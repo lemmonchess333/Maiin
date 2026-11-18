@@ -3,7 +3,7 @@
  * minutes, rounds and moves, with each move drawn and how it ran, never
  * as a lift with "No exercises recorded"; and it offers neither a
  * correction of sets nor a lift's share card, which have nothing to show
- * for it.
+ * for it, while Share to feed posts the circuit's own post.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -90,9 +90,13 @@ describe("WorkoutDetail, a circuit (Circ1 (11))", () => {
       screen.queryByRole("button", { name: "Correct workout" })
     ).toBeNull();
     expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
-    // A Circle hears the session as any other, with no numbers.
+    // A Circle hears the session as any other, with no numbers, and the
+    // feed gets the circuit's own post (WorkoutFeedShareSheet's test).
     expect(
       screen.getByRole("button", { name: "Share to circle" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Share to feed" })
     ).toBeInTheDocument();
   });
 });

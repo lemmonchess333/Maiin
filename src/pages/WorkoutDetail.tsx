@@ -322,7 +322,8 @@ function WorkoutDetailContent() {
   );
   /* A circuit (Circ1) is a lift with no sets: its moves are in
      `circuit`. It reads as its minutes, rounds and moves, and offers
-     neither a correction of sets nor a lift's share card. */
+     neither a correction of sets nor a lift's share card; Share to feed
+     posts its own post (`circuitPost`). */
   const circuit = workoutCircuit(workout);
   /* The finish screen's three figures, written by the same rule
      (`liftFigures`), so the page you come back to says what it said. */
@@ -465,7 +466,7 @@ function WorkoutDetailContent() {
               Save as routine
             </Button>
           )}
-          {circuit ? null : sharedActivityId ? (
+          {sharedActivityId ? (
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
             // one session, so this is a state, not a disabled button.

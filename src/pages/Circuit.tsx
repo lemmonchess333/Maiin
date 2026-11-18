@@ -52,6 +52,7 @@ import { useBackDismiss } from "@/lib/backDismiss";
 import { completeCircuit } from "@/lib/circuitCompletion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import type { SessionShareAction } from "@/lib/sessionPost";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 
 /** How long the picker waits for the circuit history before offering the
@@ -160,6 +161,7 @@ export default function Circuit() {
   const audio = useAudioCues(voice, "off");
   const wakeLock = useWakeLock({ onNative: true });
   const [completionId] = useState(createWorkoutCompletionId);
+  const [share, setShare] = useState<SessionShareAction | null>(null);
   const startedAtRef = useRef(0);
   // The session clock at the last tick the player was given: with the
   // player's seconds into its step, where that step began.
@@ -346,14 +348,20 @@ export default function Circuit() {
           effort: session.effort,
         },
         bodyweightKg: profile?.weightKg ?? 0,
+        author: {
+          displayName: profile?.displayName,
+          photoURL: profile?.photoURL,
+        },
       });
+      // The finish stays, saved, with its post (Circ1 (11)): shared on the
+      // person's standing answer, or the one question.
+      setShare(receipt.share);
       dispatch({ type: "saved", workoutId: receipt.workoutId });
       toast.success(
         receipt.syncStatus === "queued"
           ? "Circuit saved. It syncs when you’re back online."
           : "Circuit saved"
       );
-      navigate("/program", { replace: true });
     } catch (error) {
       logger.warn("[Circuit] save failed", error);
       dispatch({ type: "failed", error: "Couldn’t save. Try again." });
@@ -383,10 +391,12 @@ export default function Circuit() {
         }
         effort={session.effort}
         saving={phase !== "finish"}
+        share={phase === "saved" ? share : null}
         error={session.error}
         onRate={(effort) => dispatch({ type: "rate", effort })}
         onSave={() => void save()}
         onClose={leave}
+        onDone={() => navigate("/program", { replace: true })}
       />
     );
 

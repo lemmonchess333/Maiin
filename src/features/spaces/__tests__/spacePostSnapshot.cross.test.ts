@@ -96,6 +96,43 @@ describe("a Space post's session — the snapshot and the rules agree", () => {
     expect([...written].sort()).toEqual([...ruleKeys].sort());
   });
 
+  it("snapshots a circuit (Circ1) by its moves, on the list's keys", async () => {
+    const { builtInCircuit } =
+      await import("@/features/circuit/builtInCircuits");
+    const { circuitWorkoutFields } = await import("@/lib/circuitCompletion");
+    const circuit = builtInCircuit({ kit: "minimal", minutes: 10 });
+    const snapshot = spacePostSnapshot(
+      {
+        kind: "workout",
+        workout: {
+          id: "free-c1",
+          ...circuitWorkoutFields({
+            uid: "u1",
+            completionId: "c1",
+            startedAt: new Date(2026, 8, 22, 7).getTime(),
+            circuit,
+            outcome: {
+              intervalsDone: 10,
+              roundsDone: 2,
+              workSecondsDone: 400,
+              activeSeconds: 580,
+              finished: true,
+            },
+            bodyweightKg: 70,
+          }),
+        },
+      } as unknown as RecentSession,
+      { keepRouteEnds: false, zones: [] }
+    );
+    expect(snapshot).toMatchObject({
+      type: "workout",
+      totalVolume: 0,
+      exerciseCount: circuit.moves.length,
+      duration: 600,
+    });
+    for (const key of Object.keys(snapshot)) expect(ruleKeys).toContain(key);
+  });
+
   it("the parser reads a mismatch as one", () => {
     // Guards the guard: a rule with a key the snapshot lacks, or without
     // one it writes, must not read as equal.

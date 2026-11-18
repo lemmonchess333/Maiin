@@ -1337,7 +1337,8 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'routeMap', 'caption', 'moments'
+          'routePreview', 'routeMap', 'caption', 'moments',
+          'circuit'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1409,6 +1410,30 @@ service cloud.firestore {
                   || validPostMoment(request.resource.data.moments[1]))
               && (request.resource.data.moments.size() < 3
                   || validPostMoment(request.resource.data.moments[2])))
+        )
+        // A circuit (Circ1): a workout post's rounds, its interval and one
+        // round's moves, as exercise ids the app names from its catalogue.
+        // Whole numbers in a plausible range, and no field more.
+        && (
+          !('circuit' in request.resource.data.keys())
+          || (request.resource.data.type == 'workout'
+              && request.resource.data.circuit is map
+              && request.resource.data.circuit.keys().hasOnly(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.keys().hasAll(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.rounds is int
+              && request.resource.data.circuit.rounds >= 0
+              && request.resource.data.circuit.rounds <= 50
+              && request.resource.data.circuit.workSeconds is int
+              && request.resource.data.circuit.workSeconds >= 1
+              && request.resource.data.circuit.workSeconds <= 600
+              && request.resource.data.circuit.restSeconds is int
+              && request.resource.data.circuit.restSeconds >= 0
+              && request.resource.data.circuit.restSeconds <= 600
+              && request.resource.data.circuit.moves is list
+              && request.resource.data.circuit.moves.size() <= 12
+              && request.resource.data.circuit.moves.join('').size() <= 600)
         )
         && (
           !('prHit' in request.resource.data.keys())

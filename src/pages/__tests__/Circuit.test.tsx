@@ -25,7 +25,12 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "lifter" },
-    profile: { equipment: "minimal", weightKg: 70, injuries: [] },
+    profile: {
+      equipment: "minimal",
+      weightKg: 70,
+      injuries: [],
+      displayName: "Sam Lee",
+    },
   }),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -36,6 +41,12 @@ vi.mock("@/lib/savedWorkouts", async (importOriginal) => ({
 }));
 vi.mock("@/lib/circuitCompletion", () => ({
   completeCircuit: h.completeCircuit,
+}));
+// The saved finish's post is the share row's (SessionShareRow's tests).
+vi.mock("@/components/workout/CompletionExtras", () => ({
+  default: ({ share }: { share: { source: { id: string } } }) => (
+    <p>The post for {share.source.id}</p>
+  ),
 }));
 
 import Circuit from "../Circuit";
@@ -145,9 +156,16 @@ const timer = () => screen.getByRole("timer").textContent;
 const heading = () => screen.getByRole("heading", { level: 1 }).textContent;
 
 beforeEach(() => {
-  h.completeCircuit
-    .mockReset()
-    .mockResolvedValue({ workoutId: "free-c1", syncStatus: "synced" });
+  h.completeCircuit.mockReset().mockResolvedValue({
+    workoutId: "free-c1",
+    syncStatus: "synced",
+    share: {
+      uid: "lifter",
+      type: "workout",
+      source: { kind: "workout", id: "free-c1" },
+      post: vi.fn(),
+    },
+  });
   h.history = [];
   h.read = null;
 });
@@ -315,7 +333,7 @@ describe("the circuit runner (Circ1 (10))", () => {
 });
 
 describe("the finish (Circ1 (11), (A))", () => {
-  it("saves a finished circuit with its one tap, then goes back to Train", async () => {
+  it("saves a finished circuit with its one tap, shows its post, then Done goes back to Train", async () => {
     await startTenMinute();
     // Into the first work interval a second at a time, then on the clock
     // to the end of the circuit's 590 s.
@@ -339,6 +357,7 @@ describe("the finish (Circ1 (11), (A))", () => {
     expect(finished).toMatchObject({
       uid: "lifter",
       bodyweightKg: 70,
+      author: { displayName: "Sam Lee" },
       circuit: { id: "builtin-minimal-10-standard", level: 0 },
       outcome: {
         intervalsDone: 10,
@@ -348,6 +367,12 @@ describe("the finish (Circ1 (11), (A))", () => {
         finished: true,
         effort: "easy",
       },
+    });
+    // Saved, the finish stays with the circuit's post, until Done.
+    expect(screen.getByText("The post for free-c1")).toBeInTheDocument();
+    expect(screen.queryByText("Train")).not.toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
     });
     expect(screen.getByText("Train")).toBeInTheDocument();
   });

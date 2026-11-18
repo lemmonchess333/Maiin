@@ -11,6 +11,9 @@
  *   has: it moves no plan and never ticks a plan day (Circ1 (C), (6));
  * - calories from the Compendium's circuit METs (Circ1 (J));
  * - nothing under 7 minutes of the session clock (Circ1 (A), (K)).
+ *
+ * The receipt carries the post it can share (`circuitPost`), as a lift's
+ * does: the finish posts it on the person's standing answer, or asks.
  */
 import { Timestamp } from "firebase/firestore";
 import { stripUndefined } from "@/lib/firestoreGuards";
@@ -20,6 +23,8 @@ import {
   saveFinishedWorkout,
   type WorkoutSave,
 } from "@/lib/liftCompletion";
+import { circuitPost, circuitPostPreview } from "@/lib/circuitPost";
+import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
 import { circuitBurn, circuitCounts } from "@/features/circuit/circuitRules";
 import {
   CIRCUIT_FORMAT,
@@ -39,10 +44,13 @@ export interface FinishedCircuit {
   circuit: Circuit;
   outcome: CircuitOutcome;
   bodyweightKg: number;
+  /** Who the post is by, as the profile names them. */
+  author?: { displayName?: string | null; photoURL?: string | null };
 }
 
 export interface CircuitCompletion extends WorkoutSave {
   workoutId: string;
+  share: SessionShareAction;
 }
 
 /** Thrown for a circuit under 7 minutes: the page says so before it
@@ -92,5 +100,17 @@ export async function completeCircuit(
   };
   // No programme completion: a circuit chosen on the day moves no plan.
   const saved = await saveFinishedWorkout(finished.uid, workoutId, data);
-  return { workoutId, ...saved };
+  const forPost = {
+    title: finished.circuit.name,
+    circuit: savedCircuitFrom(finished.circuit, finished.outcome),
+  };
+  const share = createSessionShare({
+    uid: finished.uid,
+    type: "workout",
+    source: { kind: "workout", id: workoutId },
+    preview: () => circuitPostPreview(forPost),
+    payload: (decision) =>
+      circuitPost({ uid: finished.uid, ...finished.author }, forPost, decision),
+  });
+  return { workoutId, share, ...saved };
 }
