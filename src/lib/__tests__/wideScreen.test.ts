@@ -2,7 +2,7 @@
  * The wide layouts are CSS (`wide` and `split` in index.css) with a script
  * copy of each query for the two places that must know (wideScreen.ts).
  * These keep the two the same, and keep each of the iPhone Duo's screens
- * on the layout docs/ios/iphone-duo.md says it gets: the outer display
+ * on the layout DESIGN_GUIDE §14r gives it: the outer display
  * and half of Split View stay phones, the inner display standing up gets
  * one column, and open on its side two panes, even built with the iOS 27
  * SDK, which leaves the status bar its side.

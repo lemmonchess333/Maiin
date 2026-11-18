@@ -1,7 +1,11 @@
 /**
  * The iPhone Duo's screens in CSS px (points), for the capture rig and the
- * tests that check which layout each one gets. docs/ios/iphone-duo.md has
- * the sources.
+ * tests that check which layout each one gets. Sources: App Store
+ * Connect's screenshot specifications
+ * (https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)
+ * and WebKit's "WebKit Features for Safari 27.1"
+ * (https://webkit.org/blog/18486/webkit-features-for-safari-27-1/); the
+ * iPhone Duo page in the docs has the rest.
  *
  * Apple publishes no point sizes for the Duo, so every number here is
  * derived, and says from what:

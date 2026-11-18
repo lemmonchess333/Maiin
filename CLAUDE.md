@@ -77,6 +77,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
+- **Wide screens (iPhone Duo):** the `wide` and `split` Tailwind variants in `src/index.css` (touch screens 640 and 800 px wide) lay Home, the workout and the live run out in two panes on the Duo's inner display; phones are unchanged. `src/lib/wideScreen.ts` holds the same queries for script. Read `docs/ios/iphone-duo.md` and DESIGN_GUIDE §14r first
 
 ## Pages (src/pages/)
 
@@ -269,7 +270,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 `useFoodAnalysis`, `useMealReminders`
 
 **UI & UX:**
-`useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
+`useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`, `useMediaQuery` (a query kept current through a resize, as a fold is)
 
 **Payments:**
 `useProCheckout`

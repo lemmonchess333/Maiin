@@ -1,6 +1,6 @@
 /**
  * The wide screens Tropos lays out for: the iPhone Duo's inner display
- * (docs/ios/iphone-duo.md). The CSS is the source of truth: `wide` and
+ * (DESIGN_GUIDE §14r). The CSS is the source of truth: `wide` and
  * `split` are custom variants in src/index.css, and these are the same
  * media queries for the few places that must know in script (a panel
  * that stops being draggable, a list that names every row). Pinned to
