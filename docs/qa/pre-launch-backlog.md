@@ -523,8 +523,9 @@ reading it.
 ## The streak against your longest and the next tier (DS5 rule 46, 2026-11-18)
 
 The streak's sheet gains two tiles under its first line: Longest, with
-how many days beat it ("10 days to beat it", or "This streak"), and Next,
-the next streak badge with its art, its length and the days to go. The
+how many days pass it ("10 days to pass it", or "This is your longest"),
+and Next, the next streak badge with its art, its length and the days to
+go ("Already earned" when it is held from a longer streak). The
 unit suites read the words and the large-text spec measures the sheet; a
 phone shows the badge art at its small size and VoiceOver's reading.
 
@@ -532,9 +533,9 @@ phone shows the badge art at its small size and VoiceOver's reading.
       both tiles show, side by side on a 393 pt phone at the standard text
       size and one above the other at larger text, the badge art is sharp
       and greyed with a ring round it until the badge is earned.
-- [ ] **VoiceOver.** Swipe through the two tiles. Passing: "Longest, 21
-      days, 10 days to beat it" and "Next, 14 days, Two Week Wonder, 2
-      days to go" are read in that order, the art is skipped.
+- [ ] **VoiceOver.** Swipe through the two tiles. Passing: each is one
+      stop, "Longest, 21 days, 10 days to pass it" and then "Next, 14
+      days, Two Week Wonder, 2 days to go", and the art is skipped.
 
 ## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
 

@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
   streak: 12,
   longest: 21,
   earned: ["first_step", "three_day", "week_warrior"] as string[],
+  loading: false,
+  loadFailed: false,
   active: new Set<string>(),
   bridged: [] as string[],
   rested: [] as string[],
@@ -30,6 +32,8 @@ vi.mock("../useStreaks", async (importOriginal) => ({
     currentStreak: h.streak,
     longestStreak: h.longest,
     allBadges: h.earned.map((id) => ({ id, earnedAt: "2026-10-01" })),
+    loading: h.loading,
+    loadFailed: h.loadFailed,
     activeDates: h.active,
     bridgedDates: h.bridged,
     restDates: h.rested,
@@ -54,6 +58,8 @@ beforeEach(() => {
   h.streak = 12;
   h.longest = 21;
   h.earned = ["first_step", "three_day", "week_warrior"];
+  h.loading = false;
+  h.loadFailed = false;
   // 16 to 27 October, with the 26th covered.
   h.active = new Set(
     Array.from({ length: 12 }, (_, i) => `2026-10-${String(16 + i)}`).filter(
@@ -184,20 +190,22 @@ describe("StreakSheet", () => {
   });
 
   describe("the count against something (DS5 rule 46)", () => {
-    it("shows the longest streak and how far off beating it is", () => {
+    it("shows the longest streak and how far off passing it is", () => {
       open();
       const sheet = screen.getByRole("dialog", { name: "12-day streak" });
       expect(within(sheet).getByText("Longest")).toBeInTheDocument();
       expect(sheet.textContent).toContain("21 days");
-      expect(sheet.textContent).toContain("10 days to beat it");
+      expect(sheet.textContent).toContain("10 days to pass it");
     });
 
     it("says when this streak is the longest", () => {
       h.longest = 12;
       open();
       const sheet = screen.getByRole("dialog", { name: "12-day streak" });
-      expect(within(sheet).getByText("This streak")).toBeInTheDocument();
-      expect(sheet.textContent).not.toMatch(/to beat it/);
+      expect(
+        within(sheet).getByText("This is your longest")
+      ).toBeInTheDocument();
+      expect(sheet.textContent).not.toMatch(/to pass it/);
     });
 
     it("names the next tier, its badge and the days to it, drawn locked with its progress", () => {
@@ -236,13 +244,63 @@ describe("StreakSheet", () => {
       open();
       const sheet = screen.getByRole("dialog", { name: "400-day streak" });
       expect(within(sheet).queryByText("Next")).toBeNull();
-      expect(within(sheet).getByText("This streak")).toBeInTheDocument();
+      expect(
+        within(sheet).getByText("This is your longest")
+      ).toBeInTheDocument();
     });
 
-    it("never draws it in gold, which means a new best", () => {
+    it("draws the progress in the streak's purple, never a tier's gold", () => {
+      // 20 days: the next tier is Month Master, a gold-tier badge. Gold
+      // means a new best and nothing else (flameTiers.ts).
+      h.streak = 20;
+      h.longest = 20;
       open();
-      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
+      const sheet = screen.getByRole("dialog", { name: "20-day streak" });
+      expect(within(sheet).getByText("Month Master")).toBeInTheDocument();
+      const arc = sheet.querySelectorAll("[data-next-tier] svg circle");
+      expect(arc.length).toBeGreaterThan(0);
+      for (const circle of arc)
+        expect(circle.getAttribute("stroke")?.toUpperCase()).toMatch(
+          /^#7B72E9/
+        );
+      expect(sheet.innerHTML.toUpperCase()).not.toContain("#FFD700");
       expect(sheet.innerHTML).not.toMatch(/achievement/);
+    });
+
+    it("says a held tier in words, not only in the art's colour", () => {
+      h.streak = 5;
+      h.longest = 40;
+      h.earned = ["first_step", "three_day", "week_warrior"];
+      open();
+      const sheet = screen.getByRole("dialog", { name: "5-day streak" });
+      expect(within(sheet).getByText("Already earned")).toBeInTheDocument();
+    });
+
+    it("reads each tile as one sentence", () => {
+      open();
+      expect(
+        screen.getByRole("group", {
+          name: "Longest, 21 days, 10 days to pass it",
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("group", {
+          name: "Next, 14 days, Two Week Wonder, 2 days to go",
+        })
+      ).toBeInTheDocument();
+    });
+
+    it("waits for the record: nothing while it loads or after a failed read", () => {
+      // A failed read leaves the stored longest at 0 and every badge
+      // locked, which is not this person's record.
+      h.loadFailed = true;
+      const { unmount } = open();
+      expect(screen.queryByText("Longest")).toBeNull();
+      unmount();
+      h.loadFailed = false;
+      h.loading = true;
+      open();
+      expect(screen.queryByText("Longest")).toBeNull();
     });
   });
 });

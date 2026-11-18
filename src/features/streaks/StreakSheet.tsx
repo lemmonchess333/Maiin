@@ -60,6 +60,8 @@ export default function StreakSheet({
     bridgedDates,
     restDates,
     coversRestDays,
+    loading,
+    loadFailed,
   } = useStreaks();
   const standing = streakStanding(
     currentStreak,
@@ -99,7 +101,12 @@ export default function StreakSheet({
           <p className="text-sm text-foreground">{reassurance}</p>
         )}
 
-        <StreakStandingBand standing={standing} current={currentStreak} />
+        {/* Only once the record has loaded: before it, or after a failed
+            read, the stored longest is 0 and a held badge reads as locked,
+            which is not this person's record. */}
+        {!loading && !loadFailed && (
+          <StreakStandingBand standing={standing} current={currentStreak} />
+        )}
 
         {/* A container for the days: under 13em of it (double text on a
             narrow phone) a day's number steps down a size, so two digits
