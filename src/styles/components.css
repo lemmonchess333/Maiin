@@ -743,6 +743,48 @@ html.launching [data-brand-mark] {
   font-size: clamp(64px, 18vw, 72px);
 }
 
+/* The workout's docked cards, frosted (DS6 step 5, DESIGN_GUIDE §14o):
+   the new best and the rest card float over the foot of the set list, so
+   they are glass: the card's colour over a static blur of the rows behind.
+   The fill keeps enough of the card that every word on them holds AA with
+   no blur at all, over the worst thing that can pass behind: 92% on light
+   over black (the grey line 4.6:1, the gold 5.3:1) and 88% on dark over
+   white (4.9:1 and 7.8:1). The card's lit edge (`card-shadow`) stays. The
+   blur is written out, never through a variable (WebKit ignores one in
+   -webkit-backdrop-filter), sits on the element that fades so no fading
+   parent cuts it off, and goes solid where it cannot be drawn and under
+   Reduce Transparency (the media query, and the attribute the app sets
+   from the phone's own setting, `src/lib/reducedTransparency.ts`). */
+.dock-glass {
+  background-color: hsl(var(--card) / 0.92);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  backdrop-filter: blur(24px) saturate(1.3);
+}
+.dark .dock-glass {
+  background-color: hsl(var(--card) / 0.88);
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .dock-glass,
+  .dark .dock-glass {
+    background-color: hsl(var(--card));
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dock-glass,
+  .dark .dock-glass {
+    background-color: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+:root[data-reduced-transparency] .dock-glass {
+  background-color: hsl(var(--card));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* The run's 3-2-1 (Run27 (1), StartCountdown): one digit on the run
    screen's dark stage, its one display element, at the top of the
    register's 120 px on a 393 px phone and 96 px on a 320 px one. */

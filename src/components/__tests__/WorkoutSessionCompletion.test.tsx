@@ -532,6 +532,96 @@ describe("the new-best moment (DS3)", () => {
     ).toBe(true);
   });
 
+  /* DS6 step 5: the dock floats over the foot of the list, frosted, and
+     the list keeps its height as room at its end and as scroll padding,
+     written before the set row is asked into view. */
+  it("docks over the foot of the list, taking taps only on its cards", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    const card = screen.getByTestId("new-best-moment");
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    const dock = card.closest("[data-workout-dock]") as HTMLElement;
+    const list = document.querySelector("[data-workout-list]") as HTMLElement;
+    expect(dock).not.toBeNull();
+    expect(timer.closest("[data-workout-dock]")).toBe(dock);
+    // The dock follows the list and pulls itself up over its foot by its
+    // own height, so it floats there rather than taking the list's room.
+    expect(dock.parentElement).toBe(list.parentElement);
+    expect(dock.previousElementSibling).toBe(list);
+    expect(list.className).toMatch(/\bflex-1 overflow-y-auto\b/);
+    expect(dock.className).toContain("-mt-[var(--dock-h,0px)]");
+    expect(dock.className).toMatch(/\brelative z-10\b/);
+    // Held to the list's own box: the exercise strip stays clear.
+    expect(dock.className).toContain("max-h-[var(--dock-room,100%)]");
+    expect(dock.className).toMatch(/\bpointer-events-none\b/);
+    expect(card.className).toMatch(/\bpointer-events-auto\b/);
+    expect(timer.parentElement?.className).toMatch(/\bpointer-events-auto\b/);
+  });
+
+  it("frosts each docked card on the element that fades it", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    expect(screen.getByTestId("new-best-moment").className).toMatch(
+      /\bdock-glass\b/
+    );
+    // The rest band draws no surface: its fading parent is the card.
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    expect(timer.className).not.toMatch(/\bbg-card\b/);
+    expect(timer.parentElement?.className).toMatch(/\bdock-glass\b/);
+    expect(timer.parentElement?.className).toMatch(/\bcard-shadow\b/);
+  });
+
+  it("keeps the dock's height as room under the list before the set is placed", async () => {
+    // jsdom lays nothing out; give the dock a height when it holds a card.
+    const height = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.hasAttribute("data-workout-list")) return 500;
+        return this.hasAttribute("data-workout-dock") &&
+          this.querySelector('[role="group"]')
+          ? 236
+          : 0;
+      });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    const seen: string[] = [];
+    scroll.mockImplementation(function (this: Element) {
+      if (this.hasAttribute("data-set-row"))
+        seen.push(
+          (
+            document.querySelector("[data-workout-list]") as HTMLElement
+          ).style.getPropertyValue("--dock-h")
+        );
+    });
+    try {
+      seedBest();
+      await act(async () => {
+        openSession();
+      });
+      liftFirstSet("62.5");
+      const list = document.querySelector("[data-workout-list]") as HTMLElement;
+      const dock = document.querySelector("[data-workout-dock]") as HTMLElement;
+      await vi.waitFor(() =>
+        expect(list.style.getPropertyValue("--dock-h")).toBe("236px")
+      );
+      expect(dock.style.getPropertyValue("--dock-h")).toBe("236px");
+      // Its ceiling is the list's own box.
+      expect(dock.style.getPropertyValue("--dock-room")).toBe("500px");
+      // The row asked into view after the tick already saw the room.
+      expect(seen.at(-1)).toBe("236px");
+      expect(list.className).toContain("pb-[calc(var(--dock-h,0px)+1rem)]");
+      expect(list.className).toContain("scroll-pb-[var(--dock-h,0px)]");
+    } finally {
+      height.mockRestore();
+      scroll.mockImplementation(() => {});
+    }
+  });
+
   it("stays quiet for a set that did not beat the best", async () => {
     seedBest();
     await act(async () => {

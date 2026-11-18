@@ -1527,6 +1527,43 @@ need an iPhone.
       and nothing moves as the score and the range card arrive, at the
       default text size and at a larger one.
 
+## The workout's docked cards, frosted over the list (DS6 step 5, 2026-11-18)
+
+Affects: the workout screen's dock (`WorkoutSession.tsx`: the new best and
+the rest card, `CompactRestTimer.tsx`, `NewBestMoment.tsx`). The set list
+now runs on under the dock, which floats over its foot, frosted (the
+card's colour at 92% on light and 88% on dark over a blur), and the list
+keeps the dock's height as room at its end and as scroll padding. The
+manual Start rest timer (auto-start off) stays under the list in the flow.
+The unit tests pin the structure, the order of the writes and the
+contrast floors; the captures were the real cards in a harness page on a
+desktop Chrome. Scrolling, the blur's cost and `scrollIntoView` with
+scroll padding in WebKit are for a phone.
+
+- [ ] **The current set is never under a card.** On a TestFlight build,
+      start a lift with five or more sets on the first exercise and tick
+      sets one by one. Passing: after each tick the next set's row is in
+      view above the rest card, never behind it, and nothing above the
+      set table moves when the rest card arrives.
+- [ ] **The last row scrolls clear.** With a rest running, scroll the list
+      to its end. Passing: Add exercise and the last row can be scrolled
+      above the rest card and tapped.
+- [ ] **What is behind is blurred.** Scroll the set table slowly under the
+      rest card in both themes. Passing: the rows show through only as a
+      soft blur, every word on the card reads as before, and in dark mode
+      the card keeps its lighter top edge.
+- [ ] **Taps go where they look.** With the rest card up, tap a row's
+      check in the strip of list showing between the new best and the rest
+      card, and beside the cards. Passing: the row takes the tap; the
+      cards' buttons (+15 s, End rest, Undo) take theirs.
+- [ ] **Large text on a small phone.** At the largest standard text size
+      on a 320 pt phone (or Display Zoom), tick a set that is a new best.
+      Passing: both cards show whole or the dock scrolls inside itself,
+      and the exercise strip at the top stays uncovered.
+- [ ] **Frames.** Scroll a long set table under the rest card. Passing:
+      no stutter; if there is, the cards go back to solid with their edge
+      (DS6's named risk).
+
 ## Race plans the rollover dropped end on the server (2026-10-10)
 
 Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
