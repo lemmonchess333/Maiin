@@ -75,7 +75,7 @@ import { toast } from "sonner";
 import { purgeFoodPhotos } from "@/lib/foodPhotoStore";
 import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
 vi.mock("@/lib/purchaseProvider", () => ({
-  openWebBilling: vi.fn(async () => true),
+  openWebSubscription: vi.fn(async () => ({ ok: true })),
 }));
 vi.mock("@/lib/foodPhotoStore", () => ({ purgeFoodPhotos: vi.fn() }));
 vi.mock("@/lib/pushNotifications", () => ({
@@ -131,9 +131,16 @@ describe("AccountSection — sign out", () => {
    kept renewing (security audit O3). The person is told first and handed
    the billing page, as for the App Store. */
 describe("AccountSection: a website subscription's warning", () => {
+  const webRecord = {
+    entitlementActive: true,
+    store: "rc_billing",
+    period: "month",
+    willRenew: true,
+  };
   const webPro = {
     subscriptionSource: "stripe",
     subscriptionTier: "pro",
+    revenueCat: webRecord,
   };
 
   function openDelete(profile: Record<string, unknown>) {
@@ -143,8 +150,8 @@ describe("AccountSection: a website subscription's warning", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
   }
 
-  it("shows before deletion for a website Pro subscription, and opens billing", async () => {
-    const { openWebBilling } = await import("@/lib/purchaseProvider");
+  it("shows before deletion for a website Pro subscription, and opens it to be managed", async () => {
+    const { openWebSubscription } = await import("@/lib/purchaseProvider");
     openDelete(webPro);
     expect(
       screen.getByText(/Cancel your website subscription first/i)
@@ -153,8 +160,10 @@ describe("AccountSection: a website subscription's warning", () => {
       screen.queryByRole("alertdialog", { name: "Delete account" })
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Open billing/i }));
-    await waitFor(() => expect(openWebBilling).toHaveBeenCalledTimes(1));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Manage subscription/i })
+    );
+    await waitFor(() => expect(openWebSubscription).toHaveBeenCalledTimes(1));
   });
 
   it("goes on to the deletion when the person taps Delete anyway", async () => {
@@ -170,14 +179,37 @@ describe("AccountSection: a website subscription's warning", () => {
     ).toBeInTheDocument();
   });
 
+  it("goes on to the App Store warning when an older App Store purchase is there too", async () => {
+    openDelete({ ...webPro, appleOriginalTransactionId: "1000000000000001" });
+    fireEvent.click(screen.getByRole("button", { name: /Delete anyway/i }));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Cancel your App Store subscription first/i)
+      ).toBeInTheDocument()
+    );
+  });
+
   it.each([
-    [
-      "a free account",
-      { subscriptionSource: "stripe", subscriptionTier: "free" },
-    ],
+    ["a free account", { ...webPro, subscriptionTier: "free" }],
     [
       "a legacy Stripe Checkout subscription, which the deletion cancels",
       { ...webPro, stripeSubscriptionId: "sub_123" },
+    ],
+    [
+      "a website subscription already cancelled, which renews no more",
+      { ...webPro, revenueCat: { ...webRecord, willRenew: false } },
+    ],
+    [
+      "a lifetime purchase, which never renews",
+      { ...webPro, revenueCat: { ...webRecord, period: null } },
+    ],
+    [
+      "an App Store subscription",
+      { ...webPro, revenueCat: { ...webRecord, store: "app_store" } },
+    ],
+    [
+      "a lifetime from the old Stripe checkout, with no RevenueCat record",
+      { subscriptionSource: "stripe", subscriptionTier: "pro" },
     ],
   ])("does not show for %s", (_label, profile) => {
     openDelete(profile);

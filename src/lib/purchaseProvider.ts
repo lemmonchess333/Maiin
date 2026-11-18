@@ -340,25 +340,33 @@ export async function manageSubscription(
 }
 
 /**
- * Open the website's billing page for the signed-in person in a new window:
- * RevenueCat's management link (`getSubscriptionManagementUrl`), where a
- * subscription bought on the website is cancelled. On every platform,
- * the iPhone included, since the App Store does not manage a website
- * purchase. Resolves false when there is no link or the call failed.
+ * Go to the page where a subscription bought on the website is managed and
+ * cancelled: RevenueCat's management link for the signed-in person
+ * (`getSubscriptionManagementUrl`). On every platform, the iPhone included,
+ * since the App Store does not manage a website purchase. A navigation,
+ * not a new window: it needs no tap still in progress after the call
+ * (Safari blocks a window opened that late), and in the iPhone app
+ * Capacitor hands a page on another host to Safari, as Manage subscription
+ * does. Resolves with the sentence to show when there is no link.
  */
-export async function openWebBilling(): Promise<boolean> {
+export async function openWebSubscription(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  const fallback = "Couldn’t open your subscription. Try again.";
   try {
     const manageLink = httpsCallable<Record<string, never>, { url: string }>(
       functions,
       "getSubscriptionManagementUrl"
     );
     const url = (await manageLink({})).data?.url;
-    if (!url) return false;
-    window.open(url, "_blank");
-    return true;
+    if (!url) return { ok: false, error: fallback };
+    window.location.href = url;
+    return { ok: true };
   } catch (err) {
-    logger.error("[purchase] web billing link failed", err);
-    return false;
+    logger.error("[purchase] web subscription link failed", err);
+    // A failed-precondition carries a sentence the server wrote for the
+    // person, as for Manage subscription.
+    return { ok: false, error: describeRejection(err) ?? fallback };
   }
 }
 

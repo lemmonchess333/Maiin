@@ -3210,9 +3210,10 @@ the account does not cancel it. Only a real website purchase shows it.
 - [ ] **The warning shows.** On an account that bought Pro on the website
       (a sandbox purchase on an allow-listed uid will do), tap Delete
       account. Passing: the warning shows, not the deletion's own dialog.
-- [ ] **Open billing opens the right page,** on the web and on the iPhone:
+- [ ] **Manage subscription opens the right page,** on the web and on the iPhone:
       RevenueCat's billing page for that subscription, where it can be
-      cancelled. Then Delete anyway leads to the usual deletion.
+      cancelled. Then Delete anyway leads to the usual deletion. A website
+      subscription already cancelled, or a lifetime purchase, shows no warning.
 - [ ] **The deletion still cancels nothing on the website.** Until the
       server cancels a website subscription itself (audit O3: it needs a
       RevenueCat secret key for its API v2), check after a test deletion

@@ -33,6 +33,11 @@ import { isAppleRelayEmail } from "@/lib/appleRelay";
 const APPLE_MANAGE_SUBSCRIPTIONS_URL =
   "https://apps.apple.com/account/subscriptions";
 
+/** RevenueCat's stores for a purchase made on the website (RevenueCat
+ *  Billing, Paddle, a Stripe purchase sent to RevenueCat), as
+ *  functions/lib/revenueCatEntitlement.js maps them to "stripe". */
+const WEB_STORES = ["rc_billing", "paddle", "stripe"];
+
 interface AccountSectionProps {
   user: User | null;
   signOut: () => Promise<void>;
@@ -110,10 +115,19 @@ function AccountSectionContent({
   // (security audit O3, docs/agents/security-audit-2026-11.md). A legacy
   // Stripe Checkout subscription carries its own id and is cancelled by
   // the deletion itself (functions/lib/accountDeletionRetry.js).
+  // Read from the RevenueCat record the server keeps: a website store, the
+  // entitlement active and renewal on. A subscription already cancelled
+  // (renewal off) renews no more, and a lifetime purchase never did, so
+  // neither is warned about.
+  const revenueCat = profile?.revenueCat;
   const hasWebSubscription =
-    profile?.subscriptionSource === "stripe" &&
     profile?.subscriptionTier === "pro" &&
-    !profile?.stripeSubscriptionId;
+    !profile?.stripeSubscriptionId &&
+    revenueCat?.entitlementActive === true &&
+    typeof revenueCat.store === "string" &&
+    WEB_STORES.includes(revenueCat.store) &&
+    revenueCat.willRenew !== false &&
+    revenueCat.period !== null;
   const [showWebWarning, setShowWebWarning] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [password, setPassword] = useState("");
@@ -490,7 +504,7 @@ function AccountSectionContent({
         open={showWebWarning}
         onClose={() => setShowWebWarning(false)}
         title="Cancel your website subscription first"
-        description="Deleting your account doesn’t cancel the subscription you bought on the website. Cancel it in billing, or it keeps renewing."
+        description="Deleting your account doesn’t cancel the subscription you bought on the website. Cancel it first, or it keeps renewing."
         role="alertdialog"
       >
         <div className="space-y-2">
@@ -499,20 +513,23 @@ function AccountSectionContent({
             fullWidth
             onClick={() => {
               void import("@/lib/purchaseProvider")
-                .then(({ openWebBilling }) => openWebBilling())
-                .then((opened) => {
-                  if (!opened) toast.error("Couldn’t open billing. Try again.");
+                .then(({ openWebSubscription }) => openWebSubscription())
+                .then((result) => {
+                  if (!result.ok) toast.error(result.error);
                 });
             }}
           >
-            Open billing
+            Manage subscription
           </Button>
           <Button
             variant="destructive-tinted"
             fullWidth
             onClick={() => {
               setShowWebWarning(false);
-              openDeletion();
+              // An older App Store purchase on the same account has its
+              // own warning, which still applies.
+              if (hasAppleSubscription) setShowAppleWarning(true);
+              else openDeletion();
             }}
           >
             Delete anyway
