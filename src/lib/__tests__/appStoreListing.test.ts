@@ -1,6 +1,7 @@
 /**
  * The App Store listing is pasted into App Store Connect by hand, from
- * `docs/app-store/listing.md`. Pin what a paste would otherwise find out
+ * `docs/app-store/submission-pack.md` (`listing.md` until 18 November
+ * 2026, which now points there). Pin what a paste would otherwise find out
  * too late, and the claims in it that the code can contradict.
  *
  *  - Each pasteable field fits Apple's limit. App Store Connect refuses
@@ -27,7 +28,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) =>
   readFileSync(resolve(here, rel), "utf8").replace(/\r\n/g, "\n");
 
-const LISTING = read("../../../docs/app-store/listing.md");
+const LISTING = read("../../../docs/app-store/submission-pack.md");
 
 /** Apple's limits (App Store Connect Help → Reference). Characters unless
  *  the unit says bytes; the keywords and the review notes are counted in
@@ -41,6 +42,7 @@ const LIMITS: Record<
   "promotional-text": { max: 170, unit: "characters" },
   description: { max: 4000, unit: "characters" },
   keywords: { max: 100, unit: "bytes" },
+  "whats-new": { max: 4000, unit: "characters" },
   "review-notes": { max: 4000, unit: "bytes" },
   "iap-monthly-name": { min: 2, max: 30, unit: "characters" },
   "iap-monthly-description": { max: 45, unit: "characters" },
@@ -203,12 +205,14 @@ describe("App Store listing: claims the code can contradict", () => {
     expect(everything).not.toMatch(/unlimited/i);
   });
 
-  it("claims no feature the app doesn't have", () => {
-    // Heart rate (from the Watch, behind its release gate, or a Bluetooth
-    // sensor) waits for its device checks in docs/qa/pre-launch-backlog.md
-    // before the listing names it, there is no watch app or Live Activity,
-    // and iPhone gets no push for social activity. Each would be a 2.3
-    // rejection waiting for a reviewer.
+  it("claims no feature a phone hasn't proved", () => {
+    // Live heart rate (from the Watch, behind its release gate, or a
+    // Bluetooth strap), the Live Activities and widgets (#3373) and push
+    // for social activity are in the binary, but each waits for its device
+    // rows in docs/qa/pre-launch-backlog.md before the listing sells it:
+    // a feature that fails in a reviewer's hands is a 2.1 rejection. The
+    // review notes describe them, as 2.3.1(a) asks. Readiness from heart
+    // rate in Apple Health is a different thing, and is sold (Pro).
     const forSale = [
       field("name"),
       field("subtitle"),
@@ -217,7 +221,72 @@ describe("App Store listing: claims the code can contradict", () => {
       field("keywords"),
     ].join("\n");
     expect(forSale).not.toMatch(
-      /apple watch|heart rate|live activit|dynamic island|push notification/i
+      /apple watch|heart[- ]rate (strap|sensor|monitor|zones?)|live heart|live activit|dynamic island|widget|push notification|notification/i
+    );
+  });
+
+  it("names every Pro gate in the description's Pro list (Guideline 2.3.2)", () => {
+    // PRO_INCLUDES is the paywall's list of every runtime Pro gate. A gate
+    // added there and missing here sells a free-looking feature that asks
+    // for money. Read as source: the module imports the subscription caps.
+    const copy = read("../../components/paywall/proIncludesCopy.ts");
+    const list = copy
+      .split("export const PRO_INCLUDES")[1]
+      .split("];")[0]
+      .split("\n")
+      .filter((line) => /^\s+[`"]/.test(line));
+    expect(list, "PRO_INCLUDES changed: name the new gate here").toHaveLength(
+      7
+    );
+    const pro = field("description").split("\nTropos Pro\n")[1];
+    expect(pro, "the description has a Tropos Pro list").toBeTruthy();
+    for (const gate of [
+      /meal from a photo/,
+      /calorie target that adapts/,
+      /shift with each day's training/,
+      /paces that move with/,
+      /Readiness from your sleep and heart rate/,
+      /older than 3 months, your training load and your score's details/,
+      /half marathon or longer, after their first week/,
+    ])
+      expect(pro).toMatch(gate);
+  });
+
+  it("does not sell a marathon plan as free, which is Pro after week 1", () => {
+    // Q85 (13 November 2026). The free Running list said "Race plans for
+    // 5K, 10K, half marathon and marathon".
+    const free = field("description").split("\nTropos Pro\n")[0];
+    expect(free).not.toMatch(/half marathon and marathon/);
+    expect(free).toMatch(
+      /half marathon or longer are Pro after their first week/
+    );
+    expect(read("../racePlanAccess.ts")).toMatch(
+      /PRO_RACE_DISTANCES = \["half", "marathon"/
+    );
+  });
+
+  it("does not show steps on Home, or send the reviewer to an offer after setup", () => {
+    // Steps left Home (App1 Q31) and setup goes straight to Home with no
+    // Pro offer (App1 Q27); the October listing said both.
+    const everything = [...FIELDS.values()].flat().join("\n");
+    expect(everything).not.toMatch(/steps from Apple Health on Home/i);
+    expect(everything).not.toMatch(/offer shown after setup/i);
+    expect(everything).not.toMatch(/shows it on Home/i);
+  });
+
+  it("says when Spaces, challenges and leagues open, at the code's number", () => {
+    // They stay hidden until GROUP_MIN people are training (App1 Q6,
+    // src/lib/enoughPeople.ts), so a reviewer at launch sees none of them
+    // unless the notes say why (Guideline 2.5.19, 2.3.1).
+    const groupMin = read("../../features/league/leagueRules.ts").match(
+      /export const GROUP_MIN = (\d+);/
+    );
+    expect(groupMin).not.toBeNull();
+    expect(field("review-notes")).toContain(
+      `once at least ${groupMin![1]} people are training`
+    );
+    expect(field("description")).toMatch(
+      /once enough people are training on Tropos/
     );
   });
 

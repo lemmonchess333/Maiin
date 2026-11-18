@@ -109,7 +109,9 @@ const DECLARED: Record<string, string[]> = {
   PhotosorVideos: [APP],
   OtherUserContent: [APP],
   UserID: [APP],
-  DeviceID: [ANALYTICS],
+  // The analytics app-instance id, and the push token the server sends to
+  // (claimPushDeviceToken), since the launch audit of 2026-11-18.
+  DeviceID: [APP, ANALYTICS],
   PurchaseHistory: [APP],
   ProductInteraction: [APP, ANALYTICS],
   OtherUsageData: [APP, ANALYTICS],
