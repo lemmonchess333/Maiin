@@ -74,6 +74,9 @@ import {
 import { toast } from "sonner";
 import { purgeFoodPhotos } from "@/lib/foodPhotoStore";
 import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
+vi.mock("@/lib/purchaseProvider", () => ({
+  openWebBilling: vi.fn(async () => true),
+}));
 vi.mock("@/lib/foodPhotoStore", () => ({ purgeFoodPhotos: vi.fn() }));
 vi.mock("@/lib/pushNotifications", () => ({
   discardDeletedAccountPushState: vi.fn(),
@@ -120,6 +123,67 @@ describe("AccountSection — sign out", () => {
       )
     );
     online.mockRestore();
+  });
+});
+
+/* A subscription bought on the website (RevenueCat Billing) is not
+   cancelled by deleting the account, and the app cannot cancel it, so it
+   kept renewing (security audit O3). The person is told first and handed
+   the billing page, as for the App Store. */
+describe("AccountSection: a website subscription's warning", () => {
+  const webPro = {
+    subscriptionSource: "stripe",
+    subscriptionTier: "pro",
+  };
+
+  function openDelete(profile: Record<string, unknown>) {
+    useAuthMock.mockReturnValue({ user: makeUser(), profile, loading: false });
+    renderSection();
+    fireEvent.click(screen.getByText(/Sign out or delete/i));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
+  }
+
+  it("shows before deletion for a website Pro subscription, and opens billing", async () => {
+    const { openWebBilling } = await import("@/lib/purchaseProvider");
+    openDelete(webPro);
+    expect(
+      screen.getByText(/Cancel your website subscription first/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("alertdialog", { name: "Delete account" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Open billing/i }));
+    await waitFor(() => expect(openWebBilling).toHaveBeenCalledTimes(1));
+  });
+
+  it("goes on to the deletion when the person taps Delete anyway", async () => {
+    openDelete(webPro);
+    fireEvent.click(screen.getByRole("button", { name: /Delete anyway/i }));
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Cancel your website subscription first/i)
+      ).not.toBeInTheDocument()
+    );
+    expect(
+      screen.getByRole("alertdialog", { name: "Delete account" })
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "a free account",
+      { subscriptionSource: "stripe", subscriptionTier: "free" },
+    ],
+    [
+      "a legacy Stripe Checkout subscription, which the deletion cancels",
+      { ...webPro, stripeSubscriptionId: "sub_123" },
+    ],
+  ])("does not show for %s", (_label, profile) => {
+    openDelete(profile);
+    expect(
+      screen.queryByText(/Cancel your website subscription first/i)
+    ).not.toBeInTheDocument();
   });
 });
 

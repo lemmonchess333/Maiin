@@ -340,6 +340,29 @@ export async function manageSubscription(
 }
 
 /**
+ * Open the website's billing page for the signed-in person in a new window:
+ * RevenueCat's management link (`getSubscriptionManagementUrl`), where a
+ * subscription bought on the website is cancelled. On every platform,
+ * the iPhone included, since the App Store does not manage a website
+ * purchase. Resolves false when there is no link or the call failed.
+ */
+export async function openWebBilling(): Promise<boolean> {
+  try {
+    const manageLink = httpsCallable<Record<string, never>, { url: string }>(
+      functions,
+      "getSubscriptionManagementUrl"
+    );
+    const url = (await manageLink({})).data?.url;
+    if (!url) return false;
+    window.open(url, "_blank");
+    return true;
+  } catch (err) {
+    logger.error("[purchase] web billing link failed", err);
+    return false;
+  }
+}
+
+/**
  * Restore previous purchases (iOS only)
  */
 export async function restorePurchases(): Promise<PurchaseResult> {
