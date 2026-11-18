@@ -1815,7 +1815,8 @@ Affects: the native project's life cycle (`claude/duo-uiscene`), the
 shell's side insets and the two-pane layouts (`claude/duo-layouts`), and
 every screen on Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
 No GitHub runner has an iPhone Duo simulator (the `macos-26` image tops out
-at Xcode 26.6, and the `xcode-27` image has no Duo device), so none of this
+at Xcode 26.6; the `xcode-27` image has Xcode 27.1 as a release candidate
+with an iOS 27.0 simulator runtime only, and no Duo device), so none of this
 is checked in CI; the capture rig checks the layouts at the Duo's sizes in
 Chromium. Needs an iPhone Duo, or Xcode 27.1's Duo simulator on a Mac for
 the rows marked (sim).
@@ -1836,7 +1837,12 @@ Once `claude/duo-uiscene` is merged, on any iPhone (a TestFlight build):
 - [ ] **Leaving and coming back** fires pause and resume: the rest timer
       and a run's clock are right after a minute away, and Home's day moves
       on after midnight.
-- [ ] **Sign in with Google and with Apple** from a signed-out start.
+- [ ] **Sign in with Google and with Apple** from a signed-out start, and
+      once more with the app killed while the sign-in sheet is open: the
+      return lands on the app signed in or back on sign-in, never on a
+      blank page or a wrong screen (a URL that wakes the app now arrives
+      through the scene, and every one reaches the app's link listeners,
+      which ignore any they do not know).
 - [ ] **Links open the app where they point**, cold and warm: an invite
       link, a shared post, a widget's tap, a Live Activity's tap, and the
       return from the website's checkout.
