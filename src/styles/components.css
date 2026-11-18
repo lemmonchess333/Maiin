@@ -39,6 +39,29 @@
   pointer-events: none;
 }
 
+/* The fade under the bar (DS6 step 3, DESIGN_GUIDE §14o). The bar floats
+   above the home indicator, and words scrolled past it read in plain view
+   in the gap and the safe area below it (the owner's recording, 10
+   November 2026). The page's own colour rises behind the bar, from nothing
+   at its top edge to solid at its bottom edge, and stays solid to the
+   screen's foot: nothing reads below the bar, and the glass still has what
+   passes behind its upper half. A static gradient with no blur of its own,
+   since a second full-width backdrop filter on every tab would double the
+   paint cost DS6 names as its risk. It sits behind the bar in the frame's
+   own stacking context and, like the frame, takes no taps. */
+.bottom-nav-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--background) / 0),
+    hsl(var(--background)) calc(100% - var(--safe-bottom) - var(--tab-bar-gap))
+  );
+}
+
 .bottom-nav-frost {
   pointer-events: auto;
   background: var(--surface-solid);
@@ -113,7 +136,10 @@
   }
 }
 
-/* Reduced transparency → solid bar, no blur. */
+/* Reduce Transparency → solid bar, no blur. The media query is how a
+   browser says so; WebKit has no such query (WebKit bug 175497), so on
+   iPhone the app marks the page from the phone's own setting instead
+   (`src/lib/reducedTransparency.ts`), and the attribute does the same. */
 @media (prefers-reduced-transparency: reduce) {
   .bottom-nav-frost,
   .dark .bottom-nav-frost {
@@ -121,6 +147,11 @@
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+}
+:root[data-reduced-transparency] .bottom-nav-frost {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 @media (forced-colors: active) {

@@ -430,12 +430,16 @@
   --border: 240 6% 17%; /* #29292E */
   --input-fill: 240 7% 12.5%; /* #1E1E22 */
   --glass-bg: rgba(18, 18, 22, 0.97);
-  --glass-border: rgba(255, 255, 255, 0.07);
+  /* The tab bar's rim on dark: the card's lit edge at the bar's size
+     (DS6, DESIGN_GUIDE §14o), a faint outline all round and a hairline of
+     light along the top. At 7% and 10% the top measured about 1.2:1
+     against the page, where a card's lit edge is about 1.55:1; at 8% and
+     14% the hairline is about 1.55:1 too. */
+  --glass-border: rgba(255, 255, 255, 0.08);
   --surface-solid: #151519;
   /* The direction the inline literal always assumed — correct here only. */
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
-  /* Fainter sheen on dark glass. */
-  --nav-frost-highlight: rgba(255, 255, 255, 0.1);
+  --nav-frost-highlight: rgba(255, 255, 255, 0.14);
   --nav-surface-opacity: 88%;
   --nav-active-foreground: var(--ds-purple-400);
   /* Semantic status colours — dark mode.
