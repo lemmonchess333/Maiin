@@ -62,6 +62,7 @@ function trainingLabel(strip: WeekStripDay): string {
  *  Null for a day it gave none. */
 function liftLeft({ day, liftDoneOn }: WeekStripDay): string | null {
   if (liftDoneOn) return "lift done on another day";
+  if (day.skippedHere.length > 0) return "skipped lift";
   const gone = day.slidOut[0];
   if (gone)
     return gone.to === "skipped"

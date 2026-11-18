@@ -101,6 +101,8 @@ export interface TrainingWeekInput {
         workouts?: readonly { completed?: boolean; skipped?: boolean }[];
         raceWeek?: ProgramState["raceWeek"];
         runPlan?: Pick<RunPlan, "mode" | "raceGoal"> | null;
+        /** The week the plan's lifts are for: its marks are that week's. */
+        liftWeekKey?: string;
       }
     | null
     | undefined;
@@ -275,8 +277,10 @@ export function trainingWeek({
  * one of a race's rest days, every lift skipped and not done is one the
  * app rested, as `layOutWeek`'s Rest before your race group reads them.
  * Only the plan's own week holds those marks: a week read on another day
- * (last week's review) counts its lift days. What race week keeps is the
- * plan's lifts not rested, never more than the week's lift days.
+ * (last week's review), or a plan not yet rolled over to the week (its
+ * `liftWeekKey` another week's, as on a Monday before the rollover),
+ * counts its lift days. What race week keeps is the plan's lifts not
+ * rested, never more than the week's lift days.
  */
 function liftsAsked(
   liftDays: number,
@@ -284,7 +288,12 @@ function liftsAsked(
   weekKey: string,
   now: Date
 ): number {
-  if (liftDays <= 0 || weekKey !== localWeekKey(now)) return liftDays;
+  if (
+    liftDays <= 0 ||
+    weekKey !== localWeekKey(now) ||
+    programState?.liftWeekKey !== weekKey
+  )
+    return liftDays;
   if (
     programState?.raceWeek !== "race" &&
     !isRaceRestDay(programState?.runPlan, localDateString(now))

@@ -57,7 +57,7 @@ function session(over: Partial<TodaySession> = {}): TodaySession {
   };
 }
 
-const liftToday = (status: "planned" | "completed" | "skipped" = "planned") =>
+const liftToday = (status: "planned" | "completed" = "planned") =>
   session({
     type: "lift",
     lift: {
@@ -177,9 +177,19 @@ describe("the Today widget's day", () => {
   });
 
   it("a skipped session says so, in the same neutral register", () => {
-    expect(widgetToday(input({ session: liftToday("skipped") }))).toMatchObject(
-      { state: "done", kicker: "Skipped today", line: "Skipped today" }
-    );
+    // A run: a skipped lift is never today's (TrainWk1 step 2), the week
+    // lays the next lift on the day instead.
+    const skipped = runToday();
+    const runDay = { ...skipped.run!.runDay!, status: "skipped" as const };
+    expect(
+      widgetToday(
+        input({ session: { ...skipped, run: { ...skipped.run!, runDay } } })
+      )
+    ).toMatchObject({
+      state: "done",
+      kicker: "Skipped today",
+      line: "Skipped today",
+    });
   });
 
   it("a day with two: the one still to do leads, with how many are done", () => {

@@ -78,6 +78,7 @@ interface Fixture {
     runDays?: ScheduledRunDay[];
     workouts?: { completed?: boolean; skipped?: boolean }[];
     raceWeek?: "build" | "taper" | "race" | "after";
+    liftWeekKey?: string;
     runPlan?: { mode: string; raceGoal?: { targetDate: string } };
   } | null;
   /** The day it is read on, a day of this week; today without one. */
@@ -94,8 +95,13 @@ const RACE_WEEK_SCHEDULE = schedule({
   5: "lift",
   0: "run",
 });
-const lifts = (...marks: ("done" | "skipped" | "to do")[]) =>
-  marks.map((m) => ({ completed: m === "done", skipped: m === "skipped" }));
+const lifts = (
+  ...marks: ("done" | "skipped" | "to do" | "done and skipped")[]
+) =>
+  marks.map((m) => ({
+    completed: m === "done" || m === "done and skipped",
+    skipped: m === "skipped" || m === "done and skipped",
+  }));
 
 function fixtures(): Fixture[] {
   const w = (i: number) => dayIn(THIS_WEEK, i);
@@ -242,6 +248,7 @@ function fixtures(): Fixture[] {
       profile: { weekSchedule: RACE_WEEK_SCHEDULE, runMode: "race_prep" },
       programState: {
         raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
         workouts: lifts("to do", "skipped", "skipped"),
         runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
         runDays: [
@@ -264,6 +271,7 @@ function fixtures(): Fixture[] {
       profile: { weekSchedule: schedule({ 1: "lift", 3: "lift" }) },
       programState: {
         raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
         workouts: lifts("skipped", "skipped"),
         runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
       },
@@ -277,6 +285,7 @@ function fixtures(): Fixture[] {
       profile: { weekSchedule: RACE_WEEK_SCHEDULE },
       programState: {
         raceWeek: "taper",
+        liftWeekKey: THIS_WEEK,
         workouts: lifts("done", "done", "skipped"),
         runPlan: {
           mode: "race_prep",
@@ -293,6 +302,7 @@ function fixtures(): Fixture[] {
       profile: { weekSchedule: RACE_WEEK_SCHEDULE },
       programState: {
         raceWeek: "taper",
+        liftWeekKey: THIS_WEEK,
         workouts: lifts("done", "skipped", "to do"),
         runPlan: {
           mode: "race_prep",
@@ -302,12 +312,71 @@ function fixtures(): Fixture[] {
       today: w(3),
     },
     {
+      // Friday is not a rest day of a race next Monday (two days before it
+      // and race day: Saturday to Monday): Friday's skip is the person's.
+      name: "the Friday before a race on Monday",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "taper",
+        liftWeekKey: THIS_WEEK,
+        workouts: lifts("done", "done", "skipped"),
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { targetDate: dayIn(THIS_WEEK, 7) },
+        },
+      },
+      today: w(4),
+    },
+    {
+      // Two lift days and a plan of four, one rested: never more than the
+      // week's lift days.
+      name: "race week, fewer lift days than lifts",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: schedule({ 1: "lift", 3: "lift" }) },
+      programState: {
+        raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
+        workouts: lifts("to do", "skipped", "to do", "to do"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+      },
+      today: w(1),
+    },
+    {
+      // A lift done is not rested, whatever its skip mark says.
+      name: "race week, a lift both skipped and done",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
+        workouts: lifts("done and skipped", "skipped", "to do"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+      },
+      today: w(2),
+    },
+    {
+      // Monday before the rollover: the plan is last week's, race week's
+      // marks with it. Its lift days stand.
+      name: "a plan not rolled over to the week",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "race",
+        liftWeekKey: LAST_WEEK,
+        workouts: lifts("to do", "skipped", "skipped"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+      },
+      today: w(0),
+    },
+    {
       // Last week's review, after the rollover: its lift days stand.
       name: "race week's skips, read for another week",
       weekKey: LAST_WEEK,
       profile: { weekSchedule: RACE_WEEK_SCHEDULE },
       programState: {
         raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
         workouts: lifts("to do", "skipped", "skipped"),
         runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
       },
@@ -373,6 +442,10 @@ describe("league planned ≡ trainingWeek's planned", () => {
     expect(byName.get("the rest days before a race early next week")).toBe(2);
     expect(byName.get("the same week, before its rest days")).toBe(3);
     expect(byName.get("race week's skips, read for another week")).toBe(3);
+    expect(byName.get("the Friday before a race on Monday")).toBe(3);
+    expect(byName.get("race week, fewer lift days than lifts")).toBe(2);
+    expect(byName.get("race week, a lift both skipped and done")).toBe(2);
+    expect(byName.get("a plan not rolled over to the week")).toBe(3);
     // Without the day it is read on, the server counts the lift days.
     const race = fixtures().find(
       (f) => f.name === "race week, two lifts rested"

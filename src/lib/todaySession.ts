@@ -182,7 +182,9 @@ export interface TodayLift {
    *  workout. Absent reads as the day's name without its week. */
   name?: string | null;
   isStartable: boolean;
-  status: LiftSlotStatus;
+  /** To do, done, or "none" for a lifting day with no workout. Never
+   *  skipped: a skipped lift is not the day's (`layOutWeek`). */
+  status: Exclude<LiftSlotStatus, "skipped">;
   /** Up to three muscle groups, "Chest · Shoulders · Triceps". */
   muscleGroups: string;
   /** This workout is under way: the card offers Resume in Start's place.

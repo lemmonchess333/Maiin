@@ -156,18 +156,24 @@ function isRaceRestDay(runPlan, dayKey) {
  * The week's planned lifts with race week's rested lifts left out
  * (trainingWeek.ts liftsAsked): on `todayKey`, a day of the week, in race
  * week or on one of a race's rest days, every lift skipped and not done is
- * one the app rested before the race. Without a day of the week, the lift
- * days stand.
+ * one the app rested before the race. Without a day of the week, or with a
+ * plan not yet rolled over to the week (`liftWeekKey`), the lift days
+ * stand.
  */
 function liftsAsked(liftDays, programState, weekKey, todayKey) {
-  if (liftDays <= 0 || !todayKey || mondayOf(todayKey) !== weekKey)
-    return liftDays;
   const state = programState || {};
+  if (
+    liftDays <= 0 ||
+    !todayKey ||
+    mondayOf(todayKey) !== weekKey ||
+    state.liftWeekKey !== weekKey
+  )
+    return liftDays;
   if (state.raceWeek !== "race" && !isRaceRestDay(state.runPlan, todayKey))
     return liftDays;
   const lifts = Array.isArray(state.workouts) ? state.workouts : [];
   const rested = lifts.filter(
-    (day) => day && day.skipped === true && !day.completed
+    (day) => day && day.skipped && !day.completed
   ).length;
   return rested > 0 ? Math.min(liftDays, lifts.length - rested) : liftDays;
 }

@@ -1701,6 +1701,25 @@ describe("DayPeekCard — the lift the week lays on the day", () => {
     expect(screen.getByText("Manage day")).toBeInTheDocument();
   });
 
+  it("keeps a lift skipped from the day on it, skipped, with its Manage", () => {
+    // Read Monday: Pull skipped from today's sheet, Push skipped from
+    // Wednesday's. Each stays on its day, so Restore is a tap away there.
+    const plan = {
+      ...lifts("Pull", "Push", "Legs"),
+    } as ProgramState;
+    plan.workouts = plan.workouts.map((w, i) =>
+      i < 2 ? { ...w, skipped: true } : w
+    );
+    renderPeek(day(0), plan, day(0));
+    expect(screen.getByText(/^Pull/)).toBeInTheDocument();
+    expect(screen.getByText(/· skipped/)).toBeInTheDocument();
+    expect(screen.getByText("Manage day")).toBeInTheDocument();
+    cleanup();
+    renderPeek(day(2), plan, day(0));
+    expect(screen.getByText(/^Push/)).toBeInTheDocument();
+    expect(screen.getByText(/· skipped/)).toBeInTheDocument();
+  });
+
   it("says a lift day before a race rests", () => {
     const programState = {
       ...lifts("Pull", "Push", "Legs"),

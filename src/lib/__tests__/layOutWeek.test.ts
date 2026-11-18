@@ -5,6 +5,7 @@ import {
   type LayoutLift,
   type LayoutRun,
   type WeekLayout,
+  manageLiftOn,
 } from "../layOutWeek";
 import { todaySession } from "../todaySession";
 import { trainingWeek, weekDays } from "../trainingWeek";
@@ -312,6 +313,99 @@ describe("lifts on days", () => {
     expect(names(w.skipped)).toEqual(["B"]);
     expect(w.skipped[0]).toMatchObject({ group: "skipped", plannedOn: WED });
     expect(w.raceRest).toEqual([]);
+  });
+
+  /* A skip is restored where it was made: the plan keeps no day for a
+     skip, so a skipped lift sits, for its Manage sheet, on the day it would
+     be laid on were it not skipped (`skippedHere`), from today on. */
+  it("restores a skip on the day it was made, the same day", () => {
+    const skippedToday = week({
+      today: MON,
+      programState: plan([{ ...A, skipped: true }, B, C]),
+    });
+    // Monday now holds B, the next, and A skipped from it.
+    expect(lifts(skippedToday)[MON]).toEqual(["B today"]);
+    expect(names(dayOf(skippedToday, MON).skippedHere)).toEqual(["A"]);
+    expect(manageLiftOn(dayOf(skippedToday, MON))).toMatchObject({
+      index: 0,
+      status: "skipped",
+      isStartable: false,
+    });
+    // Restored: A is Monday's again, and nothing is skipped from it.
+    const restored = week({ today: MON, programState: plan([A, B, C]) });
+    expect(lifts(restored)[MON]).toEqual(["A today"]);
+    expect(dayOf(restored, MON).skippedHere).toEqual([]);
+    expect(manageLiftOn(dayOf(restored, MON))).toMatchObject({
+      index: 0,
+      status: "planned",
+    });
+  });
+
+  it("keeps a lift skipped from a later day's sheet on that day", () => {
+    // On Monday, Wednesday's B is skipped: Wednesday holds C and B, skipped.
+    const w = week({
+      today: MON,
+      programState: plan([A, { ...B, skipped: true }, C]),
+    });
+    expect(lifts(w)[WED]).toEqual(["C planned"]);
+    expect(names(dayOf(w, WED).skippedHere)).toEqual(["B"]);
+    expect(manageLiftOn(dayOf(w, WED))).toMatchObject({
+      index: 1,
+      status: "skipped",
+    });
+    expect(dayOf(w, FRI).skippedHere).toEqual([]);
+  });
+
+  it("keeps the week's last lift, skipped on its day, on that day", () => {
+    const w = week({
+      today: FRI,
+      programState: plan([
+        doneOn(A, MON),
+        doneOn(B, WED),
+        { ...C, skipped: true },
+      ]),
+      workouts: [saved(MON), saved(WED)],
+    });
+    expect(lifts(w)[FRI] ?? []).toEqual([]);
+    expect(names(dayOf(w, FRI).skippedHere)).toEqual(["C"]);
+    expect(manageLiftOn(dayOf(w, FRI))).toMatchObject({ status: "skipped" });
+  });
+
+  it("keeps a skip on a Sunday, and on a plan made for another week", () => {
+    const sundays = profile({
+      weekSchedule: layoutOf(
+        "lift",
+        "lift",
+        "rest",
+        "lift",
+        "rest",
+        "lift",
+        "rest"
+      ),
+    });
+    const D = session("Full Body D");
+    const sunday = week({
+      today: SUN,
+      profile: sundays,
+      programState: plan([
+        doneOn(A, MON),
+        doneOn(B, WED),
+        doneOn(C, FRI),
+        { ...D, skipped: true },
+      ]),
+      workouts: [saved(MON), saved(WED), saved(FRI)],
+    });
+    expect(names(dayOf(sunday, SUN).skippedHere)).toEqual(["D"]);
+    // After Start next week the plan is next week's: no lift has a first
+    // day (`plannedOn`), and a skip still sits where it was made.
+    const ahead = week({
+      today: WED,
+      programState: plan([A, { ...B, skipped: true }, C], {
+        liftWeekKey: NEXT_WEEK,
+      }),
+    });
+    expect(ahead.skipped[0].plannedOn).toBeNull();
+    expect(names(dayOf(ahead, FRI).skippedHere)).toEqual(["B"]);
   });
 
   it("holds every lift once: on a day, still to do, skipped or done off the week", () => {

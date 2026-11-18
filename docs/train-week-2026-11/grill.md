@@ -744,4 +744,8 @@ taste or appetite decides more than the evidence does:
   (`leagues.js`), pinned by `leaguePlanned.cross.test.ts`. Not built:
   steps 3 to 8; a session under way is not passed to the layout yet
   (Home keeps its own strip for it), and a free runner's run weekday
-  still gives today's card a run.
+  still gives today's card a run. Train's Lift tab and the plan page
+  (`/program/plan`) still draw the slot and "missed" until step 5. A lift
+  skipped from a day stays on that day, skipped, from today on
+  (`skippedHere`: the day it would be laid on were it not skipped), so
+  its Manage sheet restores it where the skip was made.

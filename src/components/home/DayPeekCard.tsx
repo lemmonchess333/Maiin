@@ -40,6 +40,7 @@ import {
   manageLiftOn,
   planLiftOn,
   type LayoutDay,
+  type LayoutLift,
   type SlidOut,
 } from "@/lib/layOutWeek";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -317,6 +318,7 @@ export default function DayPeekCard({
     movedFrom: planLift?.movedFrom ?? null,
   };
   const slidOut = day && !planLift ? day.slidOut : [];
+  const skippedHere = day?.skippedHere ?? [];
   const restsForRace = !!day && day.rest === "race";
   const dayLabel = formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   /* The badge names what is actually on the day, not its weekday's type
@@ -332,6 +334,7 @@ export default function DayPeekCard({
   const liftOnDay =
     !!day &&
     (day.sessions.some((s) => s.sport === "lift") ||
+      skippedHere.length > 0 ||
       (day.liftDay && slidOut.length > 0));
   const shownType: "lift" | "run" | "both" | "rest" = scheduledRun
     ? liftOnDay
@@ -522,6 +525,7 @@ export default function DayPeekCard({
           hasExtras ||
           plannedLiftName ||
           slidOut.length > 0 ||
+          skippedHere.length > 0 ||
           restsForRace ? (
             <div className="space-y-1 text-xs">
               {/* Several sessions on one day get one row EACH, mirroring how
@@ -608,21 +612,22 @@ export default function DayPeekCard({
               {/* A passed lift day's lift that moved on: where it went,
                   so the day is never read as a lift missed (TrainWk1). */}
               {slidOut.map((gone) => (
-                <SlidOutRow
-                  key={gone.lift.index ?? gone.to}
-                  gone={gone}
-                  todayKey={todayKey}
-                  programState={programState}
+                <LiftNoteRow
+                  key={`gone-${gone.lift.index ?? gone.to}`}
+                  name={liftName(programState, gone.lift)}
+                  note={whereItWent(gone, todayKey)}
                 />
               ))}
-              {restsForRace && (
-                <div className="flex items-center gap-1.5">
-                  <Dumbbell className="size-3.5 shrink-0 text-lifting opacity-50" />
-                  <span className="text-muted-foreground">
-                    Rest before your race
-                  </span>
-                </div>
-              )}
+              {/* A lift skipped from this day, today or later: it stays
+                  here, skipped, and the Manage sheet restores it. */}
+              {skippedHere.map((lift) => (
+                <LiftNoteRow
+                  key={`skipped-${lift.index}`}
+                  name={liftName(programState, lift)}
+                  note="skipped"
+                />
+              ))}
+              {restsForRace && <LiftNoteRow note="Rest before your race" />}
               {/* The planned lift's reason, as the run row below carries
                   "Why this run". Outside the row: it can be a button, and
                   a disclosure cannot sit inside one. */}
@@ -814,39 +819,40 @@ export default function DayPeekCard({
   );
 }
 
-/** A passed lift day's lift, said where it went: to a later day, still
- *  to do this week, or skipped. */
-function SlidOutRow({
-  gone,
-  todayKey,
-  programState,
-}: {
-  gone: SlidOut;
-  todayKey: string;
-  programState: ProgramState | null;
-}) {
-  const workout = gone.lift.workout;
-  const name = workout
+/** A lift's name as Train names it in its week ("Pull B"). */
+function liftName(programState: ProgramState | null, lift: LayoutLift): string {
+  return lift.workout
     ? liftDayNameIn(
         (programState?.workouts ?? []).map((w) => w.dayName),
-        gone.lift.index ?? -1,
-        workout.dayName
+        lift.index ?? -1,
+        lift.workout.dayName
       )
     : "Lift";
-  const where =
-    gone.to === "skipped"
-      ? "skipped"
-      : gone.to === "still-to-do"
-        ? "still to do"
-        : gone.to === todayKey
-          ? "moved to today"
-          : `moved to ${formatWeekday(parseLocalDate(gone.to))}`;
+}
+
+/** Where a passed lift day's lift went: to a later day, still to do this
+ *  week, or skipped. */
+function whereItWent(gone: SlidOut, todayKey: string): string {
+  return gone.to === "skipped"
+    ? "skipped"
+    : gone.to === "still-to-do"
+      ? "still to do"
+      : gone.to === todayKey
+        ? "moved to today"
+        : `moved to ${formatWeekday(parseLocalDate(gone.to))}`;
+}
+
+/** A line about a lift the day does not hold to do: one that moved on,
+ *  one skipped from it, or a day that rests before a race. */
+function LiftNoteRow({ name, note }: { name?: string; note: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <Dumbbell className="size-3.5 shrink-0 text-lifting opacity-50" />
       <span className="text-foreground">
         {name}
-        <span className="text-muted-foreground"> · {where}</span>
+        <span className="text-muted-foreground">
+          {name ? ` · ${note}` : note}
+        </span>
       </span>
     </div>
   );

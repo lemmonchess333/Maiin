@@ -271,6 +271,11 @@ export interface LayoutDay {
   /** A past lift day's lifts that went elsewhere (the prototype's 5): to
    *  a day ("yyyy-MM-dd"), or to "still-to-do" or "skipped". */
   slidOut: SlidOut[];
+  /** Today or a later day: the lifts skipped from it, each on the day it
+   *  would be laid on were it not skipped. The plan keeps no day for a
+   *  skip, so this is where a skip just made was made, and Restore is
+   *  offered there (`manageLiftOn`). */
+  skippedHere: LayoutLift[];
   /** What a day with nothing on it says, from the account's start:
    *  "race" (rest before the race), "moved" (its lift went elsewhere) or
    *  "rest". Null for a day with a session, or before the start. */
@@ -352,6 +357,7 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
   const holdsPlan = thisWeek && plan.length > 0;
   const linked = new Set<string>();
   let freeLiftDays: string[] = [];
+  const skippedAt = new Map<number, string>();
 
   if (holdsPlan) {
     const savedDay = new Map(workouts.map((w) => [w.id, w.date]));
@@ -365,7 +371,11 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
       planWeek === weekKey
         ? dates.filter((d) => isLiftDay(d) && !beforeStart(d, startKey))
         : [];
-    const restBeforeRace = raceWeek || isRaceRestDay(runPlan, today);
+    // The plan's skips are race week's rested lifts only in the plan's own
+    // week, as the count reads them (`trainingWeek`'s `liftsAsked`).
+    const restBeforeRace =
+      programState?.liftWeekKey === weekKey &&
+      (raceWeek || isRaceRestDay(runPlan, today));
     const lift = (
       index: number,
       group: LayoutGroup,
@@ -448,6 +458,22 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
           laid.movedFrom = laid.plannedOn;
         add(laid);
       });
+    // A skipped lift's day: where it would be laid were it not skipped.
+    if (skipped.length > 0) {
+      const skippedIndex = new Set(skipped.map((l) => l.index));
+      const unskipped = {
+        ...programState!,
+        workouts: plan.map((day, index) =>
+          skippedIndex.has(index) ? { ...day, skipped: false } : day
+        ),
+      };
+      cursorOrder(unskipped)
+        .filter((index) => index !== underWayIndex)
+        .forEach((index, k) => {
+          const date = freeLiftDays[k];
+          if (date && skippedIndex.has(index)) skippedAt.set(index, date);
+        });
+    }
   }
 
   // Lift sessions the plan's marks don't hold: outside the plan, or of a
@@ -568,6 +594,9 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
       raceRest: raceRestDay,
       sessions,
       slidOut,
+      skippedHere: skipped.filter(
+        (l) => l.index !== null && skippedAt.get(l.index) === date
+      ),
       rest:
         sessions.length > 0 || priorToAccount
           ? null
@@ -675,12 +704,16 @@ export function planLiftOn(day: LayoutDay): LayoutLift | null {
 }
 
 /**
- * A day's lift as the Manage sheet acts on it: the plan's lift on the day
- * (`planLiftOn`), else a lift skipped from it, so a skip made there can be
- * restored there. None reads as no lift.
+ * A day's lift as the Manage sheet acts on it: a lift skipped from the day
+ * first, so a skip made there can be restored there at once (today and
+ * later, `skippedHere`), else the plan's lift on the day (`planLiftOn`),
+ * else, on a passed day, a lift skipped from it. The sheet holds one lift;
+ * the day's next lift is still started from Home's card or Train. None
+ * reads as no lift.
  */
 export function manageLiftOn(day: LayoutDay | null): ResolvedLift {
   const lift =
+    day?.skippedHere[0] ??
     (day && planLiftOn(day)) ??
     day?.slidOut.find((s) => s.to === "skipped")?.lift ??
     null;
