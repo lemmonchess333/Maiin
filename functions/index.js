@@ -9923,7 +9923,9 @@ async function sendFollowNotice({
       sourceEvent,
       // A request made by joining from an invite is told whatever came
       // before it: it is the one notice of the join, and its words differ.
-      ...(type === "follow_request" && !fromInvite
+      // A direct follow too: unfollowing and following again made the
+      // row unread each time (it is not pushed, and is off by default).
+      ...((type === "follow_request" || type === "follow") && !fromInvite
         ? { quietForMs: FOLLOW_REQUEST_QUIET_MS }
         : {}),
     });

@@ -71,7 +71,7 @@ const senders = [
   {
     name: "follower",
     id: `follow_${FROM}`,
-    quietMs: 0,
+    quietMs: DAY_MS,
     deliver: (eventId, createTime) =>
       onFollowerCreated.run(
         source(`followers/${TO}/users/${FROM}`, {}, createTime),
@@ -188,6 +188,20 @@ describe.each(senders)(
     });
   }
 );
+
+it("tells nothing new for a follow undone and made again within a day", async () => {
+  const path = `notifications/${TO}/items/follow_${FROM}`;
+  await senders[0].deliver("source-A", firstTime);
+  const told = structuredClone(firestore.data.get(path));
+  for (let i = 1; i <= 3; i += 1) {
+    deliveryTime = { seconds: SECONDS + 10 + i, nanoseconds: 0 };
+    await senders[0].deliver(`source-${i}`, {
+      seconds: SECONDS + i,
+      nanoseconds: 0,
+    });
+  }
+  expect(firestore.data.get(path)).toEqual(told);
+});
 
 describe("a follow request made again", () => {
   const path = `notifications/${TO}/items/follow_request_${FROM}`;
