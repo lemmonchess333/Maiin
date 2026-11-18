@@ -64,6 +64,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos.food.proHintDismissed":
     "FoodProHint's dismiss: the line under the composer that says photo logging is part of Pro. A device choice like the ring mode — the gate itself is re-read from the account's tier on every render, so a second account on the phone loses one line of text, not the gate",
   tropos_fcm_device_tokens: "the push token IS the device identity",
+  "tropos.liveActivities.off":
+    "the Live Activities switch (Wid2 call 6): the Lock Screen and the Dynamic Island are this phone's, as iOS's own switch for the app is, so a second account on the phone keeps the phone's choice",
   "tropos.run.bgGrantNoteDismissed":
     "acknowledges THIS DEVICE's iOS location grant (While Using vs Always) — an OS per-app setting no account owns; re-nagging a second account about the same grant would be noise",
   tropos_offline_queue:

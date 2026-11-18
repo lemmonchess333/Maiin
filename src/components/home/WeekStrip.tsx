@@ -1,69 +1,37 @@
 import { useMemo } from "react";
 import { format } from "date-fns";
-import type { LayoutDay, WeekLayout } from "@/lib/layOutWeek";
+import type { WeekLayout } from "@/lib/layOutWeek";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  weekStripDays,
+  type WeekDayState,
+  type WeekStripDay,
+} from "@/lib/weekStripDays";
 import {
   formatDayMonthLong,
   formatWeekday,
   formatWeekdayDayMonth,
 } from "@/utils/formatters";
 
-/**
- * What one day of the strip shows (DS4: seven segments under Home's hero,
- * where DS3 drew seven circles). The segment carries the day's state on
- * its own; there is no dot row beneath it and no legend to learn. Its
- * colour is the person's training, the largest colour on Home (§14m).
- *
- *   lift-done / run-done  filled with the sport's colour
- *   both-done             split between the two
- *   planned               outlined in its sport's colour: still to do
- *   missed                a dashed outline: a planned run whose day has
- *                         passed. A lift is never missed: one whose day
- *                         passes moves to the next lift day (TrainWk1)
- *   rest                  the bare track
- *   before                the bare track, for a day before the account
- *                         began: a plan made on Friday did not miss Monday
- *
- * Today is outlined in the foreground on top of whichever state it is in,
- * so a finished today still reads as today.
- */
-export type WeekDayState =
-  | "lift-done"
-  | "run-done"
-  | "both-done"
-  | "planned"
-  | "missed"
-  | "rest"
-  | "before";
-
-/**
- * The segment is a statement about the DATE, as the week lays it out
- * (`layOutWeek`, the one answer Home's card and day card read too). It
- * fills for what was done that day: a lift session saved on it, planned or
- * not, and a run done for it or on it. A lift or run still to do is
- * planned; a run whose day passed is missed; a day whose lift moved on, a
- * day of rest before a race, and a skipped run are bare, like rest.
- */
-function weekDayState(day: LayoutDay): WeekDayState {
-  const { lift, run } = day.lanes;
-  if (lift === "done" && run === "done") return "both-done";
-  if (lift === "done") return "lift-done";
-  if (run === "done") return "run-done";
-  if (day.beforeStart) return "before";
-  if (lift === "planned" || lift === "active") return "planned";
-  if (run === "planned" || run === "active") return "planned";
-  if (run === "missed") return "missed";
-  return "rest";
-}
+/* What each day shows, and why the strip is the calendar week holding
+   today, are `weekStripDays`'s (weekStripDays.ts), from the week laid out
+   (`layOutWeek`): the Home Screen widget's week reads the same seven days.
+   Today is outlined in the foreground on top of whichever state it is in,
+   so a finished today still reads as today. */
 
 /**
  * What the day's segment says, in words: the training it shows, a planned
  * session whose day has passed included. A lift is named by where the week
  * put it: a day whose lift moved says where it went, so a passed lift day
  * is never read out as missed. One session is announced once.
+ *
+ * The accessible name once said "(activity logged)", which came from
+ * `dayMap` and is food: the one signal in this component with NO visual
+ * counterpart, announced in place of every signal that has one.
  */
-function trainingLabel(day: LayoutDay): string {
+function trainingLabel(strip: WeekStripDay): string {
+  const { day } = strip;
   const lifts = day.sessions.filter((s) => s.sport === "lift");
   const runs = day.sessions.filter((s) => s.sport === "run");
   if (lifts.length === 0 && runs.length === 0 && day.beforeStart)
@@ -72,7 +40,7 @@ function trainingLabel(day: LayoutDay): string {
     ? "completed lift"
     : lifts.length > 0
       ? "lift day"
-      : liftLeft(day);
+      : liftLeft(strip);
   const run =
     runs.length === 0
       ? null
@@ -90,8 +58,10 @@ function trainingLabel(day: LayoutDay): string {
 }
 
 /** What a day with no lift on it says of the lift it was given: where it
- *  went, or that it rests before a race. Null for a day it gave none. */
-function liftLeft(day: LayoutDay): string | null {
+ *  went, that it was done on another day, or that it rests before a race.
+ *  Null for a day it gave none. */
+function liftLeft({ day, liftDoneOn }: WeekStripDay): string | null {
+  if (liftDoneOn) return "lift done on another day";
   const gone = day.slidOut[0];
   if (gone)
     return gone.to === "skipped"
@@ -119,12 +89,6 @@ const STATE_CLASSES: Record<WeekDayState, string> = {
 /** A planned day's outline, in the colour of what it plans. A day with
  *  both takes the lift's: the outline says "still to do", and the label
  *  names both sessions. */
-function plannedSport(day: LayoutDay): "lift" | "run" | "both" {
-  const lift = day.lanes.lift === "planned" || day.lanes.lift === "active";
-  const run = day.lanes.run === "planned" || day.lanes.run === "active";
-  return lift && run ? "both" : run ? "run" : "lift";
-}
-
 const PLANNED_EDGE: Record<string, string> = {
   lift: "border-lifting/70",
   run: "border-running/70",
@@ -156,22 +120,13 @@ export default function WeekStrip({
 }) {
   const days = useMemo(
     () =>
-      /* The CALENDAR week containing today, from its first day: the days
-         already gone are where a week's done sessions are, and where
-         DayPeekCard's nutrition row has meals to summarise. The weekday
-         letters come from each date via `format`, so they move with the
-         days rather than being a fixed M-T-W row. */
-      week.days.map((d) => {
-        const data = dayMap.get(d.date);
+      weekStripDays(week, todayKey).map((day) => {
+        const data = dayMap.get(day.key);
         return {
-          key: d.date,
-          day: d,
-          date: parseLocalDate(d.date),
-          isToday: d.date === todayKey,
+          ...day,
+          date: parseLocalDate(day.key),
           hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
-          isSelected: d.date === selectedDate,
-          state: weekDayState(d),
-          sport: plannedSport(d),
+          isSelected: day.key === selectedDate,
         };
       }),
     [week, dayMap, todayKey, selectedDate]
@@ -202,7 +157,7 @@ export default function WeekStrip({
                   "linear-gradient(90deg, hsl(var(--lifting)) 50%, hsl(var(--running)) 50%)",
               }
             : undefined;
-        const sport = day.sport;
+        const sport = day.sType;
         return (
           <button
             type="button"
@@ -222,7 +177,7 @@ export default function WeekStrip({
               // weekStripCaptureSelector.test.tsx pins the two together.
               formatWeekdayDayMonth(day.date) +
               ", " +
-              trainingLabel(day.day) +
+              trainingLabel(day) +
               // Kept, but named for what it is: `dayMap` counts meals, and
               // Food.tsx is the only writer of the collection it comes from.
               (day.hasActivity ? " (food logged)" : "") +

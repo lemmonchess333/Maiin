@@ -1,7 +1,7 @@
 /**
  * The Dynamic Island's small views (Run26 call 1, the follow-up to Wid2):
  * what the app asks the plugin to draw in the compact and minimal views
- * of a run and of a lift's rest. The plugin draws each view from this
+ * of a run and of a lift, on a set and resting. The plugin draws each view from this
  * layout (`DynamicActivityWidget.swift`, `createMinimal` and
  * `createCompactTrailing`), so the layout is the whole of the change; only
  * a phone with an island shows the result (`docs/qa/pre-launch-backlog.md`).
@@ -32,9 +32,10 @@ vi.mock("@/lib/logger", () => ({
 
 import { __resetLiveActivitiesForTests } from "@/lib/liveActivities";
 import {
-  __resetRestActivityForTests,
-  startRestActivity,
-} from "@/lib/restLiveActivity";
+  __resetLiftActivityForTests,
+  showLiftRest,
+  showLiftSession,
+} from "@/lib/liftLiveActivity";
 import {
   __resetRunActivityForTests,
   startRunActivity,
@@ -66,8 +67,28 @@ const walk = (element: Element): Element[] => [
 
 const ENDS_AT = Date.UTC(2030, 0, 1, 12, 0, 0);
 
+const LIFT = {
+  name: "Push A",
+  art: "bench-press" as const,
+  set: {
+    exerciseName: "Bench press",
+    setLabel: "Set 3 of 4",
+    load: "80 kg × 6",
+    fact: "3/4",
+  },
+  setsDone: 2,
+};
+
+async function startedSet(): Promise<Started> {
+  __resetLiftActivityForTests();
+  await showLiftSession(LIFT);
+  return startActivity.mock.calls.at(-1)![0] as Started;
+}
+
 async function startedRest(): Promise<Started> {
-  await startRestActivity({ endsAt: ENDS_AT, exerciseName: "Bench press" });
+  __resetLiftActivityForTests();
+  await showLiftSession(LIFT);
+  await showLiftRest({ endsAt: ENDS_AT });
   return startActivity.mock.calls.at(-1)![0] as Started;
 }
 
@@ -84,7 +105,7 @@ async function startedRun(): Promise<Started> {
 beforeEach(() => {
   vi.clearAllMocks();
   __resetLiveActivitiesForTests();
-  __resetRestActivityForTests();
+  __resetLiftActivityForTests();
   __resetRunActivityForTests();
   startActivity.mockResolvedValue({ activityId: "act-1" });
 });
@@ -116,6 +137,13 @@ describe("the compact view's live figure", () => {
     expect(prop(trailing, "fontSize")).toBe(12);
   });
 
+  it("is the set's number at 12 pt on a set", async () => {
+    const { dynamicIslandLayout } = await startedSet();
+    const trailing = dynamicIslandLayout.compactTrailing;
+    expect(prop(trailing, "text")).toBe("{{fact}}");
+    expect(prop(trailing, "fontSize")).toBe(12);
+  });
+
   it("is 12 pt in a rest", async () => {
     const { dynamicIslandLayout } = await startedRest();
     const trailing = dynamicIslandLayout.compactTrailing;
@@ -131,6 +159,10 @@ describe("the compact view's live figure", () => {
     );
     const rest = await startedRest();
     expect(prop(rest.dynamicIslandLayout.compactLeading, "systemName")).toBe(
+      "dumbbell.fill"
+    );
+    const set = await startedSet();
+    expect(prop(set.dynamicIslandLayout.compactLeading, "systemName")).toBe(
       "dumbbell.fill"
     );
   });
@@ -169,8 +201,17 @@ describe("the Lock Screen card, which an iPhone without an island shows", () => 
       (el) => prop(el, "text") === "{{distanceValue}}"
     )!;
     expect(prop(runFigure, "fontSize")).toBe(34);
+    // Wid2 call 2: the rest is the lift's card at the run's size, where the
+    // rest-only card drew it at 28.
     const rest = await startedRest();
     const restFigure = walk(rest.layout).find((el) => el.type === "timer")!;
-    expect(prop(restFigure, "fontSize")).toBe(28);
+    expect(prop(restFigure, "fontSize")).toBe(34);
+    // A set's weight and reps is longer than a countdown, so a little
+    // smaller.
+    const set = await startedSet();
+    const setFigure = walk(set.layout).find(
+      (el) => prop(el, "text") === "{{figure}}"
+    )!;
+    expect(prop(setFigure, "fontSize")).toBe(28);
   });
 });

@@ -227,6 +227,12 @@ app shows nothing there; the rest-end notification is separate and works
 already. The unit suites pin the title, the plugin calls and a rest made
 longer replacing itself; only a phone shows the card.
 
+STATUS 2026-11-15: the rest's own card is gone. A rest is now a phase of
+the lift's whole-workout card (Wid2 call 2, `src/lib/liftLiveActivity.ts`);
+its device check is "A lift's card across sets and rests" under the
+widgets' section below, and the "The lock screen" row here reads for that
+card.
+
 - [ ] **The tab's title.** In the web app, tick a working set and switch
       to another tab. Passing: the tab reads "1:29 rest" and counts down
       while you are away, reads "Rest over" when it ends, and goes back to
@@ -302,6 +308,86 @@ result.
       locked. Passing: the Lock Screen cards look as the rows above say
       (the runner in the coral light, the distance large; "Rest", the
       large countdown and "Next:"), unchanged from before this round.
+
+## The widgets and the lift's whole-workout card (Wid1, Wid2, 2026-11-15)
+
+Wid1's three widgets (Today, Streak, Today's food) and Wid2's design C
+(the picture leads) are built, in PR "Widgets (Wid1) and the Live
+Activities in design C (Wid2)". The widgets live in the Live Activity
+extension (`ios/App/LiveActivities/`) and read a snapshot the app writes
+to `group.com.tropos.app` (`HomeWidgetsPlugin.swift`,
+`src/lib/homeWidgetSnapshot.ts`); the food widget's "+ Glass" queues a
+drink there that the app saves once on its next open
+(`src/lib/widgetDrinks.ts`). A lift's Live Activity is now one card from
+the first set to the finish (`src/lib/liftLiveActivity.ts`), started again
+at each change between a set and a rest. Settings → Notifications → Lock
+Screen → Live Activities turns every card off. CI's simulator build
+compiles the Swift; nothing here has been seen on a phone. No new App ID,
+capability or Apple developer site step: the extension and the App Group
+are the ones TestFlight already signs.
+
+- [ ] **Each widget in the gallery.** Long-press the Home Screen, add
+      Tropos's widgets. Passing: Today small and medium, Streak small and
+      Today's food small and medium are offered, each with a sample that
+      looks like the app; nothing reads "Open Tropos" in the gallery.
+- [ ] **Today, small and medium.** On a lifting day, open Tropos, then
+      go to the Home Screen. Passing: the session's name and minutes match
+      Home's hero, its lead lift is drawn at the right in a soft purple
+      light (the runner in coral on a run day), the medium widget adds the
+      week's seven segments and "2 of 5 sessions this week" as Home says
+      it; a rest day has no drawing; done today reads "Done today" in
+      green with tomorrow's session under it. Check by day and by night.
+- [ ] **Streak.** Passing: the purple flame with the count on it and
+      "day streak" under it, matching Home's flame; with no streak, a grey
+      flame, "0" and "No streak yet"; never words about losing it.
+- [ ] **Today's food, and "+ Glass" saved once.** Passing: the ring
+      shows the calories left as Food's wheel does ("kcal over" past the
+      target); the medium widget shows protein and water. Tap "+ Glass"
+      twice with the app closed: the water figure rises by two glasses at
+      once. Open Tropos: Home's water card shows exactly those two drinks,
+      once each, at the times they were tapped; reopening the app does not
+      add them again. On iOS 16 the button opens Home instead.
+- [ ] **The Lock Screen widgets.** Add Today (rectangle and the line
+      over the clock), Streak (circle) and Today's food (gauge). Passing:
+      one tone, no drawings; the line reads like "Tomorrow · Long 18K", a
+      race goal's countdown shows on a rest day; each tap opens the page
+      it names (the session in Train, Food, Home).
+- [ ] **StandBy.** Charge the phone on its side, locked. Passing: the
+      Streak and Today small widgets read across a room; their cards'
+      backgrounds are taken away by iOS without the words going with them.
+- [ ] **Midnight and a day old.** Leave the phone overnight without
+      opening Tropos. Passing: after midnight Today names the day the app
+      wrote for tomorrow; after 24 hours without the app the widgets dim to
+      60% with a refresh mark, and opening the app brings them back.
+- [ ] **A lift's card across sets and rests.** On iOS 16.2 or later,
+      start a workout and lock the phone. Passing: the card shows the
+      session's lead lift drawn mid-rep, "SET 1 OF 3", the set's weight and
+      reps large ("100 kg × 5") and the exercise under it, the day's name
+      in the top corner; tick a set (with auto rest on): the card turns to
+      the lift standing, "REST", the system's countdown and "Next:" with
+      the set; the countdown stops at 0:00 with the app asleep; back in the
+      app past the rest's end it reads "REST OVER" with the next set and
+      the lift set up; End rest or the next set brings back "SET 2 OF 3".
+      +15 s moves the countdown on. Failing in a way to report: a card
+      that flickers or vanishes for good between a set and a rest (the
+      restart was refused), a grey photo icon in place of the drawing, or
+      no card at all (ActivityKit refused the layout).
+- [ ] **The finish takes the card away.** Finish the workout. Passing:
+      the card goes the moment the finish screen shows, with no ended card
+      left on the Lock Screen; the same when the workout is left without
+      finishing.
+- [ ] **The island's sizes.** On an iPhone with a Dynamic Island, during
+      a lift: compact shows the dumbbell and "1/3" on a set, the countdown
+      in a rest, "Go" once it is over; the smallest size (start a Clock
+      timer too) shows the same figure alone, never the dumbbell; a long
+      press shows the drawing with the figure and the line. A lead lift
+      drawn lying down (glute bridge, hip thrust) is drawn shorter, not
+      wider than the card allows.
+- [ ] **The switch off.** Settings → Notifications → Live Activities
+      off, mid-lift. Passing: the card goes at once; a new run or workout
+      shows none; on again mid-lift, the card comes back on the set the
+      workout is on. iOS's own switch for Tropos in the Settings app still
+      works beside it.
 
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
@@ -4223,6 +4309,33 @@ suites cover the logic; these need the release, the console and phones.
       the confirmation names what happens; afterwards the group's other
       members no longer see your row, `leagueMembers/{you}` is gone, and
       the next Monday does not place you.
+
+## Home's week from one layout, and race week's count (TrainWk1 step 2, 2026-11-18)
+
+Home's session card, week strip, day card, its Manage sheet and the
+"tomorrow" line read `layOutWeek`: a lift whose day passes moves to the
+next lift day and is never shown missed. Race week's planned lifts leave
+out the lifts the app rests, in the app (`trainingWeek.ts`) and the
+league (`functions/lib/leaguePlanned.js`, read on the member's own day by
+`lib/leagues.js`). `layOutWeek.sim.test.ts` (Q56), `todaySession.test.ts`,
+`WeekStrip.test.tsx`, `DayPeekCard.test.tsx` and
+`leaguePlanned.cross.test.ts` cover the rules; these need a phone and the
+release.
+
+- [ ] **A missed lift on an iPhone.** On a TestFlight account that lifts
+      Monday, Wednesday and Friday, skip Monday's lift and open Home on
+      Tuesday. Passing: Monday's segment is bare, not dashed, and VoiceOver
+      reads "lift moved to Wednesday"; tapping Monday says "Pull · moved to
+      Wednesday" (or the plan's name); Wednesday's segment is outlined and
+      its day card names the lift Train calls Up next, "moved from Monday";
+      Friday's names the next one. The Home Screen widget's week draws the
+      same seven segments.
+- [ ] **Race week's count in the league (console).** After the release, a
+      league member in race week saves a session. Passing: the deployed
+      source of the session triggers carries `lib/leaguePlanned.js` with
+      `liftsAsked`, and their standing's `planned` leaves out the lifts
+      the app rested (three lift days with two rested count one), as
+      Home's "of N sessions this week" does.
 
 ## Plan groups (Soc15, 2026-11-05)
 

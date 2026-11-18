@@ -48,6 +48,10 @@ const NAMED = [
   "Terms of Service",
   "Apple Health",
   "London Marathon",
+  // Apple's names for the iPhone's surfaces (Wid2 call 6's switch).
+  "Live Activities",
+  "Lock Screen",
+  "Dynamic Island",
 ];
 
 /** Words that carry their own capital wherever they appear. */

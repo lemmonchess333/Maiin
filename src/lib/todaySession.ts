@@ -240,7 +240,13 @@ export interface NextSession {
   target: string;
   dateKey: string;
   daysAhead: number;
+  /** What the day holds, for a surface that colours it by sport (the Home
+   *  Screen widget's tomorrow). Absent reads as unknown. */
+  sport?: SessionSport;
 }
+
+/** What a day ahead holds: a lift, a run, or both. */
+export type SessionSport = "lift" | "run" | "both";
 
 export type RestDayOffer =
   /** A new lifter's first workout: lifts follow the rotation, not the
@@ -330,16 +336,14 @@ export function todaySession(input: TodaySessionInput): TodaySession {
   const pattern = resolved.scheduleType;
   const running =
     resolved.run.runDay !== null ||
-    (!runsWrittenForWeek(programState?.runDays, currentWeekKey, currentWeekKey) &&
+    (!runsWrittenForWeek(
+      programState?.runDays,
+      currentWeekKey,
+      currentWeekKey
+    ) &&
       (pattern === "run" || pattern === "both"));
   const type: DayType =
-    lifting && running
-      ? "both"
-      : lifting
-        ? "lift"
-        : running
-          ? "run"
-          : "rest";
+    lifting && running ? "both" : lifting ? "lift" : running ? "run" : "rest";
 
   const framingInput = {
     createdAtMs: input.createdAtMs,
@@ -425,7 +429,7 @@ function todayLift(
 const NEXT_SESSION_DAYS = 6;
 
 /** The first day after today, within `maxDaysAhead`, that holds a session,
- *  named as the rest day's card names tomorrow's (`sessionDaysAhead`). */
+ *  named as the rest day's card names tomorrow's (`sessionsAhead`). */
 function nextSessionAhead(
   input: TodaySessionInput,
   maxDaysAhead: number
@@ -441,6 +445,7 @@ function nextSessionAhead(
           addLocalDays(parseLocalDate(input.today), daysAhead)
         ),
         daysAhead,
+        sport: session.sport,
       };
   }
   return null;
@@ -574,7 +579,10 @@ function nextRestSession(
   const ahead = sessionsAhead(input);
   for (let daysAhead = 1; daysAhead <= maxDaysAhead; daysAhead += 1) {
     const session = ahead(daysAhead);
-    if (session) return session;
+    if (session) {
+      const { label, target, dateKey } = session;
+      return dateKey ? { label, target, dateKey } : { label, target };
+    }
   }
   return null;
 }
@@ -597,7 +605,7 @@ function nextRestSession(
  */
 function sessionsAhead(
   input: TodaySessionInput
-): (daysAhead: number) => TomorrowSession | null {
+): (daysAhead: number) => (TomorrowSession & { sport: SessionSport }) | null {
   const { today, profile, programState, claimMap, week } = input;
   const currentWeekKey = localWeekKey(parseLocalDate(today));
   const nextWeek = new Map(
@@ -667,7 +675,11 @@ function sessionsAhead(
       liftName && lift?.index !== null && lift?.index !== undefined
         ? `/program?day=${lift.index}`
         : `/program?tab=run&rday=${dateKey}`;
-    return daysAhead === 1 ? { label, target } : { label, target, dateKey };
+    const sport: SessionSport =
+      liftName && run ? "both" : liftName ? "lift" : "run";
+    return daysAhead === 1
+      ? { label, target, sport }
+      : { label, target, dateKey, sport };
   };
 }
 

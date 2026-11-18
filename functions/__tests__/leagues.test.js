@@ -135,7 +135,11 @@ describe("a standing's figures", () => {
     ).toMatchObject({ done: 1, planned: 1, points: 100 });
     // A week read after it ended, with no figure stored, keeps its lift days.
     expect(
-      figures({ programState: raceWeek, weekKey: LAST_WEEK, weekIsCurrent: false })
+      figures({
+        programState: raceWeek,
+        weekKey: LAST_WEEK,
+        weekIsCurrent: false,
+      })
     ).toMatchObject({ planned: 3 });
   });
 

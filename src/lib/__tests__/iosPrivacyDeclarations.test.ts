@@ -270,6 +270,53 @@ describe("privacy manifest — required-reason APIs", () => {
   });
 });
 
+/* ── The Live Activity widget's own manifest ───────────────────────── */
+
+describe("the Live Activity widget's privacy manifest", () => {
+  // A manifest covers the bundle it sits in, and the widget extension is a
+  // bundle of its own inside the app.
+  const dir = "ios/App/LiveActivities";
+  const widget = parsePlist(read(`${dir}/PrivacyInfo.xcprivacy`)) as Dict;
+
+  it("collects nothing and tracks nothing: it draws what the app hands it", () => {
+    expect(widget.NSPrivacyTracking).toBe(false);
+    expect(widget.NSPrivacyTrackingDomains).toEqual([]);
+    expect(widget.NSPrivacyCollectedDataTypes).toEqual([]);
+  });
+
+  it("declares the App Group defaults it and LiveActivitiesKit share with the app, and no other API", () => {
+    expect(widget.NSPrivacyAccessedAPITypes).toEqual([
+      {
+        NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
+        NSPrivacyAccessedAPITypeReasons: ["1C8F.1"],
+      },
+    ]);
+    // The kit the widget links still holds that code...
+    expect(
+      read(
+        "node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Widget/DynamicActivityWidget.swift"
+      )
+    ).toContain("UserDefaults(suiteName:");
+    // ...and so does the widgets' own store (Wid1), the App Group's
+    // defaults and nothing else: 1C8F.1 is that reason, read and written
+    // only by the app and its extension.
+    const store = read(`${dir}/HomeWidgetStore.swift`);
+    expect(store).toContain("UserDefaults(suiteName: appGroup)");
+    expect(store).not.toMatch(/UserDefaults\.standard/);
+    // Every other file of the widget's reaches no required-reason API.
+    const swift = readdirSync(resolve(repoRoot, dir)).filter((name) =>
+      name.endsWith(".swift")
+    );
+    expect(swift.length).toBeGreaterThanOrEqual(4);
+    for (const name of swift)
+      expect(read(`${dir}/${name}`), name).not.toMatch(
+        name === "HomeWidgetStore.swift"
+          ? /FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+          : /UserDefaults|FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+      );
+  });
+});
+
 /* ── Info.plist purpose strings ────────────────────────────────────── */
 
 describe("Info.plist — purpose strings cover every use", () => {

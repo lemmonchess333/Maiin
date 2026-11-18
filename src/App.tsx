@@ -23,6 +23,9 @@ import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
 import { useNativePostNavigation } from "@/hooks/useNativePostNavigation";
 import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
+import { useWidgetLinkNavigation } from "@/hooks/useWidgetLinkNavigation";
+import { useWidgetDrinkReplay } from "@/hooks/useWidgetDrinkReplay";
+import { isNativePlatform } from "@/lib/platform";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -124,6 +127,11 @@ const DailyNutritionSnapshot = lazyRetry(() =>
     default: m.DailyNutritionSnapshot,
   }))
 );
+/* The Home Screen widgets' water (Wid1), kept on today's water log above
+   the routes. On the phone only: there are no widgets on the web, and it
+   is one more water listener. It cannot miss a drink by arriving late:
+   it writes the day's total as it stands when it mounts. */
+const WidgetWaterSync = lazyRetry(() => import("@/components/WidgetWaterSync"));
 
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
@@ -440,6 +448,11 @@ function AppRoutes() {
   );
   // A shared post's link opens the post in the app (App1 Q51).
   useNativePostNavigation(!loading && !!user && !!profile?.onboardingComplete);
+  // The Home Screen widgets (Wid1): a tap opens the page it names, and a
+  // drink the food widget's "+" queued is saved once, against the
+  // person's own water target, so it waits for the profile.
+  useWidgetLinkNavigation(!loading && !!user && !!profile?.onboardingComplete);
+  useWidgetDrinkReplay(profile ? uid : null, profile?.targetWaterGlasses);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
@@ -697,6 +710,11 @@ function SignedInRoutes({
             <Suspense fallback={null}>
               <DailyNutritionSnapshot />
             </Suspense>
+            {isNativePlatform() && (
+              <Suspense fallback={null}>
+                <WidgetWaterSync />
+              </Suspense>
+            )}
             {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
