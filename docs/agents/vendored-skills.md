@@ -81,9 +81,19 @@ own and are not listed.
   which is what its installer copies for Claude. Before that about 0.9.32,
   the release current when #1831 installed it on 2026-08-01, which recorded
   no version.
-- **Local changes:** `SKILL.md` gives the subagent step at normal volume
-  (#2558). The installer's hooks in `.claude/settings.json` and its CLAUDE.md
-  section were also rewritten (#1831).
+- **Local changes:**
+  - `SKILL.md` gives the subagent step at normal volume (#2558).
+  - `SKILL.md`'s "Graphify Cloud (hosted)" section is deleted (2026-11-18,
+    from 0.9.112). It told the agent to recommend the hosted product, with a
+    tracked signup link, whenever someone wants a graph across repos, PR
+    review or sharing.
+  - The installer's hooks in `.claude/settings.json` and its CLAUDE.md
+    section were also rewritten (#1831).
+- **Upgrade the CLI with the skill:** 0.9.112's text imports
+  `graphify.cache.drop_unreported_chunk_sources`, which an older installed
+  CLI lacks, and Step 1 installs `graphifyy` only when `import graphify`
+  fails. After copying a newer skill, upgrade the CLI where it is installed:
+  `uv tool install --upgrade graphifyy` or `pip install -U graphifyy`.
 - **Left for the owner (2026-11-18):** 0.9.112's installer also registers a
   `SessionStart` hook with matcher `compact` running `graphify hook-guard
 compact`, which resets the per-session nudge budget after a compaction.
@@ -125,35 +135,15 @@ compact`, which resets the per-session nudge budget after a compaction.
 - **Source:** git submodule, [garrytan/gstack](https://github.com/garrytan/gstack)
 - **Version here:** commit `4a77cc2c` (v0.5.0, 2026-03-16). Cloud sessions
   don't check it out.
-- **Held at that pin (2026-11-18):** upstream HEAD is `2373714` (v1.100.0.0,
+- **Held at that pin (2026-11-18):** upstream is at v1.100.0.0 and moves
+  several times a day (HEAD read `2373714` and later `33b1a965` on
   2026-11-18). It now carries `ship`, `land-and-deploy` and `setup-deploy`,
   which merge and deploy, `setup-browser-cookies` and `connect-chrome`,
   which reach into a signed-in browser, and a `verify` skill of its own.
-  Merges here wait for the owner's go, and the repo's `verify` skill is
-  this repo's own, so the pin stays until the owner decides otherwise.
+  Merges here wait for the owner's go, and a project `verify` skill for
+  Tropos is being added in a separate PR (`claude/verify-skill`), so the pin
+  stays until the owner decides otherwise.
 - **Local changes:** none
-
-## firebase/agent-skills
-
-- **Skills:** firebase-security-rules-auditor
-- **Source:** [firebase/agent-skills](https://github.com/firebase/agent-skills),
-  `skills/firebase-security-rules-auditor/`, by Google LLC
-- **Licence:** Apache-2.0. The repository's `LICENSE` is copied beside the
-  skill, as the licence asks of a redistributed copy.
-- **Version here:** main at commit `99954a3` (2026-11-09), added 2026-11-18
-- **Why:** a red-team checklist for `firestore.rules` and `storage.rules`
-  (create-then-update bypass, where authority comes from, size limits, type
-  checks, `hasOnly()` without an ownership check), scored 1 to 5. It reads
-  rules and writes nothing, and fetches nothing.
-- **Local changes:** none
-- **Not copied from the same repository:** `firebase-firestore`,
-  `firestore-rules-creation` and `firebase-basics` tell an agent to deploy
-  rules with `npx -y firebase-tools@latest deploy`, where this repo deploys
-  only through Deploy production and pins firebase-tools; the rest are for
-  products Tropos does not use (Data Connect, App Hosting, Remote Config,
-  Crashlytics, AI Logic) or set Firebase up from scratch.
-- **Updating:** clone the repository and copy the folder over ours, with
-  `LICENSE`.
 
 ## Surveyed and not added (2026-11-18)
 
@@ -164,20 +154,22 @@ accessibility, performance and the App Store, reading each candidate's
 grants a licence to copy it, fetches and runs nothing when it loads, and
 does not contradict CLAUDE.md.
 
-| Candidate                                       | Why not                                                                                                                                                                                                                     |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| anthropics/skills `webapp-testing`              | Waits on `networkidle`, which never settles under the Firebase SDK (`verifier-tropos-web`), and drives Python Playwright; the repo's own verifier and capture rig do the job                                                |
-| anthropics/skills `frontend-design`             | Asks for a bold aesthetic of the agent's own; DESIGN_GUIDE.md sets the look here                                                                                                                                            |
-| anthropics/skills, the rest                     | Documents, art, MCP and API work, or already available to sessions as plugins (`skill-creator`, `docx`, `pdf`, `pptx`, `xlsx`)                                                                                              |
-| vercel-labs/agent-skills `react-best-practices` | 70 rules written for Next.js and server rendering, overlapping `react-doctor`; no licence file at the repository root                                                                                                       |
-| addyosmani/web-quality-skills                   | Web-page measurement (Lighthouse, Core Web Vitals, SEO) for a product whose users are on the iOS app; accessibility floors already live in DESIGN_GUIDE §10, and its steps install `@axe-core/cli` and run `npx lighthouse` |
-| addyosmani/agent-skills                         | General engineering process (TDD, review, planning) already covered by the mattpocock/skills copies                                                                                                                         |
-| microsoft/playwright-cli `playwright-cli`       | Needs `npm install -g @playwright/cli@latest`, and drives a browser the repo's own verifier already drives                                                                                                                  |
-| capawesome-team/skills (Capacitor)              | Leads with adding the vendor's hosted MCP servers and its paid cloud for builds and store publishing; Tropos's native release is `deploy-ios.yml`                                                                           |
-| ionic-team/capacitor-skills                     | No licence, so it cannot be copied                                                                                                                                                                                          |
-| rorkai/app-store-connect-cli-skills             | Drives App Store Connect through a third-party CLI with an API key; App Store Connect changes here are the owner's                                                                                                          |
-| emilkowalski/skills `ask-emil`, `learn-taste`   | Above, under emilkowalski/skills                                                                                                                                                                                            |
-| pbakaus/impeccable                              | Added once and reverted (`228065c57`)                                                                                                                                                                                       |
+| Candidate                                               | Why not                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| anthropics/skills `webapp-testing`                      | Waits on `networkidle`, which never settles under the Firebase SDK (`verifier-tropos-web`), and drives Python Playwright; the repo's own verifier and capture rig do the job                                                                                                                                                                                                   |
+| anthropics/skills `frontend-design`                     | Asks for a bold aesthetic of the agent's own; DESIGN_GUIDE.md sets the look here                                                                                                                                                                                                                                                                                               |
+| anthropics/skills, the rest                             | Documents, art, MCP and API work, or already available to sessions as plugins (`skill-creator`, `docx`, `pdf`, `pptx`, `xlsx`)                                                                                                                                                                                                                                                 |
+| vercel-labs/agent-skills `react-best-practices`         | 70 rules written for Next.js and server rendering, overlapping `react-doctor`; no licence file at the repository root                                                                                                                                                                                                                                                          |
+| addyosmani/web-quality-skills                           | Web-page measurement (Lighthouse, Core Web Vitals, SEO) for a product whose users are on the iOS app; accessibility floors already live in DESIGN_GUIDE §10, and its steps install `@axe-core/cli` and run `npx lighthouse`                                                                                                                                                    |
+| addyosmani/agent-skills                                 | General engineering process (TDD, review, planning) already covered by the mattpocock/skills copies                                                                                                                                                                                                                                                                            |
+| microsoft/playwright-cli `playwright-cli`               | Needs `npm install -g @playwright/cli@latest`, and drives a browser the repo's own verifier already drives                                                                                                                                                                                                                                                                     |
+| capawesome-team/skills (Capacitor)                      | Leads with adding the vendor's hosted MCP servers and its paid cloud for builds and store publishing; Tropos's native release is `deploy-ios.yml`                                                                                                                                                                                                                              |
+| ionic-team/capacitor-skills                             | No licence, so it cannot be copied                                                                                                                                                                                                                                                                                                                                             |
+| rorkai/app-store-connect-cli-skills                     | Drives App Store Connect through a third-party CLI with an API key; App Store Connect changes here are the owner's                                                                                                                                                                                                                                                             |
+| emilkowalski/skills `ask-emil`, `learn-taste`           | Above, under emilkowalski/skills                                                                                                                                                                                                                                                                                                                                               |
+| pbakaus/impeccable                                      | Added once and reverted (`228065c57`)                                                                                                                                                                                                                                                                                                                                          |
+| firebase/agent-skills `firebase-security-rules-auditor` | 85 generic lines (an allowance for one hardcoded admin email, a forced JSON score) that know nothing of the server-written collections, `isRestricted()`, `isEmailVerified()` or the `firestore.*.rules.test.ts` suites; it tells the agent to fix the rules; and it triggers on its own. Copied at `99954a3` (Apache-2.0) in this PR's first draft and taken out after review |
+| firebase/agent-skills, the rest                         | `firebase-firestore`, `firestore-rules-creation` and `firebase-basics` deploy rules with `npx -y firebase-tools@latest deploy`, where this repo deploys only through Deploy production and pins firebase-tools; the others are for products Tropos does not use                                                                                                                |
 
 ## Updating
 
@@ -207,9 +199,15 @@ does not contradict CLAUDE.md.
   live in `.claude/skills/`. `update` only refreshes skills already in
   `skills-lock.json`; a new upstream skill is added with `add` after reading
   it.
-- **graphify:** updating means re-running its installer, which rewrites the
-  hooks in `.claude/settings.json` and the CLAUDE.md graphify section. Diff
-  both before committing, and re-apply the `SKILL.md` change above.
+- **graphify:** either re-run its installer, which rewrites the hooks in
+  `.claude/settings.json` and the CLAUDE.md graphify section (diff both
+  before committing), or, as on 2026-11-18, `pip download graphifyy` into
+  an empty folder, unzip the wheel and copy `graphify/skill.md` to
+  `SKILL.md` and `graphify/skills/claude/references/` over ours. Either way,
+  re-apply both `SKILL.md` changes above (the subagent step's volume, and
+  deleting the "Graphify Cloud (hosted)" section), then upgrade the
+  installed CLI (`uv tool install --upgrade graphifyy` or
+  `pip install -U graphifyy`) so it has what the new text imports.
 - **gstack:** compare the pinned commit with
   `git ls-remote https://github.com/garrytan/gstack HEAD`. Its newer ship and
   deploy skills merge pull requests themselves, while merges here wait for
