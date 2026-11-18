@@ -2,6 +2,9 @@ import { Suspense, useEffect, type ReactNode } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import HomePage from "@/website/pages/Home";
+// Drawn at once, as Home is: at the checkout's return React replaces the
+// written Pro page, which must not give way to a blank fallback first.
+import ProPage from "@/website/pages/Pro";
 import {
   SITE_ORIGIN,
   SITE_PAGES,
@@ -26,7 +29,6 @@ const LiftingPage = lazyRetry(() => import("@/website/pages/Lifting"));
 const RunningPage = lazyRetry(() => import("@/website/pages/Running"));
 const FoodPage = lazyRetry(() => import("@/website/pages/Food"));
 const SocialPage = lazyRetry(() => import("@/website/pages/Social"));
-const ProPage = lazyRetry(() => import("@/website/pages/Pro"));
 const AboutPage = lazyRetry(() => import("@/website/pages/About"));
 const PressPage = lazyRetry(() => import("@/website/pages/Press"));
 const NotFoundPage = lazyRetry(() => import("@/website/pages/NotFound"));
@@ -38,9 +40,12 @@ function title(path: string): string {
   return sitePage(path)?.title ?? SITE_PAGES[0].title;
 }
 
+/** A page React has drawn: its tab name, and a mark on the root once it
+ *  stands there in place of the written page (check-site.ts waits on it). */
 function Titled({ title, children }: { title: string; children: ReactNode }) {
   useEffect(() => {
     document.title = title;
+    document.getElementById("root")?.setAttribute("data-drawn", "");
   }, [title]);
   return children;
 }

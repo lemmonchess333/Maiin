@@ -26,9 +26,9 @@ export interface AppScreenImage {
   height: number;
 }
 
-/** A screen 440 points wide (the App Store's 6.9-inch frame), cut at the
- *  tab bar's foot so nothing peeks from under it, or 393 by 852; saved 660
- *  pixels wide. */
+/** A screen cut at the tab bar's foot so nothing peeks from under it, 440
+ *  points wide (the App Store's 6.9-inch frame; Food's is 393, from the
+ *  rig's second round), or 393 by 852; saved 660 pixels wide. */
 const TALL = { width: 660, height: 1376 } as const;
 const PHONE = { width: 660, height: 1431 } as const;
 
@@ -51,8 +51,7 @@ export const SCREENS = {
   },
   food: {
     src: food,
-    width: 660,
-    height: 1425,
+    ...TALL,
     alt: `The Food screen: 410 ${CALORIE_UNIT} left of 2,200, with protein, carbs and fat left, and four meals logged today.`,
   },
   progress: {

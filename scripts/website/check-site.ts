@@ -35,7 +35,8 @@ interface Check {
   /** The answer's status, when it is not 200. */
   status?: number;
   /** Whether React draws the page, in place of the page Hosting wrote
-   *  (`writtenFits`): the root's `data-page` is gone once it has. */
+   *  (`writtenFits`): the root loses `data-page` and, once React's page
+   *  stands there, gains `data-drawn`. */
   drawn?: boolean;
 }
 
@@ -116,8 +117,8 @@ const CHECKS: readonly Check[] = [
   },
 ];
 
-/** A request the sandbox or a test machine cannot make: the invite's
- *  name and a post's figures. The page carries on without them. */
+/** The requests refused (`context.route` below): the invite's name and a
+ *  post's figures. The page carries on without them. */
 const EXPECTED_FAILURE = /cloudfunctions\.net|troposfit\.com|activity\/run1/;
 
 async function checkOne(page: Page, origin: string, check: Check) {
@@ -143,14 +144,14 @@ async function checkOne(page: Page, origin: string, check: Check) {
   if (check.lands && new URL(page.url()).pathname !== check.lands)
     problems.push(`landed on ${page.url()}`);
   if (check.drawn) {
-    // React has drawn the address's own page once the written mark is gone
-    // and a headline stands in the root again.
     await page
-      .locator("#root:not([data-page]) h1")
+      .locator("#root:not([data-page])[data-drawn] h1")
       .first()
       .waitFor({ timeout: 10_000 })
       .catch(() => problems.push("React did not draw the page"));
-  } else if ((await page.locator("#root[data-page]").count()) !== 1) {
+  } else if (
+    (await page.locator("#root[data-page]:not([data-drawn])").count()) !== 1
+  ) {
     problems.push("the written page was replaced");
   }
   const h1 = page.locator("h1");
@@ -245,6 +246,13 @@ async function main() {
       colorScheme: "dark",
       reducedMotion: "reduce",
     });
+    // Nothing leaves the served build: the site loads nothing from
+    // elsewhere, and a post's figures or an inviter's name, which would
+    // come from production, are refused, so the run never depends on it.
+    await context.route(
+      (url) => url.origin !== origin,
+      (route) => route.abort()
+    );
     const page = await context.newPage();
     for (const check of CHECKS) {
       const problems = await checkOne(page, origin, check);

@@ -135,5 +135,5 @@ export function writtenFits(
  *  answers it with the home page's file, which React replaces with the
  *  post's card, so the home page must not show while that loads. */
 export function isPostAddress(pathname: string): boolean {
-  return normalisePath(pathname).startsWith("/activity/");
+  return /^\/activity\/[^/]+$/.test(normalisePath(pathname));
 }
