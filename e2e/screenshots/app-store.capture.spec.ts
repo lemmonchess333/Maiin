@@ -12,8 +12,8 @@
  * Portrait. Frames are named in listing order, `app-store-01-home.png` on
  * for 6.9-inch and `app-store-6.5-01-home.png` on for 6.5-inch, and land in
  * `screenshots/` with every other capture, so app-screenshots.yml commits
- * them to the `app-screenshots` branch. The set chosen for the listing is
- * copied into `docs/app-store/screenshots/`.
+ * them to the `app-screenshots` branch, where the listing's sets are
+ * uploaded from.
  *
  * A frame is real use of the web build on the repo's demo seeds, settled:
  * no loading state, no guide, no toast.

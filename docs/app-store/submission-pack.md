@@ -313,7 +313,7 @@ AI food analysis
 A meal or label photo, or a typed meal (Pro), goes to Google's Gemini on Vertex AI only after the user allows it on a sheet that names Google. Results are checked before they are logged. Photos are kept on the phone for 90 days for the diary, never on our servers. It can be switched off in Settings > Social & privacy.
 
 Apple Health
-Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. The binary holds an Apple Watch companion and a Health workout export, both off in this build; they will come in a later version.
+Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. This build has no Apple Watch app and no Health workout export; both are only in a separate test build. Its Health write string, there for the Health plugin, says Tropos adds nothing.
 
 Background modes
 Location: a GPS run asks for location as it starts and keeps recording with the screen locked; iOS may later offer Always. Treadmill and manual runs need no location. Bluetooth: Settings > Run plan pairs a heart-rate strap, read during a run with the screen locked.
@@ -387,12 +387,14 @@ Dynamic Island, medium display", and fills that from a "Face ID, large
 display" set when it has none of its own; the large Dynamic Island class
 falls back to the same set
 ([screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)).
-So the pack has two sets, each of eight frames in listing order:
+So there are two sets, each of eight frames in listing order. Neither is
+committed here: the capture spec writes them, under these names, to
+`screenshots/`:
 
-| Folder                            | App Store Connect class             | Pixels      | Phone it lays out as |
-| --------------------------------- | ----------------------------------- | ----------- | -------------------- |
-| `docs/app-store/screenshots/6.9/` | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
-| `docs/app-store/screenshots/6.5/` | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
+| Files                                     | App Store Connect class             | Pixels      | Phone it lays out as |
+| ----------------------------------------- | ----------------------------------- | ----------- | -------------------- |
+| `screenshots/app-store-01-home.png` …     | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
+| `screenshots/app-store-6.5-01-home.png` … | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
 
 | #   | Frame          | Shows                                                                |
 | --- | -------------- | -------------------------------------------------------------------- |
@@ -412,12 +414,12 @@ no frame shows a price (2.3.14 rules prices out of creative assets; keep
 them out of these too). Spaces, challenges and leagues are in no frame,
 since a new account at launch won't see them.
 
-To take them again from a later build: run App Screenshots (Actions →
-App Screenshots → Run workflow, on the branch to capture), fetch the
-`app-screenshots` branch, and copy `screenshots/app-store-*.png` (6.9") and
-`screenshots/app-store-6.5-*.png` (6.5") into the folders above. Upload the
-iPhone build's own screenshots instead if you prefer: they would show the
-real status bar.
+To get them: run App Screenshots (Actions → App Screenshots → Run
+workflow, on the branch to capture), which commits the frames to the
+`app-screenshots` branch. Fetch it and upload `screenshots/app-store-0*.png`
+as the 6.9" set and `screenshots/app-store-6.5-0*.png` as the 6.5" set.
+Upload the iPhone build's own screenshots instead if you prefer: they would
+show the real status bar.
 
 ## Before submitting
 
