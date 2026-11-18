@@ -5,6 +5,7 @@ import SiteLayout from "@/website/chrome/SiteLayout";
 import { HEADER_PAGES } from "@/website/headerPages";
 import { NOT_FOUND_TITLE } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 /**
  * The 404: an address that is neither a page of the website nor one the
@@ -22,9 +23,9 @@ export default function NotFound() {
         <div className="site-container home-hero-copy">
           <div className="max-w-[36rem] space-y-3">
             <p className="site-kicker text-stage-muted">Page not found</p>
-            <h1 id="not-found-title" className="site-h1">
+            <SiteHeadline id="not-found-title">
               There’s no page at this address
-            </h1>
+            </SiteHeadline>
             <p className="site-lede text-stage-foreground/85">
               The link may be old or mistyped. Tropos is an iPhone app, and this
               site says what it does.

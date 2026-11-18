@@ -1,6 +1,6 @@
 /**
  * Draws each of troposfit.com's pages into its own HTML after the Hosting
- * build (`npm run build:hosting`; docs/website/design.md, "How it is
+ * build (`npm run build:hosting`; the website’s design (#3428), "How it is
  * built"). The website is React, so without this every address would
  * answer with an empty page that a script fills in: slow on a phone's
  * first visit, and blank to a link's preview and to any search engine

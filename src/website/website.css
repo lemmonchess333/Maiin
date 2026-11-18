@@ -1,4 +1,4 @@
-/* troposfit.com's own layout (docs/website/design.md). The app's tokens,
+/* troposfit.com's own layout (the website’s design, #3428). The app's tokens,
    fonts and components come from src/index.css; this file holds only
    what a page wider than a phone needs: the column, the sections, the
    heroes and the header. The website is dark, as the app's signed-out
@@ -135,6 +135,21 @@
   box-shadow:
     0 0 0 1px hsl(0 0% 100% / 0.08),
     0 16px 40px hsl(0 0% 0% / 0.5);
+}
+
+/* The light behind a drawing or a screen takes its sport's colour from
+   `data-light` (lifting, running, nutrition, primary). */
+[data-light="lifting"] {
+  --art-light: var(--lifting);
+}
+[data-light="running"] {
+  --art-light: var(--running);
+}
+[data-light="nutrition"] {
+  --art-light: var(--nutrition);
+}
+[data-light="primary"] {
+  --art-light: var(--primary);
 }
 
 /* ─── Home's hero: the welcome's photographs ──────────────────

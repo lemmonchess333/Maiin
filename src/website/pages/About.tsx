@@ -3,6 +3,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 /** How Tropos treats the people who use it, each true of the app on main
  *  and said in its own terms (the Privacy Policy, Food9, the league's
@@ -37,9 +38,9 @@ export default function About() {
       <section className="site-container grid gap-10 pt-6 pb-14 md:grid-cols-[1.3fr_1fr] md:items-center md:pt-12 lg:pb-20">
         <div>
           <p className="site-kicker text-lifting-strong">About</p>
-          <h1 className="site-h1 mt-2">
+          <SiteHeadline className="mt-2">
             One plan for lifting, running and food
-          </h1>
+          </SiteHeadline>
           <div className="site-lede mt-4 space-y-4 text-muted-foreground max-w-[36rem]">
             <p>
               A lifting app plans your lifts, a running app plans your runs and

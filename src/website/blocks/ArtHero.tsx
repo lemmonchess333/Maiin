@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import AppStoreBadge from "@/website/AppStoreBadge";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 /** The sports' colours, as tokens, for the light behind a drawing. */
 export type SportLight = "lifting" | "running" | "nutrition" | "primary";
@@ -45,7 +46,7 @@ export default function ArtHero({
               ? "art-hero-frame"
               : "art-hero-picture max-h-[34svh] md:max-h-none"
           }
-          style={{ ["--art-light" as string]: `var(--${light})` }}
+          data-light={light}
         >
           {picture ?? (
             <img
@@ -61,7 +62,7 @@ export default function ArtHero({
       </div>
       <div className="md:order-1">
         <p className={`site-kicker ${kickerClass}`}>{kicker}</p>
-        <h1 className="site-h1 mt-2">{title}</h1>
+        <SiteHeadline className="mt-2">{title}</SiteHeadline>
         <p className="site-lede mt-4 text-muted-foreground max-w-[34rem]">
           {lede}
         </p>

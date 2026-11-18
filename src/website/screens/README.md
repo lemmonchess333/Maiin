@@ -1,7 +1,7 @@
 # The website's app screens
 
 Screens of the app as it runs, shown on troposfit.com (`AppScreen`,
-docs/website/design.md, "App screens"). Each is a crop of a capture from the
+the website’s design (#3428), "App screens"). Each is a crop of a capture from the
 emulator rig (`docs/agents/capture-rig.md`) on the repo's seeded demo
 accounts, so every name and number on them is made up: "E2E Tester", "Maya
 Chen" and "Jordan Reyes" are the seeds' people. None is a real person's data.

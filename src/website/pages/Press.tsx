@@ -15,6 +15,7 @@ import liftDay from "@/website/screens/lift-day.webp";
 import trainRun from "@/website/screens/train-run.webp";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 /** The paragraph to quote, short and long, in the App Store listing's
  *  words (docs/app-store/listing.md). */
@@ -127,7 +128,9 @@ export default function Press() {
     <SiteLayout>
       <section className="site-container pt-6 pb-10 md:pt-12">
         <p className="site-kicker text-lifting-strong">Press kit</p>
-        <h1 className="site-h1 mt-2 max-w-[40rem]">Writing about Tropos</h1>
+        <SiteHeadline className="mt-2 max-w-[40rem]">
+          Writing about Tropos
+        </SiteHeadline>
         <p className="site-lede mt-4 text-muted-foreground max-w-[40rem]">
           The facts, a paragraph to quote, the logo and the app’s screens. Use
           them as they are; ask if you need something else.

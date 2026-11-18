@@ -157,7 +157,7 @@ const KEPT: Kept[] = [
   },
   {
     address: "/lifting",
-    from: "the website's own pages (docs/website/design.md)",
+    from: "the website's own pages (the website’s design, #3428)",
     hosting: { kind: "file", file: "lifting/index.html" },
     shows: {
       page: "site",

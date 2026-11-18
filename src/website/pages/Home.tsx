@@ -15,6 +15,7 @@ import { sitePage } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
 import { landingHead } from "@/website/websiteHead";
 import { landingContext, type LandingContext } from "@/website/websiteAddress";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 const SPORTS = [
   {
@@ -67,7 +68,7 @@ function useLandingContext(): LandingContext {
 }
 
 /**
- * troposfit.com's Home (docs/website/design.md): the welcome's
+ * troposfit.com's Home (the website’s design, #3428): the welcome's
  * photographs and its promise with the App Store badge, then the app
  * doing what it promises, the three sports, the people and Pro. Every
  * address of the app's own also lands here (App1 Q52), with a line for
@@ -110,9 +111,9 @@ export default function Home() {
               </p>
             )}
             <p className="site-kicker text-stage-muted">For iPhone</p>
-            <h1 id="home-title" className="site-h1">
+            <SiteHeadline id="home-title">
               Your training and food, planned together
-            </h1>
+            </SiteHeadline>
             <p className="site-lede text-stage-foreground/85">
               Tell Tropos your goal and the days you can train. It plans your
               lifting and running week and works out a daily calorie target to
@@ -167,12 +168,7 @@ export default function Home() {
                   to={sport.to}
                   className="group flex h-full flex-col rounded-[24px] bg-card card-shadow p-5 transition-transform active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
-                  <div
-                    className="sport-card-art"
-                    style={{
-                      ["--art-light" as string]: `var(--${sport.light})`,
-                    }}
-                  >
+                  <div className="sport-card-art" data-light={sport.light}>
                     <div
                       className={
                         sport.art.length > 1

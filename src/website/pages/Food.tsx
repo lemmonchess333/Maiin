@@ -41,7 +41,7 @@ export default function Food() {
         picture={
           <AppScreen
             src={foodDay}
-            alt="Tropos’s Food page: 410 kcal left of 2,200, protein, carbs and fat left, and the day’s food log."
+            alt="Tropos’s Food page: 410 calories left of 2,200, protein, carbs and fat left, and the day’s food log."
             width={786}
             height={1520}
             priority

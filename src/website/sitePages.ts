@@ -1,5 +1,5 @@
 /**
- * troposfit.com's pages (docs/website/design.md): each page's address,
+ * troposfit.com's pages (the website’s design, #3428): each page's address,
  * its title and description, the picture a pasted link shows, and whether
  * it is in the sitemap. One table, read by the routes, by the build step
  * that writes each page out as its own HTML (`scripts/website/prerender.ts`)

@@ -12,6 +12,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
+import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 const YEARLY = findPlan(PRO_PLANS, "yearly");
 const MONTHLY = findPlan(PRO_PLANS, "monthly");
@@ -51,7 +52,7 @@ export default function Pro() {
       <section className="site-container grid gap-10 pt-6 pb-14 md:grid-cols-[1.1fr_1fr] md:items-start md:pt-12 lg:pb-24">
         <div>
           <p className="site-kicker text-lifting-strong">Tropos Pro</p>
-          <h1 className="site-h1 mt-2">What Pro adds</h1>
+          <SiteHeadline className="mt-2">What Pro adds</SiteHeadline>
           <p className="site-lede mt-4 text-muted-foreground max-w-[34rem]">
             Pro reads your meal photos, adapts your calorie target to what you
             log and weigh, and moves your paces as you get fitter. Your training

@@ -485,9 +485,14 @@ describe("DS ratchets — surface-level drift", () => {
   // has no way off the token at all.
   const OFF_SCALE_H1_BASELINE = 22;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
+  // The website's own headline (troposfit.com, App1 Q52): a hero at the
+  // website's scale, 36 px on a phone and 56 px at 1440, where the app's
+  // 31 px page title reads as small print. Every website page draws its h1
+  // through it, so it is one sanctioned file, as PageShell is.
+  const WEBSITE_H1 = "src/website/blocks/SiteHeadline.tsx";
   it("<h1> elements off the H1 token do not increase", () => {
     const { total, byFile } = scan((src, rel) => {
-      if (rel === H1_PRIMITIVE) return 0;
+      if (rel === H1_PRIMITIVE || rel === WEBSITE_H1) return 0;
       let n = 0;
       for (const m of src.matchAll(/<h1\b([^>]*)>/g)) {
         const attrs = m[1];

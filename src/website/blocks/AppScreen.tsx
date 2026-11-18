@@ -1,6 +1,6 @@
 /**
  * A screen of the app as it runs, captured from the capture rig on the
- * repo's demo account (docs/website/design.md, "App screens"): never a
+ * repo's demo account (the website’s design, #3428, "App screens"): never a
  * real person's data. Rounded as a phone's screen is, with no drawn phone
  * around it.
  */

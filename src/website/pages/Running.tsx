@@ -78,10 +78,8 @@ export default function Running() {
         picture={
           <div
             className="art-hero-picture"
-            style={{
-              ["--art-light" as string]: "var(--running)",
-              maxWidth: "20rem",
-            }}
+            data-light="running"
+            style={{ maxWidth: "20rem" }}
           >
             <img
               src="/form-art/run-easy.webp"

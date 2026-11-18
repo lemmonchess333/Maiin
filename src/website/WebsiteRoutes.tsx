@@ -1,4 +1,4 @@
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import SiteLayout from "@/website/chrome/SiteLayout";
@@ -51,17 +51,21 @@ function Elsewhere() {
   return websiteRoute(pathname).kind === "appAddress" ? <Home /> : <NotFound />;
 }
 
-/** A new page opens at its top, as a page loaded afresh does. */
+/** A new page opens at its top, as a page loaded afresh does. The page
+ *  the browser loaded keeps the place it restored. */
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const first = useRef(pathname);
   useEffect(() => {
+    if (pathname === first.current) return;
+    first.current = "";
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
 }
 
 /**
- * troposfit.com's addresses (App1 Q52, docs/website/design.md): the
+ * troposfit.com's addresses (App1 Q52, the website’s design (#3428)): the
  * website's pages, a shared post's public page (Q51), the app's legal and
  * support pages, Home for every address of the app's own, and the 404.
  * firebase.json sends every address here but a shared post, which

@@ -45,7 +45,7 @@ export default function SiteFooter() {
           <div className="col-span-2 md:col-span-1 space-y-3">
             <p className="flex items-center gap-2.5">
               <BrandMark className="h-[22px]" />
-              <span className="ds-wordmark text-[20px]">Tropos</span>
+              <span className="ds-wordmark text-h3">Tropos</span>
             </p>
             <p className="text-sm text-stage-muted max-w-[18rem]">
               Lifting, running and food, planned together. An iPhone app.
