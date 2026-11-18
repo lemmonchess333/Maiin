@@ -225,6 +225,15 @@ export default function Upgrade() {
     track("paywall_viewed", { source, platform });
   }, [source, platform]);
 
+  // A store outage would otherwise read as a paywall nobody tapped.
+  useEffect(() => {
+    if (pricesFailed) track("paywall_prices_failed", { source, platform });
+  }, [pricesFailed, source, platform]);
+
+  // The plans beat prints the prices; without them it would be a header
+  // and nothing else, so the page shows the offer, which says why.
+  const shownBeat: Beat = plans ? beat : "offer";
+
   // Checkout round-trip status. The web checkout returns here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
   // the analytics event, and clear the query so a reload doesn't
@@ -349,7 +358,7 @@ export default function Upgrade() {
     <div className="space-y-4">
       {/* Header: back on the plans beat, close on the offer beat. */}
       <header className="flex items-center justify-between min-h-11">
-        {beat === "plans" ? (
+        {shownBeat === "plans" ? (
           <button
             onClick={() => setBeat("offer")}
             type="button"
@@ -520,7 +529,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 1: the offer ─────────────────────────────────────── */}
-      {canBuy && beat === "offer" && (
+      {canBuy && shownBeat === "offer" && (
         <section className="space-y-4" aria-labelledby="pro-offer-heading">
           <div className="text-center space-y-2 pt-2">
             <h1
@@ -632,7 +641,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
-      {canBuy && onSale && plans && selected && beat === "plans" && (
+      {canBuy && onSale && plans && selected && shownBeat === "plans" && (
         <section className="space-y-4" aria-labelledby="pro-plans-heading">
           <div className="space-y-1">
             <h1

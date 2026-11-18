@@ -38,6 +38,45 @@ let configured = false;
 /** The set-up under way, shared: the identity hook at sign-in and a
  *  purchase's account check can both ask for it. */
 let configuring: Promise<void> | null = null;
+/** Settles the first time the SDK is set up, for the reads below that may
+ *  be asked for before sign-in has set it up (a paywall opened at once). */
+let markConfigured: () => void = () => {};
+const configuredOnce = new Promise<void>((resolve) => {
+  markConfigured = resolve;
+});
+
+/** How long a read that needs the SDK waits for sign-in to set it up, and
+ *  how long it waits for the store's answer, ms. A Tropos heuristic: the
+ *  set-up and an offerings fetch take well under a second on a phone, and a
+ *  paywall that waits longer should say the store didn't answer and offer
+ *  to try again rather than hold a placeholder for good. */
+export const STORE_READ_TIMEOUT_MS = 10_000;
+
+/** Resolves with `value` after `ms`, unless `work` settles first. */
+function within<T>(work: Promise<T>, ms: number, value: T): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => resolve(value), ms);
+    work.then(
+      (result) => {
+        clearTimeout(timer);
+        resolve(result);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
+/** Whether the SDK is set up, waiting up to `STORE_READ_TIMEOUT_MS` for
+ *  sign-in to set it up first. The store's reads fail before then, and a
+ *  read that fails is one the person sees fail. */
+async function whenConfigured(): Promise<boolean> {
+  if (configured) return true;
+  await within(configuredOnce, STORE_READ_TIMEOUT_MS, undefined);
+  return configured;
+}
 
 /**
  * One RevenueCat call, timed into the step list a stalled or failed
@@ -87,6 +126,7 @@ export async function configureRevenueCat(appUserID: string): Promise<void> {
         Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
       );
       configured = true;
+      markConfigured();
       logger.log("[RevenueCat] configured");
     } catch (err) {
       logger.error("[RevenueCat] configure failed", err);
@@ -334,13 +374,14 @@ export async function rcRestore(): Promise<RcRestoreOutcome> {
 
 /**
  * Apple-localized prices keyed by product id from the current Offering, or
- * null when RC is disabled / offerings unavailable. Each carries the string
- * Apple's sheet shows AND the number and currency behind it, e.g.
- * `{"com.tropos.app.pro.monthly": {priceString: "$4.99", price: 4.99,
- * currencyCode: "USD"}}`, so the paywall can work out its per-week figures
- * and the saving in the storefront's currency rather than in pounds.
- * Callers keep the hardcoded proPlans prices as the fallback so the paywall
- * never renders priceless.
+ * null when RC is disabled, the SDK isn't set up in time, the offerings
+ * are unavailable or the store takes longer than `STORE_READ_TIMEOUT_MS`.
+ * Each carries the string Apple's sheet shows AND the number and currency
+ * behind it, e.g. `{"com.tropos.app.pro.monthly": {priceString: "$4.99",
+ * price: 4.99, currencyCode: "USD"}}`, so the paywall can work out its
+ * per-week figures and the saving in the storefront's currency. On the
+ * iPhone the paywall prints these or no price at all (`useProPlanPrices`),
+ * so null is a paywall that says the store didn't answer.
  */
 export async function rcGetLocalizedPrices(): Promise<Record<
   string,
@@ -348,10 +389,17 @@ export async function rcGetLocalizedPrices(): Promise<Record<
 > | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
+    if (!(await whenConfigured())) return null;
     const { Purchases } = await loadPurchases();
-    const offerings = await step("plans for the prices", () =>
-      Purchases.getOfferings()
+    const offerings = await within(
+      step("plans for the prices", () => Purchases.getOfferings()),
+      STORE_READ_TIMEOUT_MS,
+      null
     );
+    if (!offerings) {
+      logger.error("[RevenueCat] offerings fetch timed out");
+      return null;
+    }
     const packages = offerings.current?.availablePackages;
     if (!packages || packages.length === 0) return null;
     const prices: Record<string, StorePrice> = {};
@@ -392,6 +440,7 @@ export async function rcTrialEligibility(
 ): Promise<Record<string, StoreTrialEligibility> | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
+    if (!(await whenConfigured())) return null;
     const { Purchases } = await loadPurchases();
     const statuses = await Purchases.checkTrialOrIntroductoryPriceEligibility({
       productIdentifiers: [...productIds],

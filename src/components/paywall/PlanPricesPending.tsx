@@ -19,7 +19,9 @@ export default function PlanPricesPending({
     return (
       <div className="space-y-2" data-testid="plan-prices-pending">
         <Skeleton className="h-6 w-2/3 mx-auto" />
-        <span className="sr-only">Getting prices from the App Store</span>
+        <p role="status" className="sr-only">
+          Getting prices from the App Store
+        </p>
       </div>
     );
   }

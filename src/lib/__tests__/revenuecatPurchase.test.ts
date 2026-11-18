@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { capacitorPlugin } from "@/test/capacitorPlugin";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 /**
  * Slice 3 (#1099) — enabled-path tests for purchase / restore / prices.
@@ -351,7 +352,8 @@ describe("rcGetLocalizedPrices", () => {
         },
       ])
     );
-    const { rcGetLocalizedPrices } = await loadModule();
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    await configureRevenueCat(UID);
 
     expect(await rcGetLocalizedPrices()).toEqual({
       [PID]: { priceString: "$4.99", price: 4.99, currencyCode: "USD" },
@@ -365,11 +367,60 @@ describe("rcGetLocalizedPrices", () => {
 
   it("returns null when offerings are empty and when disabled", async () => {
     mockPurchases.getOfferings.mockResolvedValue(offeringsWith([]));
-    const { rcGetLocalizedPrices } = await loadModule();
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    await configureRevenueCat(UID);
     expect(await rcGetLocalizedPrices()).toBeNull();
 
     vi.stubEnv("VITE_REVENUECAT_IOS_KEY", "");
     const disabled = await loadModule();
     expect(await disabled.rcGetLocalizedPrices()).toBeNull();
+  });
+
+  it("waits for sign-in to set the SDK up, then reads the prices", async () => {
+    // A paywall opened as the app starts asked before set-up; the SDK
+    // refused, and the iPhone paywall said the store didn't answer.
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "$4.99",
+            price: 4.99,
+            currencyCode: "USD",
+          },
+        },
+      ])
+    );
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    const prices = rcGetLocalizedPrices();
+    await Promise.resolve();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+    await configureRevenueCat(UID);
+    expect((await prices)?.[PID]?.priceString).toBe("$4.99");
+  });
+
+  describe("when the store doesn't answer", () => {
+    afterEach(async () => {
+      await restoreRealTimers();
+    });
+
+    it("gives up after STORE_READ_TIMEOUT_MS, so the paywall can say so", async () => {
+      vi.useFakeTimers();
+      mockPurchases.getOfferings.mockReturnValue(new Promise(() => {}));
+      const mod = await loadModule();
+      await mod.configureRevenueCat(UID);
+      const prices = mod.rcGetLocalizedPrices();
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS);
+      expect(await prices).toBeNull();
+    });
+
+    it("gives up when sign-in never sets the SDK up, without asking", async () => {
+      vi.useFakeTimers();
+      const mod = await loadModule();
+      const prices = mod.rcGetLocalizedPrices();
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS);
+      expect(await prices).toBeNull();
+      expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+    });
   });
 });

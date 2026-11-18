@@ -29,7 +29,7 @@
  *      one implementation for ProModal and Upgrade.tsx so they
  *      can't diverge on loading / error / auth handling.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
@@ -177,6 +177,16 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   );
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
+
+  // A store outage would otherwise read as a paywall nobody tapped.
+  useEffect(() => {
+    if (pricesFailed)
+      track("paywall_prices_failed", {
+        source: featureKey ? "feature_gate" : "unknown",
+        featureKey,
+        platform,
+      });
+  }, [pricesFailed, featureKey, platform]);
   // A build that cannot take a purchase shows no price, no checkout and no
   // Restore (`canSellInThisBuild`).
   const onSale = canSellInThisBuild();
