@@ -32,6 +32,25 @@ const SCREENED_PATHS = [
   /^post-photos\/([^/]+)(?:\/[\s\S]*)?$/,
 ];
 
+/**
+ * How many screens one account's photos may cost in a day (Tropos
+ * heuristics, a rolling day). Every screen is a paid Cloud Vision request,
+ * and nothing in Storage limits how many files an account uploads: before
+ * these, a script uploading to its own folders cost one request a file
+ * with no end, and the callable could be sent the same path about 4,300
+ * times a day. A busy day of real use is a profile photo, a few Space
+ * posts and three shared sessions with four photos and two maps each,
+ * about 25 uploads, each screened once by the trigger and once by the
+ * callable; a hundred of each is four times that.
+ *   - the trigger's screens of uploads: over the day's number, an upload
+ *     is deleted unscreened, as nothing unscreened may be shown;
+ *   - the callable's screens: over the day's number it refuses, and the
+ *     app treats that as a photo it couldn't check and posts nothing.
+ */
+const UPLOAD_SCREENS_PER_DAY = 100;
+const CALLABLE_SCREENS_PER_DAY = 100;
+const SCREEN_BUDGET_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /** SafeSearch's likelihoods at which a photo is refused as nudity. */
 const REFUSED_ADULT_LIKELIHOODS = new Set(["LIKELY", "VERY_LIKELY"]);
 
@@ -87,6 +106,36 @@ async function safeSearch(bytes, accessToken, fetchImpl = fetch) {
   return result.safeSearchAnnotation;
 }
 
+/** The object at `path`, held to one generation for reads and deletes, so
+ *  a newer upload at the same path is never the one read or deleted. */
+function pinnedFile(bucket, path, generation) {
+  // The Storage SDK converts the generation selector to a number. Refuse
+  // values it cannot represent exactly instead of selecting other bytes.
+  if (typeof generation !== "string" || !/^[0-9]+$/.test(generation)
+      || !Number.isSafeInteger(Number(generation)) || Number(generation) <= 0) {
+    throw new Error("Photo generation unavailable");
+  }
+  return bucket.file(path, {
+    generation,
+    preconditionOpts: { ifGenerationMatch: generation },
+  });
+}
+
+/**
+ * Deletes an upload that will not be screened: over its owner's day of
+ * screens, or past a day of Vision failing. Nothing unscreened may be
+ * shown, and the app posts no photo it couldn't check either.
+ */
+async function deleteUnscreenedPhoto({ bucket, path, generation }) {
+  try {
+    await pinnedFile(bucket, path, generation).delete({ ignoreNotFound: true });
+  } catch (err) {
+    // A newer upload took its place: that one has its own event.
+    if (err && err.code === 412) return;
+    throw err;
+  }
+}
+
 /**
  * Screens a stored photo, deleting it when refused.
  * @returns {Promise<{refused: boolean, adult: string}>}
@@ -101,16 +150,7 @@ async function screenStoredPhoto({
     const [metadata] = await bucket.file(path).getMetadata();
     generation = metadata.generation;
   }
-  // The Storage SDK converts the generation selector to a number. Refuse
-  // values it cannot represent exactly instead of selecting other bytes.
-  if (typeof generation !== "string" || !/^[0-9]+$/.test(generation)
-      || !Number.isSafeInteger(Number(generation)) || Number(generation) <= 0) {
-    throw new Error("Photo generation unavailable");
-  }
-  const file = bucket.file(path, {
-    generation,
-    preconditionOpts: { ifGenerationMatch: generation },
-  });
+  const file = pinnedFile(bucket, path, generation);
   const [bytes] = await file.download();
   const annotation = await safeSearch(bytes, accessToken, fetchImpl);
   const refused = refusesPhoto(annotation);
@@ -121,7 +161,11 @@ async function screenStoredPhoto({
 }
 
 module.exports = {
+  CALLABLE_SCREENS_PER_DAY,
+  SCREEN_BUDGET_WINDOW_MS,
+  UPLOAD_SCREENS_PER_DAY,
   REFUSED_ADULT_LIKELIHOODS,
+  deleteUnscreenedPhoto,
   refusesPhoto,
   safeSearch,
   screenStoredPhoto,

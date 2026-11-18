@@ -20,6 +20,7 @@ process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 const admin = require("../lib/adminSdk");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const { screenPhoto } = require("../index");
+const { CALLABLE_SCREENS_PER_DAY } = require("../lib/photoScreen");
 
 let visionReached = 0;
 
@@ -96,5 +97,25 @@ describe("screenPhoto's rate limit", () => {
       code: "unavailable",
     });
     expect(visionReached).toBe(1);
+  });
+});
+
+describe("screenPhoto's day", () => {
+  it("refuses a check past the account's day of them, before Vision", async () => {
+    const now = Date.now();
+    install(
+      memoryFirestore({
+        "rateLimits/u1_screenPhotoDay": {
+          timestamps: Array.from(
+            { length: CALLABLE_SCREENS_PER_DAY },
+            (_, i) => now - 11 * 60_000 - i * 60_000
+          ),
+        },
+      })
+    );
+    await expect(screenPhoto.run(photo, context)).rejects.toMatchObject({
+      code: "resource-exhausted",
+    });
+    expect(visionReached).toBe(0);
   });
 });

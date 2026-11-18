@@ -4904,7 +4904,9 @@ exports.onSpaceMemberWritten = functions
     if (change.before.exists === change.after.exists) return null;
     const { spaceId, uid } = context.params;
     const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
-    await steps.run("sessions", () => spaceFeed.syncMemberRows(db, spaceId, uid));
+    await steps.run("sessions", () =>
+      spaceFeed.syncMemberRows(db, spaceId, uid)
+    );
     await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
     steps.settle();
     return null;
@@ -7635,6 +7637,20 @@ exports.screenPhoto = functions
         "Too many photos checked at once. Wait a few minutes and try again."
       );
     }
+    // And a day's worth (photoScreen.js says why the number).
+    if (
+      await isRateLimited(
+        context.auth.uid,
+        "screenPhotoDay",
+        photoScreen.CALLABLE_SCREENS_PER_DAY,
+        photoScreen.SCREEN_BUDGET_WINDOW_MS
+      )
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "That's all the photos for today. Try again tomorrow."
+      );
+    }
     try {
       const accessToken = await admin.credential
         .applicationDefault()
@@ -7667,19 +7683,54 @@ exports.screenPhoto = functions
  * The same check on every upload to a screened path, for a client that
  * skips `screenPhoto`: a refused photo's file is deleted, so a post or
  * profile that names it shows nothing.
+ *
+ * Nothing unscreened stays. An upload past its owner's day of screens
+ * (photoScreen.UPLOAD_SCREENS_PER_DAY) is deleted without one, since
+ * every screen is a paid Vision request and Storage limits no account's
+ * number of uploads. A screen that fails (Vision down or out of quota,
+ * the count unreadable) throws, so the event is delivered again, and an
+ * upload still unscreened after a day of that is deleted. Before, a
+ * failure was logged and the file kept, so a client that skipped the
+ * callable kept every photo uploaded while Vision was failing, and a flood
+ * of uploads could make it fail.
  */
 exports.screenUploadedPhoto = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .storage.object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
     const path = object.name;
-    if (photoScreen.screenedOwner(path) === null) return;
+    const owner = photoScreen.screenedOwner(path);
+    if (owner === null) return;
+    const bucket = admin.storage().bucket(object.bucket);
+    const unscreened = async (reason) => {
+      await photoScreen.deleteUnscreenedPhoto({
+        bucket,
+        path,
+        generation: object.generation,
+      });
+      functions.logger.warn("screenUploadedPhoto.deletedUnscreened", {
+        path,
+        reason,
+      });
+    };
     try {
+      const overBudget = await rateLimiter.isRateLimited(
+        admin.firestore(),
+        owner,
+        "photoUploadScreenDay",
+        photoScreen.UPLOAD_SCREENS_PER_DAY,
+        photoScreen.SCREEN_BUDGET_WINDOW_MS,
+        { throwOnError: true }
+      );
+      if (overBudget) {
+        await unscreened("daily-budget");
+        return;
+      }
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
       const { refused, adult } = await photoScreen.screenStoredPhoto({
-        bucket: admin.storage().bucket(object.bucket),
+        bucket,
         path,
         generation: object.generation,
         accessToken: accessToken.access_token,
@@ -7687,14 +7738,17 @@ exports.screenUploadedPhoto = functions
       if (refused)
         functions.logger.warn("screenUploadedPhoto.refused", { path, adult });
     } catch (error) {
-      // Gone already: the callable refused it first.
+      // Gone already: the callable refused it first, or it was replaced.
       if (error && error.code === 404) return;
-      // Vision unavailable: the callable is the gate the app waits on,
-      // and this is the backstop.
       functions.logger.error("screenUploadedPhoto.failed", {
         path,
         message: String(error && error.message),
       });
+      if (pastRetryWindow(context)) {
+        await unscreened("unscreened-after-retries");
+        return;
+      }
+      throw error;
     }
   });
 
