@@ -7716,7 +7716,7 @@ exports.screenUploadedPhoto = functions
     try {
       const withinBudget = await photoScreen.claimUploadScreen(
         admin.firestore(),
-        { owner, eventId: context.eventId }
+        { owner, eventId: context && context.eventId }
       );
       if (!withinBudget) {
         await unscreened("daily-budget");
