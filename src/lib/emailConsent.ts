@@ -45,12 +45,12 @@ export interface EmailConsentAnswer {
 export type EmailConsentRecord = Partial<Record<EmailKind, EmailConsentAnswer>>;
 
 /**
- * Whether the emails are being sent. Until the sender is on main, nothing
- * asks: a switch that promised "Mondays at 08:00" with no email behind it
- * would be a claim the app does not keep. The sender's change turns this
- * on.
+ * Whether the emails are being sent: `hourlyEmailSweep` sends them
+ * (functions/updateEmails.js). Setup and Settings ask only while this is
+ * true, so a switch never promises "Mondays at 08:00" with no email behind
+ * it.
  */
-export const EMAIL_UPDATES_LIVE: boolean = false;
+export const EMAIL_UPDATES_LIVE: boolean = true;
 
 /** The words each version of the ask showed. Add a version; never edit
  *  one: a stored yes names the version it was given to. */

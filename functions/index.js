@@ -9101,6 +9101,11 @@ exports.sendVerificationEmailCallable =
 /* The Settings switches for the two emails a person can choose (App1 Q55):
    the consent record is written only on the server (lib/emailConsent.js). */
 exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
+/* The emails a person chose, and the unsubscribe link each one carries
+   (App1 Q55): updateEmails.js. */
+const updateEmails = require("./updateEmails");
+exports.hourlyEmailSweep = updateEmails.hourlyEmailSweep;
+exports.emailUnsubscribe = updateEmails.emailUnsubscribe;
 
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)

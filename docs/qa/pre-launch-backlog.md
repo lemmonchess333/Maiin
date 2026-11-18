@@ -1710,6 +1710,69 @@ words; these need the operator, a device, or a real trial.
       `docs/app-store/listing.md` ("…removing the content and, where
       needed, disabling the account").
 
+## The emails a person chose (App1 Q55, 2026-11-18)
+
+Affects: setup's last step (the opt-in), Settings → Notifications → Email,
+Settings → Account → Export (email choices), `completeOnboarding`,
+`setEmailConsent`, `hourlyEmailSweep` and its two emails
+(`lib/weeklyReviewEmail.js`, `lib/winBackEmail.js`), `emailUnsubscribe` on
+troposfit.com/email/unsubscribe, the universal-links file, the Privacy
+Policy and the privacy manifest. The weekly review goes on Monday at 08:00
+local; the emails after a break 14 and 30 days after the last session or
+meal, at 08:00 local.
+
+Unit tests cover the record, the sweep's decisions and refusals, the words
+and the unsubscribe link with a fake Resend; these need the operator, a
+device, or a real inbox.
+
+- [ ] **Resend's tracking is off.** Resend → Domains → troposfit.com (and
+      send.troposfit.com): open tracking and click tracking both off. A
+      tracking pixel needs consent of its own (PECR regulation 6), and a
+      rewritten link stops the buttons opening the app. The Privacy Policy
+      does not yet say these emails carry no tracking; add it once this is
+      checked.
+- [ ] **How many a day.** Resend's free plan sends 100 emails a day and
+      3,000 a month across every email, and the password reset and the
+      verification email must still go on a Monday. The sweep sends at most
+      60 of these a UTC day (`DEFAULT_DAILY_BUDGET`) and stops for the day
+      past it; the people left get that week's review only if a later hour
+      of their morning is in the next UTC day. Once more than about 50
+      people have said yes, an owner call: a paid Resend plan (Pro is
+      $20 a month for 50,000 with no daily limit, resend.com/pricing, 18
+      November 2026), then `system/config.emailUpdatesPerDay`
+      (a whole number, in the Firestore console) raised to match. No deploy
+      is needed for the second step.
+- [ ] **Apple's relay.** The trial reminder section's Hide My Email check
+      covers these emails too: same sender, same relay registration.
+- [ ] **The App Store privacy label.** App Store Connect → App Privacy:
+      add "Developer's Advertising or Marketing" to Email Address, Health,
+      Fitness and Other Usage Data, as `docs/app-store/listing.md` and
+      `ios/App/App/PrivacyInfo.xcprivacy` now say. The emails are
+      marketing in the ICO's reading, and Apple's purpose names "sending
+      marketing communications directly to your users".
+- [ ] **The sender's details.** PECR regulation 23 asks each email to say
+      who sent it and give an address that answers; each says "Sent by
+      Tropos" with support@troposfit.com. If Tropos is a company, its
+      registered name and number belong in that footer too (UK Companies
+      Act), an owner fact the code does not have.
+- [ ] **The first weekly review.** On the first Monday after this ships,
+      with the opt-in turned on for a test account that logged something
+      the week before: the email arrives at 08:00 local from
+      `RESEND_FROM`, the figures match the review page, "Open your review"
+      opens the review in the iPhone app (and the website on a computer),
+      and `users/{uid}/settings/emailState.weeklyReview.state` reads `sent`.
+      The `hourlyEmailSweep` run in `jobRuns` counts it as
+      `weeklyReview:sent`.
+- [ ] **The unsubscribe link.** From that email, open the link: the page
+      asks with one button and nothing has changed; tap Unsubscribe: both
+      switches in Settings → Notifications → Email read off, and the export
+      shows the withdrawal "Unsubscribe link". Then Gmail's own Unsubscribe
+      beside the sender's name does the same in one tap (RFC 8058).
+- [ ] **The universal links.** After the Hosting deploy carries the new
+      association file, `/review?from=email` and `/?from=email` open the
+      app on an iPhone that has it (Apple's CDN can take a day to read the
+      new file).
+
 ## The lifting system, Lift4 (2026-10-06, #2593)
 
 Affects: progression, the plan generator, lighter weeks and races
