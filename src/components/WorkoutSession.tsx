@@ -2329,11 +2329,13 @@ export default function WorkoutSession({
 
   return (
     /* On a screen with room for two panes (`split`) the same children
-       sit in a grid: the bar and the progress line across the top, the
-       exercises down the leading half, and the current exercise, its new
-       best, its rest and its button down the trailing half, with the
-       gap between them on the fold. Nothing is mounted or unmounted to
-       get there, so a fold mid-set keeps every typed value. */
+       sit in a grid: the bar and the progress line across the top; the
+       session down the leading half (its exercises, then a new best and
+       the rest as they come); the current exercise's sets and their
+       button down the trailing half, the full height, so a rest or a
+       new best at large text never squeezes the set table out. The gap
+       between the halves is on the fold. Nothing is mounted or unmounted
+       to get there, so a fold mid-set keeps every typed value. */
     <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb pl-[var(--safe-left)] pr-[var(--safe-right)] split:grid split:grid-cols-2 split:grid-rows-[auto_auto_minmax(0,1fr)_auto_auto_auto]">
       <GuideHint
         key={setHelpRequest}
@@ -2483,7 +2485,7 @@ export default function WorkoutSession({
           call, DESIGN_GUIDE §8) and is one 56 pt row (DS4 rule 18):
           a name under every drawing made it 109 pt, 13% of a 393 × 852
           phone, for words the list's own heading already says. */}
-      <div className="relative border-b border-border/30 split:col-start-1 split:row-span-4 split:row-start-3 split:min-h-0 split:border-b-0">
+      <div className="relative border-b border-border/30 split:col-start-1 split:row-start-3 split:min-h-0 split:border-b-0">
         <div
           ref={tabsRef}
           data-no-page-swipe
@@ -2591,7 +2593,7 @@ export default function WorkoutSession({
       {/* Main content area */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3 split:col-start-2 split:row-start-3 split:min-h-0 split:border-l split:border-border/30"
+        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3 split:col-start-2 split:row-span-3 split:row-start-3 split:min-h-0 split:border-l split:border-border/30"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
@@ -3294,7 +3296,7 @@ export default function WorkoutSession({
             ? handleUndo
             : undefined
         }
-        className="mx-4 mb-3 split:col-start-2 split:row-start-4"
+        className="mx-4 mb-3 split:col-start-1 split:row-start-4"
       />
 
       {/* The rest timer docks here too, under the new best when a set
@@ -3319,7 +3321,7 @@ export default function WorkoutSession({
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="mx-4 mb-3 shrink-0 split:col-start-2 split:row-start-5"
+            className="mx-4 mb-3 shrink-0 split:col-start-1 split:row-start-5"
           >
             <WorkoutRestTimer
               key={rest.id}
@@ -3334,7 +3336,7 @@ export default function WorkoutSession({
         ) : !autoRest && currentSets.some((st) => st.completed) ? (
           <div
             key="start-rest"
-            className="mx-4 mb-3 flex justify-center split:col-start-2 split:row-start-5"
+            className="mx-4 mb-3 flex justify-center split:col-start-1 split:row-start-5"
           >
             <Button
               variant="secondary"

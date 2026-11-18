@@ -30,6 +30,25 @@
   margin: calc(var(--map-overlay-top, 0.25rem) + 0.375rem) 0.75rem 0 0;
 }
 
+/* On the iPhone Duo's inner display open on its side (index.css `split`)
+   the live run's map is the leading half, its right edge the fold, and
+   the figures sit beside it rather than over its foot. So the credit
+   leaves the crease for the bottom left, clear of the safe area. */
+@media (min-width: 800px) and (pointer: coarse) {
+  [data-map-theme] .maplibregl-ctrl-top-right {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: 0;
+  }
+  [data-map-theme]
+    .maplibregl-ctrl-top-right
+    > .maplibregl-ctrl-attrib.maplibregl-compact {
+    margin: 0 0 calc(var(--safe-bottom) + 0.75rem)
+      calc(var(--safe-left) + 0.75rem);
+  }
+}
+
 /* Open, the credit is a caption. MapLibre's 20px lines spread its two
    lines on a phone into a slab beside the run's chips; at 16px with the
    same 24px for one line, it sits level with the (i) it folds into. */

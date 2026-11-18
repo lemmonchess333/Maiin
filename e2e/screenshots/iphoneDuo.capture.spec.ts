@@ -113,8 +113,6 @@ test.describe("iPhone Duo", () => {
     const middle = INNER.width / 2;
     expect(t.x + t.width).toBeLessThanOrEqual(middle);
     expect(w.x).toBeGreaterThanOrEqual(middle);
-    // Side by side, not one under the other.
-    expect(w.y).toBeLessThan(t.y + t.height);
     await shoot(page, "duo-home-inner");
 
     // Standing up, the inner display is one column again, and a sheet

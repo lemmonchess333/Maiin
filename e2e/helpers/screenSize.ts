@@ -6,7 +6,7 @@
  * see them, as the phone is. Touch is switched on for the page's own
  * session, so a test can change size without a new context.
  */
-import type { Page } from "@playwright/test";
+import type { CDPSession, Page } from "@playwright/test";
 
 export type ScreenSize = {
   width: number;
@@ -15,13 +15,20 @@ export type ScreenSize = {
   touch?: boolean;
 };
 
+/** The page's own session, and whether touch is on in it. */
+const sessions = new WeakMap<Page, { cdp: CDPSession; touch: boolean }>();
+
 export async function sizeTo(page: Page, size: ScreenSize): Promise<void> {
   await page.setViewportSize({ width: size.width, height: size.height });
-  if (size.touch) {
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send("Emulation.setTouchEmulationEnabled", {
-      enabled: true,
-      maxTouchPoints: 5,
-    });
-  }
+  const touch = !!size.touch;
+  const known = sessions.get(page);
+  // Nothing to switch: touch is off until a size turns it on.
+  if (!known && !touch) return;
+  if (known?.touch === touch) return;
+  const cdp = known?.cdp ?? (await page.context().newCDPSession(page));
+  await cdp.send("Emulation.setTouchEmulationEnabled", {
+    enabled: touch,
+    maxTouchPoints: touch ? 5 : 0,
+  });
+  sessions.set(page, { cdp, touch });
 }
