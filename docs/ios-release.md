@@ -34,8 +34,10 @@ without a Watch.
 
 `.github/workflows/deploy-ios.yml` builds the web bundle, runs
 `cap sync ios`, archives a signed Release build, and uploads it to
-TestFlight, on one of GitHub's macOS runners (`xcode-27`, with Xcode 27.1
-selected by name; free for a public repo). The build links the iOS 27.1 SDK:
+TestFlight, on one of GitHub's macOS runners (`xcode-27`, a preview image,
+with Xcode 27.1 selected by name, which may be its release candidate; the
+job summary names the one used. Standard runners are free for a public
+repo). The build links the iOS 27.1 SDK:
 the iPhone Duo shows an app on its whole display only from that SDK, and
 App Store Connect takes uploads only from the iOS 27 SDK from April 2027
 (`docs/ios/iphone-duo.md`, owner decision A, 18 November 2026). An app

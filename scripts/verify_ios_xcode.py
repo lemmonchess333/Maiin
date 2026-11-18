@@ -9,9 +9,10 @@ and ios-native-compile.yml select one by name instead of taking the
 default, and fail rather than build with another.
 
     python3 scripts/verify_ios_xcode.py --want 27.1
-        prints the Xcode to select: the final 27.1 if the image has it,
-        else its newest point release (27.1.1), else its release
-        candidate. Never a beta, and never another minor version.
+        prints the Xcode to select: the newest point release (27.1.1) if
+        the image has one, since it carries that release's fixes, else
+        the final 27.1, else its release candidate. Never a beta, and
+        never another minor version.
     python3 scripts/verify_ios_xcode.py --want 27.1 --sdk 27.1
         checks the selected Xcode's iOS SDK is 27.1 or later.
 """
@@ -29,9 +30,6 @@ def version_tuple(text):
 def pick_xcode(apps_dir, want):
     """The Xcode app for version `want` in `apps_dir`, or None."""
     apps = Path(apps_dir)
-    final = apps / f"Xcode_{want}.app"
-    if final.is_dir():
-        return final
     point = re.compile(rf"^Xcode_{re.escape(want)}\.(\d+)\.app$")
     releases = sorted(
         (int(m.group(1)), path)
@@ -40,12 +38,18 @@ def pick_xcode(apps_dir, want):
     )
     if releases:
         return releases[-1][1]
+    final = apps / f"Xcode_{want}.app"
+    if final.is_dir():
+        return final
+    # A second candidate is numbered after the first, so by its number,
+    # not its spelling (_10 after _2).
     candidates = sorted(
-        path
+        (int(m.group(1) or 1), path.name, path)
         for path in apps.glob(f"Xcode_{want}_*.app")
-        if path.is_dir() and re.search(r"release.?candidate|_rc", path.name, re.I)
+        if path.is_dir()
+        and (m := re.search(r"(?:release.?candidate|rc)_?(\d+)?\.app$", path.name, re.I))
     )
-    return candidates[-1] if candidates else None
+    return candidates[-1][2] if candidates else None
 
 
 def main(argv=None):

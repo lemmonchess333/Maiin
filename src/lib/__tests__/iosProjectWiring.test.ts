@@ -425,9 +425,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       ["deploy-ios.yml", workflow],
       ["ios-native-compile.yml", compile],
     ] as const) {
-      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe(
-        "xcode-27"
-      );
+      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe("xcode-27");
       const select = file.indexOf("- name: Select Xcode 27.1");
       expect(select, name).toBeGreaterThan(-1);
       expect(file.slice(select, select + 1200), name).toContain(
@@ -435,9 +433,14 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       );
       // First after the checkout: no step runs Xcode or syncs the
       // project with whatever the image's default is.
-      const firstStep = file.indexOf("- name:");
-      expect(firstStep, name).toBe(select);
+      const steps = file.slice(file.indexOf("\n    steps:\n"));
+      const before = [...steps.matchAll(/^ {6}- (?:name|uses|run):.*$/gm)]
+        .map((m) => m[0].trim())
+        .slice(0, 2);
+      expect(before[0], name).toMatch(/^- uses: actions\/checkout@/);
+      expect(before[1], name).toBe("- name: Select Xcode 27.1");
       expect(select, name).toBeLessThan(file.indexOf("xcodebuild -project"));
+      expect(select, name).toBeLessThan(file.indexOf("npm run build:ios"));
     }
   });
 

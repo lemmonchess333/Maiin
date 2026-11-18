@@ -21,7 +21,15 @@ class PickXcodeTests(unittest.TestCase):
         found = verifier.pick_xcode(apps, want)
         return found.name if found else None
 
-    def test_the_final_release_first(self):
+    def test_a_second_candidate_after_the_first(self):
+        apps = self.apps(
+            "Xcode_27.1_Release_Candidate.app",
+            "Xcode_27.1_Release_Candidate_2.app",
+            "Xcode_27.1_Release_Candidate_10.app",
+        )
+        self.assertEqual(self.pick(apps), "Xcode_27.1_Release_Candidate_10.app")
+
+    def test_the_final_release_before_a_candidate(self):
         apps = self.apps(
             "Xcode.app",
             "Xcode_27.0.app",
@@ -31,8 +39,9 @@ class PickXcodeTests(unittest.TestCase):
         )
         self.assertEqual(self.pick(apps), "Xcode_27.1.app")
 
-    def test_the_newest_point_release_before_a_candidate(self):
+    def test_the_newest_point_release_before_the_final_one(self):
         apps = self.apps(
+            "Xcode_27.1.app",
             "Xcode_27.1.1.app",
             "Xcode_27.1.2.app",
             "Xcode_27.1_Release_Candidate.app",
