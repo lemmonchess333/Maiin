@@ -4904,7 +4904,9 @@ exports.onSpaceMemberWritten = functions
     if (change.before.exists === change.after.exists) return null;
     const { spaceId, uid } = context.params;
     const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
-    await steps.run("sessions", () => spaceFeed.syncMemberRows(db, spaceId, uid));
+    await steps.run("sessions", () =>
+      spaceFeed.syncMemberRows(db, spaceId, uid)
+    );
     await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
     steps.settle();
     return null;
@@ -6708,6 +6710,12 @@ exports.createSegment = functions
 /**
  * deleteSegment — its maker deletes a segment, and with it every effort
  * anyone has on it and its board: `{ segmentId }`.
+ *
+ * Answers `{ deleted: true }` and nothing more. The efforts it deletes are
+ * everyone's, from runs never shared, runs whose ends are in a privacy zone
+ * and runs by people who blocked the maker, which the board never shows.
+ * A count of them told the maker who ran their street and when: make a
+ * segment, wait, delete it, read the number, make it again.
  */
 exports.deleteSegment = functions
   .runWith({ ...DEFAULT_HTTP_CAP, timeoutSeconds: 120 })
@@ -6734,11 +6742,8 @@ exports.deleteSegment = functions
       );
     }
     try {
-      const { efforts } = await segments.deleteOwnSegment(db, {
-        uid,
-        segmentId,
-      });
-      return { deleted: true, efforts };
+      await segments.deleteOwnSegment(db, { uid, segmentId });
+      return { deleted: true };
     } catch (err) {
       throw segmentHttpsError(err);
     }
