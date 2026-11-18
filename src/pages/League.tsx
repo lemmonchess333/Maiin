@@ -347,7 +347,9 @@ function StandingRow({
       aria-current={self ? "true" : undefined}
       className={cn(
         "flex flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-        self ? "border border-primary/25 bg-primary/10" : "bg-card"
+        self
+          ? "border border-primary/25 bg-primary/10"
+          : "bg-card dark:card-shadow"
       )}
     >
       <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">

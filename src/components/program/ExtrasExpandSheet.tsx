@@ -153,7 +153,7 @@ function ExtraRunListItem({
       aria-label={`Extra run: ${detailParts.join(", ")}. Tap to open.`}
       className={cn(
         "w-full text-left rounded-xl p-3",
-        "bg-card border border-border/60",
+        "bg-card border border-border/60 dark:card-shadow dark:border-transparent",
         "flex items-center gap-3",
         "min-h-[44px]",
         "motion-safe:transition motion-safe:active:scale-[0.98]",

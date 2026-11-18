@@ -1333,7 +1333,7 @@ export default function RunPlanSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || invalid || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saveLabel}

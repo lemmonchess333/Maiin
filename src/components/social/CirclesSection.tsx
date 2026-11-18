@@ -1471,7 +1471,7 @@ export default function CirclesSection({
                     "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     template === t.type
                       ? "bg-primary/10 border border-primary/40"
-                      : "bg-muted border border-transparent"
+                      : "bg-muted chip-edge border border-transparent"
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground">

@@ -194,7 +194,7 @@ export default function PrivacySection({
           {privacyZones.map((z) => (
             <div
               key={z.id}
-              className="flex items-center justify-between p-2.5 rounded-lg bg-card dark:card-shadow"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
             >
               <div>
                 <p className="text-xs font-medium text-foreground">{z.name}</p>
@@ -347,7 +347,7 @@ export default function PrivacySection({
                 {blockedUsersList.map((bu) => (
                   <div
                     key={bu.uid}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-card dark:card-shadow"
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
                   >
                     <span className="text-xs font-medium text-foreground">
                       {bu.displayName ?? "Name unavailable"}
@@ -375,7 +375,7 @@ export default function PrivacySection({
                             : "Unblocked"
                         );
                       }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted chip-edge text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
                     >
                       Unblock
                     </button>

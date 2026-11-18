@@ -732,7 +732,7 @@ function ExerciseRow({
         "w-full flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl border transition-colors min-h-[64px]",
         isSelected
           ? "bg-lifting/8 border-lifting/40"
-          : "bg-card border-border/40"
+          : "bg-card border-border/40 dark:card-shadow dark:border-transparent"
       )}
     >
       {/* Body → detail sheet (owner request 2026-09-02: tap to SEE it). */}

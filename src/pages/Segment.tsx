@@ -320,7 +320,9 @@ function BoardRowItem({
   );
   const classes = cn(
     "flex min-h-[44px] flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-    row.self ? "border border-primary/25 bg-primary/10" : "bg-card"
+    row.self
+      ? "border border-primary/25 bg-primary/10"
+      : "bg-card dark:card-shadow"
   );
   return (
     <li aria-current={row.self ? "true" : undefined}>

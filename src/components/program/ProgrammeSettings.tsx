@@ -205,8 +205,10 @@ function SettingsOptionCard({
         transition={{ duration: 0.18, delay: index * 0.025 }}
         className={cn(
           "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-          selected ? "border-transparent" : "border-border/70",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98] dark:card-shadow",
+          selected
+            ? "border-transparent"
+            : "border-border/70 dark:border-transparent",
           disabled && "opacity-35 pointer-events-none",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
@@ -797,7 +799,7 @@ export default function ProgrammeSettings({
                engine took ownership. Days, experience, equipment and
                injuries stay editable below, so an injury or an equipment
                change never costs the user their block. */
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm dark:card-shadow dark:border-transparent">
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-bold leading-tight">
                   {focusLabel(activeBlockFocus)}
@@ -1094,7 +1096,7 @@ export default function ProgrammeSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}

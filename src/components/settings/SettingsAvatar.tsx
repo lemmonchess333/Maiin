@@ -206,7 +206,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
               type="button"
               onClick={handleRemove}
               disabled={!!busy}
-              className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
+              className="w-full py-3 rounded-xl bg-muted chip-edge text-foreground text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
             >
               {busy === "removing" ? (
                 <>

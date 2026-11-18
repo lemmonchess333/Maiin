@@ -292,7 +292,7 @@ export default function NutritionSection({
                     "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                     activityLevel === key
                       ? "bg-primary/10 text-lifting-strong font-medium"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
+                      : "bg-muted chip-edge text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {label}

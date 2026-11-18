@@ -59,7 +59,7 @@ function pillClass(selected: boolean): string {
     "min-h-[44px] px-3 rounded-xl text-xs font-semibold transition active:scale-[0.97]",
     selected
       ? "bg-primary-strong text-primary-foreground"
-      : "bg-muted text-foreground"
+      : "bg-muted chip-edge text-foreground"
   );
 }
 
