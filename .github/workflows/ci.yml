@@ -476,13 +476,26 @@ jobs:
         run: npm test -- --sequence.shuffle --sequence.seed=${{ matrix.seed }}
         working-directory: functions
 
-  # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
-  # fails on high or critical, so a new advisory has to be fixed or
-  # consciously addressed before it merges. Development tooling processes
-  # images too, so the root gate includes it. Both dependency
-  # trees gate on high/critical. Compatible transitive updates cleared the
-  # Functions high/critical advisories on 2026-09-07 without an Admin SDK
-  # major migration; do not restore the former report-only `|| true` lane.
+  # Dependency advisories, as a PR gate for the full ROOT tree: a high or
+  # critical advisory fails, so a new one has to be fixed or consciously
+  # addressed before it merges. Development tooling processes images too,
+  # so the root gate includes it. Both dependency trees gate on
+  # high/critical. Compatible transitive updates cleared the Functions
+  # high/critical advisories on 2026-09-07 without an Admin SDK major
+  # migration; do not restore the former report-only `|| true` lane.
+  #
+  # The root tree goes through `scripts/ci/audit-gate.mjs` rather than
+  # `npm audit --audit-level=high`, which cannot accept one advisory and
+  # keep failing on the rest. The gate reads `npm audit --json` and fails
+  # on every high or critical advisory except one named in
+  # `scripts/ci/audit-allowlist.json`, and an entry holds only while its
+  # recheck date has not passed, the package is installed only where the
+  # entry says and only for development, and it reaches the tree only
+  # through the packages the entry names. Its one entry is the picomatch
+  # ReDoS (GHSA-fc5q-39xc-vjpf), which has no patched release and reaches
+  # only dev tooling, rechecked by 2026-12-18. A patched release beats the
+  # allowlist: take it, with an `overrides` entry if a tool pins the old
+  # range, and delete the entry. `audit-gate.test.ts` pins this job.
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -493,8 +506,8 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
-      - name: Audit root and development dependencies (gates on high and critical)
-        run: npm audit --audit-level=high
+      - name: Audit root and development dependencies (gates on high and critical, less the dated allowlist)
+        run: node scripts/ci/audit-gate.mjs
       - name: Audit functions dependencies (gates on high and critical)
         working-directory: functions
         run: |
