@@ -754,9 +754,9 @@ html.launching [data-brand-mark] {
    the ring sat on their floors with nothing to spare. The card's lit edge
    (`card-shadow`) stays. The blur is written out, never through a
    variable (WebKit ignores one in -webkit-backdrop-filter), and sits on
-   the element that fades, so no fading parent cuts it off; the new best's
-   short scale on arrival moves the blurred layer and never animates the
-   blur itself (§14h). Solid where the blur cannot be drawn, under Reduce
+   the element that fades, so no fading parent cuts it off; the new best
+   arrives with a fade and no scale, so the blur is never redrawn in
+   motion (§14h). Solid where the blur cannot be drawn, under Reduce
    Transparency (the media query, and the attribute the app sets from the
    phone's own setting, `src/lib/reducedTransparency.ts`, #3398), and in
    forced colours. */
