@@ -313,7 +313,7 @@ AI food analysis
 A meal or label photo, or a typed meal (Pro), goes to Google's Gemini on Vertex AI only after the user allows it on a sheet that names Google. Results are checked before they are logged. Photos are kept on the phone for 90 days for the diary, never on our servers. It can be switched off in Settings > Social & privacy.
 
 Apple Health
-Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. This build embeds no Apple Watch app and saves no workouts to Health: the Watch app goes only into a separate test build, and saving runs to Health is switched off when this one is built. The Health write purpose string is there because the Health plugin carries a write call, and it says Tropos adds nothing to Health.
+Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. This build has no Apple Watch app and no Health workout export; both are only in a separate test build. Its Health write string, there for the Health plugin, says Tropos adds nothing.
 
 Background modes
 Location: a GPS run asks for location as it starts and keeps recording with the screen locked; iOS may later offer Always. Treadmill and manual runs need no location. Bluetooth: Settings > Run plan pairs a heart-rate strap, read during a run with the screen locked.
