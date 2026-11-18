@@ -26,6 +26,44 @@
 const DEFAULT_ALERT_EMAIL = "support@troposfit.com";
 const DEFAULT_TIMEOUT_MS = 8000;
 
+/**
+ * How many alerts go in a rolling day: from one reporter, and from
+ * everyone (Tropos heuristics). Filing a report needs no verified email and
+ * allows ten an hour per account, and every alert was an email through
+ * Resend, whose allowance the password reset, verification and trial emails
+ * share (passwordResetRequest.js caps resets for the same reason). One
+ * account could send 240 a day, and a few could use up the day's sending
+ * for everyone. Past either number the report is stored and queued as
+ * always, with no email; the last email before the day's number says so,
+ * so a quiet inbox after it is not read as no reports.
+ */
+const REPORTER_ALERTS_PER_DAY = 3;
+const ALERTS_PER_DAY = 50;
+const ALERT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether this report's alert is sent, and whether it is the last for a
+ * while. `isLimited(key, action, maxCalls, windowMs)` is the shared rate
+ * limiter, which counts a call it allows and fails closed. The reporter's
+ * number is checked first, so one account's reports past it use none of
+ * everyone's.
+ * @returns {Promise<{send: boolean, last?: boolean, held?: string}>}
+ */
+async function alertAllowance({ reporterUid, isLimited }) {
+  const window = ALERT_WINDOW_MS;
+  if (
+    await isLimited(reporterUid, "reportAlert", REPORTER_ALERTS_PER_DAY, window)
+  )
+    return { send: false, held: "reporter" };
+  if (
+    !(await isLimited("reportalert_all", "reportAlertAll", ALERTS_PER_DAY - 1, window))
+  )
+    return { send: true, last: false };
+  if (!(await isLimited("reportalert_all", "reportAlertLast", 1, window)))
+    return { send: true, last: true };
+  return { send: false, held: "everyone" };
+}
+
 /** Labels for the reasons the report form offers: mirrors the labels in
  *  src/lib/reportCategories.ts, pinned by
  *  src/lib/__tests__/reportTargets.cross.test.ts. */
@@ -88,6 +126,7 @@ function buildReportAlertEmail({
   subReason,
   freeformNote,
   queueUrl,
+  lastForNow = false,
 }) {
   const reason = reasonLine({ category, subReason });
   const what = TARGET_LABELS[targetType] || "Something";
@@ -113,6 +152,11 @@ function buildReportAlertEmail({
               ${row("Note", note ? escapeHtml(note).replace(/\n/g, "<br>") : "None")}
               ${row("Report", escapeHtml(reportId))}
             </table>
+            ${
+              lastForNow
+                ? `<p style="font-size:14px;line-height:1.5;color:#1c1b22;margin:20px 0 0;"><strong>This is the last alert for a while.</strong> Tropos sends at most ${ALERTS_PER_DAY} in a day. Reports that come in meanwhile are in the queue without an email.</p>`
+                : ""
+            }
             <p style="margin:24px 0 0;">
               <a href="${escapeHtml(queueUrl)}" style="display:inline-block;background:#6560C8;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:12px;">Open the moderation queue</a>
             </p>
@@ -177,6 +221,9 @@ async function sendReportAlert({
 }
 
 module.exports = {
+  ALERTS_PER_DAY,
+  REPORTER_ALERTS_PER_DAY,
+  alertAllowance,
   DEFAULT_ALERT_EMAIL,
   CATEGORY_LABELS,
   TARGET_LABELS,
