@@ -13,7 +13,7 @@ def png(width, height, pixel, mark=None, channels=4, filt=0):
     """An 8-bit PNG filled with `pixel`, with an optional lit square
     `mark` = (x, y, size, pixel), every row written with filter `filt`
     (0 none, 1 sub, 2 up)."""
-    colour = {3: 2, 4: 6}[channels]
+    colour = {2: 4, 3: 2, 4: 6}[channels]
     rows, previous = [], bytes(width * channels)
     for y in range(height):
         row = bytearray()
@@ -91,6 +91,24 @@ class LaunchScreenshotTests(unittest.TestCase):
     def test_rejects_what_it_cannot_read(self):
         with self.assertRaises(ValueError):
             verifier.decode_png(b"not a png")
+
+    def test_a_dark_screen_says_whether_any_window_drew(self):
+        black = png(40, 80, (0, 0, 0, 255))
+        page = png(40, 80, PAGE, mark=(0, 0, 4, WHITE))
+        self.assertEqual(verifier.commonest(black), (0, 0, 0))
+        self.assertEqual(verifier.commonest(page), PAGE[:3])
+        self.assertIn("no window", verifier.dark_reason(verifier.commonest(black)))
+        self.assertIn(
+            "did not mount", verifier.dark_reason(verifier.commonest(page))
+        )
+        # Colour management may move the page colour a step or two.
+        self.assertIn("did not mount", verifier.dark_reason((13, 15, 18)))
+        self.assertIn("nothing is drawn", verifier.dark_reason((30, 0, 30)))
+
+    def test_alpha_beside_grey_is_not_a_colour(self):
+        dark = png(8, 16, (10, 255), channels=2)
+        self.assertEqual(verifier.lit_share(dark, step=1), 0.0)
+        self.assertEqual(verifier.commonest(dark), (10, 10, 10))
 
     def test_main_tells_an_unreadable_shot_from_a_dark_one(self):
         with tempfile.TemporaryDirectory() as tmp:

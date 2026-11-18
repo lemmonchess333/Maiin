@@ -286,13 +286,16 @@ compiles a standard Release build for Simulator, then the pilot, with
 signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
 the standard build must carry no Watch app, the gate off and the short Health
 text; the pilot one embedded Watch app, both gates on and the expanded text.
-It uses a synthetic Firebase plist and signs neither app. It launches the
-standard build once on a simulator (iPhone, the image's newest iOS) and
-fails if the app is not running and drawing 25 seconds later
+It uses a synthetic Firebase plist and placeholder web Firebase settings
+(without an API key the web app never mounts), and signs neither app. It
+launches the standard build once on a simulator (iPhone, the image's newest
+iOS) and fails if the app is not running and drawing 25 seconds later
 (`scripts/verify_ios_launch.py`): the app uses the UIScene life cycle
 (`ios/App/App/SceneDelegate.swift`, required of iOS 27 SDK builds, see
 `docs/ios/iphone-duo.md`), and a scene wired wrongly launches to a black
-screen that a compile cannot see. The screenshot is kept as the run's
+screen that a compile cannot see. A dark launch is named by its colour (black
+is no window; the page's colour is a web app that did not mount) and the
+app's log is printed. The screenshot is kept as the run's
 `ios-simulator-launch` artifact. Nothing else is exercised. A green compile
 is required before this gate is considered ready for the signed TestFlight
 and paired-device checks below.
