@@ -82,13 +82,12 @@ export default function ActivityCommentRows({
                         onClick={() => react(c.id, k)}
                         aria-pressed={mine}
                         /* With a count drawn beside the emoji, the name
-                           starts with it ("2 fire reactions"), as Voice
-                           Control is spoken to with the words on the
-                           screen (WCAG 2.5.3); whether one is yours is
-                           the pressed state. */
+                           starts with it ("2 fire reactions, add yours"),
+                           as Voice Control is spoken to with the words on
+                           the screen (WCAG 2.5.3), then what a tap does. */
                         aria-label={
                           uids.length > 0
-                            ? `${uids.length} ${word} ${uids.length === 1 ? "reaction" : "reactions"}`
+                            ? `${uids.length} ${word} ${uids.length === 1 ? "reaction" : "reactions"}, ${mine ? "remove yours" : "add yours"}`
                             : `Add ${word} reaction`
                         }
                         className="p-2.5 -m-1.5"

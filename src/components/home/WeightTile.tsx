@@ -80,7 +80,7 @@ export default function WeightTile({
   const weightAriaLabel = pending
     ? "Weight loading."
     : !lastWeight
-      ? `Weight, ${lastWeightDate}${sync}. Not yet logged. Log your weight to start tracking trends.`
+      ? `Weight, ${lastWeightDate}${sync}. Not yet logged.`
       : hidden
         ? `Weight, ${trendPhrase}, ${lastWeightDate}${sync}. Tap to log weight.`
         : `Weight ${lastWeight} ${weightUnitDisplay}, ${lastWeightDate}${sync}. Tap to log weight.`;

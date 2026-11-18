@@ -172,7 +172,8 @@ describe("SpacesDirectory — Races & Events", () => {
       screen.getByRole("link", { name: /^Runners\b/ }).textContent
     ).toContain("12 members");
     const smallCard = screen.getByRole("link", { name: /^Strength\b/ });
-    expect(smallCard.textContent).toBe("Strength");
+    // Its name and the unseen "space" after it, and no count line.
+    expect(smallCard.textContent).toBe("Strength space");
     expect(screen.queryByText(/New space/)).not.toBeInTheDocument();
   });
 

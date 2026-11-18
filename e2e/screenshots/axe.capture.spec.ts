@@ -382,7 +382,7 @@ test.describe("axe", () => {
 
     // A meal's edit sheet, from yesterday's diary (seed:rich logs meals on
     // the five days up to the one it ran on). A row is named by what it
-    // shows, its calories among them; its Delete is not.
+    // shows, then ", edit".
     const yesterday = await page.evaluate(() => {
       const d = new Date();
       d.setDate(d.getDate() - 1);
@@ -391,7 +391,7 @@ test.describe("axe", () => {
     });
     const meal = page
       .locator("[data-food-row]")
-      .getByRole("button", { name: /^(?!Delete ).* kcal/ })
+      .getByRole("button", { name: /\bedit$/ })
       .first();
     await open(page, `food?date=${yesterday}`, meal);
     await meal.click();
@@ -400,7 +400,7 @@ test.describe("axe", () => {
     await check(page, "sheet-meal-edit", found, sheet);
     await close(page);
 
-    const weight = page.getByRole("button", { name: /^Weight / }).first();
+    const weight = page.getByRole("button", { name: /^Weight\b/ }).first();
     await open(page, "", weight);
     await weight.click();
     await dialog.waitFor();

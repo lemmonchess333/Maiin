@@ -2587,11 +2587,17 @@ describe("ProgrammeRunSection — one run is up next", () => {
       }),
     ]);
 
-  const open = (name: string) =>
+  /* A day's tab is named by the date its circle shows, then its run
+     (WCAG 2.5.3), so the run is found after the number. */
+  const open = (run: string) =>
     fireEvent.click(
       within(screen.getByRole("tablist", { name: "Run week" })).getByRole(
         "tab",
-        { name }
+        {
+          name: new RegExp(
+            `^\\d+, ${run.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(, |$)`
+          ),
+        }
       )
     );
 

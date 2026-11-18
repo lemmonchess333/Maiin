@@ -103,7 +103,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
       />
     );
     // Named by the count it shows (WCAG 2.5.3).
-    const btn = screen.getByRole("button", { name: "2 props" });
+    const btn = screen.getByRole("button", { name: "2 props, give props" });
     expect(btn).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(btn);
     expect(onToggleLike).toHaveBeenCalledTimes(1);
@@ -121,7 +121,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onToggleLike={() => {}}
       />
     );
-    const btn = screen.getByRole("button", { name: "3 props" });
+    const btn = screen.getByRole("button", { name: "3 props, remove yours" });
     expect(btn).toHaveAttribute("aria-pressed", "true");
     expect(btn.textContent).toContain("3");
   });

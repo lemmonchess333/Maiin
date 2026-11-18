@@ -151,8 +151,8 @@ function SpaceCard({
       )}
 
       {/* The card is named by its words, so the caption comes first in
-          the page's order and the Space's name leads its name, then the
-          tags drawn over the picture: Voice Control is spoken to with the
+          the page's order and the Space's name leads its name, "space"
+          unseen after it, then the tags drawn over the picture: Voice Control is spoken to with the
           words on the screen (WCAG 2.5.3, Label in Name). The tags are
           placed absolutely, so the order moves nothing on the card.
           The name takes two lines before it gives way, on every card, so
@@ -165,7 +165,7 @@ function SpaceCard({
             photo ? "text-white" : "text-foreground"
           }`}
         >
-          {def.name}
+          {def.name} <span className="sr-only">space</span>
         </p>
         {(event || showCount) && (
           <p

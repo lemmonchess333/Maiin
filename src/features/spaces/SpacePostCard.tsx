@@ -353,12 +353,12 @@ export default function SpacePostCard({
                   type="button"
                   onClick={onToggleLike}
                   /* With a count drawn beside the flame, the name starts
-                     with it ("5 props"), as Voice Control is spoken to
-                     with the words on the screen (WCAG 2.5.3); whether
-                     yours is among them is the pressed state. */
+                     with it ("5 props, give props"), as Voice Control is
+                     spoken to with the words on the screen (WCAG 2.5.3),
+                     then what a tap does, as the feed card's count says. */
                   aria-label={
                     displayLikeCount > 0
-                      ? `${displayLikeCount} props`
+                      ? `${displayLikeCount} props, ${liked ? "remove yours" : "give props"}`
                       : liked
                         ? "Remove props"
                         : "Give props"

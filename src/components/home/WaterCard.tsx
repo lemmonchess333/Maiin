@@ -35,7 +35,8 @@ const UNDO_WINDOW_MS = 4000;
  * The reading, spoken. `formatWaterVolume` renders "2 L" / "250 ml",
  * whose units a screen reader pronounces as bare letters; Home's food
  * card spells "grams" in its macro names for the same reason. Visual copy
- * keeps the symbols — only the accessible name uses this.
+ * keeps the symbols, and so does a control's name, which carries the
+ * words drawn on it; only the announcement after a log uses this.
  */
 function spokenVolume(ml: number): string {
   const label = formatWaterVolume(ml);
@@ -177,11 +178,11 @@ export default function WaterCard({
      dropped, and a screen reader should not be told about a goal the
      screen no longer shows. */
   const reading = `Water ${spokenVolume(ml)} logged.`;
-  /* A body button's name starts with the words drawn on it, in order
-     ("Water 500 ml, Tap + for 250 ml"): Voice Control is spoken to with
-     what is on the screen (WCAG 2.5.3, Label in Name). The spoken
-     reading and what a tap does follow. The meta line is drawn only on
-     a day with water and while it is not the way back. */
+  /* A body button's name is the words drawn on it, in order ("Water
+     500 ml, Tap + for 250 ml"), then what a tap does: Voice Control is
+     spoken to with what is on the screen (WCAG 2.5.3, Label in Name).
+     The meta line is drawn only on a day with water and while it is not
+     the way back. */
   const shownReading = `Water ${formatWaterVolume(ml)}`;
   const compactShown =
     hasWater && !showUndo
@@ -388,7 +389,7 @@ export default function WaterCard({
           <button
             type="button"
             onClick={openSheet}
-            aria-label={`${compactShown}. ${reading} Add water — choose a container size.`}
+            aria-label={`${compactShown}. Add water, choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
@@ -568,7 +569,7 @@ export default function WaterCard({
         <button
           type="button"
           onClick={openSheet}
-          aria-label={`${shownReading}. Add water — choose a container size`}
+          aria-label={`${shownReading}. Add water, choose a container size.`}
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div

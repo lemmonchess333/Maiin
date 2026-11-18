@@ -198,11 +198,14 @@ export default function FoodRow({
   const actionName = accessibleFoodName ?? group.foodName;
   /* The row is named by what it shows, so its name starts with the
      food's name as drawn (WCAG 2.5.3, Label in Name: Voice Control is
-     spoken to with the words on the screen). Where two rows would read
-     alike, the portion's details follow, unseen. */
-  const rowNameDetails = accessibleFoodName ? (
-    <span className="sr-only">, {accessibleFoodName}</span>
-  ) : null;
+     spoken to with the words on the screen). Unseen after it: where two
+     rows would read alike, the portion's details, and then what a tap
+     does. */
+  const rowNameDetails = (
+    <span className="sr-only">
+      {accessibleFoodName ? `, ${accessibleFoodName}` : ""}, edit
+    </span>
+  );
 
   /* Shared inner content (name, quantity/edited pills, kcal). The row
      used to open with a dot coloured by whichever macro gave the most

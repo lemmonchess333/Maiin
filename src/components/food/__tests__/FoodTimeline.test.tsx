@@ -56,7 +56,7 @@ const escapeRegExp = (text: string) =>
   text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /* A row is named by what it shows, the food's name first (WCAG 2.5.3,
-   Label in Name); its Delete is named "Delete …". */
+   Label in Name), then ", edit"; its Delete is named "Delete …". */
 const rowFor = (name: string) =>
   screen.queryByRole("button", {
     name: new RegExp(`^${escapeRegExp(name)}\\b`),
@@ -257,7 +257,7 @@ describe("FoodTimeline — portion identity", () => {
       labels.forEach((label) => {
         // The row's own words, then the details that tell it apart.
         const edit = screen.getByRole("button", {
-          name: new RegExp(`^Oats\\b.*, ${escapeRegExp(label)}$`),
+          name: new RegExp(`^Oats\\b.*, ${escapeRegExp(label)}, edit$`),
         });
         if (reduce) fireEvent.click(edit);
         else fireEvent.keyDown(edit, { key: "Enter" });
