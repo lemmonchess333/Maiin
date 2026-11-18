@@ -552,9 +552,10 @@ export function applyEquipmentFilterToWorkouts(
         ...exerciseBank.horizontal_pull.filter((o) => o.id === "inverted-row"),
         ...exerciseBank.horizontal_pull.filter((o) => o.id !== "inverted-row"),
       ].filter(eligible);
-      // No row more than twice a week (`weekLifts`), as every other pick:
-      // with no inverted row, the dumbbell row is the first choice on every
-      // pull slot and would otherwise land on a third day.
+      // No row more than twice a week (`weekLifts`) where the level
+      // allows another, as every other pick; the level gate ranks above
+      // the cap. Complexity gives way only where the kit has no simpler
+      // row left for the day.
       const atLevel = rows.filter((o) => offerableTo(experience, o));
       const row =
         atLevel.find((o) => week.underCap(o.id)) ??

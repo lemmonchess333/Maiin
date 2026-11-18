@@ -299,7 +299,10 @@ An existing Minimal or Home gym plan was never asked, which counts as yes
 
 Change 3 reaches every Minimal or Home gym beginner without "A barbell and a
 rack", bar or no bar: the inverted row the plan used in the pull-up's place
-becomes a dumbbell row. Minimal and Home gym are the same week here.
+becomes a dumbbell row. Minimal and Home gym are the same week here. A day
+that already holds the dumbbell row takes the chest-supported dumbbell row
+as its second row, as six-day beginner plans at home already do; the level
+gate lets that one technical row in where the kit has nothing simpler.
 
 ### Minimal or Home gym, beginner, 3 days, with the bar or never asked
 
