@@ -202,7 +202,7 @@ export default function SecuritySection({
         </SettingsGroup>
 
         {user.email && !emailVerified && (
-          <div className="rounded-xl bg-card p-3 space-y-2">
+          <div className="rounded-xl bg-card p-3 space-y-2 dark:card-shadow">
             <p className="text-sm text-muted-foreground">
               Verify your email to post or comment. You can keep logging
               workouts and meals, and manage or delete your account while

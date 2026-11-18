@@ -443,7 +443,7 @@ function WorkoutDetailContent() {
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
             // one session, so this is a state, not a disabled button.
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground">
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted text-muted-foreground chip-edge">
               <Check
                 className="size-4 shrink-0"
                 style={{ color: THEME.success }}

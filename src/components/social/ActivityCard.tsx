@@ -1191,7 +1191,7 @@ function ActivityCard({
 
         {/* Kudos list popup */}
         {showKudosList && (
-          <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
+          <div className="mt-2 p-3 rounded-xl bg-muted space-y-2 chip-edge">
             <SectionLabel>Props from</SectionLabel>
             {kudosLoading ? (
               <div className="flex items-center justify-center py-2">

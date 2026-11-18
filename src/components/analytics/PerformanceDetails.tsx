@@ -113,7 +113,7 @@ export default function PerformanceDetails({
 
   if (loading) {
     return (
-      <div className="p-4 rounded-2xl bg-card">
+      <div className="p-4 rounded-2xl bg-card dark:card-shadow">
         <p className="text-sm text-muted-foreground">Loading performance…</p>
       </div>
     );
@@ -175,7 +175,7 @@ export default function PerformanceDetails({
       {children}
 
       {/* Breakdown bars */}
-      <div className="p-4 rounded-2xl bg-card space-y-3">
+      <div className="p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
         <h3 className="text-base font-bold text-foreground">Breakdown</h3>
         <ScoreBar
           label="Lift load"

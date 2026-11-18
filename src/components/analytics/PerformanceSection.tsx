@@ -354,7 +354,7 @@ export default function PerformanceSection({
           <SectionErrorBoundary sectionName="performance-details">
             <Suspense
               fallback={
-                <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
+                <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48 dark:card-shadow" />
               }
             >
               <PerformanceDetails distanceUnit={distanceUnit}>

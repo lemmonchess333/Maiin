@@ -39,7 +39,9 @@ const SIZE_CLASSES: Record<CardSize, { radius: string; padding: string }> = {
 
 const TONE_CLASSES: Record<CardTone, string> = {
   card: "bg-card card-shadow",
-  muted: "bg-muted",
+  // A tile's lit edge on dark (DS6, §14o), at a chip's size: transparent
+  // in light, where the tile still sits flush.
+  muted: "bg-muted chip-edge",
   tinted: "",
 };
 

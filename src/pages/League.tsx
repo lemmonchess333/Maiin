@@ -85,7 +85,7 @@ export default function League() {
         {[0, 1, 2, 3].map((i) => (
           <li
             key={i}
-            className="flex items-center gap-3 rounded-xl bg-card p-3"
+            className="flex items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <Skeleton className="size-6 rounded-full" />
             <Skeleton className="size-9 rounded-full" />

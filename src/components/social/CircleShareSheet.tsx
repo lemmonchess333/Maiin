@@ -132,7 +132,7 @@ export default function CircleShareSheet({
         {!loading && loadFailed && circles.length === 0 && (
           <div
             role="alert"
-            className="flex items-center justify-between gap-3 rounded-xl bg-card p-3"
+            className="flex items-center justify-between gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <p className="text-small text-muted-foreground">
               Couldn&rsquo;t load your circles.

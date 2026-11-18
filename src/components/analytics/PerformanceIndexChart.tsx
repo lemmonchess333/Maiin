@@ -65,7 +65,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   const avgWeeks = averageWeekCount(weeks);
 
   return (
-    <div className="p-4 rounded-2xl bg-card">
+    <div className="p-4 rounded-2xl bg-card dark:card-shadow">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-bold text-foreground">
           Performance Index

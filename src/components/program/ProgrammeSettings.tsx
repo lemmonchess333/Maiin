@@ -881,7 +881,7 @@ export default function ProgrammeSettings({
             the exercise editor, not a split toggle. */}
         <div>
           <GroupHeading>Split</GroupHeading>
-          <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
             <p className="text-sm font-medium text-foreground">
               {currentSplitLabel}
             </p>
@@ -906,7 +906,7 @@ export default function ProgrammeSettings({
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
-        <div className="rounded-xl bg-muted px-3 py-2.5">
+        <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
           {/* "Edit days" drops under the counts when the two no longer
               fit side by side (larger text), rather than squeezing them. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

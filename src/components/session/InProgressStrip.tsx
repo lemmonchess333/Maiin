@@ -48,7 +48,7 @@ export default function InProgressStrip({
           : `${session.name} in progress`
       }
       className={cn(
-        "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-card p-3",
+        "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-card p-3 dark:card-shadow",
         !onCard && "card-shadow",
         className
       )}

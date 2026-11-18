@@ -6,13 +6,7 @@ import {
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useUid } from "@/lib/auth";
-import {
-  Fragment,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import {
   MAX_SPACES_IN_FEED,
@@ -403,7 +397,6 @@ export default function FeedView({
 
   return (
     <>
-
       {active && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
@@ -491,7 +484,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCountFailed && (
               <div
                 role="alert"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 dark:card-shadow"
               >
                 <p className="text-small text-muted-foreground">
                   Couldn&rsquo;t load who you follow.

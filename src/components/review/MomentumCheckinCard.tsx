@@ -221,7 +221,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
       ? FOCUS_OPTIONS.find((o) => o.value === existing.focus)?.label
       : null;
     return (
-      <div className="p-4 rounded-2xl bg-card space-y-2">
+      <div className="p-4 rounded-2xl bg-card space-y-2 dark:card-shadow">
         <SectionLabel as="h2">Momentum check-in</SectionLabel>
         <div className="flex items-start gap-3">
           <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
@@ -257,7 +257,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
 
   // Question state.
   return (
-    <div className="p-4 rounded-2xl bg-card space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
