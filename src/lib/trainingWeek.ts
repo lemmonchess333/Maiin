@@ -28,7 +28,12 @@
  *   lifts done     sessions saved for a day in the week, planned or not:
  *                  a session on a rest day happened
  *   lifts planned  the schedule's lift days from the start day; none when
- *                  the schedule plans no lifting
+ *                  the schedule plans no lifting. Race week counts only
+ *                  what it asks for (TrainWk1, the owner's call (b)): read
+ *                  in the plan's own week, on a day of race week or one of
+ *                  a race's rest days, the lifts the plan has skipped are
+ *                  the ones the app rested before the race, and are not
+ *                  planned (`liftsAsked`)
  *   runs done      runs that count (`isVolumeEligible`, the rule every run
  *                  total uses, so a run saved anyway counts nowhere) on a
  *                  day in the week, and planned runs marked done by hand on
@@ -45,9 +50,12 @@
  */
 import type {
   ManualCompletion,
+  ProgramState,
+  RunPlan,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
-import { localWeekKey } from "./dateHelpers";
+import { isRaceRestDay } from "@/features/program/raceRest";
+import { localDateString, localWeekKey } from "./dateHelpers";
 import { isLegacyCompleted } from "./scheduledRunStatus";
 import { beforeStart, scheduledDaysSinceStart, startDayKey } from "./startDay";
 import { resolveRunDayForDate, weekScheduleFor } from "./trainingResolver";
@@ -89,6 +97,10 @@ export interface TrainingWeekInput {
     | {
         runDays?: ScheduledRunDay[];
         manualCompletions?: Record<string, ManualCompletion>;
+        /** The week's lifts, read for the ones skipped in race week. */
+        workouts?: readonly { completed?: boolean; skipped?: boolean }[];
+        raceWeek?: ProgramState["raceWeek"];
+        runPlan?: Pick<RunPlan, "mode" | "raceGoal"> | null;
       }
     | null
     | undefined;
@@ -96,8 +108,9 @@ export interface TrainingWeekInput {
   workouts: readonly { date: string }[];
   runs: readonly WeekRun[];
   /**
-   * When the week is read. Only an older plan's undated run days need it:
-   * they belong to the week the plan was generated for, which is this one.
+   * When the week is read. An older plan's undated run days belong to the
+   * week the plan was generated for, which is this one; and the plan's
+   * skipped lifts are race week's rested ones only on a day of its week.
    */
   now?: Date;
 }
@@ -235,11 +248,12 @@ export function trainingWeek({
     programState?.manualCompletions ?? {}
   );
 
+  const liftsPlanned = liftsAsked(liftDays, programState, weekKey, now);
   return {
     weekKey,
     lifts: {
       done: done.lifts,
-      planned: liftDays > 0 ? liftDays : null,
+      planned: liftsPlanned > 0 ? liftsPlanned : null,
     },
     runs: {
       done: done.runs,
@@ -247,4 +261,36 @@ export function trainingWeek({
       km: Math.round(done.metres / 100) / 10,
     },
   };
+}
+
+/**
+ * The week's planned lifts, with race week counting only what it asks for
+ * (TrainWk1, the owner's call (b)): a lift the app rests before a race is
+ * not planned, so the week is not short of sessions it never asked for.
+ *
+ * The app rests them by skipping them: race week's rollover keeps one
+ * session and skips the rest (`raceWeekSession`), and from two days before
+ * a race the sessions not done yet are skipped (`raceRestSkips`). The plan
+ * keeps no record of who skipped a lift, so on a day of race week, or on
+ * one of a race's rest days, every lift skipped and not done is one the
+ * app rested, as `layOutWeek`'s Rest before your race group reads them.
+ * Only the plan's own week holds those marks: a week read on another day
+ * (last week's review) counts its lift days. What race week keeps is the
+ * plan's lifts not rested, never more than the week's lift days.
+ */
+function liftsAsked(
+  liftDays: number,
+  programState: TrainingWeekInput["programState"],
+  weekKey: string,
+  now: Date
+): number {
+  if (liftDays <= 0 || weekKey !== localWeekKey(now)) return liftDays;
+  if (
+    programState?.raceWeek !== "race" &&
+    !isRaceRestDay(programState?.runPlan, localDateString(now))
+  )
+    return liftDays;
+  const lifts = programState?.workouts ?? [];
+  const rested = lifts.filter((day) => day.skipped && !day.completed).length;
+  return rested > 0 ? Math.min(liftDays, lifts.length - rested) : liftDays;
 }

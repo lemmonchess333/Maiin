@@ -6,11 +6,9 @@
  * branch, never merged) drew every screen from a `layOutWeek` of its own;
  * this is that function on the plan and the sessions as the app stores
  * them, and keeps its answers, including its own choices where the grill
- * left a rule open. Home's week strip, day card and "tomorrow" line read it
- * in step 2, which ends the two rules (the cursor and the slot) that could
- * name two different next lifts.
- *
- * @unwired: TrainWk1 step 1 adds it alone; Home reads it in step 2 (the grill's Q52).
+ * left a rule open. Home's session card, week strip, day card and
+ * "tomorrow" line read it (step 2), which ends the two rules (the cursor
+ * and the slot) that could name two different next lifts.
  *
  * Nothing is stored for it (Q4, Q42). It is worked out each time from what
  * is saved: the lift order and its done and skipped marks, the dated runs,
@@ -91,17 +89,16 @@
  *     cannot hold wait in order in Still to do and move on as any lift
  *     does. No lighter first week, and no start held back to Monday.
  *   - Race week counts only what it asks for: a lift the app rests before
- *     a race (the `raceRest` group) is not counted as planned
- *     (`countAsked`).
+ *     a race (the `raceRest` group) is not counted as planned. The count
+ *     says so (`trainingWeek`'s `liftsAsked`, and its server copy
+ *     `leaguePlanned.js`), by the same reading of the plan's skips.
  *
  * The counts are `trainingWeek`'s (`count`), not this module's: every
  * weekly count comes from one module (App1 Q14), and the grill keeps them
- * as they are (Q43). The prototype counted the same way. One change is
- * the owner's: race week's planned lifts leave out the lifts the app
- * rests. `trainingWeek` and its server copy `leaguePlanned.js` count them
- * still, until step 2 moves them onto it. The sessions drawn agree with
- * the counts except where the plan knows more than the saved list, each
- * pinned in `layOutWeek.test.ts`:
+ * as they are (Q43), with the owner's change for race week. The prototype
+ * counted the same way. The sessions drawn agree with the counts except
+ * where the plan knows more than the saved list, each pinned in
+ * `layOutWeek.test.ts`:
  *
  *   - a lift in `doneOffWeek` is drawn done and counted in the week its
  *     session was saved in, not this one;
@@ -110,12 +107,9 @@
  *     planned runs and counted once (the count counts a mark by hand only
  *     on a day with no run that counts).
  *
- * Where it differs from Home's card today (`todaySession.ts`), which step 2
- * moves onto this: Home's "tomorrow" line names a lift on a race's rest day
- * and, with every lift done, the weekday's own lift, and calls a run day of
- * the usual layout with no run written a run day; the layout lays no lift
- * on a rest day or once the week's lifts are done, and plans only the runs
- * the plan dates, as the count does.
+ * Next week is not laid out: its lifts are ordered at the rollover and its
+ * runs written then. `liftsOpeningNextWeek` says which lifts the rollover
+ * will open it with, for a line that looks past Sunday (Home's "tomorrow").
  */
 import type { UserProfile } from "@/lib/auth";
 import {
@@ -128,10 +122,19 @@ import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { isLowerBodyDay } from "@/features/program/easierToday";
 import { isRaceRestDay } from "@/features/program/raceRest";
 import { runModeWithPlan } from "@/features/program/programMaintenance";
-import { localWeekKey, parseLocalDate } from "./dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "./dateHelpers";
 import type { ClaimState } from "./scheduledRunCompletion";
 import { beforeStart, startDayKey } from "./startDay";
-import { resolveTrainingDayForDate, weekScheduleFor } from "./trainingResolver";
+import {
+  resolveTrainingDayForDate,
+  weekScheduleFor,
+  type ResolvedLift,
+} from "./trainingResolver";
 import { trainingKind, type TrainingKind } from "./trainingKind";
 import {
   trainingWeek,
@@ -314,8 +317,8 @@ export interface WeekLayout {
   freeRunning: boolean;
   /** What the plan trains (`trainingKind`). */
   kind: TrainingKind;
-  /** The week's counts, `trainingWeek`'s, with the lifts the app rests
-   *  before a race left out of the planned lifts (`countAsked`). */
+  /** The week's counts, `trainingWeek`'s: race week's planned lifts leave
+   *  out the lifts the app rests before a race. */
   count: TrainingWeek;
 }
 
@@ -328,13 +331,7 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
   const startKey = startDayKey(profile?.createdAt);
   const runPlan = programState?.runPlan;
   const raceWeek = thisWeek && programState?.raceWeek === "race";
-  const liftWeekday = new Set(
-    weekScheduleFor(profile)
-      .filter((d) => d.type === "lift" || d.type === "both")
-      .map((d) => d.day)
-  );
-  const isLiftDay = (date: string) =>
-    liftWeekday.has(parseLocalDate(date).getDay());
+  const isLiftDay = liftDayTest(profile);
   const inWeek = (date: string) => date >= dates[0] && date <= dates[6];
   const underWay = thisWeek ? (input.inProgress ?? []) : [];
   const liftUnderWay = underWay.find((s) => s.sport === "lift");
@@ -644,40 +641,119 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
       runModeWithPlan(profile, programState) === "freeform" &&
       kind.runs,
     kind,
-    count: countAsked(
-      trainingWeek({
-        weekKey,
-        profile,
-        programState,
-        workouts,
-        runs,
-        now: parseLocalDate(today),
-      }),
-      plan.length,
-      raceRest.length
-    ),
+    count: trainingWeek({
+      weekKey,
+      profile,
+      programState,
+      workouts,
+      runs,
+      now: parseLocalDate(today),
+    }),
+  };
+}
+
+/** Whether the usual layout lifts on a date ("lift" or "both"). */
+function liftDayTest(profile: UserProfile | null): (date: string) => boolean {
+  const liftWeekday = new Set(
+    weekScheduleFor(profile)
+      .filter((d) => d.type === "lift" || d.type === "both")
+      .map((d) => d.day)
+  );
+  return (date) => liftWeekday.has(parseLocalDate(date).getDay());
+}
+
+/**
+ * The plan's lift a day holds: the one to do on it (under way, today or
+ * planned), else the first done on it; null with none. Home's session
+ * card, its day card and the day's Manage sheet name this one.
+ */
+export function planLiftOn(day: LayoutDay): LayoutLift | null {
+  const lifts = day.sessions.filter(
+    (s): s is LayoutLift => s.sport === "lift" && s.plan
+  );
+  return lifts.find((l) => l.state !== "done") ?? lifts[0] ?? null;
+}
+
+/**
+ * A day's lift as the Manage sheet acts on it: the plan's lift on the day
+ * (`planLiftOn`), else a lift skipped from it, so a skip made there can be
+ * restored there. None reads as no lift.
+ */
+export function manageLiftOn(day: LayoutDay | null): ResolvedLift {
+  const lift =
+    (day && planLiftOn(day)) ??
+    day?.slidOut.find((s) => s.to === "skipped")?.lift ??
+    null;
+  if (!lift || lift.index === null || !lift.workout)
+    return {
+      index: null,
+      workout: null,
+      status: "none",
+      isTerminal: false,
+      isStartable: false,
+    };
+  const status =
+    lift.state === "done"
+      ? "completed"
+      : lift.state === "skipped"
+        ? "skipped"
+        : "planned";
+  return {
+    index: lift.index,
+    workout: lift.workout,
+    status,
+    isTerminal: status !== "planned",
+    isStartable: status === "planned",
   };
 }
 
 /**
- * The week's count with race week counting only what it asks for (the
- * owner's call): the lifts the app rests before a race are not planned.
- * Race week keeps one session of the plan's (`raceWeekSession`), so its
- * planned lifts are the plan's lifts the app did not rest, never more than
- * the week's lift days; none reads as nothing planned, as the count's own
- * none does.
+ * Next week's lifts as the rollover will open it, if the lifts laid on
+ * this week's days are done: the week opens with the first lift still to
+ * do and the plan's order follows (Lift4, `rollLiftWeeks`), each on next
+ * week's lift days in turn, from the start and not on a race's rest days,
+ * as this week's are laid. A forecast for a line that looks past Sunday
+ * (Home's "tomorrow"); the week itself is laid out when it comes. Tropos
+ * heuristic: a race week's single session (`raceWeekSession`) is decided
+ * at the rollover, so it is not foreseen here.
  */
-function countAsked(
-  count: TrainingWeek,
-  lifts: number,
-  rested: number
-): TrainingWeek {
-  if (rested === 0 || count.lifts.planned === null) return count;
-  const asked = Math.min(count.lifts.planned, lifts - rested);
-  return {
-    ...count,
-    lifts: { ...count.lifts, planned: asked > 0 ? asked : null },
-  };
+export function liftsOpeningNextWeek(
+  week: WeekLayout,
+  profile: UserProfile | null,
+  programState: ProgramState | null
+): { date: string; lift: LayoutLift }[] {
+  const plan = programState?.workouts ?? [];
+  if (plan.length === 0) return [];
+  const lead = week.stillToDo[0]?.index ?? 0;
+  const isLiftDay = liftDayTest(profile);
+  const startKey = startDayKey(profile?.createdAt);
+  const nextWeek = weekDays(
+    localDateString(addLocalDays(parseLocalDate(week.weekKey), 7))
+  ).filter(
+    (d) =>
+      isLiftDay(d) &&
+      !beforeStart(d, startKey) &&
+      !isRaceRestDay(programState?.runPlan, d)
+  );
+  return nextWeek.slice(0, plan.length).map((date, k) => {
+    const index = (lead + k) % plan.length;
+    return {
+      date,
+      lift: {
+        sport: "lift",
+        plan: true,
+        index,
+        workout: plan[index],
+        group: "day",
+        date,
+        state: "planned",
+        savedId: null,
+        plannedOn: null,
+        movedFrom: null,
+        isNext: false,
+      },
+    };
+  });
 }
 
 /** A lift outside the plan, on its day. */

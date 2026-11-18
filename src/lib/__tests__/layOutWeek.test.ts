@@ -541,6 +541,7 @@ describe("a day with a lift and a run", () => {
         programState,
         claimMap: new Map(),
         workouts: [],
+        week: w,
         createdAtMs: 0,
         nowMs: parseLocalDate(WED).getTime(),
         lifetimeRuns: 3,
@@ -612,6 +613,7 @@ describe("who the week is for", () => {
       programState,
       claimMap: new Map(),
       workouts: [],
+      week: w,
       createdAtMs: 0,
       nowMs: parseLocalDate(THU).getTime(),
       lifetimeRuns: 3,
@@ -725,7 +727,7 @@ describe("a race", () => {
     };
     const w = week(input);
     expect(w.count.lifts).toEqual({ done: 1, planned: 1 });
-    // trainingWeek still plans every lift day until step 2 moves it here.
+    // The count is trainingWeek's, which counts race week the same way.
     expect(
       trainingWeek({
         weekKey: WEEK,
@@ -735,7 +737,7 @@ describe("a race", () => {
         runs: [],
         now: parseLocalDate(TUE),
       }).lifts.planned
-    ).toBe(3);
+    ).toBe(1);
     // Rested to the last one: nothing is planned.
     const allRested = week({
       today: FRI,
@@ -886,6 +888,7 @@ describe("Home's card names the lift the week lays on today", () => {
       programState: input.programState,
       claimMap: input.claimMap,
       workouts: input.workouts,
+      week: layOutWeek(input),
       createdAtMs: 0,
       nowMs: parseLocalDate(input.today).getTime(),
       lifetimeRuns: 3,

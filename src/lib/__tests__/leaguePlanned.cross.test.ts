@@ -9,7 +9,9 @@
  * of lifts only, lifts with a dated run plan, a free runner (no run days,
  * a weekly target), an account that began mid-week, a race plan, a
  * schedule built from targets because none is stored, an older plan's
- * undated run days, and a week other than this one.
+ * undated run days, and a week other than this one. And race week, which
+ * counts only what it asks for (TrainWk1, the owner's call (b)): the lifts
+ * the app rested before a race are not planned, read on a day of the week.
  *
  * The app's start day is the device's local date of `createdAt`; the
  * server's is the account's timezone. Each fixture's account is in the
@@ -34,13 +36,15 @@ const server = require_("../../../functions/lib/leaguePlanned") as {
     profile: Record<string, unknown>,
     programState: Record<string, unknown> | null,
     weekKey: string,
-    planWeekKey?: string
+    planWeekKey?: string,
+    todayKey?: string | null
   ) => { lifts: number | null; runs: number | null };
   leaguePlanned: (
     profile: Record<string, unknown>,
     programState: Record<string, unknown> | null,
     weekKey: string,
-    planWeekKey?: string
+    planWeekKey?: string,
+    todayKey?: string | null
   ) => { lifts: number; runs: number; runsFromPlan: boolean; planned: number };
 };
 
@@ -49,6 +53,7 @@ const THIS_WEEK = localWeekKey(new Date());
 const dayIn = (weekKey: string, i: number) =>
   localDateString(addLocalDays(parseLocalDate(weekKey), i));
 const LAST_WEEK = dayIn(THIS_WEEK, -7);
+const TODAY = localDateString(new Date());
 
 /** A Firestore timestamp for local `hour` o'clock on `dateKey`. */
 const at = (dateKey: string, hour = 9) => {
@@ -69,8 +74,28 @@ interface Fixture {
   name: string;
   weekKey: string;
   profile: Record<string, unknown>;
-  programState: { runDays?: ScheduledRunDay[] } | null;
+  programState: {
+    runDays?: ScheduledRunDay[];
+    workouts?: { completed?: boolean; skipped?: boolean }[];
+    raceWeek?: "build" | "taper" | "race" | "after";
+    runPlan?: { mode: string; raceGoal?: { targetDate: string } };
+  } | null;
+  /** The day it is read on, a day of this week; today without one. */
+  today?: string;
 }
+
+/** Three lifts a week, Monday, Wednesday and Friday, and a race plan's
+ *  runs: race week's shape. */
+const RACE_WEEK_SCHEDULE = schedule({
+  1: "lift",
+  2: "run",
+  3: "lift",
+  4: "run",
+  5: "lift",
+  0: "run",
+});
+const lifts = (...marks: ("done" | "skipped" | "to do")[]) =>
+  marks.map((m) => ({ completed: m === "done", skipped: m === "skipped" }));
 
 function fixtures(): Fixture[] {
   const w = (i: number) => dayIn(THIS_WEEK, i);
@@ -209,25 +234,108 @@ function fixtures(): Fixture[] {
       profile: { weekSchedule: schedule({}), weeklyRunDaysTarget: 0 },
       programState: null,
     },
+    {
+      // Race week's rollover kept one session and skipped the other two:
+      // one lift planned, not three.
+      name: "race week, two lifts rested",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE, runMode: "race_prep" },
+      programState: {
+        raceWeek: "race",
+        workouts: lifts("to do", "skipped", "skipped"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+        runDays: [
+          runDay({ id: "e1", date: w(1), dayIndex: 2 }),
+          runDay({ id: "e2", date: w(3), dayIndex: 4 }),
+          runDay({
+            id: "race",
+            date: w(6),
+            dayIndex: 0,
+            templateId: "race",
+            type: "race",
+          }),
+        ],
+      },
+      today: w(2),
+    },
+    {
+      name: "race week, every lift rested",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: schedule({ 1: "lift", 3: "lift" }) },
+      programState: {
+        raceWeek: "race",
+        workouts: lifts("skipped", "skipped"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+      },
+      today: w(4),
+    },
+    {
+      // A race next Monday rests this Saturday and Sunday: Friday's lift
+      // skipped from Saturday is rested.
+      name: "the rest days before a race early next week",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "taper",
+        workouts: lifts("done", "done", "skipped"),
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { targetDate: dayIn(THIS_WEEK, 7) },
+        },
+      },
+      today: w(5),
+    },
+    {
+      // The same week on Thursday, before its rest days: a lift skipped
+      // then was the person's, and is planned.
+      name: "the same week, before its rest days",
+      weekKey: THIS_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "taper",
+        workouts: lifts("done", "skipped", "to do"),
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { targetDate: dayIn(THIS_WEEK, 7) },
+        },
+      },
+      today: w(3),
+    },
+    {
+      // Last week's review, after the rollover: its lift days stand.
+      name: "race week's skips, read for another week",
+      weekKey: LAST_WEEK,
+      profile: { weekSchedule: RACE_WEEK_SCHEDULE },
+      programState: {
+        raceWeek: "race",
+        workouts: lifts("to do", "skipped", "skipped"),
+        runPlan: { mode: "race_prep", raceGoal: { targetDate: w(6) } },
+      },
+      today: w(2),
+    },
   ];
 }
 
 describe("league planned ≡ trainingWeek's planned", () => {
   for (const f of fixtures()) {
     it(f.name, () => {
+      const today = f.today ?? TODAY;
       const client = trainingWeek({
         weekKey: f.weekKey,
         profile: f.profile as Parameters<typeof trainingWeek>[0]["profile"],
-        programState: f.programState,
+        programState: f.programState as Parameters<
+          typeof trainingWeek
+        >[0]["programState"],
         workouts: [],
         runs: [],
-        now: new Date(),
+        now: parseLocalDate(today),
       });
       const got = server.plannedInWeek(
         f.profile,
         f.programState,
         f.weekKey,
-        THIS_WEEK
+        THIS_WEEK,
+        today
       );
       expect(got).toEqual({
         lifts: client.lifts.planned,
@@ -245,6 +353,33 @@ describe("league planned ≡ trainingWeek's planned", () => {
     expect(counts.some((c) => c.lifts === null && c.runs === null)).toBe(true);
     // The mid-week start leaves one lift (Friday) and one run (Saturday).
     expect(counts[3]).toEqual({ lifts: 1, runs: 1 });
+  });
+
+  it("race week counts only the lifts it asks for, on a day of the week", () => {
+    const byName = new Map(
+      fixtures().map((f) => [
+        f.name,
+        server.plannedInWeek(
+          f.profile,
+          f.programState,
+          f.weekKey,
+          THIS_WEEK,
+          f.today ?? TODAY
+        ).lifts,
+      ])
+    );
+    expect(byName.get("race week, two lifts rested")).toBe(1);
+    expect(byName.get("race week, every lift rested")).toBeNull();
+    expect(byName.get("the rest days before a race early next week")).toBe(2);
+    expect(byName.get("the same week, before its rest days")).toBe(3);
+    expect(byName.get("race week's skips, read for another week")).toBe(3);
+    // Without the day it is read on, the server counts the lift days.
+    const race = fixtures().find(
+      (f) => f.name === "race week, two lifts rested"
+    )!;
+    expect(
+      server.plannedInWeek(race.profile, race.programState, THIS_WEEK).lifts
+    ).toBe(3);
   });
 });
 
