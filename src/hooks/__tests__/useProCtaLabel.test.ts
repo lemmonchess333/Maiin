@@ -7,7 +7,7 @@
  * Store's answer, the one the paywall already asks, now takes it off.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 const profileMock = vi.fn<() => Record<string, unknown> | null>(() => ({}));
 vi.mock("@/lib/auth", () => ({
@@ -22,7 +22,13 @@ vi.mock("@/lib/revenuecat", () => ({
 }));
 
 import { useProCtaLabel } from "../useProCtaLabel";
+import { forgetStoreTrialEligibility } from "../useStoreTrialEligibility";
 import { APPLE_PRODUCT_IDS } from "@/lib/purchaseProvider";
+
+function cleanupAndForget() {
+  forgetStoreTrialEligibility();
+  eligibilityMock.mockReset();
+}
 
 function storeSays(yearly: string, monthly = yearly) {
   eligibilityMock.mockResolvedValue({
@@ -35,13 +41,21 @@ beforeEach(() => {
   vi.clearAllMocks();
   profileMock.mockReturnValue({});
   enabledMock.mockReturnValue(true);
+  forgetStoreTrialEligibility();
 });
+
+/** Let the store's answer reach the hook's state before reading it, so a
+ *  label read here is the one after the answer, not the one before. */
+async function answered() {
+  await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
+  await act(async () => {});
+}
 
 describe("useProCtaLabel", () => {
   it("offers the trial to a new account the App Store will give it to", async () => {
     storeSays("eligible");
     const { result } = renderHook(() => useProCtaLabel());
-    await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
+    await answered();
     expect(result.current).toBe("Try Pro free");
   });
 
@@ -52,16 +66,22 @@ describe("useProCtaLabel", () => {
   });
 
   it("asks about the plan the Pro page opens on, the yearly", async () => {
-    storeSays("eligible", "ineligible");
+    // Yearly says no, monthly yes: the button leads to the yearly plan.
+    storeSays("ineligible", "eligible");
     const { result } = renderHook(() => useProCtaLabel());
-    await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
-    expect(result.current).toBe("Try Pro free");
+    await waitFor(() => expect(result.current).toBe("See Pro"));
+    cleanupAndForget();
+    // And the other way round, the yearly's yes wins.
+    storeSays("eligible", "ineligible");
+    const again = renderHook(() => useProCtaLabel());
+    await answered();
+    expect(again.result.current).toBe("Try Pro free");
   });
 
   it("leaves the account's record to decide when the store can't tell", async () => {
     storeSays("unknown");
     const { result } = renderHook(() => useProCtaLabel());
-    await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
+    await answered();
     expect(result.current).toBe("Try Pro free");
   });
 
@@ -69,7 +89,7 @@ describe("useProCtaLabel", () => {
     profileMock.mockReturnValue({ hasUsedTrial: true });
     storeSays("eligible");
     const { result } = renderHook(() => useProCtaLabel());
-    await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
+    await answered();
     expect(result.current).toBe("See Pro");
   });
 
