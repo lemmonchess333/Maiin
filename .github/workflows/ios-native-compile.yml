@@ -14,10 +14,26 @@ permissions:
 
 jobs:
   simulator-build:
-    runs-on: macos-26
+    # The image with Xcode 27.1, the one the release builds with
+    # (deploy-ios.yml), so a pull request compiles what ships.
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The iOS SDK the app links decides what an iPhone Duo shows it: only
+      # a build with the iOS 27.1 SDK uses the whole display; anything older
+      # runs there in compatibility mode (docs/ios/iphone-duo.md, owner
+      # decision A, 18 November 2026). The xcode-27 image carries several
+      # Xcodes and its default is not 27.1, so this selects 27.1 by name
+      # (the final release, a point release, or its release candidate) and
+      # fails rather than build with another.
+      - name: Select Xcode 27.1
+        run: |
+          set -euo pipefail
+          XCODE=$(python3 scripts/verify_ios_xcode.py --want 27.1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          python3 scripts/verify_ios_xcode.py --want 27.1 --sdk "$(xcrun --sdk iphoneos --show-sdk-version)"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22

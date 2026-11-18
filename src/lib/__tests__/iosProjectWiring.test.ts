@@ -412,11 +412,33 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("builds on a macOS image that is not deprecated", () => {
-    // macos-14 is deprecated (actions/runner-images#13518), and its default
-    // Xcode is older than App Store Connect accepts uploads from. macos-26
-    // carries the current Xcode as its default.
-    expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
+  it("builds with Xcode 27.1, before anything else touches the project", () => {
+    // Owner decision A (18 November 2026, docs/ios/iphone-duo.md): only an
+    // iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
+    // 27 SDK is required for every upload from April 2027. macos-26 tops
+    // out at Xcode 26.6 (macos-14, the first image, is deprecated:
+    // actions/runner-images#13518); the xcode-27 image carries several
+    // Xcodes, so both workflows select 27.1 by name, and the pull
+    // requests' compile builds what the release does.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    for (const [name, file] of [
+      ["deploy-ios.yml", workflow],
+      ["ios-native-compile.yml", compile],
+    ] as const) {
+      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe(
+        "xcode-27"
+      );
+      const select = file.indexOf("- name: Select Xcode 27.1");
+      expect(select, name).toBeGreaterThan(-1);
+      expect(file.slice(select, select + 1200), name).toContain(
+        "verify_ios_xcode.py --want 27.1"
+      );
+      // First after the checkout: no step runs Xcode or syncs the
+      // project with whatever the image's default is.
+      const firstStep = file.indexOf("- name:");
+      expect(firstStep, name).toBe(select);
+      expect(select, name).toBeLessThan(file.indexOf("xcodebuild -project"));
+    }
   });
 
   it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
