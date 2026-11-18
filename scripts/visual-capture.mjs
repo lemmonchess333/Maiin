@@ -180,6 +180,60 @@ async function capturePass(browser, dark) {
       `  ✓ ${tag}/${name}${openDialogs ? " (open dialog — review required)" : ""}`
     );
   }
+  // Circ1's captures (this scratch branch only, never merged): circuit
+  // mode's picker, work, rest, end question and finish at 393 and 320 px,
+  // on Playwright's clock moved 5 s at a time.
+  await p.clock.install();
+  const shoot = async (name, width) => {
+    const file = `${name}-${width}-${tag}.png`;
+    await p.screenshot({ path: `${OUT}/${file}`, animations: "disabled" });
+    manifest.screens.push({ name, theme: tag, path: "/circuit", viewportFile: file });
+    saveManifest();
+    console.log(`  ✓ ${tag}/${name} at ${width}px`);
+  };
+  const forward = async (seconds) => {
+    for (let s = 0; s < seconds; s += 5) {
+      await p.clock.fastForward(5000);
+      await p.waitForTimeout(60);
+    }
+  };
+  const until = async (locator) => {
+    for (let i = 0; i < 40; i++) {
+      if (await locator.isVisible().catch(() => false)) return;
+      await forward(5);
+    }
+    await locator.waitFor({ state: "visible" });
+  };
+  for (const width of [393, 320]) {
+    await p.setViewportSize({ width, height: 852 });
+    await p.goto(BASE.replace(/\/$/, "") + "/circuit", {
+      waitUntil: "domcontentloaded",
+    });
+    const row = p.getByRole("button", { name: /^10-minute circuit\s?10 min/ });
+    await row.waitFor({ state: "visible" });
+    await p.addStyleTag({ content: SAFE }).catch(() => {});
+    await p.waitForTimeout(800);
+    await shoot("20-circuit-picker", width);
+    await row.click();
+    await until(p.getByText("Work", { exact: true }));
+    await p.waitForTimeout(500);
+    await shoot("21-circuit-work", width);
+    await until(p.getByText("Rest", { exact: true }));
+    await p.waitForTimeout(500);
+    await shoot("22-circuit-rest", width);
+    await p.getByRole("button", { name: "End circuit" }).click();
+    const keepGoing = p
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Keep going" });
+    await keepGoing.waitFor({ state: "visible" });
+    await p.waitForTimeout(800);
+    await shoot("23-circuit-end-question", width);
+    await keepGoing.click();
+    await forward(600);
+    await p.getByText("How did it feel?").waitFor({ state: "visible" });
+    await p.waitForTimeout(1000);
+    await shoot("24-circuit-finish", width);
+  }
   await ctx.close();
 }
 
