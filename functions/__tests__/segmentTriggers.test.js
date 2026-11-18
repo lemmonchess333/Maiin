@@ -265,8 +265,18 @@ describe("the segment callables", () => {
     ).rejects.toMatchObject({ code: "not-found" });
     await expect(
       fns.deleteSegment.run({ segmentId }, VERIFIED(MAKER))
-    ).resolves.toEqual({ deleted: true, efforts: 1 });
+    ).resolves.toEqual({ deleted: true });
     expect(read(`segments/${segmentId}`)).toBeUndefined();
+  });
+
+  it("tells the maker nothing of other people's efforts when it deletes them", async () => {
+    // Someone else's run, never shared, timed on the maker's segment: the
+    // board never shows it, so the delete's answer must not count it.
+    await create("quiet", runOf("quiet"));
+    expect(effortPaths(RUNNER)).toHaveLength(1);
+    const answer = await fns.deleteSegment.run({ segmentId }, VERIFIED(MAKER));
+    expect(answer).toEqual({ deleted: true });
+    expect(effortPaths(RUNNER)).toEqual([]);
   });
 
   it("reads a board for a signed-in caller, and says when the segment is gone", async () => {
