@@ -42,15 +42,13 @@ alone:
 
 Fix PRs opened from this audit, each small and separate:
 
-| PR                                   | Guideline       | What it does                                                                            |
-| ------------------------------------ | --------------- | --------------------------------------------------------------------------------------- |
-| `claude/launch-pro-cta-store-trial`  | 3.1.2, 2.3.1    | "Try Pro free" only when the App Store will give the trial; paywall links named in full |
-| `claude/launch-paywall-store-prices` | 3.1.2, 2.3.1    | The iPhone paywall shows the App Store's prices, never the pound fallback               |
-| `claude/launch-privacy-policy-gaps`  | 5.1.1(i), 5.1.3 | The Privacy Policy names push tokens and the screened run maps                          |
-| `claude/launch-iphone-copy`          | 2.3.10, 4.2     | No "browser" in the iPhone camera message; no other app named under GPX import          |
-| `claude/launch-submission-pack`      | 2.3, 5.1, 2.3.3 | The submission pack, the privacy label's push token, 6.9" and 6.5" screenshots          |
-
-The PR numbers are in the Session report on the first PR.
+| PR                                         | Guideline       | What it does                                                                            |
+| ------------------------------------------ | --------------- | --------------------------------------------------------------------------------------- |
+| #3399 `claude/launch-pro-cta-store-trial`  | 3.1.2, 2.3.1    | "Try Pro free" only when the App Store will give the trial; paywall links named in full |
+| #3406 `claude/launch-paywall-store-prices` | 3.1.2, 2.3.1    | The iPhone paywall shows the App Store's prices, never the pound fallback               |
+| #3408 `claude/launch-privacy-policy-gaps`  | 5.1.1(i), 5.1.3 | The Privacy Policy names push tokens and the screened run maps                          |
+| #3413 `claude/launch-iphone-copy`          | 2.3.10, 4.2     | No "browser" in the iPhone camera message; no other app named under GPX import          |
+| #3418 `claude/launch-submission-pack`      | 2.3, 5.1, 2.3.3 | The submission pack, the privacy label's push token, 6.9" and 6.5" screenshots          |
 
 ## 1. Safety
 
@@ -71,7 +69,7 @@ names nonconsensual intimate imagery, including AI-made.
   `functions/profanityFilter.js:34-37`; posts flagged in
   `functions/lib/activityModeration.js:39-50`, comments refused before they
   are written at `functions/index.js:8637`, Space posts deleted by
-  `functions/lib/spacePostModeration.js:43`). Every photo other people see
+  `functions/lib/spacePostModeration.js:72-90`). Every photo other people see
   (profile, post, Space post, run map) is checked by Google Cloud Vision
   SafeSearch first, and one rated LIKELY or VERY_LIKELY adult is refused and
   deleted (`functions/lib/photoScreen.js:12-15, 35`). The check fails closed.
@@ -98,10 +96,10 @@ Risks:
 
 - **Segment names cannot be reported.** A segment's name is chosen by the
   runner who made it and shows on other people's runs that cross it
-  (`functions/lib/segments.js:276`), but the report targets are activity,
+  (`functions/lib/segments.js:334-345`, `matchRunToSegments`), but the report targets are activity,
   comment, user, Space post and Space comment only (`src/lib/socialApi.ts:1057-1063`),
   and `src/pages/Segment.tsx` has no menu. Names pass the word filter
-  (`functions/lib/segments.js:228`). Fix: a `segment` report target in
+  (`functions/lib/segments.js:222-231`). Fix: a `segment` report target in
   `functions/lib/reportTargets.js` with a "Report segment" entry, and a
   moderator action that deletes the segment. It changes `functions/`, so it
   runs the backend deploy chain; not built in this pass. Until then the
@@ -124,8 +122,8 @@ Tropos is rated 16+ and not in the Kids category.
 ### 1.4.1 Physical harm, medical apps: Pass
 
 Tropos is not a medical app and makes no measurement claims. Calorie
-targets never fall below 1,200 kcal unless the person types their own
-(`src/lib/macroConstants.ts:81-94`); a typed target below that is kept with
+targets never fall below 1,200 kcal, or below maintenance where that is
+lower, unless the person types their own (`src/lib/macroConstants.ts:81-94`); a typed target below that is kept with
 a warning (`src/components/settings/CalorieTargetOverride.tsx:94-100`).
 Weight-loss rates stop at 0.75 kg a week (`NutritionSection.tsx:385-388`).
 Readiness is said in words, not a score, and only describes sleep and heart
@@ -208,7 +206,7 @@ TestFlight group (`scripts/ios/testflight-build.mjs`, `docs/ios-release.md`).
   - Readiness, older charts and the score's details are Pro and missing
     from the Pro list (`src/components/paywall/proIncludesCopy.ts:15-23`).
   - The review notes say Tropos reads steps and shows them on Home
-    (`listing.md:275`); the Health permission now also reads sleep, resting
+    (`listing.md:276`); the Health permission now also reads sleep, resting
     heart rate and HRV (`ios/App/App.xcodeproj/project.pbxproj:681`).
   - Spaces, challenges and leagues are listed as features, but they stay
     hidden until at least 10 people are training on Tropos
@@ -237,7 +235,7 @@ TestFlight group (`scripts/ios/testflight-build.mjs`, `docs/ios-release.md`).
   reads the native shell, `src/lib/purchaseProvider.ts:76-78`). No one has
   opened the build on an iPad: Home, a sheet, the paywall and a run, once.
 - **2.4.2 Power.** GPS runs only while a run is recorded; the warm-up
-  watcher stops with the setup screen (`src/lib/nativeLocationSource.ts:168, 201`).
+  watcher stops with the setup screen (`src/lib/nativeLocationSource.ts:147, 218, 231`).
 
 ### 2.5 Software requirements
 
@@ -370,7 +368,7 @@ and carries no messages or offers.
   (`src/components/workout/ReminderOffer.tsx:164-178`); the app works with
   push off.
 - No push sells anything. Pushes not from a person are capped at one a day
-  and five a week (`functions/lib/pushBudget.js:52-56`); monthly challenge
+  and five a week (`functions/lib/pushBudget.js:56-57`); monthly challenge
   pushes are off until asked for (`functions/lib/pushConsent.js:52-55`);
   every kind has a switch in Settings → Notifications.
 - Low: the one Remind me also turns on the evening streak nudge, Monday's
@@ -496,8 +494,8 @@ answers are in the submission pack.
 - **Age rating: social media** (required since September 2026) and the
   **Shared Location** descriptor (16 November 2026): Tropos shares run maps
   on posts, so Yes.
-- **Texas SB 2420, then Utah and Louisiana** (in force in Texas since
-  4 June 2026): duties on developers to use the store's age category and
+- **Texas SB 2420, then Utah and Louisiana** (its date was 1 January 2026;
+  in force in Texas since 4 June 2026, when an injunction was lifted): duties on developers to use the store's age category and
   parental consent for minors. Tropos is 16+ and does not read Apple's
   Declared Age Range API. A legal question for the owner, not an App
   Review one.
