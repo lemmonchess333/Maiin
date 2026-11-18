@@ -54,6 +54,11 @@ public/exercise-demos/_preview.html
 # untracked so a build never trips the closeout stop-hook. Remove to commit it.
 graphify-out/
 
+# The verify skill's rig state: emulator and preview pids, the emulator
+# build, the signed-in session and each run's report and screenshots
+# (`npm run verify:app`, scripts/verify/rig.ts).
+.verify/
+
 # Ad-hoc agent worktrees created INSIDE the repo (mutation checks, parallel
 # verification). `.claude/worktrees/` above covers the managed ones; these are
 # named per-task (wt-mut, wt-flush, ...) and a `git add -A` will happily commit

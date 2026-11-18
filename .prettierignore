@@ -33,6 +33,7 @@ functions/lib/
 .claude/skills/*/
 !.claude/skills/lock-decision/
 !.claude/skills/verifier-tropos-web/
+!.claude/skills/verify/
 
 # improve-animations plans quote source verbatim, indentation included, so an
 # executor can match them exactly; prettier would re-indent the quotes.

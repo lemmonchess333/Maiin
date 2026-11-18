@@ -13,6 +13,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 npm run test:e2e:auth # Signed-in E2E against the emulator, one test at a time (as CI)
 npm run test:e2e:journeys # Journeys: one person through weeks of the app, against the emulator
 npm run verify       # Everything CI's unit job blocks a merge on: run before pushing
+npm run verify:app   # The verify skill: drive the features a change touches on the emulator rig
 ```
 
 ## Tech Stack
@@ -710,6 +711,11 @@ When the owner says a screen feels off, use the `screen-critique` skill: it
 scores the screen against §14m (`npm run score:screens` on the emulator
 rig), sets it beside the reference apps, finds the cause in the code and
 ends in fixes for the owner to call. Together's Soc16 critique is its model.
+
+Before committing a change the app shows, use `/verify` (the `verify` skill,
+`npm run verify:app`): it boots the emulator rig, drives the features the
+change touches from `scripts/verify/featureMap.ts`, and returns a report
+with a screenshot per step. Incomplete is not a pass.
 
 Three paste-ready session prompts live in `docs/agents/`, each carrying its
 measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,

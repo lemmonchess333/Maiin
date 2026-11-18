@@ -31,9 +31,7 @@ mkdirSync(SCREENS, { recursive: true });
 import { BASE } from "./env.mjs";
 const EMAIL = process.env.TEST_EMAIL || "e2e-test@tropos.test";
 import { PW } from "./env.mjs";
-const CHROMIUM_PATH =
-  process.env.CHROMIUM_PATH ||
-  "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { CHROMIUM_PATH } from "./env.mjs";
 const log = (...a) => console.log("[qa]", ...a);
 
 // Container / background-service chatter that isn't from the app itself.
