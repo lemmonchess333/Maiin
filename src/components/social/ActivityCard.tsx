@@ -22,6 +22,7 @@ import {
   liftPostLeadArt,
   liftPostRowDone,
   liftPostRows,
+  type LiftPostRow,
 } from "../../lib/liftPost";
 import { circuitPostOf } from "../../lib/circuitPost";
 import { generatedDayType } from "@/lib/liftDayLabel";
@@ -307,7 +308,7 @@ function ActivityCard({
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
-  const exercises = circuit
+  const exercises: LiftPostRow[] = circuit
     ? circuit.moves.map((move) => ({
         name: move.name,
         summary: "",

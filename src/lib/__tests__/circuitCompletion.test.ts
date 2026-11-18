@@ -134,7 +134,10 @@ describe("completeCircuit (Circ1 (11))", () => {
   it("shares the circuit's own post: rounds, interval and moves, no exercise rows", async () => {
     const receipt = await completeCircuit(finished());
     expect(receipt.share.source).toEqual({ kind: "workout", id: "free-c1" });
-    const outcome = await receipt.share.post({ visibility: "followers" });
+    const outcome = await receipt.share.post({
+      visibility: "followers",
+      caption: "",
+    });
     expect(outcome.status).toBe("posted");
     const path = allPaths().find((p) => p.startsWith("activities/"));
     expect(readDoc(path!)).toMatchObject({
