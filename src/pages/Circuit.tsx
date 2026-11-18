@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import CircuitFinish from "@/components/circuit/CircuitFinish";
 import CircuitPicker from "@/components/circuit/CircuitPicker";
 import CircuitRunner from "@/components/circuit/CircuitRunner";
@@ -52,6 +51,7 @@ import { useBackDismiss } from "@/lib/backDismiss";
 import { completeCircuit } from "@/lib/circuitCompletion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { toast } from "@/lib/toast";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 
 /** How long the picker waits for the circuit history before offering the
