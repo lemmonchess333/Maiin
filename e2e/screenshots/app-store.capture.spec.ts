@@ -730,7 +730,7 @@ test.describe("App Store screenshots", () => {
     });
     await expect(
       page.getByRole("button", { name: /Add water — choose a container size/ })
-    ).toHaveAccessibleName(/^Water 1 litres? logged/);
+    ).toHaveAccessibleName(/^Water 1 L\b.*\. Water 1 litres? logged/);
 
     // Last, so a badge the water earned is opened with the rest.
     await openWaitingBadges(page);
