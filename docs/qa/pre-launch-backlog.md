@@ -1905,6 +1905,15 @@ such upload again, for a client that skips the callable
       profile photo is refused as "couldn't check" — the safe way round,
       but photo posts stop. About $1.50 per 1,000 photos after the first
       1,000 each month.
+- [ ] **Before launch, the owner confirms Cloud Vision is on in
+      production.** Turned on once is not proof it still is: APIs &
+      Services → Enabled APIs for `adaptive-fitness-af8bb` lists "Cloud
+      Vision API", and the functions log for the last day has no
+      `screenPhoto.failed` or `screenUploadedPhoto.failed` naming
+      `SERVICE_DISABLED` or a 403. While it is off, no photo post or
+      profile photo goes through, and an upload from a client that skips
+      the app's check is kept unscreened after a day of retries (the
+      budget section below), so this is a launch gate, not a tidy-up.
 - [ ] **A gym photo goes through.** Post a Space photo of yourself in gym
       kit, and set a profile photo: both appear.
 - [ ] **The log shows the checks.** In the functions log,
@@ -1919,9 +1928,11 @@ such upload again, for a client that skips the callable
 Affects: `screenUploadedPhoto` and `screenPhoto` (`functions/index.js`,
 `functions/lib/photoScreen.js`). Each account's uploads to the screened
 folders are screened at most 100 a day by the trigger and 100 a day by the
-callable; an upload past that, or one Vision could not screen within a day
-of retries, is deleted unscreened. Only production shows the retries and
-the logs.
+callable. The trigger deletes an upload past that (unless the callable
+passed that very file) and an image Vision cannot read, at once. A photo is
+never deleted because Vision is down or switched off: the trigger is
+retried for a day, then keeps the file and marks it unscreened. Only
+production shows the retries and the logs.
 
 - [ ] **The trigger is retried.** After Deploy production runs for this
       change, the Firebase console shows `screenUploadedPhoto` with
@@ -1931,8 +1942,14 @@ the logs.
       `screenUploadedPhoto.deletedUnscreened` line for them.
 - [ ] **Until Cloud Vision is on** (the section above), expect
       `screenUploadedPhoto.failed` on each upload and, a day later,
-      `screenUploadedPhoto.deletedUnscreened` with
-      `unscreened-after-retries`. The app posts no such photo either way.
+      `screenUploadedPhoto.keptUnscreened`, never `deletedUnscreened`.
+      Each such file carries the custom metadata `screen: unscreened`.
+      The app posts no such photo either way.
+- [ ] **Unscreened files are looked at once Vision is back.** If any
+      `screenUploadedPhoto.keptUnscreened` lines were logged, list their
+      paths (each also carries the custom metadata `screen: unscreened`)
+      and delete any that should not be shown. Nothing screens them again
+      by itself yet.
 
 ## User content moderation for App Review 1.2 (2026-10-04)
 
