@@ -102,12 +102,33 @@ describe("the docked cards' glass", () => {
         contrast(hslToken(theme, "achievement-strong"), fill)
       ).toBeGreaterThanOrEqual(4.5);
       // The "New best" pill: the gold text on a 15% gold wash over the
-      // frosted card, the tightest pair on either card.
+      // frosted card, the tightest text pair on either card.
       const pill = over(hslToken(theme, "achievement"), 0.15, fill);
       expect(
         contrast(hslToken(theme, "achievement-strong"), pill)
       ).toBeGreaterThanOrEqual(4.5);
+      // "Rest done", and the rest ring's arc (WCAG 1.4.11, 3:1).
+      expect(
+        contrast(hslToken(theme, "success-strong"), fill)
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(hslToken(theme, "primary"), fill)).toBeGreaterThanOrEqual(
+        3
+      );
     }
+  });
+
+  it("leaves a margin over the floors: the lighter fills put the pill and the ring on them", () => {
+    const thin = over(hslToken("light", "card"), 0.92, BLACK);
+    const pill = over(hslToken("light", "achievement"), 0.15, thin);
+    expect(
+      contrast(hslToken("light", "achievement-strong"), pill)
+    ).toBeLessThan(4.55);
+    expect(
+      contrast(
+        hslToken("dark", "primary"),
+        over(hslToken("dark", "card"), 0.88, WHITE)
+      )
+    ).toBeLessThan(3);
   });
 
   it("goes solid where the blur cannot be drawn and under Reduce Transparency", () => {

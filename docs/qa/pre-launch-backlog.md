@@ -1532,7 +1532,7 @@ need an iPhone.
 Affects: the workout screen's dock (`WorkoutSession.tsx`: the new best and
 the rest card, `CompactRestTimer.tsx`, `NewBestMoment.tsx`). The set list
 now runs on under the dock, which floats over its foot, frosted (the
-card's colour at 92% on light and 88% on dark over a blur), and the list
+card's colour at 94% on light and 90% on dark over a blur), and the list
 keeps the dock's height as room at its end and as scroll padding. The
 manual Start rest timer (auto-start off) stays under the list in the flow.
 The unit tests pin the structure, the order of the writes and the
@@ -1548,6 +1548,10 @@ scroll padding in WebKit are for a phone.
 - [ ] **The last row scrolls clear.** With a rest running, scroll the list
       to its end. Passing: Add exercise and the last row can be scrolled
       above the rest card and tapped.
+- [ ] **Nothing jumps when a card leaves.** Scroll the list to its end
+      with the rest card up, then let the rest end (or wait out a new
+      best). Passing: the rows stay where they are until you scroll; the
+      room under them goes once you do.
 - [ ] **What is behind is blurred.** Scroll the set table slowly under the
       rest card in both themes. Passing: the rows show through only as a
       soft blur, every word on the card reads as before, and in dark mode
@@ -1560,6 +1564,10 @@ scroll padding in WebKit are for a phone.
       on a 320 pt phone (or Display Zoom), tick a set that is a new best.
       Passing: both cards show whole or the dock scrolls inside itself,
       and the exercise strip at the top stays uncovered.
+- [ ] **Reduce Transparency.** Once #3398 is in the build (it sets the
+      attribute this rule reads), turn on Settings, Accessibility, Display
+      & Text Size, Reduce Transparency, and go back to a workout with a
+      rest running. Passing: both cards are solid, with no blur.
 - [ ] **Frames.** Scroll a long set table under the rest card. Passing:
       no stutter; if there is, the cards go back to solid with their edge
       (DS6's named risk).
