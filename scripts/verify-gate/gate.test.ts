@@ -398,6 +398,16 @@ describe("trailers", () => {
         releasedAfterBlocks: true,
       })
     ).toBe("enforce(env) would-block, released after 2 blocks; seen: nothing");
+    expect(
+      gate.gateTrailer({
+        mode: "observe",
+        source: "base",
+        verdict: "pass",
+        methods: ["review"],
+        releasedAfterBlocks: false,
+        rules: "worktree(env)",
+      })
+    ).toBe("observe(base) pass; seen: review; rules: worktree(env)");
   });
 
   it("names the way out when it denies", () => {

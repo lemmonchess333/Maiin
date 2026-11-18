@@ -47,6 +47,13 @@ function readText(path) {
 }
 
 async function loadGate(stateDir) {
+  // TROPOS_VERIFY_GATE_RULES=worktree judges by the working tree's rules,
+  // for a branch that changes them (its tests run the hook). The stamp says
+  // so, as it says when the env var sets the mode.
+  if (process.env.TROPOS_VERIFY_GATE_RULES === "worktree") {
+    const gate = await import(pathToFileURL(join(project, GATE_PATH)).href);
+    return { gate, logic: "worktree(env)" };
+  }
   const blob = git(project, [
     "rev-parse",
     "-q",
@@ -130,6 +137,7 @@ async function main() {
       ? readText(resolve(target, commit.messageFile))
       : null,
     root: top,
+    rules: logic === "worktree(env)" ? logic : null,
   });
   if (!result) return;
 

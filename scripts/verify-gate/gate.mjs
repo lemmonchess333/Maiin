@@ -758,12 +758,16 @@ export function gateTrailer({
   verdict,
   methods,
   releasedAfterBlocks,
+  rules = null,
 }) {
   const seen = sortMethods(methods);
   const outcome = releasedAfterBlocks
     ? `${verdict}, released after ${MAX_BLOCKS} blocks`
     : verdict;
-  return `${mode}(${source}) ${outcome}; seen: ${seen.length ? seen.join(", ") : "nothing"}`;
+  // `rules` is said only when the session chose which copy of these rules
+  // judged it (TROPOS_VERIFY_GATE_RULES), as the mode's source is.
+  const note = rules ? `; rules: ${rules}` : "";
+  return `${mode}(${source}) ${outcome}; seen: ${seen.length ? seen.join(", ") : "nothing"}${note}`;
 }
 
 /** What the hook tells Claude Code when enforce mode denies a commit. */
@@ -816,6 +820,7 @@ export function evaluate({
   blocks,
   messageFromFile,
   root = null,
+  rules = null,
 }) {
   const commits = findGitCommits(command, cwd);
   if (!commits.length) return null;
@@ -838,6 +843,7 @@ export function evaluate({
         verdict: decision.verdict,
         methods: evidence.methods,
         releasedAfterBlocks: decision.releasedAfterBlocks,
+        rules,
       }),
     },
   };

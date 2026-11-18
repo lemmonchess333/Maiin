@@ -58,8 +58,11 @@ edit**:
   `set -o pipefail`, `vitest …; git push` and `vitest … || true` all
   report success whatever the tests did, so they count for nothing
   (CLAUDE.md's "Gate a push on the checks in the same command with `&&`").
-- An Edit, a Write, a merge, a branch switch, `sed -i` or
-  `prettier --write` after a check makes it stale.
+  So does the `npx tsc -b; echo "exit: $?"` idiom: the gate cannot read
+  the printed code. Chain checks with `&&` and they count.
+- An Edit or a Write inside the repository, a merge, a branch switch,
+  `sed -i` or `prettier --write` after a check makes it stale. Writing a
+  commit message or a scratch file outside the repository does not.
 - A `verify` or code-review skill call, and an Agent call whose description
   says "review", count as `verify` and `review`.
 
@@ -80,6 +83,9 @@ tests beside them. The hook loads the **base branch's** copy
 (`git show origin/main:scripts/verify-gate/gate.mjs`) when there is one,
 so a branch cannot loosen the gate that judges its own commits; a branch
 that changes the rules is judged by the old ones until it merges.
+`TROPOS_VERIFY_GATE_RULES=worktree` makes it use the working tree's copy
+(`stamp.test.ts` sets it, to test a branch's rules), and the stamp then
+ends `rules: worktree(env)`.
 
 The pending stamp is written by husky's `commit-msg`
 (`scripts/verify-gate/stamp.mjs`), keyed to the commit's parent so that a

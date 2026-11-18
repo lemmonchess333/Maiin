@@ -54,9 +54,13 @@ function runHook(command: string, env: Record<string, string> = {}): string {
       tool_input: { command },
     }),
     encoding: "utf8",
-    env: cleanEnv(env),
+    // Judge by this branch's rules, not main's copy, which the hook would
+    // otherwise load wherever origin/main has one.
+    env: cleanEnv({ TROPOS_VERIFY_GATE_RULES: "worktree", ...env }),
   });
 }
+
+const RULES = "; rules: worktree(env)";
 
 function writeTranscript(...commands: string[]): void {
   const lines: string[] = [];
@@ -162,7 +166,9 @@ describe("the commit gate, end to end", () => {
     ]);
     const t = trailers();
     expect(t.Verified).toBe("types");
-    expect(t["Verify-gate"]).toBe("observe(worktree) would-block; seen: types");
+    expect(t["Verify-gate"]).toBe(
+      `observe(worktree) would-block; seen: types${RULES}`
+    );
     expect(t["Co-Authored-By"]).toBe("Someone <someone@example.com>");
     expect(pendingFiles()).toHaveLength(0);
   });
@@ -180,7 +186,9 @@ describe("the commit gate, end to end", () => {
     ]);
     const t = trailers();
     expect(t.Verified).toBe("none (copy only)");
-    expect(t["Verify-gate"]).toBe("observe(worktree) pass; seen: types");
+    expect(t["Verify-gate"]).toBe(
+      `observe(worktree) pass; seen: types${RULES}`
+    );
   });
 
   it("leaves a commit nobody stamped alone", () => {
@@ -218,7 +226,7 @@ describe("the commit gate, end to end", () => {
     expect(runHook('git commit -m "x"', env)).toBe("");
     git(["commit", "-q", "--allow-empty", "-m", "x"]);
     expect(trailers()["Verify-gate"]).toBe(
-      "enforce(env) would-block, released after 2 blocks; seen: nothing"
+      `enforce(env) would-block, released after 2 blocks; seen: nothing${RULES}`
     );
   });
 
