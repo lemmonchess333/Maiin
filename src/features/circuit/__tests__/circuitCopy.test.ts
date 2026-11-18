@@ -58,7 +58,7 @@ describe("circuit mode's words", () => {
       "You’ve done 5 min. A circuit saves from 7 min, so this one won’t be saved."
     );
     expect(circuitEndLine(725, true)).toBe(
-      "You’ve done 12 min. It’s saved as it stands."
+      "You’ve done 12 min. You can save it as it stands."
     );
     expect(circuitTooShortLine(130)).toBe(
       "You did 2 min. A circuit saves from 7 min."

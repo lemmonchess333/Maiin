@@ -10,7 +10,9 @@
  *      or the request throws (locked OS / unsupported context).
  *   4. release() awaits the sentinel's release().
  *   5. visibilitychange → visible re-requests when sentinel is null
- *      (recovers a lock that the OS dropped on background).
+ *      (recovers a lock that the OS dropped on background), and only
+ *      between request() and release(): a paused or finished session
+ *      lets the screen sleep.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
@@ -140,6 +142,63 @@ describe("useWakeLock — request / release", () => {
       await result.current.release();
     });
     /* No throw — and the request mock wasn't called. */
+    expect(
+      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
+    ).not.toHaveBeenCalled();
+  });
+});
+
+describe("useWakeLock — coming back to the page", () => {
+  it("takes the lock again on the way back while it is wanted", async () => {
+    mockWakeLock();
+    const { useWakeLock } = await import("../useWakeLock");
+    const { result } = renderHook(() => useWakeLock());
+    await act(async () => {
+      await result.current.request();
+    });
+    // The system drops the lock while the page is hidden.
+    const dropped = lastSentinel?.addEventListener.mock.calls.find(
+      ([event]) => event === "release"
+    )?.[1] as () => void;
+    act(() => {
+      setVisibility("hidden");
+      dropped();
+    });
+    await act(async () => {
+      setVisibility("visible");
+    });
+    expect(
+      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
+    ).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the screen free once released: a paused or finished session", async () => {
+    mockWakeLock();
+    const { useWakeLock } = await import("../useWakeLock");
+    const { result } = renderHook(() => useWakeLock());
+    await act(async () => {
+      await result.current.request();
+    });
+    await act(async () => {
+      await result.current.release();
+    });
+    act(() => setVisibility("hidden"));
+    await act(async () => {
+      setVisibility("visible");
+    });
+    expect(
+      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it("never takes one on the way back when none was asked for", async () => {
+    mockWakeLock();
+    const { useWakeLock } = await import("../useWakeLock");
+    renderHook(() => useWakeLock());
+    act(() => setVisibility("hidden"));
+    await act(async () => {
+      setVisibility("visible");
+    });
     expect(
       (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
     ).not.toHaveBeenCalled();

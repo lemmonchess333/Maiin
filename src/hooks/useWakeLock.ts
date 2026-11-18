@@ -17,8 +17,14 @@ export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
   // sentinel, and the second overwrites the first — orphaning a screen wake
   // lock (never released until page close) plus its stray release listener.
   const acquiringRef = useRef(false);
+  // Whether the caller wants the screen kept on: from `request` until
+  // `release`. The system drops a lock while the page is hidden, and it is
+  // taken again on the way back only while this holds, so a session that
+  // was paused or finished leaves the screen free to sleep.
+  const wantedRef = useRef(false);
 
   const request = useCallback(async () => {
+    wantedRef.current = true;
     // Native-gated (RUN-01): on the native shell, background run tracking is
     // owned by the background-geolocation foreground service — pinning the
     // screen awake would only burn battery for no tracking benefit (the doc's
@@ -43,6 +49,7 @@ export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
   }, [onNative]);
 
   const release = useCallback(async () => {
+    wantedRef.current = false;
     if (wakeLockRef.current) {
       await wakeLockRef.current.release();
       wakeLockRef.current = null;
@@ -51,7 +58,11 @@ export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
 
   useEffect(() => {
     const handleVisibility = async () => {
-      if (document.visibilityState === "visible" && !wakeLockRef.current)
+      if (
+        document.visibilityState === "visible" &&
+        wantedRef.current &&
+        !wakeLockRef.current
+      )
         await request();
     };
     document.addEventListener("visibilitychange", handleVisibility);

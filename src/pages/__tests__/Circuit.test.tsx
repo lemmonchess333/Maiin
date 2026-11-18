@@ -1,20 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { BackDismissProvider } from "@/lib/BackDismissProvider";
+import { useBackDismissController } from "@/lib/backDismiss";
 import { restoreRealTimers } from "@/test/fakeTimers";
 
 /**
  * Circuit mode's page (Circ1 (10), (11), (A)), on a fake clock: the
  * runner walks the count in, work and rest on the session player; a
- * pause stops the step; a clock that jumped (a screen that slept) lands
- * on the step it says; a finished circuit saves as a circuit with the
- * Easy / Right / Hard tap; under 7 minutes nothing is saved; and
- * skipping to the end is not finishing. The save itself is
+ * pause stops the step; a step that ended while the screen looked away
+ * ends on time, and more than one pauses the circuit with none of the time
+ * away counted; a finished circuit saves as a circuit with the
+ * Easy / Right / Hard tap, and only its own minutes; under 7 minutes
+ * nothing is saved; skipping to the end is not finishing; a history read
+ * that is slow or fails is never taken for no history. The save itself is
  * `circuitCompletion.test.ts`'s.
  */
 const h = vi.hoisted(() => ({
   completeCircuit: vi.fn(),
   history: [] as unknown[],
+  read: null as null | (() => Promise<unknown[]>),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
@@ -26,7 +32,7 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/confetti", () => ({ throwConfetti: () => () => {} }));
 vi.mock("@/lib/savedWorkouts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/savedWorkouts")>()),
-  fetchSavedWorkouts: () => Promise.resolve(h.history),
+  fetchSavedWorkouts: () => (h.read ? h.read() : Promise.resolve(h.history)),
 }));
 vi.mock("@/lib/circuitCompletion", () => ({
   completeCircuit: h.completeCircuit,
@@ -34,16 +40,40 @@ vi.mock("@/lib/circuitCompletion", () => ({
 
 import Circuit from "../Circuit";
 
-function renderPage() {
+function renderPage(wrap: (page: ReactNode) => ReactNode = (page) => page) {
   return render(
     <MemoryRouter initialEntries={["/circuit"]}>
-      <Routes>
-        <Route path="/circuit" element={<Circuit />} />
-        <Route path="/program" element={<p>Train</p>} />
-      </Routes>
+      {wrap(
+        <Routes>
+          <Route path="/circuit" element={<Circuit />} />
+          <Route path="/program" element={<p>Train</p>} />
+        </Routes>
+      )}
     </MemoryRouter>
   );
 }
+
+/** What the Android back button calls, as a button the test can press. */
+function BackButton() {
+  const { dispatchBack } = useBackDismissController();
+  return (
+    <button type="button" onClick={() => dispatchBack()}>
+      Phone back
+    </button>
+  );
+}
+
+const FAKE_CLOCK = {
+  toFake: [
+    "setTimeout",
+    "clearTimeout",
+    "setInterval",
+    "clearInterval",
+    "Date",
+  ] as (
+    "setTimeout" | "clearTimeout" | "setInterval" | "clearInterval" | "Date"
+  )[],
+};
 
 /** Lets the clock run, a second at a time, so each tick renders. */
 async function seconds(n: number) {
@@ -53,7 +83,7 @@ async function seconds(n: number) {
     });
 }
 
-/** The clock jumps, as it does after the screen slept. */
+/** The clock jumps, as it does after the screen looked away. */
 async function jump(n: number) {
   await act(async () => {
     vi.advanceTimersByTime(n * 1000);
@@ -62,22 +92,50 @@ async function jump(n: number) {
   await seconds(1);
 }
 
-async function startTenMinute() {
-  renderPage();
+/** The clock runs on, ten seconds a render: never more than one step
+ *  ends between two renders, as on a screen that stays awake. */
+async function onTheClock(n: number) {
+  for (let left = n; left > 0; left -= 10)
+    await act(async () => {
+      vi.advanceTimersByTime(Math.min(10, left) * 1000);
+    });
+}
+
+function setVisibility(state: "visible" | "hidden") {
+  Object.defineProperty(document, "visibilityState", {
+    value: state,
+    configurable: true,
+  });
+  document.dispatchEvent(new Event("visibilitychange"));
+}
+
+const endCircuit = async () => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "End circuit" }));
+  });
+  await act(async () => {
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "End circuit",
+      })
+    );
+  });
+};
+
+const saveCircuit = async () => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Save circuit" }));
+  });
+};
+
+const TEN_MINUTE = /^10-minute circuit\s?10 min/;
+
+async function startTenMinute(wrap?: (page: ReactNode) => ReactNode) {
+  renderPage(wrap);
   // The history read resolves and the six circuits are offered. The clock
   // is faked once they are: finding them waits on real timers.
-  const row = await screen.findByRole("button", {
-    name: /^10-minute circuit\s?10 min/,
-  });
-  vi.useFakeTimers({
-    toFake: [
-      "setTimeout",
-      "clearTimeout",
-      "setInterval",
-      "clearInterval",
-      "Date",
-    ],
-  });
+  const row = await screen.findByRole("button", { name: TEN_MINUTE });
+  vi.useFakeTimers(FAKE_CLOCK);
   await act(async () => {
     fireEvent.click(row);
   });
@@ -91,10 +149,48 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ workoutId: "free-c1", syncStatus: "synced" });
   h.history = [];
+  h.read = null;
 });
 afterEach(async () => {
+  setVisibility("visible");
   await restoreRealTimers();
 });
+
+/** The 10-minute circuit, done once and called Easy: it comes back a
+ *  rung up, 45 s on and 15 s off. */
+const EASY_LAST_TIME = [
+  {
+    date: "2026-05-01",
+    format: "circuit",
+    circuit: {
+      circuitId: "builtin-minimal-10-standard",
+      name: "10-minute circuit",
+      kind: "intervals",
+      kit: "minimal",
+      minutes: 10,
+      lowImpact: false,
+      level: 0,
+      workSeconds: 40,
+      restSeconds: 20,
+      rounds: 2,
+      moves: [
+        {
+          kind: "move",
+          unit: "seconds",
+          exerciseId: "plank",
+          name: "Plank",
+          impact: "low",
+        },
+      ],
+      intervalsDone: 10,
+      roundsDone: 2,
+      workSecondsDone: 400,
+      activeSeconds: 580,
+      finished: true,
+      effort: "easy",
+    },
+  },
+];
 
 describe("the circuit runner (Circ1 (10))", () => {
   it("counts in, then works and rests, move after move", async () => {
@@ -120,6 +216,19 @@ describe("the circuit runner (Circ1 (10))", () => {
     expect(timer()).toBe("0:40");
   });
 
+  it("names the voice button once, its state pressed or not", async () => {
+    await startTenMinute();
+    const voice = screen.getByRole("button", { name: "Voice" });
+    expect(voice).toHaveAttribute("aria-pressed", "true");
+    await act(async () => {
+      fireEvent.click(voice);
+    });
+    expect(screen.getByRole("button", { name: "Voice" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+  });
+
   it("does not burn an interval while paused", async () => {
     await startTenMinute();
     await seconds(25);
@@ -138,14 +247,70 @@ describe("the circuit runner (Circ1 (10))", () => {
     expect(heading()).toBe("Next: Push-Ups");
   });
 
-  it("lands on the step the clock says after a jump, as after the screen slept", async () => {
+  it("ends a step on time when it ended while the screen looked away", async () => {
     await startTenMinute();
     await seconds(2);
-    // From 2 s to 77 s with no tick between: the count in (10 s), the
-    // squats (40 s) and the rest (20 s) all ended while it was dark.
+    // From 2 s to 16 s with no tick between: the count in ended at 10 s.
+    await jump(13);
+    expect(heading()).toBe("Bodyweight Squat");
+    expect(timer()).toBe("0:34");
+  });
+
+  it("pauses where it was left when more than one step went by, counting none of it", async () => {
+    await startTenMinute();
+    await seconds(2);
+    // From 2 s to 76 s with no tick between: the count in, the squats and
+    // the rest all ended while nobody was following.
     await jump(74);
-    expect(heading()).toBe("Push-Ups");
-    expect(timer()).toBe("0:33");
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    expect(heading()).toBe("Next: Bodyweight Squat");
+    expect(timer()).toBe("0:08");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+    });
+    await seconds(8);
+    expect(heading()).toBe("Bodyweight Squat");
+    expect(timer()).toBe("0:40");
+  });
+
+  it("never finishes a circuit left in the background", async () => {
+    await startTenMinute();
+    await seconds(2);
+    // Hidden, the clock keeps ticking and nothing moves on.
+    act(() => setVisibility("hidden"));
+    await onTheClock(600);
+    await act(async () => {
+      setVisibility("visible");
+    });
+    await seconds(1);
+    expect(screen.queryByText("Circuit done")).not.toBeInTheDocument();
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    expect(timer()).toBe("0:08");
+    // Ended there, it ran under 7 minutes: nothing is saved.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "End circuit" }));
+    });
+    expect(
+      screen.getByRole("button", { name: "End without saving" })
+    ).toBeInTheDocument();
+  });
+
+  it("asks before Back leaves a circuit under way", async () => {
+    await startTenMinute((page) => (
+      <BackDismissProvider>
+        <BackButton />
+        {page}
+      </BackDismissProvider>
+    ));
+    await seconds(15);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Phone back" }));
+    });
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("End circuit?");
+    // The clock stopped while it asks.
+    await seconds(10);
+    expect(timer()).toBe("0:35");
+    expect(screen.queryByText("Train")).not.toBeInTheDocument();
   });
 });
 
@@ -155,7 +320,7 @@ describe("the finish (Circ1 (11), (A))", () => {
     // Into the first work interval a second at a time, then on the clock
     // to the end of the circuit's 590 s.
     await seconds(12);
-    await jump(577);
+    await onTheClock(578);
     expect(screen.getByText("Circuit done")).toBeInTheDocument();
     // A first circuit is the reward register (DS4 call 3).
     expect(screen.getByText("first")).toBeInTheDocument();
@@ -187,46 +352,99 @@ describe("the finish (Circ1 (11), (A))", () => {
     expect(screen.getByText("Train")).toBeInTheDocument();
   });
 
-  it("offers today's rung from the circuit's history", async () => {
-    // Easy last time: the 10-minute circuit comes back at rung 1.
-    h.history = [
-      {
-        date: "2026-05-01",
-        format: "circuit",
-        circuit: {
-          circuitId: "builtin-minimal-10-standard",
-          name: "10-minute circuit",
-          kind: "intervals",
-          kit: "minimal",
-          minutes: 10,
-          lowImpact: false,
-          level: 0,
-          workSeconds: 40,
-          restSeconds: 20,
-          rounds: 2,
-          moves: [
-            {
-              kind: "move",
-              unit: "seconds",
-              exerciseId: "plank",
-              name: "Plank",
-              impact: "low",
-            },
-          ],
-          intervalsDone: 10,
-          roundsDone: 2,
-          workSecondsDone: 400,
-          activeSeconds: 580,
-          finished: true,
-          effort: "easy",
-        },
-      },
-    ];
-    renderPage();
-    const row = await screen.findByRole("button", {
-      name: /^10-minute circuit\s?10 min/,
+  it("counts only the circuit's own time when the clock jumps past its end", async () => {
+    await startTenMinute();
+    await seconds(12);
+    // Into the last work interval (550 s to 590 s)...
+    await onTheClock(548);
+    expect(heading()).toBe("Burpees");
+    // ...then an hour with no tick: only the last step ended meanwhile.
+    await jump(3600);
+    expect(screen.getByText("Circuit done")).toBeInTheDocument();
+    await saveCircuit();
+    expect(h.completeCircuit.mock.calls[0][0].outcome).toMatchObject({
+      intervalsDone: 10,
+      roundsDone: 2,
+      activeSeconds: 580,
+      finished: true,
     });
+  });
+
+  it("saves a circuit ended at 8 minutes as what was done of it", async () => {
+    await startTenMinute();
+    await seconds(12);
+    // 8 minutes after the count in: eight intervals, work and rest.
+    await onTheClock(478);
+    await endCircuit();
+    expect(screen.getByText("Circuit ended")).toBeInTheDocument();
+    await saveCircuit();
+    expect(h.completeCircuit.mock.calls[0][0].outcome).toEqual({
+      intervalsDone: 8,
+      roundsDone: 1,
+      workSecondsDone: 320,
+      activeSeconds: 480,
+      finished: false,
+    });
+  });
+
+  it("offers Discard once a save has failed", async () => {
+    h.completeCircuit.mockReset().mockRejectedValue(new Error("offline"));
+    await startTenMinute();
+    await seconds(12);
+    await onTheClock(478);
+    await endCircuit();
+    expect(
+      screen.queryByRole("button", { name: "Discard" })
+    ).not.toBeInTheDocument();
+    await saveCircuit();
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t save");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    });
+    expect(screen.getByText("Train")).toBeInTheDocument();
+    expect(h.completeCircuit).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers today's rung from the circuit's history", async () => {
+    h.history = EASY_LAST_TIME;
+    renderPage();
+    const row = await screen.findByRole("button", { name: TEN_MINUTE });
     expect(row).toHaveTextContent("45 s on, 15 s off");
+  });
+
+  it("offers first rungs when the history is slow, and moves them when it lands", async () => {
+    let land: (workouts: unknown[]) => void = () => {};
+    h.read = () => new Promise((resolve) => (land = resolve));
+    vi.useFakeTimers(FAKE_CLOCK);
+    renderPage();
+    await act(async () => {
+      vi.advanceTimersByTime(4000);
+    });
+    expect(screen.getByRole("button", { name: TEN_MINUTE })).toHaveTextContent(
+      "40 s on, 20 s off"
+    );
+    await act(async () => {
+      land(EASY_LAST_TIME);
+    });
+    expect(screen.getByRole("button", { name: TEN_MINUTE })).toHaveTextContent(
+      "45 s on, 15 s off"
+    );
+  });
+
+  it("never calls a circuit a first when the history could not be read", async () => {
+    h.read = () => new Promise(() => {});
+    vi.useFakeTimers(FAKE_CLOCK);
+    renderPage();
+    await act(async () => {
+      vi.advanceTimersByTime(4000);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: TEN_MINUTE }));
+    });
+    await seconds(12);
+    await onTheClock(578);
+    expect(screen.getByText("Circuit done")).toBeInTheDocument();
+    expect(screen.queryByText("first")).not.toBeInTheDocument();
   });
 
   it("saves nothing under 7 minutes, and says so before it ends", async () => {
