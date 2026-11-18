@@ -42,7 +42,20 @@ beforeEach(() => {
   vi.spyOn(deletion, "shouldSystemWriteProceed").mockResolvedValue(true);
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Moves the clock on by `ms`: a follow request is quiet for a day after
+ *  the row was last written (sendFollowNotice). */
+function later(ms) {
+  // A minute over: the stored delivery times run a few seconds ahead.
+  if (ms > 0)
+    vi.useFakeTimers({ now: Date.now() + ms + 60_000, toFake: ["Date"] });
+}
 
 function source(path, data, createTime) {
   firestore.data.set(path, data);
@@ -58,6 +71,7 @@ const senders = [
   {
     name: "follower",
     id: `follow_${FROM}`,
+    quietMs: 0,
     deliver: (eventId, createTime) =>
       onFollowerCreated.run(
         source(`followers/${TO}/users/${FROM}`, {}, createTime),
@@ -67,6 +81,7 @@ const senders = [
   {
     name: "follow request",
     id: `follow_request_${FROM}`,
+    quietMs: DAY_MS,
     deliver: (eventId, createTime) =>
       onFollowRequestCreated.run(
         source(`followRequests/${TO}/users/${FROM}`, {}, createTime),
@@ -76,6 +91,7 @@ const senders = [
   {
     name: "Circle event",
     id: "circle_milestone",
+    quietMs: 0,
     deliver: (eventId, createTime) =>
       onGoalSpaceEventCreated.run(
         source(
@@ -93,78 +109,112 @@ const senders = [
   },
 ];
 
-describe.each(senders)("$name notification redelivery", ({ deliver, id }) => {
-  const path = `notifications/${TO}/items/${id}`;
+describe.each(senders)(
+  "$name notification redelivery",
+  ({ deliver, id, quietMs }) => {
+    const path = `notifications/${TO}/items/${id}`;
 
-  it("keeps the first delivery time and seen state for the same source event", async () => {
-    await deliver("source-A", firstTime);
-    const original = structuredClone(firestore.data.get(path));
-    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+    it("keeps the first delivery time and seen state for the same source event", async () => {
+      await deliver("source-A", firstTime);
+      const original = structuredClone(firestore.data.get(path));
+      deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
 
-    await deliver("source-A", firstTime);
+      await deliver("source-A", firstTime);
 
-    expect(firestore.data.get(path)).toEqual(original);
-    // useNotifications counts rows newer than the last tray-open instant.
-    expect(firestore.data.get(path).createdAt.seconds).toBeLessThan(
-      SECONDS + 15
-    );
+      expect(firestore.data.get(path)).toEqual(original);
+      // useNotifications counts rows newer than the last tray-open instant.
+      expect(firestore.data.get(path).createdAt.seconds).toBeLessThan(
+        SECONDS + 15
+      );
+    });
+
+    it("refreshes a genuinely newer event even within the same millisecond", async () => {
+      await deliver("source-A", firstTime);
+      const original = structuredClone(firestore.data.get(path));
+      deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+      later(quietMs);
+
+      await deliver("source-B", nextTime);
+
+      expect(firestore.data.get(path).createdAt).toEqual(deliveryTime);
+      expect(firestore.data.get(path)).not.toEqual(original);
+      expect(
+        [...firestore.data.keys()].filter((key) =>
+          key.startsWith(`notifications/${TO}/items/`)
+        )
+      ).toEqual([path]);
+    });
+
+    it("cannot resurrect an older event A after event B has refreshed the row", async () => {
+      await deliver("source-A", firstTime);
+      deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+      await deliver("source-B", nextTime);
+      const newest = structuredClone(firestore.data.get(path));
+      deliveryTime = { seconds: SECONDS + 30, nanoseconds: 0 };
+
+      await deliver("source-A", firstTime);
+
+      expect(firestore.data.get(path)).toEqual(newest);
+    });
+
+    it("accepts a delayed new source for a legacy row even when its source time precedes delivery time", async () => {
+      const original = {
+        type: "follow",
+        fromUserId: FROM,
+        read: true,
+        createdAt: { seconds: SECONDS + 5, nanoseconds: 0 },
+      };
+      firestore.data.set(path, original);
+      later(quietMs);
+
+      await deliver("source-A", firstTime);
+
+      expect(firestore.data.get(path).createdAt).toEqual(deliveryTime);
+      expect(firestore.data.get(path)._sourceEvent).toMatchObject(firstTime);
+      const receipted = structuredClone(firestore.data.get(path));
+      deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+      await deliver("source-A", firstTime);
+      expect(firestore.data.get(path)).toEqual(receipted);
+    });
+
+    it("does not let a different event ID with the same source time bounce the row", async () => {
+      await deliver("source-A", firstTime);
+      const original = structuredClone(firestore.data.get(path));
+      deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+
+      await deliver("source-with-equal-time", firstTime);
+
+      expect(firestore.data.get(path)).toEqual(original);
+    });
+  }
+);
+
+describe("a follow request made again", () => {
+  const path = `notifications/${TO}/items/follow_request_${FROM}`;
+  const request = (eventId, createTime) =>
+    senders[1].deliver(eventId, createTime);
+
+  it("tells the person asked nothing new within a day: no rewrite, so no push and no unread", async () => {
+    await request("source-A", firstTime);
+    const told = structuredClone(firestore.data.get(path));
+    // The request cancelled and made again, a newer event each time.
+    for (let i = 1; i <= 5; i += 1) {
+      deliveryTime = { seconds: SECONDS + 10 + i, nanoseconds: 0 };
+      await request(`source-${i}`, {
+        seconds: SECONDS + i,
+        nanoseconds: 0,
+      });
+    }
+    expect(firestore.data.get(path)).toEqual(told);
   });
 
-  it("refreshes a genuinely newer event even within the same millisecond", async () => {
-    await deliver("source-A", firstTime);
-    const original = structuredClone(firestore.data.get(path));
-    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
-
-    await deliver("source-B", nextTime);
-
+  it("is news again a day after the last one", async () => {
+    await request("source-A", firstTime);
+    later(DAY_MS);
+    deliveryTime = { seconds: SECONDS + DAY_MS / 1000 + 10, nanoseconds: 0 };
+    await request("source-B", nextTime);
     expect(firestore.data.get(path).createdAt).toEqual(deliveryTime);
-    expect(firestore.data.get(path)).not.toEqual(original);
-    expect(
-      [...firestore.data.keys()].filter((key) =>
-        key.startsWith(`notifications/${TO}/items/`)
-      )
-    ).toEqual([path]);
-  });
-
-  it("cannot resurrect an older event A after event B has refreshed the row", async () => {
-    await deliver("source-A", firstTime);
-    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
-    await deliver("source-B", nextTime);
-    const newest = structuredClone(firestore.data.get(path));
-    deliveryTime = { seconds: SECONDS + 30, nanoseconds: 0 };
-
-    await deliver("source-A", firstTime);
-
-    expect(firestore.data.get(path)).toEqual(newest);
-  });
-
-  it("accepts a delayed new source for a legacy row even when its source time precedes delivery time", async () => {
-    const original = {
-      type: "follow",
-      fromUserId: FROM,
-      read: true,
-      createdAt: { seconds: SECONDS + 5, nanoseconds: 0 },
-    };
-    firestore.data.set(path, original);
-
-    await deliver("source-A", firstTime);
-
-    expect(firestore.data.get(path).createdAt).toEqual(deliveryTime);
-    expect(firestore.data.get(path)._sourceEvent).toMatchObject(firstTime);
-    const receipted = structuredClone(firestore.data.get(path));
-    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
-    await deliver("source-A", firstTime);
-    expect(firestore.data.get(path)).toEqual(receipted);
-  });
-
-  it("does not let a different event ID with the same source time bounce the row", async () => {
-    await deliver("source-A", firstTime);
-    const original = structuredClone(firestore.data.get(path));
-    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
-
-    await deliver("source-with-equal-time", firstTime);
-
-    expect(firestore.data.get(path)).toEqual(original);
+    expect(firestore.data.get(path).read).toBe(false);
   });
 });
 

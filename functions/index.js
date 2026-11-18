@@ -4904,7 +4904,9 @@ exports.onSpaceMemberWritten = functions
     if (change.before.exists === change.after.exists) return null;
     const { spaceId, uid } = context.params;
     const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
-    await steps.run("sessions", () => spaceFeed.syncMemberRows(db, spaceId, uid));
+    await steps.run("sessions", () =>
+      spaceFeed.syncMemberRows(db, spaceId, uid)
+    );
     await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
     steps.settle();
     return null;
@@ -9885,6 +9887,14 @@ exports.onGoalSpaceEventCreated = functions
  * createNotification holds the block check and each recipient's switch,
  * and skips an account that is being deleted.
  */
+/** A follow request made again within a day of the last one the person
+ *  asked was told about tells them nothing new (createNotification's
+ *  `quietForMs`): no second push, and the row is not made unread again. A
+ *  request can be cancelled and made again as often as a client can write,
+ *  and each one pushed until the person blocked. Tropos heuristic: a day,
+ *  the same window as the props bundle's once a day. */
+const FOLLOW_REQUEST_QUIET_MS = 24 * 60 * 60 * 1000;
+
 async function sendFollowNotice({
   toUid,
   fromUid,
@@ -9911,6 +9921,9 @@ async function sendFollowNotice({
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
+      ...(type === "follow_request"
+        ? { quietForMs: FOLLOW_REQUEST_QUIET_MS }
+        : {}),
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {
