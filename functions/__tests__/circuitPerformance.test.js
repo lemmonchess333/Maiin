@@ -142,6 +142,44 @@ describe("a circuit in the performance index (Circ1 (6))", () => {
     expect(isCircuitWorkout(null)).toBe(false);
   });
 
+  it("reads workouts saved before circuits as before, with no circuits", () => {
+    // Main's aggregate of these workouts, field for field, plus the count.
+    const { start, end } = currentWindow(COMPUTE_KEY);
+    const old = [lift(day(1)), lift(day(3), 120)];
+    const agg = aggregateWindow(start, end, old, [], [], []);
+    expect(agg).toEqual({
+      liftTonnage: 1500 + 1800,
+      liftHardSets: 2,
+      liftSessions: 2,
+      circuitSessions: 0,
+      runKm: 0,
+      runLongKm: 0,
+      runLongKmWeeklySum: 0,
+      runQualityCount: 0,
+      runSessions: 0,
+      mealDaysLogged: 0,
+      avgDailyCalories: 0,
+      avgDailyProtein: 0,
+      bwCurrent7dAvg: null,
+      bwPrevious7dAvg: null,
+      activeWeeks: 1,
+      dayCount: 7,
+    });
+    // Only the exact marker is a circuit: anything else is a lift.
+    for (const format of [null, "Circuit", "circuits", ""]) {
+      const odd = aggregateWindow(
+        start,
+        end,
+        [{ ...lift(day(2)), format }],
+        [],
+        [],
+        []
+      );
+      expect(odd.liftSessions, String(format)).toBe(1);
+      expect(odd.circuitSessions, String(format)).toBe(0);
+    }
+  });
+
   it("is aggregated as a circuit session, not a lift session or an active week", () => {
     const { start, end } = currentWindow(COMPUTE_KEY);
     const agg = aggregateWindow(start, end, [circuit(day(2))], [], [], []);
