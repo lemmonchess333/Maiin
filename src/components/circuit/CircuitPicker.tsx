@@ -1,5 +1,6 @@
 import { ChevronRight, X } from "lucide-react";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
+import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   circuitKitLine,
@@ -19,7 +20,9 @@ export default function CircuitPicker({
   onChoose,
   onClose,
 }: {
-  circuits: readonly Circuit[];
+  /** Null while the person's circuit history is read: each circuit is
+   *  offered at its rung, so none is offered before it is known. */
+  circuits: readonly Circuit[] | null;
   kit: CircuitKit;
   onChoose: (circuit: Circuit) => void;
   onClose: () => void;
@@ -40,18 +43,38 @@ export default function CircuitPicker({
           onClick={onClose}
         />
         <header className="mt-2 mb-5">
-          <h1 className="text-2xl font-bold text-foreground">Circuit</h1>
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground">
+            Circuit
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Work and rest on a clock. {circuitKitLine(kit)}.
           </p>
         </header>
-        <ul className="space-y-[8px]" aria-label="Circuits">
-          {circuits.map((circuit) => (
+        {circuits === null && (
+          <p className="sr-only" role="status">
+            Loading your circuits
+          </p>
+        )}
+        <ul
+          className="space-y-[8px]"
+          aria-label="Circuits"
+          aria-busy={circuits === null}
+        >
+          {circuits === null &&
+            Array.from({ length: 6 }, (_, i) => (
+              <li
+                key={i}
+                aria-hidden="true"
+                className="h-[72px] rounded-xl bg-card card-shadow motion-safe:animate-pulse"
+              />
+            ))}
+          {(circuits ?? []).map((circuit) => (
             <li key={circuit.id}>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                fullWidth
                 onClick={() => onChoose(circuit)}
-                className="flex w-full min-h-[56px] items-center gap-[12px] rounded-xl bg-card p-[12px] text-left card-shadow transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[56px] justify-start gap-[12px] bg-card p-[12px] text-left font-normal card-shadow hover:bg-card active:scale-[0.98]"
               >
                 <ExerciseThumb
                   exerciseId={circuit.moves[0]?.exerciseId ?? ""}
@@ -69,7 +92,7 @@ export default function CircuitPicker({
                   className="size-[16px] shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

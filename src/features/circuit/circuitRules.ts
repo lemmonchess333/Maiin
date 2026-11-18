@@ -1,8 +1,14 @@
 /**
- * What a finished circuit counts for (Circ1 (6), (2)): whether it is
- * saved at all, the calories it burned, and whether it is a best.
+ * What a finished circuit counts for (Circ1 (6)): whether it is saved at
+ * all, and the calories it burned.
+ *
+ * A best is v2's, with the kinds that fix one side of the work (for time,
+ * AMRAP; Circ1 (2)). When it comes it compares a result only with earlier
+ * results of the same circuit at the same rung with the same moves, since
+ * a harder move or a stand-in for an injury is other work (Circ1 STATUS,
+ * later (5)). A timed circuit is "done", with no best.
  */
-import type { CircuitEffort, CircuitKind } from "./circuitTypes";
+import type { CircuitEffort } from "./circuitTypes";
 
 /**
  * A circuit is saved, and so counted for the streak, the feed and the
@@ -47,51 +53,4 @@ export function circuitBurn({
   if (!(bodyweightKg > 0) || !(activeSeconds > 0)) return 0;
   const met = CIRCUIT_MET[effort ?? "right"];
   return Math.round((met * bodyweightKg * activeSeconds) / 3600);
-}
-
-/** What a best is judged on: one side fixed, the other measured (Circ1
- *  (2)). */
-export interface CircuitResult {
-  kind: CircuitKind;
-  /** The circuit's id and rung: the fixed side is the same only at the
-   *  same rung of the same circuit. */
-  circuitId: string;
-  level: number;
-  /** For time: the seconds the set work took. */
-  seconds: number;
-  /** AMRAP: whole rounds, then reps into the next. */
-  rounds: number;
-  reps: number;
-  finished: boolean;
-}
-
-/**
- * Whether a result beats every earlier one of the same circuit at the
- * same rung (Circ1 (2)). For time: fewer seconds for the work, done in
- * full. AMRAP: more rounds, then more reps, in the same time. Timed
- * intervals have no best, only "done", so this is null for them. A first
- * result is not a best: there is nothing to beat.
- */
-export function circuitBest(
-  result: CircuitResult,
-  earlier: readonly CircuitResult[]
-): boolean | null {
-  if (result.kind === "intervals") return null;
-  const same = earlier.filter(
-    (other) =>
-      other.kind === result.kind &&
-      other.circuitId === result.circuitId &&
-      other.level === result.level
-  );
-  if (result.kind === "for_time") {
-    const done = same.filter((other) => other.finished);
-    if (!result.finished || done.length === 0) return false;
-    return done.every((other) => result.seconds < other.seconds);
-  }
-  if (same.length === 0) return false;
-  return same.every(
-    (other) =>
-      result.rounds > other.rounds ||
-      (result.rounds === other.rounds && result.reps > other.reps)
-  );
 }

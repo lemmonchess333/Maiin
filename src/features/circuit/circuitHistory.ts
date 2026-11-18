@@ -1,17 +1,16 @@
 /**
  * A person's circuits so far, as the picker and the finish read them: the
  * rung each built-in circuit is offered at today (Circ1 (7)), and whether
- * a finished one is a first or a best (Circ1 (11), DS4 call 3).
+ * a finished one is a first (Circ1 (11), DS4 call 3).
  *
  * Read from the newest workouts, not every one ever saved. Tropos
  * heuristic: `CIRCUIT_HISTORY_WORKOUTS` of them is months of training at
  * any rate a person keeps up, so the ladder has every rung it climbed
- * lately; a circuit last done before them starts again at its first rung,
- * as a return after a long gap should, and its next finish counts as a
- * first again.
+ * lately. A circuit last done before them starts again at its first
+ * rung, as a return after a long gap should; someone whose last circuit
+ * of any kind is that far back gets a first circuit's finish again.
  */
 import { doseAt, nextLevel, type CircuitSessionRecord } from "./circuitDose";
-import { circuitBest, type CircuitResult } from "./circuitRules";
 import { workoutCircuit, type SavedCircuit } from "./savedCircuit";
 import type { Circuit } from "./circuitTypes";
 
@@ -51,29 +50,15 @@ export function circuitForToday(
   return doseAt(base, nextLevel(ladderRecords(base.id, newestFirst)), injuries);
 }
 
-function asResult(saved: SavedCircuit): CircuitResult {
-  return {
-    kind: saved.kind,
-    circuitId: saved.circuitId,
-    level: saved.level,
-    seconds: saved.activeSeconds,
-    rounds: saved.roundsDone,
-    // Reps into an unfinished round are AMRAP's, which v1 does not run.
-    reps: 0,
-    finished: saved.finished,
-  };
-}
-
 /**
  * Whether a finished circuit earns the full-screen finish (Circ1 (11),
- * DS4 call 3): a first circuit, or a best where its kind has one. A timed
- * circuit has no best (Circ1 (2)), so for one it is only ever a first.
+ * DS4 call 3): only a first circuit in v1. A timed circuit is "done",
+ * with no best (Circ1 (2)); a best joins this with v2's kinds, compared
+ * against the same circuit at the same rung with the same moves (Circ1
+ * STATUS, later (5)).
  */
 export function circuitReward(
-  finished: SavedCircuit,
   newestFirst: readonly SavedCircuit[]
-): "first" | "best" | null {
-  if (newestFirst.length === 0) return "first";
-  const best = circuitBest(asResult(finished), newestFirst.map(asResult));
-  return best ? "best" : null;
+): "first" | null {
+  return newestFirst.length === 0 ? "first" : null;
 }

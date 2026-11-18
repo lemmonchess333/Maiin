@@ -6,7 +6,7 @@ import {
   CIRCUIT_EFFORTS,
   circuitFinishCaption,
   circuitMinutes,
-  circuitRewardLine,
+  CIRCUIT_FIRST_LINE,
   circuitTooShortLine,
 } from "@/features/circuit/circuitCopy";
 import type { Circuit, CircuitEffort } from "@/features/circuit/circuitTypes";
@@ -42,8 +42,8 @@ export default function CircuitFinish({
   activeSeconds: number;
   /** Ran 7 minutes or more (Circ1 (A)). */
   saves: boolean;
-  /** A first circuit, or a best where the kind has one. */
-  reward: "first" | "best" | null;
+  /** A first circuit: v1's only reward (Circ1 (11)). */
+  reward: "first" | null;
   effort?: CircuitEffort;
   saving: boolean;
   error?: string;
@@ -85,7 +85,7 @@ export default function CircuitFinish({
           titleLevel={1}
           figure={{ value: String(minutes) }}
           caption={circuitFinishCaption(roundsDone, circuit.moves.length)}
-          line={saves && reward ? circuitRewardLine(reward) : null}
+          line={saves && reward ? { ...CIRCUIT_FIRST_LINE } : null}
           lineIcon={tone ? "trophy" : null}
         />
 
@@ -114,21 +114,19 @@ export default function CircuitFinish({
                 {CIRCUIT_EFFORTS.map((choice) => {
                   const chosen = effort === choice.effort;
                   return (
-                    <button
+                    <Button
                       key={choice.effort}
-                      type="button"
+                      variant={chosen ? "lifting-tinted" : "secondary"}
                       aria-pressed={chosen}
                       disabled={saving}
                       onClick={() => onRate(chosen ? undefined : choice.effort)}
                       className={cn(
-                        "min-h-[44px] min-w-[88px] flex-1 rounded-xl px-[12px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        chosen
-                          ? "bg-lifting-strong text-white"
-                          : "bg-card text-foreground card-shadow"
+                        "min-w-[88px] flex-1",
+                        chosen && "ring-2 ring-lifting"
                       )}
                     >
                       {choice.label}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

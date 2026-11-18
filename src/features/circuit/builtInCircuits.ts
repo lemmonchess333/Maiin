@@ -12,10 +12,11 @@
  */
 import {
   circuitMove,
-  circuitMovesFor,
+  circuitStartersFor,
   type CircuitFilter,
   type CircuitSlot,
 } from "./circuitMoves";
+import { circuitSeconds } from "./circuitSteps";
 import type { Circuit, CircuitKit, CircuitMinutes } from "./circuitTypes";
 
 export const CIRCUIT_MINUTES: readonly CircuitMinutes[] = [10, 20, 30];
@@ -63,13 +64,20 @@ const ROUNDS: Record<
 };
 
 /** Where a slot with no move left looks next: the slots with the most
- *  moves that need nothing and hurt nothing. */
-const STAND_INS: readonly CircuitSlot[] = ["core", "legs", "hinge", "push"];
+ *  moves that need nothing and hurt nothing, then a pull, which needs
+ *  dumbbells. */
+const STAND_INS: readonly CircuitSlot[] = [
+  "core",
+  "legs",
+  "hinge",
+  "push",
+  "pull",
+];
 
-/** Which of a slot's moves each length starts from, so the three lengths
- *  are not one circuit at three sizes. The engine slot always takes its
- *  first: at standard impact that is the jump, so a standard circuit and
- *  its low-impact twin differ in more than their clock. */
+/** Which of a slot's opening moves each length starts from, so the three
+ *  lengths are not one circuit at three sizes. The engine slot always
+ *  takes its first: at standard impact that is the jump, so a standard
+ *  circuit and its low-impact twin differ in more than their clock. */
 const FIRST_CHOICE: Record<CircuitMinutes, number> = { 10: 0, 20: 1, 30: 0 };
 
 export function builtInCircuitId(
@@ -80,12 +88,43 @@ export function builtInCircuitId(
   return `builtin-${kit}-${minutes}-${lowImpact ? "low" : "standard"}`;
 }
 
-/** "20-minute circuit", and "20-minute circuit, low impact". */
-export function builtInCircuitName(
-  minutes: CircuitMinutes,
-  lowImpact: boolean
+/**
+ * A circuit's name, from its own clock (Circ1 (M)): "20-minute circuit",
+ * and "20-minute circuit, low impact". Taken from its seconds rather than
+ * the length it was built for, so the name and the minutes shown beside
+ * it can never disagree.
+ */
+export function circuitName(
+  circuit: Pick<
+    Circuit,
+    "moves" | "rounds" | "workSeconds" | "restSeconds" | "lowImpact"
+  >
 ): string {
-  return `${minutes}-minute circuit${lowImpact ? ", low impact" : ""}`;
+  const minutes = Math.round(circuitSeconds(circuit) / 60);
+  return `${minutes}-minute circuit${circuit.lowImpact ? ", low impact" : ""}`;
+}
+
+/**
+ * The move that comes round again once every allowed move is in the
+ * round: from the second move on, never the one just done, and never
+ * the round's first in its last slot, so no move ends one round and
+ * starts the next. With two moves or one there is no such choice.
+ */
+function repeatMove(
+  chosen: readonly string[],
+  distinct: readonly string[],
+  from: number,
+  lastSlot: boolean
+): { id: string; next: number } {
+  const previous = chosen[chosen.length - 1];
+  for (let k = 0; k < distinct.length; k++) {
+    const at = (from + k) % distinct.length;
+    const id = distinct[at];
+    if (id === previous || (lastSlot && id === chosen[0])) continue;
+    return { id, next: at + 1 };
+  }
+  const id = distinct.find((move) => move !== previous) ?? distinct[0];
+  return { id, next: from };
 }
 
 export interface BuiltInCircuitRequest extends CircuitFilter {
@@ -95,7 +134,7 @@ export interface BuiltInCircuitRequest extends CircuitFilter {
 /**
  * One built-in circuit, built for this person. Its moves are distinct
  * while they have enough to choose from; someone whose injuries leave
- * fewer does one twice in a round rather than a move that is ruled out.
+ * fewer does one again in a round rather than a move that is ruled out.
  */
 export function builtInCircuit(request: BuiltInCircuitRequest): Circuit {
   const { minutes, kit } = request;
@@ -103,36 +142,43 @@ export function builtInCircuit(request: BuiltInCircuitRequest): Circuit {
   const filter: CircuitFilter = { ...request, lowImpact };
   const { rounds, slots } = ROUNDS[minutes];
   const chosen: string[] = [];
-  let distinct = 0;
-  let repeats = 0;
+  let distinct: string[] = [];
+  let cursor = 1;
   const unused = (slot: CircuitSlot) =>
-    circuitMovesFor(slot, filter).filter((id) => !chosen.includes(id));
-  for (const wanted of slots) {
+    circuitStartersFor(slot, filter).filter((id) => !chosen.includes(id));
+  slots.forEach((wanted, index) => {
     const open = [...wanted, ...STAND_INS]
       .map(unused)
       .find((moves) => moves.length > 0);
     if (open) {
       const first = wanted[0] === "engine" ? 0 : FIRST_CHOICE[minutes];
       chosen.push(open[first % open.length]);
-      continue;
+      return;
     }
     // Every allowed move is in the round already: one comes round again.
-    // They come back in the order they first ran.
-    if (chosen.length === 0) break;
-    if (repeats === 0) distinct = chosen.length;
-    chosen.push(chosen[repeats % distinct]);
-    repeats += 1;
-  }
+    if (chosen.length === 0) return;
+    if (distinct.length === 0) distinct = [...chosen];
+    const repeat = repeatMove(
+      chosen,
+      distinct,
+      cursor,
+      index === slots.length - 1
+    );
+    chosen.push(repeat.id);
+    cursor = repeat.next;
+  });
+  const interval = lowImpact ? LOW_IMPACT_INTERVAL : STANDARD_INTERVAL;
+  const moves = chosen.map(circuitMove);
   return {
     id: builtInCircuitId(kit, minutes, lowImpact),
-    name: builtInCircuitName(minutes, lowImpact),
+    name: circuitName({ ...interval, moves, rounds, lowImpact }),
     kit,
     minutes,
     lowImpact,
     kind: "intervals",
-    ...(lowImpact ? LOW_IMPACT_INTERVAL : STANDARD_INTERVAL),
+    ...interval,
     rounds,
-    moves: chosen.map(circuitMove),
+    moves,
     level: 0,
   };
 }

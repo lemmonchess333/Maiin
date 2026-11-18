@@ -7,16 +7,17 @@
  * This file is the vocabulary. The moves a circuit may hold are in
  * `circuitMoves.ts`, the built-in circuits in `builtInCircuits.ts`, the
  * timer's steps in `circuitSteps.ts`, the ladder in `circuitDose.ts`, the
- * rules for counting, calories and a best in `circuitRules.ts`, and the
- * shape a finished one is stored in in `savedCircuit.ts`.
+ * rules for counting and calories in `circuitRules.ts`, and the shape a
+ * finished one is stored in in `savedCircuit.ts`.
  */
 
 /**
- * How a circuit is run. `intervals` is work and rest on a clock, and is
- * "done" with no best (Circ1 (2)). `for_time` fixes the work and `amrap`
- * fixes the time, so each has a best.
+ * How a circuit is run. v1 has one kind: work and rest on a clock,
+ * "done" with no best (Circ1 (2)). v2 makes `Circuit` a union on its kind
+ * when for time (fixed work) and AMRAP (fixed time) arrive, each with a
+ * best (Circ1 STATUS, later (2)).
  */
-export type CircuitKind = "intervals" | "for_time" | "amrap";
+export type CircuitKind = "intervals";
 
 /** High impact is a jump: both feet leave the floor (Circ1 (9)). */
 export type CircuitImpact = "low" | "high";
@@ -35,6 +36,9 @@ export interface CircuitMove {
   exerciseId: string;
   name: string;
   impact: CircuitImpact;
+  /** Worked one side at a time: the runner says when to switch, halfway
+   *  through the interval. */
+  sided?: true;
 }
 
 /** A circuit as the timer runs it: its moves in order, round after round. */

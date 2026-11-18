@@ -15,21 +15,32 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { builtInCircuits } from "@/features/circuit/builtInCircuits";
 import {
   CIRCUIT_DONE_CUE,
+  CIRCUIT_SWITCH_CUE,
   circuitEndLine,
 } from "@/features/circuit/circuitCopy";
+import {
+  CIRCUIT_HISTORY_WORKOUTS,
+  circuitForToday,
+  circuitReward,
+  savedCircuits,
+} from "@/features/circuit/circuitHistory";
 import { circuitKit } from "@/features/circuit/circuitMoves";
 import { circuitCounts } from "@/features/circuit/circuitRules";
 import {
   CIRCUIT_SESSION_START,
+  circuitClockRuns,
   stepCircuitSession,
 } from "@/features/circuit/circuitSession";
 import {
   circuitProgress,
   circuitSegments,
   circuitSteps,
+  circuitSwitchAt,
   stepEndsPassed,
+  stepSecondsRan,
 } from "@/features/circuit/circuitSteps";
 import type { Circuit as CircuitShape } from "@/features/circuit/circuitTypes";
+import type { SavedCircuit } from "@/features/circuit/savedCircuit";
 import { useAudioCues } from "@/hooks/useAudioCues";
 import { useRunTimer } from "@/hooks/useRunTimer";
 import { useSessionPlayer } from "@/hooks/useSessionPlayer";
@@ -39,17 +50,26 @@ import { useAuth } from "@/lib/auth";
 import { completeCircuit } from "@/lib/circuitCompletion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+
+/** How long the picker waits for the circuit history before offering the
+ *  circuits at their first rung. Tropos heuristic: offline, the read can
+ *  hang, and a circuit should never wait on it. */
+const HISTORY_WAIT_MS = 4000;
 
 /**
  * Circuit mode (Circ1): pick one of your six built-in circuits, run it on
  * the clock, say how it felt, save it as a workout. Full screen, without
  * the tab bar, as a run is.
  *
- * The timer is the run's: `useRunTimer` keeps a clock that pauses, and
- * `useSessionPlayer` walks the circuit's steps as a run's segments (Circ1
- * (10)). Each step ends on the clock, not on the tick that noticed
+ * Each circuit is offered at the rung its history steers it to (Circ1
+ * (7)). The timer is the run's: `useRunTimer` keeps a clock that pauses,
+ * and `useSessionPlayer` walks the circuit's steps as a run's segments
+ * (Circ1 (10)). Each step ends on the clock, not on the tick that noticed
  * (`stepEndsPassed`), so a circuit whose screen slept picks up where the
- * clock says it is. The states are `circuitSession.ts`'s.
+ * clock says it is. What was done is measured from the seconds each step
+ * really ran, so skipping to the end is not finishing. The states are
+ * `circuitSession.ts`'s.
  */
 export default function Circuit() {
   const navigate = useNavigate();
@@ -60,9 +80,37 @@ export default function Circuit() {
   );
   const kit = circuitKit(profile?.equipment);
   const injuries = profile?.injuries;
+
+  // The person's recent circuits, newest first: null until read.
+  const [history, setHistory] = useState<SavedCircuit[] | null>(null);
+  const uid = user?.uid;
+  useEffect(() => {
+    if (!uid) return;
+    let live = true;
+    const settle = (circuits: SavedCircuit[]) => {
+      if (live) setHistory((current) => current ?? circuits);
+    };
+    const wait = window.setTimeout(() => settle([]), HISTORY_WAIT_MS);
+    fetchSavedWorkouts(uid, { latest: CIRCUIT_HISTORY_WORKOUTS })
+      .then((workouts) => settle(savedCircuits(workouts)))
+      .catch((error) => {
+        logger.warn("[Circuit] history read failed", error);
+        settle([]);
+      });
+    return () => {
+      live = false;
+      window.clearTimeout(wait);
+    };
+  }, [uid]);
+
   const circuits = useMemo(
-    () => builtInCircuits({ kit, injuries }),
-    [kit, injuries]
+    () =>
+      history === null
+        ? null
+        : builtInCircuits({ kit, injuries }).map((base) =>
+            circuitForToday(base, history, injuries)
+          ),
+    [history, kit, injuries]
   );
 
   const circuit = session.circuit;
@@ -88,7 +136,7 @@ export default function Circuit() {
   const lastTickRef = useRef(0);
 
   const { phase } = session;
-  const running = phase === "running";
+  const running = circuitClockRuns(phase);
 
   const choose = useCallback(
     (chosen: CircuitShape) => {
@@ -128,18 +176,32 @@ export default function Circuit() {
     lastTickRef.current = timer.elapsed;
   }, [running, timer.elapsed, player, stepSeconds]);
 
-  // Each step says itself as it starts; the end is said once.
+  // Each step says itself as it starts; a one-sided move says when to
+  // switch, once, halfway.
   const spokenIndexRef = useRef(-1);
+  const switchedIndexRef = useRef(-1);
   useEffect(() => {
-    const { index } = player.state;
-    if (index < 0 || index === spokenIndexRef.current) return;
-    spokenIndexRef.current = index;
-    if (player.isComplete) return;
-    const segment = player.current;
-    if (segment?.cue) audio.speak(segment.cue);
-    if (segment?.type === "hard" || segment?.type === "recovery")
-      haptic("medium");
-  }, [player, audio]);
+    const { index, phaseElapsed } = player.state;
+    if (index < 0 || player.isComplete) return;
+    if (index !== spokenIndexRef.current) {
+      spokenIndexRef.current = index;
+      const segment = player.current;
+      if (segment?.cue) audio.speak(segment.cue);
+      if (segment?.type === "hard" || segment?.type === "recovery")
+        haptic("medium");
+      return;
+    }
+    const switchAt = steps[index] ? circuitSwitchAt(steps[index]) : null;
+    if (
+      switchAt !== null &&
+      phaseElapsed >= switchAt &&
+      switchedIndexRef.current !== index
+    ) {
+      switchedIndexRef.current = index;
+      audio.speak(CIRCUIT_SWITCH_CUE);
+      haptic("light");
+    }
+  }, [player, audio, steps]);
 
   // The last step done: the clock stops and the finish takes the screen.
   useEffect(() => {
@@ -153,22 +215,23 @@ export default function Circuit() {
   }, [player.isComplete, phase, timer, audio, wakeLock]);
 
   // The count in is not part of the circuit's minutes (Circ1 (K)).
-  const countInEnd = player.checkpoint?.segmentStarts[1]?.elapsed;
+  const starts = player.checkpoint?.segmentStarts;
+  const countInEnd = starts?.[1]?.elapsed;
   const activeSeconds =
     countInEnd === undefined ? 0 : Math.max(0, timer.elapsed - countInEnd);
   const saves = circuitCounts(activeSeconds);
 
+  // What was done: only the work each step really ran.
   const progress = useMemo(
     () =>
       circuit
         ? circuitProgress(
             circuit,
             steps,
-            player.state.index,
-            player.state.phaseElapsed
+            stepSecondsRan(starts ?? [], steps.length, timer.elapsed)
           )
         : null,
-    [circuit, steps, player.state.index, player.state.phaseElapsed]
+    [circuit, steps, starts, timer.elapsed]
   );
 
   const pause = () => {
@@ -201,7 +264,6 @@ export default function Circuit() {
     if (!circuit || !progress || !user) return;
     dispatch({ type: "save" });
     try {
-      const work = player.workPortion(timer.elapsed, 0);
       const receipt = await completeCircuit({
         uid: user.uid,
         completionId,
@@ -210,9 +272,9 @@ export default function Circuit() {
         outcome: {
           intervalsDone: progress.intervalsDone,
           roundsDone: progress.roundsDone,
-          workSecondsDone: work?.seconds ?? progress.workSecondsDone,
+          workSecondsDone: progress.workSecondsDone,
           activeSeconds,
-          finished: session.finished,
+          finished: progress.complete,
           effort: session.effort,
         },
         bodyweightKg: profile?.weightKg ?? 0,
@@ -244,10 +306,11 @@ export default function Circuit() {
     return (
       <CircuitFinish
         circuit={circuit}
-        finished={session.finished}
+        finished={progress?.complete ?? false}
         roundsDone={progress?.roundsDone ?? 0}
         activeSeconds={activeSeconds}
         saves={saves}
+        reward={history ? circuitReward(history) : null}
         effort={session.effort}
         saving={phase !== "finish"}
         error={session.error}

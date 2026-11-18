@@ -5,6 +5,7 @@ import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import {
+  CIRCUIT_SIDED_LINE,
   circuitPlaceLine,
   circuitStepEyebrow,
   circuitStepHeading,
@@ -84,7 +85,7 @@ export default function CircuitRunner({
       <main className="flex flex-1 flex-col items-center justify-center gap-[16px] py-[16px] text-center">
         <p
           className={cn(
-            "text-xs font-semibold uppercase tracking-wide",
+            "text-sm font-semibold",
             work ? "text-lifting-strong" : "text-muted-foreground"
           )}
         >
@@ -112,9 +113,14 @@ export default function CircuitRunner({
           exerciseId={step.move.exerciseId}
           className="size-[160px] rounded-3xl"
         />
-        <h1 className="max-w-full break-words text-2xl font-bold text-foreground">
+        <h1 className="text-h1 max-w-full break-words leading-tight font-extrabold text-foreground">
           {heading}
         </h1>
+        {step.move.sided && (
+          <p className="-mt-[8px] text-sm text-muted-foreground">
+            {CIRCUIT_SIDED_LINE}
+          </p>
+        )}
         {/* The step as the voice says it, for a screen reader. */}
         <p className="sr-only" aria-live="polite">
           {`${circuitStepEyebrow(step.kind)}. ${heading}`}

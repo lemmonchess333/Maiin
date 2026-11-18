@@ -85,4 +85,26 @@ export const CIRCUIT_EFFORTS: readonly {
 
 /** What a spoken cue says as the circuit ends. Coach speech, as the run's
  *  cues are. */
-export const CIRCUIT_DONE_CUE = "Circuit done. Nice work.";
+export const CIRCUIT_DONE_CUE = "Circuit done.";
+
+/** The caption under the finish's minutes: "min · 4 rounds of 5 moves". */
+export function circuitFinishCaption(
+  roundsDone: number,
+  moves: number
+): string {
+  return `min · ${roundsDone} ${roundsDone === 1 ? "round" : "rounds"} of ${moves} ${moves === 1 ? "move" : "moves"}`;
+}
+
+/** The reward's one sentence for a first circuit (DS4 call 3), its
+ *  figure apart so the finish can draw it in lifting's colour. */
+export const CIRCUIT_FIRST_LINE = {
+  before: "Your ",
+  figure: "first",
+  after: " circuit, done.",
+} as const;
+
+/** Under a one-sided move: when to change side. */
+export const CIRCUIT_SIDED_LINE = "Switch sides halfway";
+
+/** What is said halfway through a one-sided move. */
+export const CIRCUIT_SWITCH_CUE = "Switch sides.";

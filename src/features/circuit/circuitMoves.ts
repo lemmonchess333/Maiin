@@ -23,15 +23,25 @@ export type CircuitSlot =
 interface PoolMove {
   slot: CircuitSlot;
   impact: CircuitImpact;
-  /** The next step up, for the ladder's last rung (Circ1 (7)). */
+  /** The next step up, for the ladder's harder rungs (Circ1 (7)). */
   harder?: string;
-  /** Injuries this move is left out for, beyond the plan's own table
-   *  (`CONTRAINDICATED`), which names only lifts a programme prescribes.
-   *  Tropos heuristic, by that table's own promises: no fast or repeated
-   *  bending of a sore back, no body weight on a sore wrist, no jump on a
-   *  sore knee. */
+  /** A progression the ladder reaches, never a circuit's first offer
+   *  while its slot has an easier move. Tropos heuristic. */
+  stepUp?: true;
+  /** Worked one side at a time: the runner says when to switch. */
+  sided?: true;
+  /** Injuries this move is left out for. These add to the plan's own
+   *  injury table (`CONTRAINDICATED`), which names only the lifts a
+   *  programme prescribes, so an injury option's words hold inside a
+   *  circuit too (Circ1 (H), STATUS later (3)). Tropos heuristic, by
+   *  that table's own promises: no squat, lunge or knee drive on a sore
+   *  knee, no push-up on a sore shoulder or elbow, no body weight on a
+   *  sore wrist, no fast or repeated bending of a sore back, no jump on
+   *  any of them. */
   avoid?: readonly InjuryCategory[];
 }
+
+const PUSH_UP_AVOID: readonly InjuryCategory[] = ["shoulder", "elbow"];
 
 /**
  * The pool, by slot in the order a circuit tries them. Tropos heuristic:
@@ -40,37 +50,61 @@ interface PoolMove {
  * feet leave the floor.
  */
 export const CIRCUIT_MOVES: Readonly<Record<string, PoolMove>> = {
-  "goblet-squat": { slot: "legs", impact: "low" },
+  "goblet-squat": { slot: "legs", impact: "low", avoid: ["knee"] },
   "bodyweight-squat": {
     slot: "legs",
     impact: "low",
     harder: "bodyweight-lunge",
+    avoid: ["knee"],
   },
-  "bodyweight-lunge": { slot: "legs", impact: "low" },
-  "single-leg-calf-raise": { slot: "legs", impact: "low" },
-  "push-ups": { slot: "push", impact: "low", harder: "diamond-push-ups" },
+  "bodyweight-lunge": { slot: "legs", impact: "low", avoid: ["knee"] },
+  "single-leg-calf-raise": { slot: "legs", impact: "low", sided: true },
+  // Easiest first: a push-up, then the press, then the harder push-ups
+  // the ladder steps up to.
+  "push-ups": {
+    slot: "push",
+    impact: "low",
+    harder: "diamond-push-ups",
+    avoid: PUSH_UP_AVOID,
+  },
   "db-shoulder-press": { slot: "push", impact: "low" },
-  "pike-push-up": { slot: "push", impact: "low" },
-  "diamond-push-ups": { slot: "push", impact: "low" },
-  "db-row": { slot: "pull", impact: "low" },
+  "diamond-push-ups": {
+    slot: "push",
+    impact: "low",
+    harder: "pike-push-up",
+    stepUp: true,
+    avoid: PUSH_UP_AVOID,
+  },
+  "pike-push-up": {
+    slot: "push",
+    impact: "low",
+    stepUp: true,
+    avoid: PUSH_UP_AVOID,
+  },
+  "db-row": { slot: "pull", impact: "low", sided: true },
   "kettlebell-swing": { slot: "hinge", impact: "low", avoid: ["lower_back"] },
   "db-rdl": { slot: "hinge", impact: "low" },
   "glute-bridge": { slot: "hinge", impact: "low" },
   plank: { slot: "core", impact: "low" },
   "dead-bug": { slot: "core", impact: "low" },
-  "bicycle-crunch": { slot: "core", impact: "low", avoid: ["lower_back"] },
+  "bicycle-crunch": {
+    slot: "core",
+    impact: "low",
+    stepUp: true,
+    avoid: ["lower_back"],
+  },
   "russian-twist": { slot: "core", impact: "low", avoid: ["lower_back"] },
   crunches: { slot: "core", impact: "low", harder: "bicycle-crunch" },
   burpees: {
     slot: "engine",
     impact: "high",
-    avoid: ["knee", "wrist", "lower_back", "shoulder"],
+    avoid: ["knee", "wrist", "lower_back", "shoulder", "elbow"],
   },
   "mountain-climbers": {
     slot: "engine",
     impact: "low",
     harder: "burpees",
-    avoid: ["wrist"],
+    avoid: ["wrist", "knee"],
   },
 };
 
@@ -131,13 +165,29 @@ export function circuitMovesFor(
   );
 }
 
+/** A slot's moves a circuit may open on: its step-ups only when the slot
+ *  has nothing easier for this person. */
+export function circuitStartersFor(
+  slot: CircuitSlot,
+  filter: CircuitFilter
+): string[] {
+  const moves = circuitMovesFor(slot, filter);
+  const easier = moves.filter((id) => !CIRCUIT_MOVES[id].stepUp);
+  return easier.length > 0 ? easier : moves;
+}
+
 /** A move as a circuit holds it. Throws for an id outside the pool: a
  *  circuit is built only from it. */
 export function circuitMove(exerciseId: string): CircuitMove {
   const move = CIRCUIT_MOVES[exerciseId];
   const exercise = BY_ID.get(exerciseId);
   if (!move || !exercise) throw new Error(`Not a circuit move: ${exerciseId}`);
-  return { exerciseId, name: exercise.name, impact: move.impact };
+  return {
+    exerciseId,
+    name: exercise.name,
+    impact: move.impact,
+    ...(move.sided ? { sided: true as const } : {}),
+  };
 }
 
 /** The step up from a move that this person may do, or null. */

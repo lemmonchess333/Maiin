@@ -17,6 +17,20 @@ import type {
 /** The workout field that marks a circuit (Circ1 (4)). */
 export const CIRCUIT_FORMAT = "circuit";
 
+/**
+ * A move as the workout stores it. The entry says what kind of step it
+ * is and what unit its target is in, so a later build can store other
+ * steps beside it without reshaping saved circuits: a rest or a run as a
+ * step, a target in reps or metres, a load (the hybrid session to come,
+ * Hyb1). v1 stores moves timed in seconds, its rests in `restSeconds`.
+ */
+export interface SavedCircuitMove extends CircuitMove {
+  kind: "move";
+  unit: "seconds";
+  /** Kilograms held, when a later build records them. */
+  loadKg?: number;
+}
+
 export interface SavedCircuit {
   /** The circuit's id, the same at every rung of its ladder. */
   circuitId: string;
@@ -31,7 +45,7 @@ export interface SavedCircuit {
   restSeconds: number;
   /** Rounds the circuit asked for. */
   rounds: number;
-  moves: CircuitMove[];
+  moves: SavedCircuitMove[];
   /** Work intervals done. */
   intervalsDone: number;
   /** Rounds done, every move of each. */
@@ -72,10 +86,13 @@ export function savedCircuitFrom(
     workSeconds: circuit.workSeconds,
     restSeconds: circuit.restSeconds,
     rounds: circuit.rounds,
-    moves: circuit.moves.map(({ exerciseId, name, impact }) => ({
+    moves: circuit.moves.map(({ exerciseId, name, impact, sided }) => ({
+      kind: "move" as const,
+      unit: "seconds" as const,
       exerciseId,
       name,
       impact,
+      ...(sided ? { sided } : {}),
     })),
     intervalsDone: Math.max(0, Math.floor(outcome.intervalsDone)),
     roundsDone: Math.max(0, Math.floor(outcome.roundsDone)),
@@ -86,7 +103,9 @@ export function savedCircuitFrom(
   };
 }
 
-const KINDS: readonly CircuitKind[] = ["intervals", "for_time", "amrap"];
+/** v1's one kind (Circ1 STATUS, later (2)): a stored circuit of any
+ *  other kind is from a later build, and this one cannot read it. */
+const KINDS: readonly CircuitKind[] = ["intervals"];
 const KITS: readonly CircuitKit[] = ["minimal", "home_gym", "full_gym"];
 const MINUTES: readonly CircuitMinutes[] = [10, 20, 30];
 const EFFORTS: readonly CircuitEffort[] = ["easy", "right", "hard"];
@@ -100,12 +119,24 @@ function isText(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function readMove(value: unknown): CircuitMove | null {
+function readMove(value: unknown): SavedCircuitMove | null {
   if (!value || typeof value !== "object") return null;
-  const { exerciseId, name, impact } = value as Record<string, unknown>;
+  const { kind, unit, loadKg, exerciseId, name, impact, sided } =
+    value as Record<string, unknown>;
+  if (kind !== "move" || unit !== "seconds") return null;
   if (!isText(exerciseId) || !isText(name)) return null;
   if (!IMPACTS.includes(impact as CircuitImpact)) return null;
-  return { exerciseId, name, impact: impact as CircuitImpact };
+  if (sided !== undefined && sided !== true) return null;
+  if (loadKg !== undefined && !isCount(loadKg)) return null;
+  return {
+    kind,
+    unit,
+    exerciseId,
+    name,
+    impact: impact as CircuitImpact,
+    ...(sided ? { sided: true as const } : {}),
+    ...(loadKg !== undefined ? { loadKg } : {}),
+  };
 }
 
 /**
@@ -152,7 +183,7 @@ export function readSavedCircuit(value: unknown): SavedCircuit | null {
     workSeconds: raw.workSeconds as number,
     restSeconds: raw.restSeconds as number,
     rounds: raw.rounds as number,
-    moves: moves as CircuitMove[],
+    moves: moves as SavedCircuitMove[],
     intervalsDone: raw.intervalsDone as number,
     roundsDone: raw.roundsDone as number,
     workSecondsDone: raw.workSecondsDone as number,
