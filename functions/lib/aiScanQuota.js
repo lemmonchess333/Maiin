@@ -13,8 +13,8 @@
  * someone eating five times a day, with a rescan of each, stays under it,
  * and one account at the cap costs about $7 a month in Gemini 3.8 Flash
  * at the prices from 1 January 2027, where 100 of each could cost about
- * $46, many times what a yearly subscriber pays
- * (docs/business/next-steps-2026-11.md, section 6.4).
+ * $46, many times what a yearly subscriber pays (the business plan in
+ * PR #3415, section 6.4).
  *
  * The free plan has no AI: Apple's 7-day trial is how someone tries it.
  *
