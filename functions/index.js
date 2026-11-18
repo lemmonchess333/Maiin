@@ -1526,9 +1526,13 @@ exports.analyzeFood = functions
       // on the service's side after that gives it back (aiScanQuota).
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        const refunded =
+          !!charge &&
+          aiScanQuota.isServiceFailure(modelStatus) &&
+          (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -1799,9 +1803,13 @@ exports.analyzeFoodText = functions
       // gives it back.
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        const refunded =
+          !!charge &&
+          aiScanQuota.isServiceFailure(modelStatus) &&
+          (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -4904,7 +4912,9 @@ exports.onSpaceMemberWritten = functions
     if (change.before.exists === change.after.exists) return null;
     const { spaceId, uid } = context.params;
     const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
-    await steps.run("sessions", () => spaceFeed.syncMemberRows(db, spaceId, uid));
+    await steps.run("sessions", () =>
+      spaceFeed.syncMemberRows(db, spaceId, uid)
+    );
     await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
     steps.settle();
     return null;
