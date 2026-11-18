@@ -5,9 +5,6 @@ import {
   MAX_PLAUSIBLE_SPEED_MPS,
   calculateSplits,
   haversine,
-  movingClockMs,
-  movingSecondsBetween,
-  pausedMsOf,
   routeTotalDistance,
   segmentMetres,
   totalDistance,
@@ -163,48 +160,45 @@ describe("a trace's distance", () => {
     );
   });
 
-  it("across a hold, a step credits no more than 12 m/s of its moving time", () => {
+  it("a step credits its straight line, and across a hold no more than 12 m/s for the seconds it ran", () => {
     assertProperty(
       fc.property(lat, lon, steps, (la, lo, walk) => {
         const points = trace(la, lo, walk);
-        for (let i = 1; i < points.length; i++) {
-          const [a, b] = [points[i - 1], points[i]];
+        walk.forEach((s, k) => {
+          const [a, b] = [points[k], points[k + 1]];
+          const line = haversine(a.lat, a.lon, b.lat, b.lon);
           const metres = segmentMetres(a, b);
-          expect(metres).toBeLessThanOrEqual(
-            haversine(a.lat, a.lon, b.lat, b.lon) + 1e-9
-          );
-          if (pausedMsOf(b) > pausedMsOf(a))
+          if (s.heldSeconds === 0) expect(metres).toBe(line);
+          else {
+            // The step ran for s.seconds; the rest of its gap was held.
+            expect(metres).toBeLessThanOrEqual(line + 1e-9);
             expect(metres).toBeLessThanOrEqual(
-              MAX_PLAUSIBLE_SPEED_MPS * movingSecondsBetween(a, b) + 1e-9
+              MAX_PLAUSIBLE_SPEED_MPS * s.seconds + 1e-9
             );
-        }
+          }
+        });
       })
     );
   });
 
-  it("counts nothing across a break", () => {
+  it("counts nothing across a break: joining the breaks adds exactly the steps they cut", () => {
     assertProperty(
       fc.property(lat, lon, steps, (la, lo, walk) => {
         const points = trace(la, lo, walk);
         const joined = points.map((p, i) =>
           i > 0 && p.breakBefore ? { ...p, breakBefore: undefined } : p
         );
-        const gaps = points.reduce(
+        const cut = points.reduce(
           (sum, p, i) =>
             i > 0 && p.breakBefore
-              ? sum +
-                haversine(points[i - 1].lat, points[i - 1].lon, p.lat, p.lon)
+              ? sum + segmentMetres(points[i - 1], p)
               : sum,
           0
         );
-        // With every break joined, the distance gains at most the lines
-        // the breaks left out.
-        expect(totalDistance(joined)).toBeLessThanOrEqual(
-          totalDistance(points) + gaps + 1e-6
-        );
-        expect(totalDistance(joined)).toBeGreaterThanOrEqual(
-          totalDistance(points) - 1e-6
-        );
+        const whole = totalDistance(joined);
+        expect(
+          close(totalDistance(points) + cut, whole, 1e-6 * Math.max(1, whole))
+        ).toBe(true);
       })
     );
   });
@@ -230,10 +224,8 @@ describe("splits", () => {
       fc.property(lat, lon, steps, (la, lo, walk) => {
         const points = trace(la, lo, walk);
         const splits = calculateSplits(points);
-        const moving =
-          (movingClockMs(points[points.length - 1]) -
-            movingClockMs(points[0])) /
-          1000;
+        // The seconds the steps ran, holds left out.
+        const moving = walk.reduce((sum, s) => sum + s.seconds, 0);
         for (const s of splits) expect(s.time).toBeGreaterThan(0);
         const sum = splits.reduce((acc, s) => acc + s.time, 0);
         expect(sum).toBeLessThanOrEqual(moving + 1e-6);

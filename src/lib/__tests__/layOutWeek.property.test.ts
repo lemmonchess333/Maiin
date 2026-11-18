@@ -17,7 +17,13 @@ import {
   parseLocalDate,
 } from "../dateHelpers";
 import type { UserProfile } from "../auth";
-import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
+import type { SavedRun } from "../savedRuns";
+import { claimableRuns, claimMapFor } from "../runClaims";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+  WorkoutDay,
+} from "@/features/program/programTypes";
 
 /**
  * The week laid out (TrainWk1), as properties over the plan's lifts: a
@@ -25,6 +31,15 @@ import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
  * one lift to do, and every session sits in exactly one place. The week
  * is the clock's (so CI's +90 days, Auckland and Kiritimati runs each lay
  * out their own), and `today` is one of its days.
+ *
+ * Drawn: the usual layout, the account's start (on or before today: an
+ * account cannot begin after the day it is read), the plan's lifts and
+ * their marks, a lift or run under way, race week, a race date whose rest
+ * days fall in or near the week, the plan's dated runs with some marked
+ * done by hand, and saved runs, with the claim map built from them as Home
+ * builds it. Not drawn: lifts that load the legs (so no clash note), runs
+ * of the plan before the account began, and a plan for a week other than
+ * today's beyond one week either side.
  */
 
 const WEEK = localWeekKey(new Date());
@@ -76,6 +91,12 @@ interface Drawn {
   underWay: SessionUnderWay | null;
   /** Lay out another week than today's. */
   otherWeek: number;
+  /** A race this many days from the week's Monday, or none. */
+  race: number | null;
+  /** The plan's runs, by day of the week, some marked done by hand. */
+  runDays: { day: number; manual: boolean }[];
+  /** Saved runs, by day from the week's Monday. */
+  runs: { day: number; distance: number }[];
 }
 
 const drawn: fc.Arbitrary<Drawn> = fc
@@ -96,12 +117,32 @@ const drawn: fc.Arbitrary<Drawn> = fc
     planWeekShift: fc.constantFrom(0, 0, 0, -1, 1),
     outside: fc.array(fc.integer({ min: -3, max: 9 }), { maxLength: 3 }),
     underWay: fc.option(
-      fc
-        .option(fc.integer({ min: 0, max: 6 }), { nil: null })
-        .map((index): SessionUnderWay => ({ sport: "lift", index })),
+      fc.oneof(
+        fc
+          .option(fc.integer({ min: 0, max: 6 }), { nil: null })
+          .map((index): SessionUnderWay => ({ sport: "lift", index })),
+        fc
+          .option(fc.integer({ min: 0, max: 6 }), { nil: null })
+          .map((day): SessionUnderWay => ({
+            sport: "run",
+            runDayId: day === null ? null : `rd-${DAYS[day]}`,
+          }))
+      ),
       { nil: null }
     ),
     otherWeek: fc.constantFrom(0, 0, 0, 0, -1, 1),
+    race: fc.option(fc.integer({ min: -3, max: 10 }), { nil: null }),
+    runDays: fc.uniqueArray(
+      fc.record({ day: fc.integer({ min: 0, max: 6 }), manual: fc.boolean() }),
+      { maxLength: 4, selector: (r) => r.day }
+    ),
+    runs: fc.array(
+      fc.record({
+        day: fc.integer({ min: -2, max: 8 }),
+        distance: fc.constantFrom(0, 3000, 5000, 12_000),
+      }),
+      { maxLength: 4 }
+    ),
   })
   // A start after today is no account at all; keep it on or before today.
   .map((d) => ({ ...d, startShift: Math.min(d.startShift, d.todayIndex) }));
@@ -147,6 +188,36 @@ function build(d: Drawn): LayOutWeekInput {
   d.outside.forEach((offset, i) =>
     saved.push({ id: `outside-${i}`, date: shift(DAYS[0], offset) })
   );
+  const runDays = d.runDays.map(
+    ({ day }) =>
+      ({
+        id: `rd-${DAYS[day]}`,
+        dayIndex: parseLocalDate(DAYS[day]).getDay(),
+        date: DAYS[day],
+        weekKey: WEEK,
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+      }) as ScheduledRunDay
+  );
+  const manualCompletions = Object.fromEntries(
+    d.runDays
+      .filter((r) => r.manual)
+      .map((r) => [`rd-${DAYS[r.day]}`, { completedAt: 0 }])
+  );
+  const runs = d.runs.map((r, i) => {
+    const date = shift(DAYS[0], r.day);
+    return {
+      id: `run-${i}`,
+      day: date,
+      date,
+      distance: r.distance,
+      duration: r.distance > 0 ? 1800 : 0,
+      avgPace: 360,
+      activityType: "outdoor",
+      savedAtSeconds: parseLocalDate(date).getTime() / 1000 + 43_200,
+    } as unknown as SavedRun;
+  });
   const programState = {
     goal: "recomp",
     currentPhase: "base",
@@ -156,7 +227,16 @@ function build(d: Drawn): LayOutWeekInput {
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
-    runDays: [],
+    runDays,
+    manualCompletions,
+    ...(d.race !== null
+      ? {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { targetDate: shift(DAYS[0], d.race) },
+          },
+        }
+      : {}),
     liftWeekKey: shift(WEEK, d.planWeekShift * 7),
     ...(d.override !== null ? { nextWorkoutOverride: d.override } : {}),
     ...(d.raceWeek ? { raceWeek: "race" } : {}),
@@ -176,8 +256,13 @@ function build(d: Drawn): LayOutWeekInput {
     profile,
     programState,
     workouts: saved,
-    runs: [],
-    claimMap: new Map(),
+    runs,
+    claimMap: claimMapFor(
+      runDays,
+      claimableRuns(runs),
+      manualCompletions,
+      today
+    ),
     inProgress: d.underWay ? [d.underWay] : [],
   };
 }
@@ -265,17 +350,51 @@ describe("layOutWeek: the plan's lifts", () => {
     );
   });
 
-  it("the lifts still to do are the ones the free lift days could not hold, and only then", () => {
+  it("lays the lifts to do on the free lift days from today, in order, and the rest wait in Still to do", () => {
     assertProperty(
       fc.property(drawn, (d) => {
+        if (d.otherWeek !== 0) return;
         const week = layOutWeek(build(d));
+        const today = DAYS[d.todayIndex];
+        const start = shift(DAYS[0], d.startShift);
+        const race = d.race === null ? null : shift(DAYS[0], d.race);
+        // The lift under way holds today, unless the plan has it done.
+        const underWay =
+          d.underWay?.sport === "lift" &&
+          d.underWay.index !== null &&
+          d.underWay.index < d.marks.length &&
+          !d.marks[d.underWay.index].kind.startsWith("done")
+            ? d.underWay.index
+            : null;
+        // A day holding a lift of the plan done, or the one under way.
+        const taken = new Set(
+          d.marks.flatMap((m) =>
+            m.kind === "done-in-week" ? [DAYS[m.day]] : []
+          )
+        );
+        if (underWay !== null) taken.add(today);
+        // Worked out here, not read back: from today on, a lift day of the
+        // usual layout, the account begun, not one of the two days before
+        // a race or its day, and holding no lift.
+        const free = DAYS.filter(
+          (date) =>
+            date >= today &&
+            isLiftDay(d, date) &&
+            date >= start &&
+            !(race && date >= shift(race, -2) && date <= race) &&
+            !taken.has(date)
+        );
+        const toDoCount = d.marks.filter(
+          (m, i) => m.kind === "to-do" && i !== underWay
+        ).length;
         const laid = planLifts(week).filter(
           (l) => l.state === "today" || l.state === "planned"
         );
-        if (week.stillToDo.length > 0)
-          expect(laid.length).toBe(week.freeLiftDays.length);
         expect(laid.map((l) => l.date)).toEqual(
-          week.freeLiftDays.slice(0, laid.length)
+          free.slice(0, Math.min(free.length, toDoCount))
+        );
+        expect(week.stillToDo).toHaveLength(
+          Math.max(0, toDoCount - free.length)
         );
       })
     );

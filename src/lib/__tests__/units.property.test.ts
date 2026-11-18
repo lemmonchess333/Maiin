@@ -140,30 +140,24 @@ describe("distance and pace", () => {
     );
   });
 
-  it("a run target's distance is its metres, unconverted, and nothing else is a distance", () => {
+  it("a distance target set in either unit reads back as the distance set; a pace or time target is no distance", () => {
     assertProperty(
       fc.property(
-        fc.constantFrom("distance", "time", "pace", "open"),
-        fc.integer({ min: 1, max: 100_000 }),
-        (type, value) => {
-          const read = getDistanceTargetMeters({ type, value });
-          expect(read).toBe(type === "distance" ? value : 0);
-          // The target as the setup picker writes it, in either unit,
-          // comes back as the distance it was set to.
-          if (type === "distance")
-            for (const u of ["km", "mi"] as const)
-              expect(
-                close(
-                  distanceIn(
-                    getDistanceTargetMeters({
-                      type,
-                      value: distanceToMetres(value / 1000, u),
-                    }),
-                    u
-                  ),
-                  value / 1000
-                )
-              ).toBe(true);
+        fc.constantFrom("time", "pace", "open"),
+        fc.integer({ min: 1, max: 100 }),
+        fc.constantFrom<DistanceUnit>("km", "mi"),
+        (other, picked, u) => {
+          // The setup picker stores what was picked, in the reader's
+          // unit, as metres; the audio cues read it back.
+          const metres = distanceToMetres(picked, u);
+          const read = getDistanceTargetMeters({
+            type: "distance",
+            value: metres,
+          });
+          expect(close(distanceIn(read, u), picked)).toBe(true);
+          expect(getDistanceTargetMeters({ type: other, value: metres })).toBe(
+            0
+          );
         }
       )
     );

@@ -3,13 +3,13 @@ import fc from "fast-check";
 import { assertProperty } from "@/test/property";
 import {
   movingTimeOf,
-  readsMovingTimeFromTrace,
   replayAutoPause,
   withHolds,
   type MovingFix,
   type MovingTimeInput,
   type RecoveryWindow,
 } from "../runMovingTime";
+import { GPS_STOP_WINDOW_MS } from "../runAutoPause";
 import {
   MAX_PLAUSIBLE_SPEED_MPS,
   movingClockMs,
@@ -152,6 +152,145 @@ describe("replayAutoPause", () => {
   });
 });
 
+/**
+ * Runs whose holds are known without replaying anything: one fix a
+ * second, every fix good enough to count (accuracy 35 m or better),
+ * running at 1.2 m/s or more and standing under 0.5 m/s. A stop holds the
+ * clock from GPS_STOP_WINDOW_MS into it until the first moving fix, or the
+ * finish.
+ */
+const goodFix = fc.integer({ min: 3, max: 35 });
+const leg = (speed: fc.Arbitrary<number>, min: number, max: number) =>
+  fc.record({
+    seconds: fc.integer({ min, max }),
+    speed,
+    accuracy: goodFix,
+  });
+const moving = fc.double({ min: 1.2, max: 6, noNaN: true });
+const standing = fc.double({ min: 0, max: 0.4, noNaN: true });
+
+function walk(legs: readonly Stretch[], tail: number) {
+  const fixes: MovingFix[] = [];
+  const points: GPSPoint[] = [];
+  const legStart: number[] = [];
+  let t = START;
+  let lat = 51.5;
+  for (const s of legs) {
+    legStart.push(t + 1000);
+    for (let i = 0; i < s.seconds; i++) {
+      t += 1000;
+      lat += s.speed / 111_320;
+      fixes.push({ timestamp: t, speed: s.speed, accuracy: s.accuracy });
+      points.push({
+        lat,
+        lon: -0.12,
+        rawLat: lat,
+        rawLon: -0.12,
+        altitude: null,
+        accuracy: s.accuracy,
+        speed: s.speed,
+        timestamp: t,
+      });
+    }
+  }
+  return { fixes, points, legStart, finishedAt: t + tail * 1000 };
+}
+
+describe("replayAutoPause: a stop is held", () => {
+  it("a run that never stops is never held", () => {
+    assertProperty(
+      fc.property(
+        fc.array(leg(moving, 1, 60), { minLength: 1, maxLength: 6 }),
+        fc.integer({ min: 0, max: 30 }),
+        (legs, tail) => {
+          const w = walk(legs, tail);
+          expect(replayAutoPause(w.fixes, [], START, w.finishedAt)).toEqual([]);
+        }
+      )
+    );
+  });
+
+  it("standing 10 s or more to the finish holds from 5 s into the stop to the finish", () => {
+    assertProperty(
+      fc.property(
+        leg(moving, 1, 60),
+        leg(standing, 10, 120),
+        fc.integer({ min: 0, max: 30 }),
+        (ran, stood, tail) => {
+          const w = walk([ran, stood], tail);
+          expect(replayAutoPause(w.fixes, [], START, w.finishedAt)).toEqual([
+            { from: w.legStart[1] + GPS_STOP_WINDOW_MS, to: w.finishedAt },
+          ]);
+        }
+      )
+    );
+  });
+
+  it("a stop between two runs is held until the first moving fix", () => {
+    assertProperty(
+      fc.property(
+        leg(moving, 1, 60),
+        leg(standing, 10, 120),
+        leg(moving, 1, 60),
+        fc.integer({ min: 0, max: 30 }),
+        (ran, stood, ranAgain, tail) => {
+          const w = walk([ran, stood, ranAgain], tail);
+          expect(replayAutoPause(w.fixes, [], START, w.finishedAt)).toEqual([
+            {
+              from: w.legStart[1] + GPS_STOP_WINDOW_MS,
+              to: w.legStart[2],
+            },
+          ]);
+        }
+      )
+    );
+  });
+
+  it("the moving time is the timer less the stop, but for what each step keeps for its metres", () => {
+    assertProperty(
+      fc.property(
+        leg(moving, 1, 60),
+        leg(standing, 10, 120),
+        fc.integer({ min: 0, max: 30 }),
+        (ran, stood, tail) => {
+          const w = walk([ran, stood], tail);
+          const elapsedSeconds = (w.finishedAt - START) / 1000;
+          const result = movingTimeOf({
+            points: w.points,
+            fixes: w.fixes,
+            recoveries: [],
+            startedAt: START,
+            finishedAt: w.finishedAt,
+            elapsedSeconds,
+            autoPause: false,
+            outdoorGps: true,
+            pausedByHand: false,
+          });
+          const stopMs = w.finishedAt - (w.legStart[1] + GPS_STOP_WINDOW_MS);
+          // Standing steps under 0.5 m/s keep a few ms each for their
+          // drift (withHolds' rule): at most 0.4 m / 12 m/s, plus 1 ms.
+          const keptMs = stood.seconds * (Math.ceil((0.4 / 12) * 1000) + 1);
+          expect(result.source).toBe("trace");
+          expect(result.heldSeconds).toBeLessThanOrEqual(
+            Math.round(stopMs / 1000)
+          );
+          expect(result.heldSeconds).toBeGreaterThanOrEqual(
+            Math.round((stopMs - keptMs) / 1000)
+          );
+          // The moving time: the running, the stop's first 5 s, and the
+          // kept milliseconds.
+          expect(result.seconds).toBeGreaterThanOrEqual(
+            elapsedSeconds - Math.round(stopMs / 1000)
+          );
+          expect(result.seconds).toBeLessThanOrEqual(
+            elapsedSeconds - Math.round((stopMs - keptMs) / 1000)
+          );
+        }
+      )
+    );
+  });
+});
+
 describe("withHolds", () => {
   it("keeps the run's distance, and the moving clock never runs backwards", () => {
     assertProperty(
@@ -213,16 +352,18 @@ describe("withHolds", () => {
 });
 
 describe("movingTimeOf", () => {
-  it("moving time and time held add up to the timer, and neither is negative", () => {
+  it("moving time and time held are each between 0 and the timer, and a trace of two points is read", () => {
     assertProperty(
       fc.property(run, (r) => {
         const result = movingTimeOf(input(r));
-        expect(result.seconds + result.heldSeconds).toBe(r.elapsedSeconds);
         expect(result.heldSeconds).toBeGreaterThanOrEqual(0);
+        expect(result.heldSeconds).toBeLessThanOrEqual(r.elapsedSeconds);
         expect(result.seconds).toBeGreaterThanOrEqual(0);
-        expect(result.source).toBe(
-          readsMovingTimeFromTrace(input(r)) ? "trace" : "timer"
-        );
+        expect(result.seconds).toBeLessThanOrEqual(r.elapsedSeconds);
+        // Auto-pause off, outdoors, never paused by hand, a known start
+        // and no hold in the trace: read from the trace once it has two
+        // points.
+        expect(result.source).toBe(r.points.length >= 2 ? "trace" : "timer");
       })
     );
   });

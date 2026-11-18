@@ -98,7 +98,8 @@ describe("weight grids", () => {
     assertProperty(
       fc.property(grid, weight, ({ grid: g }, w) => {
         expect(g.above(w)).toBeGreaterThan(w);
-        expect(g.below(w)).toBeLessThan(w + EPS);
+        if (w > 0) expect(g.below(w)).toBeLessThan(w);
+        else expect(g.below(w)).toBe(0);
         expect(g.below(w)).toBeGreaterThanOrEqual(0);
       })
     );

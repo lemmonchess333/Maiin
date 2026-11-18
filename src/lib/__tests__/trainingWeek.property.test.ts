@@ -142,20 +142,22 @@ describe("trainingWeek", () => {
     );
   });
 
-  it("lifts planned are the schedule's lift days, never more, and none reads as null", () => {
+  it("lifts planned are the schedule's lift days from the day the account began, counted by hand", () => {
     assertProperty(
       fc.property(drawn, (d) => {
         const input = build(d);
-        const planned = trainingWeek(input).lifts.planned;
-        const liftDays = d.schedule.filter(
-          (k) => k === "lift" || k === "both"
-        ).length;
-        if (planned === null) return;
-        expect(planned).toBeGreaterThan(0);
-        expect(planned).toBeLessThanOrEqual(liftDays);
-        // A week wholly after the account began plans every lift day.
-        if (d.startShift !== null && d.startShift <= 0)
-          expect(planned).toBe(liftDays);
+        const start =
+          d.startShift === null ? null : shift(input.weekKey, d.startShift);
+        // The schedule is Sunday first; the week is Monday first.
+        const planned = d.schedule.filter((kind, dayOfWeek) => {
+          if (kind !== "lift" && kind !== "both") return false;
+          const date = shift(
+            input.weekKey,
+            dayOfWeek === 0 ? 6 : dayOfWeek - 1
+          );
+          return !(start && date < start);
+        }).length;
+        expect(trainingWeek(input).lifts.planned).toBe(planned || null);
       })
     );
   });

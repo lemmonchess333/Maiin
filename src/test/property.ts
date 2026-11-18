@@ -1,3 +1,4 @@
+import { expect } from "vitest";
 import fc, { type IProperty, type Parameters } from "fast-check";
 
 /**
@@ -13,14 +14,19 @@ import fc, { type IProperty, type Parameters } from "fast-check";
  *
  *   FC_SEED=7 FC_RUNS=2000 npx vitest run src/lib/__tests__/gps.property.test.ts
  *
- * and turn what it finds into an example test with that input.
+ * and turn what it finds into an example test with that input. The same
+ * FC_SEED replays the same inputs for a test of the same name.
+ *
+ * Each property mixes its test's name into the seed, so two properties
+ * that share an arbitrary in one file draw different inputs rather than
+ * the same hundred. Renaming a test changes what it draws.
  *
  * Every call passes its own `{ seed, numRuns }`, never
  * `fc.configureGlobal`: global settings are mutable state shared by every
  * file a worker runs, the shape `unit-shuffle` caught three times.
  */
 
-/** The seed every property runs with unless `FC_SEED` names another. */
+/** The base seed every property runs with unless `FC_SEED` names another. */
 export const PROPERTY_SEED = 20_261_118;
 
 /** Runs per property unless `FC_RUNS` says otherwise. The suite runs about
@@ -35,10 +41,24 @@ function envInt(name: string): number | null {
   return Number.isSafeInteger(value) ? value : null;
 }
 
-/** The seed and the number of runs for one property. */
-export function propertyOptions(): { seed: number; numRuns: number } {
+/** FNV-1a over a test's name: a fixed number per name, for the seed. */
+function nameSalt(name: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < name.length; i++) {
+    hash ^= name.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/** The seed and the number of runs for one property: the base seed mixed
+ *  with the running test's name. */
+export function propertyOptions(
+  testName: string = expect.getState().currentTestName ?? ""
+): { seed: number; numRuns: number } {
+  const base = envInt("FC_SEED") ?? PROPERTY_SEED;
   return {
-    seed: envInt("FC_SEED") ?? PROPERTY_SEED,
+    seed: (base ^ nameSalt(testName)) | 0,
     numRuns: Math.max(1, envInt("FC_RUNS") ?? PROPERTY_RUNS),
   };
 }
