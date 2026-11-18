@@ -112,8 +112,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA                                      |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
 | `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
-| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, with the rest timer and Reset programme at its foot           |
-| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor, with voice cues (Train's Run tab deep-links here)              |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, or Add lifting; Stop lifting and the reset at its foot        |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor or Add running, voice cues (Train's Run tab deep-links here)    |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
 | `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Food offers again (F2d)            |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
@@ -171,6 +171,7 @@ Support & legal.
 | `layOutWeek.ts`         | The week laid out: each session on a day, lifts that slide     |
 | `foodDay.ts`            | A food day: 800 kcal or more, the one rule every count reads   |
 | `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
+| `sportChange.ts`        | A sport added or removed: the plan's input and profile fields  |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |

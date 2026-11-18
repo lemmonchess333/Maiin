@@ -100,6 +100,9 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import { smallPlatesHint } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
+import { sportChange, sportChangeRefusal } from "@/lib/sportChange";
+import { localDateString } from "@/lib/dateHelpers";
+import StopSportDialog from "./StopSportDialog";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
@@ -440,6 +443,15 @@ export default function ProgrammeSettings({
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Stop lifting (TrainWk1 step 6): its own confirmation, and why it can't
+  // be done when it can't (the last sport, a training block running).
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopRefused = sportChangeRefusal(
+    profile,
+    programState,
+    "remove_lifting"
+  );
 
   const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
@@ -614,6 +626,62 @@ export default function ProgrammeSettings({
       toast.error(rejection.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** Takes lifting off the plan: its lift days go, and everything logged
+   *  stays (`sportChange`'s `remove_lifting`). */
+  async function stopLifting() {
+    if (stopping || readiness !== "ready") return;
+    const change = sportChange(
+      {
+        profile,
+        programState,
+        today: localDateString(new Date()),
+        recentLayoff,
+        recentRuns,
+      },
+      { kind: "remove_lifting" }
+    );
+    if (!change.ok) {
+      setConfirmStop(false);
+      toast.error(change.sentence);
+      return;
+    }
+    setStopping(true);
+    try {
+      const plan = buildPlan(change.input);
+      Object.assign(plan.profileUpdates, change.patch);
+      await configureLiftPlan(plan, profile, programState);
+      setConfirmStop(false);
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Save changes).
+        logger.warn(
+          "[ProgrammeSettings] lifting stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Lifting stopped");
+        window.location.reload();
+        return;
+      }
+      toast.success("Lifting stopped");
+      onSaved?.();
+    } catch (err) {
+      logger.error("[ProgrammeSettings] stop lifting failed:", err);
+      const rejection = planSaveRejection(
+        err,
+        "Your programme changed. Reopen settings to review the latest plan before saving."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setStopping(false);
     }
   }
 
@@ -1055,6 +1123,24 @@ export default function ProgrammeSettings({
 
       {afterForm}
 
+      {/* Stop lifting (TrainWk1 step 6; the Train grill's Q33): lifting off
+          the plan, as Run plan's Stop running takes running off. Refused
+          with the reason when it would leave no sport, or while a training
+          block runs. */}
+      {stopRefused ? (
+        <p className="px-1 text-xs text-muted-foreground">
+          {stopRefused.sentence}
+        </p>
+      ) : (
+        <SettingsGroup footer="Your saved workouts and best lifts stay. Your plan’s lift days go.">
+          <SettingsRow
+            tone="destructive"
+            label="Stop lifting"
+            onClick={() => setConfirmStop(true)}
+          />
+        </SettingsGroup>
+      )}
+
       {/* Reset programme. It was the foot of Settings → Programme, a page
           that edited nothing; this editor is where the programme is set
           now (Trim1 call 2). */}
@@ -1103,6 +1189,14 @@ export default function ProgrammeSettings({
       )}
 
       {confirmModal}
+      <StopSportDialog
+        sport="lifting"
+        open={confirmStop}
+        busy={stopping}
+        ready={programReady}
+        onCancel={() => setConfirmStop(false)}
+        onConfirm={() => void stopLifting()}
+      />
     </div>
   );
 }

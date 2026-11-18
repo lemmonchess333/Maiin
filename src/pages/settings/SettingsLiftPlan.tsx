@@ -25,6 +25,11 @@ import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
  * problems rather than a finding, and the fields that fix it were two
  * screens away. Here the finding and its remedy are on one page — it rates
  * the very days and focus this form edits — and Train keeps one fewer card.
+ *
+ * Someone with no lift days on their plan gets Add lifting in place of the
+ * editor (TrainWk1 step 6): before, a runner saw the whole editor with no
+ * lift days selected and no way to add any. The rest timer, the week's
+ * volume and Reset programme are lifting's, so they wait until it is on.
  */
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -32,6 +37,8 @@ import { useAuth } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import ProgrammeSettings from "@/components/program/ProgrammeSettings";
+import AddLiftingFlow from "@/components/program/AddLiftingFlow";
+import { trainingKind } from "@/lib/trainingKind";
 import RestTimerPrefs from "@/components/settings/RestTimerPrefs";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
@@ -83,6 +90,26 @@ export default function SettingsLiftPlan() {
   if (!profile) {
     // Brief auth-resolution window; route guards keep signed-out users out.
     return <SettingsSection title="Lift plan" />;
+  }
+
+  if (!trainingKind(profile, programState).lifts) {
+    return (
+      <SettingsSection
+        title="Lift plan"
+        subtitle="Focus, experience, lift days, equipment, injuries"
+        section="training"
+      >
+        <AddLiftingFlow
+          key={profile.uid}
+          profile={profile}
+          programState={programState}
+          readiness={readiness}
+          recentLayoff={recentLayoff}
+          recentRuns={recentRuns}
+          refreshProfile={refreshProfile}
+        />
+      </SettingsSection>
+    );
   }
 
   return (

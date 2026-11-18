@@ -4845,6 +4845,34 @@ Captured in Chromium at 393 and 320 px; a phone has not drawn them.
       `/settings/training` in the installed app. Passing: Lift plan
       opens.
 
+## A sport added or removed in Lift plan and Run plan (TrainWk1 step 6a, 2026-11-18)
+
+Affects: Settings → Lift plan for someone with no lift days (Add lifting,
+setup's three lifting questions, one a screen), Settings → Run plan for
+someone with no running (Add running: setup's running question, then the
+goal cards with the 30-minute goal offered), and Stop lifting and Stop
+running at each editor's foot with one confirmation. Unit tests and the
+journey run them on the web; a phone has not drawn them.
+
+- [ ] **Add lifting on a phone.** As a runner, open Settings → Lift plan.
+      Passing: it opens on "How often will you lift?" with Continue above
+      the tab bar, not under it or the home indicator; Back and Continue
+      stack at the largest text size; Add lifting saves and the page turns
+      into the lift plan editor.
+- [ ] **The runs keep their days.** Before adding lifting, note the runner's
+      run days on Home's week. After, passing: the same days are run days,
+      and the lifts sit on the others.
+- [ ] **Add running on a phone.** As a lifter, open Settings → Run plan,
+      choose New to running. Passing: "30 minutes without stopping" is
+      chosen, Add running saves, and Train's Run tab shows the goal's
+      first runs.
+- [ ] **Stop running, then Stop lifting.** On a hybrid with no race, tap
+      Stop running. Passing: the confirmation opens over the tab bar,
+      Cancel changes nothing, Stop running takes the run days off Home's
+      week and every saved run stays in Progress. Then Lift plan's foot
+      reads "Your plan is lifting only. To stop lifting, add running
+      first." with no Stop lifting.
+
 ## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
 
 Affects: new plans of 30 and 45 minutes past beginner (`planSupersets.ts`,

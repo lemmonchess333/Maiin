@@ -51,6 +51,7 @@ inside that type.
 | Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                |
 | Making a segment         | `src/components/run/SegmentMaker.tsx` (`MakerState`)                                         | picking, saving, refused; closed is RunDetail's (`segmentRange` null)                                                |
 | A segment's page         | `src/hooks/useSegment.ts` (`SegmentStatus`, `BoardStatus`)                                   | loading, ready, missing, failed; its board loading, ready, failed                                                    |
+| A sport added, removed   | `src/components/program/AddLiftingFlow.tsx` (`AddLiftingStep`), `src/lib/sportChange.ts`     | week, kit, limits, saving; a removal asked once, then saved or refused (`SportRefusal`: last sport, race, block)     |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.
