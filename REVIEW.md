@@ -74,7 +74,7 @@ guard test) has held its class for a while and nothing has slipped past.
 
 - **Trigger:** paths `src/**/*.{ts,tsx}` `functions/**/*.js`; not `**/__tests__/**`; added `orderBy\(` `where\([^)]*["'](==|!=|<=?|>=?|in|not-in|array-contains(-any)?)["']`
 - **Check:** Every saved document carries the field the query orders by (Firestore leaves out documents without it, and so does the test fake), and the test seeds the fields the app really writes. A new composite query has its `firestore.indexes.json` entry.
-- **Behind:** the runs query ordered by `createdAt`, which no saved run had, read nothing in production from May to October 2026 (CLAUDE.md, Testing); #1084 (`7a8db8ec5`), #2018 (`5c61e4ded`), #2235 (`026e0c33b`), #3361 (`ff5737aee`).
+- **Behind:** the runs query ordered by `createdAt`, which no saved run had, read nothing in production from May to October 2026 (#2555, `2b393f727`); #1084 (`7a8db8ec5`), #2018 (`5c61e4ded`), #2235 (`026e0c33b`), #3361 (`ff5737aee`).
 
 ### R07. Saved sessions or a week's count, read again
 
@@ -136,7 +136,7 @@ guard test) has held its class for a while and nothing has slipped past.
 
 - **Trigger:** paths `src/**/*.{ts,tsx}`; not `**/__tests__/**` `src/lib/weightUnits.ts` `src/lib/distanceUnits.ts` `src/lib/liftLoad.ts`; added `2\.2046|0\.4535|1609\.3|0\.6213|1\.6093`
 - **Check:** The factor is imported from its one definition, not written again.
-- **Behind:** #2152 (`0fdf6bfd6`, one definition each for the clock, the kg to lb factor, clamp and the week key), ADR-0005's drift class.
+- **Behind:** #2152 (`0fdf6bfd6`, one definition each for the clock, the kg to lb factor, clamp and the week key, after copies had drifted).
 
 ## Tests
 
