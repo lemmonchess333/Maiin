@@ -1814,12 +1814,12 @@ where the bars were 47 pt and 34 pt.
 Affects: the native project's life cycle (`claude/duo-uiscene`), the
 shell's side insets and the two-pane layouts (`claude/duo-layouts`), and
 every screen on Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
-No GitHub runner has an iPhone Duo simulator (the `macos-26` image tops out
-at Xcode 26.6; the `xcode-27` image has Xcode 27.1 as a release candidate
-with an iOS 27.0 simulator runtime only, and no Duo device), so none of this
-is checked in CI; the capture rig checks the layouts at the Duo's sizes in
-Chromium. Needs an iPhone Duo, or Xcode 27.1's Duo simulator on a Mac for
-the rows marked (sim).
+The `xcode-27` image's Xcode 27.1 has an iPhone Duo simulator, and with
+`claude/duo-sdk-27-1` each pull request's build is launched on it and both
+displays shot (`ios-native-compile.yml`); that run cannot fold it, sign in
+or open a sheet. The capture rig checks the layouts at the Duo's sizes in
+Chromium. The rest needs an iPhone Duo, or Xcode 27.1's Duo simulator on a
+Mac for the rows marked (sim).
 
 Today's builds (iOS 26 SDK), in compatibility mode:
 
@@ -1856,6 +1856,11 @@ Once the app is built with the iOS 27.1 SDK (owner decision A in
       log names Xcode 27.1 and iOS SDK 27.1 or later, App Store Connect
       accepts the upload, and it installs and opens on any iPhone with no
       change from the last iOS 26 SDK build.
+- [ ] **The Duo launch fills the display**: in a green
+      `ios-native-compile.yml` run, the `ios-simulator-duo` screenshot of
+      the display the job summary names shows the app edge to edge, with no
+      bars of a letterboxed iPhone mini's shape (the check only asks that
+      the middle of the display is drawn).
 
 On an iPhone Duo:
 

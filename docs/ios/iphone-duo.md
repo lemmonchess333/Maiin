@@ -289,12 +289,18 @@ That is where Tropos is today (see the short version).
 - **Simulator**: Xcode 27.1's Device Hub runs an iPhone Duo simulator and
   previews poses [PREP] [WEBKIT], within the limits above [XCODE271]. "Xcode
   27.1 requires a Mac running macOS Tahoe 26.6 or later" [XCODE271].
-- **CI has no Duo simulator.** GitHub's `macos-26` image (both iOS workflows
-  use it) tops out at Xcode 26.6; the `xcode-27` image carries Xcode 27.1 as
-  a release candidate with an iOS 27.0 simulator runtime only, and no
-  "iPhone Duo" device [RUNNERS]. So no CI job builds or screenshots on a Duo;
-  the device checks are in `docs/qa/pre-launch-backlog.md` ("The iPhone
-  Duo").
+- **CI launches on the Duo simulator.** GitHub's `macos-26` image tops out
+  at Xcode 26.6. The `xcode-27` image's Readme listed Xcode 27.1 as a
+  release candidate with an iOS 27.0 runtime only [RUNNERS], but a run on
+  18 November 2026 selected the final `Xcode_27.1.app` and found an "iPhone
+  Duo" simulator: one device with two displays, 1398 × 2034 and
+  2007 × 2853, the outer and inner App Store screenshot sizes [CI-DUO].
+  With `claude/duo-sdk-27-1`, `ios-native-compile.yml` launches each pull
+  request's build on it: each display is shot before the launch and 25
+  seconds after it, the app has to be running, and the display that showed
+  the home screen has to show the app (the `ios-simulator-duo` artifact).
+  It cannot fold the simulator, sign in or open a sheet; those are device
+  checks in `docs/qa/pre-launch-backlog.md` ("The iPhone Duo").
 - **The capture rig** has the Duo's sizes as touch screens
   (`e2e/helpers/screenSize.ts`, `src/test/iphoneDuo.ts`):
   `largeText.capture.spec.ts` measures every screen at 466 × 678 and
@@ -332,7 +338,7 @@ Owner decisions:
   anything but compatibility mode, and the iOS 27 SDK is required for every
   upload from April 2027. It means `deploy-ios.yml` and
   `ios-native-compile.yml` move to a runner with Xcode 27.1 (GitHub's
-  `xcode-27` image had it as a release candidate on 18 November 2026) after
+  `xcode-27` image, which has its iPhone Duo simulator [CI-DUO]) after
   `claude/duo-uiscene` is proven on a device. Duo screenshots are then
   required for submissions. **Approved by the owner, 18 November 2026:**
   `claude/duo-sdk-27-1` runs both workflows on `xcode-27` and selects
@@ -388,6 +394,11 @@ Owner decisions:
 - [RUNNERS] GitHub, actions/runner-images: `macos-26-arm64-Readme.md` and
   `xcode-27-arm64-Readme.md` (read 18 November 2026).
   https://github.com/actions/runner-images
+- [CI-DUO] Tropos CI, "iOS native compile", job `simulator-build` on
+  `claude/duo-sdk-27-1` (18 November 2026): `simctl` lists the iPhone Duo's
+  displays as `--display=3 LCD-1 (primary-1) 2007x2853` and
+  `--display=1 LCD (primary) 1398x2034`.
+  https://github.com/lemmonchess333/Maiin/actions/runs/44244821762/job/134601125367
 
 Quotes from the tech talks and the DTS lab were read from their transcripts
 through a summarising fetch, not copied by hand; check a quote against the
