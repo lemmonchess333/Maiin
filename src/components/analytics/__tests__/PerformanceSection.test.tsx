@@ -4,9 +4,10 @@
  * take more".
  *
  * The lead is the engine's verdict, the verb PI1 locks and its line, over
- * the last seven days' lifting and running against the usual week. The
- * 0–100 score is the first of its details, under "Score details", and
- * `PerformanceDetails.test.tsx` holds it there.
+ * the last seven days' lifting and running against the usual week, with
+ * the 0–100 number small beside the window (free, the owner, 18
+ * November). The score's own card, history and breakdown are its details,
+ * under "Score details", and `PerformanceDetails.test.tsx` holds them.
  *
  * The cases the retired surfaces' tests carried are kept with their
  * reasons: the first-week 81 that read "Peak" over "Establishing your
@@ -130,13 +131,28 @@ beforeEach(() => {
 });
 
 describe("the lead: load against your usual (App1 Q10)", () => {
-  it("does not lead with the 0–100 score: no ring and no figure out of 100", () => {
+  it("carries the number free and small beside the window, never as the hero", () => {
+    /* The owner, 18 November: the score's number is free; its history,
+       chart and details are Pro. It leads no more (Q10): no ring, and it
+       sits at caption rank beside "Last 7 days", under the verdict. */
     serve(history(72, "high"));
     const { container } = renderSection();
-    // The score is 72. It is the first of the details, not the lead.
-    expect(screen.queryByText("72")).toBeNull();
-    expect(screen.queryByText(/Performance Index/)).toBeNull();
+    const score = lead().querySelector("[data-lead-score]") as HTMLElement;
+    expect(score).toHaveTextContent("Your score 72");
+    expect(screen.getAllByText("72")).toHaveLength(1);
+    expect(screen.getByText("72").className).not.toMatch(/text-hero|text-4xl/);
     expect(container.querySelector("svg circle[stroke-dasharray]")).toBeNull();
+  });
+
+  it("shows the number to a free account too: only the details are Pro", () => {
+    serve(history(72, "high"));
+    renderSection({ detailsLocked: true });
+    expect(lead().querySelector("[data-lead-score]")).toHaveTextContent(
+      "Your score 72"
+    );
+    expect(
+      screen.getByRole("button", { name: "Score details, Pro" })
+    ).toBeInTheDocument();
   });
 
   it("leads with the verdict, the screen's largest words", () => {

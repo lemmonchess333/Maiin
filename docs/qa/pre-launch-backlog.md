@@ -5097,9 +5097,10 @@ A person's sessions, bests, lifetime totals and exports stay free.
 Unit-tested; the capture specs that film 6M and the details now sign the
 test user in as Pro for the length of the capture.
 
-_Note 2026-11-15 (App1 Q10, Q16): Score details now holds the 0–100 score
-itself, its 12-week chart and its average; the training load chart is
-gone. A free account sees the verdict and the bars, not the score._
+_Note 2026-11-15, updated 18 November (App1 Q10, Q16; the owner): the
+score's number is free and sits small in the lead beside "Last 7 days";
+Score details holds its card, its 12-week chart, average and breakdown,
+which are Pro. The training load chart is gone._
 
 - [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
       lock; tapping one opens the Pro page and leaves the range where it
@@ -5117,19 +5118,19 @@ gone. A free account sees the verdict and the bars, not the score._
 Affects: the top of Progress (`PerformanceSection`, `LoadAgainstUsual`),
 Score details (`PerformanceDetails`) and the weekly review's first card.
 The lead is the verdict at hero size over the last 7 days' lifting and
-running against the usual week; the 0–100 score opens first under Score
-details, which is Pro (Q84), so a free account no longer sees the number
-anywhere; the minutes-based training load chart is gone. Unit-tested; the
-capture specs read the new lead and details on the emulator. Where this
-section and the Q84 one above disagree on "the headline score", this one
-is current: a free account's Progress shows the verdict, not the score.
+running against the usual week, with the 0–100 number small beside the
+window, free (the owner, 18 November); its card, 12-week chart, average
+and breakdown are under Score details, which is Pro (Q84); the
+minutes-based training load chart is gone. Unit-tested; the capture specs
+read the new lead and details on the emulator.
 
 - [ ] **A free account on Progress.** Passing: the top card reads "Last 7
       days", a word such as Steady or Sharpening in large type, its line,
       Lifting and Running each with a bar and a tick at the usual week,
       and under them "No sign to ease off. Carry on with your plan" (or
-      "Ease off this week rather than add more" under Backing off); no
-      0–100 figure on the page; Score details shows "Pro".
+      "Ease off this week rather than add more" under Backing off); "Your
+      score 74" small at the top right of the card, never larger than the
+      word; Score details shows "Pro".
 - [ ] **A Pro account opens Score details.** Passing: "Your score" first,
       the ring with the figure and "Last 7 days · out of 100", then "Your
       score by week", Breakdown with the food logged, Load band and the

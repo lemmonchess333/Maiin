@@ -94,11 +94,13 @@ function Heading() {
  * the verb is its largest text (§14m), in the band's colour, so the word,
  * its colour and the bars say one thing.
  *
- * The 0–100 score itself is one of the details (Q10), opened in place
- * under "Score details" with what it is made of (`PerformanceDetails`),
- * which is Pro (Q84). It is shown nowhere else: the weekly review keeps
- * its verdict in words and drops the number (Q12). The details keep one
- * load model, the score's (Q16).
+ * The 0–100 number is free and small (the owner, 18 November 2026): it
+ * sits beside the window, under the verdict in rank, so the screen keeps
+ * one hero. Its history, its 12-week chart and average, and what it is
+ * made of are the details under "Score details" (`PerformanceDetails`),
+ * which are Pro (Q84). Progress is the one surface that shows it: the
+ * weekly review keeps its verdict in words and drops the number (Q12).
+ * The details keep one load model, the score's (Q16).
  */
 export default function PerformanceSection({
   hasLoggedSession = false,
@@ -200,9 +202,22 @@ export default function PerformanceSection({
       <ArrivalFade {...arrival}>
         <Card className="space-y-4" data-performance-lead="">
           <div className="@container space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground">
-              {scoreWindowLabel(currentWeek.weekKey, new Date())}
-            </p>
+            {/* The window, and the number at caption rank beside it:
+                free (owner, 18 November), never a second hero. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <p className="text-xs font-semibold text-muted-foreground">
+                {scoreWindowLabel(currentWeek.weekKey, new Date())}
+              </p>
+              <p
+                className="text-xs font-semibold text-muted-foreground"
+                data-lead-score=""
+              >
+                Your score{" "}
+                <span className="text-sm font-bold font-mono tabular-nums text-foreground">
+                  {pi}
+                </span>
+              </p>
+            </div>
             {/* The verdict. Its longest words ("Sharpening", "Recovering")
                 are about 5.3 em wide, so where the card is narrower than
                 that at the reader's text size (a 320 pt phone at the

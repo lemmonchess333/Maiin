@@ -18,7 +18,7 @@ export const PRO_INCLUDES: readonly string[] = [
   "Macros that shift with your training",
   "Running paces that speed up as your races and sessions show you’re fitter",
   "Readiness from your sleep and heart rate in Apple Health",
-  "Charts older than 3 months, and your score with its 12-week chart and average",
+  "Charts older than 3 months, and your score’s 12-week chart, average and details",
   "Plans for a half marathon or longer, after their first week",
 ];
 

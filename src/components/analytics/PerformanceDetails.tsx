@@ -50,10 +50,12 @@ const RING = 72;
 const RING_STROKE = 6;
 
 /**
- * The 0–100 score, the first of its details (App1 Q10: "the single score
- * moves into the details"). Its ring in the band's colour with the figure
- * in it, the window it covers (Q13) and its change on the seven days
- * before. The verb is the lead's, above, and is not repeated here.
+ * The 0–100 score's own card, the first of its details: its ring in the
+ * band's colour with the figure in it, the window it covers (Q13), its
+ * change on the seven days before and what the number means. The figure
+ * itself is free and sits small in the lead above (the owner, 18
+ * November); this card, with the history below it, is Pro (Q84). The
+ * verb is the lead's, and is not repeated here.
  */
 function ScoreCard({
   week,
@@ -235,9 +237,11 @@ function loadBandLabel(band: string): string {
 }
 
 /**
- * The score and what it is made of, opened in place under the Progress
- * lead by "Score details" (Trim1 call 5; App1 Q10 moved the score itself
- * here). Pro for a free account (Q84), so its page never mounts it there.
+ * The score's details, opened in place under the Progress lead by "Score
+ * details" (Trim1 call 5, App1 Q10): its own card, its 12-week chart and
+ * average, and what it is made of. Pro (Q84; the owner, 18 November: the
+ * number is free and shown in the lead, its history and details are Pro),
+ * so a free account's page never mounts it.
  *
  * The verdict and the last seven days against the usual week are the
  * lead's (`PerformanceSection`), and are not repeated here. One load model,
