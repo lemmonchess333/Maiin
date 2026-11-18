@@ -172,6 +172,24 @@ const KEPT: Kept[] = [
     shows: { page: "landing" },
   },
   {
+    address: "/?from=widget",
+    from: "a widget's tap (Wid1, widgetLinks.ts); iOS hands it to the app",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/program?day=0&from=widget",
+    from: "a widget's tap on a session; iOS hands it to the app",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/food?from=widget",
+    from: "the food widget's tap; iOS hands it to the app",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
     address: "/.well-known/apple-app-site-association",
     from: "Apple's CDN, for universal links (#3366)",
     hosting: { kind: "file", file: ".well-known/apple-app-site-association" },
@@ -333,9 +351,10 @@ describe("the website's page at each address", () => {
   });
 });
 
-/** Every troposfit.com address the code names, outside its tests. */
+/** Every troposfit.com address the code names, outside its tests: the
+ *  web and server code, and the iPhone app's own (its widgets' links). */
 function addressesInCode(): string[] {
-  const roots = ["src", "functions/lib", "functions/email"];
+  const roots = ["src", "functions/lib", "functions/email", "ios/App"];
   const found = new Set<string>();
   const scan = (text: string) => {
     for (const m of text.matchAll(
@@ -348,9 +367,12 @@ function addressesInCode(): string[] {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
       if (statSync(full).isDirectory()) {
-        if (name === "__tests__" || name === "node_modules") continue;
+        if (/^(__tests__|node_modules|Pods|build)$|Tests$/.test(name)) continue;
         walk(full);
-      } else if (/\.(ts|tsx|js|cjs)$/.test(name) && !/\.test\./.test(name)) {
+      } else if (
+        /\.(ts|tsx|js|cjs|swift)$/.test(name) &&
+        !/\.test\./.test(name)
+      ) {
         scan(readFileSync(full, "utf8"));
       }
     }
@@ -375,12 +397,15 @@ describe("the addresses the code hands out", () => {
   });
 
   it("names no troposfit.com address the table does not keep", () => {
-    // An address written as a family ("https://troposfit.com/activity/<id>"
-    // in a comment, `${PUBLIC_ORIGIN}/activity/${id}` in code) is kept
-    // when a kept address is that family with an id.
+    // Hosting answers by path, so an address is kept when a kept address
+    // has its path (a widget's "/program?day=2" is "/program?day=0&from=
+    // widget"'s). One written as a family ("https://troposfit.com/
+    // activity/<id>" in a comment, `${PUBLIC_ORIGIN}/activity/${id}` in
+    // code) is kept when a kept address is that family with an id.
     const families = KEPT.map((k) => pathOf(k.address));
     const isKept = (address: string) =>
       kept.has(address) ||
+      families.includes(pathOf(address)) ||
       (address.endsWith("/") &&
         families.some(
           (path) =>
