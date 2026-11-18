@@ -315,14 +315,19 @@ words). Ratings, user counts and press quotes: there are none yet.
   drawing stays hidden there until the post's own page replaces it.
   Checked on the Hosting emulator: it does not let `/settings/**` match
   `/settings`, which is why the rule is a regex.
-- **Home keeps no canonical address (Tropos decision).** Its HTML is also
-  the page `publicPostPage` fills with a post, and that function removes the
-  page's preview tags but not a canonical link, so a canonical on Home would
-  tell search engines every shared post is Home. Home's duplicates
-  (`/upgrade`, `/settings/…`) are few and Google chooses `/` for them.
-- **The old service worker** that browsers kept from the web app here asks
-  the network first for every page (`public/sw.js`), so they get the
-  website on their next visit.
+- **Home's HTML keeps no canonical address (Tropos decision).** It is
+  also the page `publicPostPage` fills with a post, and that function
+  removes the page's preview tags but not a canonical link, so a canonical
+  written into Home's HTML would tell search engines every shared post is
+  Home. In the browser, Home at any other address names the front page as
+  its canonical copy, and `/upgrade` and `/settings/…` ask not to be
+  indexed (#3375's `landingHead`).
+- **Only what the website uses ships.** From the app's `public/` folder,
+  the icons, the static legal pages and the few drawings the pages draw
+  (`WEBSITE_PUBLIC_ART`; `prerender.test.tsx` holds every picture a page
+  names to that list). #3375 serves a worker at `sw.js` that clears the old
+  web app's caches and unregisters, so a browser that used the app here
+  gets the website.
 - **No new SDK or tracker.** The website has no analytics: the app's Firebase
   Analytics runs behind the consent the signed-in app asks for, and the
   website has no account to ask. It loads no third-party script; its policy
