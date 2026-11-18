@@ -17,6 +17,9 @@ const INDEX = read("src/index.css");
 const COMPONENTS = read("src/styles/components.css");
 const TOASTS = read("src/components/ToastProvider.tsx");
 const SHEET = read("src/components/ui/BottomSheet.tsx");
+const FILES = globSync("src/**/*.tsx", { cwd: process.cwd() }).filter(
+  (f) => !f.includes("__tests__")
+);
 
 type Rgb = [number, number, number];
 
@@ -145,11 +148,10 @@ describe("a sheet takes the lit rim, on its solid fill", () => {
     return m[1];
   };
 
-  it("draws a hairline of light along its top on dark, and no doubled edge", () => {
+  it("draws a hairline of light along its top on dark", () => {
     expect(rim()).toMatch(
       /box-shadow:\s*inset 0 1px 0 rgba\(255, 255, 255, 0\.14\);/
     );
-    expect(rim()).toMatch(/border-color:\s*transparent;/);
   });
 
   it("keeps the page's solid colour and takes no blur, which measured as nothing", () => {
@@ -157,6 +159,24 @@ describe("a sheet takes the lit rim, on its solid fill", () => {
       '"rounded-t-2xl flex flex-col bg-background sheet-surface safe-area-pb"'
     );
     expect(rim()).not.toMatch(/backdrop-filter/);
+  });
+
+  it("is never given a top border of its own, so the rim is not doubled", () => {
+    // A border under an inset rim leaves a 1px line and then the light.
+    const sheets = FILES.map((f) => [f, read(f)] as const).filter(([, src]) =>
+      /<BottomSheet\b|sheet-surface/.test(src)
+    );
+    const bordered = sheets.flatMap(([f, src]) =>
+      [
+        ...src.matchAll(
+          /<BottomSheet\b[^>]*?className="([^"]*)"|className="([^"]*sheet-surface[^"]*)"/g
+        ),
+      ]
+        .map((m) => m[1] ?? m[2])
+        .filter((cls) => /\bborder-t\b/.test(cls))
+        .map((cls) => `${f}: ${cls}`)
+    );
+    expect(bordered).toEqual([]);
   });
 });
 
@@ -186,13 +206,15 @@ describe("a sheet's grab handle can be seen", () => {
   it("is the one handle every sheet draws", () => {
     // A sheet that hides the primitive's header draws its own handle;
     // each of them, and the hand-built plan options sheet, take this one.
-    const stray = globSync("src/**/*.tsx", { cwd: process.cwd() })
-      .filter((f) => !f.includes("__tests__"))
-      .filter((f) =>
-        /className="[^"]*\bh-1\b[^"]*rounded-full[^"]*\bbg-border\b/.test(
-          read(f)
-        )
-      );
+    // A handle: a 36 to 40px pill, 4px tall, in a grey of its own.
+    const handle = (cls: string) =>
+      /(^|\s)w-(9|10)(\s|$)/.test(cls) &&
+      /(^|\s)h-1(\s|$)/.test(cls) &&
+      /(^|\s)rounded-full(\s|$)/.test(cls) &&
+      /(^|\s)bg-(border|muted)/.test(cls);
+    const stray = FILES.filter((f) =>
+      [...read(f).matchAll(/className="([^"]*)"/g)].some((m) => handle(m[1]))
+    );
     // ScanDemo is a drawing of a phone on the paywall, not a sheet.
     expect(stray).toEqual(["src/components/paywall/ScanDemo.tsx"]);
   });

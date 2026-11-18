@@ -2580,7 +2580,7 @@ function ProgramInner() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-background sheet-surface border-t border-border/50"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-background sheet-surface"
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full sheet-handle mx-auto mb-3" />

@@ -80,7 +80,6 @@ export function ServingSizeDrawer({
       onOpenChange={(o) => !o && onClose()}
       title={food.name}
       hideHeader
-      className="border-t border-border"
     >
       <div className="px-5 pt-4 pb-6">
         {/* Drag handle */}

@@ -4637,8 +4637,8 @@ are checked on the first TestFlight build that carries it.
 
 ## Glass toasts, and the sheet's lit rim and handle (DS6 step 4, 2026-11-18)
 
-Affects: every toast (`ToastProvider`: the card's colour at 92% on
-light and 88% on dark over a static blur, the lit edge on dark) and every
+Affects: every toast (`ToastProvider`: the card's colour at 94% on
+light and 90% on dark over a static blur, the lit edge on dark) and every
 sheet (`BottomSheet`, the sheets that draw their own handle, and Train's
 plan options sheet: a hairline of light along the top on dark, and a grab
 handle in the secondary grey at 45%). Sheets stay solid: a blur under

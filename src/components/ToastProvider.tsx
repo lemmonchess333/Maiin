@@ -13,15 +13,17 @@ export function ToastProvider() {
            step 4, DESIGN_GUIDE §14o): the card's colour over a static blur
            of what is behind it. The fill keeps enough of the card that the
            grey line holds AA with no blur at all, over the worst thing
-           that can pass behind: 92% on light over black (4.6:1; 90% was
-           4.4:1) and 88% on dark over white (4.9:1; 85% was 4.4:1). On
+           that can pass behind, with a margin: 94% on light over black
+           (4.77:1; at 92% it was 4.56:1, at 90% 4.35:1) and 90% on dark
+           over white (5.28:1; at 85% it was 4.42:1), the fills the
+           workout's docked cards use. On
            dark the edge is the card's lit edge, a hairline of light along
            the top and a faint outline, in place of the grey border. The
            blur is written out, never through a variable (WebKit ignores
            one in -webkit-backdrop-filter), and sonner moves the toast
            itself, so no fading ancestor cuts the blur off. */
         [data-sonner-toast] {
-          background: hsl(var(--card) / 0.92) !important;
+          background: hsl(var(--card) / 0.94) !important;
           border: 1px solid hsl(var(--border)) !important;
           color: hsl(var(--foreground)) !important;
           border-radius: 14px !important;
@@ -31,7 +33,7 @@ export function ToastProvider() {
           backdrop-filter: blur(24px) saturate(1.3) !important;
         }
         .dark [data-sonner-toast] {
-          background: hsl(var(--card) / 0.88) !important;
+          background: hsl(var(--card) / 0.9) !important;
           border-color: transparent !important;
           box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.14),

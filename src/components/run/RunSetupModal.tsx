@@ -1418,7 +1418,6 @@ export default function RunSetupModal({
         title="Choose run type"
         description="Pick how you want to record this run."
         hideHeader
-        className="border-t border-border"
       >
         {/* Header is shrink-0 with a faint bottom border so the
                 visual transition between fixed header and scrolling
@@ -1429,7 +1428,7 @@ export default function RunSetupModal({
                 the title on small viewports. */}
         <div className="px-5 pt-3 pb-3 shrink-0 border-b border-border/40">
           <div
-            className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3"
+            className="mx-auto w-10 h-1 rounded-full sheet-handle mb-3"
             aria-hidden="true"
           />
           <h2 className="text-lg font-bold text-foreground">Choose run type</h2>

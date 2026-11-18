@@ -32,7 +32,7 @@ export default function SkipConfirmSheet({
       title={`Skip ${sessionName}?`}
       hideHeader
       overlayClassName="z-[102]"
-      className="z-[103] border-t border-border"
+      className="z-[103]"
     >
       <div className="px-5 pb-6 pt-3">
         {/* Drag handle */}

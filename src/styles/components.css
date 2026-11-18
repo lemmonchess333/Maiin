@@ -560,17 +560,18 @@ select.ds-input:focus {
    paint on every slide of an 85%-tall sheet, the risk DS6 names. So a
    sheet keeps its solid page colour (`bg-background`), and on dark it
    takes what does show: the card's lit edge, a hairline of light along
-   its rounded top, in place of a call site's own top border so the edge
-   is not doubled. */
+   its rounded top. No sheet draws a top border of its own, so the edge is
+   never doubled (`sheetToastGlass.test.ts`). */
 .dark .sheet-surface {
-  border-color: transparent;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 /* The grab handle. The border grey it was drawn in measured 1.33:1 on
-   the dark sheet and 1.13:1 on the light one, so the one sign that the
-   sheet can be pulled down all but went. The secondary grey at 45% is
-   2.4:1 on dark and 1.8:1 on light: seen, and still quieter than any
-   word on the sheet. */
+   the dark sheet and 1.13:1 on the light one, so the sign that the sheet
+   can be pulled down all but went. The secondary grey at 45% is 2.4:1 on
+   dark and 1.8:1 on light: seen, and still quieter than any word on the
+   sheet. It is a hint, not the control: the overlay, Escape, Back and
+   each sheet's own button close it too, so the 3:1 a control's edge
+   needs (§10) does not bind it. */
 .sheet-handle {
   background-color: hsl(var(--muted-foreground) / 0.45);
 }
