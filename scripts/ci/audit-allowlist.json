@@ -3,10 +3,9 @@
     {
       "id": "GHSA-fc5q-39xc-vjpf",
       "package": "picomatch",
-      "reason": "ReDoS in picomatch's extglob handling, high, affecting every version through 4.0.7 with no patched release yet. Only dev tooling installs it (vite, vitest, tinyglobby, fdir and lint-staged), and they match patterns from this repository's own config, never input from users. npm audit --omit=dev finds nothing in the root or functions trees. When a fixed picomatch is published, add an overrides entry and delete this one.",
+      "reason": "ReDoS in picomatch's extglob handling, high, affecting every version through 4.0.7 with no patched release yet. It is installed only for dev tooling (vite, vitest, tinyglobby, fdir and lint-staged), which match it against patterns from this repository's own config and file paths, never input from users, and nothing under src/ imports it. package-lock marks it dev, which means npm reached it only from devDependencies, not that no output of those tools ships: the build does ship, but the build does not run picomatch on anything a user sends. npm audit --omit=dev finds nothing in the root or functions trees. When a fixed picomatch is published, take it (an overrides entry if a tool pins the old range) and delete this entry.",
       "recheckBy": "2026-12-18",
-      "nodes": ["node_modules/picomatch"],
-      "through": ["fdir", "lint-staged", "tinyglobby", "vite", "vitest"]
+      "nodes": ["node_modules/picomatch"]
     }
   ]
 }

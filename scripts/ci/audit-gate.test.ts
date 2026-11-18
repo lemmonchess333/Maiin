@@ -7,8 +7,10 @@
  * (npm 10, report version 2): the picomatch advisory as it stood, filed
  * against picomatch and reached through five dev tools.
  *
- * No test reads the real clock. `unit-future` runs this suite 90 days on,
- * and the checked-in entry is dated a month out on purpose.
+ * No test reads the real clock: every verdict takes `today` from the
+ * test. `unit-future` runs this suite 90 days on, and the checked-in
+ * entry is dated a month out, so a test that asked the clock whether the
+ * real entry is live would go red there at once.
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -24,12 +26,25 @@ interface Verdict {
 }
 type Json = Record<string, unknown>;
 
-const judge = gate.judge as (args: {
+const rawJudge = gate.judge as (args: {
+  report: unknown;
+  allowlist: unknown;
+  lock: unknown;
+  importersOf: (name: string) => string[];
+  today: string;
+}) => Verdict;
+/** No file under src/ imports anything, unless a test says so. */
+const judge = (args: {
   report: unknown;
   allowlist: unknown;
   lock: unknown;
   today: string;
-}) => Verdict;
+  importersOf?: (name: string) => string[];
+}) => rawJudge({ importersOf: () => [], ...args });
+const importsPackage = gate.importsPackage as (
+  text: string,
+  name: string
+) => boolean;
 const allowlistProblems = gate.allowlistProblems as (
   allowlist: unknown,
   today: string
@@ -43,6 +58,15 @@ const checkedIn = JSON.parse(
 ) as { advisories: Json[] };
 
 const PICOMATCH = "GHSA-fc5q-39xc-vjpf";
+/** picomatch and the five packages the report lists it through. */
+const PICOMATCH_CHAIN = [
+  "picomatch",
+  "fdir",
+  "tinyglobby",
+  "vite",
+  "vitest",
+  "lint-staged",
+];
 
 function picomatchAdvisory(severity = "high"): Json {
   return {
@@ -227,19 +251,6 @@ describe("what fails the gate", () => {
     ]);
   });
 
-  it("the advisory reaching the tree through a package the entry does not name", () => {
-    const r = report();
-    const vulns = r.vulnerabilities as Record<string, Json>;
-    vulns.picomatch.effects = [
-      ...(vulns.picomatch.effects as string[]),
-      "left-pad",
-    ];
-    const v = judge({ report: r, allowlist: checkedIn, lock, today: before });
-    expect(v.failures).toEqual([
-      expect.stringContaining("it now reaches the tree through left-pad"),
-    ]);
-  });
-
   it("a second copy installed somewhere the entry does not name", () => {
     const r = report();
     const vulns = r.vulnerabilities as Record<string, Json>;
@@ -285,7 +296,7 @@ describe("what fails the gate", () => {
     ]);
   });
 
-  it("a report npm could not produce, or one with no vulnerabilities object", () => {
+  it("a report npm could not produce", () => {
     const errored = judge({
       report: { error: { code: "ENOTFOUND", summary: "registry unreachable" } },
       allowlist: checkedIn,
@@ -297,35 +308,115 @@ describe("what fails the gate", () => {
         "npm audit reported an error: registry unreachable"
       ),
     ]);
-    for (const bad of [undefined, null, {}, { vulnerabilities: "none" }]) {
-      const v = judge({
-        report: bad,
-        allowlist: checkedIn,
-        lock,
-        today: before,
-      });
-      expect(v.failures, JSON.stringify(bad)).toEqual([
-        "the audit report has no `vulnerabilities` object",
-      ]);
-    }
+  });
+
+  it.each([
+    ["nothing", undefined, "is not version 2"],
+    ["null", null, "is not version 2"],
+    [
+      "no version",
+      { ...report(), auditReportVersion: undefined },
+      "is not version 2",
+    ],
+    ["version 1", { ...report(), auditReportVersion: 1 }, "is not version 2"],
+    [
+      "no counts",
+      { ...report(), metadata: {} },
+      "no `metadata.vulnerabilities` counts",
+    ],
+    [
+      "no vulnerabilities",
+      { ...report(), vulnerabilities: undefined },
+      "no `vulnerabilities` object",
+    ],
+  ])("a report with %s", (_label, bad, message) => {
+    const v = judge({ report: bad, allowlist: checkedIn, lock, today: before });
+    expect(v.failures).toEqual([expect.stringContaining(message)]);
+  });
+
+  it("a high package whose advisories it cannot trace to a high one", () => {
+    const r = report({
+      "left-pad": {
+        name: "left-pad",
+        severity: "high",
+        via: ["minimatch"],
+        effects: [],
+        nodes: ["node_modules/left-pad"],
+      },
+    });
+    const v = judge({ report: r, allowlist: checkedIn, lock, today: before });
+    expect(v.failures).toEqual([
+      expect.stringContaining(
+        "left-pad (high) reported with no high or critical advisory under it"
+      ),
+    ]);
+  });
+
+  it("counts of high packages with none listed", () => {
+    const r = report();
+    const vulns = r.vulnerabilities as Record<string, Json>;
+    for (const name of PICOMATCH_CHAIN) delete vulns[name];
+    const v = judge({ report: r, allowlist: checkedIn, lock, today: before });
+    expect(v.failures).toEqual([
+      expect.stringContaining(
+        "counts 6 high or critical packages but lists none"
+      ),
+    ]);
+  });
+
+  it("the allowlisted package imported from the app", () => {
+    const v = judge({
+      report: report(),
+      allowlist: checkedIn,
+      lock,
+      today: before,
+      importersOf: (name) => (name === "picomatch" ? ["src/lib/globs.ts"] : []),
+    });
+    expect(v.failures).toEqual([
+      expect.stringContaining("src/ imports it (src/lib/globs.ts)"),
+    ]);
+  });
+});
+
+describe("importsPackage", () => {
+  it.each([
+    ['import pm from "picomatch";', true],
+    ["import { isMatch } from 'picomatch';", true],
+    ['import "picomatch";', true],
+    ['const pm = require("picomatch");', true],
+    ['const pm = await import("picomatch/posix");', true],
+    ['export { default } from "picomatch";', true],
+    ['import mm from "micromatch";', false],
+    ['import x from "picomatch-extra";', false],
+    ["// picomatch is a dev tool", false],
+    ['const label = "picomatch";', false],
+  ])("%s -> %s", (text, expected) => {
+    expect(importsPackage(text, "picomatch")).toBe(expected);
+  });
+
+  it("escapes a scoped name", () => {
+    expect(importsPackage('import x from "@scope/pkg";', "@scope/pkg")).toBe(
+      true
+    );
+    expect(importsPackage('import x from "@scopeXpkg";', "@scope/pkg")).toBe(
+      false
+    );
   });
 });
 
 describe("what the gate lets through", () => {
-  it("moderate and low advisories, which it does not gate", () => {
+  /** The report once picomatch is fixed: the moderate left, and counts
+   *  that agree. */
+  function withoutPicomatch(): Json {
     const r = report();
     const vulns = r.vulnerabilities as Record<string, Json>;
-    for (const name of [
-      "picomatch",
-      "fdir",
-      "tinyglobby",
-      "vite",
-      "vitest",
-      "lint-staged",
-    ])
-      delete vulns[name];
+    for (const name of PICOMATCH_CHAIN) delete vulns[name];
+    return { ...r, metadata: { vulnerabilities: { high: 0, moderate: 1 } } };
+  }
+
+  it("moderate and low advisories, which it does not gate", () => {
     const v = judge({
-      report: r,
+      report: withoutPicomatch(),
       allowlist: { advisories: [] },
       lock,
       today: before,
@@ -334,12 +425,12 @@ describe("what the gate lets through", () => {
   });
 
   it("names an entry the audit no longer reports, without failing", () => {
-    const r = report();
-    const vulns = r.vulnerabilities as Record<string, Json>;
-    delete vulns.picomatch;
-    for (const name of ["fdir", "tinyglobby", "vite", "vitest", "lint-staged"])
-      delete vulns[name];
-    const v = judge({ report: r, allowlist: checkedIn, lock, today: before });
+    const v = judge({
+      report: withoutPicomatch(),
+      allowlist: checkedIn,
+      lock,
+      today: before,
+    });
     expect(v.failures).toEqual([]);
     expect(v.stale).toEqual([PICOMATCH]);
   });
@@ -366,9 +457,9 @@ describe("an allowlist entry has to be checkable", () => {
       "nodes must be a non-empty list",
     ],
     [
-      "no dependents",
-      { ...good, through: "vite" },
-      "through must be a non-empty list",
+      "install paths that are not a list",
+      { ...good, nodes: "node_modules/picomatch" },
+      "nodes must be a non-empty list",
     ],
     ["no package", { ...good, package: undefined }, "package is missing"],
   ])("refuses %s", (_label, bad, message) => {

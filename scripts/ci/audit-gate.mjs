@@ -11,24 +11,30 @@
 //
 //   id         the GHSA id of the one advisory it accepts
 //   package    the package that advisory is filed against
-//   reason     why it is acceptable here, in a sentence someone can check
+//   reason     why it is acceptable here, in sentences someone can check
 //   recheckBy  the last day it holds (UTC); from the next day it fails
 //              again, so the exception is looked at, not forgotten
-//   nodes      where that package may be installed (package-lock paths),
-//              each of them dev-only in package-lock.json
-//   through    the packages that may depend on it directly (npm audit's
-//              `effects` for it), the ways it reaches the tree
+//   nodes      where that package may be installed (package-lock paths)
 //
-// A new carrier, a new install location, a production install or a
-// passed date each fail the gate, because each one breaks the reason the
-// entry was accepted for. If a patched release appears, an `overrides`
-// entry in package.json beats this file: take it and delete the entry.
+// The entry holds only while the package is installed at those paths
+// alone, each marked `dev` in package-lock.json, and nothing under src/
+// imports it. `dev` means npm reached it only from devDependencies, not
+// that none of its work ships (a build tool's output does), which is why
+// the src/ import check is separate. A new install path, a production
+// install, an import from the app or a passed date each fail the gate,
+// because each breaks the reason the entry was accepted for. If a patched
+// release appears, take it (an `overrides` entry in package.json if a tool
+// pins the old range) and delete the entry.
+//
+// The report is read strictly: npm prints JSON for a registry error too,
+// so a report without its version, its counts or its vulnerabilities, or
+// a high or critical package whose advisories cannot be traced, fails.
 //
 // Usage: node scripts/ci/audit-gate.mjs   (runs `npm audit --json` here)
 
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** The severities that fail the gate. */
@@ -38,6 +44,9 @@ export const GATED = new Set(["high", "critical"]);
  *  long enough for an upstream fix to ship and short enough that an
  *  exception cannot become permanent by writing a far-off date. */
 export const MAX_DAYS_AHEAD = 92;
+
+/** The `npm audit --json` shape this reads (npm 7 and later). */
+export const REPORT_VERSION = 2;
 
 const GHSA = /^GHSA(-[23456789cfghjmpqrvwx]{4}){3}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -85,50 +94,83 @@ export function allowlistProblems(allowlist, today) {
       problems.push(
         `${at}: recheckBy ${e.recheckBy} is more than ${MAX_DAYS_AHEAD} days ahead`
       );
-    for (const key of ["nodes", "through"]) {
-      if (
-        !Array.isArray(e?.[key]) ||
-        !e[key].length ||
-        e[key].some((v) => typeof v !== "string" || !v)
-      )
-        problems.push(`${at}: ${key} must be a non-empty list of names`);
-    }
+    if (
+      !Array.isArray(e?.nodes) ||
+      !e.nodes.length ||
+      e.nodes.some((v) => typeof v !== "string" || !v)
+    )
+      problems.push(`${at}: nodes must be a non-empty list of paths`);
   }
   return problems;
 }
 
 /**
- * Every high or critical advisory in an `npm audit --json` report (v2),
- * with the package it is filed against, where that package is installed,
- * and the packages that depend on it directly.
+ * Every high or critical advisory in an `npm audit --json` report, with
+ * the package it is filed against and where that package is installed.
  *
- * An advisory is an object in some package's `via`; a string there only
- * names another vulnerable package. Each advisory is read where it is
- * filed, so one reached through many packages is judged once.
+ * Each high or critical package is walked down its `via` (a string there
+ * names another vulnerable package, an object is an advisory) to the
+ * advisories at the bottom. A package that is high or critical with no
+ * high or critical advisory under it is a report this cannot account
+ * for, and throws, as does a report missing its version or counts.
  */
 export function gatedAdvisories(report) {
-  const vulns = report?.vulnerabilities;
+  if (report?.auditReportVersion !== REPORT_VERSION) {
+    throw new Error(
+      `the audit report is not version ${REPORT_VERSION} (auditReportVersion: ${JSON.stringify(report?.auditReportVersion)})`
+    );
+  }
+  const counts = report?.metadata?.vulnerabilities;
+  if (!counts || typeof counts !== "object") {
+    throw new Error(
+      "the audit report has no `metadata.vulnerabilities` counts"
+    );
+  }
+  const vulns = report.vulnerabilities;
   if (!vulns || typeof vulns !== "object") {
     throw new Error("the audit report has no `vulnerabilities` object");
   }
+
+  const leavesUnder = (name, seen = new Set()) => {
+    if (seen.has(name)) return [];
+    seen.add(name);
+    const out = [];
+    for (const via of vulns[name]?.via ?? []) {
+      if (typeof via === "string") out.push(...leavesUnder(via, seen));
+      else if (via && typeof via === "object") out.push(via);
+    }
+    return out;
+  };
+
   const found = new Map();
-  for (const vuln of Object.values(vulns)) {
-    for (const adv of vuln?.via ?? []) {
-      if (!adv || typeof adv !== "object") continue;
-      if (!GATED.has(adv.severity)) continue;
+  const untraced = [];
+  for (const [name, vuln] of Object.entries(vulns)) {
+    if (!GATED.has(vuln?.severity)) continue;
+    const gated = leavesUnder(name).filter((adv) => GATED.has(adv.severity));
+    if (!gated.length) untraced.push(`${name} (${vuln.severity})`);
+    for (const adv of gated) {
       const id = ghsaOf(adv.url) ?? `npm-advisory-${adv.source}`;
       if (found.has(id)) continue;
-      const filed = vulns[adv.name] ?? vuln;
       found.set(id, {
         id,
         package: adv.name,
         severity: adv.severity,
         title: adv.title ?? "",
         url: adv.url ?? "",
-        nodes: [...(filed.nodes ?? [])].sort(),
-        through: [...(filed.effects ?? [])].sort(),
+        nodes: [...(vulns[adv.name]?.nodes ?? [])].sort(),
       });
     }
+  }
+  if (untraced.length) {
+    throw new Error(
+      `${untraced.join(", ")} reported with no high or critical advisory under it`
+    );
+  }
+  const countedHigh = (counts.high ?? 0) + (counts.critical ?? 0);
+  if (countedHigh > 0 && found.size === 0) {
+    throw new Error(
+      `the report counts ${countedHigh} high or critical packages but lists none`
+    );
   }
   return [...found.values()];
 }
@@ -137,9 +179,11 @@ export function gatedAdvisories(report) {
  * The gate's verdict on one report.
  *
  * `lock` is package-lock.json, read for the `dev` flag of each install
- * location; `today` is a YYYY-MM-DD UTC day, passed in so tests choose it.
+ * path; `importersOf(name)` lists the files under src/ that import a
+ * package; `today` is a YYYY-MM-DD UTC day. All three are passed in, so
+ * tests choose them.
  */
-export function judge({ report, allowlist, lock, today }) {
+export function judge({ report, allowlist, lock, importersOf, today }) {
   const failures = [...allowlistProblems(allowlist, today)];
   const allowed = [];
   const entries = new Map(
@@ -181,10 +225,8 @@ export function judge({ report, allowlist, lock, today }) {
     const prod = adv.nodes.filter((n) => lock?.packages?.[n]?.dev !== true);
     if (prod.length)
       why.push(`${prod.join(", ")} is not dev-only in package-lock.json`);
-    const through = Array.isArray(entry.through) ? entry.through : [];
-    const newThrough = adv.through.filter((p) => !through.includes(p));
-    if (newThrough.length)
-      why.push(`it now reaches the tree through ${newThrough.join(", ")}`);
+    const importers = importersOf(adv.package);
+    if (importers.length) why.push(`src/ imports it (${importers.join(", ")})`);
     if (why.length) {
       failures.push(`${label} is allowlisted, but ${why.join("; ")}.`);
     } else {
@@ -200,6 +242,31 @@ export function judge({ report, allowlist, lock, today }) {
   return { failures, allowed, stale };
 }
 
+/** Whether a source file's text imports `name` or a subpath of it. */
+export function importsPackage(text, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+  return new RegExp(
+    `(?:\\bfrom\\s*|\\bimport\\s*\\(\\s*|\\brequire\\s*\\(\\s*|\\bimport\\s+)["']${escaped}(?:/[^"']*)?["']`
+  ).test(text);
+}
+
+/** Every source file under `dir`, as repo-relative paths. */
+function sourceFiles(root, dir) {
+  const out = [];
+  const walk = (rel) => {
+    for (const ent of readdirSync(join(root, rel), { withFileTypes: true })) {
+      const path = `${rel}/${ent.name}`;
+      if (ent.isDirectory()) {
+        if (ent.name !== "node_modules") walk(path);
+      } else if (/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(ent.name)) {
+        out.push(path);
+      }
+    }
+  };
+  walk(dir);
+  return out;
+}
+
 function main() {
   const here = dirname(fileURLToPath(import.meta.url));
   const root = resolve(here, "../..");
@@ -209,6 +276,12 @@ function main() {
   const lock = JSON.parse(
     readFileSync(resolve(root, "package-lock.json"), "utf8")
   );
+  const src = sourceFiles(root, "src").map((path) => ({
+    path,
+    text: readFileSync(join(root, path), "utf8"),
+  }));
+  const importersOf = (name) =>
+    src.filter((f) => importsPackage(f.text, name)).map((f) => f.path);
   // npm audit exits non-zero whenever it finds anything, at any level, so
   // the exit status says nothing here. The JSON is the answer, and output
   // that does not parse fails the gate.
@@ -231,10 +304,11 @@ function main() {
     report,
     allowlist,
     lock,
+    importersOf,
     today,
   });
   const counts = report?.metadata?.vulnerabilities;
-  if (counts) console.log(`npm audit: ${JSON.stringify(counts)}`);
+  if (counts) console.log(`npm audit (packages): ${JSON.stringify(counts)}`);
   for (const a of allowed) {
     console.log(
       `allowed ${a.id} until ${a.recheckBy} (${a.daysLeft} days left), by scripts/ci/audit-allowlist.json`
