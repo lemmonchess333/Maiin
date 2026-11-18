@@ -1,7 +1,7 @@
 /**
- * The phone's Reduce Transparency setting, on the page, so every frosted
- * surface draws solid under it (DS6, DESIGN_GUIDE §14o: "a solid fallback
- * under Reduce Transparency").
+ * The phone's Reduce Transparency setting, on the page, so a frosted
+ * surface can draw solid under it (DS6, DESIGN_GUIDE §14o: "a solid
+ * fallback under Reduce Transparency").
  *
  * The stylesheet's `prefers-reduced-transparency` query is not enough on
  * iPhone: WebKit does not support it (WebKit bug 175497), so in WKWebView
@@ -11,7 +11,10 @@
  * change and whenever the app comes back to the foreground; on the web
  * from the media query, where a browser supports it. Either way the
  * answer is one attribute on <html>, `data-reduced-transparency`, which
- * the frosted surfaces' solid fallbacks select on beside the media query.
+ * frosted surfaces' solid fallbacks select on beside the media query: the
+ * tab bar and the status bar's scrim here, the toasts and the workout's
+ * docked cards in their own changes (#3416, #3426). The other blurred
+ * chips (a Space's hero, the map's) are listed in the pre-launch backlog.
  *
  * An older app build without the plugin leaves the attribute off: the
  * surfaces stay frosted, as they were.
@@ -91,14 +94,31 @@ export function startReducedTransparencySync(): () => void {
     })
     .catch(() => {});
   // A change made in Settings while the app was in the background is read
-  // on return, whether or not iOS posted it to a suspended app.
+  // on return, whether or not iOS posted it to a suspended app: on the
+  // page's visibility and on the app becoming active, the two paths
+  // `systemTextSize.ts` uses, since WKWebView does not always fire the
+  // first on a return from Settings.
   const onVisible = () => {
     if (document.visibilityState === "visible") void syncReducedTransparency();
   };
   document.addEventListener("visibilitychange", onVisible);
+  let removeResume: (() => void) | undefined;
+  void import("@capacitor/app")
+    .then(async ({ App }) => {
+      const listener = await App.addListener(
+        "appStateChange",
+        ({ isActive }) => {
+          if (isActive) void syncReducedTransparency();
+        }
+      );
+      if (!active) void listener.remove();
+      else removeResume = () => void listener.remove();
+    })
+    .catch(() => {});
   return () => {
     active = false;
     document.removeEventListener("visibilitychange", onVisible);
+    removeResume?.();
     void handle?.remove();
   };
 }

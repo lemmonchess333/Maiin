@@ -433,8 +433,9 @@
   /* The tab bar's rim on dark: the card's lit edge at the bar's size
      (DS6, DESIGN_GUIDE §14o), a faint outline all round and a hairline of
      light along the top. At 7% and 10% the hairline measured 1.37:1
-     against the page, where a card's lit edge is about 1.55:1; at 8% and
-     14% it is 1.55:1 too. */
+     against the page in a capture (1.39:1 over the solid fill), where a
+     card's lit edge is about 1.55:1; at 8% and 14% it measured 1.55:1
+     (1.60:1 over the solid fill). */
   --glass-border: rgba(255, 255, 255, 0.08);
   --surface-solid: #151519;
   /* The direction the inline literal always assumed — correct here only. */

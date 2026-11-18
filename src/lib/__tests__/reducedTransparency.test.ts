@@ -17,25 +17,42 @@ const prefs = vi.hoisted(() => ({
 const registered = vi.hoisted(() => [] as string[]);
 
 vi.mock("../platform", () => ({ isNativePlatform: () => native.value }));
-vi.mock("@capacitor/core", () => ({
-  registerPlugin: (name: string) => {
-    registered.push(name);
-    return {
-      get: prefs.get,
-      addListener: async (
-        _event: string,
-        cb: (p: { reduceTransparency?: unknown }) => void
-      ) => {
-        prefs.listeners.push(cb);
-        return {
-          remove: async () => {
-            prefs.removed += 1;
-          },
-        };
-      },
-    };
+const appState = vi.hoisted(() => [] as ((s: { isActive: boolean }) => void)[]);
+vi.mock("@capacitor/app", () => ({
+  App: {
+    addListener: vi.fn(
+      async (_event: string, cb: (s: { isActive: boolean }) => void) => {
+        appState.push(cb);
+        return { remove: vi.fn() };
+      }
+    ),
   },
 }));
+vi.mock("@capacitor/core", async () => {
+  // As the bridge makes one: a Proxy that answers every property, `then`
+  // included, so a refactor that resolves a promise with the plugin hangs
+  // here instead of passing.
+  const { capacitorPlugin } = await import("@/test/capacitorPlugin");
+  return {
+    registerPlugin: (name: string) => {
+      registered.push(name);
+      return capacitorPlugin({
+        get: prefs.get,
+        addListener: async (
+          _event: string,
+          cb: (p: { reduceTransparency?: unknown }) => void
+        ) => {
+          prefs.listeners.push(cb);
+          return {
+            remove: async () => {
+              prefs.removed += 1;
+            },
+          };
+        },
+      });
+    },
+  };
+});
 
 import {
   REDUCED_TRANSPARENCY_ATTRIBUTE,
@@ -75,6 +92,7 @@ beforeEach(() => {
   prefs.listeners.length = 0;
   prefs.removed = 0;
   registered.length = 0;
+  appState.length = 0;
   document.documentElement.removeAttribute(REDUCED_TRANSPARENCY_ATTRIBUTE);
 });
 
@@ -123,6 +141,21 @@ describe("on iPhone, from the phone's own setting", () => {
     document.dispatchEvent(new Event("visibilitychange"));
     await settle();
     expect(prefs.get).toHaveBeenCalledTimes(2);
+    expect(marked()).toBe(true);
+  });
+
+  it("reads the setting again when the app becomes active", async () => {
+    // WKWebView does not always fire visibilitychange on a return from
+    // Settings; Capacitor's appStateChange does, as systemTextSize uses.
+    native.value = true;
+    prefs.get.mockResolvedValue({ reduceTransparency: false });
+    stop = startReducedTransparencySync();
+    await settle();
+    await settle();
+    expect(appState).toHaveLength(1);
+    prefs.get.mockResolvedValue({ reduceTransparency: true });
+    appState[0]({ isActive: true });
+    await settle();
     expect(marked()).toBe(true);
   });
 

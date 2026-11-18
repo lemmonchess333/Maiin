@@ -110,6 +110,19 @@ describe("the fade under the tab bar", () => {
   });
 });
 
+describe("the status bar's scrim drops its blur under Reduce Transparency", () => {
+  it("from the phone's own setting, and from the media query", () => {
+    const marked = rule(
+      COMPONENTS,
+      ":root[data-reduced-transparency] .ds-safe-top-occluder"
+    );
+    expect(marked).toMatch(/-webkit-backdrop-filter:\s*none;/);
+    expect(COMPONENTS).toMatch(
+      /@media \(prefers-reduced-transparency: reduce\) \{\s*\.ds-safe-top-occluder \{\s*-webkit-backdrop-filter: none;/
+    );
+  });
+});
+
 describe("the bar's glass holds on iPhone", () => {
   const frost = () => rule(COMPONENTS, ".bottom-nav-frost");
 
@@ -159,14 +172,15 @@ describe("the bar's rim on dark is the card's lit edge at its size", () => {
 
   it("its hairline of light parts from the page as a card's top edge does", () => {
     // A card's lit edge is about 1.55:1 against the page (tokens.css).
-    // The bar's measured 1.37:1 at the top before this.
+    // The bar's measured 1.37:1 at the top before this (1.39:1 computed
+    // over the solid fill, as here).
     const hairline = whiteOver(whiteAlpha(dark, "nav-frost-highlight"), solid);
     expect(contrast(hairline, page)).toBeGreaterThanOrEqual(1.5);
   });
 
-  it("its outline stays fainter than the hairline", () => {
-    expect(whiteAlpha(dark, "glass-border")).toBeLessThan(
-      whiteAlpha(dark, "nav-frost-highlight")
-    );
+  it("its outline is the card's faint outline, fainter than the hairline", () => {
+    const outline = whiteAlpha(dark, "glass-border");
+    expect(outline).toBe(0.08);
+    expect(outline).toBeLessThan(whiteAlpha(dark, "nav-frost-highlight"));
   });
 });

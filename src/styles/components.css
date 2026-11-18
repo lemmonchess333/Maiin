@@ -622,6 +622,20 @@ select.ds-input:focus {
   transform: translateZ(0);
 }
 
+/* Under Reduce Transparency the scrim keeps its gradient and drops its
+   blur: the media query where a browser has it, the app's attribute where
+   WebKit does not (`src/lib/reducedTransparency.ts`). */
+@media (prefers-reduced-transparency: reduce) {
+  .ds-safe-top-occluder {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+:root[data-reduced-transparency] .ds-safe-top-occluder {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* The launch overlay. index.html paints #boot-splash with these classes
    while the bundle loads, but only once public/init.js has marked the
    document `booting` (never under automation, never without JS, so the

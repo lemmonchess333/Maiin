@@ -4637,6 +4637,14 @@ phone's safe area, its blur and its brightness are for a phone to show.
 - [ ] **Frames.** Scroll a long Social feed quickly. Passing: the bar and
       the page move without stutter. If they stutter, the bar goes back to
       solid with its rim (DS6's named risk).
+- [ ] **Still blurred under Reduce Transparency (follow-up, not a
+      check).** With the setting on, these keep a backdrop blur, since
+      they predate the attribute: a Space's hero chips (`Space.tsx`,
+      `SpacesDirectory.tsx`), a post's comment bar
+      (`ActivityPostComments.tsx`), History's chip row and the run map's
+      chips (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
+      `GhostDeltaChip`, `RunMap.tsx`). Each wants the same solid fallback;
+      tick this when they have it.
 
 ## Motion 14 under every animation (2026-11-11)
 
