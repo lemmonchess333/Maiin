@@ -67,6 +67,7 @@ import {
 import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import type { ProChange } from "@/lib/proChange";
+import type { EmailConsentRecord } from "@/lib/emailConsent";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
@@ -209,6 +210,12 @@ export interface UserProfileCore {
     firstSession?: LaunchMilestone;
     week4Return?: LaunchMilestone;
   };
+  /** App1 Q55: the person's answer for each email they can choose (the
+   *  weekly review, and the emails after a break), with when, where and
+   *  to which words. Server-owned: setup, `setEmailConsent` and the
+   *  unsubscribe link write it (`src/lib/emailConsent.ts`). Absent means
+   *  never asked, which is no. */
+  emailConsent?: EmailConsentRecord;
 }
 
 /** One launch milestone: when, which sport, and how many whole days after

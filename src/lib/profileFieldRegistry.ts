@@ -186,6 +186,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     retired: "a copy of the Auth address nothing read",
   },
+  // App1 Q55: consent to the two emails, written only by the server
+  // (completeOnboarding, setEmailConsent and the unsubscribe link) with its
+  // own time, so the record proves a yes the person gave. A client that
+  // could write it could backdate one (functions/lib/emailConsent.js).
+  { field: "emailConsent", sanitized: false, serverOnly: true },
   {
     field: "enableRolloverCalories",
     sanitized: false,

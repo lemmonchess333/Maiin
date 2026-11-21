@@ -1,9 +1,10 @@
 {
   "tolerance": 0.05,
-  "total": 7109159,
+  "total": 7110726,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
+    "analyticsRedaction",
     "createLucideIcon",
     "dateHelpers",
     "dist",
@@ -41,6 +42,7 @@
     "analytics": 462,
     "analyticsClient": 901,
     "analyticsProvider": 1287,
+    "analyticsRedaction": 1567,
     "AnimatedNumber": 608,
     "AnniversaryReveal": 4491,
     "api": 535,
@@ -170,7 +172,7 @@
     "floating-ui.react": 30284,
     "FollowButton": 1579,
     "FollowList": 5320,
-    "Food": 131126,
+    "Food": 131571,
     "FoodAnalyzer": 40687,
     "foodDay": 83,
     "foodFlight": 6818,

@@ -58,7 +58,10 @@ export default function RunReturnSheet({
   const reportChoice = (choice: ReturnChoice) => {
     if (choiceReported.current) return;
     choiceReported.current = true;
-    trackLifecycleEvent("return_choice", { surface: "run-return", choice });
+    trackLifecycleEvent("return_choice", {
+      returnSurface: "run-return",
+      choice,
+    });
   };
 
   // The sheet closes itself once a choice resolves (`ChoiceSheet`).

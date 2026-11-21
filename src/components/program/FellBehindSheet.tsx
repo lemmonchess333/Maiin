@@ -194,7 +194,7 @@ export default function FellBehindSheet({
   const reportChoice = (choice: ReturnChoice) => {
     if (choiceReported.current) return;
     choiceReported.current = true;
-    trackLifecycleEvent("return_choice", { surface, choice });
+    trackLifecycleEvent("return_choice", { returnSurface: surface, choice });
   };
 
   const raceChoices: Choice[] = raceModeActive
