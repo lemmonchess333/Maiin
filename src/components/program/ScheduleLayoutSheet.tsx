@@ -416,9 +416,20 @@ function ScheduleLayoutSheetBody({
                     ) : (
                       <div className="size-4 rounded-full bg-muted-foreground/20" />
                     )}
+                    {/* The text step of the session's colour: on the
+                        card under a 6% tint the identity colour itself
+                        is 3.3 to 4.7:1 at this size, the -strong step
+                        5.7:1 or more in both themes (§10). Both's purple
+                        is lifting's, so it takes lifting's step. */}
                     <span
-                      className="text-caption font-bold leading-none"
-                      style={{ color: color || "hsl(var(--muted-foreground))" }}
+                      className={cn(
+                        "text-caption font-bold leading-none",
+                        s.type === "lift" || s.type === "both"
+                          ? "text-lifting-strong"
+                          : s.type === "run"
+                            ? "text-running-strong"
+                            : "text-muted-foreground"
+                      )}
                     >
                       {label}
                     </span>

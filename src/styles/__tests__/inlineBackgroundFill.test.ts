@@ -11,6 +11,12 @@
  * Read from the source, one opening tag at a time (a child's style is not
  * its parent's): a tag whose class sets a fill and whose style sets the
  * `background` shorthand fails.
+ *
+ * Its reach: the five theme fills below, written as classes on the same
+ * tag as the style. It does not see `bg-white`, `bg-black` or the sport
+ * fills, a class held in a constant (`PHOTO_CHIP`), or a `style` passed to
+ * a component that owns the fill. Comments inside a style are read, so a
+ * comment that says `background:` there fails it, loudly.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
