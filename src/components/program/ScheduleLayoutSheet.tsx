@@ -391,7 +391,11 @@ function ScheduleLayoutSheetBody({
                       s.type !== "rest" && color
                         ? {
                             borderColor: `${color}45`,
-                            background: `${color}10`,
+                            /* The session's tint over the card, not in its
+                               place: `background` reset `bg-card` and laid
+                               the tint over the sheet, as ProgrammeSettings'
+                               option card once did. */
+                            backgroundImage: `linear-gradient(${color}10, ${color}10)`,
                           }
                         : undefined
                     }
