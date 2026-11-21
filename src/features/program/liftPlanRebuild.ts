@@ -32,6 +32,7 @@ import type {
 } from "./programTypes";
 import { runTuningFromProfile } from "./runScheduler";
 import { sessionLengthOption } from "./sessionFit";
+import { hasPullUpBar, takesPullUpBar } from "./programLabels";
 
 /** The split choices a stored profile may hold. The split is derived from
  *  the lift days (Pgm5 Q1); the list only normalises a legacy value, such
@@ -54,6 +55,8 @@ export interface SavedLiftPlan {
   preferredSplit: SplitChoice;
   equipment: Equipment;
   barbellAtHome: boolean;
+  /** Lift4 (11): the pull-up bar answer the plan follows (`hasPullUpBar`). */
+  pullUpBar: boolean;
   injuries: string[];
   runMode: NonNullable<UserProfile["runMode"]>;
   weeklyRunDays: number;
@@ -80,6 +83,9 @@ export function savedLiftPlan(profile: UserProfile): SavedLiftPlan {
     equipment: (profile.equipment as Equipment) ?? "full_gym",
     // Lift4 (11): "what do you have?" beside a home gym's kit.
     barbellAtHome: profile.barbellAtHome === true,
+    // The answer the plan follows: unanswered, an older home or minimal
+    // plan has its pull-ups (`hasPullUpBar`).
+    pullUpBar: hasPullUpBar(profile.equipment ?? "full_gym", profile.pullUpBar),
     injuries: profile.injuries ?? [],
     runMode: profile.runMode ?? "freeform",
     weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -103,6 +109,7 @@ export type LiftPlanDraft = Pick<
   | "sessionMinutes"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
 >;
 
@@ -182,6 +189,8 @@ export function liftPlanInput({
       : {}),
     equipment: draft.equipment,
     barbellAtHome: draft.barbellAtHome,
+    // Written only where the setup asks it, so a full gym never stores one.
+    ...(takesPullUpBar(draft.equipment) ? { pullUpBar: draft.pullUpBar } : {}),
     injuries: draft.injuries,
     currentDate: localDateString(new Date()),
     existingState: programState ?? undefined,
