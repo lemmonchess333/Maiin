@@ -910,3 +910,130 @@ describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
     );
   });
 });
+
+/**
+ * The UIScene life cycle (Duo track, 2026-11-18). "Apps built with the
+ * latest SDK must adopt the scene-based life cycle or they fail to launch"
+ * (iOS & iPadOS 27 Release Notes), and on the iPhone Duo a fold resizes
+ * the scene (the iPhone Duo notes under docs/ios, #3420). Nothing here can
+ * launch the app; a wrong class name or a delegate left out of the target
+ * is a black screen at launch that a compile does not see, so these read
+ * the wiring instead.
+ */
+describe("iOS project wiring — the scene life cycle", () => {
+  const sceneDelegate = read("ios/App/App/SceneDelegate.swift");
+  const appDelegate = read("ios/App/App/AppDelegate.swift");
+  const storyboard = read("ios/App/App/Base.lproj/Main.storyboard");
+
+  /** Paths the App target's Sources phase compiles. */
+  function compiledSourcePaths(): string[] {
+    const target = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+    const sourcesId = target[1].match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+    )?.[1];
+    if (!sourcesId) throw new Error("App target has no Sources phase");
+    const phase = pbxproj.match(
+      new RegExp(
+        `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+    return [
+      ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+    ].map(([, id]) => {
+      const ref = pbxproj.match(
+        new RegExp(
+          `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+          "m"
+        )
+      )?.[1];
+      const path = ref
+        ? pbxproj.match(
+            new RegExp(
+              `^\\s*${ref} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+              "m"
+            )
+          )?.[1]
+        : undefined;
+      if (!path) throw new Error(`build file ${id} has no path`);
+      return path;
+    });
+  }
+
+  it("declares one scene, its delegate and its storyboard", () => {
+    const manifest = infoPlist.match(
+      /<key>UIApplicationSceneManifest<\/key>\s*<dict>([\s\S]*?)<\/dict>\s*<key>UILaunchStoryboardName/
+    );
+    expect(manifest).not.toBeNull();
+    const body = manifest![1];
+    expect(body).toMatch(
+      /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/
+    );
+    expect(body).toMatch(
+      /<key>UIWindowSceneSessionRoleApplication<\/key>\s*<array>\s*<dict>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneConfigurationName<\/key>\s*<string>Default Configuration<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneDelegateClassName<\/key>\s*<string>\$\(PRODUCT_MODULE_NAME\)\.SceneDelegate<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneStoryboardFile<\/key>\s*<string>Main<\/string>/
+    );
+    // A launch screen is required of 27.0 SDK builds too.
+    expect(plistKeys(infoPlist)).toContain("UILaunchStoryboardName");
+  });
+
+  it("compiles the delegate it names into the app", () => {
+    expect(compiledSourcePaths()).toContain("SceneDelegate.swift");
+    expect(sceneDelegate).toMatch(
+      /^class SceneDelegate: UIResponder, UIWindowSceneDelegate \{/m
+    );
+    expect(sceneDelegate).toMatch(/^\s*var window: UIWindow\?$/m);
+  });
+
+  it("starts the window on the storyboard's bridge, as before scenes", () => {
+    // The storyboard makes the window; the delegate makes none of its own.
+    expect(storyboard).toMatch(
+      /initialViewController="(\S+)"[\s\S]*<viewController id="\1" customClass="TroposBridgeViewController"/
+    );
+    expect(sceneDelegate).not.toMatch(/UIWindow\(/);
+  });
+
+  it("hands the app delegate's configuration the same name and delegate", () => {
+    expect(appDelegate).toMatch(
+      /configurationForConnecting connectingSceneSession: UISceneSession[\s\S]*?UISceneConfiguration\(\s*name: "Default Configuration"[\s\S]*?config\.delegateClass = SceneDelegate\.self/
+    );
+  });
+
+  it("moves opened URLs and universal links to the scene, Firebase Auth's first", () => {
+    // Under scenes these app delegate methods are never called.
+    expect(appDelegate).not.toMatch(/open url: URL/);
+    expect(appDelegate).not.toMatch(/continue userActivity: NSUserActivity/);
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, willConnectTo: session, options: connectionOptions\)/
+    );
+    expect(sceneDelegate).toMatch(
+      /openURLContexts URLContexts[\s\S]*?Auth\.auth\(\)\.canHandle\(\$0\.url\)[\s\S]*?SceneDelegateProxy\.shared\.scene\(scene, openURLContexts:/
+    );
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, continue: userActivity\)/
+    );
+    // Push still reaches the app delegate under scenes.
+    expect(appDelegate).toMatch(
+      /didRegisterForRemoteNotificationsWithDeviceToken/
+    );
+  });
+
+  it("runs on a Capacitor with the scene proxy (8.5 and later)", () => {
+    const [major, minor] = (pkg.dependencies["@capacitor/ios"] ?? "")
+      .replace(/^[^\d]*/, "")
+      .split(".")
+      .map(Number);
+    expect(major > 8 || (major === 8 && minor >= 5)).toBe(true);
+  });
+});
