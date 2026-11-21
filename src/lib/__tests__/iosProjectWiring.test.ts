@@ -412,11 +412,69 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("builds on a macOS image that is not deprecated", () => {
-    // macos-14 is deprecated (actions/runner-images#13518), and its default
-    // Xcode is older than App Store Connect accepts uploads from. macos-26
-    // carries the current Xcode as its default.
-    expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
+  it("builds with Xcode 27.1, before anything else touches the project", () => {
+    // Owner decision A (18 November 2026, the iPhone Duo notes, #3420): only
+    // an iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
+    // 27 SDK is required for every upload from April 2027. macos-26 tops
+    // out at Xcode 26.6 (macos-14, the first image, is deprecated:
+    // actions/runner-images#13518); the xcode-27 image carries several
+    // Xcodes, so both workflows select 27.1 by name, and the pull
+    // requests' compile builds what the release does.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    for (const [name, file] of [
+      ["deploy-ios.yml", workflow],
+      ["ios-native-compile.yml", compile],
+    ] as const) {
+      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe("xcode-27");
+      const select = file.indexOf("- name: Select Xcode 27.1");
+      expect(select, name).toBeGreaterThan(-1);
+      expect(file.slice(select, select + 1200), name).toContain(
+        "verify_ios_xcode.py --want 27.1"
+      );
+      // First after the checkout: no step runs Xcode or syncs the
+      // project with whatever the image's default is.
+      const steps = file.slice(file.indexOf("\n    steps:\n"));
+      const before = [...steps.matchAll(/^ {6}- (?:name|uses|run):.*$/gm)]
+        .map((m) => m[0].trim())
+        .slice(0, 2);
+      expect(before[0], name).toMatch(/^- uses: actions\/checkout@/);
+      expect(before[1], name).toBe("- name: Select Xcode 27.1");
+      expect(select, name).toBeLessThan(file.indexOf("xcodebuild -project"));
+      expect(select, name).toBeLessThan(file.indexOf("npm run build:ios"));
+    }
+  });
+
+  it("launches the pull requests' build on the iPhone Duo simulator, each display shot", () => {
+    // Objective 4 of the Duo track: where the runner's Xcode has an iPhone
+    // Duo simulator, a CI job builds and screenshots on it. Xcode 27.1 has
+    // one, with both displays in one device; the iPhone the other launch
+    // picks is never the Duo.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    const at = (name: string) => compile.indexOf(`- name: ${name}\n`);
+    const phone = at("Launch the standard build on a simulator");
+    const duo = at("Launch the standard build on the iPhone Duo simulator");
+    expect(phone).toBeGreaterThan(-1);
+    expect(duo).toBeGreaterThan(phone);
+    expect(compile.slice(phone, duo)).toContain(
+      'not d["name"].startswith("iPhone Duo")'
+    );
+    const step = compile.slice(duo, compile.indexOf("\n      - ", duo + 1));
+    expect(step).toContain('t["name"] == "iPhone Duo"');
+    expect(step).toContain('screenshot --display="$1"');
+    // The display showing the home screen before the launch has to show
+    // the app after it, so a black scene beside a lit system screen fails.
+    expect(step).toMatch(
+      /before the launch:[\s\S]*simctl launch[\s\S]*MISSING=/
+    );
+    expect(step).toContain("python3 scripts/verify_ios_launch.py");
+    expect(step).toContain('kill -0 "$PID"');
+    expect(compile).toMatch(
+      /name: ios-simulator-duo\n\s*path: \$\{\{ runner\.temp \}\}\/duo-\*\.png/
+    );
+    // Before the pilot's build replaces the standard one it installs.
+    expect(duo).toBeLessThan(
+      at("Compile the connected training pilot for simulator")
+    );
   });
 
   it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
