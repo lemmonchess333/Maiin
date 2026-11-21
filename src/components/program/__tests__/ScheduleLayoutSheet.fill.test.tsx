@@ -22,7 +22,7 @@ const profile = {
   weeklyWorkoutsTarget: 4,
   weeklyRunDaysTarget: 2,
   runMode: "starter",
-} as UserProfile;
+} as unknown as UserProfile;
 
 function open() {
   render(
