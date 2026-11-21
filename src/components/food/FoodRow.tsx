@@ -57,9 +57,10 @@ interface FoodRowProps {
    * Optional captured-meal photo, the row's picture (Pol1), inside the
    * swipeable surface, so a photo meal keeps the same tap-to-edit and
    * swipe-to-delete as any other. Only scanned meals carry one, and it is
-   * read from the device (Food9).
+   * read from the device (Food9): a data URL from `useFoodPhotoUrls`,
+   * never a meal document's field.
    */
-  photoUrl?: string;
+  photoSrc?: string;
 }
 
 // Single destructive swipe action (Delete only). Editing is reached by
@@ -123,7 +124,7 @@ export default function FoodRow({
   onEdit,
   subLabel,
   accessibleFoodName,
-  photoUrl,
+  photoSrc,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -270,8 +271,8 @@ export default function FoodRow({
      recovers on its own without an effect resetting a boolean (which is
      also what keeps this off `react-hooks/set-state-in-effect`). */
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const photoFailed = !!photoUrl && failedSrc === photoUrl;
-  const hasPhoto = !!photoUrl && !photoFailed;
+  const photoFailed = !!photoSrc && failedSrc === photoSrc;
+  const hasPhoto = !!photoSrc && !photoFailed;
   const artKind = foodArtKindFor([
     group.foodName,
     ...group.items.map((item) => item.name ?? ""),
@@ -288,7 +289,7 @@ export default function FoodRow({
      nothing a reader needs. */
   const leading = hasPhoto ? (
     <img
-      src={photoUrl}
+      src={photoSrc}
       alt=""
       data-food-photo=""
       className="size-12 shrink-0 rounded-lg object-cover pointer-events-none select-none"
@@ -296,10 +297,10 @@ export default function FoodRow({
       decoding="async"
       draggable={false}
       /* A meal photo can genuinely go missing underneath a rendered row:
-         photos are device-local and age out at 90 days, a legacy Storage
-         URL can 404, and browser storage can be evicted. The row falls
-         back to the shape a row without a photo has on this day. */
-      onError={() => setFailedSrc(photoUrl ?? null)}
+         photos are device-local and age out at 90 days, and browser
+         storage can be evicted. The row falls back to the shape a row
+         without a photo has on this day. */
+      onError={() => setFailedSrc(photoSrc ?? null)}
     />
   ) : (
     <img

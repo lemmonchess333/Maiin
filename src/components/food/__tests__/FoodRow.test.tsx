@@ -324,7 +324,7 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
   it("shows a photo meal's picture as a thumbnail at the start of its row", function () {
     // It was a 176 px photo card above the row.
     const { container } = row({
-      photoUrl: "data:image/jpeg;base64,AAAA",
+      photoSrc: "data:image/jpeg;base64,AAAA",
     });
     const img = container.querySelector("img[data-food-photo]")!;
     // 48 pt, the inner radius of a card (DS4, §14m rules 20 and 25).
@@ -351,10 +351,9 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
   });
 
   it("falls back to the drawing when the photo cannot be read", function () {
-    // Photos are device-local and age out at 90 days; a legacy Storage
-    // URL can 404.
+    // Photos are device-local, age out at 90 days and can be evicted.
     const { container } = row({
-      photoUrl: "data:image/jpeg;base64,AAAA",
+      photoSrc: "data:image/jpeg;base64,AAAA",
     });
     fireEvent.error(container.querySelector("img[data-food-photo]")!);
     expect(container.querySelector("[data-food-photo]")).toBeNull();
