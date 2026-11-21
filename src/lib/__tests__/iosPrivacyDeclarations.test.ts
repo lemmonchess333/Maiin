@@ -102,8 +102,10 @@ const ANALYTICS = "NSPrivacyCollectedDataTypePurposeAnalytics";
 const DECLARED: Record<string, string[]> = {
   Name: [APP],
   EmailAddress: [APP],
-  Health: [APP, ANALYTICS],
-  Fitness: [APP, ANALYTICS],
+  // No health or fitness figure goes to analytics
+  // (`analyticsHealthFigures.test.ts`).
+  Health: [APP],
+  Fitness: [APP],
   PreciseLocation: [APP],
   CoarseLocation: [ANALYTICS],
   PhotosorVideos: [APP],

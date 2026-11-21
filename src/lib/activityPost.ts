@@ -40,6 +40,19 @@ export interface PostedExercise {
   superset?: number;
 }
 
+/** A circuit's post (Circ1 (11), `circuitPost`): what the card draws in
+ *  place of exercise rows. Moves are exercise ids, named from the
+ *  catalogue as they are drawn, so a post carries no typed words here.
+ *  The rules check each field. */
+export interface PostedCircuit {
+  /** Rounds done whole. */
+  rounds: number;
+  workSeconds: number;
+  restSeconds: number;
+  /** One round's moves, in order. */
+  moves: string[];
+}
+
 export type ActivityPost = {
   authorId: string;
   authorName: string;
@@ -84,6 +97,8 @@ export type ActivityPost = {
    *  longest run yet, a streak reached. At most three, each a kind and its
    *  numbers (`postMoments.ts`); absent when there were none. */
   moments?: PostMoment[];
+  /** A circuit (Circ1), on a workout post whose `exercises` are empty. */
+  circuit?: PostedCircuit;
 };
 
 /* Every field, once. A `Record` over the type's keys makes the compiler
@@ -116,6 +131,7 @@ const FIELDS: Record<keyof ActivityPost, true> = {
   routePreview: true,
   routeMap: true,
   moments: true,
+  circuit: true,
 };
 
 export const ACTIVITY_POST_FIELDS = Object.keys(FIELDS) as ReadonlyArray<

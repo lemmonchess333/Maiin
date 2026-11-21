@@ -332,13 +332,17 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   equipment: (v) => cleanString(v, 30),
   // Lift4 (11): a barbell and a rack beside a home gym's kit.
   barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
+  // Lift4 (11): a pull-up bar beside a home gym's, a minimal or a
+  // no-equipment kit.
+  pullUpBar: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
   // D16 personal "why" — short free-text motivation (chip-seeded or custom).
   // Bounded to 120 chars; control chars stripped by cleanString.
   trainingWhy: (v) => cleanString(v, 120),
-  runMode: (v) =>
-    cleanEnum(v, ["freeform", "structured", "race_prep", "starter"]),
+  // The retired "structured" mode (App1 Q25) is dropped like any other
+  // unknown value.
+  runMode: (v) => cleanEnum(v, ["freeform", "race_prep", "starter"]),
   // Run9's starter goal (30 minutes without stopping): the day it began,
   // and the day it finished, or the day a race goal took its place with the
   // stage reached. `null` clears it. Same shape as firestore.rules'

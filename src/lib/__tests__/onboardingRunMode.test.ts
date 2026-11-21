@@ -33,7 +33,7 @@ describe("resolveOnboardingRunMode (#975)", () => {
     expect(
       resolveOnboardingRunMode({
         runFrequency: "none",
-        runMode: "structured",
+        runMode: "starter",
         hasRaceDate: false,
       })
     ).toBe("freeform");
@@ -49,13 +49,13 @@ describe("resolveOnboardingRunMode (#975)", () => {
     ).toBe("freeform");
   });
 
-  it("structured is never coerced by the race-date rule", () => {
+  it("the starter goal is never coerced by the race-date rule", () => {
     expect(
       resolveOnboardingRunMode({
-        runFrequency: "4x",
-        runMode: "structured",
+        runFrequency: "new",
+        runMode: "starter",
         hasRaceDate: false,
       })
-    ).toBe("structured");
+    ).toBe("starter");
   });
 });

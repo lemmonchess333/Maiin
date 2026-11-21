@@ -367,15 +367,31 @@ describe("the complexity gate survives composition", () => {
     // Measured across the full 216-config matrix, for a beginner:
     //   before  603 complexity violations / 462 equipment violations
     //   after   273 / 12
+    //
+    // One exception since the inverted row needs a barbell and a rack at
+    // home (Lift4 (11), the owner's answer to the No equipment print): a
+    // day that already holds the dumbbell row has no simpler second row
+    // without one, so its pull slot takes the chest-supported row, as the
+    // gate lets complexity give way when the kit has no simpler choice.
+    // With a rack the inverted row is there, and nothing is over level.
     for (const equipment of ["home_gym", "minimal"] as const) {
       for (const liftDays of [2, 3, 4]) {
-        const plan = buildPlan(
-          planInput({ equipment, liftDays }) as Parameters<typeof buildPlan>[0]
-        );
-        expect(
-          overLevel(plan.programState.workouts, "beginner").map((e) => e.name),
-          `${equipment}/${liftDays}d`
-        ).toEqual([]);
+        for (const barbellAtHome of [false, true]) {
+          const plan = buildPlan(
+            planInput({ equipment, liftDays, barbellAtHome }) as Parameters<
+              typeof buildPlan
+            >[0]
+          );
+          expect(
+            overLevel(plan.programState.workouts, "beginner")
+              .map((e) => e.name)
+              .filter(
+                (name) =>
+                  barbellAtHome || name !== "Chest-Supported Dumbbell Row"
+              ),
+            `${equipment}/${liftDays}d, rack ${String(barbellAtHome)}`
+          ).toEqual([]);
+        }
       }
     }
   });
