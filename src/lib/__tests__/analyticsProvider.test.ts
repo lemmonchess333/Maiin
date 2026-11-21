@@ -409,6 +409,46 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
     expect(mod.getAnalyticsStatus()).toBe("off");
   });
 
+  it("on the web, an on overtaken by an off never starts gtag collecting again", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await expect(mod.analyticsSettled()).resolves.toBe(true);
+
+    mod.setUsageAnalytics(false);
+    mod.setUsageAnalytics(true);
+    mod.setUsageAnalytics(false);
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("off");
+    expect(setAnalyticsCollectionEnabled).toHaveBeenCalled();
+    expect(setAnalyticsCollectionEnabled).not.toHaveBeenCalledWith(
+      expect.anything(),
+      true
+    );
+  });
+
+  it("on the web, turned off while the SDK is loading, starts nothing", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    let answerSupported: (supported: boolean) => void = () => {};
+    isSupported.mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          answerSupported = resolve;
+        })
+    );
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await vi.waitFor(() => expect(isSupported).toHaveBeenCalledTimes(1));
+
+    mod.setUsageAnalytics(false);
+    answerSupported(true);
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("off");
+    expect(initializeAnalytics).not.toHaveBeenCalled();
+    mod.logAnalyticsEvent("history_viewed", { surface: "history" });
+    expect(logEvent).not.toHaveBeenCalled();
+  });
+
   it("the same answer twice changes nothing on the device's SDK", async () => {
     isNativePlatform.mockReturnValue(true);
     const mod = await import("../analyticsProvider");

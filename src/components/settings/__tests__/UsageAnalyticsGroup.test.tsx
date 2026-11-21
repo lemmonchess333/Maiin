@@ -70,6 +70,19 @@ describe("Share usage analytics", () => {
     expect(toggle().getAttribute("aria-checked")).toBe("true");
   });
 
+  it("says what is sent in the words the owner approved", () => {
+    // Events carry counts of what is logged and setup's choices (goal,
+    // days a week), never what was logged, so the line says so.
+    render(<Harness />);
+    expect(
+      screen.getByText(
+        "Sends how you use the app and your plan choices to Google " +
+          "Analytics, tied to this device, not your account. No names, " +
+          "and not what you log, only how often."
+      )
+    ).toBeTruthy();
+  });
+
   it("shows off for an account that turned it off", () => {
     render(<Harness initial={false} />);
     expect(toggle().getAttribute("aria-checked")).toBe("false");

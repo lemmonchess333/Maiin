@@ -164,16 +164,18 @@ export function setUsageAnalytics(on: boolean): void {
  *  the first time and starts it collecting again after that. */
 async function applyWeb(on: boolean): Promise<void> {
   if (!on) {
+    deliver = null;
     web?.collect(false);
     if (status === "pending" || status === "active") status = "off";
     return;
   }
+  // A newer off is queued behind this on: gtag stays as it is until then,
+  // never collecting again in between.
+  if (!shares()) return;
   if (web) {
     web.collect(true);
-    if (shares()) {
-      deliver = web.deliver;
-      status = "active";
-    }
+    deliver = web.deliver;
+    status = "active";
     return;
   }
   // Loaded once: unconfigured, unsupported and a failed load are final.

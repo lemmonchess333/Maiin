@@ -223,6 +223,7 @@ suite("users/{uid} update: Share usage analytics", () => {
   it.each([
     ["off", false],
     ["on", true],
+    ["cleared (null, read as on)", null],
   ])("accepts %s", async (_case, usageAnalytics) => {
     await assertSucceeds(
       write(`ua-ok-${String(usageAnalytics)}`, usageAnalytics)
@@ -246,6 +247,16 @@ suite("users/{uid} update: Share usage analytics", () => {
         { usageAnalytics: false },
         { merge: true }
       )
+    );
+  });
+
+  it("accepts a sign-up that carries off", async () => {
+    const db = env.authenticatedContext("ua-signup-off").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users/ua-signup-off"), {
+        ...signupProfile("ua-signup-off"),
+        usageAnalytics: false,
+      })
     );
   });
 
