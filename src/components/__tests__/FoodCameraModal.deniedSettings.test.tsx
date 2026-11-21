@@ -22,7 +22,10 @@ vi.mock("@zxing/browser", () => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { hasUsedTrial: false } }),
 }));
-const nativeMock = vi.fn(() => false);
+// Hoisted with the mock below: vi.mock runs before this file's own lines,
+// and importing the modal loads firebase.ts, whose App Check set-up asks
+// isNativePlatform() at once, so a plain const is read before it exists.
+const nativeMock = vi.hoisted(() => vi.fn(() => false));
 vi.mock("@/lib/platform", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/platform")>()),
   isNativePlatform: () => nativeMock(),
