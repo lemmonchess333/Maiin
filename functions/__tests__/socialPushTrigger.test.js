@@ -5,7 +5,10 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
-const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
+const {
+  memoryFirestore,
+  fieldDelete,
+} = require("./helpers/memoryFirestore.cjs");
 const pushTokenOwnership = require("../lib/pushTokenOwnership");
 const deletion = require("../lib/accountDeletionLocks");
 const fns = require("../index");
@@ -383,5 +386,51 @@ describe("props, once a day", () => {
       )
     ).toBe(false);
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("is not kept out of the sweep by documents that only carry a due time", async () => {
+    await write(
+      { type: "kudos", activityId: "act1", fromName: "Maya" },
+      null,
+      `notifications/${TO}/items/kudos_act1_${FROM}`
+    );
+    firestore.data.set("activities/act1", { type: "run" });
+    // Before the rules refused it, any account could put a due time on a
+    // settings document of its own. A thousand from 1970 come first in the
+    // sweep's read, as Firestore orders it by the due time; the fake lists
+    // by path, so the account's id sorts ahead of the recipient's.
+    const longAgo = admin.firestore.Timestamp.fromDate(new Date(0));
+    for (let i = 0; i < 1000; i += 1)
+      firestore.data.set(`users/aaa-troll/settings/p${i}`, {
+        propsBundleDueAt: longAgo,
+      });
+    // The fake stores a copy, which loses the Timestamp the query compares.
+    const bundle = firestore.data.get(BUNDLE);
+    firestore.data.set(BUNDLE, {
+      ...bundle,
+      propsBundleDueAt: admin.firestore.Timestamp.fromMillis(
+        millisOf(bundle.propsBundleDueAt)
+      ),
+    });
+    vi.spyOn(db, "collectionGroup").mockImplementation(
+      firestore.collectionGroup
+    );
+    vi.spyOn(admin.firestore.FieldValue, "delete").mockImplementation(
+      fieldDelete
+    );
+    vi.setSystemTime(new Date("2026-11-14T19:00:00Z"));
+
+    await fns.hourlyPropsBundle.run({});
+    await fns.hourlyPropsBundle.run({});
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].data).toMatchObject({ kind: "kudos" });
+    expect(
+      [...firestore.data.entries()].filter(
+        ([path, doc]) =>
+          path.startsWith("users/aaa-troll/settings/") &&
+          "propsBundleDueAt" in doc
+      )
+    ).toEqual([]);
   });
 });

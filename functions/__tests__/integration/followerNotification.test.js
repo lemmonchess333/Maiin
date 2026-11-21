@@ -235,7 +235,7 @@ suite.each([
     expect(await items()).toHaveLength(1);
   });
 
-  it("refreshes a new source but never lets an older source overwrite it afterwards", async () => {
+  it("is quiet for a newer source within a day, refreshes after it, and never lets an older source overwrite it", async () => {
     await source().create({});
     const first = await source().get();
     await deliver(first, "source-A");
@@ -243,12 +243,26 @@ suite.each([
     await source().delete();
     await source().create({});
     const next = await source().get();
+
+    // The same person again within the day has nothing new to say
+    // (sendFollowNotice's quiet window): the row is not rewritten, so it
+    // is neither pushed nor made unread again.
+    await deliver(next, "source-B");
+    const quiet = await notice().get();
+    expect(quiet.updateTime.isEqual(initial.updateTime)).toBe(true);
+
+    // A day on, the newer source refreshes the row.
+    const { Timestamp } = require("../../lib/adminSdk").firestore;
+    await notice().update({
+      createdAt: Timestamp.fromMillis(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    });
+    const aged = await notice().get();
     await deliver(next, "source-B");
     const newest = await notice().get();
-    expect(newest.updateTime.isEqual(initial.updateTime)).toBe(false);
+    expect(newest.updateTime.isEqual(aged.updateTime)).toBe(false);
 
+    // The older source, delivered late, still never overwrites it.
     await deliver(first, "source-A");
-
     const result = await notice().get();
     expect(result.data()).toEqual(newest.data());
     expect(result.updateTime.isEqual(newest.updateTime)).toBe(true);
