@@ -40,7 +40,7 @@ export default function OptionCard({
             ? tone === "running"
               ? "bg-running/10 border-running/50"
               : "bg-primary/10 border-primary/50"
-            : "bg-card"
+            : "bg-card dark:card-shadow dark:border-transparent"
         )}
       >
         {icon && (

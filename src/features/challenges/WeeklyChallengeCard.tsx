@@ -120,7 +120,7 @@ export default function WeeklyChallengeCard({
 
   if (!hasChallenges) {
     return (
-      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: `${THEME.brand}14` }}

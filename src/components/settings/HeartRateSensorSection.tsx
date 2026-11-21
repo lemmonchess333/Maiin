@@ -177,7 +177,7 @@ export default function HeartRateSensorSection() {
   return (
     <div className="space-y-3">
       <SectionHeading size="compact">Heart rate sensor</SectionHeading>
-      <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
+      <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3 dark:card-shadow dark:border-transparent">
         {!loaded ? (
           <Spinner size="sm" variant="muted" label="Checking for a sensor" />
         ) : !status.available ? (

@@ -276,7 +276,7 @@ export default function PeopleView({
              materially improves follow-back conversion. */
                 <div
                   key={u.uid}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card dark:card-shadow"
                 >
                   <Link
                     to={`/user/${u.uid}`}
@@ -349,7 +349,7 @@ export default function PeopleView({
             )}
           </div>
           {suggestionsPending && suggestedPeople.length === 0 ? (
-            <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+            <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center dark:card-shadow dark:border-transparent">
               <Spinner
                 size="sm"
                 variant="muted"
@@ -362,7 +362,7 @@ export default function PeopleView({
                lower on this tab. Action routes to Together, where
                Circles and Spaces are the joinable groups (crews
                retired 2026-07-20). */
-            <div className="rounded-xl bg-card border border-border/50">
+            <div className="rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
               <HexEmptyState
                 icon={Users}
                 accent={THEME.brand}
@@ -385,7 +385,7 @@ export default function PeopleView({
               {suggestedPeople.map((p) => (
                 <div
                   key={p.uid}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card dark:card-shadow"
                 >
                   <BlockAwareAvatar
                     uid={p.uid}
