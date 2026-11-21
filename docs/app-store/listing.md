@@ -301,7 +301,8 @@ your choice in App Store Connect.
 | Reference name     | Tropos Pro Monthly                               | Tropos Pro Yearly             |
 | Product ID         | `com.tropos.app.pro.monthly`                     | `com.tropos.app.pro.yearly`   |
 | Duration           | 1 month                                          | 1 year                        |
-| Price (UK)         | £3.99                                            | £34.99                        |
+| Price (UK)         | £6.99                                            | £39.99                        |
+| Price (US)         | $7.99                                            | $49.99                        |
 | Introductory offer | Free, 1 week, new subscribers                    | Free, 1 week, new subscribers |
 | Review screenshot  | The paywall's plan screen, from the iPhone build | The same                      |
 
