@@ -2853,6 +2853,19 @@ In this order:
       (Google Cloud console → Cloud Storage → the bucket → Permissions);
       no new secret. If it says the bucket does not exist, run it again
       with the bucket Firebase console → Storage shows, without `gs://`.
+- [ ] **Soft delete, before applying.** Google Cloud console → Cloud
+      Storage → the bucket → Protection → Soft delete policy. Cloud
+      Storage's default policy keeps a deleted object restorable for 7
+      days, and an object deleted while the policy is on cannot be
+      removed for good before that time is up, even by turning the policy
+      off afterwards. The policy is the whole bucket's, not a prefix's. If
+      it is on, either let it stand (the photos are truly gone on the apply
+      date plus the retention shown, and that later date is the one to
+      write into CLAUDE.md below), or, if the owner wants them gone at
+      once, turn it off before applying, knowing that profile, Space and
+      post photos in the same bucket lose their window while it is off,
+      and turn it back on after. Passing: the setting and the date the
+      photos are truly gone are written in this row.
 - [ ] **Apply.** Run it again with mode `apply`. It deletes the objects,
       then takes the fields off the meals, then counts again in the same
       run and fails unless both counts are 0. This cannot be undone. If a
@@ -2862,10 +2875,12 @@ In this order:
       `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
       photo field`; Firebase console → Storage has no `food-photos`
       folder; and in Firestore console a meal scanned before 18 August
-      2026 has neither `photoUrl` nor `photoPath`. Then write the date
-      into CLAUDE.md's "Meal photos are device-local" section, where it
-      says "Run in production on: not yet". (The same script runs from a
-      terminal with Admin credentials; its header has the command.)
+      2026 has neither `photoUrl` nor `photoPath`. Then write into
+      CLAUDE.md's "Meal photos are device-local" section, where it says
+      "Run in production on: not yet", the apply date and, if soft delete
+      was on, the date the photos are truly gone (the row above). (The
+      same script runs from a terminal with Admin credentials; its header
+      has the command.)
 - [ ] **An older build.** After the purge, a TestFlight build from before
       this change, on an account with a meal scanned before 18 August
       2026. Passing: that meal's row shows our drawing of the food, not a
