@@ -2319,10 +2319,12 @@ export default function Onboarding() {
               {askEmail && (
                 <div className="flex items-start gap-3 rounded-2xl bg-card card-shadow p-4">
                   <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-base font-semibold">
+                    {/* A word wider than the row breaks rather than run
+                        past the card at 200% text on a 320 px screen. */}
+                    <p className="text-base font-semibold break-words">
                       {EMAIL_CONSENT_COPY.setupLabel}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       {EMAIL_CONSENT_COPY.setupDescription}
                     </p>
                   </div>
