@@ -1,26 +1,21 @@
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import LegalBack from "@/components/legal/LegalBack";
 
 /* What this page says is what the App Store privacy label is filed from,
    so it describes what the code does, service by service and data type by
    data type. The claims code can contradict are pinned in
    src/lib/__tests__/legalCopyClaims.test.ts; change a claim and its pin
    together, and change the code and the claim together. */
-export default function PrivacyPolicy() {
-  const navigate = useNavigate();
-
+/** `showBack` is off on troposfit.com, whose header and the browser's own
+ *  Back do its job (src/website/pages/LegalPage.tsx). */
+export default function PrivacyPolicy({
+  showBack = true,
+}: {
+  showBack?: boolean;
+} = {}) {
   return (
-    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
+    <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Back button */}
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </button>
+        {showBack && <LegalBack />}
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">
@@ -657,6 +652,6 @@ export default function PrivacyPolicy() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

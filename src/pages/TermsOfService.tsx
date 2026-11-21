@@ -1,20 +1,16 @@
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import LegalBack from "@/components/legal/LegalBack";
 
-export default function TermsOfService() {
-  const navigate = useNavigate();
-
+/** `showBack` is off on troposfit.com, whose header and the browser's own
+ *  Back do its job (src/website/pages/LegalPage.tsx). */
+export default function TermsOfService({
+  showBack = true,
+}: {
+  showBack?: boolean;
+} = {}) {
   return (
-    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
+    <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </button>
+        {showBack && <LegalBack />}
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">
@@ -227,6 +223,6 @@ export default function TermsOfService() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

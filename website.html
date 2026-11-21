@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en-GB" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0e0e11" />
+
+    <!-- troposfit.com's page (App1 Q52), the Firebase Hosting build's
+         index.html (scripts/website/websiteEntry.ts). The GitHub Pages
+         build keeps index.html, the whole app.
+
+         Its policy is the app's, less what only a signed-in app needs (no
+         Firebase SDK, analytics, App Check or sign-in frames):
+         - img-src: the three hosts a public post's author photo may come
+           from (functions/lib/publicPhotoUrl.js) and the basemap's
+           sprites for a run's map (src/lib/basemap.ts).
+         - connect-src: the basemap; troposfit.com, which a post's page on
+           Hosting's other addresses (web.app, firebaseapp.com) asks for
+           the post's figures; and *.cloudfunctions.net for the invite
+           line's lookupInvite (src/website/inviterName.ts).
+         - worker-src blob: for MapLibre's workers.
+         frame-ancestors is a Hosting header (firebase.json); browsers
+         ignore it here. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      font-src 'self';
+      img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://appleid.cdn-apple.com https://tiles.openfreemap.org;
+      connect-src 'self' https://troposfit.com https://tiles.openfreemap.org https://*.cloudfunctions.net;
+      worker-src 'self' blob:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    "
+    />
+    <!-- The page's own title, description, address and preview, which
+         scripts/website/prerender.ts writes for each page (sitePage.ts).
+         These are the home page's, for a build that has not been through
+         it. publicPostPage swaps the description and preview tags for a
+         post's own. -->
+    <!--site:head-->
+    <title>Tropos: your training and food, planned together</title>
+    <meta
+      name="description"
+      content="Tropos plans your lifting and running week and sets a daily calorie target to fit it. An iPhone app, on the App Store."
+    />
+    <!--/site:head-->
+
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/website/main.tsx"></script>
+  </body>
+</html>
