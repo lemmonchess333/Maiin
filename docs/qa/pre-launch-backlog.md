@@ -1801,7 +1801,8 @@ device, or a real inbox.
       marketing communications directly to your users"; the emails after a
       break are timed by when the person last logged. The weekly review's
       figures are the person's own, sent to them at their request, so
-      Health and Fitness stay app functionality and analytics. App Review
+      Health and Fitness stay app functionality only (no figure from them
+      reaches Google Analytics since #3452). App Review
       Guideline 5.1.3 lets fitness data be used, with permission, to help
       someone manage their health and nothing else: a reviewer may ask, and
       the answer is the opt-in.
@@ -1817,8 +1818,12 @@ device, or a real inbox.
       with the opt-in turned on for a test account that logged something
       the week before: the email arrives at 08:00 local from
       `RESEND_FROM`, the figures match the review page, "Open your review"
-      opens the review in the iPhone app (and the website on a computer),
-      and `users/{uid}/settings/emailState.weeklyReview.state` reads `sent`.
+      opens the review in the iPhone app through the universal link, and
+      `users/{uid}/settings/emailState.weeklyReview.state` reads `sent`.
+      Opened anywhere else (a computer, or a phone without Tropos), the
+      button lands on troposfit.com's Home, which links to the App Store
+      and says that on an iPhone the link goes straight to the app:
+      troposfit.com has served no app since #3436.
       The `hourlyEmailSweep` run in `jobRuns` counts it as
       `weeklyReview:sent`.
 - [ ] **The unsubscribe link.** From that email, open the link: the page
