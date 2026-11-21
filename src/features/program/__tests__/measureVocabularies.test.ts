@@ -22,7 +22,12 @@ describe("plan-measure vocabularies (D3 single source)", () => {
     ]);
   });
   it("equipment", () => {
-    expect([...VALID_EQUIPMENT]).toEqual(["full_gym", "home_gym", "minimal"]);
+    expect([...VALID_EQUIPMENT]).toEqual([
+      "full_gym",
+      "home_gym",
+      "minimal",
+      "no_equipment",
+    ]);
   });
   it("race distance", () => {
     // Run26 (2): the ultras join the road races.
