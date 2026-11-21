@@ -74,8 +74,8 @@ as approximate.
   1 January 2027. Year one's known cash costs, before any pay for the
   founder, come to about £4,600 plus an accountant and US counsel.
 - **Legal:** incorporate, register with the ICO, write the DPIA, raise the
-  minimum age to 18, take health figures out of analytics, and add Apple's
-  age signal before the US release, because Texas's law is in force and
+  minimum age to 18 and add Apple's age signal before the US release
+  (health figures already left analytics on 21 November, #3452), because Texas's law is in force and
   California's starts on 1 January 2027.
 
 ## 1. The market
@@ -365,8 +365,11 @@ no Android, no chat coach, and no ratings yet.
 - **Price:** £3.99 a month or £34.99 a year, with the yearly plan selected
   by default and labelled "Save 27%"
   ([proPlans.ts](../../src/lib/proPlans.ts)). On the phone the paywall
-  shows the App Store's own prices once RevenueCat returns them
-  ([useProPlanPrices.ts](../../src/hooks/useProPlanPrices.ts)).
+  shows only the App Store's own prices, and no price or Continue until
+  RevenueCat returns them (#3406,
+  [useProPlanPrices.ts](../../src/hooks/useProPlanPrices.ts)). The pound
+  prices above are what the web build shows and what the App Store
+  products should be set to.
 - **Trial:** 7 days, one per account; an account that ever held the old
   onboarding free week is offered the price, not a trial
   ([subscription.ts](../../src/lib/subscription.ts)).
@@ -553,7 +556,12 @@ uses that number.
 own Stripe account (Q77), and the build exists; the engine is open again
 because both Stripe's and Paddle's fees look too high
 ([grill](../whole-app-2026-11/grill.md);
-[RevenueCat setup, Part W](../iap/revenuecat-setup.md)).
+[RevenueCat setup, Part W](../iap/revenuecat-setup.md)). Since 21
+November troposfit.com shows the App Store page and no app (App1 Q52,
+#3375), so there is no signed-in page to start the checkout from: the
+website sells nothing until the owner chooses how a web buyer reaches the
+Purchase Link (the Part W rows of the
+[pre-launch backlog](../qa/pre-launch-backlog.md)).
 
 **The rules, by country.**
 
@@ -794,11 +802,14 @@ pay, and where they heard of Tropos.
 4. A Tropos club on Strava. Clubs are free to create, and only admins
    create events ([Strava support, 16 Sep 2026](https://support.strava.com/hc/en-us/articles/221622188-Clubs-on-the-Mobile-App)).
 
-**Seed in clusters, not one by one.** Leagues, challenges and Spaces stay
-hidden until at least 10 people are training on Tropos
-([enoughPeople.ts](../../src/lib/enoughPeople.ts)). A gym or a club that
-joins together gives each person a full Circle and brings those surfaces
-on sooner. Ten scattered testers see an empty app.
+**Seed in clusters, not one by one.** Since 21 November leagues,
+challenges and Spaces show from the first day and say "Filling up" until
+they have a few people in them (App1 Q6, #3447,
+[fillingUp.ts](../../src/lib/fillingUp.ts)). The league is the exception:
+the server forms no group under 10 people, so until then its card counts
+who has joined. A gym or a club that joins together fills a Circle, a
+challenge and the first league group at once. Ten scattered testers see
+ten rooms that all say "Filling up".
 
 ### 4.4 App Store optimisation
 
@@ -849,8 +860,9 @@ months for wider consideration
 **In-app events** (up to 10 published, each up to 31 days, with Challenge
 and Competition badges,
 [Apple](https://developer.apple.com/app-store/in-app-events/)) fit
-Tropos's monthly challenges and leagues, but those stay hidden below 10
-people training. Use them from the second month.
+Tropos's monthly challenges and leagues, but a league needs 10 people
+joined before it starts and an empty challenge reads "Filling up". Use
+them from the second month.
 
 **Ratings.** Competitors carry 4.7 to 5.0 from tens of thousands of
 ratings (section 2.1); Tropos starts from none. The rating prompt in
@@ -1351,12 +1363,13 @@ the website, which skips the store's consent, is **unconfirmed**.
 - **Apple** bars using health and fitness data for advertising or data
   mining (Guideline 5.1.3,
   [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)).
-- **What Tropos does today:** the listing declares weight, height, sex, the
-  food diary and calorie targets as used for analytics, and says some
-  figures, such as macro shares, reach Google Analytics
-  ([listing](../app-store/listing.md)). That could be read as the
-  disclosure the FTC rule describes. Take health figures out of analytics
-  events before the US launch, and publish a consumer health data policy.
+- **What Tropos does today:** until 21 November chart taps on Progress
+  sent the figure tapped, such as a macro share, to Google Analytics,
+  which could be read as the disclosure the FTC rule describes. #3452
+  removed every health and training figure from analytics events, pinned
+  by a test, and the listing now gives Health and Fitness the App
+  functionality purpose only ([listing](../app-store/listing.md)). What
+  remains before the US launch is a consumer health data policy.
 
 ### 7.6 Subscription law
 
@@ -1431,15 +1444,16 @@ prices were found.
    ratings and a tested first week before the push, and every channel in
    the plan is British (section 4.1).
 4. **The US. Recommend:** release there about 16 February, only when two
-   things are true: the compliance list is done (health figures out of
-   analytics, a consumer health data policy, Declared Age Range, the
+   things are true: the compliance list is done (a consumer health data
+   policy, Declared Age Range, the
    Shared Location declaration, the DPIA) and 20% of December's finished
    setups are back in week four. **Because** Texas's law is in force,
    California's starts on 1 January, Washington's lets anyone sue, and the
    US has no channel yet that would justify the risk before retention is
    known (sections 5.3, 7.4, 7.5).
 5. **The website checkout. Recommend:** keep it built; open it to UK
-   yearly buyers on Stripe after the accountant's VAT answer, add US buyers
+   yearly buyers on Stripe after the accountant's VAT answer and once the
+   website has a way into the Purchase Link (it has no app since Q52), add US buyers
    and the US in-app link at 50 US subscriptions a month, and sell nothing
    on the web in the EU yet. **Because** it earns 38% more per UK yearly
    sale while Tropos is under the VAT threshold and 11% more per US sale,
