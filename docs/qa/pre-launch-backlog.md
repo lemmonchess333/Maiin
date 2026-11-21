@@ -6264,9 +6264,9 @@ Unit-tested; no phone has drawn it.
 
 ## Circuit mode: the runner on a phone (Circ1, 2026-11-18)
 
-Affects: the new full-screen `/circuit` page: the picker, the runner, the
-end question and the finish, and Train's Lift tab (the Circuit row under
-Empty workout) once the feed post ships with it. Unit-tested on a fake clock in jsdom; no phone has run one, and
+Affects: Train's Lift tab (the Circuit row under Empty workout), the new
+full-screen `/circuit` page (the picker, the runner, the end question and
+the finish) and a circuit's feed post. Unit-tested on a fake clock in jsdom; no phone has run one, and
 the iOS web view's screen lock, speech and haptics are only seen on a
 device.
 
@@ -6304,6 +6304,12 @@ device.
       "Finish your first workout".
 - [ ] **The ladder.** Save a circuit rated Easy, then open Circuit again.
       Passing: that circuit's row reads "45 s on, 15 s off".
+- [ ] **The post.** Save a circuit with automatic sharing on. Passing: the
+      finish says it was shared, and Done goes back to Train; on another
+      account that follows, the feed card reads the circuit's name, its
+      rounds and minutes, "40 s on, 20 s off", its first three moves and
+      "+2 more", with the first move's drawing. On a build from before
+      circuits, the same post reads as a workout of 5 exercises.
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
 Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of

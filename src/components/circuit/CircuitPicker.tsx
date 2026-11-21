@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   circuitKitLine,
+  circuitLastTimeLine,
   circuitShapeLine,
 } from "@/features/circuit/circuitCopy";
+import type { DatedCircuit } from "@/features/circuit/circuitHistory";
 import type { Circuit, CircuitKit } from "@/features/circuit/circuitTypes";
 
 /**
@@ -15,14 +17,15 @@ import type { Circuit, CircuitKit } from "@/features/circuit/circuitTypes";
  * lets the phone speak (iOS speaks only after a tap).
  */
 export default function CircuitPicker({
-  circuits,
+  offers,
   kit,
   onChoose,
   onClose,
 }: {
-  /** Null while the person's circuit history is read: each circuit is
-   *  offered at its rung, so none is offered before it is known. */
-  circuits: readonly Circuit[] | null;
+  /** Each circuit at today's rung, with the last time it was done. Null
+   *  while the person's circuit history is read: each circuit is offered
+   *  at its rung, so none is offered before it is known. */
+  offers: readonly { circuit: Circuit; last: DatedCircuit | null }[] | null;
   kit: CircuitKit;
   onChoose: (circuit: Circuit) => void;
   onClose: () => void;
@@ -50,7 +53,7 @@ export default function CircuitPicker({
             Work and rest on a clock. {circuitKitLine(kit)}.
           </p>
         </header>
-        {circuits === null && (
+        {offers === null && (
           <p className="sr-only" role="status">
             Loading your circuits
           </p>
@@ -58,9 +61,9 @@ export default function CircuitPicker({
         <ul
           className="space-y-[8px]"
           aria-label="Circuits"
-          aria-busy={circuits === null}
+          aria-busy={offers === null}
         >
-          {circuits === null &&
+          {offers === null &&
             Array.from({ length: 6 }, (_, i) => (
               <li
                 key={i}
@@ -68,7 +71,7 @@ export default function CircuitPicker({
                 className="h-[72px] rounded-xl bg-card card-shadow motion-safe:animate-pulse"
               />
             ))}
-          {(circuits ?? []).map((circuit) => (
+          {(offers ?? []).map(({ circuit, last }) => (
             <li key={circuit.id}>
               <Button
                 variant="ghost"
@@ -87,6 +90,11 @@ export default function CircuitPicker({
                   <span className="block text-xs text-muted-foreground">
                     {circuitShapeLine(circuit)}
                   </span>
+                  {last && (
+                    <span className="block text-xs text-muted-foreground">
+                      {circuitLastTimeLine(circuit, last)}
+                    </span>
+                  )}
                 </span>
                 <ChevronRight
                   className="size-[16px] shrink-0 text-muted-foreground"

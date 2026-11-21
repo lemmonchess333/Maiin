@@ -141,7 +141,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // a lift moved on, one skipped from the day, a rest before a race. One
   // dumbbell ICON for the three (3:1 non-text); their words are foreground
   // and muted.
-  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-11-21: 16 → 17. A circuit's feed post (Circ1): its rounds, a
+  // text-2xl extrabold numeral where a lift's volume numeral stands, at
+  // the large-text bar as that one is.
+  lifting: 17, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its

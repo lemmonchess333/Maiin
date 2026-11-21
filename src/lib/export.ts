@@ -2,6 +2,7 @@ import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 
 /** CSV quoting protects cell boundaries; an apostrophe also keeps untrusted
  * formula prefixes as text when the export is opened in a spreadsheet. */
@@ -35,6 +36,23 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     }[];
   };
   for (const w of workouts) {
+    // A circuit (Circ1) has no sets, and is one session: one row, its
+    // name, the rounds done under Set and the session's seconds under
+    // Reps, as a timed hold's seconds are.
+    const circuit = workoutCircuit(w);
+    if (circuit) {
+      rows.push(
+        [
+          csvCell(w.date),
+          csvCell(circuit.name, true),
+          csvCell(circuit.roundsDone),
+          csvCell(0),
+          csvCell(circuit.activeSeconds),
+          csvCell("circuit"),
+        ].join(",")
+      );
+      continue;
+    }
     for (const ex of w.exercises as unknown as ExportedExercise[]) {
       if (!Array.isArray(ex.sets)) continue;
       ex.sets.forEach((set, i) => {
