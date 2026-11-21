@@ -109,7 +109,7 @@ export function ChoiceSheet({
             description on the session chooser and the goal-reached ask,
             reading as a second sheet nested in the first. */}
         {hideHeader && (
-          <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+          <div className="w-9 h-1 rounded-full sheet-handle mx-auto" />
         )}
 
         {children}

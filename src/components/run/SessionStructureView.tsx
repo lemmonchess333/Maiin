@@ -55,7 +55,7 @@ export default function SessionStructureView({
   const allTimed = segments.every((s) => s.target.kind === "duration");
   const totalSec = segmentsDurationSeconds(segments);
   return (
-    <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+    <div className="p-4 rounded-xl border border-border bg-card space-y-3 dark:card-shadow dark:border-transparent">
       <div className="flex items-baseline justify-between">
         <SectionLabel as="h3">Session structure</SectionLabel>
         {allTimed && totalSec > 0 && (

@@ -186,7 +186,7 @@ export default function ReportForm({
                   "motion-safe:transition-colors",
                   isSelected
                     ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border/50 bg-muted text-muted-foreground hover:bg-muted/80"
+                    : "border-border/50 bg-muted chip-edge text-muted-foreground hover:bg-muted/80 dark:border-transparent"
                 )}
               >
                 {c.label}
@@ -221,7 +221,7 @@ export default function ReportForm({
                     "motion-safe:transition-colors",
                     isSelected
                       ? "bg-primary-strong text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      : "bg-muted chip-edge text-muted-foreground"
                   )}
                 >
                   {sr}
@@ -326,7 +326,7 @@ function ActionCheckbox({
         "motion-safe:transition motion-safe:active:scale-[0.99]",
         checked
           ? "border-primary/30 bg-primary/5"
-          : "border-border/50 bg-card hover:bg-muted/30"
+          : "border-border/50 bg-card hover:bg-muted/30 dark:card-shadow dark:border-transparent"
       )}
     >
       <span

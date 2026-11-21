@@ -94,7 +94,7 @@ export default function PrivacySection({
             opens followers-only posts, the default share, so it waits for
             a yes. Turning it off does not answer requests already waiting;
             they stay under People until answered. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted chip-edge">
           <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               Approve followers
@@ -125,7 +125,7 @@ export default function PrivacySection({
             Turning it on here IS that yes, which is why the line under it
             says what is sent and to whom. Off writes false: nothing more
             is sent, and the server refuses it as well. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted chip-edge">
           <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               AI food analysis
@@ -151,7 +151,7 @@ export default function PrivacySection({
 
         {/* Shared-route end clipping — default-on home-location protection,
             independent of (and composed with) explicit Privacy zones below. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted chip-edge">
           <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               Hide route start &amp; end on shared runs
@@ -178,7 +178,7 @@ export default function PrivacySection({
         </div>
 
         {/* Privacy zones */}
-        <div className="p-4 rounded-lg bg-muted space-y-3">
+        <div className="p-4 rounded-lg bg-muted space-y-3 chip-edge">
           <div className="flex items-center gap-2">
             <MapPin className="size-4 text-primary" />
             <div>
@@ -194,7 +194,7 @@ export default function PrivacySection({
           {privacyZones.map((z) => (
             <div
               key={z.id}
-              className="flex items-center justify-between p-2.5 rounded-lg bg-card"
+              className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
             >
               <div>
                 <p className="text-xs font-medium text-foreground">{z.name}</p>
@@ -273,7 +273,7 @@ export default function PrivacySection({
         </div>
 
         {/* Blocked users (#25) */}
-        <div className="p-4 rounded-lg bg-muted space-y-3">
+        <div className="p-4 rounded-lg bg-muted space-y-3 chip-edge">
           {/* "Show" drops under the heading, at the right, rather than
               past the card at double text on a 320px phone. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -347,7 +347,7 @@ export default function PrivacySection({
                 {blockedUsersList.map((bu) => (
                   <div
                     key={bu.uid}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-card"
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
                   >
                     <span className="text-xs font-medium text-foreground">
                       {bu.displayName ?? "Name unavailable"}
@@ -375,7 +375,7 @@ export default function PrivacySection({
                             : "Unblocked"
                         );
                       }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted chip-edge text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
                     >
                       Unblock
                     </button>

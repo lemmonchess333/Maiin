@@ -74,7 +74,7 @@ export default function RaceIdentityToggle({ spaceId }: { spaceId: string }) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+    <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
       <div className="flex items-center gap-3 min-w-0">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"

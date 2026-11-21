@@ -306,7 +306,7 @@ function InvalidRunReview({
         : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
 
   return (
-    <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3">
+    <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       {/* Announce the saved heading without repeating the pre-save warning. */}
       <div className="space-y-1.5" aria-live="polite">
         <p className="text-base font-semibold text-foreground">{heading}</p>
@@ -2156,7 +2156,7 @@ export default function RunSummary() {
           {/* A race plan's week. The week's runs against the plan's are
               the card's above: this row counted them a second time. */}
           {raceWeek && (
-            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
+            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs dark:card-shadow dark:border-transparent">
               <span className="font-semibold text-foreground">
                 {racePlanWeekLabel(raceWeek, "long")}
               </span>
