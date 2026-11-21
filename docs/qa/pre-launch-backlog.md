@@ -4786,6 +4786,14 @@ of thing a phone's screen and WebKit decide.
       streak chip and the "Swap" style pills have one too, and no card has
       a doubled line. At the lowest screen brightness the cards still part
       from the page.
+- [ ] **The edges reach every card (2026-11-18).** In dark mode, open
+      Settings and a few of its sections, Social's People, a profile's
+      followers, Progress (the charts and PRs), the badges, a run's setup,
+      a Circle, the league's standings and a challenge card. Passing:
+      every card and tile has the thin lighter line along its top (on a
+      challenge card, over the medal band too), none has both a grey
+      outline and the line, a chosen option keeps its coloured outline,
+      and in light mode they look as they did.
 - [ ] **The tracks read as slots.** On Home, the week's rest days and the
       empty part of each This week bar are darker than the card, and a
       day's colour or a bar's fill stands out more than before. Tap a day:

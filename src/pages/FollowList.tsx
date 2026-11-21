@@ -153,7 +153,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
           {[0, 1, 2].map((i) => (
             <li
               key={i}
-              className="flex items-center gap-3 rounded-xl bg-card p-3"
+              className="flex items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
             >
               <Skeleton className="size-10 rounded-full" />
               <Skeleton className="h-4 w-32 rounded" />
@@ -172,7 +172,7 @@ export default function FollowList({ kind }: { kind: FollowListKind }) {
             {shown.map((person) => (
               <li
                 key={person.uid}
-                className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-3"
+                className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
               >
                 <Link
                   to={`/user/${person.uid}`}

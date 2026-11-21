@@ -76,7 +76,7 @@ export default function AccordionSection({
   }
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden">
+    <div className="bg-card rounded-2xl overflow-hidden dark:card-shadow">
       <button
         type="button"
         id={triggerId}

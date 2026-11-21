@@ -1103,7 +1103,7 @@ export default function FoodAnalyzer({
           empty state replaces it because there's nothing useful
           to review. */}
       {aiResultIsEmpty && !showError && !showLoading && (
-        <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3 dark:card-shadow dark:border-transparent">
           <div className="space-y-1">
             <p className="text-base font-semibold text-foreground">
               Couldn’t identify food
