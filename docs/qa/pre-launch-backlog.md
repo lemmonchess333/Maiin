@@ -2753,8 +2753,7 @@ answers are in `docs/app-store/submission-pack.md`.
       `location` and `bluetooth-central`.
 - [ ] **The demo account** (2.1(a)). Setup finished, email verified, a few
       weeks of workouts, runs, meals and weigh-ins, following someone, and a
-      member of one Space, joined from the Space's link while Spaces are
-      still quiet (`src/lib/enoughPeople.ts`). Its uid is on
+      member of one Space. Its uid is on
       `REVENUECAT_SANDBOX_UIDS` (if the guard stays) and
       `DISCOVERY_HIDDEN_UIDS`, then a Deploy production run.
 - [ ] **App Store Connect's new questions.** App Compliance → Regulated
@@ -4401,7 +4400,8 @@ suites cover the logic; these need the release, the console and phones.
       week; each group in `leagueGroups` has 10 to 30 `memberUids` and a
       standing per member; `jobRuns/weeklyLeagueTurn` records a success.
       Before ten, the same run leaves `open: false` with the `joined`
-      count, and the card says "Leagues open when 10 people have joined."
+      count, and the card says "The league starts once 10 people have
+      joined." (worded so since App1 Q6, 2026-11-18)
       If it failed: Cloud Scheduler → Force run is safe (a second run does
       nothing twice).
 - [ ] **The second Monday settles the first.** Passing: every member of
@@ -6258,6 +6258,49 @@ Unit-tested; no phone has drawn it.
       posts "completed a session" with no numbers. A saved routine or an empty
       workout offers no Share to circle there.
 
+## Circuit mode: the runner on a phone (Circ1, 2026-11-18)
+
+Affects: the new full-screen `/circuit` page: the picker, the runner, the
+end question and the finish, and Train's Lift tab (the Circuit row under
+Empty workout) once the feed post ships with it. Unit-tested on a fake clock in jsdom; no phone has run one, and
+the iOS web view's screen lock, speech and haptics are only seen on a
+device.
+
+- [ ] **The screen stays awake.** On the iOS app, start a 10-minute circuit
+      and put the phone down without touching it. Passing: the screen stays
+      on to the end. The page asks for a screen wake lock on the native shell
+      too (`useWakeLock({ onNative: true })`) while the clock runs, and lets
+      it go on Pause; if the web view offers none, the screen sleeps after
+      the Auto-Lock time.
+- [ ] **Away and back.** Mid-work, switch to another app for about 10
+      seconds and come back. Passing: the runner shows the step the clock
+      says, with the right seconds left. Then switch away for two minutes.
+      Passing: on return the circuit is paused on the step it was left on,
+      with the seconds it had then, and the finish's minutes leave out the
+      time away. The voice says nothing while the app is in the background.
+- [ ] **Back asks.** In the browser, or with an Android back, press Back
+      mid-circuit. Passing: "End circuit?" opens and the clock stops; Keep
+      going carries on, and a second Back asks again.
+- [ ] **The voice.** With the ringer on, run a circuit. Passing: "First up,
+      Bodyweight Squat. Get ready." at the start, "Push-Ups. Go." at each
+      move, "Rest. Next, …" at each rest, "Last one. … Go." on the final
+      interval, "Switch sides." halfway through a Dumbbell Row (home gym,
+      20 minutes), and "Circuit done." at the end; the speaker
+      button mutes it.
+- [ ] **Haptics.** Passing: a tap at each work and rest, a light one at the
+      switch.
+- [ ] **Under 7 minutes.** End a circuit after a minute. Passing: "End
+      circuit?" says it won't be saved, End without saving goes back to Train,
+      and no workout appears in History.
+- [ ] **A save, online and offline.** Finish a 10-minute circuit, tap Easy and
+      Save circuit. Passing: "Circuit saved", back on Train, the week counts
+      one more session, and Home's streak counts the day. In flight mode:
+      "Circuit saved. It syncs when you’re back online.", and it appears once
+      the phone is back online. A first 7-minute circuit also ticks Home's
+      "Finish your first workout".
+- [ ] **The ladder.** Save a circuit rated Easy, then open Circuit again.
+      Passing: that circuit's row reads "45 s on, 15 s off".
+
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
 Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of
@@ -6443,40 +6486,45 @@ In this order:
       the streak shows on Home and the profile badge; and in the console
       the new `users/{uid}` holds none of the fields above.
 
-## Leagues, challenges and Spaces quiet at small numbers (App1 Q6, 2026-11-14)
+## Leagues, challenges and Spaces from the first day, filling up (App1 Q6, 2026-11-18)
 
 Affects: Together (This week, Discover, the league card), the league page,
-the Spaces directory, the Feed's Spaces source and People's empty state,
-all gated by `useEnoughPeople` (`src/lib/enoughPeople.ts`): offered to
-someone not in them only once the server's counts say 10 or more people
-are training. Unit tests drive each surface on the Firestore fake; no phone
-or populated database has shown either side of the line.
+the Spaces directory, the Feed's Spaces source and People's empty state.
+The owner's "Show them, say filling up" reversed the 2026-11-14 section that
+stood here, whose rows checked surfaces hidden below 10 people: none is
+hidden now, whatever the count. Words: the league "The league starts once
+10 people have joined. 4 so far." (count and bar from 3, no number before
+`leagueStatus/current` exists) and "The league starts on Monday. 12 people
+have joined."; a challenge "Filling up" under 3 joined, "12 joined" from 3;
+a Space's card "Filling up" under 5 members (`src/lib/fillingUp.ts`). Unit
+tests drive each surface on the Firestore fake; captures were taken from a
+harness of the real components, since this sandbox has no Firebase CLI.
 
-- [ ] **A quiet Tropos.** On the production database while fewer than 10
-      people are training (the Firestore console: this month's and last
-      month's `challenges/group-goal-YYYY-MM-01.collectiveRunners` and
-      `leagueStatus/current.joined` all under 10), sign in on a phone with
-      an account that joined nothing. Passing: Together shows the race hero
-      (if bound) and Circles only, with no This week, no Discover, no league
-      card and no "coming soon" line; the Feed has two sources, Following
-      and Explore; People's "No suggestions yet" offers no Browse spaces;
-      opening `/league` lands on Together. Check in light and dark.
-- [ ] **What a person is in stays.** On the same quiet database, an account
-      that joined a challenge, a Space and the league. Passing: This week
-      shows the joined challenge with its progress and the league's waiting
-      card; "Your spaces" shows the joined Space; the Feed keeps its Spaces
-      source.
-- [ ] **It opens on its own.** On a populated database (the emulator rig
-      seeded with 10 or more runners in this month's community goal is
-      enough), the same account that joined nothing. Passing: Together's
-      This week offers the weekly challenge, the league card offers Join,
-      Discover shows races, Spaces, the community goal and the challenges,
-      and the Feed has its Spaces source, with no reload beyond reopening
-      Social.
-- [ ] **The 1st of a month.** On the first morning of a month on a
-      populated database, with this month's community goal still under 10
-      runners and last month's over. Passing: Together still offers its
-      challenges and Spaces.
+- [ ] **A new Tropos, on a phone.** On a database with no
+      `leagueStatus/current` and no challenge or Space over its floor (a
+      fresh emulator seeded with `seed:e2e` alone is one), sign in with an
+      account that joined nothing. Passing: Together shows This week (the
+      weekly challenge with "Filling up" under its name and Join challenge,
+      then the league card with "The league starts once 10 people have
+      joined." and Join the league), Circles, and Discover (races, Spaces
+      with "Filling up" on each interest card, the challenges to join);
+      the Feed has three sources, Following, Spaces and Explore; People's
+      "No suggestions yet" offers Browse spaces; `/league` shows the join
+      card. Check in light and dark, and at the largest text size.
+- [ ] **Joining while it fills.** On the same database, tap Join the league,
+      then join the weekly challenge and a Space. Passing: the league card
+      becomes "Weekly league" with the same line; the challenge and the
+      Space still say "Filling up" until the server's counts reach 3 and 5;
+      nothing says a number the console does not show.
+- [ ] **The counts arrive.** With `leagueStatus/current` at
+      `{ joined: 4, needed: 10, open: false }`, a weekly challenge at
+      `participantCount: 3` and a Space with 5 members. Passing: "The
+      league starts once 10 people have joined. 4 so far." over a bronze
+      bar, "3 joined" under the challenge's name, "5 members" on the
+      Space's card.
+- [ ] **App Review's account.** Signed in as the hidden review account on
+      production. Passing: Together, the league and the Spaces directory
+      are all drawn, each joinable, with no empty tab.
 
 ## One free week of a half or full marathon plan per account (Q85, 2026-11-13)
 

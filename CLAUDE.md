@@ -47,6 +47,7 @@ src/
 │   └── social/         # Social feed, activity cards
 ├── features/           # Feature modules (see "Feature Modules" below)
 │   ├── challenges/     # Challenge system
+│   ├── circuit/        # Circuit mode: moves, built-in circuits, the ladder (Circ1)
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
@@ -97,6 +98,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan   |
 | `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)              |
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
+| `Circuit.tsx`                          | `/circuit`                         | Circuit mode (Circ1): pick a built-in circuit, run it on the clock, save it     |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
 | `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
 | `WeeklyReview.tsx`                     | `/review`                          | Last week’s recap, ending where the week ahead is agreed (App1 Q36)             |
@@ -163,7 +165,7 @@ Support & legal.
 | `workoutTemplates.ts`   | Workout template library                                       |
 | `nlFoodParser.ts`       | Natural language food parsing                                  |
 | `socialApi.ts`          | Firestore social operations (feed, kudos, follow)              |
-| `enoughPeople.ts`       | Social at small numbers: when leagues, challenges, Spaces show |
+| `fillingUp.ts`          | Social at small numbers: a small room says it is filling up    |
 | `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
@@ -174,6 +176,7 @@ Support & legal.
 | `sportChange.ts`        | A sport added or removed: the plan's input and profile fields  |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
+| `circuitCompletion.ts`  | Finishing a circuit: its workout, saved as a lift is (Circ1)   |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
 | `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
@@ -252,6 +255,22 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
 - `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
 
+### circuit/
+
+Circuit mode (Circ1): a way of lifting measured in work per minute, saved
+as a workout with `format: "circuit"`, never a third sport (ADR-0002's two
+kinds stand). Pure logic, no Firestore: `circuitTypes.ts` (the vocabulary),
+`circuitMoves.ts` (the move pool: released art ∩ kit tier ∩ injuries, each
+high or low impact), `builtInCircuits.ts` (six per kit tier: 10, 20 and 30
+minutes, standard 40/20 and low impact 30/30, named from their own
+seconds), `circuitSteps.ts` (the timer's steps as `useSessionPlayer`
+segments, and what of them was really run), `circuitDose.ts` (the
+Easy / Right / Hard ladder: more work, then harder moves, never a longer
+circuit), `circuitRules.ts` (the 7-minute rule, the Compendium burn) and
+`savedCircuit.ts` (the stored shape and its checked reader,
+`workoutCircuit`). A circuit's moves live in `workout.circuit.moves` and
+its `exercises` stay empty (Circ1 (B)). v1 runs timed intervals only.
+
 ## Custom Hooks (src/hooks/)
 
 **Data & State:**
@@ -261,7 +280,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 `useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (runs on `useSavedSessions`, the one live engine for saved runs and workouts; `savedSessionsReaderGuard.test.ts` keeps their readers the only ones), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useNotifications` (the tray, and the Social tab's dot: its unread, cleared when the tray is opened), `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live), `useEnoughPeople` (whether leagues, challenges and Spaces are offered yet)
+`useSocialFeed`, `useDiscoverFeed`, `useNotifications` (the tray, and the Social tab's dot: its unread, cleared when the tray is opened), `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live)
 
 **Performance & Analytics:**
 `usePerformance`
@@ -305,11 +324,12 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 ## Data Model
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/hiddenPosts` (the posts a person hid from their feed, owner-only, App1 Q38), `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
+- **A circuit is a workout, saved as a lift is** (Circ1). `/circuit` saves to `users/{uid}/workouts` through `completeCircuit` (`src/lib/circuitCompletion.ts`, on the lift's own `saveFinishedWorkout`): `format: "circuit"`, the circuit as run under `circuit` (read only through `workoutCircuit`), `exercises: []`, `totalVolume: 0`, `source: "free"` and no programme completion, so it moves no plan; calories from the 2024 Compendium's circuit METs. Nothing is saved under 7 minutes of the session clock. Every reader that counts a workout counts it (the week, the streak, leagues, challenges); the performance index counts it for adherence only (`circuitSessions`, never lift load), on both copies, pinned to the running server by `circuitFormat.cross.test.ts`.
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
 - **Every badge is awarded by the server** (App1 Q33). The rules are `functions/lib/badgeRules.js` and the award is `functions/lib/badgeAwards.js`, one transaction per award that names the session that earned it (`earnedBy`), run by the triggers that see the facts: `onWorkoutCreated` and `onRunCreated` (the session badges, the hybrid windows, early_bird's day), `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten` (the food and water badges), `onStreakWritten` (the streak badges, from `streaks/data`'s certificate) and `onProgramStateWritten` (programme_complete). Earned badges stay where they always were, `users/{uid}/streaks/data.badges` and the public profile's `badgeSummary`, and the rules refuse a client change to either, or to `streaks/data.earlyLogDays`. The app's rings are pinned to the server's rules by `badgeRules.cross.test.ts`. A badge with `earnedBy` and earned within 14 days is revealed once per device (`pendingBadgeReveals.ts`), from Home's new-badge row, never over Home by itself; one earned before the server awarded them has no `earnedBy` and stays as it was.
 - **A league is opt-in and scored against your own plan** (Soc15 call 3). `users/{uid}.leagueOptIn` is set only by the `setLeagueSharing` callable, which a restricted account cannot use to join; leaving deletes the person's standing at once. `leagueMembers`, `leagueGroups` (+ `standings`), `users/{uid}/leagueResults`, `leagueWeeks` and `leagueStatus` are SERVER-written only: `weeklyLeagueTurn` (Monday 12:15 UTC) settles, forms groups of about 20 and writes the open/locked figure, and the session triggers recompute a standing from the sessions. Points are `round(100 × min(done, planned) / planned)`; the planned count is `functions/lib/leaguePlanned.js`, a server copy of `trainingWeek.ts` pinned by `leaguePlanned.cross.test.ts` (read on the member's own day, so race week leaves out the lifts the app rests, TrainWk1), and the rules are `functions/lib/leagueRules.js`.
-- **Leagues, challenges and Spaces stay quiet at small numbers** (App1 Q6, owner 2026-11-13). To someone not in one, each is offered only once the server's counts say at least `GROUP_MIN` (10, the league's own number) people are training on Tropos: the largest of this month's and last month's community-goal `collectiveRunners` and `leagueStatus/current.joined` (`src/lib/enoughPeople.ts`, read by `useEnoughPeople`). Never a room's own count, which grows only from people who can see it. Below that a quiet surface draws nothing (Together's This week and Discover, the league card and page, the Spaces directory, the Feed's Spaces source, People's Browse spaces), and someone in one keeps their way to it: an opted-in league, a joined challenge, a joined Space. Circles, the Feed and follows are never held back.
+- **Leagues, challenges and Spaces are shown from the first day, and a small one says it is filling up** (App1 Q6, owner 2026-11-18: "Show them, say filling up", reversing the 2026-11-13 reading that hid them below 10 people). Together's This week and Discover, the league card and page, the Spaces directory, the Feed's Spaces source and People's Browse spaces are drawn for everyone, however few people are on Tropos, and Join stays wherever it was. Each room says how many are in it only from its floor, from a count the server already keeps, and "Filling up" in the number's place under it (`src/lib/fillingUp.ts`): a challenge's `participantCount` from 3 ("12 joined", the weekly card under its name and a challenge's sheet), a Space's member count from 5 (`SPACE_MEMBER_COUNT_MIN_VISIBLE`, the directory's cards; race cards keep their date and city). The league is the one room that cannot run small, since the server makes no group under `GROUP_MIN` (10): until groups are made its card and page say "The league starts once 10 people have joined. 4 so far." (the count from `leagueStatus/current.joined`, only from 3, with a bar) and, once there are enough, "The league starts on Monday. 12 people have joined.", with Join for anyone who has not. A count still being read, or one that failed, says neither. Nothing is estimated and no activity is shown that did not happen. The community goal is still drawn once its total is above 0 (Soc14).
 - **A plan group is a count, recounted** (Soc15). `raceCohorts/{spaceId}` = `{ count, updatedAt }`: how many race goals (`users/{uid}.raceGoal.eventSpaceId`) are bound to that race with their race day still ahead. SERVER-written only, from a count aggregation and never an increment (`functions/lib/raceCohorts.js`), by `onRaceGoalWritten` (any write to `users/{uid}` that sets, moves or clears a bound goal recounts the old race and the new one; it is a trigger because the goal has many writers, account deletion among them) and `dailyRaceCohortRecount` (04:30 UTC, every race ahead); any signed-in person reads it. It names no one, so it leaves no one out. Only someone whose own goal is bound to a race ahead sees it (`RaceHero`, Together's hero, and a line in the race space's hero), and under 3 neither shows a number.
 - **Social's live pulse counts everyone's sessions** (Soc15). `pulse/{YYYY-MM-DD}` = `{ sessions, updatedAt, expiresAt }`, read by anyone signed in and written only by the session create and delete triggers (`functions/lib/pulse.js`), each session once through `users/{uid}/pulseCredits` (server-only, swept with the account); both expire by TTL eight days after the day starts. The Feed reads the viewer's local today and draws nothing below 10.
 - **A Space shows its members' public sessions and its week, both written by the server** (Run27 call 11). `spaces/{spaceId}/sessions/{activityId}` = `{ activityId, authorId, createdAt }` routes a member's public post to each Space they are in, and names nothing of it. Only `functions/lib/spaceFeed.js` writes it, reading the facts again each time: `onActivitySpaceRows` (a post created public, made public, narrowed, flagged or deleted), `onSpaceMemberWritten` (a join brings in their public posts of the last 28 days, at most 20; a leave takes theirs out) and `onRestrictionWritten` (a restricted account reaches no one, and the app cannot see who is restricted). Anyone signed in reads the rows; the app (`useSpaceSessions`) reads each post on its own, where the rules check who may see it and a block either way, shows it only while it is public, and leaves out people blocked either way and posts the viewer hid. `spaces/{spaceId}/weeks/{weekKey}` = `{ members, sessions, meters }`, or `{ quiet: true }` while fewer than 5 members trained (the member count's own floor), is a count and two sums over the members' credits, never incremented; each credit, `users/{uid}/spaceWeeks/{spaceId}_{weekKey}`, is server-only and counted again from that member's saved sessions as the league counts them, by the session triggers, a join or a leave and a restriction (`functions/lib/spaceWeeks.js`). Anyone signed in reads the week, which the Space's hero says as "38 members trained this week: 127 sessions, 412 km". A restricted account adds nothing; the rows and credits go with the account (`spaceSessionRows`, `userSpaceWeeks`).
