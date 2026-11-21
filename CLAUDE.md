@@ -383,8 +383,18 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
 **CI runs the same suite five ways, and knowing that changes what you
-write.** Each is a full run in `ci.yml`, and each exists because the
-single-condition run had been hiding a real defect:
+write.** `unit` runs the whole suite on every pull request. On a pull
+request each variant below runs the tests its changes reach (`vitest
+related` on the changed files, plus every test whose text names one:
+`scripts/ci/variant-suite.mjs`), the whole suite when a change can reach
+any test without an import (dependencies, test config and setup,
+`__mocks__`, `scripts/ci`, `ci.yml`), and does not run when only
+root-level markdown, `docs/`, plan files or `ios/` changed
+(`scripts/ci/classify-changes.mjs`). Twice a
+day every variant runs the whole suite on main, and a red scheduled run
+opens or updates one `ready-for-agent` issue naming the commits since the
+last green one. Each variant exists because the single-condition run had
+been hiding a real defect:
 
 | job             | condition                                         | what it caught                                                                                                                                                             |
 | --------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -398,7 +408,8 @@ Practical consequences: do not spell a thousands separator in an
 assertion (`src/test/localeGrouping.ts` builds it), do not pin a fixture
 to a date literal that some window has to contain (derive it from the
 clock), and expect `unit-future` to go red a quarter BEFORE something
-expires rather than on the day.
+expires rather than on the day. A variant failure in a test your change
+does not reach turns up in the scheduled run, not on your pull request.
 
 Locally: `TROPOS_CLOCK_OFFSET_DAYS=90 npm run test` for the future run,
 `TROPOS_CLOCK_AT=2026-10-18 npm run test` to pin the day something
@@ -452,6 +463,7 @@ already made for this repo.
 - **deploy.yml:** Builds and deploys to GitHub Pages.
 - **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
 - **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold. Without the `IOS_DIST_CERT_*` secrets it makes each run's certificate and profile from the App Store Connect API key (`scripts/ios/asc-signing.mjs`, revoking the previous run's), so the owner needs no Mac (`docs/ios-release.md`).
+- **Required checks:** `unit` (the repository ruleset) and `emulator-tests` (main's branch protection). A check skipped by a job-level `if:` reports as passed, so `unit` never depends on what changed, and every job that does reads ci.yml's `changes` output through one fail-open condition. `ios-native-compile.yml` runs on a pull request only when a file the native compile reads changed, and daily on main. `ciChangeGating.test.ts` holds these shapes.
 - **Firebase project:** `adaptive-fitness-af8bb`
 
 ### Cloud Functions deploys and account deletion
