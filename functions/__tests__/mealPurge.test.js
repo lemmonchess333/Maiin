@@ -147,10 +147,7 @@ describe("which meals go", () => {
         "users/u1/meals/number": ago(40 * DAY),
       },
       beforeTransaction: () => {
-        db.data.set(
-          "users/u1/meals/text",
-          meal("2026-09-01T00:00:00Z")
-        );
+        db.data.set("users/u1/meals/text", meal("2026-09-01T00:00:00Z"));
         db.data.set("users/u1/meals/number", meal(NOW - 40 * DAY));
       },
     });
