@@ -81,10 +81,10 @@ Calorie + macro target for a given date. The single source of truth is `useEffec
 - **dayType** — `"lift" | "run" | "both" | "rest"`. Derived from the user's weekly schedule (`profile.weekSchedule`, or `generateSchedule(...)` if absent) on the date's day-of-week. The "planned" day type — it drives the macro split. (Nutr1 removed the actual-activity-aware `effectiveDayType`; macros are plan-based, not reactive to each logged workout.)
 - **finalTarget** — `=== baseTarget`. Flat. There is no calorie bonus and no eat-back. This is the number the user sees as "today's calorie target."
 - **net-neutral carb periodization** — day-type fuelling is a macro shift at CONSTANT calories: on training days `phaseNutrition.getDayAdjustment().fuelShiftCalories` worth of fat is moved into carbs (glycogen for the work), clamped at an essential-fat floor (`ESSENTIAL_FAT_FLOOR_PER_KG = 0.6` g/kg, and never cut below an already-low stored fat). Because carbs are the balancing macro at flat calories, a 200-cal lift day yields the SAME carb grams the old net-additive model did — only the calorie total and fat now stay flat. Rest days = baseline split.
-- **active meal** — a meal document that COUNTS. Deletion is SOFT (`deletedAt`
-  - a 24h restore window), so a deleted meal is still a document any raw read
-    returns; `deletedAt` truthy = deleted, `null` (the post-restore value) or
-    absent = active. The rule is HOME-MEALS-01 and its one owner is
+- **active meal** — a meal document that COUNTS. Deletion is SOFT (`deletedAt`,
+  kept 30 days for restore, then purged by `purgeSoftDeletedMeals`, F5c), so a
+  deleted meal is still a document any raw read returns; `deletedAt` truthy =
+  deleted, `null` (the post-restore value) or absent = active. The rule is HOME-MEALS-01 and its one owner is
     `isActiveMealDoc` / `activeMealDocs` (`src/lib/mealTotals.ts`), mirrored for
     the server as `functions/lib/mealDocs.js` — the same consolidation, for the
     same reason, as `isVolumeEligibleRun` next door. Seven surfaces read the

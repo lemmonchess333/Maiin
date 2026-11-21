@@ -6271,6 +6271,30 @@ exports.onMealWritten = functions
     return null;
   });
 
+// ── F5c: a soft-deleted meal is removed for good 30
+// days after it was deleted. Each hour, at quarter to, clear of the jobs on
+// the hour and the meet-up sweep at half past. lib/mealPurge.js has the
+// rule, the caps and the account-deletion check; its collection-group index
+// is in firestore.indexes.json. Each meal it deletes fires onMealWritten
+// above, which does nothing for a delete, as for Delete permanently.
+const mealPurge = require("./lib/mealPurge");
+
+exports.purgeSoftDeletedMeals = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("45 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "purgeSoftDeletedMeals", async () => {
+      const summary = await mealPurge.purgeSoftDeletedMeals({
+        firestore: db,
+        toTimestamp: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+        nowMs: Date.now(),
+      });
+      functions.logger.info("purgeSoftDeletedMeals.done", summary);
+      return summary;
+    })
+  );
+
 /** A day's water written (`waterLog/{date}`): hydration_hero. */
 exports.onWaterLogWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
