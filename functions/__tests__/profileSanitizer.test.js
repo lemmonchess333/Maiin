@@ -1053,3 +1053,30 @@ describe("gender", () => {
     );
   });
 });
+
+describe("emailConsent (App1 Q55)", () => {
+  // The consent record is the server's to write, with its own time:
+  // setup's yes comes to completeOnboarding as `emailOptIn`, outside
+  // profileData. One sent inside profileData would let a client write a
+  // backdated yes, so it is dropped, quietly, as a server field is.
+  it("is dropped from a profile, whatever it holds", () => {
+    expect(
+      sanitizeProfileData({
+        displayName: "Sam",
+        emailConsent: {
+          weeklyReview: { on: true, givenAt: "2020-01-01", givenVia: "setup" },
+        },
+      })
+    ).not.toHaveProperty("emailConsent");
+    expect(PROFILE_ALLOWED_FIELDS).not.toContain("emailConsent");
+  });
+
+  it("is a server field, so its drop is not reported as forgotten", () => {
+    expect(SERVER_MANAGED_PROFILE_FIELDS).toContain("emailConsent");
+    expect(
+      findUnexpectedProfileFields({
+        emailConsent: { weeklyReview: { on: true } },
+      })
+    ).toEqual([]);
+  });
+});

@@ -125,6 +125,12 @@ import {
 import { signInMethodOf } from "@/lib/signInMethod";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
+import {
+  CURRENT_EMAIL_CONSENT_WORDING,
+  EMAIL_CONSENT_COPY,
+  EMAIL_UPDATES_LIVE,
+  emailConsentAnswered,
+} from "@/lib/emailConsent";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { raceLegTrimCut } from "@/features/program/programEngine";
@@ -266,6 +272,14 @@ export default function Onboarding() {
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
   const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
+  /* App1 Q55: the email opt-in, off until the person turns it on (§14n
+     (55)), and asked only of an account that has never answered: running
+     setup again does not ask again; Settings → Notifications has the
+     switches. Not kept in the draft, so a setup picked up later asks
+     afresh rather than carry a yes forward. */
+  const askEmail =
+    EMAIL_UPDATES_LIVE && !emailConsentAnswered(profile?.emailConsent);
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -1089,6 +1103,14 @@ export default function Onboarding() {
           weekSchedule: plan.weekSchedule,
           activationJourneyVersion: 2,
           onboardingPlatform: Capacitor.getPlatform(),
+          // A yes to both emails the toggle names, with the words it
+          // showed. Nothing is sent for a no: absent already means no.
+          ...(askEmail && emailOptIn
+            ? {
+                emailOptIn: true,
+                emailWording: CURRENT_EMAIL_CONSENT_WORDING,
+              }
+            : {}),
         });
       try {
         await callCF();
@@ -2294,6 +2316,24 @@ export default function Onboarding() {
                 deliveryRevision={inviteRevision}
                 disabled={saving}
               />
+              {askEmail && (
+                <div className="flex items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-base font-semibold">
+                      {EMAIL_CONSENT_COPY.setupLabel}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {EMAIL_CONSENT_COPY.setupDescription}
+                    </p>
+                  </div>
+                  <Toggle
+                    label={EMAIL_CONSENT_COPY.setupLabel}
+                    checked={emailOptIn}
+                    onChange={() => setEmailOptIn((on) => !on)}
+                    disabled={saving}
+                  />
+                </div>
+              )}
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.
