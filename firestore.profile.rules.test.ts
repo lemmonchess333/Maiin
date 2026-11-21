@@ -417,6 +417,11 @@ suite("registry ↔ engine", () => {
     await seedProfile("sweep");
     const db = env.authenticatedContext("sweep").firestore();
     const rejected: string[] = [];
+    // A field whose rule takes one exact shape and refuses null is admitted
+    // with that shape; the question stays admission.
+    const admittedAs: Record<string, unknown> = {
+      healthDataConsent: { at: serverTimestamp(), version: 1 },
+    };
     for (const field of CLIENT_WRITABLE_PROFILE_FIELDS) {
       if (skip.has(field)) continue;
       try {
@@ -424,7 +429,7 @@ suite("registry ↔ engine", () => {
         // here is admission, not value validation.
         await setDoc(
           doc(db, "users/sweep"),
-          { [field]: null },
+          { [field]: field in admittedAs ? admittedAs[field] : null },
           { merge: true }
         );
       } catch {
