@@ -44,7 +44,7 @@ export interface ProPlan {
   id: PlanId;
   /** Display label on the plan card (e.g. "Monthly"). */
   label: string;
-  /** Display price including its currency symbol: "£3.99" as authored
+  /** Display price including its currency symbol: "£6.99" as authored
    *  here, or the App Store's own string on the RevenueCat build. */
   price: string;
   /** The same price as a number, in `currencyCode` — drives derived copy
@@ -61,13 +61,13 @@ export interface ProPlan {
   periodsPerYear: number;
   /** Long period suffix for the plan card (e.g. "/month"). */
   period: string;
-  /** The period in a sentence: "£34.99 a year". */
+  /** The period in a sentence: "£39.99 a year". */
   periodPhrase: "a month" | "a year";
   /** Short period suffix for the CTA copy (e.g. "mo" / "yr"). */
   shortPeriod: string;
   /** "Billed monthly" under the plan card's label. */
   billingFrequency: "monthly" | "annually";
-  /** Small saving callout shown next to the label (e.g. "Save 27%"). */
+  /** Small saving callout shown next to the label (e.g. "Save 52%"). */
   savingsLabel?: string;
   /** Ribbon-style badge on the recommended card (e.g. "Most popular"). */
   topBadge?: string;
@@ -84,8 +84,8 @@ export const PRO_PLANS: ProPlan[] = [
   {
     id: "monthly",
     label: "Monthly",
-    price: "£3.99",
-    priceValue: 3.99,
+    price: "£6.99",
+    priceValue: 6.99,
     currencyCode: "GBP",
     priceLocale: "en-GB",
     periodsPerYear: 12,
@@ -97,8 +97,8 @@ export const PRO_PLANS: ProPlan[] = [
   {
     id: "yearly",
     label: "Yearly",
-    price: "£34.99",
-    priceValue: 34.99,
+    price: "£39.99",
+    priceValue: 39.99,
     currencyCode: "GBP",
     priceLocale: "en-GB",
     periodsPerYear: 1,
@@ -106,7 +106,7 @@ export const PRO_PLANS: ProPlan[] = [
     periodPhrase: "a year",
     shortPeriod: "yr",
     billingFrequency: "annually",
-    savingsLabel: "Save 27%",
+    savingsLabel: "Save 52%",
     topBadge: "Most popular",
     recommended: true,
   },
@@ -204,15 +204,15 @@ export function yearlySavingPercent(plans: readonly ProPlan[]): number | null {
 /** CTA copy for the checkout button. With the trial, the Sub1a P1 trial
  *  CTA, which names no price: the price goes directly beneath it
  *  (`RenewalDisclosure`). Otherwise the plan-priced CTA, e.g.
- *  "Start Pro — £34.99/yr". */
+ *  "Start Pro — £39.99/yr". */
 export function getCheckoutCtaLabel(plan: ProPlan, withTrial = false): string {
   if (withTrial) return `Start your ${TRIAL_DAYS}-day free trial`;
   return `Start Pro — ${plan.price}/${plan.shortPeriod}`;
 }
 
 /**
- * What is billed, and from when: "7 days free, then £34.99 a year" with
- * the trial, "£34.99 a year" without. App Store Guideline 3.1.2 wants the
+ * What is billed, and from when: "7 days free, then £39.99 a year" with
+ * the trial, "£39.99 a year" without. App Store Guideline 3.1.2 wants the
  * amount billed to be clear and at least as prominent as the free trial,
  * so wherever the trial is offered this line leads, the trial and the
  * price in one sentence at one weight.
@@ -239,7 +239,7 @@ export function getRenewalTerms(platform: PaywallPlatform = "web"): string {
 /**
  * The disclosure beside every purchase button (App Store Guideline
  * 3.1.2(c)): what is charged, after the trial when there is one, then
- * that it renews and where to cancel. E.g. "7 days free, then £34.99 a
+ * that it renews and where to cancel. E.g. "7 days free, then £39.99 a
  * year. Renews automatically until cancelled. Manage or cancel in your
  * Apple Account subscriptions."
  */
@@ -255,7 +255,7 @@ export function getRenewalDisclosure(
 
 /**
  * Short inline price summary for places with no room for a plan tile:
- * "£3.99 a month or £34.99 a year". Takes the plans the page is showing,
+ * "£6.99 a month or £39.99 a year". Takes the plans the page is showing,
  * so on the App Store build it is in the storefront's currency.
  */
 export function getInlinePriceSummary(plans: readonly ProPlan[]): string {
@@ -280,7 +280,7 @@ function formatInPlanCurrency(plan: ProPlan, amount: number): string | null {
 
 /**
  * Weekly-price anchoring (Runna-teardown paywall pattern, Sub3): the same
- * plan price expressed per week — "£34.99/year" reads big, "≈ £0.67/wk"
+ * plan price expressed per week — "£39.99/year" reads big, "≈ £0.77/wk"
  * reads tiny, and showing BOTH plans per-week makes the annual saving
  * visceral. Worked out from the plan's own price and currency, so it can
  * never drift from the display price or show pounds beside a dollar price.

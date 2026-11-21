@@ -41,7 +41,7 @@ import { Footprints, Info, TrendingDown, TrendingUp } from "lucide-react";
  * reads both constants out of `functions/performanceEngine.js` and fails
  * if this sentence stops agreeing with the engine that actually runs. */
 const PI_EXPLAINER =
-  "0–100 score for your last 7 days: training load, recovery and consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder.";
+  "0–100 score for your last 7 days: how much you lifted and ran, your recovery and your consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder.";
 
 /** The ring's size at the default text size. A step down from the lead's
  *  verb above it, which is the screen's largest text (§14m); sized in rem
@@ -273,7 +273,7 @@ export default function PerformanceDetails({
 
   if (loading) {
     return (
-      <div className="p-4 rounded-2xl bg-card">
+      <div className="p-4 rounded-2xl bg-card dark:card-shadow">
         <p className="text-sm text-muted-foreground">Loading performance…</p>
       </div>
     );
@@ -324,7 +324,7 @@ export default function PerformanceDetails({
       {weeks.length >= 2 && <PerformanceIndexChart weeks={weeks} />}
 
       {/* Breakdown bars */}
-      <div className="p-4 rounded-2xl bg-card space-y-3">
+      <div className="p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
         <h3 className="text-base font-bold text-foreground">Breakdown</h3>
         <ScoreBar
           label="Lift load"

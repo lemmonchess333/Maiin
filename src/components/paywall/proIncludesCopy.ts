@@ -1,4 +1,4 @@
-import { DAILY_AI_LIMITS } from "@/lib/subscription";
+import { DAILY_AI_LIMITS } from "@/lib/dailyAiLimits";
 
 /** What Pro includes, in the words the Pro page lists it, both for
  *  someone deciding (under the demo, before Continue) and for a Pro

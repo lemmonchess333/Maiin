@@ -102,7 +102,7 @@ export default function ShareDefaultsRow({
   }));
 
   return (
-    <div className="@container p-4 rounded-2xl bg-card space-y-4">
+    <div className="@container p-4 rounded-2xl bg-card space-y-4 dark:card-shadow">
       <div className="flex items-center gap-2">
         <MessageSquare className="size-4 text-primary" />
         <div>

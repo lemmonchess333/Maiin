@@ -269,7 +269,7 @@ export default function PRsTab({
   if (hasNoPRs) {
     return (
       <section aria-label="Bests" className="space-y-3 mt-4">
-        <div className="p-6 rounded-2xl bg-card text-center space-y-3">
+        <div className="p-6 rounded-2xl bg-card text-center space-y-3 dark:card-shadow">
           <div
             className="size-12 rounded-xl flex items-center justify-center mx-auto"
             style={{ background: `${THEME.brand}15` }}

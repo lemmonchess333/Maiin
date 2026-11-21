@@ -401,6 +401,43 @@ describe("the load band is RESOLVED, not read raw", () => {
     );
   });
 
+  /* The high band is the whole score, not the training, so the review says
+     "You trained more than your usual week" only on the week's own figures
+     against the usual week, which the document carries. PI 74 is what the
+     server scores 90% of the usual week (trainedMoreThanUsual.test.ts). */
+  it.each([
+    ["under the usual week", 10800, 18, "A strong week."],
+    [
+      "over the usual week",
+      13200,
+      22,
+      "A strong week. You trained more than your usual week.",
+    ],
+  ])(
+    "a high week %s says what the figures show",
+    async (_name, liftTonnage, runKm, verdict) => {
+      seedFirestore({
+        "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+        "users/u1/performance/2026-07-13": {
+          weekKey: "2026-07-13",
+          performanceIndex: 74,
+          loadBand: "high",
+          aggregates: { liftTonnage, runKm },
+          baseline: { liftTonnage: 12000, runKm: 20, weeksUsed: 4 },
+        },
+        "users/u1/performance/2026-07-06": {
+          weekKey: "2026-07-06",
+          performanceIndex: 73,
+        },
+      });
+
+      const { result } = renderHook(() => useWeeklyReview());
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.review!.headline!.verdict).toBe(verdict);
+    }
+  );
+
   it("a band-less week with a flat delta really does fall through", async () => {
     /* The control: proves the two assertions above are discriminating,
        not just restating the default. PI 60 derives to "moderate", which

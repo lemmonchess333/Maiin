@@ -31,6 +31,13 @@
    zones (publicRoute.js), so the points cut off never leave the server.
    A run with too little left after the cut, a treadmill or manual run, a
    lift, and a run whose route or zones cannot be read get no map.
+
+   Kept out of search (legal audit §3.2): a public run must not be found
+   by searching its author's name, so every answer here asks search
+   engines not to index it, the page with a robots tag in its head and
+   every answer with an `X-Robots-Tag` header. A pasted link's preview
+   still works: the apps that draw one read the page's tags whatever it
+   asks of search engines.
    ───────────────────────────────────────────── */
 
 const { isRestricted } = require("./restriction");
@@ -78,6 +85,21 @@ const SECURITY_HEADERS = Object.freeze({
   "Permissions-Policy":
     "camera=(self), geolocation=(self), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()",
 });
+
+/** What every answer asks of search engines (legal audit §3.2): not to
+ *  index it. Its own header, not one of SECURITY_HEADERS, which are
+ *  Hosting's for the whole site, which search engines should index. */
+const NO_INDEX = "noindex";
+
+/** The page's robots tag, in place of any the app's own page carries. */
+const ROBOTS_TAG = `<meta name="robots" content="${NO_INDEX}" />`;
+
+/** A robots or googlebot tag however it is written: its name anywhere
+ *  among its attributes, in either quotes or none, in any case. Only
+ *  removed, never rewritten, so a tag that merely mentions the words
+ *  stays. */
+const ROBOTS_META =
+  /<meta\b(?=[^>]*\sname\s*=\s*(?:"(?:robots|googlebot)"|'(?:robots|googlebot)'|(?:robots|googlebot)(?=[\s/>])))[^>]*>\s*/gi;
 
 const METRES_PER_MILE = 1609.344;
 const KG_PER_LB = 0.45359237;
@@ -348,20 +370,24 @@ const PREVIEW_META =
  * it is shown, and the data block the page reads. A post that is not
  * shown keeps the app's own preview, so the head says nothing about it.
  * `view` undefined means the read failed: the page is left as it is and
- * fetches the figures itself.
+ * fetches the figures itself. Every one, shown or not, asks search
+ * engines not to index it, its robots tag in place of any the app's page
+ * carries.
  */
 function renderShell(shell, activityId, view) {
   const at = shell.lastIndexOf("</head>");
-  if (!activityId || view === undefined || at === -1) return shell;
-  const head = view
-    ? shell.slice(0, at).replace(PREVIEW_META, "")
-    : shell.slice(0, at);
+  if (at === -1) return shell;
+  let head = shell.slice(0, at).replace(ROBOTS_META, "");
+  const robots = `${ROBOTS_TAG}\n    `;
+  if (!activityId || view === undefined)
+    return `${head}${robots}${shell.slice(at)}`;
+  if (view) head = head.replace(PREVIEW_META, "");
   const tags = view ? `${previewTags(activityId, view)}\n    ` : "";
   const banner = `<meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}, app-argument=${PUBLIC_ORIGIN}/activity/${activityId}" />\n    `;
   const data = `<script type="application/json" id="${DATA_ELEMENT_ID}">${jsonForScript(
     answerFor(activityId, view)
   )}</script>`;
-  return `${head}${tags}${banner}${data}\n  ${shell.slice(at)}`;
+  return `${head}${robots}${tags}${banner}${data}\n  ${shell.slice(at)}`;
 }
 
 /** When the web app's page cannot be had: the preview still works, and a
@@ -375,6 +401,7 @@ function fallbackPage(activityId, view) {
     '    <meta charset="UTF-8" />',
     '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
     "    <title>Tropos</title>",
+    `    ${ROBOTS_TAG}`,
     tags ? `    ${tags}` : "",
     "  </head>",
     "  <body>",
@@ -432,6 +459,7 @@ function setHeaders(res, headers) {
  */
 async function servePublicPost(req, res, { db, loadShell, logger }) {
   setHeaders(res, SECURITY_HEADERS);
+  res.set("X-Robots-Tag", NO_INDEX);
   // Never kept by Hosting's cache: a post made private, or an account
   // restricted, stops showing on the next visit.
   res.set("Cache-Control", "no-cache");
