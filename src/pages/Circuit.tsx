@@ -21,7 +21,9 @@ import {
   CIRCUIT_HISTORY_WORKOUTS,
   circuitForToday,
   circuitReward,
+  lastTimeOf,
   savedCircuits,
+  type DatedCircuit,
 } from "@/features/circuit/circuitHistory";
 import { circuitKit } from "@/features/circuit/circuitMoves";
 import { circuitCounts } from "@/features/circuit/circuitRules";
@@ -39,7 +41,6 @@ import {
   stepSecondsRan,
 } from "@/features/circuit/circuitSteps";
 import type { Circuit as CircuitShape } from "@/features/circuit/circuitTypes";
-import type { SavedCircuit } from "@/features/circuit/savedCircuit";
 import { useAudioCues } from "@/hooks/useAudioCues";
 import { useRunTimer } from "@/hooks/useRunTimer";
 import { useSessionPlayer } from "@/hooks/useSessionPlayer";
@@ -50,6 +51,7 @@ import { useBackDismiss } from "@/lib/backDismiss";
 import { completeCircuit } from "@/lib/circuitCompletion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import type { SessionShareAction } from "@/lib/sessionPost";
 import { toast } from "@/lib/toast";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 
@@ -65,7 +67,7 @@ const HISTORY_WAIT_MS = 4000;
 type CircuitHistory =
   | { status: "reading" }
   | { status: "unknown" }
-  | { status: "read"; circuits: SavedCircuit[] };
+  | { status: "read"; circuits: DatedCircuit[] };
 
 /**
  * Circuit mode (Circ1): pick one of your six built-in circuits, run it on
@@ -127,17 +129,17 @@ export default function Circuit() {
     };
   }, [uid]);
 
-  const circuits = useMemo(
+  const offers = useMemo(
     () =>
       history.status === "reading"
         ? null
-        : builtInCircuits({ kit, injuries }).map((base) =>
-            circuitForToday(
-              base,
-              history.status === "read" ? history.circuits : null,
-              injuries
-            )
-          ),
+        : builtInCircuits({ kit, injuries }).map((base) => {
+            const known = history.status === "read" ? history.circuits : null;
+            return {
+              circuit: circuitForToday(base, known, injuries),
+              last: known ? lastTimeOf(base.id, known) : null,
+            };
+          }),
     [history, kit, injuries]
   );
 
@@ -159,6 +161,7 @@ export default function Circuit() {
   const audio = useAudioCues(voice, "off");
   const wakeLock = useWakeLock({ onNative: true });
   const [completionId] = useState(createWorkoutCompletionId);
+  const [share, setShare] = useState<SessionShareAction | null>(null);
   const startedAtRef = useRef(0);
   // The session clock at the last tick the player was given: with the
   // player's seconds into its step, where that step began.
@@ -354,14 +357,20 @@ export default function Circuit() {
           effort: session.effort,
         },
         bodyweightKg: profile?.weightKg ?? 0,
+        author: {
+          displayName: profile?.displayName,
+          photoURL: profile?.photoURL,
+        },
       });
+      // The finish stays, saved, with its post (Circ1 (11)): shared on the
+      // person's standing answer, or the one question.
+      setShare(receipt.share);
       dispatch({ type: "saved", workoutId: receipt.workoutId });
       toast.success(
         receipt.syncStatus === "queued"
           ? "Circuit saved. It syncs when you’re back online."
           : "Circuit saved"
       );
-      navigate("/program", { replace: true });
     } catch (error) {
       logger.warn("[Circuit] save failed", error);
       dispatch({ type: "failed", error: "Couldn’t save. Try again." });
@@ -371,7 +380,7 @@ export default function Circuit() {
   if (!circuit || phase === "picking")
     return (
       <CircuitPicker
-        circuits={circuits}
+        offers={offers}
         kit={kit}
         onChoose={choose}
         onClose={() => navigate("/program", { replace: true })}
@@ -397,11 +406,13 @@ export default function Circuit() {
           }
           effort={session.effort}
           saving={phase === "saving" || phase === "saved"}
+          share={phase === "saved" ? share : null}
           error={session.error}
           onRate={(effort) => dispatch({ type: "rate", effort })}
           onSave={() => void save()}
           onDiscard={askDiscard}
           onClose={leave}
+          onDone={() => navigate("/program", { replace: true })}
         />
         <ConfirmDialog
           open={phase === "discarding"}
