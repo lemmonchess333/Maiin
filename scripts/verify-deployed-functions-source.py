@@ -161,6 +161,11 @@ def source_targets():
                               "lib/socialFanout.js", "lib/notificationPreferences.js",
                               "lib/blockGuard.js", "lib/deletionTransactionGuard.js",
                               "lib/restriction.js", "lib/jobRuns.js", "profanityFilter.js"],
+        # F5c: deletes each meal 30 days after it was deleted, reading the
+        # account's deletion freeze in the same transaction.
+        "purgeSoftDeletedMeals": ["index.js", "package-lock.json", "lib/mealPurge.js",
+                                  "lib/deletionTransactionGuard.js",
+                                  "lib/accountDeletionStatus.js", "lib/jobRuns.js"],
         # Soc15 invites: the one writer of follows both ways from a code, and
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],
