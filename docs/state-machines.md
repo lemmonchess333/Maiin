@@ -43,6 +43,8 @@ inside that type.
 | A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                   |
 | Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                   |
 | Heart rate sensor        | `src/lib/heartRateSensorBridge.ts` (`SensorConnection`, `SensorAuthorization`)               | idle, connecting, connected; Bluetooth not asked, allowed, denied, restricted; native owns the moves                 |
+| A circuit session        | `src/features/circuit/circuitSession.ts` (`CircuitPhase`, `stepCircuitSession`)              | picking, running, paused, ending (the 7-minute question), finish, discarding (the discard question), saving, saved, discarded |
+| A circuit's history      | `src/pages/Circuit.tsx` (`CircuitHistory`)                                                   | reading, unknown (failed or too slow), read; a late read stands in for unknown until one is chosen                   |
 | A reminder's delivery    | `src/lib/reminderChoices.ts` (`ReminderDelivery`), and the server's copy (App1 Q26)          | off, local, push: the phone or the server sends it, never both                                                       |
 | A week-ahead offer       | `src/components/review/WeekAheadEnding.tsx` (`OfferStatus`)                                  | open, busy, done, undoing; one offer under way at a time                                                             |
 | Finishing a lift         | `src/lib/liftFinish.ts` (`LiftFinish`), since App1 Q20                                       | logging, review, saving, queued, synced, needs attention; `src/components/WorkoutSession.tsx` draws `liftFinishView` |
@@ -150,8 +152,10 @@ code can hold that it should not, and what would make it explicit.
 
 `src/pages/Food.tsx` (40 `useState`, 15 of them booleans),
 `src/components/social/CirclesSection.tsx` (26 and 10),
-`src/pages/Program.tsx` (23 and 8), `src/components/social/ActivityCard.tsx`
-(13 and 7). Mostly independent open-or-closed flags for sheets, not one
+`src/pages/Program.tsx` (10 and 5, since its day's session moved to
+`src/components/program/LiftSessionView.tsx`, 7 and 3, and
+`src/features/program/useLiftSession.ts`, 5 and 1, in TrainWk1 step 3),
+`src/components/social/ActivityCard.tsx` (13 and 7). Mostly independent open-or-closed flags for sheets, not one
 machine. ADR-0001 holds: do not split a page for its length. Where two flags
 can never both be true (two sheets over one screen), one union of "which sheet
 is open" removes the combination.

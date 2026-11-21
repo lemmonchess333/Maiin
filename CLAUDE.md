@@ -24,9 +24,9 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Charts:** Recharts 3
 - **Maps:** MapLibre GL 6, with OpenFreeMap's tiles (`src/lib/basemap.ts`; the credit must stay on every map)
 - **Animation:** Framer Motion 12
-- **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
+- **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts` (Pages and the iPhone app; troposfit.com serves `scripts/website/retired-sw.js` at its address, which clears the caches and unregisters)
 - **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
-- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
+- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). Since App1 Q52 troposfit.com serves no app to start that checkout from, so the website sells nothing until the owner chooses how (the backlog's Part W rows). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
@@ -47,6 +47,7 @@ src/
 │   └── social/         # Social feed, activity cards
 ├── features/           # Feature modules (see "Feature Modules" below)
 │   ├── challenges/     # Challenge system
+│   ├── circuit/        # Circuit mode: moves, built-in circuits, the ladder (Circ1)
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
@@ -61,6 +62,7 @@ src/
 ├── styles/             # CSS tokens, component styles, animations
 ├── utils/              # Helpers (calorie balance, formatters, weight trend)
 │   └── __tests__/      # Unit tests for utils/
+├── website/            # troposfit.com: the App Store page, a post's page, legal (App1 Q52)
 └── App.tsx             # Router + error boundary + lazy loading
 functions/              # Firebase Cloud Functions (plain JS, CommonJS)
 e2e/                    # Playwright specs; screenshot capture specs in e2e/screenshots/
@@ -75,6 +77,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
 - **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
+- **Train's one engine:** `/program` is a layout route (`ProgramEngineRoute`) holding one `useProgram()` for Train and a session's own page (`/program/lift/:day`, `/program/run/:date`, TrainWk1 call 2), read through `useProgramEngine`. `Layout` keys the three alike (`layoutKey`, `src/lib/sessionPages.ts`), so the engine stays mounted between them and a change made on a session's page is the one Train shows
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
@@ -91,12 +94,15 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `History.tsx`                          | `/history`                         | Progress: an overview, with Lifting / Running / Body / Food pages (`?view=`)    |
 | `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
-| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                            |
+| `Program.tsx`                          | `/program`                         | Train; it and the session pages share one engine (`ProgramEngineRoute`)         |
 | `TrainingPlan.tsx`                     | `/program/plan`                    | Combined training week, rotation-based next lift and reviewed one-off run moves |
+| `LiftSession.tsx`                      | `/program/lift/:day`               | A lift's own page: the Lift tab's session alone (TrainWk1 call 2)               |
+| `RunSession.tsx`                       | `/program/run/:date`               | A run's own page: what the day sheet held for it, from the run card's ⋯         |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                          |
 | `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan   |
 | `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)              |
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
+| `Circuit.tsx`                          | `/circuit`                         | Circuit mode (Circ1): pick a built-in circuit, run it on the clock, save it     |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
 | `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
 | `WeeklyReview.tsx`                     | `/review`                          | Last week’s recap, ending where the week ahead is agreed (App1 Q36)             |
@@ -173,6 +179,7 @@ Support & legal.
 | `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
+| `circuitCompletion.ts`  | Finishing a circuit: its workout, saved as a lift is (Circ1)   |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
 | `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
@@ -251,6 +258,22 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
 - `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
 
+### circuit/
+
+Circuit mode (Circ1): a way of lifting measured in work per minute, saved
+as a workout with `format: "circuit"`, never a third sport (ADR-0002's two
+kinds stand). Pure logic, no Firestore: `circuitTypes.ts` (the vocabulary),
+`circuitMoves.ts` (the move pool: released art ∩ kit tier ∩ injuries, each
+high or low impact), `builtInCircuits.ts` (six per kit tier: 10, 20 and 30
+minutes, standard 40/20 and low impact 30/30, named from their own
+seconds), `circuitSteps.ts` (the timer's steps as `useSessionPlayer`
+segments, and what of them was really run), `circuitDose.ts` (the
+Easy / Right / Hard ladder: more work, then harder moves, never a longer
+circuit), `circuitRules.ts` (the 7-minute rule, the Compendium burn) and
+`savedCircuit.ts` (the stored shape and its checked reader,
+`workoutCircuit`). A circuit's moves live in `workout.circuit.moves` and
+its `exercises` stay empty (Circ1 (B)). v1 runs timed intervals only.
+
 ## Custom Hooks (src/hooks/)
 
 **Data & State:**
@@ -304,6 +327,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 ## Data Model
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/hiddenPosts` (the posts a person hid from their feed, owner-only, App1 Q38), `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
+- **A circuit is a workout, saved as a lift is** (Circ1). `/circuit` saves to `users/{uid}/workouts` through `completeCircuit` (`src/lib/circuitCompletion.ts`, on the lift's own `saveFinishedWorkout`): `format: "circuit"`, the circuit as run under `circuit` (read only through `workoutCircuit`), `exercises: []`, `totalVolume: 0`, `source: "free"` and no programme completion, so it moves no plan; calories from the 2024 Compendium's circuit METs. Nothing is saved under 7 minutes of the session clock. Every reader that counts a workout counts it (the week, the streak, leagues, challenges); the performance index counts it for adherence only (`circuitSessions`, never lift load), on both copies, pinned to the running server by `circuitFormat.cross.test.ts`.
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
 - **Every badge is awarded by the server** (App1 Q33). The rules are `functions/lib/badgeRules.js` and the award is `functions/lib/badgeAwards.js`, one transaction per award that names the session that earned it (`earnedBy`), run by the triggers that see the facts: `onWorkoutCreated` and `onRunCreated` (the session badges, the hybrid windows, early_bird's day), `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten` (the food and water badges), `onStreakWritten` (the streak badges, from `streaks/data`'s certificate) and `onProgramStateWritten` (programme_complete). Earned badges stay where they always were, `users/{uid}/streaks/data.badges` and the public profile's `badgeSummary`, and the rules refuse a client change to either, or to `streaks/data.earlyLogDays`. The app's rings are pinned to the server's rules by `badgeRules.cross.test.ts`. A badge with `earnedBy` and earned within 14 days is revealed once per device (`pendingBadgeReveals.ts`), from Home's new-badge row, never over Home by itself; one earned before the server awarded them has no `earnedBy` and stays as it was.
@@ -460,8 +484,8 @@ already made for this repo.
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
 - **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 row in `docs/qa/pre-launch-backlog.md` has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
-- **deploy.yml:** Builds and deploys to GitHub Pages.
-- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
+- **deploy.yml:** Builds the whole app and deploys it to GitHub Pages (`/Maiin/`), the development and preview surface.
+- **deploy-hosting.yml:** Builds troposfit.com with `base: "/"` and deploys to Firebase Hosting. Since App1 Q52 (owner, 15 Nov 2026) that is the website, not the app: `npm run build:hosting` builds `website.html` (`src/website/`) alone and writes it out as `index.html` (`scripts/website/websiteEntry.ts`). It is the page that points to the App Store, a shared post's page (`publicPostPage` fetches this `index.html`), and the legal and support pages; every address already handed out keeps answering (`src/website/__tests__/websiteAddresses.test.tsx` follows each through firebase.json). It ships only `public/icons` and `public/legal` of the app's public folder, the worker that retires the app's at `sw.js` and `firebase-messaging-sw.js`, and the universal-links file, without whose `IOS_APP_ID_PREFIX` the build fails. The browser app is on Pages only. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
 - **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold. Without the `IOS_DIST_CERT_*` secrets it makes each run's certificate and profile from the App Store Connect API key (`scripts/ios/asc-signing.mjs`, revoking the previous run's), so the owner needs no Mac (`docs/ios-release.md`).
 - **Required checks:** `unit` (the repository ruleset) and `emulator-tests` (main's branch protection). A check skipped by a job-level `if:` reports as passed, so `unit` never depends on what changed, and every job that does reads ci.yml's `changes` output through one fail-open condition. `ios-native-compile.yml` runs on a pull request only when a file the native compile reads changed, and daily on main. `ciChangeGating.test.ts` holds these shapes.
 - **Firebase project:** `adaptive-fitness-af8bb`

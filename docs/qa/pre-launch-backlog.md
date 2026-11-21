@@ -614,7 +614,8 @@ confirm the triggers, the indexes and the share sheet.
       in a desktop browser, Share says "Link copied." Once
       `IOS_APP_ID_PREFIX` is set ("troposfit.com links open the app", below), tapping
       the link in Messages on a phone with Tropos opens that Space in the
-      app; without the app it opens the web app's sign-in.
+      app; without the app it opens troposfit.com's App Store page (App1
+      Q52; the web app's sign-in until then).
 - [ ] **Search.** Together → Spaces, type "brighton". Passing: Brighton
       Marathon and Brighton Half Marathon are listed, whatever the country
       chip says; tapping one opens its Space; Clear search brings the rows
@@ -2721,6 +2722,22 @@ What is genuinely left is operator-only — there is no code change pending:
       the **Description** footer and the **Support URL** field. Do NOT submit
       with placeholder links.
 
+## troposfit.com is the App Store page, not the app (App1 Q52, 2026-11-15)
+
+The owner said yes on 15 November to Q52 after the audit found troposfit.com serving the whole app, sign-up included. The Firebase Hosting build is now `website.html` (`src/website/`): the page that points to the App Store, written out as `index.html` (`scripts/website/websiteEntry.ts`). The browser app stays on the GitHub Pages preview. Every address already handed out keeps answering; `src/website/__tests__/websiteAddresses.test.tsx` follows each through firebase.json and then draws the page. Only the live site and a phone can confirm the rest.
+
+- [ ] **The page.** After Deploy production, open `https://troposfit.com` in a private window on a phone and on a computer. Passing: the photographs, the lockup, "Your training and food, planned together", Apple's black "Download on the App Store" badge opening Tropos's App Store listing, Privacy Policy, Terms of Service and Support under it, Apple's trademark line (naming iPhone too), and no Get started or Sign in anywhere. View Source loads `/assets/website-….js`, not the app's `index-….js`.
+- [ ] **The legal and support pages.** `https://troposfit.com/privacy`, `/terms` and `/support`, signed out: each shows its own heading (the App Store listing's addresses, "App Store listing — public Terms/Privacy URLs" above), and Back on a page opened straight from its address leads to the front page.
+- [ ] **A shared post.** `https://troposfit.com/activity/<a public post's id>` shows the post's card, its author and Get Tropos, as "A shared post's public page (App1 Q51)" describes; a followers-only post's address shows "This post isn’t available".
+- [ ] **An invite.** `https://troposfit.com/?invite=<your code>` in Safari on a phone without Tropos. Passing: "<your first name> invited you to Tropos", the code as ABCD-2345, and Copy invite code copies it.
+- [ ] **A Space.** `https://troposfit.com/space/<a Space's id>` on a phone without Tropos: the App Store page with "Get Tropos on your iPhone to open this Space.", and the same for a Space post's address (`/space/<id>/post/<id>`)
+- [ ] **The checkout's return.** `https://troposfit.com/upgrade?checkout=success` shows "If you just paid, Pro is on for your account in the Tropos app." The parameter is unsigned, so the line claims no payment; no purchase can reach it yet ("The website sells through RevenueCat Billing on Stripe", below).
+- [ ] **The association file.** `https://troposfit.com/apple-app-site-association` and `/.well-known/apple-app-site-association` each answer 200 `application/json` naming `/activity/*` and `/space/*`, never the website's HTML. A Hosting build without `IOS_APP_ID_PREFIX` now fails rather than ship without the file.
+- [ ] **Universal links on a phone with Tropos.** Tap an invite link, a shared post's link and a Space's link from Messages. Passing: each opens the app, as before.
+- [ ] **A browser that used the web app here.** On a computer that opened troposfit.com's web app before, open `https://troposfit.com`. Passing: the App Store page, not the app, and after one more reload DevTools, Application, Service workers lists none for troposfit.com and Cache storage is empty: the old worker found the retiring one (`scripts/website/retired-sw.js`) at its address, which cleared the caches and unregistered, ending its push subscription.
+- [ ] **A password reset.** After the deploy, Forgot password in the app, then open the real email's link. Passing: it reaches Firebase's own handler (`/__/auth/action`), which sets the password, as before, and never the website's page.
+- [ ] **The badge is Apple's file (owner).** Download the App Store badges from Apple's Marketing Resources (developer.apple.com/app-store/marketing/guidelines) and compare the black US-UK SVG's SHA-256 with `src/assets/app-store/download-on-the-app-store-black.svg`'s, `a26fc5b38380272c92e9019a2eb8b45542a66814b3e2b203772db8904b9fb99f` (git blob `072b425a`). Apple's hosts could not be reached from the agent's sandbox, so the file came from public repositories that carry the same bytes.
+
 ## App Review submission checks (launch audit, 2026-11-18)
 
 What `docs/app-store/review-risk-audit.md` found that only the owner, a
@@ -2781,6 +2798,7 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
 
 - [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
+- [ ] **Before the Purchase Link goes live (App1 Q52, 15 November 2026):** troposfit.com no longer serves the app, so nothing on it can start this checkout. The return also needs a signed parameter: `?checkout=success` is unsigned, so anyone can type it, and until the return carries something the website can verify, the page can only say what is true if they paid. The website first needs either a signed-in Pro corner (an existing account signs in, then the checkout as that account, its `?checkout=success` return and Manage subscription) or an anonymous purchase the iPhone app redeems into the account (RevenueCat's redemption links, native work). The owner is choosing; either is its own PR. Until then `/upgrade` and `/settings/account` show the App Store page, and the web trial email's "sign in to Tropos on the web" steps (`functions/lib/trialReminderEmail.js`) and iOS Upgrade's "Manage your subscription at troposfit.com" point at nothing that manages a subscription.
 - [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
 - [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
 - [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
@@ -4645,6 +4663,25 @@ Add rows' rules). Touch only, so a phone shows it.
       the exercise's history does not open behind it; a quick tap still
       opens the history; starting a scroll on a row never opens the menu.
 
+## A session opens its own page (TrainWk1 step 3, 2026-11-18)
+
+A lift's session (`/program/lift/:day`) and a run's (`/program/run/:date`)
+are pages of their own under Train, sharing Train's programme engine.
+Train's Lift tab still draws the lift's session under its day strip; the
+run card's ⋯ now opens the run's page where it opened the day's sheet, and
+an action there (Mark as done, Skip, Move, Restore) goes back to Train on
+that day. Unit tests render both pages; the iOS back gesture and the
+offline case only a phone shows.
+
+- [ ] **Back from a run's page.** On a TestFlight build, on Train's Run
+      tab, tap the ⋯ on a planned run's card, then swipe back from the
+      left edge. Passing: Train's Run tab, the same day selected, with no
+      skeleton flash on the way in or out.
+- [ ] **A change made offline shows on Train.** In flight mode, open a
+      run's page from its ⋯ and tap Skip this run. Passing: Train shows the
+      run skipped at once, and the skip holds once the phone is back
+      online.
+
 ## The water tile on the compositor (2026-11-09)
 
 Home's water tile no longer animates on the main thread: each wave is
@@ -6224,6 +6261,49 @@ Unit-tested; no phone has drawn it.
       and opens the Circle sheet over the finish screen, dimming it, and sharing
       posts "completed a session" with no numbers. A saved routine or an empty
       workout offers no Share to circle there.
+
+## Circuit mode: the runner on a phone (Circ1, 2026-11-18)
+
+Affects: the new full-screen `/circuit` page: the picker, the runner, the
+end question and the finish, and Train's Lift tab (the Circuit row under
+Empty workout) once the feed post ships with it. Unit-tested on a fake clock in jsdom; no phone has run one, and
+the iOS web view's screen lock, speech and haptics are only seen on a
+device.
+
+- [ ] **The screen stays awake.** On the iOS app, start a 10-minute circuit
+      and put the phone down without touching it. Passing: the screen stays
+      on to the end. The page asks for a screen wake lock on the native shell
+      too (`useWakeLock({ onNative: true })`) while the clock runs, and lets
+      it go on Pause; if the web view offers none, the screen sleeps after
+      the Auto-Lock time.
+- [ ] **Away and back.** Mid-work, switch to another app for about 10
+      seconds and come back. Passing: the runner shows the step the clock
+      says, with the right seconds left. Then switch away for two minutes.
+      Passing: on return the circuit is paused on the step it was left on,
+      with the seconds it had then, and the finish's minutes leave out the
+      time away. The voice says nothing while the app is in the background.
+- [ ] **Back asks.** In the browser, or with an Android back, press Back
+      mid-circuit. Passing: "End circuit?" opens and the clock stops; Keep
+      going carries on, and a second Back asks again.
+- [ ] **The voice.** With the ringer on, run a circuit. Passing: "First up,
+      Bodyweight Squat. Get ready." at the start, "Push-Ups. Go." at each
+      move, "Rest. Next, …" at each rest, "Last one. … Go." on the final
+      interval, "Switch sides." halfway through a Dumbbell Row (home gym,
+      20 minutes), and "Circuit done." at the end; the speaker
+      button mutes it.
+- [ ] **Haptics.** Passing: a tap at each work and rest, a light one at the
+      switch.
+- [ ] **Under 7 minutes.** End a circuit after a minute. Passing: "End
+      circuit?" says it won't be saved, End without saving goes back to Train,
+      and no workout appears in History.
+- [ ] **A save, online and offline.** Finish a 10-minute circuit, tap Easy and
+      Save circuit. Passing: "Circuit saved", back on Train, the week counts
+      one more session, and Home's streak counts the day. In flight mode:
+      "Circuit saved. It syncs when you’re back online.", and it appears once
+      the phone is back online. A first 7-minute circuit also ticks Home's
+      "Finish your first workout".
+- [ ] **The ladder.** Save a circuit rated Easy, then open Circuit again.
+      Passing: that circuit's row reads "45 s on, 15 s off".
 
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
