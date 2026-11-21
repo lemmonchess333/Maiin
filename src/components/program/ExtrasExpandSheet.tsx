@@ -68,7 +68,7 @@ export default function ExtrasExpandSheet({
     >
       <div className="px-5 pb-6 pt-4 space-y-3">
         {/* Drag handle (BottomSheet hides its own when hideHeader). */}
-        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        <div className="w-9 h-1 rounded-full sheet-handle mx-auto" />
         <div>
           <SectionLabel>Extra runs</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
