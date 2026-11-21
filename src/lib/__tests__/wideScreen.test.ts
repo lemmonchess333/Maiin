@@ -11,12 +11,11 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { SPLIT_QUERY, TWO_PANE_PATHS, WIDE_QUERY } from "@/lib/wideScreen";
+import { SPLIT_QUERY, WIDE_QUERY } from "@/lib/wideScreen";
 import { IPHONE_DUO } from "@/test/iphoneDuo";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(resolve(here, "../../index.css"), "utf8");
-const app = readFileSync(resolve(here, "../../App.tsx"), "utf8");
 
 function variant(name: string): string {
   const m = css.match(
@@ -61,13 +60,5 @@ describe("the wide layouts", () => {
     // Open on its side: two panes, with room to spare for a side column.
     expect(IPHONE_DUO.innerLandscape.width).toBeGreaterThanOrEqual(split);
     expect(IPHONE_DUO.innerSdk27.width - split).toBeGreaterThanOrEqual(50);
-  });
-
-  it("names only pages the app routes", () => {
-    for (const path of TWO_PANE_PATHS) {
-      expect(path === "/" || app.includes(`path="${path.slice(1)}"`)).toBe(
-        true
-      );
-    }
   });
 });

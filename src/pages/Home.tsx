@@ -48,6 +48,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
+import TwoPanes, { Pane } from "@/components/ui/TwoPanes";
 import BrandMark from "@/components/ui/BrandMark";
 import { Sparkles, X } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
@@ -1366,16 +1367,11 @@ export default function Home() {
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
       {/* Two panes where the screen has room for two (the iPhone Duo's
-          inner display open in landscape, `split`): training on one side,
-          the day's food, water and weight and anything to answer on the
-          other, the gap on the fold. Both wrappers are always there and
-          carry the page's own 16px rhythm, so a phone draws exactly the
-          one column it did, a fold re-flows the same elements rather than
-          mounting new ones, and the reading order is the phone's. (The
-          stack's spacing stays on in the grid: it sets the first column's
-          foot 16px longer, which only the row's height can see.) */}
-      <div className="space-y-4 split:grid split:grid-cols-2 split:items-start split:gap-x-8">
-        <div className="space-y-4 min-w-0">
+          inner display open in landscape): training on one side, the
+          day's food, water and weight and anything to answer on the
+          other, the gap on the fold. One column on a phone, as before. */}
+      <TwoPanes>
+        <Pane>
           {/* DS4 Home: today's session as the hero, then the week under it,
           then food, water and weight, then how the week is going. The hero
           names the screen, so nothing above it carries a title; "This
@@ -1534,8 +1530,8 @@ export default function Home() {
               />
             </motion.div>
           )}
-        </div>
-        <div className="space-y-4 min-w-0">
+        </Pane>
+        <Pane>
           {newBadge && !badgeOpen && (
             <NewBadgeRow
               name={newBadge.name}
@@ -1665,8 +1661,8 @@ export default function Home() {
             invitation: Train's Run tab carries the same card where run
             plans live, and this copy only worked on days 8 to 14. */}
           </div>
-        </div>
-      </div>
+        </Pane>
+      </TwoPanes>
 
       {streakSheet !== "unopened" && (
         <Suspense fallback={null}>

@@ -17,10 +17,3 @@
  */
 export const WIDE_QUERY = "(min-width: 640px) and (pointer: coarse)";
 export const SPLIT_QUERY = "(min-width: 800px) and (pointer: coarse)";
-
-/**
- * Pages drawn in two panes under `split`. Layout widens its column for
- * them alone; every other page keeps the phone's column, centred, as iOS
- * keeps a readable width on a wide screen.
- */
-export const TWO_PANE_PATHS: ReadonlySet<string> = new Set(["/"]);

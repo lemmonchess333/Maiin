@@ -1,8 +1,9 @@
 /**
  * The iPhone Duo (docs/ios/iphone-duo.md): its outer display behaves like
- * any iPhone, its inner display open on its side lays Home, a workout and
- * a run out in two panes with the gap on the fold, and folding or
- * unfolding mid-workout or mid-run loses nothing.
+ * any iPhone, its inner display open on its side lays Home, Food,
+ * Progress's overview, a workout and a run out in two panes with the gap
+ * on the fold, and folding or unfolding mid-meal, mid-workout or mid-run
+ * loses nothing.
  *
  * A fold is a resize of the same page (Apple: "a fold can resize your app
  * in the middle of a session"; the scene is not disconnected), so these
@@ -68,6 +69,67 @@ async function box(locator: Locator) {
   return b;
 }
 
+/** A page in two panes (ui/TwoPanes) open on its side: one pane either
+ *  side of the fold, and nothing drawn in either within 8 px of it, as the
+ *  HIG keeps important elements clear of the centre. What runs past a
+ *  scroller inside a pane is clipped, not drawn, so it is left out. */
+async function expectTwoPanes(page: Page) {
+  const panes = page.locator("[data-two-panes] > *");
+  await expect(panes).toHaveCount(2);
+  const middle = INNER.width / 2;
+  const first = await box(panes.nth(0));
+  const second = await box(panes.nth(1));
+  expect(first.x + first.width).toBeLessThanOrEqual(middle);
+  expect(second.x).toBeGreaterThanOrEqual(middle);
+  const onTheFold = await page.evaluate((middle) => {
+    const found: string[] = [];
+    const panes = Array.from(document.querySelectorAll("[data-two-panes] > *"));
+    panes.forEach((pane, side) => {
+      for (const el of Array.from(pane.querySelectorAll("*"))) {
+        // Not drawn here: fixed to the screen, or not drawn at all (a
+        // chart's tooltip waiting for a touch).
+        const look = getComputedStyle(el);
+        if (
+          look.position === "fixed" ||
+          look.visibility === "hidden" ||
+          look.opacity === "0"
+        )
+          continue;
+        let clipped = false;
+        for (
+          let up = el.parentElement;
+          up && up !== pane;
+          up = up.parentElement
+        )
+          if (getComputedStyle(up).overflowX !== "visible") {
+            clipped = true;
+            break;
+          }
+        if (clipped) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (side === 0 ? r.right > middle - 8 : r.left < middle + 8)
+          found.push(
+            `${el.tagName.toLowerCase()} ${el.getAttribute("class") ?? ""}`.slice(
+              0,
+              120
+            )
+          );
+      }
+    });
+    return found;
+  }, middle);
+  expect(onTheFold).toEqual([]);
+}
+
+/** The same page standing up or folded: its panes one under the other. */
+async function expectOneColumn(page: Page) {
+  const panes = page.locator("[data-two-panes] > *");
+  const first = await box(panes.nth(0));
+  const second = await box(panes.nth(1));
+  expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
+}
+
 test.describe("iPhone Duo", () => {
   test.skip(
     !emulatorActive,
@@ -126,6 +188,84 @@ test.describe("iPhone Duo", () => {
     // And back to the outer display: the page it left.
     await fold(page, OUTER);
     expect(await training.isVisible()).toBe(true);
+  });
+
+  test("Food: the day beside the diary, and a meal half typed keeps through a fold", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await sizeTo(page, OUTER);
+    await signInAsTestUser(page);
+    await page.goto("food");
+    const composer = page.getByRole("textbox", { name: "What did you eat" });
+    await composer.waitFor({ timeout: 20_000 });
+    await page.waitForTimeout(1200);
+
+    // A meal half typed, the field still focused.
+    await composer.click();
+    await composer.pressSequentially("two eggs");
+    const held = (await composer.elementHandle())!;
+    await shoot(page, "duo-food-outer");
+
+    // Open on its side: the day's wheel, week and macros on one side, the
+    // composer high in the other, the same field, still typed in.
+    await fold(page, INNER);
+    await expectTwoPanes(page);
+    expect(await same(page, held, composer)).toBe(true);
+    await expect(composer).toHaveValue("two eggs");
+    expect(await composer.evaluate((el) => el === document.activeElement)).toBe(
+      true
+    );
+    expect((await box(composer)).x).toBeGreaterThanOrEqual(INNER.width / 2);
+    await shoot(page, "duo-food-inner");
+
+    // Standing up: one column again, still the same field.
+    await fold(page, STANDING);
+    await expectOneColumn(page);
+    expect(await same(page, held, composer)).toBe(true);
+
+    // And folded.
+    await fold(page, OUTER);
+    expect(await same(page, held, composer)).toBe(true);
+    await expect(composer).toHaveValue("two eggs");
+  });
+
+  test("Progress: the week's score beside its history, and a page keeps the column", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await sizeTo(page, INNER);
+    await signInAsTestUser(page);
+    await page.goto("history");
+    const performance = page.getByRole("region", { name: "Performance" });
+    await performance.waitFor({ timeout: 20_000 });
+    await page.waitForTimeout(1500);
+
+    // The seeded history (seed:rich) has sessions, so the overview is in
+    // two panes, the score in the first.
+    await expectTwoPanes(page);
+    const p = await box(performance);
+    expect(p.x + p.width).toBeLessThanOrEqual(INNER.width / 2);
+    const held = (await performance.elementHandle())!;
+    await shoot(page, "duo-history-inner");
+
+    // Standing up and folded: one column, the same score.
+    await fold(page, STANDING);
+    await expectOneColumn(page);
+    await fold(page, OUTER);
+    await expectOneColumn(page);
+    expect(await same(page, held, performance)).toBe(true);
+
+    // A page of the four keeps the phone's column, centred.
+    await fold(page, INNER);
+    await page.goto("history?view=running");
+    await page
+      .getByRole("button", { name: "Overview", exact: true })
+      .waitFor({ timeout: 20_000 });
+    await expect(page.locator("[data-two-panes]")).toHaveCount(0);
+    expect((await box(page.locator("main").first())).width).toBeLessThanOrEqual(
+      448
+    );
   });
 
   test("a workout: the list beside the sets, and a fold mid-set keeps everything", async ({

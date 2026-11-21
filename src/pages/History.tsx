@@ -10,6 +10,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
+import TwoPanes, { Pane } from "@/components/ui/TwoPanes";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { useMeals } from "@/hooks/useMeals";
 import { useMealsInRange } from "@/hooks/useMealsInRange";
@@ -109,6 +110,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import {
   Skeleton,
   ChartSkeleton,
+  ScoreSectionSkeleton,
   PeriodSummarySkeleton,
 } from "@/components/LoadingSkeleton";
 import ArrivalFade from "@/components/ui/ArrivalFade";
@@ -1293,201 +1295,320 @@ export default function History() {
               </div>
             )}
 
-            {/* Hist6: Performance pinned to the top, range-independent
-                ("this week"). The range below scopes only the history
-                under it, so changing it never moves the index. Trim1
-                call 5: this is the one place the score is shown, and
-                what it is made of opens in place under "Score details",
-                the training load among it, which carries the range in
-                its own card as it did on the Performance page.
-                Suppressed in cold-start: the "Your first week starts
-                here" card below stands in until the first session is
-                logged. */}
-            {filter === "analytics" &&
-              view === "overview" &&
-              !isAnalyticsColdStart && (
-                <SectionErrorBoundary sectionName="performance-section">
-                  <PerformanceSection
-                    /* A meal alone clears the cold-start gate, so this can
-                       render for someone with no session at all, and the
-                       score is server-written, so someone who has just
-                       logged their first workout reaches it too. */
-                    hasLoggedSession={
-                      workouts.length > 0 || lifetimeRuns.runCount > 0
-                    }
-                    distanceUnit={unit}
-                    detailsOpen={scoreOpen}
-                    onToggleDetails={setScoreOpen}
-                    detailsLocked={!isPro}
-                  >
-                    <SectionErrorBoundary sectionName="training-load">
-                      <TrainingLoadCard
-                        points={trainingLoad.points}
-                        loading={trainingLoad.loading}
-                        failed={trainingLoad.failed}
-                        onRetry={trainingLoad.refresh}
-                        guardrails={trainingLoad.guardrails}
-                        range={{ selected: timeRange, onChange: setTimeRange }}
-                      />
-                    </SectionErrorBoundary>
-                  </PerformanceSection>
-                </SectionErrorBoundary>
-              )}
-
-            {/* The range scopes the history below it. On a page it shares
-                the way back's row, above. */}
-            {view === "overview" && (
-              <TimeRangePills
-                selected={timeRange}
-                onChange={setTimeRange}
-                locked={lockedTimeRanges}
-              />
-            )}
-
-            {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
-              the Analytics tab AND only when there are 2+ sections
-              to jump between (single-section users don't need an
-              anchor menu — they ARE always on the only chip). */}
-            {/* Hist5 PR 7b follow-up: removed the sticky AnalyticsAnchorChips
-              row. Three pill rows stacked above the content (Tabs +
-              TimeRange + sticky chips) read as chrome-heavy on iPhone,
-              AND the chip row's `backdrop-blur-md` + `position:
-              sticky` inside framer-motion's transformed motion.div was
-              choking iOS Safari scroll. Reference apps (Strava Stats,
-              Hevy Stats, NRC) navigate analytics by single scroll,
-              not by anchor chips. The chip set was a recovery of
-              affordance lost when sport-filtered tabs dropped — users
-              who navigated by sport can still see each section's
-              sport-coded header inline as they scroll. */}
-
-            {/* Loading — always show a skeleton while the run/workout/meal
-                queries resolve, INCLUDING for eventual cold-start users.
-                Previously the cold-start card was gated on `!dataLoading`
-                while the skeleton was nested under `!isAnalyticsColdStart`,
-                so the `dataLoading && isAnalyticsColdStart` window (a fresh
-                user's first Analytics load) rendered NOTHING — a blank tab.
-                Splitting the three states keeps them mutually exclusive and
-                exhaustive: loading → skeleton, then cold-start → card, else
-                → overview. */}
-            {/* The range card's own shape (Pol1), so the chart arriving
-                moves nothing under it. */}
-            {filter === "analytics" && view === "overview" && dataLoading && (
-              <PeriodSummarySkeleton />
-            )}
-
-            {/*
-              Skeletons that never resolve were the shape of the original
-              "analytics doesn't load" report, and the shape nothing could
-              observe: a Firestore listener that neither fires nor errors
-              logs nothing, and `navigator.onLine` stays true because the
-              network is fine — it's the SDK stream that's dead. So the
-              user waited forever and there was no evidence afterwards.
-
-              This says so out loud after 15s and names the source, which
-              is also what makes a second report diagnosable. Reload
-              rather than retry: two of the three are onSnapshot
-              subscriptions with no re-subscribe handle from here, and
-              remounting the page genuinely re-establishes them.
-            */}
-            {filter === "analytics" &&
-              view === "overview" &&
-              stalledSources.length > 0 && (
-                <div
-                  role="status"
-                  className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
-                >
-                  <p className="text-sm font-semibold text-foreground">
-                    Still loading your {formatSourceList(stalledSources)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    This is taking longer than it should. Your data is safe —
-                    the connection to it has stalled.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    onClick={() => window.location.reload()}
-                  >
-                    Reload
-                  </Button>
-                </div>
-              )}
-
-            {/* Cold-start: one calm expectation-setting card instead of a
-                wall of zeroed rings + redundant PI strip. */}
-            {filter === "analytics" &&
-              view === "overview" &&
-              !dataLoading &&
-              isAnalyticsColdStart && (
-                <ArrivalFade {...overviewArrival}>
-                  <EmptyState
-                    icon={LineChart}
-                    accent={THEME.brand}
-                    /* Day one is a starting line (DS4 words rules): the
-                       first step, and what fills. The rules' rewrite of
-                       "No analytics yet". */
-                    headline="Your first week starts here"
-                    sub="Finish your first workout and this page draws your sessions, kg lifted and km run."
-                    /* The screen's one filled button is neutral, as Home's
-                       and Train's Start are (§14m rule 12). */
-                    action={{
-                      label: "Start a workout",
-                      href: "/program",
-                      variant: "neutral",
-                    }}
-                  />
-                </ArrivalFade>
-              )}
-
-            {filter === "analytics" &&
-              view === "overview" &&
-              !dataLoading &&
-              !isAnalyticsColdStart && (
-                <ArrivalFade {...overviewArrival} className="space-y-4">
-                  <SectionErrorBoundary sectionName="period-summary">
-                    <PeriodSummaryCard
-                      title={rollingRangeLabel(timeRange)}
-                      comparedWith={
-                        joinedInRange ? null : previousRangeLabel(timeRange)
-                      }
-                      sinceLabel={
-                        startKey
-                          ? `Since you joined on ${formatDayMonth(parseLocalDate(startKey))}`
-                          : undefined
-                      }
-                      figures={summaryFigures}
-                      bins={periodSummary.bins}
-                      granularity={periodSummary.granularity}
-                      sessionsLink={{
-                        to: periodHistoryHref,
-                        returnTo: historyReturnTo,
-                      }}
-                      /* This week's planned sessions from the plan as it is
-                         now (`trainingWeek`, the count Home and the finish
-                         screens show), not the days asked for at setup,
-                         which are written once (App1's third settings
-                         fault). */
-                      plannedThisWeek={plannedThisWeek}
-                      distanceUnit={unit}
+            {/* Two panes where the screen has room for two (the iPhone
+                Duo's inner display open on its side): this week's score
+                on one side; the range, the history it scopes and the way
+                into the four pages on the other, the gap on the fold. One
+                column on a phone, as before, and for an account with
+                nothing logged yet, when there is no score to set beside
+                the history. The panes stay on while the history loads,
+                the score's place held in the first, since most accounts
+                have one: their page fills the panes rather than moving
+                across, and only an account with nothing logged goes back
+                to the one column once that is known. */}
+            {filter === "analytics" && view === "overview" && (
+              <TwoPanes panes={dataLoading || !isAnalyticsColdStart}>
+                <Pane>
+                  {/* The score's place while the history loads, so the first
+                      pane is not empty beside the second filling. Only in
+                      two panes: a phone's overview holds no place for it
+                      here, as before. */}
+                  {dataLoading && isAnalyticsColdStart && (
+                    <div className="hidden split:in-data-two-panes:block">
+                      <ScoreSectionSkeleton />
+                    </div>
+                  )}
+                  {/* Hist6: Performance pinned to the top, range-independent
+                      ("this week"). The range below scopes only the history
+                      under it, so changing it never moves the index. Trim1
+                      call 5: this is the one place the score is shown, and
+                      what it is made of opens in place under "Score details",
+                      the training load among it, which carries the range in
+                      its own card as it did on the Performance page.
+                      Suppressed in cold-start: the "Your first week starts
+                      here" card below stands in until the first session is
+                      logged. */}
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    !isAnalyticsColdStart && (
+                      <SectionErrorBoundary sectionName="performance-section">
+                        <PerformanceSection
+                          /* A meal alone clears the cold-start gate, so this can
+                             render for someone with no session at all, and the
+                             score is server-written, so someone who has just
+                             logged their first workout reaches it too. */
+                          hasLoggedSession={
+                            workouts.length > 0 || lifetimeRuns.runCount > 0
+                          }
+                          distanceUnit={unit}
+                          detailsOpen={scoreOpen}
+                          onToggleDetails={setScoreOpen}
+                          detailsLocked={!isPro}
+                        >
+                          <SectionErrorBoundary sectionName="training-load">
+                            <TrainingLoadCard
+                              points={trainingLoad.points}
+                              loading={trainingLoad.loading}
+                              failed={trainingLoad.failed}
+                              onRetry={trainingLoad.refresh}
+                              guardrails={trainingLoad.guardrails}
+                              range={{
+                                selected: timeRange,
+                                onChange: setTimeRange,
+                              }}
+                            />
+                          </SectionErrorBoundary>
+                        </PerformanceSection>
+                      </SectionErrorBoundary>
+                    )}
+                </Pane>
+                <Pane>
+                  {/* The range scopes the history below it. On a page it shares
+                      the way back's row, above. */}
+                  {view === "overview" && (
+                    <TimeRangePills
+                      selected={timeRange}
+                      onChange={setTimeRange}
+                      locked={lockedTimeRanges}
                     />
-                  </SectionErrorBoundary>
-                  <SectionErrorBoundary sectionName="trends">
-                    <AnalyticsTrends rows={trendRows} onOpen={setView} />
-                  </SectionErrorBoundary>
-                  <SectionErrorBoundary sectionName="muscles">
-                    <AnalyticsMuscles
-                      data={liftingData.muscleData}
-                      onOpen={() => setView("lifting")}
-                    />
-                  </SectionErrorBoundary>
-                </ArrivalFade>
-              )}
+                  )}
 
-            {/* The way into the four pages. Shown in cold start too: the
-                Body page holds a weight chart that needs no session. */}
-            {filter === "analytics" && view === "overview" && !dataLoading && (
-              <ArrivalFade {...overviewArrival}>
-                <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
-              </ArrivalFade>
+                  {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
+                    the Analytics tab AND only when there are 2+ sections
+                    to jump between (single-section users don't need an
+                    anchor menu — they ARE always on the only chip). */}
+                  {/* Hist5 PR 7b follow-up: removed the sticky AnalyticsAnchorChips
+                    row. Three pill rows stacked above the content (Tabs +
+                    TimeRange + sticky chips) read as chrome-heavy on iPhone,
+                    AND the chip row's `backdrop-blur-md` + `position:
+                    sticky` inside framer-motion's transformed motion.div was
+                    choking iOS Safari scroll. Reference apps (Strava Stats,
+                    Hevy Stats, NRC) navigate analytics by single scroll,
+                    not by anchor chips. The chip set was a recovery of
+                    affordance lost when sport-filtered tabs dropped — users
+                    who navigated by sport can still see each section's
+                    sport-coded header inline as they scroll. */}
+
+                  {/* Loading — always show a skeleton while the run/workout/meal
+                      queries resolve, INCLUDING for eventual cold-start users.
+                      Previously the cold-start card was gated on `!dataLoading`
+                      while the skeleton was nested under `!isAnalyticsColdStart`,
+                      so the `dataLoading && isAnalyticsColdStart` window (a fresh
+                      user's first Analytics load) rendered NOTHING — a blank tab.
+                      Splitting the three states keeps them mutually exclusive and
+                      exhaustive: loading → skeleton, then cold-start → card, else
+                      → overview. */}
+                  {/* The range card's own shape (Pol1), so the chart arriving
+                      moves nothing under it. */}
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    dataLoading && <PeriodSummarySkeleton />}
+
+                  {/*
+                    Skeletons that never resolve were the shape of the original
+                    "analytics doesn't load" report, and the shape nothing could
+                    observe: a Firestore listener that neither fires nor errors
+                    logs nothing, and `navigator.onLine` stays true because the
+                    network is fine — it's the SDK stream that's dead. So the
+                    user waited forever and there was no evidence afterwards.
+
+                    This says so out loud after 15s and names the source, which
+                    is also what makes a second report diagnosable. Reload
+                    rather than retry: two of the three are onSnapshot
+                    subscriptions with no re-subscribe handle from here, and
+                    remounting the page genuinely re-establishes them.
+                  */}
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    stalledSources.length > 0 && (
+                      <div
+                        role="status"
+                        className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Still loading your {formatSourceList(stalledSources)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          This is taking longer than it should. Your data is
+                          safe — the connection to it has stalled.
+                        </p>
+                        <Button
+                          variant="secondary"
+                          onClick={() => window.location.reload()}
+                        >
+                          Reload
+                        </Button>
+                      </div>
+                    )}
+
+                  {/* Cold-start: one calm expectation-setting card instead of a
+                      wall of zeroed rings + redundant PI strip. */}
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    !dataLoading &&
+                    isAnalyticsColdStart && (
+                      <ArrivalFade {...overviewArrival}>
+                        <EmptyState
+                          icon={LineChart}
+                          accent={THEME.brand}
+                          /* Day one is a starting line (DS4 words rules): the
+                             first step, and what fills. The rules' rewrite of
+                             "No analytics yet". */
+                          headline="Your first week starts here"
+                          sub="Finish your first workout and this page draws your sessions, kg lifted and km run."
+                          /* The screen's one filled button is neutral, as Home's
+                             and Train's Start are (§14m rule 12). */
+                          action={{
+                            label: "Start a workout",
+                            href: "/program",
+                            variant: "neutral",
+                          }}
+                        />
+                      </ArrivalFade>
+                    )}
+
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    !dataLoading &&
+                    !isAnalyticsColdStart && (
+                      <ArrivalFade {...overviewArrival} className="space-y-4">
+                        <SectionErrorBoundary sectionName="period-summary">
+                          <PeriodSummaryCard
+                            title={rollingRangeLabel(timeRange)}
+                            comparedWith={
+                              joinedInRange
+                                ? null
+                                : previousRangeLabel(timeRange)
+                            }
+                            sinceLabel={
+                              startKey
+                                ? `Since you joined on ${formatDayMonth(parseLocalDate(startKey))}`
+                                : undefined
+                            }
+                            figures={summaryFigures}
+                            bins={periodSummary.bins}
+                            granularity={periodSummary.granularity}
+                            sessionsLink={{
+                              to: periodHistoryHref,
+                              returnTo: historyReturnTo,
+                            }}
+                            /* This week's planned sessions from the plan as it is
+                               now (`trainingWeek`, the count Home and the finish
+                               screens show), not the days asked for at setup,
+                               which are written once (App1's third settings
+                               fault). */
+                            plannedThisWeek={plannedThisWeek}
+                            distanceUnit={unit}
+                          />
+                        </SectionErrorBoundary>
+                        <SectionErrorBoundary sectionName="trends">
+                          <AnalyticsTrends rows={trendRows} onOpen={setView} />
+                        </SectionErrorBoundary>
+                        <SectionErrorBoundary sectionName="muscles">
+                          <AnalyticsMuscles
+                            data={liftingData.muscleData}
+                            onOpen={() => setView("lifting")}
+                          />
+                        </SectionErrorBoundary>
+                      </ArrivalFade>
+                    )}
+
+                  {/* The way into the four pages. Shown in cold start too: the
+                      Body page holds a weight chart that needs no session. */}
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    !dataLoading && (
+                      <ArrivalFade {...overviewArrival}>
+                        <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+                      </ArrivalFade>
+                    )}
+
+                  {filter === "analytics" &&
+                    view === "overview" &&
+                    !dataLoading &&
+                    lifetimeTotals.runCount +
+                      lifetimeTotals.liftCount +
+                      lifetimeTotals.daysLogged >
+                      0 && (
+                      <section
+                        id="analytics-lifetime"
+                        aria-label="Lifetime totals"
+                        className="space-y-2"
+                      >
+                        <SectionHeading>Lifetime</SectionHeading>
+                        {/* Three peer tiles, one unit treatment. The runs tile
+                            used to push its `km` down into the caption ("km ·
+                            1 runs") while the lifting tile beside it carried
+                            `kg` inline on the figure — so the same information
+                            sat in two different places in one row, and the runs
+                            caption opened on a dangling unit that only parsed if
+                            you read upward. Unit inline on the figure, caption
+                            as a plain descriptor, for all three. The unit span
+                            also dropped from 700 to font-medium: at 700 beside
+                            an 800 figure it was the weight-mixing DESIGN_GUIDE
+                            bars, and `text-sm font-medium` is what the Home
+                            weight tile already uses for exactly this role.
+                            Three across while 17em allows (a 320px phone at the
+                            designed size), stacked below: at larger text
+                            "115.2k kg" was wider than a third. */}
+                        <div className="@container">
+                          <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
+                            <Card size="compact" className="text-center">
+                              <Footprints className="size-4 mx-auto mb-1.5 text-running" />
+                              <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                                {/* In the reader's unit: it read "km" to everyone. */}
+                                {abbreviateK(
+                                  distanceIn(lifetimeTotals.runKm * 1000, unit)
+                                )}{" "}
+                                <span className="text-xs font-medium">
+                                  {distanceUnitLabel(unit)}
+                                </span>
+                              </p>
+                              <p className="text-caption text-muted-foreground mt-0.5">
+                                {lifetimeTotals.runCount}{" "}
+                                {lifetimeTotals.runCount === 1 ? "run" : "runs"}
+                              </p>
+                            </Card>
+                            <Card size="compact" className="text-center">
+                              <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
+                              <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                                {lifetimeVolume.value}
+                                {lifetimeVolume.unit && " "}
+                                {lifetimeVolume.unit && (
+                                  <span className="text-xs font-medium">
+                                    {lifetimeVolume.unit}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-caption text-muted-foreground mt-0.5">
+                                {lifetimeTotals.liftCount}{" "}
+                                {/* "lifts", as the tile beside it says "runs":
+                                    the range card's "sessions" counts both. */}
+                                {lifetimeTotals.liftCount === 1
+                                  ? "lift"
+                                  : "lifts"}
+                              </p>
+                            </Card>
+                            <Card size="compact" className="text-center">
+                              <UtensilsCrossed className="size-4 mx-auto mb-1.5 text-nutrition-strong" />
+                              <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                                {lifetimeTotals.daysLogged.toLocaleString()}{" "}
+                                <span className="text-xs font-medium">
+                                  {lifetimeTotals.daysLogged === 1
+                                    ? "day"
+                                    : "days"}
+                                </span>
+                              </p>
+                              <p className="text-caption text-muted-foreground mt-0.5">
+                                logged
+                              </p>
+                            </Card>
+                          </div>
+                        </div>
+                      </section>
+                    )}
+                </Pane>
+              </TwoPanes>
             )}
 
             {/* On its own page a section renders whatever its data: each
@@ -1978,87 +2099,6 @@ export default function History() {
                 )}
               </section>
             )}
-
-            {filter === "analytics" &&
-              view === "overview" &&
-              !dataLoading &&
-              lifetimeTotals.runCount +
-                lifetimeTotals.liftCount +
-                lifetimeTotals.daysLogged >
-                0 && (
-                <section
-                  id="analytics-lifetime"
-                  aria-label="Lifetime totals"
-                  className="space-y-2"
-                >
-                  <SectionHeading>Lifetime</SectionHeading>
-                  {/* Three peer tiles, one unit treatment. The runs tile
-                      used to push its `km` down into the caption ("km ·
-                      1 runs") while the lifting tile beside it carried
-                      `kg` inline on the figure — so the same information
-                      sat in two different places in one row, and the runs
-                      caption opened on a dangling unit that only parsed if
-                      you read upward. Unit inline on the figure, caption
-                      as a plain descriptor, for all three. The unit span
-                      also dropped from 700 to font-medium: at 700 beside
-                      an 800 figure it was the weight-mixing DESIGN_GUIDE
-                      bars, and `text-sm font-medium` is what the Home
-                      weight tile already uses for exactly this role.
-                      Three across while 17em allows (a 320px phone at the
-                      designed size), stacked below: at larger text
-                      "115.2k kg" was wider than a third. */}
-                  <div className="@container">
-                    <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
-                      <Card size="compact" className="text-center">
-                        <Footprints className="size-4 mx-auto mb-1.5 text-running" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {/* In the reader's unit: it read "km" to everyone. */}
-                          {abbreviateK(
-                            distanceIn(lifetimeTotals.runKm * 1000, unit)
-                          )}{" "}
-                          <span className="text-xs font-medium">
-                            {distanceUnitLabel(unit)}
-                          </span>
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
-                          {lifetimeTotals.runCount}{" "}
-                          {lifetimeTotals.runCount === 1 ? "run" : "runs"}
-                        </p>
-                      </Card>
-                      <Card size="compact" className="text-center">
-                        <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {lifetimeVolume.value}
-                          {lifetimeVolume.unit && " "}
-                          {lifetimeVolume.unit && (
-                            <span className="text-xs font-medium">
-                              {lifetimeVolume.unit}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
-                          {lifetimeTotals.liftCount}{" "}
-                          {/* "lifts", as the tile beside it says "runs":
-                              the range card's "sessions" counts both. */}
-                          {lifetimeTotals.liftCount === 1 ? "lift" : "lifts"}
-                        </p>
-                      </Card>
-                      <Card size="compact" className="text-center">
-                        <UtensilsCrossed className="size-4 mx-auto mb-1.5 text-nutrition-strong" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {lifetimeTotals.daysLogged.toLocaleString()}{" "}
-                          <span className="text-xs font-medium">
-                            {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
-                          </span>
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
-                          logged
-                        </p>
-                      </Card>
-                    </div>
-                  </div>
-                </section>
-              )}
           </>
         )}
       </Suspense>

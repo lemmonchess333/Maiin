@@ -282,11 +282,12 @@ function PageLoader() {
   // route turns the lone-spinner "loading…" into a placeholder that mirrors
   // the page about to mount (no full-screen spinner, no layout jump). The
   // in-Layout <Suspense> handles the nav-persistent case; this covers the
-  // first paint of an un-cached chunk. Padding matches Layout's <main>.
-  const { pathname } = useLocation();
+  // first paint of an un-cached chunk. Padding matches Layout's <main>,
+  // and so does the width a placeholder in two panes is given.
+  const { pathname, search } = useLocation();
   return (
-    <div className="max-w-md mx-auto px-4 py-6 sm:py-7">
-      <PageContentSkeleton pathname={pathname} />
+    <div className="max-w-md mx-auto px-4 py-6 sm:py-7 split:has-[[data-two-panes]]:max-w-[60rem]">
+      <PageContentSkeleton pathname={pathname} search={search} />
     </div>
   );
 }

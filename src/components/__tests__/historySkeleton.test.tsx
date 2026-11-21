@@ -26,9 +26,12 @@ function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 }
 
+/* Whitespace is folded to one space, so a block moving into a pane (the
+   iPhone Duo's two panes, DESIGN_GUIDE §14r) and prettier re-indenting it
+   leaves the markers below where they were. */
 const history = stripComments(
   readFileSync(resolve(repoRoot, "src/pages/History.tsx"), "utf8")
-);
+).replace(/\s+/g, " ");
 
 /** What renders each of the overview's blocks, as History writes it. */
 const PAGE_BLOCKS: Record<string, string> = {
@@ -36,9 +39,10 @@ const PAGE_BLOCKS: Record<string, string> = {
   tabs: "<FilterPills",
   performance: "<PerformanceSection",
   /* The overview's range, under Performance. A page draws its own, beside
-     the way back, higher in the file and indented deeper, which is what
-     tells the two apart: both now name the Pro ranges (Q84). */
-  range: "<TimeRangePills\n                selected={timeRange}",
+     the way back and higher in the file; the overview's alone stands
+     under its own view check, which is what tells the two apart: both
+     now name the Pro ranges (Q84). */
+  range: 'view === "overview" && ( <TimeRangePills',
   "period-summary": "<PeriodSummaryCard",
 };
 
@@ -80,11 +84,11 @@ describe("HistorySkeleton", () => {
   });
 
   it("holds the range card's place with its placeholder while the range loads", () => {
-    const loading = history.indexOf('view === "overview" && dataLoading && (');
+    const loading = history.indexOf('view === "overview" && dataLoading &&');
     expect(loading, "History's overview loading branch moved").toBeGreaterThan(
       -1
     );
-    const branch = history.slice(loading, history.indexOf(")}", loading));
+    const branch = history.slice(loading, history.indexOf("}", loading));
     expect(branch).toContain("<PeriodSummarySkeleton />");
   });
 });

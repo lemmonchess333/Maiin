@@ -40,7 +40,6 @@ import {
   useState,
 } from "react";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
-import { TWO_PANE_PATHS } from "@/lib/wideScreen";
 
 /** Queue state describes local persistence, not network connectivity. */
 function useQueuedChanges(uid: string | null) {
@@ -324,11 +323,10 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className={
-          TWO_PANE_PATHS.has(location.pathname)
-            ? "max-w-md mx-auto px-[16px] py-6 sm:py-7 split:max-w-[60rem]"
-            : "max-w-md mx-auto px-[16px] py-6 sm:py-7"
-        }
+        /* A page drawn in two panes (ui/TwoPanes) widens the column
+           where there is room for them; every other page keeps the
+           phone's column, centred, as iOS keeps a readable width. */
+        className="max-w-md mx-auto px-[16px] py-6 sm:py-7 split:has-[[data-two-panes]]:max-w-[60rem]"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >
@@ -338,7 +336,12 @@ export default function Layout() {
             (DESIGN_GUIDE §14h). */}
         <div key={location.pathname}>
           <Suspense
-            fallback={<PageContentSkeleton pathname={location.pathname} />}
+            fallback={
+              <PageContentSkeleton
+                pathname={location.pathname}
+                search={location.search}
+              />
+            }
           >
             <Outlet />
           </Suspense>

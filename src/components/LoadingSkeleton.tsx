@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import TwoPanes, { Pane } from "@/components/ui/TwoPanes";
 
 interface SkeletonProps {
   className?: string;
@@ -105,10 +106,18 @@ export function HomeSkeleton() {
         <Skeleton className="h-6 w-48" stagger={0} />
         <Skeleton className="h-4 w-32" stagger={1} />
       </div>
-      <Skeleton className="h-16 w-full rounded-xl" stagger={2} />
-      <CardSkeleton stagger={3} />
-      <ChartSkeleton stagger={5} />
-      <CardSkeleton stagger={7} />
+      {/* In Home's two panes on a wide screen (DESIGN_GUIDE §14r), in this
+          placeholder's own 24 px rhythm; one column on a phone, as before. */}
+      <TwoPanes className="space-y-6">
+        <Pane className="space-y-6">
+          <Skeleton className="h-16 w-full rounded-xl" stagger={2} />
+          <CardSkeleton stagger={3} />
+        </Pane>
+        <Pane className="space-y-6">
+          <ChartSkeleton stagger={5} />
+          <CardSkeleton stagger={7} />
+        </Pane>
+      </TwoPanes>
     </div>
   );
 }
@@ -342,6 +351,22 @@ function PillRowSkeleton({ count }: { count: number }) {
   );
 }
 
+/** Performance under its heading while its week loads: the heading, the
+ *  card's placeholder and the "Score details" row under it. */
+export function ScoreSectionSkeleton() {
+  return (
+    <div className="space-y-2">
+      <LineBar
+        text="text-h3 font-bold tracking-tight leading-tight"
+        className="w-36"
+      />
+      <PerformanceCardSkeleton />
+      {/* The "Score details" row under the card: 44 px. */}
+      <div className="min-h-11" />
+    </div>
+  );
+}
+
 /**
  * Progress while its page loads, block for block in the overview's own
  * order and rhythm (Pol1): PageShell's title, the Overview / Bests
@@ -349,7 +374,12 @@ function PillRowSkeleton({ count }: { count: number }) {
  * card. In any other order the whole page reshuffles as it arrives. `historySkeleton
  * .test.tsx` holds the order to History's.
  */
-export function HistorySkeleton() {
+export function HistorySkeleton({
+  panes = true,
+}: {
+  /** False for a URL that opens a page of Progress that keeps one column. */
+  panes?: boolean;
+} = {}) {
   return (
     <div role="status" aria-label="Loading" className="space-y-4">
       <div data-skeleton-for="title" className="pt-1 pb-1">
@@ -361,21 +391,24 @@ export function HistorySkeleton() {
       <div data-skeleton-for="tabs">
         <TrackBar />
       </div>
-      <div data-skeleton-for="performance" className="space-y-2">
-        <LineBar
-          text="text-h3 font-bold tracking-tight leading-tight"
-          className="w-36"
-        />
-        <PerformanceCardSkeleton />
-        {/* The "Score details" row under the card: 44 px. */}
-        <div className="min-h-11" />
-      </div>
-      <div data-skeleton-for="range">
-        <TrackBar />
-      </div>
-      <div data-skeleton-for="period-summary">
-        <PeriodSummarySkeleton />
-      </div>
+      {/* In the overview's two panes, as the page draws them on a wide
+          screen (DESIGN_GUIDE §14r); one column on a phone, as before, and
+          on a wide screen for the pages that keep one. */}
+      <TwoPanes panes={panes}>
+        <Pane>
+          <div data-skeleton-for="performance">
+            <ScoreSectionSkeleton />
+          </div>
+        </Pane>
+        <Pane>
+          <div data-skeleton-for="range">
+            <TrackBar />
+          </div>
+          <div data-skeleton-for="period-summary">
+            <PeriodSummarySkeleton />
+          </div>
+        </Pane>
+      </TwoPanes>
     </div>
   );
 }
@@ -384,17 +417,24 @@ export function FoodSkeleton() {
   return (
     <div role="status" aria-label="Loading" className="space-y-4">
       <Bar className="h-7 w-24" />
-      {/* Match the compact summary and standing logging group. */}
-      <Bar className="h-32 w-full rounded-2xl" />
-      <Bar className="h-36 w-full rounded-xl" />
-      <SkelCard>
-        <Bar className="h-4 w-1/3" />
-        <Bar className="h-10 w-full" />
-      </SkelCard>
-      <SkelCard>
-        <Bar className="h-4 w-1/3" />
-        <Bar className="h-10 w-full" />
-      </SkelCard>
+      {/* Match the compact summary and standing logging group, in the
+          page's two panes on a wide screen (DESIGN_GUIDE §14r). */}
+      <TwoPanes>
+        <Pane>
+          <Bar className="h-32 w-full rounded-2xl" />
+        </Pane>
+        <Pane>
+          <Bar className="h-36 w-full rounded-xl" />
+          <SkelCard>
+            <Bar className="h-4 w-1/3" />
+            <Bar className="h-10 w-full" />
+          </SkelCard>
+          <SkelCard>
+            <Bar className="h-4 w-1/3" />
+            <Bar className="h-10 w-full" />
+          </SkelCard>
+        </Pane>
+      </TwoPanes>
     </div>
   );
 }
@@ -491,12 +531,33 @@ export function GenericPageSkeleton() {
  * Matched on pathname so the placeholder roughly mirrors the page
  * that's about to mount — no full-screen spinner, no layout jump.
  */
-export function PageContentSkeleton({ pathname }: { pathname: string }) {
+export function PageContentSkeleton({
+  pathname,
+  search = "",
+}: {
+  pathname: string;
+  search?: string;
+}) {
   if (pathname === "/") return <HomeSkeleton />;
   if (pathname.startsWith("/food")) return <FoodSkeleton />;
-  if (pathname.startsWith("/history")) return <HistorySkeleton />;
+  if (pathname.startsWith("/history"))
+    return <HistorySkeleton panes={opensProgressOverview(pathname, search)} />;
   if (pathname.startsWith("/program")) return <ProgramSkeleton />;
   if (pathname.startsWith("/social")) return <SocialSkeleton />;
   if (pathname.startsWith("/settings")) return <SettingsSkeleton />;
   return <GenericPageSkeleton />;
+}
+
+/** Whether a Progress URL opens its overview, the one part of Progress in
+ *  two panes on a wide screen. A page of the four, Bests and the saved
+ *  sessions keep the phone's column there, so their placeholder does. A
+ *  link to the retired Performance page opens the overview. */
+function opensProgressOverview(pathname: string, search: string): boolean {
+  if (pathname !== "/history") return false;
+  const params = new URLSearchParams(search);
+  const overview = [null, "overview", "performance"];
+  return (
+    overview.includes(params.get("view")) &&
+    [null, "analytics", "performance"].includes(params.get("tab"))
+  );
 }
