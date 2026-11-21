@@ -75,8 +75,10 @@ import {
   localDateString,
 } from "@/lib/dateHelpers";
 import { resolveRunMoveOptions } from "@/lib/runReschedule";
-import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
-import { liftOnDate } from "@/lib/homeLift";
+import {
+  resolveTrainingDayForDate,
+  type ResolvedLift,
+} from "@/lib/trainingResolver";
 import { hasHybridInterference } from "@/lib/runProgrammeViewModel";
 import {
   getCompletionKind,
@@ -146,17 +148,24 @@ export interface DayActionContentProps {
    *    management). Lift skipping from a run was never the job of this
    *    affordance. */
   scope?: "day" | "run";
-  /** Ids of the sessions logged on `dateKey`. Today's lift is the one
-   *  Home's card offers, and a session done today keeps it on the sheet,
-   *  done (`liftOnDate`). */
-  sessionsOnDate?: ReadonlySet<string>;
+  /** The day's lift, as Home's week lays it out (`manageLiftOn`): the one
+   *  the day card names, so Skip skips the session Home shows there, and a
+   *  passed day's skipped lift can be restored there. Absent reads as no
+   *  lift: a sheet scoped to the run shows none. */
+  lift?: ResolvedLift;
   /** A plan with no race date's weeks, by their Mondays
    *  (`useRollingSessionContexts`, Run24 (3)): a run's reason in the plan's
    *  terms. Home and Train pass them; without them such a run has none. */
   rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null;
 }
 
-const NO_SESSIONS: ReadonlySet<string> = new Set();
+const NO_LIFT: ResolvedLift = {
+  index: null,
+  workout: null,
+  status: "none",
+  isTerminal: false,
+  isStartable: false,
+};
 
 export default function DayActionContent({
   onClose,
@@ -174,7 +183,7 @@ export default function DayActionContent({
   restoreWorkoutDay,
   moveRunDay,
   scope = "day",
-  sessionsOnDate = NO_SESSIONS,
+  lift = NO_LIFT,
   rollingContexts = null,
 }: DayActionContentProps) {
   const unit = useDistanceUnit();
@@ -230,14 +239,6 @@ export default function DayActionContent({
   }, [dateKey, unclaimedByDate]);
 
   const { run } = resolved;
-  // Today's lift is the today card's, so Skip skips the session it offers.
-  const lift = liftOnDate({
-    dateKey,
-    todayKey: localDateString(new Date()),
-    scheduled: resolved.lift,
-    programme: programState,
-    sessionsOnDate,
-  });
   const hasLift = lift.workout !== null && lift.index !== null;
   const hasRun = run.runDay !== null;
   // Run-scoped invocations (Programme Run tab) never surface the lift block —

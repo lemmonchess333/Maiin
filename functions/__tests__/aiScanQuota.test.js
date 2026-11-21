@@ -360,3 +360,107 @@ describe("checkDailyAiQuota", () => {
     expect(result.limit).toBe(0); // free fallback
   });
 });
+
+/* Refunds (the scan given back when the service failed after the charge)
+   are bounded per action per UTC day. A person can make the model fail:
+   a typed list long enough runs the answer past its token limit, and the
+   unreadable answer was refunded every time, so the daily cap stopped
+   bounding the spend. */
+describe("refundDailyAiQuota", () => {
+  const {
+    checkDailyAiQuota,
+    refundDailyAiQuota,
+    failedScanResponse,
+    MAX_REFUNDS_PER_DAY,
+  } = require("../lib/aiScanQuota");
+  const NOON = new Date("2026-05-25T12:00:00Z");
+
+  async function failedScan(db, now = NOON) {
+    const charge = await checkDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "text_ai",
+      now,
+    });
+    expect(charge.allowed).toBe(true);
+    return refundDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "text_ai",
+      dayKey: charge.dayKey,
+    });
+  }
+
+  it("gives back a failed scan, a few times a day", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    for (let i = 0; i < MAX_REFUNDS_PER_DAY; i++) {
+      expect(await failedScan(db)).toBe(true);
+    }
+    expect(db.data.get("scanUsage/uid_loop").text_ai).toEqual({
+      day: "2026-05-25",
+      count: 0,
+    });
+  });
+
+  it("keeps the charge once the day's refunds are spent, so the cap holds", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    // Every call fails after its charge, as a cut-short answer does.
+    let calls = 0;
+    let refunded = 0;
+    for (;;) {
+      const charge = await checkDailyAiQuota(db, {
+        uid: "uid_loop",
+        action: "text_ai",
+        now: NOON,
+      });
+      if (!charge.allowed) break;
+      calls++;
+      if (
+        await refundDailyAiQuota(db, {
+          uid: "uid_loop",
+          action: "text_ai",
+          dayKey: charge.dayKey,
+        })
+      )
+        refunded++;
+      expect(calls).toBeLessThan(1000);
+    }
+    expect(refunded).toBe(MAX_REFUNDS_PER_DAY);
+    expect(calls).toBe(100 + MAX_REFUNDS_PER_DAY);
+  });
+
+  it("starts the day's refunds again with the day, and counts each action alone", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    for (let i = 0; i < MAX_REFUNDS_PER_DAY; i++) await failedScan(db);
+    expect(await failedScan(db)).toBe(false);
+    expect(await failedScan(db, new Date("2026-05-26T00:00:00Z"))).toBe(true);
+    const photo = await checkDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "image_ai",
+      now: NOON,
+    });
+    expect(
+      await refundDailyAiQuota(db, {
+        uid: "uid_loop",
+        action: "image_ai",
+        dayKey: photo.dayKey,
+      })
+    ).toBe(true);
+  });
+
+  it("says the scan was not used only when it was given back", () => {
+    expect(failedScanResponse(undefined).body.message).toMatch(
+      /didn't use a scan/
+    );
+    expect(
+      failedScanResponse(undefined, { refunded: false }).body.message
+    ).toBe("Couldn't analyse this. Try again.");
+    expect(failedScanResponse(429, { refunded: false }).body.message).toBe(
+      "Food analysis is busy right now. Try again in a minute."
+    );
+  });
+});

@@ -1,6 +1,9 @@
 /**
  * `unit` is the job the repository ruleset requires, so what that job
- * runs is what gates a merge.
+ * runs is what gates a merge. (main's classic branch protection also
+ * requires `emulator-tests`, from emulator-tests.yml; read from
+ * `gh api repos/lemmonchess333/Maiin/branches/main/protection` on
+ * 2026-11-18. This file holds `unit`'s half.)
  *
  * Measured 2026-09-18 from the API rather than from the settings page —
  * a squash-merge attempted while the checks were still running was
