@@ -89,9 +89,8 @@ describe("which session the hero draws", () => {
       run: run(),
     });
     expect(heroLead(liftDone)).toBe("run");
-    expect(heroLead({ ...liftDone, lift: lift({ status: "skipped" }) })).toBe(
-      "run"
-    );
+    // A skipped lift is never the day's: the week lays the next one there
+    // (TrainWk1 step 2), so the card has no skipped lift to lead with.
     const runDone = day({
       type: "both",
       lift: lift(),

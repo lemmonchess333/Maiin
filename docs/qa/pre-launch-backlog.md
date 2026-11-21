@@ -4310,6 +4310,33 @@ suites cover the logic; these need the release, the console and phones.
       members no longer see your row, `leagueMembers/{you}` is gone, and
       the next Monday does not place you.
 
+## Home's week from one layout, and race week's count (TrainWk1 step 2, 2026-11-18)
+
+Home's session card, week strip, day card, its Manage sheet and the
+"tomorrow" line read `layOutWeek`: a lift whose day passes moves to the
+next lift day and is never shown missed. Race week's planned lifts leave
+out the lifts the app rests, in the app (`trainingWeek.ts`) and the
+league (`functions/lib/leaguePlanned.js`, read on the member's own day by
+`lib/leagues.js`). `layOutWeek.sim.test.ts` (Q56), `todaySession.test.ts`,
+`WeekStrip.test.tsx`, `DayPeekCard.test.tsx` and
+`leaguePlanned.cross.test.ts` cover the rules; these need a phone and the
+release.
+
+- [ ] **A missed lift on an iPhone.** On a TestFlight account that lifts
+      Monday, Wednesday and Friday, skip Monday's lift and open Home on
+      Tuesday. Passing: Monday's segment is bare, not dashed, and VoiceOver
+      reads "lift moved to Wednesday"; tapping Monday says "Pull · moved to
+      Wednesday" (or the plan's name); Wednesday's segment is outlined and
+      its day card names the lift Train calls Up next, "moved from Monday";
+      Friday's names the next one. The Home Screen widget's week draws the
+      same seven segments.
+- [ ] **Race week's count in the league (console).** After the release, a
+      league member in race week saves a session. Passing: the deployed
+      source of the session triggers carries `lib/leaguePlanned.js` with
+      `liftsAsked`, and their standing's `planned` leaves out the lifts
+      the app rested (three lift days with two rested count one), as
+      Home's "of N sessions this week" does.
+
 ## Plan groups (Soc15, 2026-11-05)
 
 How many people on Tropos are training for each race, `raceCohorts/{spaceId}`,

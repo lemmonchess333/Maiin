@@ -5,7 +5,8 @@
  *   setup builds the plan (`buildOnboardingPlan`) → the loader reads it
  *   back (`normalizeProgramState`, `migrateProgramState`) → each morning
  *   the weekly rollover (`rollRunWeeks`, then `rollLiftWeeks`, again on what
- *   was saved, until neither moves) → Home's card (`todaySession`) → the
+ *   was saved, until neither moves) → Home's card (`todaySession`, on the
+ *   week laid out, `layOutWeek`) → the
  *   session Train opens (`sessionPrescription`, with Train's baseline and
  *   completion context) → the rows the workout screen starts from
  *   (`buildInitialSetLogs`, `startingSetRows` from the last saved sets) →
@@ -49,6 +50,7 @@ import { liftWorkoutExercises, liftWorkoutId } from "@/lib/liftCompletion";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import type { OnboardingDraft } from "@/lib/onboardingDraft";
 import { todaySession, type TodaySession } from "@/lib/todaySession";
+import { layOutWeek } from "@/lib/layOutWeek";
 import type { SavedRun } from "@/lib/savedRuns";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
@@ -1101,13 +1103,24 @@ export function simulateLiftSeason(
             "said not now to falling behind"
           );
 
-        // Home's card, and the session it starts.
+        // Home's card, and the session it starts, from the week laid out
+        // as Home lays it out (TrainWk1).
+        const claimMap = runSide?.claims(state, date) ?? new Map();
         const card = todaySession({
           today: date,
           profile,
           programState: state,
-          claimMap: runSide?.claims(state, date) ?? new Map(),
+          claimMap,
           workouts: saved,
+          week: layOutWeek({
+            weekKey: weekOf(date),
+            today: date,
+            profile,
+            programState: state,
+            workouts: saved,
+            runs: runSide?.saved ?? [],
+            claimMap,
+          }),
           createdAtMs,
           nowMs: Date.now(),
           lifetimeRuns: runSide?.saved.length ?? 0,
