@@ -22,6 +22,7 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 import type { LastSet } from "@/features/program/lastSets";
 import { toast } from "@/lib/toast";
 import { SETUP, SPORT_CHANGE } from "@/test/journeyScreens";
+import { EXERCISE_WARNING } from "@/lib/exerciseWarning";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -268,5 +269,20 @@ describe("AddLiftingFlow", () => {
         value: location,
       });
     }
+  });
+
+  it("shows the exercise warning under the limitation choices, as setup does", () => {
+    setup();
+    expect(screen.queryByText(EXERCISE_WARNING)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "4" }));
+    fireEvent.click(button("Continue"));
+    fireEvent.click(button(/^Full gym/));
+    fireEvent.click(button(/^Some experience/));
+    fireEvent.click(button("Continue"));
+    const warning = screen.getByText(EXERCISE_WARNING);
+    expect(
+      button(SETUP.noInjuries).compareDocumentPosition(warning) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
