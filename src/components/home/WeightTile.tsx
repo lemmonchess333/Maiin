@@ -72,13 +72,18 @@ export default function WeightTile({
           : Minus;
 
   const pending = loading && !lastWeight;
+  /* Each label starts with the tile's words in the order they are drawn
+     ("Weight 75.4 kg, Logged today"): Voice Control is spoken to with
+     the words on the screen, so all of them are in the name, first
+     (WCAG 2.5.3, Label in Name). A visible sync line is one of them. */
+  const sync = syncStatus ? `, ${syncStatus}` : "";
   const weightAriaLabel = pending
     ? "Weight loading."
     : !lastWeight
-      ? "Weight not yet logged. Log your weight to start tracking trends."
+      ? `Weight, ${lastWeightDate}${sync}. Not yet logged.`
       : hidden
-        ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
-        : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
+        ? `Weight, ${trendPhrase}, ${lastWeightDate}${sync}. Tap to log weight.`
+        : `Weight ${lastWeight} ${weightUnitDisplay}, ${lastWeightDate}${sync}. Tap to log weight.`;
   return (
     /* home-declutter pyramid: this component lives in the RIGHT column
        of the water/weight duo. h-full lets the weight tile stretch to
@@ -113,6 +118,9 @@ export default function WeightTile({
           </div>
           <SectionLabel>Weight</SectionLabel>
         </div>
+        {/* Spaces in the text between the tile's words, so they read as
+            words, as the name does; the flex boxes draw nothing for
+            them. */}{" "}
         {/* Align the reading beneath the label, like the adjacent water
             tile. Extra height stays below the date rather than displacing
             the number as water controls or sync status change. */}
@@ -134,7 +142,7 @@ export default function WeightTile({
             <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
               <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
                 {lastWeight ? lastWeight : "\u2014"}
-              </p>
+              </p>{" "}
               {lastWeight && (
                 <span
                   className="text-sm font-medium"
@@ -144,7 +152,7 @@ export default function WeightTile({
                 </span>
               )}
             </div>
-          )}
+          )}{" "}
           {pending ? (
             <Skeleton className="h-3 w-20 mt-1.5" />
           ) : (
@@ -157,7 +165,7 @@ export default function WeightTile({
               {lastWeightDate}
             </p>
           )}
-        </div>
+        </div>{" "}
         <span
           role="status"
           className={

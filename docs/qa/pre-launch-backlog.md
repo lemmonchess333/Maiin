@@ -1742,6 +1742,38 @@ Chromium; these need the iOS app or a production account.
       Train's banner reads "No lifting in the two days before your race,
       or on the day, so your legs are fresh for it."
 
+## No equipment and "A pull-up bar" (Lift4 STATUS 2026-11-09)
+
+Affects: setup's equipment step and Settings → Lift plan (`Onboarding.tsx`,
+`ProgrammeSettings.tsx`), the plan builder's No equipment path
+(`noEquipment.ts`, `matchTemplate.ts`), the `pullUpBar` profile field
+(`firestore.rules`, `functions/profileSanitizer.js`), the server's role
+table (`functions/lib/roleTable.js`, `represcribe.js`), and a bodyweight
+session's first-set hint (`firstGuide.ts`). Waits on the owner's answer to
+`docs/training-deep-dive-2026-11/no-equipment-print.md` (Pgm9).
+
+Unit tests, the journeys (`e2e/journeys/no-equipment.auth.spec.ts`) and the
+emulator cover the rules and the saves; these need the iOS app or a
+production account.
+
+- [ ] **Setup on a phone.** In the native shell, at the phone's own text
+      size and at its largest: the four equipment cards fit (Full gym,
+      Home gym, Minimal, No equipment); "A pull-up bar" shows on the last
+      three, off for Minimal and No equipment and on for Home gym; with No
+      equipment and the bar off, the note under the switch reads "No
+      pulling without something to pull on…"; Small plates is not offered
+      with No equipment.
+- [ ] **The answer is stored in production.** After setup with No
+      equipment and the bar on, the console shows
+      `equipment: "no_equipment"` and `pullUpBar: true` on `users/{uid}`;
+      turning the bar off in Settings → Lift plan saves without a refusal
+      and the plan loses its pull-ups.
+- [ ] **A No equipment session.** The first session's hint has no word
+      about weights; finishing every set of push-ups at the target moves
+      the next session's target up one rep, on past the top of its range,
+      and no "add load" note appears; a superman hold logged at its target
+      moves up 5 seconds.
+
 ## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
 
 Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
@@ -1905,6 +1937,15 @@ such upload again, for a client that skips the callable
       profile photo is refused as "couldn't check" — the safe way round,
       but photo posts stop. About $1.50 per 1,000 photos after the first
       1,000 each month.
+- [ ] **Before launch, the owner confirms Cloud Vision is on in
+      production.** Turned on once is not proof it still is: APIs &
+      Services → Enabled APIs for `adaptive-fitness-af8bb` lists "Cloud
+      Vision API", and the functions log for the last day has no
+      `screenPhoto.failed` or `screenUploadedPhoto.failed` naming
+      `SERVICE_DISABLED` or a 403. While it is off, no photo post or
+      profile photo goes through, and an upload from a client that skips
+      the app's check is kept unscreened after a day of retries (the
+      budget section below), so this is a launch gate, not a tidy-up.
 - [ ] **A gym photo goes through.** Post a Space photo of yourself in gym
       kit, and set a profile photo: both appear.
 - [ ] **The log shows the checks.** In the functions log,
@@ -1913,6 +1954,34 @@ such upload again, for a client that skips the callable
 - [ ] **The privacy label.** App Store Connect's privacy answers already
       list photos; confirm Google Cloud Vision needs no change there (it
       processes them for the app, not for tracking).
+
+## A day's budget of photo screens (security audit, 2026-11-18)
+
+Affects: `screenUploadedPhoto` and `screenPhoto` (`functions/index.js`,
+`functions/lib/photoScreen.js`). Each account's uploads to the screened
+folders are screened at most 100 a day by the trigger and 100 a day by the
+callable. The trigger deletes an upload past that (unless the callable
+passed that very file) and an image Vision cannot read, at once. A photo is
+never deleted because Vision is down or switched off: the trigger is
+retried for a day, then keeps the file and marks it unscreened. Only
+production shows the retries and the logs.
+
+- [ ] **The trigger is retried.** After Deploy production runs for this
+      change, the Firebase console shows `screenUploadedPhoto` with
+      "Retry on failure" on.
+- [ ] **A real photo is kept.** Post a Space photo and a shared
+      session's photo. Passing: both show, and the functions log has no
+      `screenUploadedPhoto.deletedUnscreened` line for them.
+- [ ] **Until Cloud Vision is on** (the section above), expect
+      `screenUploadedPhoto.failed` on each upload and, a day later,
+      `screenUploadedPhoto.keptUnscreened`, never `deletedUnscreened`.
+      Each such file carries the custom metadata `screen: unscreened`.
+      The app posts no such photo either way.
+- [ ] **Unscreened files are looked at once Vision is back.** If any
+      `screenUploadedPhoto.keptUnscreened` lines were logged, list their
+      paths (each also carries the custom metadata `screen: unscreened`)
+      and delete any that should not be shown. Nothing screens them again
+      by itself yet.
 
 ## User content moderation for App Review 1.2 (2026-10-04)
 
@@ -2651,6 +2720,54 @@ What is genuinely left is operator-only — there is no code change pending:
 - [ ] **Then update App Store Connect** to the real URLs: the two links in
       the **Description** footer and the **Support URL** field. Do NOT submit
       with placeholder links.
+
+## App Review submission checks (launch audit, 2026-11-18)
+
+What `docs/app-store/review-risk-audit.md` found that only the owner, a
+console or a phone can settle before the first submission. The paste-in
+answers are in `docs/app-store/submission-pack.md`.
+
+- [ ] **Decide how a reviewer's test purchase turns Pro on** (2.1(b)). A
+      sandbox purchase grants Pro only to the uids in
+      `REVENUECAT_SANDBOX_UIDS` (`functions/lib/revenueCatEntitlement.js`).
+      Either keep that and put the demo account's uid on it, or let App
+      Store sandbox purchases through for every account (the audit has
+      both). Passing: on a TestFlight build signed in as the demo account,
+      buy Monthly, and the Food camera's photo scan opens without a Pro
+      offer.
+- [ ] **Apple accounts can delete themselves** (5.1.1(v)). Firebase console
+      → Authentication → Sign-in method → Apple: the OAuth code flow is
+      filled in (Services ID, Apple Team ID, Key ID, private key). Then on a
+      TestFlight build, sign up with a disposable Apple ID, Settings →
+      Account → Delete account → Confirm with Apple. Passing: the account is
+      deleted, and Settings → Apple ID → Sign-In & Security → Sign in with
+      Apple no longer lists Tropos.
+- [ ] **The app on an iPad** (2.1, 4.0). Install the TestFlight build on an
+      iPad, where it runs as an iPhone app. Passing: Home, a bottom sheet,
+      the Pro page and its purchase sheet, and a run's setup screen draw
+      inside the window with nothing cut off.
+- [ ] **A video for the background modes** (2.5.4). Record a phone pairing a
+      heart-rate strap in Settings → Run plan, then a run with the screen
+      locked for two minutes, ending on the summary's route and heart rate.
+      Keep it to attach if App Review asks why the app declares
+      `location` and `bluetooth-central`.
+- [ ] **The demo account** (2.1(a)). Setup finished, email verified, a few
+      weeks of workouts, runs, meals and weigh-ins, following someone, and a
+      member of one Space. Its uid is on
+      `REVENUECAT_SANDBOX_UIDS` (if the guard stays) and
+      `DISCOVERY_HIDDEN_UIDS`, then a Deploy production run.
+- [ ] **App Store Connect's new questions.** App Compliance → Regulated
+      Medical Devices: No. Age rating: the social media questions and the
+      Shared Location descriptor, as the pack answers them.
+- [ ] **The version matches the build.** `package.json` (1.2.0 on
+      2026-11-18) is the version `deploy-ios.yml` stamps; the App Store
+      Connect version must be the same.
+- [ ] **The public pages after PR #3375.** Once troposfit.com shows the App
+      Store page, `/privacy`, `/terms` and `/support` still open signed out
+      on the phone's browser.
+- [ ] **Texas SB 2420.** A legal call on whether Tropos, rated 16+, must read
+      Apple's Declared Age Range API for accounts in Texas (and Utah and
+      Louisiana as their laws start).
 
 ## Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
@@ -4283,7 +4400,8 @@ suites cover the logic; these need the release, the console and phones.
       week; each group in `leagueGroups` has 10 to 30 `memberUids` and a
       standing per member; `jobRuns/weeklyLeagueTurn` records a success.
       Before ten, the same run leaves `open: false` with the `joined`
-      count, and the card says "Leagues open when 10 people have joined."
+      count, and the card says "The league starts once 10 people have
+      joined." (worded so since App1 Q6, 2026-11-18)
       If it failed: Cloud Scheduler → Force run is safe (a second run does
       nothing twice).
 - [ ] **The second Monday settles the first.** Passing: every member of
@@ -4309,6 +4427,33 @@ suites cover the logic; these need the release, the console and phones.
       the confirmation names what happens; afterwards the group's other
       members no longer see your row, `leagueMembers/{you}` is gone, and
       the next Monday does not place you.
+
+## Home's week from one layout, and race week's count (TrainWk1 step 2, 2026-11-18)
+
+Home's session card, week strip, day card, its Manage sheet and the
+"tomorrow" line read `layOutWeek`: a lift whose day passes moves to the
+next lift day and is never shown missed. Race week's planned lifts leave
+out the lifts the app rests, in the app (`trainingWeek.ts`) and the
+league (`functions/lib/leaguePlanned.js`, read on the member's own day by
+`lib/leagues.js`). `layOutWeek.sim.test.ts` (Q56), `todaySession.test.ts`,
+`WeekStrip.test.tsx`, `DayPeekCard.test.tsx` and
+`leaguePlanned.cross.test.ts` cover the rules; these need a phone and the
+release.
+
+- [ ] **A missed lift on an iPhone.** On a TestFlight account that lifts
+      Monday, Wednesday and Friday, skip Monday's lift and open Home on
+      Tuesday. Passing: Monday's segment is bare, not dashed, and VoiceOver
+      reads "lift moved to Wednesday"; tapping Monday says "Pull · moved to
+      Wednesday" (or the plan's name); Wednesday's segment is outlined and
+      its day card names the lift Train calls Up next, "moved from Monday";
+      Friday's names the next one. The Home Screen widget's week draws the
+      same seven segments.
+- [ ] **Race week's count in the league (console).** After the release, a
+      league member in race week saves a session. Passing: the deployed
+      source of the session triggers carries `lib/leaguePlanned.js` with
+      `liftsAsked`, and their standing's `planned` leaves out the lifts
+      the app rested (three lift days with two rested count one), as
+      Home's "of N sessions this week" does.
 
 ## Plan groups (Soc15, 2026-11-05)
 
@@ -6265,40 +6410,45 @@ In this order:
       the streak shows on Home and the profile badge; and in the console
       the new `users/{uid}` holds none of the fields above.
 
-## Leagues, challenges and Spaces quiet at small numbers (App1 Q6, 2026-11-14)
+## Leagues, challenges and Spaces from the first day, filling up (App1 Q6, 2026-11-18)
 
 Affects: Together (This week, Discover, the league card), the league page,
-the Spaces directory, the Feed's Spaces source and People's empty state,
-all gated by `useEnoughPeople` (`src/lib/enoughPeople.ts`): offered to
-someone not in them only once the server's counts say 10 or more people
-are training. Unit tests drive each surface on the Firestore fake; no phone
-or populated database has shown either side of the line.
+the Spaces directory, the Feed's Spaces source and People's empty state.
+The owner's "Show them, say filling up" reversed the 2026-11-14 section that
+stood here, whose rows checked surfaces hidden below 10 people: none is
+hidden now, whatever the count. Words: the league "The league starts once
+10 people have joined. 4 so far." (count and bar from 3, no number before
+`leagueStatus/current` exists) and "The league starts on Monday. 12 people
+have joined."; a challenge "Filling up" under 3 joined, "12 joined" from 3;
+a Space's card "Filling up" under 5 members (`src/lib/fillingUp.ts`). Unit
+tests drive each surface on the Firestore fake; captures were taken from a
+harness of the real components, since this sandbox has no Firebase CLI.
 
-- [ ] **A quiet Tropos.** On the production database while fewer than 10
-      people are training (the Firestore console: this month's and last
-      month's `challenges/group-goal-YYYY-MM-01.collectiveRunners` and
-      `leagueStatus/current.joined` all under 10), sign in on a phone with
-      an account that joined nothing. Passing: Together shows the race hero
-      (if bound) and Circles only, with no This week, no Discover, no league
-      card and no "coming soon" line; the Feed has two sources, Following
-      and Explore; People's "No suggestions yet" offers no Browse spaces;
-      opening `/league` lands on Together. Check in light and dark.
-- [ ] **What a person is in stays.** On the same quiet database, an account
-      that joined a challenge, a Space and the league. Passing: This week
-      shows the joined challenge with its progress and the league's waiting
-      card; "Your spaces" shows the joined Space; the Feed keeps its Spaces
-      source.
-- [ ] **It opens on its own.** On a populated database (the emulator rig
-      seeded with 10 or more runners in this month's community goal is
-      enough), the same account that joined nothing. Passing: Together's
-      This week offers the weekly challenge, the league card offers Join,
-      Discover shows races, Spaces, the community goal and the challenges,
-      and the Feed has its Spaces source, with no reload beyond reopening
-      Social.
-- [ ] **The 1st of a month.** On the first morning of a month on a
-      populated database, with this month's community goal still under 10
-      runners and last month's over. Passing: Together still offers its
-      challenges and Spaces.
+- [ ] **A new Tropos, on a phone.** On a database with no
+      `leagueStatus/current` and no challenge or Space over its floor (a
+      fresh emulator seeded with `seed:e2e` alone is one), sign in with an
+      account that joined nothing. Passing: Together shows This week (the
+      weekly challenge with "Filling up" under its name and Join challenge,
+      then the league card with "The league starts once 10 people have
+      joined." and Join the league), Circles, and Discover (races, Spaces
+      with "Filling up" on each interest card, the challenges to join);
+      the Feed has three sources, Following, Spaces and Explore; People's
+      "No suggestions yet" offers Browse spaces; `/league` shows the join
+      card. Check in light and dark, and at the largest text size.
+- [ ] **Joining while it fills.** On the same database, tap Join the league,
+      then join the weekly challenge and a Space. Passing: the league card
+      becomes "Weekly league" with the same line; the challenge and the
+      Space still say "Filling up" until the server's counts reach 3 and 5;
+      nothing says a number the console does not show.
+- [ ] **The counts arrive.** With `leagueStatus/current` at
+      `{ joined: 4, needed: 10, open: false }`, a weekly challenge at
+      `participantCount: 3` and a Space with 5 members. Passing: "The
+      league starts once 10 people have joined. 4 so far." over a bronze
+      bar, "3 joined" under the challenge's name, "5 members" on the
+      Space's card.
+- [ ] **App Review's account.** Signed in as the hidden review account on
+      production. Passing: Together, the league and the Spaces directory
+      are all drawn, each joinable, with no empty tab.
 
 ## One free week of a half or full marathon plan per account (Q85, 2026-11-13)
 

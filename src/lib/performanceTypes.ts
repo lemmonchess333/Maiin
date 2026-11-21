@@ -51,6 +51,10 @@ export interface WeeklyAggregates {
   liftTonnage: number; // session tonnage (workoutVolumeKg: stated totalVolume, else weightKg*reps excluding timed holds)
   liftHardSets: number; // proxy: count of last-set per non-cardio exercise
   liftSessions: number;
+  /** Circuits saved in the window (Circ1 (6)): counted for adherence only,
+   *  never in the lift fields above. Absent on aggregates written before
+   *  circuits, which read as none. */
+  circuitSessions?: number;
 
   // Running
   runKm: number; // total km

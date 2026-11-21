@@ -41,6 +41,8 @@ export const SETUP = {
   weekMinutes: "Minutes a week",
   longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
+  /** "What do you have?" beside a home gym, Minimal and no equipment. */
+  pullUpBar: "A pull-up bar",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",
@@ -68,7 +70,7 @@ export const SETUP_OPTIONS = {
   liftMinutes: ["30 min", "45 min", "60 min", "75+ min"],
   runners: ["New to running", "Occasional runner", "Regular runner"],
   raceDistances: ["5K", "10K", "Half", "Full"],
-  equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
+  equipment: ["Full gym", "Home gym", "Minimal", "No equipment"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
 } as const;
@@ -159,7 +161,8 @@ export const TRAIN = {
   viewRun: "View run",
   /** Today's planned run starts from its card, straight into the run. */
   startRun: "Start run",
-  /** The Lift tab's way into a workout with no plan day
+  /** The Lift tab's way into a workout with no plan day: its name starts
+   *  with these words, the line under them follows
    *  (`EmptyWorkoutEntry.test.tsx`). */
   emptyWorkout: "Empty workout",
 } as const;
@@ -168,15 +171,18 @@ export const TRAIN = {
  *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
 export const runWeekLabel = runStripLabel;
 
-/** A day on Train's run week, by its name: the run's short label
- *  (`runWeekLabel`), and whether the day is today or the run done. Until
- *  its run is done its text is the date's day of the month, which tells
- *  apart days whose runs share a name. */
+/** A day on Train's run week, by its name: the date's day of the month,
+ *  which its circle shows until its run is done and which tells apart
+ *  days whose runs share a name, then the run's short label
+ *  (`runWeekLabel`), and whether the day is today or the run done. The
+ *  number leads because it is the tab's visible text (WCAG 2.5.3). */
 export function runWeekTabName(
+  day: number | string,
   label: string,
   state?: "today" | "completed" | "skipped"
 ): string {
-  return state ? `${label}, ${state}` : label;
+  const name = `${day}, ${label}`;
+  return state ? `${name}, ${state}` : name;
 }
 
 /** The banner over Train's lift week in the weeks a race plan turns

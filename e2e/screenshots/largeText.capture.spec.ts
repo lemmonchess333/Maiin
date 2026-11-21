@@ -286,7 +286,11 @@ test.describe("large text", () => {
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       });
       await page.goto(`food?date=${yesterday}`);
-      const diaryRow = page.getByRole("button", { name: /^Edit / }).first();
+      // A diary row is named by what it shows, then ", edit".
+      const diaryRow = page
+        .locator("[data-food-row]")
+        .getByRole("button", { name: /\bedit$/ })
+        .first();
       await ready(page, diaryRow);
       await page.waitForTimeout(600);
       await diaryRow.click();
@@ -569,7 +573,9 @@ test.describe("large text", () => {
           .or(page.getByText("You don’t follow anyone yet"))
           .or(
             page
-              .getByRole("button", { name: /^(Add a comment|View comments)$/ })
+              .getByRole("button", {
+                name: /^(Add a comment|View comments|[\d,.\s]+ comments?)$/,
+              })
               .first()
           )
       );
@@ -619,7 +625,7 @@ test.describe("large text", () => {
       const found: string[] = [];
       const dialog = page.getByRole("dialog").first();
 
-      const weight = page.getByRole("button", { name: /^Weight / }).first();
+      const weight = page.getByRole("button", { name: /^Weight\b/ }).first();
       await page.goto("");
       await ready(page, weight);
       await weight.click();
@@ -707,7 +713,10 @@ test.describe("large text", () => {
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       });
       await page.goto(`food?date=${yesterday}`);
-      const meal = page.getByRole("button", { name: /^Edit / }).first();
+      const meal = page
+        .locator("[data-food-row]")
+        .getByRole("button", { name: /\bedit$/ })
+        .first();
       await ready(page, meal);
       await meal.click();
       await page.getByRole("dialog").waitFor({ timeout: 10_000 });
