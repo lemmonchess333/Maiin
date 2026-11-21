@@ -192,10 +192,18 @@ describe("verdict templates (no AI)", () => {
     expect(
       verdictFor({ delta: 0, loadBand: "overreach", deloadRecommended: false })
     ).toMatch(/recovery/i);
-    // The high band says what the lead's Sharpening line says by default,
-    // about the person, not about load.
+    // The high band bands the whole score, not the training: it says you
+    // trained more only on the week's own figures (trainedMoreThanUsual.test).
     expect(
       verdictFor({ delta: 0, loadBand: "high", deloadRecommended: false })
+    ).toBe("A strong week.");
+    expect(
+      verdictFor({
+        delta: 0,
+        loadBand: "high",
+        deloadRecommended: false,
+        trainedMore: true,
+      })
     ).toBe("A strong week. You trained more than your usual week.");
     expect(
       verdictFor({ delta: 7, loadBand: "moderate", deloadRecommended: false })
@@ -243,12 +251,22 @@ describe("verdict templates (no AI)", () => {
       delta: 2,
       loadBand: "overreach",
       deloadRecommended: true,
+      trainedMore: true,
     });
     // About the person and their usual week, never "load" (house voice).
     expect(v).toBe(
       "You trained more than your usual week, so this is a good week to ease off."
     );
     expect(v).not.toMatch(/a light week|lighter week|load/i);
+    /* The flag also fires on a high score with sessions or food well off
+       plan (adherence under 50), at or under the usual week: then only
+       the advice is said. */
+    const unproven = verdictFor({
+      delta: 2,
+      loadBand: "high",
+      deloadRecommended: true,
+    });
+    expect(unproven).toBe("This is a good week to ease off.");
   });
 
   it("uses only bands computeLoadBand can emit", () => {

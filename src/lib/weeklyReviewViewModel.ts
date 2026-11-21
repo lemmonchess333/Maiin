@@ -96,6 +96,9 @@ export interface ReviewPerfWeek {
   pi: number;
   loadBand: string | null;
   deloadRecommended: boolean;
+  /** The week's own figures held more training than the usual week
+   *  (`trainedMoreThanUsual`). Absent reads as not shown to. */
+  trainedMore?: boolean;
 }
 
 /** One new best: the set, and the best it beat. */
@@ -256,8 +259,12 @@ export function verdictFor(args: {
   delta: number | null;
   loadBand: string | null;
   deloadRecommended: boolean;
+  /** Said only on the week's own figures (`trainedMoreThanUsual`): the
+   *  band and the flag are the whole score, and a week at or under the
+   *  usual one reaches either. Absent reads as not shown to. */
+  trainedMore?: boolean;
 }): string {
-  const { delta, loadBand, deloadRecommended } = args;
+  const { delta, loadBand, deloadRecommended, trainedMore = false } = args;
   /* These two flags mean DIFFERENT things. One sentence covered both —
      "A lighter week by design — recovery is part of the plan." — and it
      was wrong for each of them, in opposite directions.
@@ -284,7 +291,9 @@ export function verdictFor(args: {
      lock decided on, and it is a choice about emphasis rather than a
      claim about why. */
   if (deloadRecommended) {
-    return "You trained more than your usual week, so this is a good week to ease off.";
+    return trainedMore
+      ? "You trained more than your usual week, so this is a good week to ease off."
+      : "This is a good week to ease off.";
   }
   if (loadBand === "deload") {
     return "A light week. The plan picks up from here.";
@@ -292,10 +301,12 @@ export function verdictFor(args: {
   if (loadBand === "overreach") {
     return "A big week. Keep an eye on recovery going into this one.";
   }
-  /* About you, never about load (App1 Q12): the lead's own Sharpening
-     line, "You trained more than your usual week". */
+  /* About you, never about load (App1 Q12), and the comparison only when
+     the week's figures show it: 100% of the usual week scores high. */
   if (loadBand === "high") {
-    return "A strong week. You trained more than your usual week.";
+    return trainedMore
+      ? "A strong week. You trained more than your usual week."
+      : "A strong week.";
   }
   if (delta !== null && delta >= 5) return "Momentum’s building.";
   if (delta !== null && delta <= -5) {
@@ -370,6 +381,7 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
             delta: rawDelta,
             loadBand: data.perf.loadBand,
             deloadRecommended: data.perf.deloadRecommended,
+            trainedMore: data.perf.trainedMore === true,
           }),
     };
   }
