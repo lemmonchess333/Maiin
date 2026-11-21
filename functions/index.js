@@ -4344,8 +4344,17 @@ async function sendPropsBundle(ref, now) {
     parts.length !== 4 ||
     parts[0] !== "users" ||
     parts[3] !== socialPush.PROPS_BUNDLE_DOC
-  )
+  ) {
+    // A due time on a document that is not a bundle was written by a
+    // client before the rules refused it. Left there it is read first by
+    // every hourly sweep, and a thousand of them kept every real bundle
+    // out of the sweep's read for good. Take the field off; the rest of
+    // the document is its owner's.
+    await ref.update({
+      propsBundleDueAt: admin.firestore.FieldValue.delete(),
+    });
     return false;
+  }
   const uid = parts[1];
   const bundle = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
