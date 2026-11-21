@@ -80,8 +80,8 @@ no web app on troposfit.com.
   drawing in its own light with its kicker in the sport's colour (purple,
   coral, orange) and one line, opening its page.
 - **Train with the people you know.** A weekly challenge's board beside three
-  lines on props, Circles, and challenges and the league "once 10 people
-  train on Tropos", and a link to Social.
+  lines on props, Circles, and challenges with a medal for each and a weekly
+  league, and a link to Social.
 - **Tropos Pro.** "What Pro adds", what stays free, and the first four lines
   of the Pro list, linking to Pro.
 - **The foot.** "Plan your first week in the app", Get the app, and a QR code
@@ -108,14 +108,13 @@ drawings), alternating sides on a wide screen. The headlines:
 
 - **Lifting:** "Strength sessions built around your week"; "Every session
   starts from your last" (a lift day's exercises); "Short on time, or
-  working around a sore joint" (six drawn form guides); "See it add up"
-  (words only: the one recent capture of Analytics shows its Badges tab,
-  which Trim1 call 3(c) has since moved to the profile).
+  working around a sore joint" (six drawn form guides); "See it add up" (a
+  finished lift with its new best).
 - **Running:** "From your first 5K to a marathon"; "Your next run, already
   planned" (Train's next run and the race plan, with the four race chips and
   "5K and 10K plans are free. Plans for a half marathon or longer are part of
-  Pro after their first week."); "Every run, measured" (the running drawing,
-  with segments timed against the people you follow); "Share the run, keep
+  Pro after their first week."); "Every run, measured" (a saved run on its
+  map coloured by pace, with segments timed against the people you follow); "Share the run, keep
   your front door private".
 - **Food:** "Eat for the plan you're on"; "Log it the way you'd say it" (the
   food drawings); "A photo of the meal, with Pro" (where the photo goes);
@@ -128,14 +127,14 @@ app, so a visitor can read the sports in turn.
 
 People first, as Strava orders it: the hero is the welcome's photograph of
 three women running together (Soc16 allows photographs of communities). Then
-Circles, challenges and medals (the challenge board and one challenge's three
-medals, `public/medals/`), the weekly league with its five tiers drawn by the
-app's own `TierBadge`, Spaces, and who sees what. It says plainly that
-challenges, the league and Spaces open once at least 10 people are training
-on Tropos (App1 Q6, `enoughPeople.ts`), beside each of those claims, and
-that Circles, the feed and following work from the first day: a page
-promising a busy league to the first hundred people would be showing an
-empty room as a full one.
+Circles (Together's tab: the week's challenge, the leagues and a Circle),
+challenges and medals (the challenge board and one challenge's three medals,
+`public/medals/`), the weekly league with its five tiers drawn by the app's
+own `TierBadge`, Spaces, and who sees what (the feed). Challenges, the
+league and Spaces are there from a person's first day (App1 Q6 as the owner
+reversed it on 18 November, `fillingUp.ts`); the league alone waits, until
+10 people have joined it, and the page says so in the league card's own
+words rather than promise a busy league to the first hundred people.
 
 ### Pro
 
@@ -243,14 +242,13 @@ supplies them, and forbids drawing or simulating one (Tropos decision, from
 Apple's rules; research.md).
 
 The rig could not run in the sandbox this was made in: its Firestore
-emulator's download host (storage.googleapis.com) is blocked there. So the
+emulator's download host (storage.googleapis.com) is blocked there. So five
 screens are the most recent rig captures already on main, from 11 to 13
-November 2026, cropped (`src/website/screens/README.md` names each source).
-Home's session screen and Food's are the app as it is after DS4 and Food's
-November rework; none shows a run's map, because none of the recent
-captures does. **Follow-up:** a capture spec for the website's screens on the
-season athlete (`app-store.capture.spec.ts`'s account), with a run's map,
-once the rig can run.
+November 2026, cropped, and four (a saved run on its map, a finished lift's
+new best, Together and the feed) are from the rig run in CI on 18 November
+by the other build of the site, #3442, on the same seeded accounts
+(`src/website/screens/README.md` names each source). That build was closed
+in favour of this one on 21 November, with its screens brought across.
 
 ## Words
 
@@ -275,7 +273,7 @@ Where each claim comes from:
 | Circles of up to 8; meet-ups, weekly repeats, pace groups, the reminder about a day before                                                                                                                    | `GOAL_SPACE_MAX_MEMBERS`; Run26 call 4; Run27 call 10                    |
 | Weekly, monthly and seasonal challenges; medals and the trophy case                                                                                                                                           | App Store listing; Soc15                                                 |
 | The league: opt-in, about 20, points out of 100 for your plan, five tiers                                                                                                                                     | Soc15 call 3, `leagueRules.ts`                                           |
-| Leagues, challenges and Spaces wait for 10 people                                                                                                                                                             | App1 Q6, `enoughPeople.ts`                                               |
+| The league starts once 10 people have joined it                                                                                                                                                               | App1 Q6 (18 Nov), `league.ts`                                            |
 | Approve followers; followers or everyone; block and report                                                                                                                                                    | Polish2; `shareComposer.ts`; S4                                          |
 | Pro's list, what stays free, £3.99 a month, £34.99 a year, the 7-day trial, renewal terms                                                                                                                     | `proIncludesCopy.ts`, `proPlans.ts`                                      |
 | No adverts, data not sold                                                                                                                                                                                     | Privacy Policy                                                           |
