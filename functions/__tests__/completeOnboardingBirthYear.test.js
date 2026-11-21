@@ -25,11 +25,11 @@ const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
 const actor = { auth: { uid: "birth-year-user" } };
 const path = "users/birth-year-user";
 
-/* Derived from the clock, so inside (and outside) 16 to 120 whatever year
+/* Derived from the clock, so inside (and outside) 18 to 120 whatever year
    the suite runs. */
 const year = new Date().getUTCFullYear();
 const THIRTY = year - 30;
-const UNDER_16 = year - 10;
+const UNDER_18 = year - 10;
 
 function request(age) {
   return {
@@ -79,9 +79,9 @@ describe("completeOnboarding and the year of birth", () => {
     expect(stored).not.toHaveProperty("ageRange");
   });
 
-  it("refuses a year of birth that makes the person under 16, by its name", async () => {
+  it("refuses a year of birth that makes the person under 18, by its name", async () => {
     await expect(
-      completeOnboarding.run(request({ birthYear: UNDER_16 }), actor)
+      completeOnboarding.run(request({ birthYear: UNDER_18 }), actor)
     ).rejects.toMatchObject({
       code: "invalid-argument",
       message: "Missing required field: birthYear",

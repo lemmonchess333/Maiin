@@ -231,7 +231,8 @@ function YourWeek({
       </div>
       <div className="mt-auto space-y-3 pt-8">
         {/* The week's verdict, in words alone (App1 Q12): the 0–100
-            score is shown in one place, Progress's Score details. */}
+            score is shown on Progress alone, its number on the lead and
+            its details under Score details. */}
         {headline && (
           <p className="text-sm text-foreground">{headline.verdict}</p>
         )}

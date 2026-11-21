@@ -55,7 +55,7 @@ export default function ActivityPostComments({
       {thread.panel ? (
         // Report, Block user and Delete in place of the list, as in the
         // sheet.
-        <div className="rounded-xl bg-card p-3">
+        <div className="rounded-xl bg-card p-3 dark:card-shadow">
           <CommentPanels
             panel={thread.panel}
             onChange={thread.setPanel}

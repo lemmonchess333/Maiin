@@ -156,22 +156,22 @@ lifting,strength,training,plan,marathon,hybrid,5k,10k,half,macro,counter,food,lo
 Apple's questionnaire as it stands since 2025, with the answer for each
 question and the reason.
 
-| Question                                                   | Answer    | Why                                                                                                              |
-| ---------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| Parental controls                                          | No        |                                                                                                                  |
-| Age assurance                                              | No        | Setup asks for an age range and turns away anyone under 16 (`src/pages/Onboarding.tsx`), but nothing verifies it |
-| Unrestricted web access                                    | No        | Outside links open in Safari                                                                                     |
-| User-generated content                                     | Yes       | Posts, comments, Space posts with photos, profile photos                                                         |
-| Messaging and chat                                         | Yes       | No private messages, but Apple's definition includes public posting and comments                                 |
-| Advertising                                                | No        |                                                                                                                  |
-| Social media                                               | Yes       | A feed with props, comments and sharing. This places the app at 13+ at least                                     |
-| Health or wellness topics                                  | Yes       | Calorie tracking and exercise plans                                                                              |
-| Medical or treatment information                           | None      | Injury limits only change which exercises are chosen; the app gives no treatment advice                          |
-| Alcohol, tobacco or drug use or references                 | None      | The food search includes drinks such as beer and wine for logging; the app doesn't depict or encourage them      |
-| Profanity, sexual content, violence, horror, mature themes | None      |                                                                                                                  |
-| Gambling, simulated gambling, contests, loot boxes         | No / None | Challenges and leaderboards carry no prizes                                                                      |
+| Question                                                   | Answer    | Why                                                                                                         |
+| ---------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
+| Parental controls                                          | No        |                                                                                                             |
+| Age assurance                                              | No        | Setup asks for a year of birth and turns away anyone under 18 (`src/lib/age.ts`), but nothing verifies it   |
+| Unrestricted web access                                    | No        | Outside links open in Safari                                                                                |
+| User-generated content                                     | Yes       | Posts, comments, Space posts with photos, profile photos                                                    |
+| Messaging and chat                                         | Yes       | No private messages, but Apple's definition includes public posting and comments                            |
+| Advertising                                                | No        |                                                                                                             |
+| Social media                                               | Yes       | A feed with props, comments and sharing. This places the app at 13+ at least                                |
+| Health or wellness topics                                  | Yes       | Calorie tracking and exercise plans                                                                         |
+| Medical or treatment information                           | None      | Injury limits only change which exercises are chosen; the app gives no treatment advice                     |
+| Alcohol, tobacco or drug use or references                 | None      | The food search includes drinks such as beer and wine for logging; the app doesn't depict or encourage them |
+| Profanity, sexual content, violence, horror, mature themes | None      |                                                                                                             |
+| Gambling, simulated gambling, contests, loot boxes         | No / None | Challenges and leaderboards carry no prizes                                                                 |
 
-Then raise the rating to **16+**, the minimum age in the Terms (section 2)
+Then raise the rating to **18+**, the minimum age in the Terms (section 2)
 and at setup. Apple allows a higher rating than the questionnaire gives.
 
 ## App Privacy
@@ -301,7 +301,8 @@ your choice in App Store Connect.
 | Reference name     | Tropos Pro Monthly                               | Tropos Pro Yearly             |
 | Product ID         | `com.tropos.app.pro.monthly`                     | `com.tropos.app.pro.yearly`   |
 | Duration           | 1 month                                          | 1 year                        |
-| Price (UK)         | £3.99                                            | £34.99                        |
+| Price (UK)         | £6.99                                            | £39.99                        |
+| Price (US)         | $7.99                                            | $49.99                        |
 | Introductory offer | Free, 1 week, new subscribers                    | Free, 1 week, new subscribers |
 | Review screenshot  | The paywall's plan screen, from the iPhone build | The same                      |
 

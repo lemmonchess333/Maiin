@@ -31,7 +31,7 @@ export default function TermsOfService() {
               2. Eligibility
             </h2>
             <p>
-              You must be at least 16 years old to use Tropos. By using the App,
+              You must be at least 18 years old to use Tropos. By using the App,
               you represent that you meet this age requirement.
             </p>
           </section>

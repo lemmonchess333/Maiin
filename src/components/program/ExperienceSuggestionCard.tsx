@@ -88,7 +88,7 @@ export default function ExperienceSuggestionCard({
           {suggestion.evidence.slice(0, 3).map((e) => (
             <div
               key={e.exerciseId}
-              className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2"
+              className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2 chip-edge"
             >
               <span className="text-sm text-foreground truncate">{e.name}</span>
               <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
