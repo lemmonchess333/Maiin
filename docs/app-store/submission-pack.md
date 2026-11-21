@@ -134,7 +134,7 @@ their rows are open), notifications for comments and follows on the iPhone
 recording with the screen locked (`docs/run-background-gps.md`). All of them
 are in the binary, so the review notes describe them. It also never says
 "unlimited": Pro allows 100 photo scans and 100 typed-meal reads a day
-(`DAILY_AI_LIMITS`, `src/lib/subscription.ts`).
+(`DAILY_AI_LIMITS`, `src/lib/dailyAiLimits.ts`).
 
 ### Keywords
 

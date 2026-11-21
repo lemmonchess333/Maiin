@@ -228,7 +228,7 @@ describe("App Store listing: claims the code can contradict", () => {
   it("names every Pro gate in the description's Pro list (Guideline 2.3.2)", () => {
     // PRO_INCLUDES is the paywall's list of Pro gates. A gate added there
     // and missing here sells a free-looking feature that asks for money.
-    // AI reading of typed meals (the `text_ai` cap, subscription.ts) is a
+    // AI reading of typed meals (the `text_ai` cap, dailyAiLimits.ts) is a
     // gate the list leaves out, so it is asserted on its own. Read as
     // source: the module imports the subscription caps.
     const copy = read("../../components/paywall/proIncludesCopy.ts");
@@ -253,7 +253,7 @@ describe("App Store listing: claims the code can contradict", () => {
       /Typed meals read by AI/,
     ])
       expect(pro).toMatch(gate);
-    expect(read("../subscription.ts")).toMatch(/pro:\s*\{\s*text_ai:/);
+    expect(read("../dailyAiLimits.ts")).toMatch(/pro:\s*\{\s*text_ai:/);
     // The charts line in the paywall's own words, so the two say one thing.
     expect(copy).toContain(
       "Charts older than 3 months, and your score’s 12-week chart, average and details"
@@ -264,7 +264,7 @@ describe("App Store listing: claims the code can contradict", () => {
     // DAILY_AI_LIMITS is the server's cap; a pack that says more promises
     // scans the server refuses. Read as source, as above.
     const cap = /pro:\s*\{\s*text_ai:\s*\d+,\s*image_ai:\s*(\d+)\s*\}/.exec(
-      read("../subscription.ts")
+      read("../dailyAiLimits.ts")
     );
     expect(cap, "DAILY_AI_LIMITS.pro.image_ai").toBeTruthy();
     expect(field("description")).toContain(
