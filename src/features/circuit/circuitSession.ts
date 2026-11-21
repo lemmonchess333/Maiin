@@ -10,7 +10,12 @@
  *   running, paused, ending ─complete→ finish
  *   finish ─save→ saving ─saved→ saved
  *                        ─failed→ finish (with the error)
+ *   finish ─askDiscard→ discarding ─keep→ finish
+ *                                  ─discard→ discarded
  *   finish ─discard→ discarded (a finish under 7 minutes: skipped through)
+ *
+ * A finish that saves asks before it is dropped, from its Discard and from
+ * Back alike: it holds up to half an hour's work, and nothing else keeps it.
  *
  * The 7-minute rule (`circuitCounts`) is the page's to apply when it asks
  * to end: this graph only refuses an end that skips the question.
@@ -23,6 +28,7 @@ export type CircuitPhase =
   | "paused"
   | "ending"
   | "finish"
+  | "discarding"
   | "saving"
   | "saved"
   | "discarded";
@@ -48,6 +54,8 @@ export type CircuitSessionEvent =
   | { type: "keepGoing" }
   | { type: "end" }
   | { type: "discard" }
+  | { type: "askDiscard" }
+  | { type: "keep" }
   | { type: "complete" }
   | { type: "rate"; effort: CircuitEffort | undefined }
   | { type: "save" }
@@ -89,8 +97,18 @@ export function stepCircuitSession(
         ? { ...state, phase: "finish", finished: false }
         : state;
     case "discard":
-      return state.phase === "ending" || state.phase === "finish"
+      return state.phase === "ending" ||
+        state.phase === "finish" ||
+        state.phase === "discarding"
         ? { ...state, phase: "discarded" }
+        : state;
+    case "askDiscard":
+      return state.phase === "finish"
+        ? { ...state, phase: "discarding" }
+        : state;
+    case "keep":
+      return state.phase === "discarding"
+        ? { ...state, phase: "finish" }
         : state;
     case "complete":
       return state.phase === "running" ||

@@ -43,7 +43,8 @@ export default function ProgressPhotoCompareSheet({
   onClose: () => void;
   /** Null where this device cannot hand an image on. */
   onShare:
-    ((before: ProgressPhoto, after: ProgressPhoto) => Promise<void>) | null;
+    | ((before: ProgressPhoto, after: ProgressPhoto) => Promise<void>)
+    | null;
 }) {
   const [before, setBefore] = useState(initial.before);
   const [after, setAfter] = useState(initial.after);

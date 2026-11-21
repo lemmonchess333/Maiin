@@ -59,4 +59,8 @@ export interface Circuit {
   /** The rung of its ladder it is at (Circ1 (7)); 0 is the circuit as
    *  first offered. */
   level: number;
+  /** Offered while the person's circuits could not be read: its rung is
+   *  the first one, not the one its ladder reached, so once saved it says
+   *  nothing about the ladder and the ladder leaves it out. */
+  historyUnknown?: true;
 }
