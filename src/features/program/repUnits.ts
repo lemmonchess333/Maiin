@@ -31,6 +31,13 @@ export const TIMED_EXERCISE_IDS: ReadonlySet<string> = new Set([
   "farmers-carry",
 ]);
 
+/** A hold's first time where a plan takes one in place of a lift, as
+ *  Train's swap and Add start one (`sessionSwap.ts`, `sessionAdd.ts`). */
+export const HOLD_START_SECONDS = 30;
+
+/** Ceiling for a hold with no authored range — past this, add load instead. */
+export const MAX_HOLD_SECONDS = 60;
+
 export function repUnitForExerciseId(
   exerciseId: string | undefined
 ): RepUnit | undefined {

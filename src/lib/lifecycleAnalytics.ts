@@ -154,8 +154,6 @@ export interface LifecycleEventMetadata {
   daysPerWeek?: number;
   /** onboarding_completed: resolved run mode (freeform / race_prep). */
   runMode?: string;
-  /** Generic timing dimension (ms). */
-  durationMs?: number;
   /** session_started, first_session_saved, week_4_returned: which
    *  discipline. */
   kind?: "lift" | "run";

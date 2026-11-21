@@ -612,8 +612,12 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
 
   it("carries the legal links on the offer beat too (Guideline 3.1.2)", () => {
     renderPage();
-    expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Privacy" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Terms of Service" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Privacy Policy" })
+    ).toBeInTheDocument();
   });
 
   it("offers Restore only on iOS, as 'Already purchased?'", () => {
@@ -643,7 +647,9 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     expect(screen.queryByText(/Renews automatically/)).toBeNull();
     // The way out stays, and so do the legal links.
     expect(screen.getByRole("button", { name: "Not now" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Terms of Service" })
+    ).toBeInTheDocument();
   });
 
   it("on iOS, both beats say where to cancel: the Apple Account", () => {
