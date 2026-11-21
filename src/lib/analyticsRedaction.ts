@@ -11,7 +11,8 @@
  * Defence is two-layered:
  *   1. Key denylist — drop any key whose name signals PII (email, gps /
  *      coordinates, address, phone, injury/notes free-text, names, uid,
- *      secrets/tokens).
+ *      secrets/tokens) or something a person typed or named (a saved
+ *      food's id, any name or title, a search).
  *   2. Value coercion — only primitives survive. Objects/arrays are
  *      dropped (they can smuggle nested PII), strings are capped at the
  *      GA4 100-char param limit, and any string that looks like an email
@@ -63,6 +64,17 @@ const PII_KEY_TOKENS = [
   "username",
   "note",
   "uid",
+  // What a person typed or named. A saved food's id is its name,
+  // lower-cased (`chicken_and_rice`), and went to Google as `favouriteId`
+  // until a fact-check of the Privacy Policy found it. `name` catches any
+  // food, meal, exercise, routine, segment, Space, shoe or route name,
+  // `title` a Circle's, and `query` / `search` a search's text.
+  "favourite",
+  "favorite",
+  "name",
+  "title",
+  "query",
+  "search",
 ];
 
 /** Exact (lower-cased) keys to drop that are too short to substring-match safely. */
