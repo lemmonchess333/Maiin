@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/Button";
 import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
-import { lockedLine } from "./league";
+import { lockedLine, showsJoinedCount } from "./league";
+import LeagueJoinedBar from "./LeagueJoinedBar";
 import TierBadge from "./TierBadge";
 
 /**
@@ -10,6 +11,12 @@ import TierBadge from "./TierBadge";
  * league page. A league shows a first name, a photo and a week's points to
  * about twenty people who may be strangers, so the line says so before the
  * button, in plain words.
+ *
+ * Until groups are made (App1 Q6, `src/lib/fillingUp.ts`) it says what the
+ * league starts at, how many are in so far once there are 3, with a bar of
+ * them, and Join stays: the people who join now are the ones it starts
+ * with. Before the server has counted anyone there is no figure to read,
+ * and the line says what it starts at with no number.
  *
  * Join is a quiet button: the page's filled one is the weekly challenge's
  * (ChallengeList). A restricted account sees why it cannot join instead.
@@ -23,7 +30,8 @@ export default function LeagueJoin({
   onJoin,
   headingLevel = "h3",
 }: {
-  /** How many have joined and trained lately; null while unknown. */
+  /** How many have joined and trained lately; null before the server
+   *  has counted anyone. */
   joined: number | null;
   needed: number;
   open: boolean;
@@ -63,10 +71,15 @@ export default function LeagueJoin({
         Your first name, photo and weekly points show to the people in your
         group. Nobody else sees them, and you can leave at any time.
       </p>
-      {joined !== null && !open && (
-        <p className="text-xs font-medium text-foreground">
-          {lockedLine(joined, needed)}
-        </p>
+      {!open && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-foreground text-pretty">
+            {lockedLine(joined ?? 0, needed)}
+          </p>
+          {joined !== null && showsJoinedCount(joined) && (
+            <LeagueJoinedBar joined={joined} needed={needed} />
+          )}
+        </div>
       )}
       {restricted ? (
         <RestrictedNotice />
