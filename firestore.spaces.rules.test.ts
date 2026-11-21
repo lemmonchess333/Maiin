@@ -334,6 +334,38 @@ suite("firestore.rules — community spaces", () => {
         );
       });
 
+      it("takes a circuit's mark on a workout only, and only as true (Circ1)", async () => {
+        await seedMember(MEMBER);
+        const circuit = {
+          type: "workout",
+          totalVolume: 0,
+          exerciseCount: 5,
+          muscleGroups: [],
+          duration: 600,
+          leadExerciseId: "bodyweight-squat",
+          circuit: true,
+        };
+        await assertSucceeds(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/circuit`),
+            post(circuit)
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/circuit-run`),
+            post({ ...run, circuit: true })
+          )
+        );
+        for (const [i, mark] of [false, "yes", 1, { moves: 5 }].entries())
+          await assertFails(
+            setDoc(
+              doc(db(MEMBER), `spaces/${SPACE}/posts/circuit-bad-${i}`),
+              post({ ...circuit, circuit: mark })
+            )
+          );
+      });
+
       it("refuses a field the snapshot does not have, or a type it cannot be", async () => {
         await seedMember(MEMBER);
         await assertFails(

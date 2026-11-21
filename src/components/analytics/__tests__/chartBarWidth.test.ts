@@ -29,15 +29,11 @@ const srcRoot = resolve(here, "../../..");
 /**
  * Bars that legitimately need no cap, with the reason. A stacked daily series
  * over a fixed multi-week window is dense by construction — its natural width
- * is already far below any cap, so adding one would be decoration.
+ * is already far below any cap, so adding one would be decoration. None
+ * today: the one there was, the minutes-based training load's daily bars,
+ * went with that chart (App1 Q16).
  */
-const EXEMPT: Record<string, string> = {
-  "components/analytics/TrainingLoadCard.tsx":
-    "one stacked bin per day across the page's own range pill — 7 bars at " +
-    "1W up to 365 at 1Y, so the width is set by the window rather than by " +
-    "sparseness, and the single-bin slab this rule exists to stop cannot " +
-    "occur when the bin count IS the window in days",
-};
+const EXEMPT: Record<string, string> = {};
 
 function tsxFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -74,9 +70,8 @@ describe("Recharts bars — width is constrained", () => {
     // (`TrainingWeeksCard`), and set their own width from the bin count.
     // The run pages' splits bar chart is gone too: their splits are a
     // table now (`components/run/SplitsTable`), its bars plain divs.
-    expect(files.length).toBeGreaterThanOrEqual(2);
+    expect(files.length).toBeGreaterThanOrEqual(1);
     expect(files).toContain("components/progress/CalorieBalanceChart.tsx");
-    expect(files).toContain("components/analytics/TrainingLoadCard.tsx");
   });
 
   it("excludes LoadingSkeleton's own non-Recharts Bar", () => {

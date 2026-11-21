@@ -28,7 +28,7 @@ describe("isRaceRestDay", () => {
   });
 
   it("needs a race plan with a date", () => {
-    expect(isRaceRestDay(race("2026-11-14", "structured"), "2026-11-13")).toBe(
+    expect(isRaceRestDay(race("2026-11-14", "starter"), "2026-11-13")).toBe(
       false
     );
     expect(isRaceRestDay({ mode: "race_prep" }, "2026-11-13")).toBe(false);

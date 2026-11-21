@@ -68,13 +68,10 @@ export interface HistoryEventMetadata {
    *  per the established eventing pattern across this module. */
   chart?: HistoryChart;
   /** history_chart_tap_attempted: bin key (ISO date / week / month
-   *  per chartGranularity). */
+   *  per chartGranularity, or the macro's name on the donut). The figure
+   *  at the tapped point is never sent: a volume, a distance, a macro
+   *  share or a score is health data (`analyticsHealthFigures.test.ts`). */
   binKey?: string;
-  /** history_chart_tap_attempted: value at the tapped data point —
-   *  kg for the Lifting page's week bars, metres for the Running page's,
-   *  calorie-share % for MacroDistribution, PI 0-100 for
-   *  PerformanceIndexChart. */
-  value?: number;
   /** history_progress_photo_added / _deleted: the photo's pose. */
   pose?: HistoryPhotoPose;
   /** history_progress_photo_shared: one photo, or a before-and-after. */

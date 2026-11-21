@@ -636,9 +636,9 @@ export default function RunSummary() {
      what you expected?"). Structured so the engine can later distinguish
      "completed, felt easy" from "completed, too hard" — notes no longer
      carry the whole reflection burden. Null = skipped (never required).
-     Deliberately NOT fed into the Performance Index / trainingLoad (that
-     would need the trainingLoad-standalone lock revisited); v1 is a stored
-     calibration signal only. */
+     Deliberately NOT fed into the performance score (that would need the
+     trainingLoad-standalone lock revisited); v1 is a stored calibration
+     signal only. */
   const [relativeEffort, setRelativeEffort] = useState<
     "easier" | "matched" | "harder" | null
   >(receipt?.relativeEffort ?? null);

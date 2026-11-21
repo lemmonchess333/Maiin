@@ -18,7 +18,12 @@
  *                  account began (`scheduledDaysSinceStart`): the person's
  *                  own seven-day schedule, or one built from their weekly
  *                  targets when it is missing (`weekScheduleFor`,
- *                  `generateSchedule` in src/lib/scheduleUtils.ts)
+ *                  `generateSchedule` in src/lib/scheduleUtils.ts). Race
+ *                  week counts only what it asks for (TrainWk1, the owner's
+ *                  call (b)): read on a day of the week, in race week or on
+ *                  one of a race's rest days, the lifts the plan has skipped
+ *                  are the ones the app rested, and are not planned
+ *                  (`liftsAsked`, trainingWeek.ts's)
  *   runs planned   the plan's run days in the week from the day the account
  *                  began, each day resolved as `resolveRunDayForDate` does:
  *                  an exact date, then the week key and day, then an older
@@ -133,6 +138,46 @@ function generateSchedule(liftDays, runDays) {
   return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount });
 }
 
+/** The days before a race with no lifting (raceRest.ts RACE_REST_DAYS). */
+const RACE_REST_DAYS = 2;
+
+/** Whether a day is one of a race plan's rest days: the two before the
+ *  race, or race day (raceRest.ts isRaceRestDay). */
+function isRaceRestDay(runPlan, dayKey) {
+  const race =
+    runPlan && runPlan.mode === "race_prep" && runPlan.raceGoal
+      ? runPlan.raceGoal.targetDate
+      : undefined;
+  if (typeof race !== "string" || !race) return false;
+  return dayKey >= addDays(race, -RACE_REST_DAYS) && dayKey <= race;
+}
+
+/**
+ * The week's planned lifts with race week's rested lifts left out
+ * (trainingWeek.ts liftsAsked): on `todayKey`, a day of the week, in race
+ * week or on one of a race's rest days, every lift skipped and not done is
+ * one the app rested before the race. Without a day of the week, or with a
+ * plan not yet rolled over to the week (`liftWeekKey`), the lift days
+ * stand.
+ */
+function liftsAsked(liftDays, programState, weekKey, todayKey) {
+  const state = programState || {};
+  if (
+    liftDays <= 0 ||
+    !todayKey ||
+    mondayOf(todayKey) !== weekKey ||
+    state.liftWeekKey !== weekKey
+  )
+    return liftDays;
+  if (state.raceWeek !== "race" && !isRaceRestDay(state.runPlan, todayKey))
+    return liftDays;
+  const lifts = Array.isArray(state.workouts) ? state.workouts : [];
+  const rested = lifts.filter(
+    (day) => day && day.skipped && !day.completed
+  ).length;
+  return rested > 0 ? Math.min(liftDays, lifts.length - rested) : liftDays;
+}
+
 /** The weekly run target, `getWeeklyRunTarget`'s order. */
 function weeklyRunTarget(profile) {
   return (
@@ -206,15 +251,28 @@ function resolveRunDayForDate(dateKey, runDays, currentWeekKey) {
  * The week's planned lifts and runs as trainingWeek.ts counts them, null
  * where nothing is planned. `planWeekKey` is the week an older plan's
  * undated run days belong to: the week the app reads them in, which for a
- * league standing is the group's own week.
+ * league standing is the group's own week. `todayKey` is the day the week
+ * is read on, the member's own: race week's rested lifts are left out only
+ * on a day of the week.
  */
-function plannedInWeek(profile, programState, weekKey, planWeekKey = weekKey) {
+function plannedInWeek(
+  profile,
+  programState,
+  weekKey,
+  planWeekKey = weekKey,
+  todayKey = null
+) {
   const startKey = accountStartKey(profile);
-  const lifts = scheduledDaysSinceStart(
-    weekScheduleFor(profile),
-    ["lift", "both"],
+  const lifts = liftsAsked(
+    scheduledDaysSinceStart(
+      weekScheduleFor(profile),
+      ["lift", "both"],
+      weekKey,
+      startKey
+    ),
+    programState,
     weekKey,
-    startKey
+    todayKey
   );
   const runDays = programState && programState.runDays;
   let runs = 0;
@@ -230,10 +288,22 @@ function plannedInWeek(profile, programState, weekKey, planWeekKey = weekKey) {
  * The league's planned count for a member's week: the plan's lifts and
  * runs, a free runner's weekly target for the runs, and DEFAULT_PLANNED
  * when the week still plans nothing. `runsFromPlan` says whether the runs
- * came from the plan's own run days.
+ * came from the plan's own run days. `todayKey` as plannedInWeek's.
  */
-function leaguePlanned(profile, programState, weekKey, planWeekKey = weekKey) {
-  const week = plannedInWeek(profile, programState, weekKey, planWeekKey);
+function leaguePlanned(
+  profile,
+  programState,
+  weekKey,
+  planWeekKey = weekKey,
+  todayKey = null
+) {
+  const week = plannedInWeek(
+    profile,
+    programState,
+    weekKey,
+    planWeekKey,
+    todayKey
+  );
   const runsFromPlan = week.runs !== null;
   const runs = runsFromPlan ? week.runs : Math.max(0, weeklyRunTarget(profile));
   const total = (week.lifts ?? 0) + runs;

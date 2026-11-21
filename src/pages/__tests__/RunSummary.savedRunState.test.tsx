@@ -222,7 +222,7 @@ function savedRun(notes = "") {
     runConfig: {
       activityType: "freerun",
       planMetadata: {
-        planMode: "structured",
+        planMode: "starter",
         planSource: "today_plan",
         plannedRunDayIndex: 2,
         plannedTemplateId: "tempo_run",

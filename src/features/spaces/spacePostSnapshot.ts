@@ -11,6 +11,7 @@
  */
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { liftPostLeadExerciseId } from "@/lib/liftPost";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import { applyPrivacyZones, type PrivacyZone } from "@/lib/privacyZones";
 import { sampleRoute, splitRouteSegments } from "@/lib/routeSegments";
@@ -30,6 +31,7 @@ export const SPACE_POST_SNAPSHOT_KEYS = [
   "exerciseCount",
   "muscleGroups",
   "leadExerciseId",
+  "circuit",
 ] as const satisfies readonly (keyof SpacePostActivitySnapshot)[];
 
 /** Route points cap for the snapshot — bounds the post doc size while
@@ -76,6 +78,22 @@ export function spacePostSnapshot(
     };
   }
   const w = a.workout;
+  // A circuit (Circ1) has no exercises: its moves are counted, marked as
+  // moves for the card, and its first drawn move leads, as a lift's first
+  // drawn lift does.
+  const circuit = workoutCircuit(w);
+  if (circuit) {
+    const leadExerciseId = liftPostLeadExerciseId(circuit.moves);
+    return {
+      type: "workout",
+      totalVolume: 0,
+      exerciseCount: circuit.moves.length,
+      muscleGroups: [],
+      duration: w.durationMinutes * 60,
+      ...(leadExerciseId ? { leadExerciseId } : {}),
+      circuit: true,
+    };
+  }
   const categories = Array.from(
     new Set(
       w.exercises.map((ex) =>

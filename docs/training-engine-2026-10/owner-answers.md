@@ -64,6 +64,12 @@ performance.
 (running-evidence §6.2), never `trainingLoad.ts`. No copy may turn form into a
 prediction ("you'll be fresh by Friday"). No code change.
 
+STATUS 2026-11-15: the card and its model are gone. App1 Q16 (13 November)
+kept one load model in Score details, the score's own (the week against the
+usual week), so `trainingLoad.ts`, its chart and its two warnings were
+removed on `claude/app1-score-one-place`. This answer's constants stand for
+the record; the virtual athlete never read them.
+
 ### A3. The one line for a stretched rep range
 
 **Question.** When the next weight is more than about 15% heavier, Lift4 (6)
