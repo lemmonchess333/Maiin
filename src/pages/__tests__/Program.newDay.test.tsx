@@ -122,6 +122,7 @@ vi.mock("@/features/program/useProgram", async () => {
 vi.mock("@/components/WorkoutSession", () => ({ default: () => null }));
 
 import Program from "../Program";
+import ProgramEngineRoute from "@/features/program/ProgramEngineRoute";
 
 /** The journey's days: a Wednesday, and the Thursday after it. */
 const WEDNESDAY = "2026-11-25";
@@ -192,7 +193,10 @@ function renderTrain() {
   return render(
     <MemoryRouter initialEntries={["/program"]}>
       <Routes>
-        <Route path="/program" element={<Program />} />
+        {/* As App.tsx nests it: Train reads the engine from the route. */}
+        <Route path="/program" element={<ProgramEngineRoute />}>
+          <Route index element={<Program />} />
+        </Route>
       </Routes>
     </MemoryRouter>
   );
