@@ -118,6 +118,7 @@ describe("readSavedCircuit", () => {
       { ...saved, moves: [{ ...saved.moves[0], loadKg: -5 }] },
     ],
     ["no finished flag", { ...saved, finished: undefined }],
+    ["a history flag that is not true", { ...saved, historyUnknown: "yes" }],
   ];
   for (const [what, value] of broken)
     it(`refuses ${what}`, () => {
@@ -139,6 +140,24 @@ describe("a one-sided move", () => {
     expect(readSavedCircuit(JSON.parse(JSON.stringify(stored)))?.moves).toEqual(
       withRow.moves.map((move) => ({ kind: "move", unit: "seconds", ...move }))
     );
+  });
+});
+
+describe("a circuit chosen while the history could not be read", () => {
+  it("keeps its mark through the save, and only then", () => {
+    expect("historyUnknown" in saved).toBe(false);
+    const blind = savedCircuitFrom(
+      { ...circuit, historyUnknown: true },
+      {
+        intervalsDone: 20,
+        roundsDone: 4,
+        workSecondsDone: 800,
+        activeSeconds: 1180,
+        finished: true,
+      }
+    );
+    expect(blind.historyUnknown).toBe(true);
+    expect(readSavedCircuit(JSON.parse(JSON.stringify(blind)))).toEqual(blind);
   });
 });
 

@@ -13,6 +13,8 @@
  *      (recovers a lock that the OS dropped on background), and only
  *      between request() and release(): a paused or finished session
  *      lets the screen sleep.
+ *   6. a lock the system grants after release() (or unmount) is let go
+ *      as it arrives, and one asked for again in the gap is kept.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
@@ -131,6 +133,92 @@ describe("useWakeLock — request / release", () => {
       await result.current.release();
     });
     expect(lastSentinel?.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets go of a lock granted after release() was called", async () => {
+    // Pause tapped while the system was still granting the lock: the
+    // sentinel arrives after release(), and must not hold the screen on.
+    mockWakeLock();
+    let grant: () => void = () => {};
+    const late: FakeSentinel = {
+      release: vi.fn(async () => {}),
+      addEventListener: vi.fn(),
+    };
+    requestImpl = () => new Promise((resolve) => (grant = () => resolve(late)));
+    const { useWakeLock } = await import("../useWakeLock");
+    const { result } = renderHook(() => useWakeLock());
+    let asked: Promise<boolean> = Promise.resolve(true);
+    act(() => {
+      asked = result.current.request();
+    });
+    await act(async () => {
+      await result.current.release();
+    });
+    expect(late.release).not.toHaveBeenCalled();
+    let ok = true;
+    await act(async () => {
+      grant();
+      ok = await asked;
+    });
+    expect(ok).toBe(false);
+    expect(late.release).toHaveBeenCalledTimes(1);
+    // Nothing is held: coming back to the page asks for nothing.
+    act(() => setVisibility("hidden"));
+    await act(async () => {
+      setVisibility("visible");
+    });
+    expect(
+      (navigator.wakeLock as { request: ReturnType<typeof vi.fn> }).request
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets go of a lock granted after the page went away", async () => {
+    mockWakeLock();
+    let grant: () => void = () => {};
+    const late: FakeSentinel = {
+      release: vi.fn(async () => {}),
+      addEventListener: vi.fn(),
+    };
+    requestImpl = () => new Promise((resolve) => (grant = () => resolve(late)));
+    const { useWakeLock } = await import("../useWakeLock");
+    const { result, unmount } = renderHook(() => useWakeLock());
+    let asked: Promise<boolean> = Promise.resolve(true);
+    act(() => {
+      asked = result.current.request();
+    });
+    unmount();
+    grant();
+    expect(await asked).toBe(false);
+    expect(late.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a lock asked for again before the first one arrived", async () => {
+    // Pause, then Resume, inside one grant: the person wants the screen
+    // on, and the one lock that arrives holds it.
+    mockWakeLock();
+    let grant: () => void = () => {};
+    const late: FakeSentinel = {
+      release: vi.fn(async () => {}),
+      addEventListener: vi.fn(),
+    };
+    requestImpl = () => new Promise((resolve) => (grant = () => resolve(late)));
+    const { useWakeLock } = await import("../useWakeLock");
+    const { result } = renderHook(() => useWakeLock());
+    let asked: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      asked = result.current.request();
+    });
+    await act(async () => {
+      await result.current.release();
+      await result.current.request();
+    });
+    let ok = false;
+    await act(async () => {
+      grant();
+      ok = await asked;
+    });
+    expect(ok).toBe(true);
+    expect(late.release).not.toHaveBeenCalled();
   });
 
   it("release() is a no-op when no sentinel was acquired", async () => {

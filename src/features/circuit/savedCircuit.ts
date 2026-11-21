@@ -41,6 +41,9 @@ export interface SavedCircuit {
   lowImpact: boolean;
   /** The rung it was done at (Circ1 (7)). */
   level: number;
+  /** Chosen while the person's circuits could not be read, so `level`
+   *  is the first rung rather than the ladder's: the ladder skips it. */
+  historyUnknown?: true;
   workSeconds: number;
   restSeconds: number;
   /** Rounds the circuit asked for. */
@@ -83,6 +86,7 @@ export function savedCircuitFrom(
     minutes: circuit.minutes,
     lowImpact: circuit.lowImpact,
     level: circuit.level,
+    ...(circuit.historyUnknown ? { historyUnknown: true as const } : {}),
     workSeconds: circuit.workSeconds,
     restSeconds: circuit.restSeconds,
     rounds: circuit.rounds,
@@ -172,6 +176,8 @@ export function readSavedCircuit(value: unknown): SavedCircuit | null {
     !EFFORTS.includes(raw.effort as CircuitEffort)
   )
     return null;
+  if (raw.historyUnknown !== undefined && raw.historyUnknown !== true)
+    return null;
   return {
     circuitId: raw.circuitId,
     name: raw.name,
@@ -180,6 +186,7 @@ export function readSavedCircuit(value: unknown): SavedCircuit | null {
     minutes: raw.minutes as CircuitMinutes,
     lowImpact: raw.lowImpact,
     level: raw.level as number,
+    ...(raw.historyUnknown ? { historyUnknown: true as const } : {}),
     workSeconds: raw.workSeconds as number,
     restSeconds: raw.restSeconds as number,
     rounds: raw.rounds as number,

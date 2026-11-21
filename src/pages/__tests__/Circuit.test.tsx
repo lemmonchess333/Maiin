@@ -13,14 +13,17 @@ import { restoreRealTimers } from "@/test/fakeTimers";
  * ends on time, and more than one pauses the circuit with none of the time
  * away counted; a finished circuit saves as a circuit with the
  * Easy / Right / Hard tap, and only its own minutes; under 7 minutes
- * nothing is saved; skipping to the end is not finishing; a history read
- * that is slow or fails is never taken for no history. The save itself is
- * `circuitCompletion.test.ts`'s.
+ * nothing is saved; a finish that saves asks before Discard or Back drops
+ * it; skipping to the end is not finishing; a history read that is slow
+ * or fails is never taken for no history, and what is chosen from it is
+ * marked so. The save itself is `circuitCompletion.test.ts`'s.
  */
 const h = vi.hoisted(() => ({
   completeCircuit: vi.fn(),
   history: [] as unknown[],
   read: null as null | (() => Promise<unknown[]>),
+  /** Whether the last back press was taken by the page. */
+  backTaken: false,
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
@@ -57,7 +60,7 @@ function renderPage(wrap: (page: ReactNode) => ReactNode = (page) => page) {
 function BackButton() {
   const { dispatchBack } = useBackDismissController();
   return (
-    <button type="button" onClick={() => dispatchBack()}>
+    <button type="button" onClick={() => (h.backTaken = dispatchBack())}>
       Phone back
     </button>
   );
@@ -80,6 +83,20 @@ async function seconds(n: number) {
   for (let i = 0; i < n; i++)
     await act(async () => {
       vi.advanceTimersByTime(1000);
+    });
+}
+
+/** The real clock's timeout, kept before any test fakes it. */
+const realTimeout = globalThis.setTimeout;
+
+/** Lets a dialog fade out. framer times its 150 ms on the real clock,
+ *  but draws a frame only when the fake clock fires jsdom's: so real time
+ *  goes by, then a frame is drawn, until the fade is well past its end. */
+async function fadeOut() {
+  for (let i = 0; i < 12; i++)
+    await act(async () => {
+      await new Promise((resolve) => realTimeout(resolve, 30));
+      vi.advanceTimersByTime(16);
     });
 }
 
@@ -150,6 +167,7 @@ beforeEach(() => {
     .mockResolvedValue({ workoutId: "free-c1", syncStatus: "synced" });
   h.history = [];
   h.read = null;
+  h.backTaken = false;
 });
 afterEach(async () => {
   setVisibility("visible");
@@ -387,22 +405,140 @@ describe("the finish (Circ1 (11), (A))", () => {
     });
   });
 
-  it("offers Discard once a save has failed", async () => {
+  const discardQuestion = () =>
+    within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Discard",
+    });
+
+  it("offers Discard on a finish that saves, and asks before it drops it", async () => {
+    // iOS has no Back: the way out without saving is on the screen.
+    await startTenMinute();
+    await seconds(12);
+    await onTheClock(478);
+    await endCircuit();
+    await fadeOut();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    });
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "Discard this circuit?"
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    });
+    await fadeOut();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Circuit ended")).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    });
+    await act(async () => {
+      fireEvent.click(discardQuestion());
+    });
+    expect(screen.getByText("Train")).toBeInTheDocument();
+    expect(h.completeCircuit).not.toHaveBeenCalled();
+  });
+
+  it("offers Discard after a failed save too", async () => {
     h.completeCircuit.mockReset().mockRejectedValue(new Error("offline"));
     await startTenMinute();
     await seconds(12);
     await onTheClock(478);
     await endCircuit();
-    expect(
-      screen.queryByRole("button", { name: "Discard" })
-    ).not.toBeInTheDocument();
     await saveCircuit();
     expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t save");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Discard" }));
     });
+    await act(async () => {
+      fireEvent.click(discardQuestion());
+    });
     expect(screen.getByText("Train")).toBeInTheDocument();
     expect(h.completeCircuit).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before Back drops a finish that saves", async () => {
+    await startTenMinute((page) => (
+      <BackDismissProvider>
+        <BackButton />
+        {page}
+      </BackDismissProvider>
+    ));
+    await seconds(12);
+    await onTheClock(478);
+    await endCircuit();
+    await fadeOut();
+    const back = async () =>
+      act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Phone back" }));
+      });
+    await back();
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "Discard this circuit?"
+    );
+    // Back again answers the question with Cancel: the finish stays.
+    await back();
+    await fadeOut();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Circuit ended")).toBeInTheDocument();
+    expect(screen.queryByText("Train")).not.toBeInTheDocument();
+    // And asks again on the next.
+    await back();
+    await act(async () => {
+      fireEvent.click(discardQuestion());
+    });
+    expect(screen.getByText("Train")).toBeInTheDocument();
+    expect(h.completeCircuit).not.toHaveBeenCalled();
+  });
+
+  it("lets Back leave a finish that saves nothing", async () => {
+    await startTenMinute((page) => (
+      <BackDismissProvider>
+        <BackButton />
+        {page}
+      </BackDismissProvider>
+    ));
+    for (let i = 0; i < 20; i++)
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+      });
+    await seconds(1);
+    expect(screen.getByText("Circuit ended")).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Phone back" }));
+    });
+    expect(h.backTaken).toBe(false);
+  });
+
+  it("waits on Back while the circuit saves", async () => {
+    let settle: () => void = () => {};
+    h.completeCircuit.mockReset().mockReturnValue(
+      new Promise((resolve) => {
+        settle = () => resolve({ workoutId: "free-c1", syncStatus: "synced" });
+      })
+    );
+    await startTenMinute((page) => (
+      <BackDismissProvider>
+        <BackButton />
+        {page}
+      </BackDismissProvider>
+    ));
+    await seconds(12);
+    await onTheClock(478);
+    await endCircuit();
+    await saveCircuit();
+    await fadeOut();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Phone back" }));
+    });
+    // Taken, so it leaves nothing, and asks nothing.
+    expect(h.backTaken).toBe(true);
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Circuit ended")).toBeInTheDocument();
+    await act(async () => {
+      settle();
+    });
+    expect(screen.getByText("Train")).toBeInTheDocument();
   });
 
   it("offers today's rung from the circuit's history", async () => {
@@ -445,6 +581,25 @@ describe("the finish (Circ1 (11), (A))", () => {
     await onTheClock(578);
     expect(screen.getByText("Circuit done")).toBeInTheDocument();
     expect(screen.queryByText("first")).not.toBeInTheDocument();
+    // Saved, it is marked as chosen without its history, so the ladder
+    // leaves its first rung out rather than start again from it.
+    await saveCircuit();
+    expect(h.completeCircuit.mock.calls[0][0].circuit).toMatchObject({
+      level: 0,
+      historyUnknown: true,
+    });
+  });
+
+  it("marks nothing when the history was read", async () => {
+    h.history = EASY_LAST_TIME;
+    await startTenMinute();
+    await seconds(12);
+    // A rung up, 45 s on and 15 s off: 585 s after the count in.
+    await onTheClock(590);
+    await saveCircuit();
+    const { circuit } = h.completeCircuit.mock.calls[0][0];
+    expect(circuit.level).toBe(1);
+    expect(circuit).not.toHaveProperty("historyUnknown");
   });
 
   it("saves nothing under 7 minutes, and says so before it ends", async () => {
