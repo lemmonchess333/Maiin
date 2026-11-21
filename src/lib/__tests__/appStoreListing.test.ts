@@ -260,6 +260,18 @@ describe("App Store listing: claims the code can contradict", () => {
     );
   });
 
+  it("gives the photo scan cap the server enforces (2.3.1)", () => {
+    // DAILY_AI_LIMITS is the server's cap; a pack that says more promises
+    // scans the server refuses. Read as source, as above.
+    const cap = /pro:\s*\{\s*text_ai:\s*\d+,\s*image_ai:\s*(\d+)\s*\}/.exec(
+      read("../subscription.ts")
+    );
+    expect(cap, "DAILY_AI_LIMITS.pro.image_ai").toBeTruthy();
+    expect(field("description")).toContain(
+      `Log a meal from a photo, up to ${cap![1]} a day.`
+    );
+  });
+
   it("does not sell a marathon plan as free, which is Pro after week 1", () => {
     // Q85 (13 November 2026). The free Running list said "Race plans for
     // 5K, 10K, half marathon and marathon".
