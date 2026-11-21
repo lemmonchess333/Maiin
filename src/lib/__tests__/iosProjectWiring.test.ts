@@ -970,9 +970,10 @@ describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
  * The UIScene life cycle (Duo track, 2026-11-18). "Apps built with the
  * latest SDK must adopt the scene-based life cycle or they fail to launch"
  * (iOS & iPadOS 27 Release Notes), and on the iPhone Duo a fold resizes
- * the scene (docs/ios/iphone-duo.md). Nothing here can launch the app; a
- * wrong class name or a delegate left out of the target is a black screen
- * at launch that a compile does not see, so these read the wiring instead.
+ * the scene (the iPhone Duo notes under docs/ios, #3420). Nothing here can
+ * launch the app; a wrong class name or a delegate left out of the target
+ * is a black screen at launch that a compile does not see, so these read
+ * the wiring instead.
  */
 describe("iOS project wiring — the scene life cycle", () => {
   const sceneDelegate = read("ios/App/App/SceneDelegate.swift");
