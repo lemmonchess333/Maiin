@@ -93,10 +93,12 @@ describe("NewBestMoment", () => {
     expect(screen.getByText("New best")).toHaveClass("text-achievement-strong");
   });
 
-  it("enters with a small scale and fade when motion is allowed", () => {
+  it("enters with a fade and no scale when motion is allowed: the docked card is frosted, and a blur is never animated", () => {
     reduceMotion(false);
     render(<NewBestMoment moment={moment()} />);
-    expect(screen.getByTestId("new-best-moment").style.opacity).toBe("0");
+    const card = screen.getByTestId("new-best-moment");
+    expect(card.style.opacity).toBe("0");
+    expect(card.style.transform).not.toMatch(/scale/);
   });
 
   it("appears without moving under Reduce Motion", () => {
