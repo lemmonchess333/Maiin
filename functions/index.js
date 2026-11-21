@@ -1526,9 +1526,15 @@ exports.analyzeFood = functions
       // on the service's side after that gives it back (aiScanQuota).
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -1799,9 +1805,15 @@ exports.analyzeFoodText = functions
       // gives it back.
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
