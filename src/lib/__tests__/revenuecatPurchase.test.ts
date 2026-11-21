@@ -50,6 +50,10 @@ beforeEach(() => {
   vi.stubEnv("VITE_REVENUECAT_IOS_KEY", "appl_test_key");
   // RevenueCat is this account unless a test says otherwise.
   mockPurchases.getAppUserID.mockResolvedValue({ appUserID: UID });
+  // Set-up succeeds unless a test says otherwise. clearAllMocks keeps a
+  // mock's implementation, so a test that made set-up fail would leave it
+  // failing for whichever test ran next.
+  mockPurchases.configure.mockResolvedValue(undefined);
 });
 
 describe("rcPurchase", () => {
