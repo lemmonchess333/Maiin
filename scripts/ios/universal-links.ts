@@ -32,6 +32,18 @@ export function appleAppSiteAssociation(prefix: string) {
               comment:
                 "A shared Space opens in the app (Run27 call 11); without the app it is the web app's sign-in, then the Space.",
             },
+            {
+              "/": "/review",
+              "?": { from: "email" },
+              comment:
+                "The weekly review email's button opens the review in the app (App1 Q55); without the app it is the website.",
+            },
+            {
+              "/": "/",
+              "?": { from: "email" },
+              comment:
+                "An email's Open Tropos button opens the app (App1 Q55); without the app it is the website.",
+            },
           ],
         },
       ],

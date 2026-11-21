@@ -7,7 +7,7 @@ import {
 } from "./universal-links";
 
 describe("iPhone invite association", () => {
-  it("names only the verified app, root invite URLs, shared posts and shared Spaces", () => {
+  it("names only the verified app, root invite URLs, shared posts, shared Spaces and an email's two buttons", () => {
     expect(appleAppSiteAssociation("A2B3C4D5E6")).toEqual({
       applinks: {
         details: [
@@ -23,6 +23,14 @@ describe("iPhone invite association", () => {
               { "/": "/activity/*", comment: expect.any(String) },
               // A shared Space (Run27 call 11): the app's own /space/:id.
               { "/": "/space/*", comment: expect.any(String) },
+              // An email's buttons (App1 Q55), marked as an email's, so an
+              // ordinary link to the review or the website stays on the web.
+              {
+                "/": "/review",
+                "?": { from: "email" },
+                comment: expect.any(String),
+              },
+              { "/": "/", "?": { from: "email" }, comment: expect.any(String) },
             ],
           },
         ],
