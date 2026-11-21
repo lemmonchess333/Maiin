@@ -50,6 +50,11 @@ public/exercise-demos/_preview.html
 # the local dir is generated noise — CI force-adds with -f)
 /screenshots/
 
+# The skills CLI (`npx skills update`, docs/agents/vendored-skills.md) also
+# writes a second copy of each skill here; the copies this repo keeps live in
+# .claude/skills/.
+/.agents/
+
 # graphify output — generated knowledge graph (rebuildable via /graphify .);
 # untracked so a build never trips the closeout stop-hook. Remove to commit it.
 graphify-out/

@@ -55,6 +55,11 @@ Match the control to the intent — prefer the narrowest one:
 
 How the layers combine: `ignore.tags` disables every rule carrying that tag **before** linting, so a tagged rule stays off even if `rules`/`categories` set it to `warn`/`error` (a rule-level override cannot re-enable a tag-ignored rule). For rules that aren't tag-disabled, `rules` overrides `categories` overrides the rule's default. `surfaces` is visibility-only and never changes whether a rule runs.
 
+With `customRulesOnly: true`, ported rules stay off by default. Set a specific rule
+to `"warn"` or `"error"` in `rules` to enable it. Current and legacy rule keys both
+work. Category settings do not enable ported rules. Project requirements and tag
+exclusions still apply, and the React Compiler plugin stays off.
+
 ## Config shape
 
 Config lives in `doctor.config.ts` (or `.js`/`.mjs`/`.cjs`/`.json`/`.jsonc`), or the `reactDoctor` key in `package.json`. The `rules` commands edit whichever exists — TS/JS edits preserve formatting (via magicast) — and create `doctor.config.json` when none does, stamping `$schema`:
@@ -71,3 +76,8 @@ export default {
 ## Educating the user
 
 When explaining a rule, lead with the "Why it matters" guidance from `rules explain` and, when they want depth, the per-rule recipe at `https://www.react.doctor/prompts/rules/<plugin>/<rule>.md`. Only after they understand it should you offer to disable it — many "bad" rules are catching real issues.
+
+Unknown bundled rule IDs in `rules` produce a warning on stderr, including in
+JSON mode. Use `rules list` or `rules explain <rule>` to verify IDs after an
+upgrade. A warning does not change the scan's blocking threshold or rewrite the
+config. Arbitrary custom-plugin namespaces are outside this bundled-ID check.
