@@ -100,3 +100,9 @@ export function setsFigure(sets: number): LiftFigure {
     unit: sets === 1 ? "set" : "sets",
   };
 }
+
+/** A count with its noun: a circuit's rounds and moves (Circ1), written
+ *  as the sets are. */
+export function countFigure(n: number, one: string, many: string): LiftFigure {
+  return { to: n, format: groupedFigure, unit: n === 1 ? one : many };
+}

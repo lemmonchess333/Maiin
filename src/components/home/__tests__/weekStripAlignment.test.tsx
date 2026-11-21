@@ -17,6 +17,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WeekStrip from "@/components/home/WeekStrip";
+import { stripWeek } from "@/test/stripWeek";
 import type { UserProfile } from "@/lib/auth";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localDateString } from "@/lib/dateHelpers";
@@ -30,9 +31,12 @@ function renderStrip(selectedDate: string | null = null) {
     <WeekStrip
       todayKey={todayKey}
       dayMap={new Map()}
-      profile={profile}
-      programState={null}
-      claimMap={emptyClaimMap}
+      week={stripWeek({
+        todayKey: todayKey,
+        profile: profile,
+        programState: null,
+        claimMap: emptyClaimMap,
+      })}
       selectedDate={selectedDate}
       onDayTap={vi.fn()}
     />

@@ -64,12 +64,15 @@ describe("the feed card's comment count", () => {
         <ActivityCard feedItem={feedItem(2)} />
       </MemoryRouter>
     );
-    const button = screen.getByRole("button", { name: "View comments" });
+    // Named by the count it shows (WCAG 2.5.3), which moves with it.
+    const button = screen.getByRole("button", { name: "2 comments" });
     expect(button).toHaveTextContent("2");
     act(() => sheet.onCountChange?.(1));
     expect(button).toHaveTextContent("3");
+    expect(button).toHaveAccessibleName("3 comments");
     act(() => sheet.onCountChange?.(-1));
     act(() => sheet.onCountChange?.(-1));
     expect(button).toHaveTextContent("1");
+    expect(button).toHaveAccessibleName("1 comment");
   });
 });

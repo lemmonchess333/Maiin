@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 /** The paywalls' App Store answer on the trial, by plan. */
 const enabledMock = vi.fn(() => true);
@@ -11,6 +11,7 @@ vi.mock("@/lib/revenuecat", () => ({
 }));
 
 import {
+  __resetStoreTrialEligibilityForTests,
   offersTrial,
   useStoreTrialEligibility,
 } from "../useStoreTrialEligibility";
@@ -19,6 +20,7 @@ import { APPLE_PRODUCT_IDS } from "@/lib/purchaseProvider";
 beforeEach(() => {
   vi.clearAllMocks();
   enabledMock.mockReturnValue(true);
+  __resetStoreTrialEligibilityForTests();
 });
 
 describe("useStoreTrialEligibility", () => {
@@ -48,6 +50,81 @@ describe("useStoreTrialEligibility", () => {
     const { result } = renderHook(() => useStoreTrialEligibility());
     await waitFor(() => expect(eligibilityMock).toHaveBeenCalled());
     expect(result.current).toBeNull();
+  });
+
+  it("asks the App Store once for every offer on screen", async () => {
+    eligibilityMock.mockResolvedValue({
+      [APPLE_PRODUCT_IDS.monthly]: "eligible",
+      [APPLE_PRODUCT_IDS.yearly]: "ineligible",
+    });
+    const first = renderHook(() => useStoreTrialEligibility());
+    const second = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() =>
+      expect(first.result.current?.yearly).toBe("ineligible")
+    );
+    await waitFor(() =>
+      expect(second.result.current?.yearly).toBe("ineligible")
+    );
+    expect(eligibilityMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks again after a check that gave no answer", async () => {
+    eligibilityMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      [APPLE_PRODUCT_IDS.monthly]: "eligible",
+      [APPLE_PRODUCT_IDS.yearly]: "eligible",
+    });
+    const first = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() => expect(eligibilityMock).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(first.result.current).toBeNull();
+    const second = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() => expect(second.result.current?.yearly).toBe("eligible"));
+    expect(eligibilityMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("asks again after an answer of unknown, and uses it meanwhile", async () => {
+    // RevenueCat couldn't tell (no receipt read yet, say). Kept for the
+    // session, the trial would hang on that guess for every later offer.
+    eligibilityMock
+      .mockResolvedValueOnce({
+        [APPLE_PRODUCT_IDS.monthly]: "unknown",
+        [APPLE_PRODUCT_IDS.yearly]: "eligible",
+      })
+      .mockResolvedValueOnce({
+        [APPLE_PRODUCT_IDS.monthly]: "ineligible",
+        [APPLE_PRODUCT_IDS.yearly]: "ineligible",
+      });
+    const first = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() =>
+      expect(first.result.current).toEqual({
+        monthly: "unknown",
+        yearly: "eligible",
+      })
+    );
+    const second = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() =>
+      expect(second.result.current).toEqual({
+        monthly: "ineligible",
+        yearly: "ineligible",
+      })
+    );
+    expect(eligibilityMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a definite answer for the next offer", async () => {
+    eligibilityMock.mockResolvedValue({
+      [APPLE_PRODUCT_IDS.monthly]: "eligible",
+      [APPLE_PRODUCT_IDS.yearly]: "ineligible",
+    });
+    const first = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() =>
+      expect(first.result.current?.yearly).toBe("ineligible")
+    );
+    const second = renderHook(() => useStoreTrialEligibility());
+    await waitFor(() =>
+      expect(second.result.current?.yearly).toBe("ineligible")
+    );
+    expect(eligibilityMock).toHaveBeenCalledTimes(1);
   });
 
   it("asks nothing on the web", () => {

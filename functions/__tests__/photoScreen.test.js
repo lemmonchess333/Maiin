@@ -5,13 +5,18 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const {
+  isUnscreenable,
   refusesPhoto,
   safeSearch,
   screenStoredPhoto,
   screenedOwner,
+  SCREENED_PATHS,
+  VISION_REQUEST_LIMIT_BYTES,
 } = require("../lib/photoScreen");
 
 const annotation = (adult, racy = "UNLIKELY") => ({
@@ -114,6 +119,118 @@ describe("safeSearch", () => {
       )
     ).rejects.toThrow(/Bad image/);
   });
+
+  it("reads only Vision's per-image INVALID_ARGUMENT as the photo's own fault", async () => {
+    const unreadable = await safeSearch(
+      Buffer.from("x"),
+      "t",
+      visionAnswer({
+        responses: [{ error: { code: 3, message: "Bad image data." } }],
+      })
+    ).catch((err) => err);
+    expect(isUnscreenable(unreadable)).toBe(true);
+    expect(unreadable.message).toMatch(/Bad image data/);
+    // The service failing, per image or as a whole, is never the photo's.
+    for (const [body, status] of [
+      [{ responses: [{ error: { code: 14, message: "Unavailable" } }] }, 200],
+      [{ responses: [{ error: { code: 13, message: "Internal" } }] }, 200],
+      [{ responses: [{ error: { code: 8, message: "Quota" } }] }, 200],
+      [{ responses: [{ error: { message: "Bad image" } }] }, 200],
+      [{ responses: [{}] }, 200],
+      [{ error: { message: "Cloud Vision API has not been used" } }, 403],
+      [{ error: { message: "Quota exceeded" } }, 429],
+      [{ error: { message: "Invalid JSON payload" } }, 400],
+      [{ error: { message: "Backend Error" } }, 503],
+    ]) {
+      const failed = await safeSearch(
+        Buffer.from("x"),
+        "t",
+        visionAnswer(body, status)
+      ).catch((err) => err);
+      expect(failed).toBeInstanceOf(Error);
+      expect(isUnscreenable(failed)).toBe(false);
+    }
+    const transport = await safeSearch(Buffer.from("x"), "t", async () => {
+      throw new TypeError("fetch failed");
+    }).catch((err) => err);
+    expect(isUnscreenable(transport)).toBe(false);
+  });
+
+  it("does not send Vision a photo past its request limit, and reads it as unscreenable", async () => {
+    const fetchImpl = vi.fn();
+    const tooLarge = Buffer.alloc(
+      Math.ceil((VISION_REQUEST_LIMIT_BYTES * 3) / 4) + 1
+    );
+    const failed = await safeSearch(tooLarge, "t", fetchImpl).catch(
+      (err) => err
+    );
+    expect(isUnscreenable(failed)).toBe(true);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    // Anchor: a photo the app makes is sent.
+    const fits = visionAnswer({
+      responses: [{ safeSearchAnnotation: annotation("UNLIKELY") }],
+    });
+    await safeSearch(Buffer.alloc(2 * 1024 * 1024), "t", fits);
+    expect(fits).toHaveBeenCalledOnce();
+  });
+
+  /* Storage must refuse a screened upload that Vision could never take,
+     so the person is told at upload instead of having the photo accepted
+     and then deleted as unscreenable. Read from storage.rules: each
+     screened prefix's size cap, with a photo one byte under it, has to
+     reach Vision. A Space photo was allowed 10 MB, and anything over
+     about 7.86 MB was deleted on arrival. The prefixes are the screened
+     paths themselves (SCREENED_PATHS), so a new one is held to this too. */
+  it("a photo just under each screened path's Storage cap reaches Vision", async () => {
+    const rules = readFileSync(
+      fileURLToPath(new URL("../../storage.rules", import.meta.url)),
+      "utf8"
+    );
+    const prefixes = SCREENED_PATHS.map((pattern) => {
+      const prefix = /^\^([a-z][a-z-]*)\\\//.exec(pattern.source);
+      expect(prefix, `${pattern} opens on a folder name`).not.toBeNull();
+      return prefix[1];
+    });
+    // Anchored, so the loop below cannot pass by reading no paths.
+    expect(prefixes).toEqual(
+      expect.arrayContaining([
+        "space-photos",
+        "profile-photos",
+        "route-maps",
+        "post-photos",
+      ])
+    );
+    const caps = {};
+    for (const prefix of prefixes) {
+      const block = rules.match(
+        new RegExp(
+          `match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`
+        )
+      );
+      expect(block, `${prefix} has a match block`).not.toBeNull();
+      const size = block[1].match(
+        /request\.resource\.size < (\d+) \* 1024(?: \* (1024))?/
+      );
+      expect(size, `${prefix} caps its uploads`).not.toBeNull();
+      caps[prefix] = Number(size[1]) * 1024 * (size[2] ? 1024 : 1);
+    }
+    const reachesVision = {};
+    for (const [prefix, cap] of Object.entries(caps)) {
+      const fetchImpl = visionAnswer({
+        responses: [{ safeSearchAnnotation: annotation("UNLIKELY") }],
+      });
+      const failed = await safeSearch(Buffer.alloc(cap - 1), "t", fetchImpl)
+        .then(() => null)
+        .catch((err) => err);
+      reachesVision[prefix] =
+        !isUnscreenable(failed) && fetchImpl.mock.calls.length === 1;
+    }
+    expect(reachesVision).toEqual(
+      Object.fromEntries(prefixes.map((prefix) => [prefix, true]))
+    );
+    for (const prefix of prefixes)
+      expect(screenedOwner(`${prefix}/u/x.jpg`)).toBe("u");
+  });
 });
 
 describe("screenStoredPhoto", () => {
@@ -136,7 +253,12 @@ describe("screenStoredPhoto", () => {
         responses: [{ safeSearchAnnotation: annotation("VERY_LIKELY") }],
       }),
     });
-    expect(result).toEqual({ refused: true, adult: "VERY_LIKELY" });
+    // The generation screened comes back, for the callable's record of a pass.
+    expect(result).toEqual({
+      refused: true,
+      adult: "VERY_LIKELY",
+      generation: "1700000000000001",
+    });
     expect(bucket.file).toHaveBeenLastCalledWith("space-photos/u1/1.jpg", {
       generation: "1700000000000001",
       preconditionOpts: { ifGenerationMatch: "1700000000000001" },

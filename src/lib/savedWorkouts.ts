@@ -105,6 +105,11 @@ export interface Workout {
    *  made since completions carried an id. A session resumed after Finish
    *  uses it to leave its own record out of "last time". */
   completionId?: string;
+  /** A circuit (Circ1 (4)): a way of lifting, saved as a workout. Its
+   *  moves are in `circuit` and `exercises` is empty (Circ1 (B)); read it
+   *  through `workoutCircuit`, which checks the stored shape. */
+  format?: "circuit";
+  circuit?: import("@/features/circuit/savedCircuit").SavedCircuit;
 }
 
 /** Total kg lifted in a session, derived from its sets. The writers compute

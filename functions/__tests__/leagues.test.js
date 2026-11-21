@@ -122,6 +122,32 @@ describe("a standing's figures", () => {
     ).toMatchObject({ planned: 3, points: 33 });
   });
 
+  it("race week counts only the lifts it asks for, read on the member's own day", () => {
+    // Race week's rollover kept one session and rested the other two
+    // (TrainWk1, the owner's call (b)), as the app counts the week.
+    const raceWeek = {
+      raceWeek: "race",
+      liftWeekKey: WEEK,
+      workouts: [{ completed: false }, { skipped: true }, { skipped: true }],
+      runPlan: { mode: "race_prep", raceGoal: { targetDate: day(6) } },
+    };
+    expect(
+      figures({ programState: raceWeek, workouts: [lift(day(0))] })
+    ).toMatchObject({ done: 1, planned: 1, points: 100 });
+    // A plan not rolled over to the week keeps its lift days.
+    expect(
+      figures({ programState: { ...raceWeek, liftWeekKey: LAST_WEEK } })
+    ).toMatchObject({ planned: 3 });
+    // A week read after it ended, with no figure stored, keeps its lift days.
+    expect(
+      figures({
+        programState: raceWeek,
+        weekKey: LAST_WEEK,
+        weekIsCurrent: false,
+      })
+    ).toMatchObject({ planned: 3 });
+  });
+
   it("an account that began mid-week is scored from its first day", () => {
     // Began on Thursday: of Mon, Wed and Fri, Friday is left.
     const createdAt = { toMillis: () => Date.parse(`${day(3)}T09:00:00Z`) };

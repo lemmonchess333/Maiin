@@ -58,6 +58,10 @@ describe("StatCard value treatment", () => {
     render(<StatCard label="Trend" value="Establishing" valueKind="text" />);
     const el = valueEl("Establishing");
     expect(el).toHaveClass("text-xl");
+    // And it fits its card: no wider than about 13 letters across it, so
+    // "Overreaching" is not broken mid-word at larger text sizes.
+    expect(el.className).toMatch(/min\(1\.25rem,13cqi\)/);
+    expect(el.parentElement).toHaveClass("@container");
     expect(el).not.toHaveClass("font-mono");
     expect(el).not.toHaveClass("font-figure");
     expect(el).not.toHaveClass("tabular-nums");

@@ -36,7 +36,6 @@ const workout = {
   dayName: "Push A",
   exercises: [{ name: "Bench press" }, { name: "Overhead press" }],
   completed: false,
-  skipped: false,
 };
 
 function renderLift(over: Record<string, unknown> = {}) {
@@ -72,17 +71,16 @@ describe("the lift card's line against last time", () => {
     expect(screen.getByText(/more than last time/)).toBeInTheDocument();
   });
 
-  it("is not drawn once the day is done or skipped", () => {
-    for (const status of ["completed", "skipped"]) {
-      const view = renderLift({
-        nextWorkout: { ...progressed, completed: status === "completed" },
-        status,
-        unit: "kg",
-      });
-      expect(screen.queryByText(/than last time/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/Barbell row 37/)).not.toBeInTheDocument();
-      view.unmount();
-    }
+  /* A skipped lift never reaches the card: the week lays the next one on
+     the day (`layOutWeek`), and `todaySession` gives it no skipped status. */
+  it("is not drawn once the day is done", () => {
+    renderLift({
+      nextWorkout: { ...progressed, completed: true },
+      status: "completed",
+      unit: "kg",
+    });
+    expect(screen.queryByText(/than last time/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Barbell row 37/)).not.toBeInTheDocument();
   });
 });
 

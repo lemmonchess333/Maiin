@@ -27,7 +27,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     email: "t@example.com",
     weeklyWorkoutsTarget: 4,
     weeklyRunDaysTarget: 2,
-    runMode: "structured",
+    runMode: "starter",
     ...overrides,
   } as UserProfile;
 }

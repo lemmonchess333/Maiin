@@ -58,9 +58,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
-  // Twelve people in the league trained lately: enough for challenges to
-  // be offered (App1 Q6). The quiet Tropos has its own tests.
-  seedFirestore({ "leagueStatus/current": { joined: 12 } });
   h.user = { uid: "acct-a" };
   const joinedAt = Timestamp.fromDate(new Date("2026-09-07T08:00:00Z"));
   seedFirestore({
@@ -122,7 +119,7 @@ describe("ChallengeList — the weekly card across an account switch", () => {
     // B has not joined and its own count has not landed: the card is the
     // challenge's offer, with no count and no place carried over.
     expect(
-      await screen.findByRole("button", { name: "Join weekly challenge" })
+      await screen.findByRole("button", { name: "Join challenge" })
     ).toBeInTheDocument();
     expect(screen.queryByText("You’re on the board")).toBeNull();
     expect(screen.queryByText("1 of 2 sessions this week.")).toBeNull();

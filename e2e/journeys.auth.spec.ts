@@ -48,6 +48,7 @@ import {
   EXPECTED_AUTH_HOST,
   EXPECTED_FIRESTORE_HOST,
 } from "./helpers/emulator";
+import { answerRunningLevelIfAsked } from "./helpers/runPlan";
 
 // Sandbox rigs provide a system chromium instead of the Playwright-
 // managed download — same escape hatch every other auth spec carries.
@@ -114,6 +115,8 @@ test.describe("core user journeys", () => {
     await expect(page.getByRole("heading", { name: "Run plan" })).toBeVisible({
       timeout: 15_000,
     });
+    // The seeded user lifts only: Run plan asks how much they run first.
+    await answerRunningLevelIfAsked(page);
 
     // "Running goal" is a radiogroup (No race / Training for a race). Choosing a race
     // reveals the RaceGoalPlanner.

@@ -21,7 +21,6 @@ import { runHeaderLine } from "./runHeaderLine";
 import { runTemplateName, runTypeTitle } from "./runLabels";
 import { plannedRunDose } from "./runDose";
 import { resolveRunPlan } from "./runPlanResolver";
-import { getWeeklyRunTarget } from "./scheduleUtils";
 import { beforeStart, startDayKey } from "./startDay";
 import {
   dayTypeFor,
@@ -97,7 +96,6 @@ function planLine(
       runPlan?.leadInWeek === localWeekKey(parseLocalDate(todayKey))
         ? runPlan.leadInWeek
         : null,
-    runsTarget: getWeeklyRunTarget(profile),
     starterStage: runPlan?.mode === "starter" ? runPlan.stage : null,
   });
 }

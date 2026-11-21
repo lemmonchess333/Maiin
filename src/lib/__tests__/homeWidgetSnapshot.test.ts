@@ -10,7 +10,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { TodaySession } from "@/lib/todaySession";
 import type { WorkoutDay } from "@/features/program/programTypes";
-import type { WeekStripDay } from "@/lib/weekStripDays";
+import type { WeekDayState } from "@/lib/weekStripDays";
 import {
   homeWidgetSnapshot,
   raceCountdown,
@@ -57,7 +57,7 @@ function session(over: Partial<TodaySession> = {}): TodaySession {
   };
 }
 
-const liftToday = (status: "planned" | "completed" | "skipped" = "planned") =>
+const liftToday = (status: "planned" | "completed" = "planned") =>
   session({
     type: "lift",
     lift: {
@@ -99,7 +99,7 @@ const TOMORROW_RUN = {
   sport: "run" as const,
 };
 
-const STRIP: WeekStripDay[] = [
+const STRIP: HomeWidgetInput["strip"] = [
   "lift-done",
   "missed",
   "planned",
@@ -110,14 +110,7 @@ const STRIP: WeekStripDay[] = [
 ].map((state, i) => ({
   key: `2026-11-${String(9 + i).padStart(2, "0")}`,
   sType: i === 3 ? "run" : i === 5 ? "both" : "lift",
-  state: state as WeekStripDay["state"],
-  isToday: i === 2,
-  isPast: i < 2,
-  liftCompleted: false,
-  liftSkipped: false,
-  liftLogged: false,
-  runDone: false,
-  runSkipped: false,
+  state: state as WeekDayState,
 }));
 
 function input(over: Partial<HomeWidgetInput> = {}): HomeWidgetInput {
@@ -184,9 +177,19 @@ describe("the Today widget's day", () => {
   });
 
   it("a skipped session says so, in the same neutral register", () => {
-    expect(widgetToday(input({ session: liftToday("skipped") }))).toMatchObject(
-      { state: "done", kicker: "Skipped today", line: "Skipped today" }
-    );
+    // A run: a skipped lift is never today's (TrainWk1 step 2), the week
+    // lays the next lift on the day instead.
+    const skipped = runToday();
+    const runDay = { ...skipped.run!.runDay!, status: "skipped" as const };
+    expect(
+      widgetToday(
+        input({ session: { ...skipped, run: { ...skipped.run!, runDay } } })
+      )
+    ).toMatchObject({
+      state: "done",
+      kicker: "Skipped today",
+      line: "Skipped today",
+    });
   });
 
   it("a day with two: the one still to do leads, with how many are done", () => {
