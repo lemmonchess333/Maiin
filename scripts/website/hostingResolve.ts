@@ -36,7 +36,8 @@ export interface HostingRewrite {
 }
 
 export interface HostingHeaderRule {
-  source: string;
+  source?: string;
+  regex?: string;
   headers: { key: string; value: string }[];
 }
 
@@ -97,6 +98,17 @@ export function assertModelled(config: HostingConfig): void {
     ) {
       throw new Error(
         `resolveHosting does not model the redirect ${JSON.stringify(redirect)}`
+      );
+    }
+  }
+  for (const rule of config.headers ?? []) {
+    const keys = Object.keys(rule).sort().join(",");
+    if (
+      !(keys === "headers,source" && typeof rule.source === "string") &&
+      !(keys === "headers,regex" && typeof rule.regex === "string")
+    ) {
+      throw new Error(
+        `hostingHeaders does not model the header rule ${JSON.stringify(rule)}`
       );
     }
   }
@@ -172,14 +184,16 @@ export function resolveHosting(
   return { kind: "404" };
 }
 
-/** The headers Hosting sends with `pathname`, later rules winning. */
+/** The headers Hosting sends with `pathname`, later rules winning. A rule
+ *  names its paths by a `source` glob or a `regex`, as a rewrite does. */
 export function hostingHeaders(
   config: HostingConfig,
   pathname: string
 ): Map<string, string> {
+  assertModelled(config);
   const out = new Map<string, string>();
   for (const rule of config.headers ?? []) {
-    if (!globToRegExp(rule.source).test(pathname)) continue;
+    if (!ruleRegExp(rule).test(pathname)) continue;
     for (const { key, value } of rule.headers)
       out.set(key.toLowerCase(), value);
   }

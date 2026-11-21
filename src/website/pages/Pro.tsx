@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { CircleCheck } from "lucide-react";
 import { FREE_KEEPS, PRO_INCLUDES } from "@/components/paywall/proIncludesCopy";
 import {
@@ -10,7 +11,8 @@ import {
 import AppStoreBadge from "@/website/AppStoreBadge";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
-import { sitePage } from "@/website/sitePages";
+import { normalisePath, sitePage } from "@/website/sitePages";
+import { useLandingContext } from "@/website/useLandingContext";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
 import SiteHeadline from "@/website/blocks/SiteHeadline";
 
@@ -46,11 +48,32 @@ const QUESTIONS = [
  * payment (App1 Q77, option 4).
  */
 export default function Pro() {
-  usePageHead(sitePageHead(sitePage("pro")));
+  const { pathname } = useLocation();
+  // At the app's old Pro address (`/upgrade`) the page names /pro as its
+  // canonical copy and asks not to be indexed itself.
+  usePageHead({
+    ...sitePageHead(sitePage("pro")),
+    noindex: normalisePath(pathname) !== "/pro",
+  });
+  const { note } = useLandingContext();
   return (
     <SiteLayout>
       <section className="site-container grid gap-10 pt-6 pb-14 md:grid-cols-[1.1fr_1fr] md:items-start md:pt-12 lg:pb-24">
         <div>
+          {note === "checkoutDone" && (
+            <div
+              role="status"
+              className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-card border border-success/30 text-sm font-medium"
+            >
+              <CircleCheck
+                className="size-4 shrink-0 mt-0.5 text-success-strong"
+                aria-hidden="true"
+              />
+              <span>
+                If you just paid, Pro is on for your account in the Tropos app.
+              </span>
+            </div>
+          )}
           <p className="site-kicker text-lifting-strong">Tropos Pro</p>
           <SiteHeadline className="mt-2">What Pro adds</SiteHeadline>
           <p className="site-lede mt-4 text-muted-foreground max-w-[34rem]">

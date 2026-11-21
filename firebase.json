@@ -12,6 +12,10 @@
         }
       },
       {
+        "regex": "^/upgrade/?$",
+        "destination": "/pro/index.html"
+      },
+      {
         "regex": "^/(?:admin|circuit|diagnostics|dev|empty-workout|followers|following|history|league|onboarding|program|review|routine|run|run-summary|segment|settings|space|upgrade|user|workout)(?:/.*)?$",
         "destination": "/index.html"
       }
@@ -43,6 +47,15 @@
           {
             "key": "Permissions-Policy",
             "value": "camera=(self), geolocation=(self), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()"
+          }
+        ]
+      },
+      {
+        "regex": "^/(?:upgrade|settings)(?:/.*)?$",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
           }
         ]
       },

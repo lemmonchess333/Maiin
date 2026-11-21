@@ -18,10 +18,12 @@
  * - `/space/<id>`, and a post in one (`/space/<id>/post/<id>`): a shared
  *   Space (Run27 call 11), which the iPhone app opens when it is installed.
  * - `/upgrade?checkout=success`: where RevenueCat's hosted checkout returns
- *   after a web purchase (docs/iap/revenuecat-setup.md, Part W). The
- *   website does not sell while the web engine is open (Q77), and the
- *   parameter is unsigned, so anyone can type it: the line says what is
- *   true if they just paid, and nothing here claims a payment.
+ *   after a web purchase (docs/iap/revenuecat-setup.md, Part W). That
+ *   address opens the website's Pro page (`PAGE_ALIASES` in
+ *   `sitePages.ts`), which adds this line. The website does not sell while
+ *   the web engine is open (Q77), and the parameter is unsigned, so anyone
+ *   can type it: the line says what is true if they just paid, and nothing
+ *   here claims a payment.
  */
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { INVITE_PARAM } from "@/lib/publicLinks";

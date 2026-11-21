@@ -32,7 +32,11 @@ import {
   WEBSITE_OUTPUT,
   websitePublicFiles,
 } from "../../../scripts/website/websiteEntry";
-import { APP_ADDRESS_PREFIXES, SITE_PAGES } from "@/website/sitePages";
+import {
+  APP_ADDRESS_PREFIXES,
+  PAGE_ALIASES,
+  SITE_PAGES,
+} from "@/website/sitePages";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -100,7 +104,7 @@ type Page =
   | { page: "landing"; note?: RegExp; invite?: boolean }
   | { page: "post" }
   | { page: "legal"; heading: string }
-  | { page: "site"; heading: string }
+  | { page: "site"; heading: string; note?: RegExp }
   | { page: "notFound" };
 
 interface Kept {
@@ -243,14 +247,19 @@ const KEPT: Kept[] = [
   {
     address: "/upgrade?checkout=success",
     from: "RevenueCat's Purchase Link return (revenuecat-setup.md Part W)",
-    hosting: WEBSITE,
-    shows: { page: "landing", note: /If you just paid/ },
+    hosting: { kind: "file", file: "pro/index.html" },
+    shows: { page: "site", heading: "What Pro adds", note: /If you just paid/ },
   },
   {
     address: "/upgrade",
     from: "the web paywall's address",
-    hosting: WEBSITE,
-    shows: { page: "landing" },
+    hosting: { kind: "file", file: "pro/index.html" },
+    shows: { page: "site", heading: "What Pro adds" },
+  },
+  {
+    address: "/upgrade/",
+    from: "the web paywall's address, written with a slash",
+    hosting: { kind: "file", file: "pro/index.html" },
   },
   {
     address: "/settings/account",
@@ -412,7 +421,10 @@ describe("Firebase Hosting answers every kept address", () => {
     for (const prefix of APP_ADDRESS_PREFIXES.filter(
       (p) => p !== "/activity"
     )) {
-      for (const address of [prefix, `${prefix}/x`, `${prefix}/x/y`]) {
+      // The app's Pro page opens the website's (`PAGE_ALIASES`), by a
+      // rewrite of its own ahead of this one.
+      const bare = PAGE_ALIASES[prefix] ? [] : [prefix];
+      for (const address of [...bare, `${prefix}/x`, `${prefix}/x/y`]) {
         expect(resolveHosting(hosting, files, address), address).toEqual(
           WEBSITE
         );
@@ -455,6 +467,34 @@ describe("Firebase Hosting answers every kept address", () => {
   });
 });
 
+describe("the app's account addresses stay out of search", () => {
+  it("sends X-Robots-Tag: noindex with /upgrade and /settings, and with no page of the website's", () => {
+    for (const address of [
+      "/upgrade",
+      "/upgrade/",
+      "/settings",
+      "/settings/account",
+    ]) {
+      expect(
+        hostingHeaders(hosting, address).get("x-robots-tag"),
+        address
+      ).toBe("noindex");
+    }
+    for (const address of [
+      ...SITE_PAGES.map((p) => p.path),
+      "/space/brighton-marathon",
+      "/activity/run1",
+      "/upgradex",
+      "/settingsx",
+    ]) {
+      expect(
+        hostingHeaders(hosting, address).has("x-robots-tag"),
+        address
+      ).toBe(false);
+    }
+  });
+});
+
 describe("the website's page at each address", () => {
   const shown = KEPT.filter((k) => k.shows);
 
@@ -477,6 +517,8 @@ describe("the website's page at each address", () => {
       });
       expect(badges).toHaveLength(1);
       expect(badges[0]).toHaveAttribute("href", APP_STORE_URL);
+      if (shows.note) expect(screen.getByText(shows.note)).toBeInTheDocument();
+      else expect(screen.queryByText(/If you just paid/)).toBeNull();
       return;
     }
     if (shows?.page === "notFound") {
@@ -569,15 +611,29 @@ describe("the website's page at each address", () => {
     });
     cleanup();
 
-    for (const address of ["/upgrade?checkout=success", "/settings/account"]) {
-      renderAt(address);
-      await screen.findByRole("heading", { level: 1 });
-      expect(head(), address).toEqual({
-        canonical: "https://troposfit.com/",
-        robots: "noindex",
-      });
-      cleanup();
-    }
+    renderAt("/settings/account");
+    await screen.findByRole("heading", { level: 1 });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/",
+      robots: "noindex",
+    });
+    cleanup();
+
+    // The app's Pro address opens Pro, which names /pro as itself.
+    renderAt("/upgrade?checkout=success");
+    await screen.findByRole("heading", { level: 1, name: "What Pro adds" });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/pro",
+      robots: "noindex",
+    });
+    cleanup();
+    renderAt("/pro");
+    await screen.findByRole("heading", { level: 1, name: "What Pro adds" });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/pro",
+      robots: undefined,
+    });
+    cleanup();
     // Gone with the page.
     expect(head()).toEqual({ canonical: undefined, robots: undefined });
   });

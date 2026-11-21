@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, CircleCheck } from "lucide-react";
 import { PRO_INCLUDES } from "@/components/paywall/proIncludesCopy";
@@ -14,7 +13,7 @@ import challengeBoard from "@/website/screens/challenge-board.webp";
 import { sitePage } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
 import { landingHead } from "@/website/websiteHead";
-import { landingContext, type LandingContext } from "@/website/websiteAddress";
+import { useLandingContext } from "@/website/useLandingContext";
 import SiteHeadline from "@/website/blocks/SiteHeadline";
 
 const SPORTS = [
@@ -47,32 +46,12 @@ const SPORTS = [
   },
 ] as const;
 
-const NO_CONTEXT: LandingContext = { invite: null, note: null };
-const subscribeToNothing = () => () => {};
-
-/**
- * What the address that brought the visitor adds to Home: a friend's
- * invite, a shared Space or the checkout's return (`websiteAddress.ts`).
- * Nothing while the browser takes over the HTML it was sent (Home, written
- * out at build time, which knows no address), then the address's own:
- * `useSyncExternalStore`'s server snapshot is what hydration reads.
- */
-function useLandingContext(): LandingContext {
-  const { pathname, search } = useLocation();
-  const inBrowser = useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false
-  );
-  return inBrowser ? landingContext(pathname, search) : NO_CONTEXT;
-}
-
 /**
  * troposfit.com's Home, as the website’s design draws it: the welcome's
  * photographs and its promise with the App Store badge, then the app
  * doing what it promises, the three sports, the people and Pro. Every
  * address of the app's own also lands here (App1 Q52), with a line for
- * the one that brought the visitor.
+ * an invite or a shared Space; the app's Pro page (`/upgrade`) opens Pro.
  */
 export default function Home() {
   const { pathname, search } = useLocation();
@@ -90,21 +69,6 @@ export default function Home() {
         <HeroPhotos />
         <div className="site-container home-hero-copy">
           <div className="max-w-[36rem] space-y-3">
-            {note === "checkoutDone" && (
-              <div
-                role="status"
-                className="flex items-start gap-2.5 p-3 rounded-xl bg-stage-raised border border-success/30 text-sm font-medium"
-              >
-                <CircleCheck
-                  className="size-4 shrink-0 mt-0.5 text-success-strong"
-                  aria-hidden="true"
-                />
-                <span>
-                  If you just paid, Pro is on for your account in the Tropos
-                  app.
-                </span>
-              </div>
-            )}
             {note === "space" && (
               <p className="p-3 rounded-xl bg-stage-raised text-sm font-semibold">
                 Get Tropos on your iPhone to open this Space.

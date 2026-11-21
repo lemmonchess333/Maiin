@@ -2820,7 +2820,8 @@ The marketing site on top of Q52's page (`docs/website/design.md`): Home, Liftin
 
 - [ ] **Every page on a phone and a computer.** After Deploy production, open `https://troposfit.com`, `/lifting`, `/running`, `/food`, `/social`, `/pro`, `/about` and `/press` in Safari on an iPhone and in a desktop browser. Passing: each opens with its words already drawn (no blank page first), the header's pages move between them without a reload, Apple's badge opens the App Store listing, and on a computer the foot's QR code opens the listing on a phone.
 - [ ] **No trailing slash.** `https://troposfit.com/lifting/` and `/privacy/` redirect (301) to `/lifting` and `/privacy`; `/privacy`, the App Store listing's address, answers 200 with no redirect.
-- [ ] **A real 404.** `https://troposfit.com/no-such-page` answers 404 (DevTools, Network) with "There’s no page at this address"; `/settings/account`, `/upgrade` and `/space/<id>` still answer 200 with Home.
+- [ ] **A real 404.** `https://troposfit.com/no-such-page` answers 404 (DevTools, Network) with "There’s no page at this address"; `/settings/account` and `/space/<id>` still answer 200 with Home, and `/upgrade` with the Pro page.
+- [ ] **`/upgrade` and the search engines.** `https://troposfit.com/upgrade?checkout=success` opens the Pro page with "If you just paid, Pro is on for your account in the Tropos app." above its headline; DevTools, Network shows `X-Robots-Tag: noindex` on `/upgrade` and `/settings/account`, and none on `/pro` or `/`.
 - [ ] **Link previews.** Paste `https://troposfit.com`, `/lifting` and `/pro` into Messages and Slack. Passing: each shows its own title and its own picture (`/og/<page>.jpg`). A shared post's link still shows the post (`publicPostPage`, unchanged).
 - [ ] **Lighthouse on the live site.** Chrome DevTools, Lighthouse, mobile, on Home and Social. Passing: performance 90 or more, accessibility, best practices and SEO 100 (93 to 98 and 100 locally, with Hosting's compression emulated).
 - [ ] **Search Console (owner).** Add troposfit.com as a property, verify it through the domain's DNS, and submit `https://troposfit.com/sitemap.xml`.
@@ -2887,7 +2888,7 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
 
 - [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
-- [ ] **Before the Purchase Link goes live (App1 Q52, 15 November 2026):** troposfit.com no longer serves the app, so nothing on it can start this checkout. The return also needs a signed parameter: `?checkout=success` is unsigned, so anyone can type it, and until the return carries something the website can verify, the page can only say what is true if they paid. The website first needs either a signed-in Pro corner (an existing account signs in, then the checkout as that account, its `?checkout=success` return and Manage subscription) or an anonymous purchase the iPhone app redeems into the account (RevenueCat's redemption links, native work). The owner is choosing; either is its own PR. Until then `/upgrade` and `/settings/account` show the App Store page, and the web trial email's "sign in to Tropos on the web" steps (`functions/lib/trialReminderEmail.js`) and iOS Upgrade's "Manage your subscription at troposfit.com" point at nothing that manages a subscription.
+- [ ] **Before the Purchase Link goes live (App1 Q52, 15 November 2026):** troposfit.com no longer serves the app, so nothing on it can start this checkout. The return also needs a signed parameter: `?checkout=success` is unsigned, so anyone can type it, and until the return carries something the website can verify, the page can only say what is true if they paid. The website first needs either a signed-in Pro corner (an existing account signs in, then the checkout as that account, its `?checkout=success` return and Manage subscription) or an anonymous purchase the iPhone app redeems into the account (RevenueCat's redemption links, native work). The owner is choosing; either is its own PR. Until then `/upgrade` shows the website's Pro page and `/settings/account` the App Store page, and the web trial email's "sign in to Tropos on the web" steps (`functions/lib/trialReminderEmail.js`) and iOS Upgrade's "Manage your subscription at troposfit.com" point at nothing that manages a subscription.
 - [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
 - [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
 - [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
@@ -2957,7 +2958,7 @@ In this order:
       listed or written again.
 - [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
       `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
-      photo field`; Firebase console → Storage has no `food-photos`
+    photo field`; Firebase console → Storage has no `food-photos`
       folder; and in Firestore console a meal scanned before 18 August
       2026 has neither `photoUrl` nor `photoPath`. Then write into
       CLAUDE.md's "Meal photos are device-local" section, where it says
@@ -2966,8 +2967,7 @@ In this order:
       same script runs from a terminal with Admin credentials; its header
       has the command.)
 - [ ] **An older build.** After the purge, a TestFlight build from before
-      this change, on an account with a meal scanned before 18 August
-      2026. Passing: that meal's row shows our drawing of the food, not a
+      this change, on an account with a meal scanned before 18 August 2026. Passing: that meal's row shows our drawing of the food, not a
       broken picture (the row falls back when its photo fails to load).
 - [ ] **Then the account-deletion sweep can go.** Once the purge has run,
       `food-photos/__UID__/` in `STORAGE_PREFIX_TEMPLATES`

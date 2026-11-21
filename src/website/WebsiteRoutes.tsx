@@ -85,6 +85,7 @@ export default function WebsiteRoutes() {
           <Route path="/food" element={<Food />} />
           <Route path="/social" element={<Social />} />
           <Route path="/pro" element={<Pro />} />
+          <Route path="/upgrade" element={<Pro />} />
           <Route path="/about" element={<About />} />
           <Route path="/press" element={<Press />} />
           <Route path="/activity/:activityId" element={<Post />} />
