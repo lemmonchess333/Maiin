@@ -124,7 +124,7 @@ describe("a feed card opens its post", () => {
       "/activity/w1"
     );
     const compare = screen.getByRole("button", {
-      name: "Compare your Back Squat",
+      name: /^Back Squat .*, compare with yours$/,
     });
     expect(compare.closest("a")).toBeNull();
   });
