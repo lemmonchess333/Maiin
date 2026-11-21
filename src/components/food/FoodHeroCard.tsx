@@ -269,10 +269,12 @@ export default function FoodHeroCard({
             components.css, which draws it as a 170px circle at this box's
             centre). The box runs out to the screen's edges and no
             further: a 340px circle of its own would reach 10px past a
-            320px screen. */}
+            320px screen. In one of two panes (the iPhone Duo's inner
+            display, DESIGN_GUIDE §14r) it keeps to its pane, clear of
+            the fold; the circle, at its centre, is where it was. */}
         <div
           aria-hidden="true"
-          className="food-hero-glow pointer-events-none absolute inset-x-[-16px] top-[-38px] h-[340px]"
+          className="food-hero-glow pointer-events-none absolute inset-x-[-16px] top-[-38px] h-[340px] split:in-data-two-panes:inset-x-0"
         />
         {/* Top left: the goal-hit caption, for the two seconds after the
             day's last goal is met. */}

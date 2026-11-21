@@ -20,6 +20,7 @@ import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
+import TwoPanes, { Pane } from "@/components/ui/TwoPanes";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
@@ -2073,603 +2074,613 @@ export default function Food() {
       />
       {readError}
 
-      {/* The wheel, then the week it belongs to, then the macros (Food11
-          call 4), 8px apart as one group. The week strip sat above the
-          calorie card until then, a section of its own. */}
-      <motion.div variants={pageItemVariant} className="space-y-2">
-        <FoodHeroCard
-          key={selectedDate}
-          drawIn={heroDrawIn}
-          holdWheel={logFlight.holdWheel}
-          selectedDate={selectedDate}
-          isToday={isToday}
-          dailyTargets={dailyTargets}
-          dailyTotals={{
-            calories: dailyTotals.calories,
-            protein: dailyTotals.protein,
-            carbs: dailyTotals.carbs,
-            fat: dailyTotals.fat,
-          }}
-          onTapDrillDown={() => {
-            setHeroSheetUsed(true);
-            setHeroSheetOpen(true);
-          }}
-        />
-        {/* Isolated as Home's strip is: a bad day's data costs the strip,
-            not the diary under it. Not inside the hero: that is remounted
-            on every day change, which would drop the focus from the day
-            just tapped. */}
-        <SectionErrorBoundary sectionName="food-week-strip">
-          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
-        </SectionErrorBoundary>
-        {/* No macros on a day before the account began with nothing
-            logged on it (Food10 (3)), as the hero draws no wheel for it. */}
-        {!(
-          beforeStart(selectedDate, accountStartKey) &&
-          dailyTotals.calories === 0
-        ) && (
-          <FoodMacroRow
-            key={selectedDate}
-            drawIn={heroDrawIn}
-            dailyTargets={dailyTargets}
-            dailyTotals={{
-              protein: dailyTotals.protein,
-              carbs: dailyTotals.carbs,
-              fat: dailyTotals.fat,
-            }}
-          />
-        )}
-      </motion.div>
-      <FoodLogFlight
-        flight={foodFlight}
-        onArrive={logFlight.arrive}
-        onDone={logFlight.finish}
-      />
-      {/* Mounted from the first open on, so it closes with its animation
-          and its queued Pro sheet opens after it has gone. */}
-      {heroSheetUsed && (
-        <Suspense fallback={null}>
-          <HeroDrillDownSheet
-            open={heroSheetOpen}
-            onOpenChange={setHeroSheetOpen}
-            selectedDate={selectedDate}
-            isToday={isToday}
-            dailyTotals={{
-              calories: dailyTotals.calories,
-              protein: dailyTotals.protein,
-              carbs: dailyTotals.carbs,
-              fat: dailyTotals.fat,
-              fiber: dailyTotals.fiber,
-              sugar: dailyTotals.sugar,
-              sodium: dailyTotals.sodium,
-            }}
-            dailyTargets={dailyTargets}
-            onOpenWeek={() => {
-              setHeroSheetOpen(false);
-              navigate("/history?view=food&range=1W");
-            }}
-          />
-        </Suspense>
-      )}
-
-      {/* FOOD-02: the refuel handoff. Renders ONLY when arriving via a
-          finish screen's "Log recovery food" link (`recoveryFoodPath`: the
-          run's, and the lift's since App1 Q30), today, and until
-          dismissed — a transient contextual chip, not a new structural
-          section (Food6 IA untouched). Frames the existing composer with
-          one calm data-derived line in the session's colour; no separate
-          flow, no prescription, finalTarget unchanged. */}
-      {refuelSport && isToday && (
-        <motion.div variants={pageItemVariant}>
-          <div
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
-              refuelSport === "run" ? "bg-running/10" : "bg-lifting/10"
-            }`}
-          >
-            <p className="flex-1 text-sm text-foreground">
-              {refuelSport === "run"
-                ? "Nice run. Refuel with carbs and protein."
-                : "Nice workout. Refuel with protein and carbs."}
-              {(() => {
-                const proteinLeft = Math.max(
-                  0,
-                  Math.round(dailyTargets.protein - dailyTotals.protein)
-                );
-                const carbsLeft = Math.max(
-                  0,
-                  Math.round(dailyTargets.carbs - dailyTotals.carbs)
-                );
-                if (proteinLeft === 0 && carbsLeft === 0) return null;
-                return (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    You have{" "}
-                    <span className="font-mono tabular-nums font-semibold text-foreground">
-                      {proteinLeft}g
-                    </span>{" "}
-                    protein and{" "}
-                    <span className="font-mono tabular-nums font-semibold text-foreground">
-                      {carbsLeft}g
-                    </span>{" "}
-                    carbs left today.
-                  </span>
-                );
-              })()}
-            </p>
-            <IconButton
-              aria-label="Dismiss refuel reminder"
-              icon={<X className="w-4 h-4" aria-hidden="true" />}
-              size="sm"
-              onClick={() =>
-                setSearchParams(
-                  (params) => {
-                    const updated = new URLSearchParams(params);
-                    updated.delete("context");
-                    return updated;
-                  },
-                  { replace: true }
-                )
-              }
+      {/* Two panes where the screen has room for two (the iPhone Duo's
+          inner display open on its side): the day's wheel, week and
+          macros on one side; logging, the diary and water on the other,
+          so the composer sits at the top of its pane, clear of the
+          keyboard. One column on a phone, as before. */}
+      <TwoPanes>
+        <Pane>
+          {/* The wheel, then the week it belongs to, then the macros (Food11
+              call 4), 8px apart as one group. The week strip sat above the
+              calorie card until then, a section of its own. */}
+          <motion.div variants={pageItemVariant} className="space-y-2">
+            <FoodHeroCard
+              key={selectedDate}
+              drawIn={heroDrawIn}
+              holdWheel={logFlight.holdWheel}
+              selectedDate={selectedDate}
+              isToday={isToday}
+              dailyTargets={dailyTargets}
+              dailyTotals={{
+                calories: dailyTotals.calories,
+                protein: dailyTotals.protein,
+                carbs: dailyTotals.carbs,
+                fat: dailyTotals.fat,
+              }}
+              onTapDrillDown={() => {
+                setHeroSheetUsed(true);
+                setHeroSheetOpen(true);
+              }}
             />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Logging group: the composer and slot, then the eligible usual.
-          The composer leads so the page's main input, and its Scan button,
-          are on screen when the page opens (owner call). With the usual row
-          above it, the text box sat under the tab bar for a habitual user
-          on a 390x844 phone and on an SE. The usual row follows as the
-          one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
-          wide, that the Scan button clears the tab bar and that the usual
-          row's Log comes after it. */}
-      <motion.div variants={pageItemVariant}>
-        <FoodComposerCard
-          /* Photo logging gated for this tier: one line under the field
-             says why the camera is locked and where Pro is. Mounted only
-             when it has something to say, so the ungated tiers never
-             run its hooks and never carry an empty step in the rhythm. */
-          proHint={
-            !proLineWaits &&
-            !scanUsage.loading &&
-            !scanUsage.isUnlimited &&
-            scanUsage.limit === 0 ? (
-              <FoodProHint
-                limit={scanUsage.limit}
-                isUnlimited={scanUsage.isUnlimited}
-                loading={scanUsage.loading}
+            {/* Isolated as Home's strip is: a bad day's data costs the strip,
+                not the diary under it. Not inside the hero: that is remounted
+                on every day change, which would drop the focus from the day
+                just tapped. */}
+            <SectionErrorBoundary sectionName="food-week-strip">
+              <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+            </SectionErrorBoundary>
+            {/* No macros on a day before the account began with nothing
+                logged on it (Food10 (3)), as the hero draws no wheel for it. */}
+            {!(
+              beforeStart(selectedDate, accountStartKey) &&
+              dailyTotals.calories === 0
+            ) && (
+              <FoodMacroRow
+                key={selectedDate}
+                drawIn={heroDrawIn}
+                dailyTargets={dailyTargets}
+                dailyTotals={{
+                  protein: dailyTotals.protein,
+                  carbs: dailyTotals.carbs,
+                  fat: dailyTotals.fat,
+                }}
               />
-            ) : null
-          }
-          ref={suggestionsRef}
-          nlInput={nlInput}
-          setNlInput={setNlInput}
-          nlParsing={nlParsing}
-          inputFocused={inputFocused}
-          setInputFocused={(v) => {
-            if (v && !inputFocused) {
-              trackFoodEvent("food_composer_focused");
-              // Opens a logging attempt, to be paired with `food_log_saved`
-              // so an abandoned attempt is visible as an unmatched start.
-              // `slot` is the targeted slot when the user picked one, and
-              // the slot the clock implies otherwise.
-              trackFoodEvent("food_log_start", {
-                slot: targetMeal ?? mealSlotFor(undefined),
-              });
-            }
-            // The no-match prompt is for the moment after the scan.
-            if (!v) setDescribeHint(false);
-            setInputFocused(v);
-          }}
-          setSuggestionsActive={setSuggestionsActive}
-          placeholderPrompt={
-            describeHint
-              ? "What is this product?"
-              : NL_EXAMPLE_PROMPTS[placeholderIdx]
-          }
-          onParse={handleNLParse}
-          inputRef={inputRef}
-          showSuggestions={showSuggestions || showQuickAdd}
-          suggestions={suggestions}
-          offResults={offResults}
-          pantryResults={pantrySuggestions}
-          quickAdd={quickAddSection}
-          offEmpty={offEmpty}
-          offSearchQuery={offSearchQuery}
-          onSelectSuggestion={handleSuggestionSelect}
-          onSelectOff={handleOFFSelect}
-          onSelectPantry={handlePantrySelect}
-          scanUsage={scanUsage}
-          scanOverrides={scanOverrides}
-          onUpgrade={handleUpgrade}
-          onManualOpen={() => setManualOpen(true)}
-        />
-        {/* The guide's hint on a first visit (FV1). */}
-        <GuideHint
-          id="food-composer"
-          when
-          onClose={() => setComposerHintClosed(true)}
-        />
-      </motion.div>
-      {usual && (
-        /* One row: what and how much on the left, Edit and Log on the
-           right. It sits under the composer, where on a 390x844 phone it
-           decides whether the one-tap Log clears the tab bar, so it takes
-           the least height that keeps the name whole: the name gets its
-           own line rather than sharing one with the figures, where it
-           truncated first. Edit is the pencil the Quick Add rows already
-           use for the same sheet. Both controls stay 44px.
-
-           Log is the food orange, not brand purple (owner call): it
-           is in Food's colour, as the camera and the send arrow in the
-           composer's field are, and since Food11 it is the page's one
-           filled control. Purple stays for Pro ("Try Pro free").
-           CLAUDE.md's Button mapping records the exception;
-           mealSlotPickerIdentity.test.tsx pins it.
-
-           The group takes its name FROM the visible heading, so the two
-           cannot disagree.
-
-           At larger text the two controls drop under the words together,
-           at the right, once the words would have less than 7em beside
-           them: at double size on a 320px screen, "Your usual at
-           breakfast" ran 74px past the card. */
-        <Card
-          size="compact"
-          className="flex flex-wrap items-center gap-2"
-          role="group"
-          aria-labelledby={usualHeadingId}
-        >
-          <div className="min-w-0 grow basis-[7em]">
-            <p
-              id={usualHeadingId}
-              className="text-micro leading-tight text-muted-foreground"
-            >
-              {usualMealHeading(usualSlot)}
-            </p>
-            <p className="text-base font-semibold leading-snug truncate">
-              {usual.name}
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground truncate">
-              <span className="font-mono tabular-nums">
-                {formatCalories(usual.cal)}
-              </span>{" "}
-              {CALORIE_UNIT}
-              {usualPortion && ` · ${usualPortion}`}
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <IconButton
-              aria-label="Adjust portion or meal"
-              disabled={quickAdding !== null}
-              onClick={() => setPortionMeal(usual)}
-              icon={<Pencil className="size-4" />}
-            />
-            {/* Logs to the slot the heading names. With no slot selected
-                the heading names the hour's slot, and a meal saved without
-                one is filed by the diary's own hour rule, which differs. */}
-            <Button
-              variant="nutrition"
-              disabled={quickAdding !== null}
-              onClick={() => void handleQuickMealAdd(usual, usualSlot)}
-            >
-              Log
-            </Button>
-          </div>
-        </Card>
-      )}
-      {copyingEntries && (
-        <Suspense fallback={null}>
-          <CopyEntrySheet
-            sources={copyingEntries}
-            todayKey={todayStr}
-            minDate={minDateStr}
-            onClose={() => setCopyingEntries(null)}
-            onSave={handleCopyEntry}
+            )}
+          </motion.div>
+          <FoodLogFlight
+            flight={foodFlight}
+            onArrive={logFlight.arrive}
+            onDone={logFlight.finish}
           />
-        </Suspense>
-      )}
-
-      {scanGrowFrom && (
-        <ScanGrow
-          from={scanGrowFrom}
-          scannerShown={scannerShown}
-          onDone={() => setScanGrowFrom(null)}
-        />
-      )}
-      {scanOpen && (
-        <Suspense
-          fallback={
-            <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-              Loading scanner…
-            </div>
-          }
-        >
-          <FoodAnalyzer
-            key={scanSession}
-            onCameraShown={() => setScannerShown(true)}
-            date={selectedDate}
-            meal={targetMeal}
-            /* Pass the day's effective calorie target so AI scans
-               whose aggregate exceeds 150% of it open the
-               "review items" prompt before persisting. Already
-               includes day-type fuel adjustments (lift/run
-               bonus calories) via useEffectiveTargets, so the
-               threshold scales with the user's planned day. */
-            effectiveDailyTarget={dailyTargets.finalTarget}
-            day={dayBudget}
-            /* No photo scans on this tier: the scanner opens on Barcode,
-               which is free, and its photo tabs carry the Pro offer. The
-               offer closes the scanner before opening the Pro sheet, the
-               same hand-off as onRequestManualLog below. */
-            photoLock={
-              scanOverrides.locked
-                ? {
-                    onUpgrade: () => {
-                      setScanOpen(false);
-                      setTimeout(handleUpgrade, 50);
-                    },
+          {/* Mounted from the first open on, so it closes with its animation
+              and its queued Pro sheet opens after it has gone. */}
+          {heroSheetUsed && (
+            <Suspense fallback={null}>
+              <HeroDrillDownSheet
+                open={heroSheetOpen}
+                onOpenChange={setHeroSheetOpen}
+                selectedDate={selectedDate}
+                isToday={isToday}
+                dailyTotals={{
+                  calories: dailyTotals.calories,
+                  protein: dailyTotals.protein,
+                  carbs: dailyTotals.carbs,
+                  fat: dailyTotals.fat,
+                  fiber: dailyTotals.fiber,
+                  sugar: dailyTotals.sugar,
+                  sodium: dailyTotals.sodium,
+                }}
+                dailyTargets={dailyTargets}
+                onOpenWeek={() => {
+                  setHeroSheetOpen(false);
+                  navigate("/history?view=food&range=1W");
+                }}
+              />
+            </Suspense>
+          )}
+        </Pane>
+        <Pane>
+          {/* FOOD-02: the refuel handoff. Renders ONLY when arriving via a
+              finish screen's "Log recovery food" link (`recoveryFoodPath`: the
+              run's, and the lift's since App1 Q30), today, and until
+              dismissed — a transient contextual chip, not a new structural
+              section (Food6 IA untouched). Frames the existing composer with
+              one calm data-derived line in the session's colour; no separate
+              flow, no prescription, finalTarget unchanged. */}
+          {refuelSport && isToday && (
+            <motion.div variants={pageItemVariant}>
+              <div
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+                  refuelSport === "run" ? "bg-running/10" : "bg-lifting/10"
+                }`}
+              >
+                <p className="flex-1 text-sm text-foreground">
+                  {refuelSport === "run"
+                    ? "Nice run. Refuel with carbs and protein."
+                    : "Nice workout. Refuel with protein and carbs."}
+                  {(() => {
+                    const proteinLeft = Math.max(
+                      0,
+                      Math.round(dailyTargets.protein - dailyTotals.protein)
+                    );
+                    const carbsLeft = Math.max(
+                      0,
+                      Math.round(dailyTargets.carbs - dailyTotals.carbs)
+                    );
+                    if (proteinLeft === 0 && carbsLeft === 0) return null;
+                    return (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        You have{" "}
+                        <span className="font-mono tabular-nums font-semibold text-foreground">
+                          {proteinLeft}g
+                        </span>{" "}
+                        protein and{" "}
+                        <span className="font-mono tabular-nums font-semibold text-foreground">
+                          {carbsLeft}g
+                        </span>{" "}
+                        carbs left today.
+                      </span>
+                    );
+                  })()}
+                </p>
+                <IconButton
+                  aria-label="Dismiss refuel reminder"
+                  icon={<X className="w-4 h-4" aria-hidden="true" />}
+                  size="sm"
+                  onClick={() =>
+                    setSearchParams(
+                      (params) => {
+                        const updated = new URLSearchParams(params);
+                        updated.delete("context");
+                        return updated;
+                      },
+                      { replace: true }
+                    )
                   }
-                : null
-            }
-            aiConsent={aiConsent.gate}
-            onSaved={() => {
-              setScanOpen(false);
-            }}
-            onRequestManualLog={() => {
-              // AI photo failure fallback. The camera modal stays
-              // open after AI errors (single-tap retry intent), so
-              // the toast's Log manually action needs to close the
-              // scanner AND open the manual drawer so the user has
-              // a clear next path without finding their way back to
-              // Food.tsx's CTA themselves.
-              setScanOpen(false);
-              setTimeout(() => setManualOpen(true), 50);
-            }}
-            notFoundBarcode={scanForkCode}
-            onDescribeProduct={() => {
-              // F2d's primary choice: the composer, asking what the
-              // product is, with nothing typed for the person.
-              setScanOpen(false);
-              setScanForkCode(null);
-              setDescribeHint(true);
-              setTimeout(() => {
-                inputRef.current?.focus();
-                setSuggestionsActive(true);
-              }, 100);
-            }}
-            onTypeProductDetails={(code) => {
-              setScanOpen(false);
-              setScanForkCode(null);
-              manualSavedRef.current = false;
-              setManualBarcode(code);
-              setTimeout(() => setManualOpen(true), 50);
-            }}
-            onRequestTypedInput={() => {
-              // Camera denied fallback path — close the scanner and
-              // focus the NL composer so the user can type the meal
-              // instead. setTimeout to let the modal teardown finish
-              // before requesting focus (otherwise iOS Safari rejects
-              // the focus call).
-              setScanOpen(false);
-              setTimeout(() => {
-                inputRef.current?.focus();
-                setSuggestionsActive(true);
-              }, 100);
-            }}
-          />
-        </Suspense>
-      )}
+                />
+              </div>
+            </motion.div>
+          )}
 
-      {/* Diary feed — one chronological timeline, newest first (the
-          2026-07 interview decision; reverses Food6d's four fixed slot
-          sections). The slot is row metadata now: auto-derived by
-          mealSlotFor, shown in each row's caption, and moved via the
-          row's edit sheet. Targeting a slot for NEW logs stays on the
-          composer pills. */}
-      <motion.div variants={pageItemVariant} className="space-y-3">
-        {/* Keyed by day, as the hero above is: a new day is a new list,
-            not the old day's rows folding away among the new ones. */}
-        <FoodTimeline
-          key={selectedDate}
-          meals={visibleTodaysMeals}
-          openRowId={openRowId}
-          setOpenRowId={setOpenRowId}
-          onDelete={handleDeleteMeal}
-          onEdit={setEditingGroup}
-          isToday={isToday}
-        />
+          {/* Logging group: the composer and slot, then the eligible usual.
+              The composer leads so the page's main input, and its Scan button,
+              are on screen when the page opens (owner call). With the usual row
+              above it, the text box sat under the tab bar for a habitual user
+              on a 390x844 phone and on an SE. The usual row follows as the
+              one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
+              wide, that the Scan button clears the tab bar and that the usual
+              row's Log comes after it. */}
+          <motion.div variants={pageItemVariant}>
+            <FoodComposerCard
+              /* Photo logging gated for this tier: one line under the field
+                 says why the camera is locked and where Pro is. Mounted only
+                 when it has something to say, so the ungated tiers never
+                 run its hooks and never carry an empty step in the rhythm. */
+              proHint={
+                !proLineWaits &&
+                !scanUsage.loading &&
+                !scanUsage.isUnlimited &&
+                scanUsage.limit === 0 ? (
+                  <FoodProHint
+                    limit={scanUsage.limit}
+                    isUnlimited={scanUsage.isUnlimited}
+                    loading={scanUsage.loading}
+                  />
+                ) : null
+              }
+              ref={suggestionsRef}
+              nlInput={nlInput}
+              setNlInput={setNlInput}
+              nlParsing={nlParsing}
+              inputFocused={inputFocused}
+              setInputFocused={(v) => {
+                if (v && !inputFocused) {
+                  trackFoodEvent("food_composer_focused");
+                  // Opens a logging attempt, to be paired with `food_log_saved`
+                  // so an abandoned attempt is visible as an unmatched start.
+                  // `slot` is the targeted slot when the user picked one, and
+                  // the slot the clock implies otherwise.
+                  trackFoodEvent("food_log_start", {
+                    slot: targetMeal ?? mealSlotFor(undefined),
+                  });
+                }
+                // The no-match prompt is for the moment after the scan.
+                if (!v) setDescribeHint(false);
+                setInputFocused(v);
+              }}
+              setSuggestionsActive={setSuggestionsActive}
+              placeholderPrompt={
+                describeHint
+                  ? "What is this product?"
+                  : NL_EXAMPLE_PROMPTS[placeholderIdx]
+              }
+              onParse={handleNLParse}
+              inputRef={inputRef}
+              showSuggestions={showSuggestions || showQuickAdd}
+              suggestions={suggestions}
+              offResults={offResults}
+              pantryResults={pantrySuggestions}
+              quickAdd={quickAddSection}
+              offEmpty={offEmpty}
+              offSearchQuery={offSearchQuery}
+              onSelectSuggestion={handleSuggestionSelect}
+              onSelectOff={handleOFFSelect}
+              onSelectPantry={handlePantrySelect}
+              scanUsage={scanUsage}
+              scanOverrides={scanOverrides}
+              onUpgrade={handleUpgrade}
+              onManualOpen={() => setManualOpen(true)}
+            />
+            {/* The guide's hint on a first visit (FV1). */}
+            <GuideHint
+              id="food-composer"
+              when
+              onClose={() => setComposerHintClosed(true)}
+            />
+          </motion.div>
+          {usual && (
+            /* One row: what and how much on the left, Edit and Log on the
+               right. It sits under the composer, where on a 390x844 phone it
+               decides whether the one-tap Log clears the tab bar, so it takes
+               the least height that keeps the name whole: the name gets its
+               own line rather than sharing one with the figures, where it
+               truncated first. Edit is the pencil the Quick Add rows already
+               use for the same sheet. Both controls stay 44px.
 
-        {/* Water for the day on screen, past days included (Mob2, call
-            2). Isolated: a failed water read costs this row, not the
-            diary above it. */}
-        <SectionErrorBoundary sectionName="food-water">
+               Log is the food orange, not brand purple (owner call): it
+               is in Food's colour, as the camera and the send arrow in the
+               composer's field are, and since Food11 it is the page's one
+               filled control. Purple stays for Pro ("Try Pro free").
+               CLAUDE.md's Button mapping records the exception;
+               mealSlotPickerIdentity.test.tsx pins it.
+
+               The group takes its name FROM the visible heading, so the two
+               cannot disagree.
+
+               At larger text the two controls drop under the words together,
+               at the right, once the words would have less than 7em beside
+               them: at double size on a 320px screen, "Your usual at
+               breakfast" ran 74px past the card. */
+            <Card
+              size="compact"
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-labelledby={usualHeadingId}
+            >
+              <div className="min-w-0 grow basis-[7em]">
+                <p
+                  id={usualHeadingId}
+                  className="text-micro leading-tight text-muted-foreground"
+                >
+                  {usualMealHeading(usualSlot)}
+                </p>
+                <p className="text-base font-semibold leading-snug truncate">
+                  {usual.name}
+                </p>
+                <p className="text-xs leading-tight text-muted-foreground truncate">
+                  <span className="font-mono tabular-nums">
+                    {formatCalories(usual.cal)}
+                  </span>{" "}
+                  {CALORIE_UNIT}
+                  {usualPortion && ` · ${usualPortion}`}
+                </p>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <IconButton
+                  aria-label="Adjust portion or meal"
+                  disabled={quickAdding !== null}
+                  onClick={() => setPortionMeal(usual)}
+                  icon={<Pencil className="size-4" />}
+                />
+                {/* Logs to the slot the heading names. With no slot selected
+                    the heading names the hour's slot, and a meal saved without
+                    one is filed by the diary's own hour rule, which differs. */}
+                <Button
+                  variant="nutrition"
+                  disabled={quickAdding !== null}
+                  onClick={() => void handleQuickMealAdd(usual, usualSlot)}
+                >
+                  Log
+                </Button>
+              </div>
+            </Card>
+          )}
+          {copyingEntries && (
+            <Suspense fallback={null}>
+              <CopyEntrySheet
+                sources={copyingEntries}
+                todayKey={todayStr}
+                minDate={minDateStr}
+                onClose={() => setCopyingEntries(null)}
+                onSave={handleCopyEntry}
+              />
+            </Suspense>
+          )}
+
+          {scanGrowFrom && (
+            <ScanGrow
+              from={scanGrowFrom}
+              scannerShown={scannerShown}
+              onDone={() => setScanGrowFrom(null)}
+            />
+          )}
+          {scanOpen && (
+            <Suspense
+              fallback={
+                <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
+                  Loading scanner…
+                </div>
+              }
+            >
+              <FoodAnalyzer
+                key={scanSession}
+                onCameraShown={() => setScannerShown(true)}
+                date={selectedDate}
+                meal={targetMeal}
+                /* Pass the day's effective calorie target so AI scans
+                   whose aggregate exceeds 150% of it open the
+                   "review items" prompt before persisting. Already
+                   includes day-type fuel adjustments (lift/run
+                   bonus calories) via useEffectiveTargets, so the
+                   threshold scales with the user's planned day. */
+                effectiveDailyTarget={dailyTargets.finalTarget}
+                day={dayBudget}
+                /* No photo scans on this tier: the scanner opens on Barcode,
+                   which is free, and its photo tabs carry the Pro offer. The
+                   offer closes the scanner before opening the Pro sheet, the
+                   same hand-off as onRequestManualLog below. */
+                photoLock={
+                  scanOverrides.locked
+                    ? {
+                        onUpgrade: () => {
+                          setScanOpen(false);
+                          setTimeout(handleUpgrade, 50);
+                        },
+                      }
+                    : null
+                }
+                aiConsent={aiConsent.gate}
+                onSaved={() => {
+                  setScanOpen(false);
+                }}
+                onRequestManualLog={() => {
+                  // AI photo failure fallback. The camera modal stays
+                  // open after AI errors (single-tap retry intent), so
+                  // the toast's Log manually action needs to close the
+                  // scanner AND open the manual drawer so the user has
+                  // a clear next path without finding their way back to
+                  // Food.tsx's CTA themselves.
+                  setScanOpen(false);
+                  setTimeout(() => setManualOpen(true), 50);
+                }}
+                notFoundBarcode={scanForkCode}
+                onDescribeProduct={() => {
+                  // F2d's primary choice: the composer, asking what the
+                  // product is, with nothing typed for the person.
+                  setScanOpen(false);
+                  setScanForkCode(null);
+                  setDescribeHint(true);
+                  setTimeout(() => {
+                    inputRef.current?.focus();
+                    setSuggestionsActive(true);
+                  }, 100);
+                }}
+                onTypeProductDetails={(code) => {
+                  setScanOpen(false);
+                  setScanForkCode(null);
+                  manualSavedRef.current = false;
+                  setManualBarcode(code);
+                  setTimeout(() => setManualOpen(true), 50);
+                }}
+                onRequestTypedInput={() => {
+                  // Camera denied fallback path — close the scanner and
+                  // focus the NL composer so the user can type the meal
+                  // instead. setTimeout to let the modal teardown finish
+                  // before requesting focus (otherwise iOS Safari rejects
+                  // the focus call).
+                  setScanOpen(false);
+                  setTimeout(() => {
+                    inputRef.current?.focus();
+                    setSuggestionsActive(true);
+                  }, 100);
+                }}
+              />
+            </Suspense>
+          )}
+
+          {/* Diary feed — one chronological timeline, newest first (the
+              2026-07 interview decision; reverses Food6d's four fixed slot
+              sections). The slot is row metadata now: auto-derived by
+              mealSlotFor, shown in each row's caption, and moved via the
+              row's edit sheet. Targeting a slot for NEW logs stays on the
+              composer pills. */}
+          <motion.div variants={pageItemVariant} className="space-y-3">
+            {/* Keyed by day, as the hero above is: a new day is a new list,
+                not the old day's rows folding away among the new ones. */}
+            <FoodTimeline
+              key={selectedDate}
+              meals={visibleTodaysMeals}
+              openRowId={openRowId}
+              setOpenRowId={setOpenRowId}
+              onDelete={handleDeleteMeal}
+              onEdit={setEditingGroup}
+              isToday={isToday}
+            />
+
+            {/* Water for the day on screen, past days included (Mob2, call
+                2). Isolated: a failed water read costs this row, not the
+                diary above it. */}
+            <SectionErrorBoundary sectionName="food-water">
+              <Suspense fallback={null}>
+                <FoodWaterRow date={selectedDate} />
+              </Suspense>
+            </SectionErrorBoundary>
+          </motion.div>
+
           <Suspense fallback={null}>
-            <FoodWaterRow date={selectedDate} />
+            <ManualFoodLogger
+              date={selectedDate}
+              /* Pass the user's pre-selected meal slot through so a
+                 manual entry honours the same "Add to" meal selection
+                 selection as NL / quick-add. Null when no slot is
+                 selected — ManualFoodLogger omits the meal field in
+                 that case (no default slot, matches NL convention). */
+              meal={targetMeal}
+              open={manualOpen}
+              barcode={manualBarcode}
+              onSaved={() => {
+                manualSavedRef.current = true;
+              }}
+              onClose={() => {
+                setManualOpen(false);
+                const code = manualBarcode;
+                const saved = manualSavedRef.current;
+                manualSavedRef.current = false;
+                setManualBarcode(null);
+                /* Back from a product's form without saving: the scanner
+                   reopens on the no-match choice for the same code. */
+                if (code && !saved) {
+                  setScannerShown(false);
+                  setScanGrowFrom(null);
+                  setScanForkCode(code);
+                  setScanSession((n) => n + 1);
+                  setScanOpen(true);
+                }
+              }}
+            />
           </Suspense>
-        </SectionErrorBoundary>
-      </motion.div>
+          {offDrawerFood && (
+            <Suspense fallback={null}>
+              <ServingSizeDrawer
+                food={offDrawerFood}
+                open
+                onClose={() => setOffDrawerFood(null)}
+                onConfirm={handleOFFConfirm}
+                day={dayBudget}
+              />
+            </Suspense>
+          )}
 
-      <Suspense fallback={null}>
-        <ManualFoodLogger
-          date={selectedDate}
-          /* Pass the user's pre-selected meal slot through so a
-             manual entry honours the same "Add to" meal selection
-             selection as NL / quick-add. Null when no slot is
-             selected — ManualFoodLogger omits the meal field in
-             that case (no default slot, matches NL convention). */
-          meal={targetMeal}
-          open={manualOpen}
-          barcode={manualBarcode}
-          onSaved={() => {
-            manualSavedRef.current = true;
-          }}
-          onClose={() => {
-            setManualOpen(false);
-            const code = manualBarcode;
-            const saved = manualSavedRef.current;
-            manualSavedRef.current = false;
-            setManualBarcode(null);
-            /* Back from a product's form without saving: the scanner
-               reopens on the no-match choice for the same code. */
-            if (code && !saved) {
-              setScannerShown(false);
-              setScanGrowFrom(null);
-              setScanForkCode(code);
-              setScanSession((n) => n + 1);
-              setScanOpen(true);
-            }
-          }}
-        />
-      </Suspense>
-      {offDrawerFood && (
-        <Suspense fallback={null}>
-          <ServingSizeDrawer
-            food={offDrawerFood}
-            open
-            onClose={() => setOffDrawerFood(null)}
-            onConfirm={handleOFFConfirm}
-            day={dayBudget}
+          {/* Mount the sheet only while a group is being edited and key it
+              on the group id. Each open gets a fresh component instance so
+              the stepper's local target state can't be stomped by a parent
+              re-render rebuilding the `source` prop with a new identity. */}
+          {portionMeal && (
+            <Suspense fallback={null}>
+              <QuickMealPortionSheet
+                meal={portionMeal}
+                onClose={() => setPortionMeal(null)}
+                slot={usualSlot}
+                onLog={handleQuickMealAdd}
+                day={dayBudget}
+              />
+            </Suspense>
+          )}
+          {editingGroup && (
+            <EditServingsSheet
+              key={editingGroup.id}
+              source={{
+                foodName: editingGroup.foodName,
+                currentCount: editingGroup.meals.length,
+                currentTotalCalories: editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalCalories),
+                  0
+                ),
+                currentTotalProtein: editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalProtein),
+                  0
+                ),
+                currentTotalCarbs: editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalCarbs),
+                  0
+                ),
+                currentTotalFat: editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalFat),
+                  0
+                ),
+                // F5a: if all docs in the group share one slot, that's
+                // the current. Mixed-state groups (rare, e.g. user moved
+                // one of two duplicates) get null so the picker renders
+                // un-selected and any pick snaps the whole group to that
+                // slot.
+                currentMeal: (() => {
+                  const first = editingGroup.meals[0]?.meal ?? null;
+                  const allSame = editingGroup.meals.every(
+                    (m) => (m.meal ?? null) === first
+                  );
+                  return allSame ? first : null;
+                })(),
+                /* A row of one entry is corrected by amount; a row of
+                   repeats keeps the stepper that repeats or removes them. */
+                currentPortion:
+                  editingGroup.meals.length === 1
+                    ? entryPortion(editingGroup.meals[0])
+                    : null,
+                /* One entry of several foods is corrected food by food. */
+                currentItems:
+                  editingGroup.meals.length === 1 &&
+                  (editingGroup.meals[0].items?.length ?? 0) > 1
+                    ? editingGroup.meals[0].items
+                    : null,
+              }}
+              onCancel={() => setEditingGroup(null)}
+              onSave={applyServingsChange}
+              onCopy={() => {
+                setCopyingEntries(editingGroup.meals);
+                setEditingGroup(null);
+              }}
+              /* The day without this row, which the sheet adds back at the
+                 edited amount. */
+              day={{
+                ...dayBudget,
+                calories:
+                  dayBudget.calories -
+                  editingGroup.meals.reduce(
+                    (s, m) => s + safeNum(m.totalCalories),
+                    0
+                  ),
+                protein:
+                  dayBudget.protein -
+                  editingGroup.meals.reduce(
+                    (s, m) => s + safeNum(m.totalProtein),
+                    0
+                  ),
+              }}
+              onDelete={() => {
+                // Reuse the same optimistic-hide + Undo-toast path the
+                // swipe uses, then close the sheet. Capture ids before the
+                // state clear since editingGroup is nulled synchronously.
+                handleDeleteMeal(
+                  editingGroup.meals.map((m) => m.id),
+                  editingGroup.foodName
+                );
+                setEditingGroup(null);
+              }}
+            />
+          )}
+          {/* Suspicious-value override prompt for the NL parse path.
+              AI-parsed and locally-parsed entries with a single item
+              above the warn threshold (5000 cal / 300g protein etc)
+              land here. Save anyway commits the entry as-is; Edit
+              dismisses the dialog and resets parsing state so the
+              user can adjust their input. */}
+          <ConfirmDialog
+            open={nlWarnTitle !== null}
+            title={nlWarnTitle ?? ""}
+            description={nlWarnDescription}
+            confirmLabel="Save anyway"
+            cancelLabel="Edit"
+            onConfirm={async () => {
+              const save = nlPendingSave;
+              setNlWarnTitle(null);
+              setNlPendingSave(null);
+              if (save) await save();
+            }}
+            onCancel={() => {
+              setNlWarnTitle(null);
+              setNlPendingSave(null);
+              setNlParsing(false);
+            }}
           />
-        </Suspense>
-      )}
+          {/* #978 — contextual inline paywall at the AI-scan gate. Opened by
+              handleUpgrade (free users only); ProModal owns its own web Stripe
+              checkout path. featureKey drives the AI-food hero + analytics. */}
+          {showProModal && (
+            <Suspense fallback={null}>
+              <ProModal
+                featureKey="ai_food_logging"
+                onClose={() => setShowProModal(false)}
+              />
+            </Suspense>
+          )}
 
-      {/* Mount the sheet only while a group is being edited and key it
-          on the group id. Each open gets a fresh component instance so
-          the stepper's local target state can't be stomped by a parent
-          re-render rebuilding the `source` prop with a new identity. */}
-      {portionMeal && (
-        <Suspense fallback={null}>
-          <QuickMealPortionSheet
-            meal={portionMeal}
-            onClose={() => setPortionMeal(null)}
-            slot={usualSlot}
-            onLog={handleQuickMealAdd}
-            day={dayBudget}
-          />
-        </Suspense>
-      )}
-      {editingGroup && (
-        <EditServingsSheet
-          key={editingGroup.id}
-          source={{
-            foodName: editingGroup.foodName,
-            currentCount: editingGroup.meals.length,
-            currentTotalCalories: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalCalories),
-              0
-            ),
-            currentTotalProtein: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalProtein),
-              0
-            ),
-            currentTotalCarbs: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalCarbs),
-              0
-            ),
-            currentTotalFat: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalFat),
-              0
-            ),
-            // F5a: if all docs in the group share one slot, that's
-            // the current. Mixed-state groups (rare, e.g. user moved
-            // one of two duplicates) get null so the picker renders
-            // un-selected and any pick snaps the whole group to that
-            // slot.
-            currentMeal: (() => {
-              const first = editingGroup.meals[0]?.meal ?? null;
-              const allSame = editingGroup.meals.every(
-                (m) => (m.meal ?? null) === first
-              );
-              return allSame ? first : null;
-            })(),
-            /* A row of one entry is corrected by amount; a row of
-               repeats keeps the stepper that repeats or removes them. */
-            currentPortion:
-              editingGroup.meals.length === 1
-                ? entryPortion(editingGroup.meals[0])
-                : null,
-            /* One entry of several foods is corrected food by food. */
-            currentItems:
-              editingGroup.meals.length === 1 &&
-              (editingGroup.meals[0].items?.length ?? 0) > 1
-                ? editingGroup.meals[0].items
-                : null,
-          }}
-          onCancel={() => setEditingGroup(null)}
-          onSave={applyServingsChange}
-          onCopy={() => {
-            setCopyingEntries(editingGroup.meals);
-            setEditingGroup(null);
-          }}
-          /* The day without this row, which the sheet adds back at the
-             edited amount. */
-          day={{
-            ...dayBudget,
-            calories:
-              dayBudget.calories -
-              editingGroup.meals.reduce(
-                (s, m) => s + safeNum(m.totalCalories),
-                0
-              ),
-            protein:
-              dayBudget.protein -
-              editingGroup.meals.reduce(
-                (s, m) => s + safeNum(m.totalProtein),
-                0
-              ),
-          }}
-          onDelete={() => {
-            // Reuse the same optimistic-hide + Undo-toast path the
-            // swipe uses, then close the sheet. Capture ids before the
-            // state clear since editingGroup is nulled synchronously.
-            handleDeleteMeal(
-              editingGroup.meals.map((m) => m.id),
-              editingGroup.foodName
-            );
-            setEditingGroup(null);
-          }}
-        />
-      )}
-      {/* Suspicious-value override prompt for the NL parse path.
-          AI-parsed and locally-parsed entries with a single item
-          above the warn threshold (5000 cal / 300g protein etc)
-          land here. Save anyway commits the entry as-is; Edit
-          dismisses the dialog and resets parsing state so the
-          user can adjust their input. */}
-      <ConfirmDialog
-        open={nlWarnTitle !== null}
-        title={nlWarnTitle ?? ""}
-        description={nlWarnDescription}
-        confirmLabel="Save anyway"
-        cancelLabel="Edit"
-        onConfirm={async () => {
-          const save = nlPendingSave;
-          setNlWarnTitle(null);
-          setNlPendingSave(null);
-          if (save) await save();
-        }}
-        onCancel={() => {
-          setNlWarnTitle(null);
-          setNlPendingSave(null);
-          setNlParsing(false);
-        }}
-      />
-      {/* #978 — contextual inline paywall at the AI-scan gate. Opened by
-          handleUpgrade (free users only); ProModal owns its own web Stripe
-          checkout path. featureKey drives the AI-food hero + analytics. */}
-      {showProModal && (
-        <Suspense fallback={null}>
-          <ProModal
-            featureKey="ai_food_logging"
-            onClose={() => setShowProModal(false)}
-          />
-        </Suspense>
-      )}
-
-      {/* The one AI question, for the composer and the scanner alike. It
-          raises itself above the scanner when a photo asks. */}
-      <AiConsentSheet {...aiConsent.sheet} />
+          {/* The one AI question, for the composer and the scanner alike. It
+              raises itself above the scanner when a photo asks. */}
+          <AiConsentSheet {...aiConsent.sheet} />
+        </Pane>
+      </TwoPanes>
     </PageShell>
   );
 }

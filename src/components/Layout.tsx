@@ -188,6 +188,9 @@ export default function Layout() {
         paddingBottom: hideNav
           ? "var(--safe-bottom)"
           : "var(--page-bottom-pad)",
+        // 0 on a portrait iPhone; the iPhone Duo's side column otherwise.
+        paddingLeft: "var(--safe-left)",
+        paddingRight: "var(--safe-right)",
       }}
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
@@ -321,7 +324,10 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md mx-auto px-[16px] py-6 sm:py-7"
+        /* A page drawn in two panes (ui/TwoPanes) widens the column
+           where there is room for them; every other page keeps the
+           phone's column, centred, as iOS keeps a readable width. */
+        className="max-w-md mx-auto px-[16px] py-6 sm:py-7 split:has-[[data-two-panes]]:max-w-[60rem]"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >
@@ -332,7 +338,12 @@ export default function Layout() {
             so the engine they share stays mounted (`layoutKey`). */}
         <div key={layoutKey(location.pathname)}>
           <Suspense
-            fallback={<PageContentSkeleton pathname={location.pathname} />}
+            fallback={
+              <PageContentSkeleton
+                pathname={location.pathname}
+                search={location.search}
+              />
+            }
           >
             <Outlet />
           </Suspense>

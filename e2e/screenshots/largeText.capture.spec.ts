@@ -37,8 +37,11 @@
  * sheet and a period with nothing in it.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
- * a mini), with the root font at 135% (the largest standard size) and
- * 200% (where the app's scaling stops), and measured with layoutBreaks:
+ * a mini), and on the iPhone Duo's two screens as touch screens, the
+ * outer display (466 x 678) and the inner one open on its side (951 x
+ * 669), where Home, a workout and a run lay out in two panes. Each is
+ * measured with the root font at 135% (the largest standard size) and
+ * 200% (where the app's scaling stops), with layoutBreaks:
  * nothing may reach past the screen, and no text may be wider than its
  * own box unless it ends in an ellipsis on purpose.
  *
@@ -64,8 +67,17 @@ import {
   TEN_MINUTE_CIRCUIT,
 } from "../helpers/circuit";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { sizeTo } from "../helpers/screenSize";
+import { IPHONE_DUO } from "../../src/test/iphoneDuo";
 
-const WIDTHS = [393, 320] as const;
+/** The phones at 852 tall, then the Duo's two screens as touch screens,
+ *  which is what its wide layouts answer (src/lib/wideScreen.ts). */
+const VIEWPORTS = [
+  { width: 393, height: 852, touch: false },
+  { width: 320, height: 852, touch: false },
+  { ...IPHONE_DUO.outer, touch: true },
+  { ...IPHONE_DUO.innerLandscape, touch: true },
+] as const;
 const SCALES = [135, 200] as const;
 
 /* Not skipped: aria-hidden. Much of what it marks is visible text that
@@ -226,10 +238,10 @@ test.describe("large text", () => {
       );
   }
 
-  for (const width of WIDTHS) {
+  for (const { width, height, touch } of VIEWPORTS) {
     test(`the main screens at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const nav = page.getByRole("navigation").first();
@@ -338,7 +350,7 @@ test.describe("large text", () => {
        days, a month's weeks, six months. */
     test(`History's charts on a Monday at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       // The coming Monday, so everything seeded is in the past.
       const monday = new Date();
       monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7));
@@ -405,7 +417,7 @@ test.describe("large text", () => {
 
     test(`a workout and a run at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
 
@@ -463,7 +475,7 @@ test.describe("large text", () => {
 
     test(`sign-up, setup and Pro at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       const found: string[] = [];
       const next = async () => {
         await page
@@ -551,7 +563,7 @@ test.describe("large text", () => {
 
     test(`the Settings pages at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       for (const section of SETTINGS_PAGES) {
@@ -573,7 +585,7 @@ test.describe("large text", () => {
 
     test(`Social, a Space and a profile at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const nav = page.getByRole("navigation").first();
@@ -659,7 +671,7 @@ test.describe("large text", () => {
 
     test(`the sheets at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const dialog = page.getByRole("dialog").first();
@@ -706,7 +718,7 @@ test.describe("large text", () => {
 
     test(`the detail screens at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const follow = async (from: string, href: string, screen: string) => {
@@ -827,7 +839,7 @@ test.describe("large text", () => {
        there. */
     test(`the one-post pages at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const dialog = page.getByRole("dialog").first();
@@ -870,7 +882,7 @@ test.describe("large text", () => {
     // seed:liftreturn's free runner, whose last run was 15 days ago.
     test(`a runner's welcome back at ${width}px`, async ({ page }) => {
       test.setTimeout(120_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page, {
         email: "runreturn-capture@tropos.test",
         password: "test-password-123",
@@ -893,7 +905,7 @@ test.describe("large text", () => {
        move, with the move sheet. */
     test(`the plan and all sessions at ${width}px`, async ({ page }) => {
       test.setTimeout(240_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
       const dialog = page.getByRole("dialog").first();
@@ -1018,7 +1030,7 @@ test.describe("large text", () => {
       page,
     }) => {
       test.setTimeout(180_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page, {
         email: "fellbehind-capture@tropos.test",
         password: "test-password-123",
@@ -1074,7 +1086,7 @@ test.describe("large text", () => {
     // in the sheet its card opens.
     test(`a Circle's invite code at ${width}px`, async ({ page }) => {
       test.setTimeout(180_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       const found: string[] = [];
       const dialog = page.getByRole("dialog");
 
@@ -1098,7 +1110,7 @@ test.describe("large text", () => {
     // its own sheet, each offering only a new code.
     test(`an expired Circle invite code at ${width}px`, async ({ page }) => {
       test.setTimeout(180_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       const found: string[] = [];
       const dialog = page.getByRole("dialog");
 
@@ -1137,7 +1149,7 @@ test.describe("large text", () => {
        day), newer, which they show on its own above the day. */
     test(`a workout in progress at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
 
@@ -1204,7 +1216,7 @@ test.describe("large text", () => {
        no weight, and Finish after the first working set. */
     test(`an empty workout's review at ${width}px`, async ({ page }) => {
       test.setTimeout(240_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
 
@@ -1299,7 +1311,7 @@ test.describe("large text", () => {
 
     test(`the Pro page at ${width}px`, async ({ page }) => {
       test.setTimeout(120_000);
-      await page.setViewportSize({ width, height: 852 });
+      await sizeTo(page, { width, height, touch });
       await signInAsTestUser(page);
       const found: string[] = [];
 

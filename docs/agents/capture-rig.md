@@ -33,6 +33,19 @@ for, so pass `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`
 — the capture specs' `test.use` already reads it as `executablePath`.
 Full suite locally: 64 passed in 6.8 minutes.
 
+**The iPhone Duo's sizes are touch screens.** Its wide layouts (DESIGN_GUIDE
+§14r) answer `(pointer: coarse)` only, so a capture at 951 × 669 in a plain
+desktop context still draws the phone layout. Size a page with `sizeTo`
+(`e2e/helpers/screenSize.ts`), which turns touch on for the page's own
+session; the sizes and where each came from are `src/test/iphoneDuo.ts`.
+`largeText.capture.spec.ts` runs every screen at the outer (466 × 678) and
+inner (951 × 669) sizes too, and `iphoneDuo.capture.spec.ts` checks the two
+panes and folds mid-workout and mid-run. If the sandbox cannot fetch the
+Firestore emulator's jar (storage.googleapis.com refused, 2026-11-18), the
+rig cannot run locally: a component that takes its data as props can still
+be compared before and after in a small Vite page that mounts it, with the
+two builds served side by side.
+
 Two caveats worth carrying. **Seed the FULL chain or you will measure the
 wrong thing** — `food-suggest-typed` frames at 430px under `seed:e2e`
 alone and at 142px under the whole chain, because the extra diary content

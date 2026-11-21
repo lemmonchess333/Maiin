@@ -35,7 +35,10 @@
   /* 16px, not --page-x (1rem): the bar keeps its size at larger text,
      like its labels, and a rem gutter took the room "Analytics" needed
      on a 320px screen at double size. */
-  padding: 0 16px calc(var(--safe-bottom) + var(--tab-bar-gap));
+  /* The sides clear the iPhone Duo's status-bar column; on a portrait
+     iPhone both insets are 0 and the gutter is the 16px it always was. */
+  padding: 0 max(16px, var(--safe-right))
+    calc(var(--safe-bottom) + var(--tab-bar-gap)) max(16px, var(--safe-left));
   pointer-events: none;
 }
 

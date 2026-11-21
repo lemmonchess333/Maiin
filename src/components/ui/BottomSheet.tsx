@@ -130,6 +130,10 @@ export function BottomSheet({
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50",
+            /* On the iPhone Duo's inner display a sheet is a phone's
+               width, centred over the page's own column, not the whole
+               display's (margins, so vaul's own transform stays its). */
+            "wide:mx-auto wide:max-w-lg",
             "rounded-t-2xl flex flex-col bg-background sheet-surface safe-area-pb",
             maxHeight,
             className

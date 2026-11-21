@@ -190,13 +190,8 @@ describe("Analytics — links into the pages", () => {
       history.indexOf("</div>", history.indexOf("<AnalyticsBackRow"))
     );
     expect(row).toContain("<TimeRangePills");
-    // The overview's own, indented less deeply than the page row's.
-    expect(
-      conditionBefore(
-        "<TimeRangePills\n                selected={timeRange}",
-        60
-      )
-    ).toMatch(/view === "overview"/);
+    // The overview's own, under its own view check.
+    expect(history).toMatch(/view === "overview" && \(\s*<TimeRangePills/);
   });
 });
 

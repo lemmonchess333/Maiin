@@ -69,8 +69,10 @@ export default function FoodWeekStrip({
       role="group"
       aria-label={`Week of ${formatDayMonthLong(parseLocalDate(days[0].key))}`}
       /* Seven equal columns, out to the screen's edges. The margin is in
-         px, as the gutter it gives back is. */
-      className="-mx-[16px] grid grid-cols-7"
+         px, as the gutter it gives back is. In one of two panes (the
+         iPhone Duo's inner display, DESIGN_GUIDE §14r) it keeps to its
+         pane, as the cards above and below it do, clear of the fold. */
+      className="-mx-[16px] grid grid-cols-7 split:in-data-two-panes:mx-0"
     >
       {days.map((day) => {
         const date = parseLocalDate(day.key);
