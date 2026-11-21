@@ -1742,6 +1742,38 @@ Chromium; these need the iOS app or a production account.
       Train's banner reads "No lifting in the two days before your race,
       or on the day, so your legs are fresh for it."
 
+## No equipment and "A pull-up bar" (Lift4 STATUS 2026-11-09)
+
+Affects: setup's equipment step and Settings → Lift plan (`Onboarding.tsx`,
+`ProgrammeSettings.tsx`), the plan builder's No equipment path
+(`noEquipment.ts`, `matchTemplate.ts`), the `pullUpBar` profile field
+(`firestore.rules`, `functions/profileSanitizer.js`), the server's role
+table (`functions/lib/roleTable.js`, `represcribe.js`), and a bodyweight
+session's first-set hint (`firstGuide.ts`). Waits on the owner's answer to
+`docs/training-deep-dive-2026-11/no-equipment-print.md` (Pgm9).
+
+Unit tests, the journeys (`e2e/journeys/no-equipment.auth.spec.ts`) and the
+emulator cover the rules and the saves; these need the iOS app or a
+production account.
+
+- [ ] **Setup on a phone.** In the native shell, at the phone's own text
+      size and at its largest: the four equipment cards fit (Full gym,
+      Home gym, Minimal, No equipment); "A pull-up bar" shows on the last
+      three, off for Minimal and No equipment and on for Home gym; with No
+      equipment and the bar off, the note under the switch reads "No
+      pulling without something to pull on…"; Small plates is not offered
+      with No equipment.
+- [ ] **The answer is stored in production.** After setup with No
+      equipment and the bar on, the console shows
+      `equipment: "no_equipment"` and `pullUpBar: true` on `users/{uid}`;
+      turning the bar off in Settings → Lift plan saves without a refusal
+      and the plan loses its pull-ups.
+- [ ] **A No equipment session.** The first session's hint has no word
+      about weights; finishing every set of push-ups at the target moves
+      the next session's target up one rep, on past the top of its range,
+      and no "add load" note appears; a superman hold logged at its target
+      moves up 5 seconds.
+
 ## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
 
 Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
