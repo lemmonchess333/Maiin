@@ -32,6 +32,9 @@ import {
 const h = vi.hoisted(() => ({
   isPro: false,
   weeks: [] as object[],
+  /* This Monday to Sunday as `trainingWeek` counts it; null while it
+     loads, as the other cases leave it. */
+  weekPulse: null as object | null,
   /* One object, so the page's memos keyed on it hold between renders. */
   profile: {
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -105,7 +108,7 @@ vi.mock("@/hooks/useLifetimeRunStats", () => ({
 vi.mock("@/hooks/useLifetimeMealStats", () => ({
   useLifetimeMealStats: () => ({ mealCount: 3, daysLogged: 1 }),
 }));
-vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => null }));
+vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => h.weekPulse }));
 vi.mock("@/hooks/useEffectiveTargets", () => ({
   useEffectiveTargets: () => ({
     finalTarget: 2400,
@@ -224,6 +227,7 @@ beforeEach(() => {
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
 });
 afterEach(() => {
+  h.weekPulse = null;
   cleanup();
   window.history.replaceState(null, "", "/");
   vi.restoreAllMocks();
@@ -275,5 +279,57 @@ describe("Score details are Pro on Progress", () => {
     await settle();
     expect(screen.queryByText("Your score by week")).toBeNull();
     expect(ring()).toBeNull();
+  });
+});
+
+/* The lead counts the 7 days' sessions against the plan the score was
+   scored against, the profile's lift and run days (`plannedSessionCount`),
+   only while this Monday to Sunday plans the same (`trainingWeek`, as Home
+   and Train count it). History has both. */
+describe("the lead counts sessions against the plan", () => {
+  /** A moderate week: 4 lifts, food logged on 6 days far under target. */
+  const offPlan = () => ({
+    ...week(daysAgo(0), 64),
+    loadBand: "moderate",
+    adherenceScore: 43,
+    aggregates: {
+      liftSessions: 4,
+      liftTonnage: 13700,
+      runSessions: 0,
+      runKm: 0,
+      runLongKm: 0,
+      mealDaysLogged: 6,
+      avgDailyCalories: 1200,
+      avgDailyProtein: 40,
+    },
+    signals: {
+      lifetimeWeeks: 8,
+      daysSinceLastTraining: 1,
+      adherenceWeak: true,
+    },
+  });
+
+  it("says the count when the week plans the profile's 4 lifts", async () => {
+    h.isPro = false;
+    h.weeks = [...WEEKS.slice(0, 3), offPlan()];
+    h.weekPulse = { lifts: { done: 1, planned: 4 }, runs: null, streak: null };
+    open("/history");
+    expect(await screen.findByText("Steady")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "You did 4 of 4 planned sessions in these 7 days. Food was well off your targets"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("says no count when the week plans another number, as race week does", async () => {
+    h.isPro = false;
+    h.weeks = [...WEEKS.slice(0, 3), offPlan()];
+    h.weekPulse = { lifts: { done: 1, planned: 1 }, runs: null, streak: null };
+    open("/history");
+    expect(await screen.findByText("Steady")).toBeInTheDocument();
+    expect(
+      screen.getByText("Your sessions or food were well off your plan")
+    ).toBeInTheDocument();
   });
 });
