@@ -27,6 +27,7 @@ on:
       - "tsconfig*.json"
       - "scripts/verify_ios_watch.py"
       - "scripts/verify_ios_push.py"
+      - "scripts/verify_ios_launch.py"
       - ".github/workflows/ios-native-compile.yml"
   schedule:
     - cron: "23 5 * * *"
@@ -69,6 +70,17 @@ jobs:
           plutil -lint ios/App/App/GoogleService-Info.plist
       - name: Build Capacitor bundle and sync native project
         run: npm run build:ios
+        # Placeholders, as the plist above: the web app sets up Firebase
+        # Auth as it loads, and Auth refuses an empty API key, so a bundle
+        # built without one never mounts and the launch check below sees
+        # only the page's background. Nothing calls Firebase before sign-in.
+        env:
+          VITE_FIREBASE_API_KEY: compile-only-key
+          VITE_FIREBASE_AUTH_DOMAIN: compile-only.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: compile-only
+          VITE_FIREBASE_STORAGE_BUCKET: compile-only.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: "1:123456789:web:compileonly"
       # The same project builds both kinds of TestFlight build: a standard
       # one, which embeds no Watch app and carries the short Health text, and
       # the pilot, which overrides the release gate exactly as deploy-ios.yml
@@ -93,6 +105,77 @@ jobs:
           python3 scripts/verify_ios_watch.py --unsigned \
             --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
             --expected-connected-training NO
+      # The scene life cycle (ios/App/App/SceneDelegate.swift, required of
+      # iOS 27 SDK builds) is wiring a compile cannot check: a scene
+      # delegate the manifest names wrongly, or a scene with no window,
+      # launches to a black screen while the process stays up. So the
+      # standard build is launched on a simulator, before the pilot build
+      # replaces it, and must still be running and drawing after 25 s.
+      # The compile-only Firebase plist is given IDs in Firebase's own
+      # formats inside the built app, so its checks at launch pass; nothing
+      # it sends can reach a project.
+      - name: Launch the standard build on a simulator
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app"
+          PLIST="$APP/GoogleService-Info.plist"
+          plutil -replace GOOGLE_APP_ID -string "1:123456789012:ios:0123456789abcdef012345" "$PLIST"
+          plutil -replace GCM_SENDER_ID -string "123456789012" "$PLIST"
+          plutil -replace API_KEY -string "AIzaSyA00000000000000000000000000000000" "$PLIST"
+          # An iPhone on the newest iOS runtime the selected Xcode's SDK
+          # covers (a beta runtime newer than the SDK is passed over), by
+          # version number, then the first by name, so the same image picks
+          # the same phone. Not the iPhone Duo: it has two displays, so a
+          # screenshot has to name one, and it is launched on its own where
+          # the image has it.
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          UDID=$(xcrun simctl list devices available --json | SDK="$SDK" python3 -c '
+          import json, os, re, sys
+          devices = json.load(sys.stdin)["devices"]
+          sdk = tuple(int(p) for p in os.environ["SDK"].split(".")[:2])
+          def version(runtime):
+              m = re.search(r"\.iOS-(\d+)-(\d+)", runtime)
+              return (int(m.group(1)), int(m.group(2))) if m else None
+          phones = sorted(
+              (version(runtime), d["name"], d["udid"])
+              for runtime, ds in devices.items() if version(runtime)
+              for d in ds if d["name"].startswith("iPhone")
+              and not d["name"].startswith("iPhone Duo")
+          )
+          if not phones:
+              sys.exit("no iPhone simulator is available on this runner")
+          covered = [p for p in phones if p[0] <= sdk] or phones
+          newest = covered[-1][0]
+          print(next(p for p in covered if p[0] == newest)[2])
+          ')
+          xcrun simctl list devices | grep "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          LAUNCHED=$(xcrun simctl launch "$UDID" com.tropos.app)
+          echo "$LAUNCHED"
+          PID="${LAUNCHED##* }"
+          sleep 25
+          xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/launch.png"
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::The app was no longer running 25 s after launch"
+            exit 1
+          fi
+          if ! python3 scripts/verify_ios_launch.py --screenshot "$RUNNER_TEMP/launch.png"; then
+            echo "The app's log since it was installed:"
+            xcrun simctl spawn "$UDID" log show --last 5m --style compact \
+              --predicate 'process == "App"' | tail -n 120 || true
+            exit 1
+          fi
+          xcrun simctl shutdown "$UDID"
+      - name: Keep the launch screenshot
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-simulator-launch
+          path: ${{ runner.temp }}/launch.png
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Compile the connected training pilot for simulator
         run: |
           set -euo pipefail
