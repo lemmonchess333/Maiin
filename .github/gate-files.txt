@@ -4,19 +4,22 @@
 # `node scripts/review-triggers.mjs --gates` read this list from the BASE
 # commit, never from the pull request, and name every listed file the pull
 # request edits. A check the change can edit is a check it can switch off,
-# so an edit here is reviewed on its own (REVIEW.md R38).
+# so an edit here is reviewed on its own. REVIEW.md R38's trigger is this
+# list (its `gate-files` keyword), so the two cannot drift.
 #
 # One glob per line (`**` spans folders, `{a,b}` alternates); `#` starts a
 # comment. A line starting `run ` also has its base copy RUN against the
 # pull request's code when the pull request edits it: a rule test whose
 # base copy should still pass after any change that keeps to the rule (a
 # scan for a banned call, a pinned workflow shape). If the base copy fails,
-# the change loosened a rule its own code relies on.
+# the change loosened a rule its own code relies on, extended a list the
+# test enumerates, or moved a helper the base's copy imports.
 #
 # Tests that pin BEHAVIOUR (the `.cross.test.ts` mirror pins) or ENUMERATE
 # the codebase (`mirrorCrossTestGate`, `claudeMdFreshness`) change with the
 # code they pin, so their base copies fail on ordinary changes. They are
-# named, not run. Measured on main's history in docs/agents/review.md.
+# named, not run. So are the `functions/` guards: the root suite does not
+# run `functions/`. Measured on main's history in docs/agents/review.md.
 
 # The checklist, the standards it is mined from, and this list
 REVIEW.md
@@ -25,29 +28,46 @@ CODING_STANDARDS.md
 scripts/review-triggers.mjs
 run scripts/review-triggers.test.ts
 
-# The workflows that run the required checks, and this one
+# The workflows that run the checks a pull request needs, and this one
 .github/workflows/ci.yml
 .github/workflows/emulator-tests.yml
+.github/workflows/ios-native-compile.yml
 .github/workflows/guards-from-base.yml
 
-# Lint, the bundle ratchet and the audit gate
+# What runs the suite and lint: their configs, setup and scripts
+package.json
+vitest.config.ts
+src/test/setup.ts
 eslint.config.js
+run src/lib/__tests__/eslintConfigPaths.test.ts
+
+# The bundle ratchet and the audit gate
 scripts/dist-size.baseline.json
 scripts/check-dist-size.mjs
 scripts/ci/audit-gate.mjs
 scripts/ci/audit-allowlist.json
 run scripts/ci/audit-gate.test.ts
 
+# The agents' own gates: commit hooks and session hooks
+.husky/**
+.claude/settings.json
+
 # Rule tests: scans the code is held to
-run src/lib/__tests__/*Guard*.test.ts
+run src/lib/__tests__/*Guard.test.ts
+run src/styles/__tests__/*Guard.test.ts
+run src/components/analytics/__tests__/*Guard.test.ts
 run src/utils/__tests__/*Treatment.test.ts
 run src/lib/__tests__/copyMechanics.test.ts
 run src/lib/__tests__/workflow*.test.ts
 run src/lib/__tests__/requiredCheckComposition.test.ts
+run src/lib/__tests__/autoUpdateNeedsPat.test.ts
 run src/lib/__tests__/npmScripts.test.ts
 run src/lib/__tests__/captureSeedChain.test.ts
 run src/lib/__tests__/hostingSecurityHeaders.test.ts
 run src/lib/__tests__/prRowUnits.test.ts
+
+# Server guards (named, not run: the root suite leaves functions/ out)
+functions/__tests__/utcDateConvention.test.js
 
 # Pins that move with the code they pin: named, not run
 src/lib/__tests__/claudeMdFreshness.test.ts

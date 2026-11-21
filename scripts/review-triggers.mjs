@@ -6,13 +6,16 @@
  *   node scripts/review-triggers.mjs [--base <ref>] [--head <ref>] [--json]
  *   node scripts/review-triggers.mjs --gates [--base <ref>] [--head <ref>] [--github]
  *
+ * Add `--allow-own-copy` only on the change that adds REVIEW.md or the
+ * gate manifest: without it, a base that lacks either is an error.
+ *
  * REVIEW.md is a checklist whose items each carry a trigger that can be
  * read from a diff. A reviewer runs only the items whose triggers match.
  * The checklist and the gate-file manifest are read from the BASE commit
  * (`git show <base>:REVIEW.md`), never from the change under review: a
  * check the change can edit is a check the change can switch off. Only
  * when the base has no copy yet (the change that adds the file) is the
- * working tree's copy used, with a warning saying so.
+ * working tree's copy used, and only with `--allow-own-copy`.
  *
  * This file is deliberately self-contained (node built-ins only, no local
  * imports), so the base's copy of it can be run from a temporary file:
@@ -90,7 +93,21 @@ export function matchesAny(path, globs) {
 /* REVIEW.md                                                           */
 /* ------------------------------------------------------------------ */
 
-const KEYWORDS = new Set(["paths", "not", "added", "removed", "deleted"]);
+const KEYWORDS = new Set([
+  "paths",
+  "not",
+  "added",
+  "removed",
+  "deleted",
+  "mirrored",
+  "gate-files",
+]);
+/** Keywords that take no values. */
+const FLAGS = {
+  deleted: "deleted",
+  mirrored: "mirrored",
+  "gate-files": "gateFiles",
+};
 
 /**
  * A trigger line is keywords and backticked values, in order:
@@ -98,6 +115,10 @@ const KEYWORDS = new Set(["paths", "not", "added", "removed", "deleted"]);
  * Values belong to the keyword before them. Separators (`;`, `,`) and any
  * other bare words are ignored, so a regex may hold `;` freely; it may not
  * hold a backtick (write `\x60`).
+ *
+ * Two keywords name files without globs, from lists the base keeps:
+ * `mirrored` (a client module some `.cross.test.ts` imports: a rule with a
+ * server copy) and `gate-files` (a file `.github/gate-files.txt` names).
  */
 export function parseTrigger(text) {
   const trigger = {
@@ -106,6 +127,8 @@ export function parseTrigger(text) {
     added: [],
     removed: [],
     deleted: false,
+    mirrored: false,
+    gateFiles: false,
   };
   let current = null;
   let i = 0;
@@ -114,7 +137,7 @@ export function parseTrigger(text) {
       const end = text.indexOf("`", i + 1);
       if (end === -1) throw new Error(`Unclosed backtick in trigger: ${text}`);
       const value = text.slice(i + 1, end);
-      if (!current || current === "deleted")
+      if (!current || current in FLAGS)
         throw new Error(`Value \`${value}\` has no keyword before it`);
       trigger[current].push(value);
       i = end + 1;
@@ -124,14 +147,14 @@ export function parseTrigger(text) {
     if (word) {
       if (KEYWORDS.has(word[0])) {
         current = word[0];
-        if (current === "deleted") trigger.deleted = true;
+        if (current in FLAGS) trigger[FLAGS[current]] = true;
       }
       i += word[0].length;
       continue;
     }
     i += 1;
   }
-  if (trigger.paths.length === 0)
+  if (trigger.paths.length === 0 && !trigger.mirrored && !trigger.gateFiles)
     throw new Error(`Trigger names no paths: ${text}`);
   return trigger;
 }
@@ -143,10 +166,11 @@ export function toRegExp(value) {
 }
 
 /**
- * Items are `### R01. Title` headings followed by `- **Trigger:**`,
- * `- **Check:**` and `- **Behind:**` bullets (a bullet may wrap onto
- * indented lines). Anything before the first item, and any heading that is
- * not an item, is prose and ignored.
+ * Items are `### R01. Title` headings followed by one or more
+ * `- **Trigger:**` bullets (any one matching triggers the item), then
+ * `- **Check:**` and `- **Behind:**` (a bullet may wrap onto indented
+ * lines). `#` and `##` headings are prose. A `###` heading that is not an
+ * item heading is an error, so a typo cannot silently drop an item.
  */
 export function parseReview(markdown) {
   const items = [];
@@ -158,19 +182,23 @@ export function parseReview(markdown) {
     field = null;
   };
   for (const line of markdown.replace(/\r\n/g, "\n").split("\n")) {
-    const heading = line.match(/^###\s+(R\d{2,3})\.\s+(.+?)\s*$/);
-    if (heading) {
+    if (/^###\s/.test(line)) {
+      const heading = line.match(/^###\s+(R\d{2,3})\.\s+(\S.*?)\s*$/);
+      if (!heading)
+        throw new Error(
+          `Malformed item heading (want "### R01. Title"): ${line.trim()}`
+        );
       flush();
       item = {
         id: heading[1],
         title: heading[2],
-        trigger: "",
+        triggers: [],
         check: "",
         behind: "",
       };
       continue;
     }
-    if (/^#{1,3}\s/.test(line)) {
+    if (/^#{1,2}\s/.test(line)) {
       flush();
       continue;
     }
@@ -178,23 +206,36 @@ export function parseReview(markdown) {
     const bullet = line.match(/^- \*\*(Trigger|Check|Behind):\*\*\s*(.*)$/);
     if (bullet) {
       field = bullet[1].toLowerCase();
-      item[field] = bullet[2].trim();
+      if (field === "trigger") item.triggers.push(bullet[2].trim());
+      else item[field] = bullet[2].trim();
       continue;
     }
+    if (/^- \*\*\w+:?\*\*/.test(line))
+      throw new Error(`${item.id}: unknown field ${line.trim().slice(0, 40)}`);
     if (field && /^\s+\S/.test(line)) {
-      item[field] += ` ${line.trim()}`;
+      if (field === "trigger")
+        item.triggers[item.triggers.length - 1] += ` ${line.trim()}`;
+      else item[field] += ` ${line.trim()}`;
       continue;
     }
     if (line.trim() === "") field = null;
   }
   flush();
+  const seen = new Set();
   for (const it of items) {
-    if (!it.trigger) throw new Error(`${it.id} has no Trigger`);
-    it.triggerSpec = parseTrigger(it.trigger);
-    it.regex = {
-      added: it.triggerSpec.added.map(toRegExp),
-      removed: it.triggerSpec.removed.map(toRegExp),
-    };
+    if (seen.has(it.id)) throw new Error(`${it.id} appears twice`);
+    seen.add(it.id);
+    if (it.triggers.length === 0) throw new Error(`${it.id} has no Trigger`);
+    if (!it.check) throw new Error(`${it.id} has no Check`);
+    if (!it.behind) throw new Error(`${it.id} has no Behind`);
+    it.triggerSpecs = it.triggers.map((t) => {
+      const spec = parseTrigger(t);
+      spec.regex = {
+        added: spec.added.map(toRegExp),
+        removed: spec.removed.map(toRegExp),
+      };
+      return spec;
+    });
   }
   return items;
 }
@@ -280,65 +321,78 @@ export function isExempt(path) {
   return path === REVIEW_PATH;
 }
 
-function pathPasses(spec, path) {
-  return matchesAny(path, spec.paths) && !matchesAny(path, spec.not);
+/**
+ * Whether a path is one a trigger names: by its globs, or as a mirrored
+ * module or a gate file (from `context`, which the CLI fills from the base).
+ */
+function pathPasses(spec, path, context) {
+  if (!path || matchesAny(path, spec.not)) return false;
+  if (matchesAny(path, spec.paths)) return true;
+  if (spec.mirrored && context.mirrored?.has(path)) return true;
+  if (spec.gateFiles && matchesAny(path, context.gateGlobs ?? [])) return true;
+  return false;
+}
+
+function specEvidence(spec, f, context) {
+  const evidence = [];
+  const candidate = pathPasses(spec, f.path, context)
+    ? f.path
+    : f.status !== "A" && pathPasses(spec, f.oldPath, context)
+      ? f.oldPath
+      : null;
+  if (!candidate) return evidence;
+  const hasLineConditions =
+    spec.regex.added.length > 0 || spec.regex.removed.length > 0;
+  if (!hasLineConditions && !spec.deleted) {
+    evidence.push({ file: candidate, line: null, kind: "changed", text: "" });
+  }
+  if (
+    spec.deleted &&
+    (f.status === "D" ||
+      (f.status === "R" && pathPasses(spec, f.oldPath, context)))
+  ) {
+    evidence.push({
+      file: f.oldPath,
+      line: null,
+      kind: f.status === "D" ? "deleted" : "renamed",
+      text: f.path,
+    });
+  }
+  for (const [kind, lines, res] of [
+    ["added", f.added, spec.regex.added],
+    ["removed", f.removed, spec.regex.removed],
+  ]) {
+    if (res.length === 0) continue;
+    for (const l of lines) {
+      if (!res.some((re) => re.test(l.text))) continue;
+      evidence.push({
+        file: kind === "removed" ? f.oldPath : f.path,
+        line: l.line,
+        kind,
+        text: l.text.trim(),
+      });
+      if (evidence.length >= MAX_EVIDENCE) return evidence;
+    }
+  }
+  return evidence;
 }
 
 /**
  * The items a change triggers, each with the evidence that matched it
- * (file, line, the line's text). An item with no line or deletion
- * condition matches any changed file its paths name.
+ * (file, line, the line's text). An item matches when any of its triggers
+ * does. A trigger with no line or deletion condition matches any changed
+ * file it names. `context.mirrored` (a Set of paths) and
+ * `context.gateGlobs` feed the `mirrored` and `gate-files` keywords.
  */
-export function matchItems(items, files) {
+export function matchItems(items, files, context = {}) {
   const hits = [];
   for (const item of items) {
-    const spec = item.triggerSpec;
-    const hasLineConditions =
-      item.regex.added.length > 0 || item.regex.removed.length > 0;
     const evidence = [];
     for (const f of files) {
       if (isExempt(f.path) || isExempt(f.oldPath)) continue;
-      const candidate = pathPasses(spec, f.path)
-        ? f.path
-        : f.status !== "A" && pathPasses(spec, f.oldPath)
-          ? f.oldPath
-          : null;
-      if (!candidate) continue;
-      if (!hasLineConditions && !spec.deleted) {
-        evidence.push({
-          file: candidate,
-          line: null,
-          kind: "changed",
-          text: "",
-        });
-      }
-      if (
-        spec.deleted &&
-        (f.status === "D" || (f.status === "R" && pathPasses(spec, f.oldPath)))
-      ) {
-        evidence.push({
-          file: f.oldPath,
-          line: null,
-          kind: f.status === "D" ? "deleted" : "renamed",
-          text: f.path,
-        });
-      }
-      for (const [kind, lines, res] of [
-        ["added", f.added, item.regex.added],
-        ["removed", f.removed, item.regex.removed],
-      ]) {
-        if (res.length === 0) continue;
-        for (const l of lines) {
-          if (res.some((re) => re.test(l.text))) {
-            evidence.push({
-              file: kind === "removed" ? f.oldPath : f.path,
-              line: l.line,
-              kind,
-              text: l.text.trim(),
-            });
-            if (evidence.length >= MAX_EVIDENCE) break;
-          }
-        }
+      for (const spec of item.triggerSpecs) {
+        evidence.push(...specEvidence(spec, f, context));
+        if (evidence.length >= MAX_EVIDENCE) break;
       }
       if (evidence.length >= MAX_EVIDENCE) break;
     }
@@ -353,6 +407,62 @@ export function matchItems(items, files) {
     }
   }
   return hits;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mirrored modules                                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The client modules the `.cross.test.ts` files import: the rules that
+ * have a server copy pinned against them (ADR-0008). `files` is every path
+ * in the tree (to resolve an import's extension); `read(path)` returns a
+ * cross test's text. Test helpers (`__tests__`, `src/test`) and
+ * type-only imports are left out.
+ */
+export function mirroredModules(files, read) {
+  const all = new Set(files);
+  const modules = new Set();
+  for (const test of files.filter((f) => /\.cross\.test\.tsx?$/.test(f))) {
+    // A type-only import pins no behaviour, so it names no mirror.
+    const text = read(test).replace(
+      /\bimport\s+type\s+\{[^}]*\}\s*from\s+["'][^"']+["']/g,
+      ""
+    );
+    for (const m of text.matchAll(/\bfrom\s+["']([^"']+)["']/g)) {
+      const spec = m[1];
+      let p;
+      if (spec.startsWith("@/")) p = `src/${spec.slice(2)}`;
+      else if (spec.startsWith(".")) p = joinPath(dirOf(test), spec);
+      else continue;
+      const found = [p, `${p}.ts`, `${p}.tsx`, `${p}/index.ts`].find(
+        (c) => all.has(c) && /\.tsx?$/.test(c)
+      );
+      if (
+        !found ||
+        /(^|\/)__tests__\//.test(found) ||
+        found.startsWith("src/test/")
+      )
+        continue;
+      modules.add(found);
+    }
+  }
+  return modules;
+}
+
+function dirOf(path) {
+  const i = path.lastIndexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+
+function joinPath(dir, rel) {
+  const parts = dir ? dir.split("/") : [];
+  for (const seg of rel.split("/")) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === "..") parts.pop();
+    else parts.push(seg);
+  }
+  return parts.join("/");
 }
 
 /* ------------------------------------------------------------------ */
@@ -411,8 +521,18 @@ function defaultGit(args) {
 }
 
 /**
- * A file's text at the base, or the working tree's copy when the base has
- * none (with `source: "working-tree"` and a warning to print).
+ * Whether `path` is in `ref`'s tree. A missing path is `false`; a ref git
+ * cannot read is an error, never "missing".
+ */
+export function existsAt(ref, path, git = defaultGit) {
+  return git(["ls-tree", "--name-only", ref, "--", path]).trim() === path;
+}
+
+/**
+ * A file's text at the base. When the base has no copy, the working tree's
+ * copy is used only with `allowOwnCopy` (the change that adds the file),
+ * and then with `source: "working-tree"` and a warning to print. Any other
+ * git failure is an error, not a reason to fall back.
  */
 export function readFromBase(
   path,
@@ -421,36 +541,42 @@ export function readFromBase(
     git = defaultGit,
     readWorkingTree = (p) => readFileSync(resolve(process.cwd(), p), "utf8"),
     workingTreeHas = (p) => existsSync(resolve(process.cwd(), p)),
+    allowOwnCopy = false,
   } = {}
 ) {
-  try {
+  if (existsAt(base, path, git)) {
     return {
       text: git(["show", `${base}:${path}`]),
       source: "base",
       warning: null,
     };
-  } catch {
-    if (!workingTreeHas(path)) {
-      throw new Error(`${path} is neither on ${base} nor in the working tree.`);
-    }
-    return {
-      text: readWorkingTree(path),
-      source: "working-tree",
-      warning:
-        `WARNING: ${path} is not on the base (${base}). This change is being ` +
-        `judged by its own copy from the working tree, which it can edit. ` +
-        `That is expected only for the change that adds ${path}.`,
-    };
   }
+  if (!workingTreeHas(path)) {
+    throw new Error(`${path} is neither on ${base} nor in the working tree.`);
+  }
+  if (!allowOwnCopy) {
+    throw new Error(
+      `${path} is not on the base (${base}), so the only copy is the one this ` +
+        `change can edit. Only the change that adds ${path} should be judged ` +
+        `by its own copy: rerun with --allow-own-copy if this is that change.`
+    );
+  }
+  return {
+    text: readWorkingTree(path),
+    source: "working-tree",
+    warning:
+      `WARNING: ${path} is not on the base (${base}). This change is being ` +
+      `judged by its own copy from the working tree, which it can edit. ` +
+      `That is expected only for the change that adds ${path}.`,
+  };
 }
 
-export function existsAt(ref, path, git = defaultGit) {
-  try {
-    git(["cat-file", "-e", `${ref}:${path}`]);
-    return true;
-  } catch {
-    return false;
-  }
+/** The mirrored client modules as the base has them. */
+function mirroredAtBase(base, git) {
+  const files = git(["ls-tree", "-r", "--name-only", base, "--", "src"])
+    .split("\n")
+    .filter(Boolean);
+  return mirroredModules(files, (p) => git(["show", `${base}:${p}`]));
 }
 
 /* ------------------------------------------------------------------ */
@@ -464,6 +590,7 @@ function parseArgs(argv) {
     json: false,
     gates: false,
     github: false,
+    allowOwnCopy: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -472,6 +599,7 @@ function parseArgs(argv) {
     else if (a === "--json") args.json = true;
     else if (a === "--gates") args.gates = true;
     else if (a === "--github") args.github = true;
+    else if (a === "--allow-own-copy") args.allowOwnCopy = true;
     else if (a === "--help" || a === "-h") args.help = true;
     else throw new Error(`Unknown argument: ${a}`);
   }
@@ -504,8 +632,8 @@ function diffFiles(base, head, git) {
   return parseDiff(text);
 }
 
-function selfEdited(files) {
-  return files.some((f) => f.path === SELF_PATH || f.oldPath === SELF_PATH);
+function edits(files, path) {
+  return files.some((f) => f.path === path || f.oldPath === path);
 }
 
 function printItems(hits, total, meta) {
@@ -530,6 +658,12 @@ function printItems(hits, total, meta) {
   return out.join("\n");
 }
 
+/** `name<<DELIM` lines, so a list survives as one path per line. */
+function githubOutput(name, lines) {
+  const delim = `EOF_${name.toUpperCase()}_${Date.now()}`;
+  return `${name}<<${delim}\n${lines.join("\n")}\n${delim}\n`;
+}
+
 export function main(argv = process.argv.slice(2), git = defaultGit) {
   const args = parseArgs(argv);
   if (args.help) {
@@ -539,20 +673,21 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
   const base = resolveBase(args.base, git);
   const files = diffFiles(base, args.head, git);
   const warnings = [];
-  if (selfEdited(files) && existsAt(base, SELF_PATH, git)) {
+  const notes = [];
+  if (edits(files, SELF_PATH) && existsAt(base, SELF_PATH, git)) {
     warnings.push(
       `WARNING: this change edits ${SELF_PATH}. To judge it with the base's copy: ` +
         `git show ${base.slice(0, 12)}:${SELF_PATH} > /tmp/rt.mjs && node /tmp/rt.mjs --base ${base.slice(0, 12)}`
     );
   }
+  const readOpts = { git, allowOwnCopy: args.allowOwnCopy };
+  const manifest = readFromBase(GATE_MANIFEST_PATH, base, readOpts);
+  if (manifest.warning) warnings.push(manifest.warning);
+  const gateManifest = parseGateManifest(manifest.text);
 
   if (args.gates) {
-    const manifest = readFromBase(GATE_MANIFEST_PATH, base, { git });
-    if (manifest.warning) warnings.push(manifest.warning);
-    const result = gateFilesTouched(
-      parseGateManifest(manifest.text),
-      files,
-      (p) => existsAt(base, p, git)
+    const result = gateFilesTouched(gateManifest, files, (p) =>
+      existsAt(base, p, git)
     );
     for (const w of warnings) console.error(w);
     if (args.github) {
@@ -581,7 +716,12 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
         appendFileSync(summary, `${lines.join("\n")}\n`);
       }
       const output = process.env.GITHUB_OUTPUT;
-      if (output) appendFileSync(output, `tests=${result.tests.join(" ")}\n`);
+      if (output) {
+        appendFileSync(
+          output,
+          result.tests.length ? githubOutput("tests", result.tests) : "tests=\n"
+        );
+      }
     }
     if (args.json)
       console.log(
@@ -600,10 +740,19 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
     return 0;
   }
 
-  const review = readFromBase(REVIEW_PATH, base, { git });
+  const review = readFromBase(REVIEW_PATH, base, readOpts);
   if (review.warning) warnings.push(review.warning);
+  if (edits(files, REVIEW_PATH) && review.source === "base") {
+    notes.push(
+      `This change edits ${REVIEW_PATH}. It is judged by the base's copy; its own items apply from the next change. Review the ${REVIEW_PATH} diff on its own (R38).`
+    );
+  }
   const items = parseReview(review.text);
-  const hits = matchItems(items, files);
+  const context = {
+    mirrored: mirroredAtBase(base, git),
+    gateGlobs: gateManifest.globs,
+  };
+  const hits = matchItems(items, files, context);
   for (const w of warnings) console.error(w);
   if (args.json) {
     console.log(
@@ -613,6 +762,7 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
           head: args.head,
           source: review.source,
           total: items.length,
+          notes,
           hits,
         },
         null,
@@ -620,6 +770,7 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
       )
     );
   } else {
+    for (const n of notes) console.log(n);
     console.log(
       printItems(hits, items.length, {
         base,

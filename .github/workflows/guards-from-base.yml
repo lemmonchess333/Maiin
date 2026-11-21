@@ -48,26 +48,31 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The base commit and the merge-base have to be here to read
-          # files from them and to diff against them.
-          fetch-depth: 0
+          # The pull request's merge commit and its two parents: the first
+          # parent IS the base this change merges onto, exactly, which
+          # `pull_request.base.sha` is not once main has moved since the
+          # event. Two commits, not the 2.76 GiB history.
+          fetch-depth: 2
 
       - name: Name the gate files this pull request edits
         id: gates
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
+          BASE=$(git rev-parse HEAD^1)
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "Judging HEAD against its first parent, $BASE."
           # The matcher too comes from the base, so a pull request cannot
           # edit the script that judges it. The pull request that adds the
-          # script has no base copy; only then is its own copy used.
+          # script has no base copy; only then is its own copy used, with
+          # --allow-own-copy (the manifest is new there too).
           if git cat-file -e "$BASE:scripts/review-triggers.mjs" 2>/dev/null; then
             git show "$BASE:scripts/review-triggers.mjs" > "$RUNNER_TEMP/review-triggers.mjs"
+            node "$RUNNER_TEMP/review-triggers.mjs" --gates --github --base "$BASE" --head HEAD
           else
             echo "::warning::The base has no scripts/review-triggers.mjs yet, so this run uses the pull request's own copy."
             cp scripts/review-triggers.mjs "$RUNNER_TEMP/review-triggers.mjs"
+            node "$RUNNER_TEMP/review-triggers.mjs" --gates --github --base "$BASE" --head HEAD --allow-own-copy
           fi
-          node "$RUNNER_TEMP/review-triggers.mjs" --gates --github --base "$BASE" --head HEAD
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.gates.outputs.tests != ''
@@ -89,21 +94,18 @@ jobs:
       - name: Run the base's copy of each edited gate test against this pull request
         if: steps.gates.outputs.tests != ''
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
+          BASE: ${{ steps.gates.outputs.base }}
           TESTS: ${{ steps.gates.outputs.tests }}
         run: |
           set -uo pipefail
-          # Word-splitting is the point: TESTS is a space-separated list of
-          # repo paths, none of which holds a space (the matcher only
-          # lists files that exist at the base).
-          # shellcheck disable=SC2086
-          git checkout "$BASE" -- $TESTS
-          echo "Base copies restored: $TESTS"
-          # shellcheck disable=SC2086
-          if npx vitest run $TESTS; then
-            printf '\nThe base copies of %s pass against this pull request.\n' "$TESTS" >> "$GITHUB_STEP_SUMMARY"
+          # One repo path per line, as the matcher wrote them.
+          mapfile -t tests < <(printf '%s\n' "$TESTS" | sed '/^$/d')
+          git checkout "$BASE" -- "${tests[@]}"
+          echo "Base copies restored: ${tests[*]}"
+          if npx vitest run "${tests[@]}"; then
+            printf '\nThe base copies of %s pass against this pull request.\n' "${tests[*]}" >> "$GITHUB_STEP_SUMMARY"
           else
-            msg="The base's copy of an edited gate test fails against this pull request ($TESTS). Either the change loosened a rule its own code relies on, or it extended a list the test enumerates. Read that test's hunk on its own (REVIEW.md R38); the log above names the failing case."
+            msg="The base's copy of an edited gate test fails against this pull request (${tests[*]}). Either the change loosened a rule its own code relies on, it extended a list the test enumerates, or it renamed or moved a helper the base's copy imports. Read that test's hunk on its own (REVIEW.md R38); the log above names the failing case."
             echo "::warning::$msg"
             printf '\n**%s**\n' "$msg" >> "$GITHUB_STEP_SUMMARY"
           fi
