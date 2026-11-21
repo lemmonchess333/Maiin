@@ -116,7 +116,14 @@ export function getEstablishingLine(signals: PerformanceSignals): string {
    Sunday (App1 Q13). Whether to ease off is the line under the bars
    (`takeMoreLine`), not these. The person does the training: a line is
    about you, never about "load" (CODING_STANDARDS, the measured rules). */
-export function getLine(state: VerbState, signals: PerformanceSignals): string {
+export function getLine(
+  state: VerbState,
+  signals: PerformanceSignals,
+  /** The 7 days' own figures held more training than the usual week
+   *  (`trainedMoreThanUsual`). The band is the whole score, so it is no
+   *  proof: 100% of the usual week scores high. Absent reads as not. */
+  trainedMore = false
+): string {
   switch (state) {
     case "backing-off":
       // The recovery factor is built from food logged, the weight trend
@@ -129,7 +136,9 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
       if (signals.bothLoadsStrong) return "Lifting and running both strong";
       if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
       if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
-      return "You trained more than your usual week";
+      return trainedMore
+        ? "You trained more than your usual week"
+        : "A strong 7 days";
 
     case "cruising":
       if (signals.adherenceWeak) return "Fewer sessions than usual";

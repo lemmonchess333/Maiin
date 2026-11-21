@@ -313,6 +313,26 @@ describe("the lead names its window (App1 Q13)", () => {
       within(lead()).getByText("You trained more than your usual week")
     ).toBeInTheDocument();
   });
+
+  it("says you trained more only when the bars beside it show it", () => {
+    /* A high score is no proof of more training: 90% of the usual week
+       scores 74, high (trainedMoreThanUsual.test.ts). Here both measures
+       sit under their usual week, so the line makes no comparison. */
+    const under = history(74, "high");
+    under[under.length - 1] = {
+      ...under[under.length - 1],
+      aggregates: {
+        ...under[under.length - 1].aggregates,
+        liftTonnage: 12300,
+        runKm: 25.2,
+      },
+    };
+    serve(under);
+    renderSection();
+    expect(within(lead()).getByText("Sharpening")).toBeInTheDocument();
+    expect(within(lead()).getByText("A strong 7 days")).toBeInTheDocument();
+    expect(lead().textContent).not.toMatch(/more than your usual week/);
+  });
 });
 
 describe("the lead while the baseline forms", () => {

@@ -803,7 +803,7 @@ export default function LiftSessionView({
                     haptic("light");
                     session.startEasier(idx);
                   }}
-                  className="w-full min-h-[44px] p-3 rounded-xl bg-muted text-left active:scale-[0.97] transition-transform"
+                  className="w-full min-h-[44px] p-3 rounded-xl bg-muted text-left active:scale-[0.97] transition-transform chip-edge"
                 >
                   <p className="text-sm font-semibold text-foreground">
                     Go easier today ·{" "}
@@ -853,7 +853,7 @@ export default function LiftSessionView({
                           >
                             <div
                               data-swipe-card="true"
-                              className="p-3 rounded-xl bg-card"
+                              className="p-3 rounded-xl bg-card dark:card-shadow"
                             >
                               <ExerciseRowSummary
                                 exercise={ex}
@@ -997,7 +997,7 @@ export default function LiftSessionView({
                       setAddPickerDayIndex(idx);
                       setShowAddPicker(true);
                     }}
-                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-semibold text-sm"
+                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-semibold text-sm dark:card-shadow"
                   >
                     <Plus className="size-4" /> Add exercise
                   </button>
@@ -1072,7 +1072,7 @@ export default function LiftSessionView({
 
               {/* ── Completed Session Summary ── */}
               {status === "completed" && (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                <div className="rounded-xl border border-border bg-card p-4 space-y-2 dark:card-shadow dark:border-transparent">
                   <p className="text-sm text-muted-foreground">
                     {completedWorkoutId
                       ? "Your recorded sets and actual totals are ready to view."
