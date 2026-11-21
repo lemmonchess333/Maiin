@@ -342,15 +342,15 @@ fixed by the code (`src/lib/purchaseProvider.ts`); the prices are the ones
 the web shows (`src/lib/proPlans.ts`), and the actual prices are your choice
 in App Store Connect. The iPhone paywall shows the App Store's own prices.
 
-|                    | Monthly                                          | Yearly                        |
-| ------------------ | ------------------------------------------------ | ----------------------------- |
-| Reference name     | Tropos Pro Monthly                               | Tropos Pro Yearly             |
-| Product ID         | `com.tropos.app.pro.monthly`                     | `com.tropos.app.pro.yearly`   |
-| Duration           | 1 month                                          | 1 year                        |
-| Price (UK)         | £6.99                                            | £39.99                        |
-| Price (US)         | $7.99                                            | $49.99                        |
-| Introductory offer | Free, 1 week, new subscribers                    | Free, 1 week, new subscribers |
-| Review screenshot  | The paywall's plan screen, from the iPhone build | The same                      |
+|                    | Monthly                                                                                                  | Yearly                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Reference name     | Tropos Pro Monthly                                                                                       | Tropos Pro Yearly             |
+| Product ID         | `com.tropos.app.pro.monthly`                                                                             | `com.tropos.app.pro.yearly`   |
+| Duration           | 1 month                                                                                                  | 1 year                        |
+| Price (UK)         | £6.99                                                                                                    | £39.99                        |
+| Storefronts        | Base storefront United Kingdom; every other storefront uses App Store Connect's comparable price from it | The same                      |
+| Introductory offer | Free, 1 week, new subscribers                                                                            | Free, 1 week, new subscribers |
+| Review screenshot  | The paywall's plan screen, from the iPhone build                                                         | The same                      |
 
 Both products are submitted with the first version: attach them on the
 version page under In-App Purchases and Subscriptions, or App Review
