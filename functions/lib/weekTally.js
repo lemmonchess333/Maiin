@@ -88,12 +88,14 @@ function localMidnightMs(dayKey, timezone) {
   }
 }
 
-/** The person's current week, and when it ends where they are. */
+/** The person's current week, the day it is where they are, and when the
+ *  week ends there. */
 function currentWeek(timezone, now = Date.now()) {
   const today = localDateKeyInTz(new Date(now), timezone) || isoDay(now);
   const weekKey = weekKeyOf(today);
   return {
     weekKey,
+    today,
     weekEndsAt: new Date(localMidnightMs(addDays(weekKey, 7), timezone)),
   };
 }

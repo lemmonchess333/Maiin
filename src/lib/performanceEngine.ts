@@ -166,7 +166,10 @@ export function computeAdherenceScore(
 
   // Workout adherence (biggest factor)
   if (targetWorkouts > 0) {
-    const totalSessions = agg.liftSessions + agg.runSessions;
+    // A circuit counts as a session done (Circ1 (6)), and for nothing else
+    // in the index. Absent on aggregates written before circuits.
+    const totalSessions =
+      agg.liftSessions + agg.runSessions + (agg.circuitSessions ?? 0);
     const ratio = Math.min(totalSessions / targetWorkouts, 1.2);
     score += ratio * 100;
     factors++;
