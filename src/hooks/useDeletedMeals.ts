@@ -24,7 +24,9 @@ import { logger } from "@/lib/logger";
 import { parseMealDoc, type Meal } from "@/hooks/useMeals";
 
 /** Include every supported Firestore timestamp, excluding null/missing
- *  deletion fields. Meals remain recoverable until an explicit hard delete. */
+ *  deletion fields. No cutoff of its own: a meal stays listed, and
+ *  restorable, until it is hard-deleted, by Delete permanently or by the
+ *  server's purge 30 days after `deletedAt` (functions/lib/mealPurge.js). */
 const FIRST_TIMESTAMP = Timestamp.fromDate(new Date("0001-01-01T00:00:00Z"));
 
 /** Stable identity so a signed-out render does not churn consumers. */

@@ -548,20 +548,24 @@ describe("useFoodFavourites", () => {
       expect(faveDeletes()).toHaveLength(0);
     });
 
-    it("emits food_pantry_eviction analytics with id + useCount + totalBefore", async () => {
+    it("emits food_pantry_eviction with useCount + totalBefore, never the food's id", async () => {
+      // The favourite evicted is a typed meal, whose id is its name.
+      const docs = makeManyDocs(51);
+      docs[0] = {
+        id: "chicken_and_rice",
+        data: { ...docs[0].data, name: "Chicken and rice" },
+      };
       const { result } = renderHook(() => useFoodFavourites());
       await act(async () => {
-        pumpSnapshot(makeManyDocs(51));
+        pumpSnapshot(docs);
       });
       expect(result.current.favourites).toHaveLength(51);
       await act(async () => {
         await vi.advanceTimersByTimeAsync(500);
       });
+      expect(faveDeletes()[0].path.split("/").pop()).toBe("chicken_and_rice");
       const ev = trackedEvents.find((e) => e.event === "food_pantry_eviction");
-      expect(ev).toBeDefined();
-      expect(ev?.metadata.favouriteId).toBe("fav-0");
-      expect(ev?.metadata.useCount).toBe(1);
-      expect(ev?.metadata.totalBefore).toBe(51);
+      expect(ev?.metadata).toEqual({ useCount: 1, totalBefore: 51 });
     });
   });
 
@@ -588,10 +592,12 @@ describe("useFoodFavourites", () => {
       expect(evs).toHaveLength(0);
     });
 
-    it("fires on the < 2 → >= 2 transition between snapshots", async () => {
+    it("fires on the < 2 → >= 2 transition between snapshots, without the food's id", async () => {
+      // A typed meal's id is its name: "chicken_and_rice" is the meal.
+      const chicken = { id: "chicken_and_rice", name: "Chicken and rice" };
       renderHook(() => useFoodFavourites());
       await act(async () => {
-        pumpSnapshot([makeDoc({ id: "a", useCount: 1 })]);
+        pumpSnapshot([makeDoc({ ...chicken, useCount: 1 })]);
       });
       // Nothing has graduated yet — pinned so the assertion below
       // cannot pass on an event fired by the FIRST snapshot.
@@ -600,11 +606,10 @@ describe("useFoodFavourites", () => {
       ).toHaveLength(0);
       // Second snapshot reflects the graduation.
       await act(async () => {
-        pumpSnapshot([makeDoc({ id: "a", useCount: 2 })]);
+        pumpSnapshot([makeDoc({ ...chicken, useCount: 2 })]);
       });
       const ev = trackedEvents.find((e) => e.event === "food_pantry_graduated");
-      expect(ev?.metadata.favouriteId).toBe("a");
-      expect(ev?.metadata.useCount).toBe(2);
+      expect(ev?.metadata).toEqual({ useCount: 2, source: "manual" });
     });
 
     it("catches multi-increment jumps (1 → 3 via offline sync)", async () => {
