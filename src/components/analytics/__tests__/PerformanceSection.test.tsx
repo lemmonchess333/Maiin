@@ -376,7 +376,7 @@ describe("the lead says what happened under Backing off and Steady", () => {
     expect(within(lead()).getByText(/^Backing off$/)).toBeInTheDocument();
     expect(
       within(lead()).getByText(
-        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
       )
     ).toBeInTheDocument();
     expect(lead().textContent).not.toMatch(/more than your usual week/);
@@ -390,7 +390,7 @@ describe("the lead says what happened under Backing off and Steady", () => {
     expect(within(lead()).getByText(/^Steady$/)).toBeInTheDocument();
     expect(
       within(lead()).getByText(
-        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
       )
     ).toBeInTheDocument();
     expect(lead().textContent).not.toMatch(/fewer sessions/i);

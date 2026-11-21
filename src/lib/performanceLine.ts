@@ -126,7 +126,8 @@ function sessionCount({ done, planned }: WindowSessions): string {
  *
  *   - half the plan or more done, and food counted: the sessions score 50
  *     or more, so an average under 50 needs the food under 50 too. Say
- *     both.
+ *     both, as two sentences, each within the measured 15 words
+ *     (CODING_STANDARDS).
  *   - under half: the sessions alone can make it weak, and nothing here
  *     tells whether the food was off as well. Say the count only.
  *   - food not counted (under 3 days): the score had no food in it, so
@@ -138,7 +139,7 @@ function offPlanLine(sessions: WindowSessions | null): string {
   if (!sessions) return "Your sessions or food were well off your plan";
   const count = sessionCount(sessions);
   return sessions.foodCounted && sessions.done * 2 >= sessions.planned
-    ? `${count}, with food well off your targets`
+    ? `${count}. Food was well off your targets`
     : count;
 }
 

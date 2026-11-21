@@ -131,7 +131,7 @@ describe("getLine — backing-off state", () => {
         sessions: { done: 5, planned: 5, foodCounted: true },
       })
     ).toBe(
-      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+      "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
     );
     expect(getLine("backing-off", weak)).toBe(
       "Your sessions or food were well off your plan"
@@ -249,10 +249,10 @@ describe("getLine — cruising state", () => {
 
   it("adherenceWeak, every planned session done: the food was off", () => {
     expect(getLine("cruising", weak, sessions(5, 5))).toBe(
-      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+      "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
     );
     expect(getLine("cruising", weak, sessions(6, 5))).toBe(
-      "You did 6 sessions against 5 planned in these 7 days, with food well off your targets"
+      "You did 6 sessions against 5 planned in these 7 days. Food was well off your targets"
     );
   });
 
@@ -261,10 +261,10 @@ describe("getLine — cruising state", () => {
      sessions alone can make it weak, and the food is not known. */
   it("adherenceWeak, sessions short: the count, and the food only when it must have been off", () => {
     expect(getLine("cruising", weak, sessions(3, 5))).toBe(
-      "You did 3 of 5 planned sessions in these 7 days, with food well off your targets"
+      "You did 3 of 5 planned sessions in these 7 days. Food was well off your targets"
     );
     expect(getLine("cruising", weak, sessions(2, 4))).toBe(
-      "You did 2 of 4 planned sessions in these 7 days, with food well off your targets"
+      "You did 2 of 4 planned sessions in these 7 days. Food was well off your targets"
     );
     expect(getLine("cruising", weak, sessions(2, 5))).toBe(
       "You did 2 of 5 planned sessions in these 7 days"
@@ -316,6 +316,15 @@ describe("getLine — cruising state", () => {
     expect(getLine("cruising", ZERO_SIGNALS, sessions(5, 5))).toBe(
       "Holding a steady rhythm"
     );
+  });
+
+  /* The measured words rule: one or two sentences of 15 words or fewer
+     (CODING_STANDARDS). The count and the food are two. */
+  it("keeps each sentence to 15 words or fewer", () => {
+    for (const evidence of [sessions(5, 5), sessions(6, 5), sessions(3, 5)]) {
+      for (const sentence of getLine("cruising", weak, evidence).split(". "))
+        expect(sentence.split(" ").length).toBeLessThanOrEqual(15);
+    }
   });
 
   it("never compares sessions with the usual week", () => {

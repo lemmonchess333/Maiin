@@ -317,7 +317,7 @@ describe("the lead counts sessions against the plan", () => {
     expect(await screen.findByText("Steady")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "You did 4 of 4 planned sessions in these 7 days, with food well off your targets"
+        "You did 4 of 4 planned sessions in these 7 days. Food was well off your targets"
       )
     ).toBeInTheDocument();
   });

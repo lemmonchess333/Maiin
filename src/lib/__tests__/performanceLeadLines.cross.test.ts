@@ -292,11 +292,11 @@ function expectTrueOfItsWeek(
     expect(line).not.toMatch(/planned/);
   }
 
-  if (/food well off your targets/.test(line)) {
+  if (/Food was well off your targets/.test(line)) {
     // The server counted the food (3 days or more), and it was off.
     expect(agg.mealDaysLogged).toBeGreaterThanOrEqual(3);
     expect(foodAdherence(agg)).toBeLessThan(50);
-  } else if (/food/.test(line)) {
+  } else if (/food/i.test(line)) {
     expect(line).toBe("Your sessions or food were well off your plan");
   }
 }
@@ -314,7 +314,7 @@ describe("Backing off says what happened, not more than usual", () => {
     expect(state).toBe("backing-off");
 
     expect(line).toBe(
-      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+      "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
     );
     expectTrueOfItsWeek(line, doc, 5);
   });
@@ -414,7 +414,7 @@ describe("Steady says what was off the plan, not fewer sessions than usual", () 
       expect(doc.signals.adherenceWeak).toBe(true);
       expect(state).toBe("cruising");
       expect(line).toBe(
-        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
       );
       expectTrueOfItsWeek(line, doc, 5);
     }
@@ -666,7 +666,7 @@ describe("a count is the plan's, or none", () => {
     const { state, line } = lineFor(doc, now);
     expect(state).toBe("cruising");
     expect(line).toBe("You did 2 of 4 planned sessions in these 7 days");
-    expect(line).not.toMatch(/food/);
+    expect(line).not.toMatch(/food/i);
   });
 });
 
