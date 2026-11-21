@@ -4792,6 +4792,42 @@ of thing a phone's screen and WebKit decide.
       build), Tab to a "Swap" style pill in dark mode. Passing: the purple
       focus ring shows, with the pill's edge still under it.
 
+## The tab bar's rim, the fade under it and Reduce Transparency (DS6 step 3, 2026-11-18)
+
+Affects: the tab bar on every tab (`.bottom-nav-frost`, the new
+`.bottom-nav-frame::before` fade) and Reduce Transparency, which WebKit
+cannot see by itself and now reaches the page through the app's own
+`AccessibilityPrefsPlugin` (`src/lib/reducedTransparency.ts`). The
+captures were the real tab bar in a harness page on a desktop Chrome; a
+phone's safe area, its blur and its brightness are for a phone to show.
+
+- [ ] **Nothing reads below the bar.** On a TestFlight build, scroll Home,
+      Food and Social so text passes under the tab bar. Passing: no words
+      can be read in the gap under the bar or over the home indicator, the
+      bar's upper half still shows a frosted blur of what passes behind,
+      and every tab can be tapped where it could before.
+- [ ] **The rim shows.** In dark mode at the lowest screen brightness,
+      look at the bar over a card and over the bare page. Passing: a thin
+      lighter line runs along the bar's top edge, as on the cards.
+- [ ] **Reduce Transparency.** Settings → Accessibility → Display & Text
+      Size → Reduce Transparency on, then back to Tropos without closing
+      it. Passing: the bar is solid with no blur. Turn it off and return:
+      the bar is frosted again, with no relaunch.
+- [ ] **An older iPhone.** On iOS 15, 16 or 17, if one is to hand, scroll
+      under the bar. Passing: the tab names are as readable as on iOS 18,
+      blur or no blur.
+- [ ] **Frames.** Scroll a long Social feed quickly. Passing: the bar and
+      the page move without stutter. If they stutter, the bar goes back to
+      solid with its rim (DS6's named risk).
+- [ ] **Still blurred under Reduce Transparency (follow-up, not a
+      check).** With the setting on, these keep a backdrop blur, since
+      they predate the attribute: a Space's hero chips (`Space.tsx`,
+      `SpacesDirectory.tsx`), a post's comment bar
+      (`ActivityPostComments.tsx`), History's chip row and the run map's
+      chips (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
+      `GhostDeltaChip`, `RunMap.tsx`). Each wants the same solid fallback;
+      tick this when they have it.
+
 ## Motion 14 under every animation (2026-11-11)
 
 Affects: every screen. `framer-motion` went from 12.40 to 14.6, two major
