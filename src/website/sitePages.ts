@@ -165,6 +165,7 @@ export const NOT_FOUND_TITLE = "Page not found · Tropos";
  */
 export const APP_ADDRESS_PREFIXES: readonly string[] = [
   "/admin",
+  "/circuit",
   "/diagnostics",
   "/dev",
   "/empty-workout",
