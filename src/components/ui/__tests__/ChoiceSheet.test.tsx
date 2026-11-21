@@ -14,7 +14,7 @@ import { buttonClasses } from "../buttonClasses";
 afterEach(cleanup);
 
 function handles(): number {
-  return document.querySelectorAll(".h-1.rounded-full.bg-border").length;
+  return document.querySelectorAll(".h-1.rounded-full.sheet-handle").length;
 }
 
 const choices = [

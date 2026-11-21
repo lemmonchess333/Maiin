@@ -14,7 +14,7 @@ interface Props {
 function TargetFrame() {
   return (
     <div
-      className="rounded-2xl border border-border bg-card p-3 space-y-3"
+      className="rounded-2xl border border-border bg-card p-3 space-y-3 dark:card-shadow dark:border-transparent"
       role="img"
       aria-label={`Sample: a calorie target of 2,336 ${CALORIE_UNIT}, adapted down by 120 ${CALORIE_UNIT} this week from the weight trend`}
     >

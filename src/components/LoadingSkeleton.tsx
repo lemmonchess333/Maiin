@@ -45,7 +45,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
 export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
     <div
-      className="bg-card rounded-2xl p-4 space-y-3"
+      className="bg-card rounded-2xl p-4 space-y-3 dark:card-shadow"
       style={{ animationDelay: `${stagger * 80}ms` }}
     >
       <Skeleton className="h-4 w-1/3" stagger={stagger} />
@@ -58,7 +58,7 @@ export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
 export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
     <div
-      className="bg-card rounded-2xl p-4 space-y-3"
+      className="bg-card rounded-2xl p-4 space-y-3 dark:card-shadow"
       style={{ animationDelay: `${stagger * 80}ms` }}
     >
       <Skeleton className="h-4 w-1/4" stagger={stagger} />
@@ -74,7 +74,7 @@ export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
  */
 export function ActivityCardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
-    <div className="bg-card rounded-2xl overflow-hidden">
+    <div className="bg-card rounded-2xl overflow-hidden dark:card-shadow">
       {/* Map / route preview area */}
       <Skeleton className="h-28 rounded-none" stagger={stagger} />
       <div className="p-4 space-y-3">
@@ -152,7 +152,12 @@ function SkelCard({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("bg-card rounded-2xl p-4 space-y-3", className)}>
+    <div
+      className={cn(
+        "bg-card rounded-2xl p-4 space-y-3 dark:card-shadow",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -256,7 +261,7 @@ export function CirclesCardSkeleton() {
       role="status"
       aria-label="Loading"
       data-skeleton="circles-card"
-      className="@container rounded-2xl bg-card p-4 space-y-3"
+      className="@container rounded-2xl bg-card p-4 space-y-3 dark:card-shadow"
     >
       <div className="flex items-start gap-3">
         <Bar className="size-9 shrink-0 rounded-xl" />
@@ -464,7 +469,10 @@ export function SocialSkeleton() {
       <Bar className="h-7 w-28" />
       <PillRowSkeleton count={3} />
       {[0, 1].map((i) => (
-        <div key={i} className="bg-card rounded-2xl overflow-hidden">
+        <div
+          key={i}
+          className="bg-card rounded-2xl overflow-hidden dark:card-shadow"
+        >
           <Bar className="h-28 rounded-none" />
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
