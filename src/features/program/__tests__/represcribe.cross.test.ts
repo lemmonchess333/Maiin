@@ -278,6 +278,30 @@ describe("goal-prescription engine — client vs functions mirror", () => {
     );
   });
 
+  it("repFloorFor and rangedReps agree, a bodyweight lift's 8 included", () => {
+    const cases = [
+      { exerciseId: "bench-press" },
+      { exerciseId: "bench-press", isAccessory: true },
+      { exerciseId: "push-ups" },
+      { exerciseId: "push-ups", weight: 10 },
+      { exerciseId: "pull-ups" },
+      { exerciseId: "russian-twist", isAccessory: true },
+      { exerciseId: "plank", repUnit: "seconds" },
+    ];
+    expect(repFloorFor({ exerciseId: "push-ups" })).toBe(8);
+    expect(repFloorFor({ exerciseId: "push-ups", weight: 10 })).toBe(3);
+    expect(repFloorFor({ exerciseId: "pull-ups" })).toBe(3);
+    for (const ex of cases) {
+      expect(cf.repFloorFor(ex), JSON.stringify(ex)).toBe(repFloorFor(ex));
+      for (const target of [2, 5, 10, 14, 19])
+        for (const span of [0, 2, 4, 8])
+          expect(
+            cf.rangedReps(ex, target, span),
+            `${JSON.stringify(ex)} ${target} ${span}`
+          ).toEqual(rangedReps(ex, target, span));
+    }
+  });
+
   it("prescribedRepCeiling agrees across barbell / bodyweight / timed", () => {
     const cases = [
       { exerciseId: "bench-press" },

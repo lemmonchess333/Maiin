@@ -47,6 +47,7 @@ import {
 
 import { planningEasyPaceSPerKm, type RunFitnessInput } from "@/lib/runPaces";
 import type {
+  Equipment,
   Goal,
   PreferredSplit,
   PrimaryGoal,
@@ -107,8 +108,11 @@ import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
+  standInForMissingKit,
+  withoutKitSwapNotes,
 } from "./matchTemplate";
 import { heldForInjury } from "./injurySubstitutions";
+import { capSupermanVolume, withHoldRanges } from "./noEquipment";
 import {
   generateRacePlanV2,
   DEFAULT_RUN_TUNING,
@@ -224,11 +228,16 @@ export interface PlanBuilderInput {
    *  same knobs this build used. */
   runTuning?: RunTuning;
 
-  equipment: "full_gym" | "home_gym" | "minimal";
+  equipment: Equipment;
 
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit ("what do you have?"). */
   barbellAtHome?: boolean;
+
+  /** Lift4 (11): "A pull-up bar" beside a home gym's, a minimal or a
+   *  no-equipment setup's kit: pull-ups, chin-ups and the hanging leg raise
+   *  (`hasPullUpBar`). Undefined keeps an older plan's, which has them. */
+  pullUpBar?: boolean;
 
   /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
    *  your runs build?". Saved on the profile, and the week being saved in
@@ -317,6 +326,8 @@ export interface PlanBuilderOutput {
     liftTimeBudgetMinutes?: number;
     /** A barbell and a rack beside the equipment tier's kit (Lift4 (11)). */
     barbellAtHome?: boolean;
+    /** The pull-up bar answer beside it. */
+    pullUpBar?: boolean;
     /** The race-setup answer on the leg trim (Lift4 (10)). */
     raceLegTrim?: boolean;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
@@ -437,6 +448,7 @@ type LiftProgramInput = Pick<
   | "raceGoal"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
   | "existingState"
   | "preserveHistory"
@@ -494,6 +506,7 @@ function buildLiftProgram(input: LiftProgramInput): {
             equipment: input.equipment,
             injuries: input.injuries,
             barbellAtHome: input.barbellAtHome,
+            pullUpBar: input.pullUpBar,
           },
           // Run27 (19): the day before an ultra's back-to-back run is
           // kept as the day before the long run is.
@@ -556,30 +569,70 @@ function buildLiftProgram(input: LiftProgramInput): {
       input.injuries,
       input.equipment,
       loadCtx,
-      input.barbellAtHome
+      input.barbellAtHome,
+      input.pullUpBar
     ),
     input.injuries,
     input.equipment,
     loadCtx,
-    input.barbellAtHome
+    input.barbellAtHome,
+    input.pullUpBar
   );
   // A lift the swaps bring in takes its own role's numbers; a new plan's
-  // were swapped in the generator, before its role table.
-  const equipmentSafe = represcribeSwapped(
+  // were swapped in the generator, before its role table. With no
+  // equipment, a lift nothing in its movement can stand in for takes a hold
+  // or floor lift in its slot, and comes back with the kit
+  // (`standInForMissingKit`).
+  const swapped = represcribeSwapped(
     levelled,
-    applyEquipmentFilterToWorkouts(
-      injurySafe,
+    standInForMissingKit(
+      applyEquipmentFilterToWorkouts(
+        injurySafe,
+        input.equipment,
+        input.injuries,
+        toExperience(input.experience),
+        loadCtx,
+        input.barbellAtHome,
+        input.pullUpBar
+      ),
       input.equipment,
       input.injuries,
-      toExperience(input.experience),
       loadCtx,
-      input.barbellAtHome
+      input.pullUpBar
     ),
     input.primaryGoal,
     toExperience(input.experience),
     input.existingState?.settings?.loadUnit ?? input.loadUnit,
     input.injuries
   );
+  // A plan being built carries no kit swap's note: it names a lift the
+  // person was never given. A swap in the plan they have keeps its note.
+  // With no equipment, the superman hold keeps to 3 sets a session and about
+  // 6 a week, and a hold swapped in climbs to a minute (`noEquipment.ts`):
+  // in a new plan every hold, as the level gate above can swap one in after
+  // the builder capped them; in the plan the person has, only the holds
+  // this save swapped in, each kept in its slot, while their own keep
+  // theirs.
+  const swappedHere = (d: number, e: number) =>
+    levelled[d]?.exercises[e]?.exerciseId !==
+    swapped[d]?.exercises[e]?.exerciseId;
+  const equipmentSafe =
+    input.equipment !== "no_equipment"
+      ? preserve
+        ? swapped
+        : withoutKitSwapNotes(swapped)
+      : preserve
+        ? withHoldRanges(
+            capSupermanVolume(swapped, {
+              drop: false,
+              cap: (d, e) =>
+                levelled[d]?.exercises[e]?.exerciseId !== "superman-hold",
+            }),
+            swappedHere
+          )
+        : withHoldRanges(
+            capSupermanVolume(withoutKitSwapNotes(swapped), { drop: true })
+          );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
   // they are, and the length it was fitted to.
@@ -761,6 +814,7 @@ export type FreshLiftAnswers = Pick<
   | "liftDays"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
 >;
 
@@ -1079,6 +1133,7 @@ function buildProfileUpdates(
     updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
   if (input.barbellAtHome !== undefined)
     updates.barbellAtHome = input.barbellAtHome;
+  if (input.pullUpBar !== undefined) updates.pullUpBar = input.pullUpBar;
   if (input.raceLegTrim !== undefined) updates.raceLegTrim = input.raceLegTrim;
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;

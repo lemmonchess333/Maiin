@@ -598,6 +598,7 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
+            pullUpBar: profile.pullUpBar,
           },
           // Run27 (19): an ultra's back-to-back day, kept as the long
           // run's is.
@@ -2464,6 +2465,7 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
+            pullUpBar: profile.pullUpBar,
           },
           // Run27 (19): an ultra's back-to-back day, kept as the long
           // run's is.

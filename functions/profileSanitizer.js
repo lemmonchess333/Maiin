@@ -331,6 +331,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   equipment: (v) => cleanString(v, 30),
   // Lift4 (11): a barbell and a rack beside a home gym's kit.
   barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
+  // Lift4 (11): a pull-up bar beside a home gym's, a minimal or a
+  // no-equipment kit.
+  pullUpBar: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
   // D16 personal "why" — short free-text motivation (chip-seeded or custom).
