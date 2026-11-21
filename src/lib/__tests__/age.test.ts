@@ -46,9 +46,9 @@ describe("parseBirthYear", () => {
 describe("birthYearProblem, in the year's terms", () => {
   const today = "2026-11-13";
 
-  it("takes this year less 16, and refuses the year after", () => {
-    expect(birthYearProblem(2010, today)).toBeNull();
-    expect(birthYearProblem(2011, today)).toBe("too-young");
+  it("takes this year less 18, and refuses the year after", () => {
+    expect(birthYearProblem(2008, today)).toBeNull();
+    expect(birthYearProblem(2009, today)).toBe("too-young");
   });
 
   it("takes this year less 120, and refuses the year before", () => {
@@ -62,13 +62,13 @@ describe("birthYearProblem, in the year's terms", () => {
   });
 
   it("is the same on 1 January and 31 December", () => {
-    expect(birthYearProblem(2010, "2026-01-01")).toBeNull();
-    expect(birthYearProblem(2011, "2026-12-31")).toBe("too-young");
+    expect(birthYearProblem(2008, "2026-01-01")).toBeNull();
+    expect(birthYearProblem(2009, "2026-12-31")).toBe("too-young");
   });
 
-  it("says the under-16 line setup has always said", () => {
+  it("says the under-18 line setup says (Biz1; 16 before it)", () => {
     expect(BIRTH_YEAR_MESSAGES["too-young"]).toBe(
-      "You need to be at least 16 to use Tropos."
+      "You need to be at least 18 to use Tropos."
     );
   });
 });
