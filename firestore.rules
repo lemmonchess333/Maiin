@@ -922,7 +922,6 @@ service cloud.firestore {
       // first, and leaves alone one that is not a bundle: a thousand
       // documents under one account with a due time in 1970 filled every
       // hour's read, and nobody's props were pushed again.
-      //
       // `emailState` is server-owned too (App1 Q55): the unsubscribe token
       // every chosen email links with, and what has been sent. Its owner may
       // read it; a client that could write it could reset what was sent.
