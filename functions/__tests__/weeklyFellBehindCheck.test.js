@@ -36,7 +36,7 @@ const WEEK_KEY = "2026-05-24"; // a Sunday
 function profile(overrides = {}) {
   return {
     uid: "u1",
-    runMode: "structured",
+    runMode: "race_prep",
     weeklyRunDaysTarget: 4,
     ...overrides,
   };
@@ -45,7 +45,7 @@ function profile(overrides = {}) {
 function programState(overrides = {}) {
   return {
     runDays: [],
-    runPlan: { mode: "structured" },
+    runPlan: { mode: "race_prep" },
     ...overrides,
   };
 }
@@ -159,8 +159,9 @@ describe("_fellBehindRatio", () => {
       _fellBehindRatio(profile({ runMode: undefined }), programState(), [])
     ).toBeNull();
     // A plan that is not a race repeats a missed week rather than falling
-    // behind one: the starter goal's, and whatever a newer build adds.
-    for (const runMode of ["starter", "next_kind"]) {
+    // behind one: the starter goal's, and whatever a newer build adds. The
+    // retired structured week (App1 Q25) is free running.
+    for (const runMode of ["starter", "structured", "next_kind"]) {
       expect(
         _fellBehindRatio(profile({ runMode }), programState(), [])
       ).toBeNull();

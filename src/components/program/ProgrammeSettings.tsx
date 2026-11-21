@@ -409,7 +409,6 @@ const INJURY_OPTIONS: {
   },
 ];
 
-// Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
   recentLayoff = "none",
   recentRuns,

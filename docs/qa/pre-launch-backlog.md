@@ -6400,7 +6400,6 @@ device.
       rounds and minutes, "40 s on, 20 s off", its first three moves and
       "+2 more", with the first move's drawing. On a build from before
       circuits, the same post reads as a workout of 5 exercises.
-
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
 Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of

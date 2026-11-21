@@ -102,7 +102,6 @@ const INJURY_LABELS: Record<string, string> = {
 
 const RUN_MODE_LABELS: Record<string, string> = {
   freeform: "Freeform",
-  structured: "Structured",
   race_prep: "Race prep",
 };
 
