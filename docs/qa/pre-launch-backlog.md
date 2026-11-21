@@ -10,6 +10,61 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Deleted meals go for good after 30 days (F5c, STATUS 2026-11-21)
+
+`purgeSoftDeletedMeals` runs each hour at 45 minutes past (UTC). It deletes
+every meal whose `deletedAt` is 30 days or more ago and whose last write
+reached the server 30 days or more ago, through a collection-group query on
+`meals.deletedAt` (`functions/lib/mealPurge.js`, the index in
+`firestore.indexes.json`). It skips an account being deleted. Recently
+deleted meals says each meal is removed for good 30 days after it was
+deleted and shows the days each one has left. The unit suites run the job
+on the in-memory Firestore, which does not enforce indexes, so only
+production shows the index serving and the job running.
+
+The page counts from `deletedAt` alone; the job counts from the later of
+`deletedAt` and the server's last write to the meal (so a phone clock
+running behind cannot cut the 30 days short). A meal written after it was
+deleted therefore sits at "goes soon" on the page for up to 30 days before
+the job removes it. The one writer that does this at scale is #3465's
+`functions/scripts/purgeLegacyFoodPhotos.js`, which takes `photoUrl` and
+`photoPath` off every meal, soft-deleted ones included: run its `apply`
+after this job's first run (the row below), so the meals already past
+their 30 days go first and the others do not get their 30 days again.
+
+- [ ] **The index is built before the job runs.** Passing: the Deploy
+      production run's Firestore readiness gate
+      (`scripts/verify-firestore-readiness.py`) is green, and Firestore
+      console → Indexes → Single field lists `meals` / `deletedAt` with a
+      collection-group ascending index, Enabled.
+- [ ] **The job ran.** Passing: an hour after the release, Cloud Logging
+      for `purgeSoftDeletedMeals` shows `purgeSoftDeletedMeals.done` with
+      its counts and no `FAILED_PRECONDITION` (a missing index), and
+      Firestore console → `jobRuns/purgeSoftDeletedMeals` has
+      `lastOutcome: "ok"`, `running: false` and a `lastSummary` with
+      `failed: 0`. A run in which any transaction failed is recorded as
+      `lastOutcome: "failed"`, with its counts in `lastError` ("N of M
+      meals failed; purged …"). `more: true` or `stoppedAtTimeLimit: true`
+      on a run after the first means the job is falling behind, not that it
+      failed.
+- [ ] **A meal deleted 31 days ago is gone.** Before the release, open
+      Settings → Account → Recently deleted meals on an account that has a
+      meal deleted more than 30 days ago (nothing purged before this, so an
+      account used since the summer has some), and note one. After the
+      release its row says "goes soon". Passing: after the first run at 45
+      minutes past, that meal's document is gone from `users/{uid}/meals`
+      in Firestore console and the page no longer lists it, while a meal
+      deleted today is still listed with "30 days left". Setting a newer
+      meal's `deletedAt` back in the console does not test this: the job
+      also counts the 30 days from the server's last write to the meal, and
+      that edit is a write. For the same reason, a meal still at "goes
+      soon" an hour after a run was written after it was deleted (the
+      photo-field purge, an edit); it goes 30 days after that write.
+- [ ] **The photo-field purge runs after this job's first run.** Passing:
+      `jobRuns/purgeSoftDeletedMeals` shows a finished run before the
+      `apply` run of "Purge legacy meal photos" (#3465's rows under "Legacy
+      meal photos in Storage"), if both are still to do.
+
 ## A purchase the store has, before Pro is on (2026-11-10)
 
 A purchase that Apple's sheet finished without RevenueCat granting Pro, and
@@ -7355,6 +7410,31 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## Analytics carries no food name and no real address (2026-11-21)
+
+A saved food's id is its name (`chicken_and_rice`), and five pantry events
+sent it to Google Analytics as `favouriteId`. They now send counts only
+(`useCount`, `totalBefore`, `source`, `fromPantry`), and the redaction
+denylist strips any key naming a favourite, a name, a title or a search.
+Unit-tested at `emit` (`Food.pantryAnalytics.test.tsx`); only DebugView
+shows what reaches Google. The app's own events carry a redacted page
+address, but two of gtag's automatic events read the browser's, and only
+the GA4 console turns them off.
+
+- [ ] **After Deploy production, the pantry events in GA4 DebugView.** On a
+      debug device, log a typed meal twice, tap it under Log again, pick it
+      from the typeahead and long-press it away. Passing: each
+      `food_pantry_*` event arrives with no parameter holding the food's
+      name or `favouriteId`. If GA4 has a custom dimension registered for
+      `favouriteId`, archive it.
+- [ ] **Enhanced Measurement is off where it reads the address bar.** In
+      GA4 Admin → Data streams → the web stream → Enhanced measurement,
+      open the settings. Passing: "Page changes based on browser history
+      events" (under Page views) and "Site search" are off. gtag sends
+      those `page_view` and `view_search_results` events itself, from the
+      real address (another person's uid on `/user/:uid`, a typed search in
+      `?q=`), past the redacted page fields `analyticsProvider.ts` sets.
 
 ## Second-review follow-ups: Space photo cap, public post noindex (2026-11-21)
 

@@ -7,11 +7,14 @@
  * which is what made an old meal deleted today unrecoverable — is proven
  * against the Firestore fake in `useDeletedMeals.test.tsx`.
  *
- * (The header used to cite a 24-hour purge cron. There isn't one: no
- * scheduled function touches `meals`, as `useMeals` documents at length.)
+ * Each meal is removed for good 30 days after it was deleted (F5c, STATUS
+ * 2026-11-21), by the hourly `purgeSoftDeletedMeals`
+ * (functions/lib/mealPurge.js). The page says so, and each row says how
+ * long that meal has left; `mealPurge.cross.test.ts` holds the page's day
+ * to the job's.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { Meal } from "@/hooks/useMeals";
 
@@ -88,9 +91,45 @@ describe("SettingsRecentlyDeleted — empty state", () => {
     expect(screen.getByText(/No recently deleted meals/i)).toBeInTheDocument();
     expect(
       screen.getByText(
-        /stay here until you restore or permanently delete them/i
+        "Meals you delete stay here for 30 days so you can restore them."
       )
     ).toBeInTheDocument();
+  });
+});
+
+describe("SettingsRecentlyDeleted — the 30 days", () => {
+  it("says each meal is removed for good 30 days after it was deleted", () => {
+    deletedMealsMock = [makeMeal({ deletedAtMs: Date.now() - 60_000 })];
+    renderWith(<SettingsRecentlyDeleted />);
+    expect(
+      screen.getByText(
+        "Each meal is removed for good 30 days after you delete it."
+      )
+    ).toBeInTheDocument();
+    // Nothing on the page promises to keep a meal until it is restored.
+    expect(document.body).not.toHaveTextContent(/until you restore/i);
+  });
+
+  it("shows how long each meal has left", () => {
+    const now = Date.now();
+    const day = 86_400_000;
+    deletedMealsMock = [
+      makeMeal({ id: "a", foodName: "Fresh", deletedAtMs: now - 30_000 }),
+      makeMeal({ id: "b", foodName: "Three", deletedAtMs: now - 3.5 * day }),
+      makeMeal({ id: "c", foodName: "Last", deletedAtMs: now - 29.5 * day }),
+      makeMeal({ id: "d", foodName: "Due", deletedAtMs: now - 30.5 * day }),
+    ];
+    renderWith(<SettingsRecentlyDeleted />);
+    const row = (name: string) =>
+      screen
+        .getAllByRole("listitem")
+        .find((item) => within(item).queryByText(name))!;
+    expect(row("Fresh")).toHaveTextContent("deleted just now · 30 days left");
+    expect(row("Three")).toHaveTextContent("deleted 3 days ago · 27 days left");
+    expect(row("Last")).toHaveTextContent("deleted 29 days ago · 1 day left");
+    // Its 30 days are up and the hourly job has not reached it yet: it is
+    // still stored, so it is still listed, and the row says what happens.
+    expect(row("Due")).toHaveTextContent("deleted 30 days ago · goes soon");
   });
 });
 
@@ -200,6 +239,7 @@ describe("SettingsRecentlyDeleted — actions", () => {
     ];
     renderWith(<SettingsRecentlyDeleted />);
     expect(screen.getByText(/deleted 30 days ago/i)).toBeInTheDocument();
+    expect(screen.getByText(/goes soon/i)).toBeInTheDocument();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /Restore Oats/i }));
     });

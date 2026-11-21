@@ -122,7 +122,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor or Add running, voice cues (Train's Run tab deep-links here)    |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
 | `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Food offers again (F2d)            |
-| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
+| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Deleted meals, restorable until removed for good 30 days on (F5c, `mealPurge`)  |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
 | `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | One switch and time per reminder, badges, and a switch per activity (S3)        |
