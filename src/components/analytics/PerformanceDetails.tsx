@@ -353,7 +353,9 @@ export default function PerformanceDetails({
         {food && <FoodLogged food={food} />}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      {/* Two across while each card gets 8rem; one across at larger
+          text, where "Overreaching" broke mid-word in half a phone. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-3">
         <StatCard
           label="Load band"
           /* Was `labels?.loadBand || "—"`, so this card rendered a
