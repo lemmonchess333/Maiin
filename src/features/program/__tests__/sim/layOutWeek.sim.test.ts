@@ -15,7 +15,11 @@
  *   - a lift done sits on the day its saved session belongs to, and every
  *     saved session of the week is on its day once;
  *   - Train's "Up next" is the layout's next lift, and Home's card each
- *     morning names the lift the layout lays on today (Q56);
+ *     morning names the lift the layout lays on today;
+ *   - Home and Train name the same next lift (Q56), every morning and
+ *     evening: the lift Home's card offers, else the first lift to do its
+ *     day card names on a later day of the strip, else the one its
+ *     "tomorrow" line names for next week, is Train's "Up next";
  *   - runs keep their dates: every planned run of the week once, on its
  *     date, missed only once its day has passed, and every saved run once;
  *   - the sessions drawn done are the sessions the week's count counts.
@@ -37,10 +41,13 @@ import { weekScheduleFor } from "@/lib/trainingResolver";
 import { trainingWeek } from "@/lib/trainingWeek";
 import {
   layOutWeek,
+  planLiftOn,
   type LayoutLift,
   type LayoutRun,
   type WeekLayout,
 } from "@/lib/layOutWeek";
+import { todaySession } from "@/lib/todaySession";
+import { scheduledDaysSinceStart } from "@/lib/startDay";
 import { ACTION_PERSONAS } from "@/test/sim/actionPersonas";
 import {
   LIFT_PERSONAS,
@@ -116,6 +123,15 @@ interface Tally {
   lifts: number;
   /** Mornings Home's card offered a lift to start, compared. */
   homeCards: number;
+  /** Mornings and evenings Home named a next lift, compared with Train's
+   *  (Q56): on its card, on a later day of the strip, or in its line for
+   *  next week. */
+  homeNext: number;
+  homeNextLater: number;
+  homeNextNextWeek: number;
+  /** Train had a next lift and Home named none (no day left this week
+   *  holds one, and the line names a run or nothing). */
+  homeNextNone: number;
   runs: number;
   moved: number;
   stillToDo: number;
@@ -132,6 +148,10 @@ const newTally = (): Tally => ({
   days: 0,
   lifts: 0,
   homeCards: 0,
+  homeNext: 0,
+  homeNextLater: 0,
+  homeNextNextWeek: 0,
+  homeNextNone: 0,
   runs: 0,
   moved: 0,
   stillToDo: 0,
@@ -160,6 +180,48 @@ function cursorSequence(day: ObservedDay): number[] {
   return typeof chosen === "number" && chosen >= 0 && toDo(chosen)
     ? [chosen, ...all.filter((i) => i !== chosen)]
     : all;
+}
+
+/**
+ * The next lift Home names, read off what Home draws from the same layout:
+ * the card's lift to start (or a new lifter's first workout on a rest
+ * day), else the first lift to do that the day card names on a later day
+ * of the strip (`planLiftOn`, which `DayPeekCard` reads), else the lift
+ * the "tomorrow" line names past Sunday. Null when Home names none.
+ */
+function homeNextLift(
+  day: ObservedDay,
+  w: WeekLayout
+): { index: number; where: "card" | "later" | "next-week" } | null {
+  const { date, state, profile, workouts, runs, claimMap } = day;
+  const began = (
+    profile.createdAt as { toMillis?: () => number } | undefined
+  )?.toMillis?.();
+  const session = todaySession({
+    today: date,
+    profile,
+    programState: state,
+    claimMap,
+    workouts,
+    week: w,
+    createdAtMs: began ?? null,
+    nowMs: parseLocalDate(date).getTime() + 12 * 3_600_000,
+    lifetimeRuns: runs.length,
+    lifetimeMeals: 0,
+  });
+  if (session.lift?.status === "planned" && session.lift.index !== null)
+    return { index: session.lift.index, where: "card" };
+  if (session.rest?.kind === "first-workout")
+    return { index: session.rest.index, where: "card" };
+  for (const d of w.days.filter((x) => x.date > date)) {
+    const lift = planLiftOn(d);
+    if (lift?.state === "planned" && lift.index !== null)
+      return { index: lift.index, where: "later" };
+  }
+  const line = session.next?.target.match(/^\/program\?day=(\d+)$/);
+  if (line && session.next && session.next.dateKey > w.days[6].date)
+    return { index: Number(line[1]), where: "next-week" };
+  return null;
 }
 
 /** Everything wrong with one day's layout, as lines a failure prints. */
@@ -272,6 +334,20 @@ function check(day: ObservedDay, tally: Tally): string[] {
       `the layout's next is ${String(w.next?.index)}, Train's ${String(up)}`
     );
 
+  // Q56: Home names Train's next lift, wherever it names one.
+  const home = homeNextLift(day, w);
+  if (home) {
+    tally.homeNext++;
+    if (home.where === "later") tally.homeNextLater++;
+    if (home.where === "next-week") tally.homeNextNextWeek++;
+    // Past Sunday Home names the lift the rollover opens with, which is
+    // Train's next whenever Train has one left.
+    if (up >= 0 && home.index !== up)
+      fail(
+        `Q56: Home names ${state.workouts[home.index]?.dayName} (${home.where}), Train's next is ${state.workouts[up]?.dayName}`
+      );
+  } else if (up >= 0) tally.homeNextNone++;
+
   // Home's card names today's lift.
   const card = day.card?.lift;
   const todays = w.days
@@ -353,6 +429,8 @@ function check(day: ObservedDay, tally: Tally): string[] {
     fail(
       `${String(runsDone.length)} runs drawn done, ${String(w.count.runs.done)} counted`
     );
+  // The count is trainingWeek's, and race week's planned lifts are the
+  // lift days less the lifts the layout rests before the race.
   const counted = trainingWeek({
     weekKey,
     profile,
@@ -361,13 +439,23 @@ function check(day: ObservedDay, tally: Tally): string[] {
     runs,
     now: parseLocalDate(date),
   }).lifts.planned;
-  const asked =
-    w.raceRest.length === 0 || counted === null
-      ? counted
-      : Math.min(counted, state.workouts.length - w.raceRest.length) || null;
-  if (w.count.lifts.planned !== asked)
+  if (w.count.lifts.planned !== counted)
     fail(
-      `${String(w.count.lifts.planned)} lifts planned, race week asks ${String(asked)}`
+      `${String(w.count.lifts.planned)} lifts planned, trainingWeek ${String(counted)}`
+    );
+  const liftDays = scheduledDaysSinceStart(
+    weekScheduleFor(profile),
+    ["lift", "both"],
+    weekKey,
+    startKey
+  );
+  const asked =
+    w.raceRest.length === 0
+      ? liftDays
+      : Math.min(liftDays, state.workouts.length - w.raceRest.length);
+  if ((counted ?? 0) !== Math.max(0, asked))
+    fail(
+      `${String(counted)} lifts planned, race week asks ${String(asked)} (${String(w.raceRest.length)} rested)`
     );
   return out;
 }
@@ -403,11 +491,15 @@ const ALL: readonly { persona: LiftPersona; weeks: number; seeds: number[] }[] =
 describe("the week laid out, through whole seasons", () => {
   afterAll(() => {
     console.info(`[layOutWeek season] ${JSON.stringify(total)}`);
+    // Q56 compared every way Home names a next lift, not only its card.
+    expect(total.homeNext).toBeGreaterThan(0);
+    expect(total.homeNextLater).toBeGreaterThan(0);
+    expect(total.homeNextNextWeek).toBeGreaterThan(0);
   });
 
   for (const { persona, weeks, seeds } of ALL)
     it(
-      `${persona.name}: never lost, never twice, never missed`,
+      `${persona.name}: never lost, never twice, never missed; Home and Train name one next lift (Q56)`,
       () => {
         const tally = newTally();
         const failures = seeds.flatMap((seed) =>

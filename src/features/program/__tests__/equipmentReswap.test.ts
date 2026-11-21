@@ -92,8 +92,15 @@ describe("applyEquipmentFilterToWorkouts", () => {
         ex("lat-pulldown", "Lat Pulldown", "vertical_pull", { weight: 45 }),
       ]),
     ];
-    const swapped = applyEquipmentFilterToWorkouts(w, "home_gym")[0]
-      .exercises[0];
+    // Past beginner: a beginner's pull-up slot takes a row (the
+    // bodyweight-floor rule), a dumbbell row without a rack at home.
+    const swapped = applyEquipmentFilterToWorkouts(
+      w,
+      "home_gym",
+      [],
+      "intermediate"
+    )[0].exercises[0];
+    expect(swapped.exerciseId).toBe("pull-ups");
     expect(getExerciseById(swapped.exerciseId)!.equipment).toBe("Bodyweight");
     expect(swapped.weight).toBe(0);
   });
