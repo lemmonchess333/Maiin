@@ -177,7 +177,7 @@ describe("the token", () => {
 });
 
 describe("Hosting sends the link's address to the function", () => {
-  it("before the app's catch-all", () => {
+  it("before the rewrite of the app's own addresses", () => {
     const { rewrites } = JSON.parse(
       readFileSync(resolve(repoRoot, "firebase.json"), "utf8")
     ).hosting;
@@ -188,8 +188,10 @@ describe("Hosting sends the link's address to the function", () => {
       source: "/email/unsubscribe",
       function: { functionId: "emailUnsubscribe", region: "us-central1" },
     });
-    expect(index).toBeLessThan(
-      rewrites.findIndex((rule) => rule.source === "**")
+    const appAddresses = rewrites.findIndex(
+      (rule) => rule.destination === "/index.html"
     );
+    expect(appAddresses).toBeGreaterThan(-1);
+    expect(index).toBeLessThan(appAddresses);
   });
 });
