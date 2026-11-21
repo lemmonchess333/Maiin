@@ -323,6 +323,10 @@ const PINNED: Record<string, string> = {
   // for every meals reader, the server for the PI adherence pass.
   "functions/lib/mealDocs.js":
     "src/lib/__tests__/mealActiveSingleSource.test.ts",
+  // F5c's 30 days. Both copies run: the server's purge deletes the meal,
+  // and Recently deleted meals says how long each one has left. A basename
+  // pair with src/lib/mealPurge.ts; the cross-test runs the real job.
+  "functions/lib/mealPurge.js": "src/lib/__tests__/mealPurge.cross.test.ts",
   // Effective subscription tier. The SERVER copy is the one that spends
   // money (Vertex scan quota, adherence target); the client
   // copy decides what is offered. Invisible to this gate until 2026-08-22 —

@@ -88,9 +88,10 @@ export interface Meal {
   createdAt: unknown;
   /** F5c — soft-delete sentinel. Set to a Firestore Timestamp when
    *  the user deletes the meal; null (or missing) for active meals.
-   *  Nothing clears it automatically — see the note on `deleteMeal`;
-   *  the only hard delete is the user's own "Delete permanently" in
-   *  Settings → Recently Deleted. Active-meals views filter by
+   *  A soft-deleted meal is hard-deleted by the user's own "Delete
+   *  permanently" in Settings → Recently Deleted, or by the server's
+   *  `purgeSoftDeletedMeals` 30 days after this stamp; see the note on
+   *  `deleteMeal`. Active-meals views filter by
    *  `!deletedAt` client-side (server-side `WHERE deletedAt == null`
    *  would miss docs that predate the field; lazy migration via
    *  `parseMealDoc` reads missing → null). */
@@ -382,23 +383,19 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   // F5c — soft-delete: queues `deletedAt: Timestamp.now()` instead
   // of removing the doc. Restoration clears `deletedAt`.
   //
-  // NOTE this comment used to claim "the 24h auto-purge cron CF
-  // hard-deletes after the window expires". There is NO such function
-  // — the scheduled functions in `functions/index.js` were checked
-  // (weeklyPerformanceRollup, dailyPerformanceRefresh,
-  // rolloverChallenges, hourlyStreakNudge, dailyRaceReconciliationSweep,
-  // weeklyFellBehindCheck; resumeAccountDeletions only continues an
-  // account deletion) and none purges `meals`. A soft-deleted meal doc
-  // lives forever unless the user taps "Delete permanently" in Settings
-  // → Recently Deleted (`hardDeleteMeal`), or the account is deleted.
-  // The archive keeps all soft-deleted meals accessible so people can
-  // restore them or explicitly remove them permanently.
+  // A soft-deleted meal is hard-deleted 30 days after its `deletedAt` by
+  // the server's hourly `purgeSoftDeletedMeals` (functions/lib/mealPurge.js,
+  // F5c STATUS 2026-11-21; before then nothing purged, and this comment
+  // once claimed a 24-hour job that never existed), sooner if the user taps
+  // "Delete permanently" in Settings → Recently Deleted (`hardDeleteMeal`),
+  // or with the account. Until then the archive lists it, with the days it
+  // has left, and it can be restored.
   //
   // Existing call sites (Food.tsx) keep their 3-second in-session
   // undo timer in front of this call, so the soft-delete only fires
   // after the user has had a chance to undo. That's the in-session
   // toast surface; the Recently-Deleted Settings archive covers
-  // longer-term recovery until an explicit permanent delete.
+  // recovery for the 30 days after it.
   const deleteMeal = useCallback(
     async (mealId: string) => {
       if (!uid) return;
@@ -486,9 +483,12 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     [uid]
   );
 
-  /** Hard-delete — bypasses the soft-delete window. Reserved for the
-   *  Settings recently-deleted page's "Delete permanently" action;
-   *  callers OUTSIDE that surface should call `deleteMeal` instead.
+  /** Hard-delete — ends the 30-day soft-delete window now. Reserved for
+   *  the Settings recently-deleted page's "Delete permanently" action;
+   *  callers OUTSIDE that surface should call `deleteMeal` instead. The
+   *  server's purge (functions/lib/mealPurge.js) deletes the same document
+   *  when the 30 days are up; it cannot reach the phone, so the photo
+   *  below is left to the photo store's 90-day sweep in that case.
    *
    *  Food9: also drops the meal's device-local photo. This is the
    *  delete-on-delete the Storage implementation never had — a photo
