@@ -5,6 +5,44 @@ import LegalBack from "@/components/legal/LegalBack";
    data type. The claims code can contradict are pinned in
    src/lib/__tests__/legalCopyClaims.test.ts; change a claim and its pin
    together, and change the code and the claim together. */
+
+/** Why Tropos may use the data for each purpose (UK GDPR Articles 6 and 9),
+ *  shown as section 6's table. The health row names the explicit consent
+ *  that setup's health details screen asks for (legal audit 3.1): that
+ *  screen is the owner's call, and the row is only true once it ships. */
+const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
+  {
+    purpose:
+      "Your account, your plan and logs, recording a run’s route, syncing your devices, showing what you share, segments, challenges and leagues you join, Pro, and emails about your account or a trial ending",
+    basis: "Contract: it is the service you signed up for.",
+  },
+  {
+    purpose:
+      "Your health details: weight, height, sex, injuries, the food diary, heart rate from your runs, and what you allow from Apple Health",
+    basis:
+      "Your explicit consent, which you give in setup (UK GDPR Article 9(2)(a)). You can withdraw it by deleting your account.",
+  },
+  {
+    purpose: "Sending a meal photo or a typed meal to Google’s Gemini",
+    basis:
+      "Your consent, asked before the first one is sent. You can turn it off at any time.",
+  },
+  {
+    purpose: "Notifications",
+    basis: "Your consent, which you give when your phone or browser asks.",
+  },
+  {
+    purpose: "Usage analytics, and crash and error reports",
+    basis:
+      "Legitimate interests: knowing how the app is used and fixing what breaks. You can object (section 5).",
+  },
+  {
+    purpose:
+      "Security, stopping abuse and moderation, including the records kept after an account is deleted",
+    basis: "Legitimate interests: keeping Tropos and the people on it safe.",
+  },
+];
+
 export default function PrivacyPolicy() {
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
@@ -108,8 +146,11 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Nutrition Data:</strong>{" "}
-                food logs, barcode scans, food searches, and calorie and macro
-                tracking data.
+                food logs, including foods you add from a barcode scan or a
+                search and the barcode of a food you scan, and calorie and macro
+                tracking data. The words you type in a food search go straight
+                from your phone to Open Food Facts, and Tropos keeps none of
+                your searches (section 7).
               </li>
               <li>
                 <strong className="text-foreground">
@@ -118,9 +159,9 @@ export default function PrivacyPolicy() {
                 if you connect it, your daily step count, which Pro compares
                 with your activity level. With Pro, if you add them, your sleep,
                 resting heart rate and heart rate variability for readiness.
-                With Apple Watch runs enabled, Tropos also reads heart rate
-                during a run. Saving a completed Tropos run as a workout in
-                Apple Health is a separate choice. See section 8.
+                When available, Apple Watch runs also read heart rate during a
+                run, and saving a completed Tropos run as a workout in Apple
+                Health is a separate choice. See section 8.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -150,8 +191,8 @@ export default function PrivacyPolicy() {
                 kept{" "}
                 <strong className="text-foreground">
                   only on the device that took it
-                </strong>{" "}
-                — we do not store it on our servers. It is deleted automatically
+                </strong>
+                ; we do not store it on our servers. It is deleted automatically
                 after 90 days. See section 7 for the detail.
               </li>
               <li>
@@ -166,10 +207,35 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
+                  Run Map Images (optional):
+                </strong>{" "}
+                when you share a run with a route, the app draws a picture of
+                the map of the route it shares (with the start and finish hidden
+                unless you turned that off, and your privacy zones removed) and
+                stores it with the post. It is checked as photos are (section 7)
+                and deleted with the post.
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  Segments (optional):
+                </strong>{" "}
+                a segment you make from a stretch of one of your runs (its line,
+                name and length), and the times our server records when a run of
+                yours passes along a segment, yours or someone else’s. See
+                section 4.
+              </li>
+              <li>
+                <strong className="text-foreground">
                   Social Activity (optional):
                 </strong>{" "}
-                the posts you share, comments, props, follows, Circle check-ins,
-                Space posts, and the reports you make about content or accounts.
+                the posts you share, comments, props, follows, Circle check-ins
+                and meet-ups, Space posts, and the reports you make about
+                content or accounts. Also the posts you hide from your feed, the
+                people you block, the challenges you join with your progress and
+                place in them, the medals they award, your weekly league
+                standing if you join the league, a race you choose to show on
+                your profile, and who invited you, if you joined from someone’s
+                invite.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -183,9 +249,9 @@ export default function PrivacyPolicy() {
                   Usage Data and Analytics Identifiers:
                 </strong>{" "}
                 which screens and features you use, and events such as finishing
-                a workout, a run or a scan, with a few figures about them, tied
-                to an identifier for this installation of the app. See section
-                2.
+                a workout, a run or a scan, tied to an identifier for this
+                installation of the app. They carry no figure about your body,
+                food or training. See section 2.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -200,8 +266,9 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Crash and Error Reports:
                 </strong>{" "}
-                error messages and where in the app they happened, and in the
-                iPhone app, its crashes.
+                error messages and where in the app they happened, with the
+                address of the screen and your device’s browser or app details,
+                and in the iPhone app, its crashes.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -237,10 +304,14 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">Analytics.</strong> Google
               Analytics for Firebase receives the usage events described in
-              section 1, including some fitness figures about sessions, such as
-              how long one took or how many items were logged. Google also works
-              out an approximate location, such as the country or city, from
-              your connection. Analytics never receives your email address, your
+              section 1: which screens you open, what you do there (such as
+              finishing a workout or tapping a chart), the choices you make in
+              settings and in your plan, and timings, such as how long a screen
+              took to appear or logging a meal took. It receives no figure about
+              your body, food, sleep, heart or training, such as a weight,
+              calories, a distance, a pace or a score. Google also works out an
+              approximate location, such as the country or city, from your
+              connection. Analytics never receives your email address, your
               name, GPS routes, what you type about meals, or your notes.
             </p>
             <p>
@@ -262,7 +333,7 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">New progress photos</strong>{" "}
               are additionally encrypted on your device (AES-GCM-256) before
-              upload, so they are not stored as plain image files &mdash; anyone
+              upload, so they are not stored as plain image files: anyone
               browsing raw storage sees ciphertext rather than pictures.
             </p>
             <p>
@@ -289,11 +360,19 @@ export default function PrivacyPolicy() {
               <strong className="text-foreground">
                 What other people see.
               </strong>{" "}
-              Your display name, profile photo, streaks and badges are visible
-              to other signed-in Tropos users. Your logs (meals, weight,
-              workouts and runs) are private to your account unless you share
-              them. Comments, Circle check-ins and Space posts are seen by the
-              people in that conversation, Circle or Space.
+              Your display name, profile photo, streaks, badges and medals are
+              visible to other signed-in Tropos users, and so is a race you
+              choose to show on your profile. Your logs (meals, weight, workouts
+              and runs) are private to your account unless you share them.
+              Comments, Circle check-ins and Space posts are seen by the people
+              in that conversation, Circle or Space, and a Circle meet-up (what
+              it is, when, and the place you type) by the Circle’s members. If
+              you join a challenge, your name, photo and progress in it are
+              visible to other signed-in Tropos users. If you join the weekly
+              league, the people in your group (about 20) see your first name,
+              your photo and your week: the sessions you did against those your
+              plan had, and the points they give. Leaving the league removes
+              your standing at once.
             </p>
             <p>
               <strong className="text-foreground">Sharing sessions.</strong>{" "}
@@ -307,6 +386,33 @@ export default function PrivacyPolicy() {
               without asking. Until you choose, you are asked each time. A
               shared route has its start and end hidden unless you turn that
               off, and your privacy zones are removed from it.
+            </p>
+            <p>
+              <strong className="text-foreground">
+                Public posts on the web.
+              </strong>{" "}
+              Anyone with the link to a session you shared publicly can open it
+              on troposfit.com, signed in or not, and a search engine that finds
+              the link may list it. That page shows your display name and
+              profile photo, the session’s name and date, its figures (a run’s
+              distance, time, pace and climb, or a workout’s time, volume,
+              number of exercises and any record) and, for a run, a map of its
+              route with the start and finish cut off and your privacy zones
+              removed. A followers-only or private post never opens there.
+            </p>
+            <p>
+              <strong className="text-foreground">Segments.</strong> A segment
+              is a stretch of one of your runs that you name. Anyone signed in
+              can open its line, name and length, and it does not name you. Each
+              outdoor GPS run saved after a segment is made is checked against
+              it on our server, so your runs are timed on segments other people
+              made, and theirs on yours. Each time is kept in the runner’s own
+              account, where only they see it. Your best time on a segment is
+              shown to your accepted followers, and only when it comes from a
+              run you shared with followers or publicly and neither its start
+              nor its end is in one of your privacy zones. Anyone else can
+              report a segment, and Tropos can remove it. Deleting a run, a
+              segment or your account deletes the times that go with it.
             </p>
             <p>
               <strong className="text-foreground">Followers.</strong> Someone
@@ -342,6 +448,12 @@ export default function PrivacyPolicy() {
                 Turn AI food analysis on or off at any time, in Settings &gt;
                 Social &amp; privacy
               </li>
+              <li>
+                Object to our use of your data where we rely on legitimate
+                interests (section 6), such as usage analytics, by writing to
+                support@troposfit.com
+              </li>
+              <li>Complain, to us or to the ICO (section 6)</li>
             </ul>
           </section>
 
@@ -352,15 +464,43 @@ export default function PrivacyPolicy() {
             <p>
               If you are located in the UK or European Economic Area, you have
               additional rights under the General Data Protection Regulation
-              (GDPR):
+              (GDPR).
             </p>
+            <p>
+              <strong className="text-foreground">Legal basis.</strong> The law
+              allows us to use your data for each purpose on one of these
+              grounds:
+            </p>
+            <table className="w-full text-left text-xs text-muted-foreground border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  <th
+                    scope="col"
+                    className="py-1.5 pr-3 font-semibold text-foreground"
+                  >
+                    What we do
+                  </th>
+                  <th
+                    scope="col"
+                    className="py-1.5 font-semibold text-foreground"
+                  >
+                    Why the law allows it
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {LEGAL_BASES.map(({ purpose, basis }) => (
+                  <tr
+                    key={purpose}
+                    className="border-b border-border align-top"
+                  >
+                    <td className="py-1.5 pr-3">{purpose}</td>
+                    <td className="py-1.5">{basis}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              <li>
-                <strong className="text-foreground">Legal basis:</strong> We
-                process your data based on your consent (provided during account
-                creation, and when the app asks, as it does before AI food
-                analysis) and for the performance of our service.
-              </li>
               <li>
                 <strong className="text-foreground">Right to access:</strong>{" "}
                 You can request a copy of all data we hold about you.
@@ -385,12 +525,18 @@ export default function PrivacyPolicy() {
                 settings.
               </li>
               <li>
+                <strong className="text-foreground">Right to object:</strong>{" "}
+                You can object to our use of your data where we rely on
+                legitimate interests, and we will stop unless we have a strong
+                reason to continue, such as keeping other people safe.
+              </li>
+              <li>
                 <strong className="text-foreground">
                   Right to withdraw consent:
                 </strong>{" "}
-                You can withdraw consent at any time by deleting your account,
-                and withdraw it for AI food analysis by turning it off in
-                Settings &gt; Social &amp; privacy.
+                You can withdraw your consent to your health details by deleting
+                your account, and withdraw it for AI food analysis by turning it
+                off in Settings &gt; Social &amp; privacy.
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
@@ -421,13 +567,30 @@ export default function PrivacyPolicy() {
                   One limit on erasure, stated plainly:
                 </strong>{" "}
                 meal photos are not on our servers, so there is nothing there
-                for us to erase — and equally, no process of ours can reach a
+                for us to erase, and equally, no process of ours can reach a
                 phone. Deleting your account clears them from the device you
                 delete from. If you have signed in on another device, that
                 device keeps its copies until they expire after 90 days or you
                 delete the app there.
               </li>
             </ul>
+            <p>
+              <strong className="text-foreground">Complaints.</strong> If you
+              are unhappy with how we use your data, tell us at
+              support@troposfit.com. We acknowledge a complaint no later than 30
+              days after we receive it, look into it and tell you what we found.
+              You can also complain to the Information Commissioner’s Office
+              (ICO), the UK’s data protection regulator, at{" "}
+              <a
+                href="https://ico.org.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline"
+              >
+                ico.org.uk
+              </a>
+              .
+            </p>
             <p>
               For GDPR-related requests, contact us at: support@troposfit.com
             </p>
@@ -445,13 +608,13 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Google (Firebase):</strong>{" "}
                 Firebase Authentication (sign-in), Cloud Firestore (your data),
-                Cloud Storage (progress, profile, post and Space photos), Cloud
-                Functions (our server code), App Check (which checks that
-                requests come from the real app; on the web it uses reCAPTCHA),
-                Firebase Cloud Messaging (which delivers notifications to your
-                phone or browser), Google Analytics for Firebase (usage
-                analytics, section 2) and, in the iPhone app, Firebase
-                Crashlytics (crash reports, below).
+                Cloud Storage (progress, profile, post and Space photos, and the
+                map images of runs you share), Cloud Functions (our server
+                code), App Check (which checks that requests come from the real
+                app; on the web it uses reCAPTCHA), Firebase Cloud Messaging
+                (which delivers notifications to your phone or browser), Google
+                Analytics for Firebase (usage analytics, section 2) and, in the
+                iPhone app, Firebase Crashlytics (crash reports, below).
               </li>
               <li>
                 <strong className="text-foreground">
@@ -482,7 +645,7 @@ export default function PrivacyPolicy() {
                 After analysis, the photo is kept only on the device that took
                 it, so your meal diary can show it. It is not backed up to
                 iCloud, does not sync between your devices, and is deleted
-                automatically after 90 days — the furthest back the diary can be
+                automatically after 90 days, the furthest back the diary can be
                 viewed. Deleting the app, or getting a new phone, removes these
                 photos; your logged meals and their nutrition data are
                 unaffected. Barcode scans do not use AI: the barcode is read on
@@ -491,12 +654,12 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Apple:</strong> Sign in with
                 Apple (if you use it), Apple Health (optional steps, sleep and
-                heart for readiness, run heart rate and workout export; section
-                8), In-App Purchase (Pro bought in the app; Apple handles the
-                payment), the Apple Push Notification service (notifications on
-                your iPhone, through Firebase Cloud Messaging) and App Attest
-                (which confirms that requests come from the real app on your
-                iPhone).
+                heart for readiness and, when available, run heart rate and
+                workout export; section 8), In-App Purchase (Pro bought in the
+                app; Apple handles the payment), the Apple Push Notification
+                service (notifications on your iPhone, through Firebase Cloud
+                Messaging) and App Attest (which confirms that requests come
+                from the real app on your iPhone).
               </li>
               <li>
                 <strong className="text-foreground">RevenueCat:</strong> manages
@@ -514,13 +677,17 @@ export default function PrivacyPolicy() {
                 account emails, such as verifying your email address or
                 resetting your password, and the reminder before a free trial
                 turns into a paid subscription. It receives your email address
-                and the email.
+                and the email. It also carries the alert Tropos gets when
+                someone makes a report: the reason, what kind of thing was
+                reported and any note the person reporting wrote, which can
+                quote what they reported.
               </li>
               <li>
                 <strong className="text-foreground">Open Food Facts:</strong>{" "}
                 barcode lookups and food searches. The barcode or the words you
                 search for go straight from your phone, with its IP address; no
-                account details are sent.
+                account details are sent, and Tropos keeps none of your
+                searches.
               </li>
               <li>
                 <strong className="text-foreground">OpenFreeMap:</strong> the
@@ -544,8 +711,8 @@ export default function PrivacyPolicy() {
                 start point plus a handful of nearby points we compute from it
                 and your chosen distance) were sent from our server to Mapbox’s
                 Directions service to calculate a walking route. We sent only
-                those coordinates — never your name, account details, saved
-                routes, or run history — and did not separately log the request
+                those coordinates, never your name, account details, saved
+                routes, or run history, and did not separately log the request
                 coordinates. When you chose Save &amp; follow, the returned
                 route geometry was saved privately to your account.
               </li>
@@ -560,13 +727,28 @@ export default function PrivacyPolicy() {
               handling.
             </p>
             <p>
+              <strong className="text-foreground">Where your data goes.</strong>{" "}
+              Tropos is run from the UK, and your data is also processed in the
+              United States: our server code runs in Google Cloud’s us-central1
+              region, Google’s Gemini on Vertex AI analyses meals in the US, and
+              RevenueCat, Resend and Stripe are US companies. Google, Resend and
+              Stripe are certified under the UK Extension to the EU-US Data
+              Privacy Framework (the UK-US data bridge). For RevenueCat, the
+              safeguard is the UK’s International Data Transfer Addendum to the
+              EU standard contractual clauses, in its data processing terms.
+              Write to support@troposfit.com for a copy of the safeguard that
+              covers a transfer.
+            </p>
+            <p>
               <strong className="text-foreground">Error Reporting:</strong> We
               automatically collect crash reports and error logs to improve app
               stability. They are stored with your account, and in the iPhone
               app Google’s Firebase Crashlytics also receives them, with your
               account’s ID but not your name or email address. Reports include
-              error messages and stack traces but do not contain sensitive
-              personal data such as passwords, meal content, or workout details.
+              error messages and stack traces, the address of the screen the app
+              was on, and your device’s browser or app details (its user agent),
+              but do not contain sensitive personal data such as passwords, meal
+              content, or workout details.
             </p>
           </section>
 
@@ -578,8 +760,8 @@ export default function PrivacyPolicy() {
               Tropos keeps the health and fitness data you log, including body
               weight, nutrition, workouts and GPS running data, to provide your
               fitness tracking. It is never used for advertising or marketing,
-              and never sold. Some figures about sessions reach Google Analytics
-              as described in section 2.
+              and never sold. None of it is sent to Google Analytics (section
+              2).
             </p>
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you
@@ -592,6 +774,8 @@ export default function PrivacyPolicy() {
               sleep, resting heart rate and heart rate variability for the last
               four weeks to say how ready you are for today’s session. They are
               read on your phone each time and are not stored or sent to Tropos.
+              Apple Watch runs and workout export are not yet in the App Store
+              version of Tropos; this is how they work when they are available.
               If you use Apple Watch runs, Tropos reads heart rate during that
               run to show a live reading and calculate a run summary. The Watch
               reads it through a workout session, and Apple asks an app that

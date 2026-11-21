@@ -27,7 +27,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
-import { appInfoPlistString } from "@/test/iosBuildSettings";
+import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) => readFileSync(resolve(here, rel), "utf8");
@@ -67,6 +67,21 @@ const SHARE_DEFAULTS_ROW = read(
 );
 const SETTINGS_INDEX = read("../../pages/SettingsIndex.tsx");
 const ACCOUNT_SECTION = read("../../components/settings/AccountSection.tsx");
+/** The rules and server files a claim below rests on, whitespace collapsed
+ *  so a rule's shape reads on one line. */
+const collapsed = (rel: string) => read(rel).replace(/\s+/g, " ");
+const FIRESTORE_RULES = collapsed("../../../firestore.rules");
+const STORAGE_RULES = collapsed("../../../storage.rules");
+const FUNCTIONS = (name: string) => collapsed(`../../../functions/lib/${name}`);
+
+/** The policy's text between two headings. */
+function policySection(from: string, to: string): string {
+  const start = PRIVACY_PROSE.indexOf(from);
+  const end = PRIVACY_PROSE.indexOf(to);
+  expect(start, from).toBeGreaterThanOrEqual(0);
+  expect(end, to).toBeGreaterThan(start);
+  return PRIVACY_PROSE.slice(start, end);
+}
 
 describe("meal-photo retention — the quoted window matches the code", () => {
   it("the Privacy Policy's number equals MAX_AGE_DAYS", () => {
@@ -458,6 +473,30 @@ describe("what the policy says about analytics, sharing and deletion holds", () 
     expect(PRIVACY_PROSE).toMatch(/share runs or workouts automatically/);
   });
 
+  it("says no body, food or training figure reaches analytics, while the guard holds it", () => {
+    // Chart taps used to send the figure tapped, and the policy said "a few
+    // figures" and "some fitness figures" reach Google Analytics. Now none
+    // does, and analyticsHealthFigures.test.ts refuses a parameter named
+    // for one (legal audit 3.3). The policy says so in sections 1, 2 and 8.
+    const GUARD = read("./analyticsHealthFigures.test.ts");
+    expect(GUARD).toMatch(/const FIGURE_WORDS = \{/);
+    expect(GUARD).toMatch(
+      /only `analyticsClient\.ts` calls `logAnalyticsEvent`/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(
+      /a few figures about them|some fitness figures|figures about sessions reach/i
+    );
+    expect(
+      policySection("1. Information We Collect", "2. How We Use Your Data")
+    ).toMatch(/They carry no figure about your body, food or training/);
+    expect(PRIVACY_PROSE).toMatch(
+      /It receives no figure about your body, food, sleep, heart or training/
+    );
+    expect(policySection("8. Health & Fitness Data", "9. Children")).toMatch(
+      /None of it is sent to Google Analytics/
+    );
+  });
+
   it("makes no 'exclusively' or 'solely' claim about how data is used", () => {
     // Usage events reach Google Analytics, so a claim that data is used for
     // one purpose alone is untrue.
@@ -468,6 +507,284 @@ describe("what the policy says about analytics, sharing and deletion holds", () 
     expect(PRIVACY_PROSE).toMatch(/Settings &gt; Account &gt; Delete account/);
     expect(SETTINGS_INDEX).toMatch(/label: "Account"/);
     expect(ACCOUNT_SECTION).toMatch(/label="Delete account"/);
+  });
+});
+
+describe("who sees what, as the code lets them", () => {
+  const SHARING = () => policySection("4. Data Sharing", "5. Your Rights");
+
+  it("a public post opens signed out on troposfit.com, a followers-only or private one never does", () => {
+    // publicPostPage serves /activity/<id> on troposfit.com to anyone, and
+    // answers only a public post; the policy said only "other signed-in
+    // Tropos users" (legal audit 3.2).
+    const POST = FUNCTIONS("publicPost.js");
+    expect(POST).toMatch(/const PUBLIC_ORIGIN = "https:\/\/troposfit\.com";/);
+    expect(POST).toMatch(
+      /if \(post\.visibility !== "public" \|\| post\.flagged === true\) return null;/
+    );
+    // What the page shows: the name and photo, the figures, the cut route.
+    expect(POST).toMatch(/view\.authorPhotoURL = photo;/);
+    expect(POST).toMatch(/view\.paceSecPerKm = /);
+    expect(POST).toMatch(/view\.totalVolumeKg = volume;/);
+    expect(POST).toMatch(/if \(route\) view\.route = route;/);
+    expect(FUNCTIONS("publicRoute.js")).toMatch(/const END_CUT_M = [1-9]\d*;/);
+    const sharing = SHARING();
+    expect(sharing).toMatch(/can open it on troposfit\.com, signed in or not/);
+    expect(sharing).toMatch(/display name and profile photo/);
+    expect(sharing).toMatch(/with the start and finish cut off/);
+    expect(sharing).toMatch(
+      /A followers-only or private post never opens there/
+    );
+  });
+
+  it("segments: the line read by id by anyone signed in, times private, a best time to followers, reportable", () => {
+    expect(FIRESTORE_RULES).toMatch(
+      /match \/segments\/\{segmentId\} \{ allow get: if request\.auth != null; allow list: if false;/
+    );
+    expect(FIRESTORE_RULES).toMatch(
+      /match \/users\/\{uid\}\/segmentEfforts\/\{effortId\} \{ allow read: if isOwner\(uid\);/
+    );
+    const SEGMENTS = FUNCTIONS("segments.js");
+    // The board: only from a post followers or everyone can see, never an
+    // effort starting or ending in a zone, read through the viewer's
+    // following list.
+    expect(SEGMENTS).toMatch(
+      /const SHOWN_VISIBILITIES = Object\.freeze\(\["followers", "public"\]\);/
+    );
+    expect(SEGMENTS).toMatch(
+      /inAnyZone\(effort\.start, zones\) \|\| inAnyZone\(effort\.end, zones\)/
+    );
+    expect(SEGMENTS).toMatch(
+      /async function readSegmentBoard[\s\S]*collection\("following"\)/
+    );
+    expect(read("../socialApi.ts")).toMatch(
+      /REPORT_TARGET_TYPES = \[[^\]]*"segment"/
+    );
+    const sharing = SHARING();
+    expect(sharing).toMatch(
+      /Anyone signed in can open its line, name and length/
+    );
+    expect(sharing).toMatch(/where only they see it/);
+    expect(sharing).toMatch(/shown to your accepted followers/);
+    expect(sharing).toMatch(
+      /neither its start nor its end is in one of your privacy zones/
+    );
+    expect(sharing).toMatch(/Anyone else can report a segment/);
+    expect(
+      policySection("1. Information We Collect", "2. How We Use Your Data")
+    ).toMatch(/Segments \(optional\)/);
+  });
+
+  it("names everything in the social list that the rules and the server keep", () => {
+    // Each kept thing, with the words section 1 names it by (legal audit
+    // 3.2's "Social Activity list is short").
+    const KEPT: Array<[evidence: boolean, words: RegExp]> = [
+      [
+        /match \/users\/\{uid\}\/hiddenPosts\/\{activityId\}/.test(
+          FIRESTORE_RULES
+        ),
+        /the posts you hide from your feed/,
+      ],
+      [
+        /match \/blocks\/\{uid\}\/users\/\{targetUid\}/.test(FIRESTORE_RULES),
+        /the people you block/,
+      ],
+      [
+        /match \/goalSpaces\/\{spaceId\}\/meetups\/\{meetupId\} \{ allow read: if isGoalSpaceMember\(spaceId\);/.test(
+          FIRESTORE_RULES
+        ),
+        /Circle check-ins and meet-ups/,
+      ],
+      [
+        /'currentValue', 'tierAchieved', 'joinedAt', 'displayName', 'photoURL', 'uid'/.test(
+          FIRESTORE_RULES
+        ),
+        /the challenges you join with your progress and place in them/,
+      ],
+      [/'medalSummary'/.test(FIRESTORE_RULES), /the medals they award/],
+      [
+        /standings\/\{uid\} \{ uid, name, photo, tier, points, done,/.test(
+          FUNCTIONS("leagues.js")
+        ),
+        /your weekly league standing if you join the league/,
+      ],
+      [
+        /'trainingForSpaceId'/.test(FIRESTORE_RULES),
+        /a race you choose to show on your profile/,
+      ],
+      [
+        /invitedBy: inviterUid/.test(FUNCTIONS("inviteCodes.js")),
+        /who invited you, if you joined from someone’s invite/,
+      ],
+    ];
+    const social = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("Social Activity (optional)")
+    ).slice(0, 900);
+    for (const [evidence, words] of KEPT) {
+      expect(evidence, String(words)).toBe(true);
+      expect(social).toMatch(words);
+    }
+  });
+
+  it("says who sees a meet-up, a challenge place and a league standing", () => {
+    expect(FUNCTIONS("leagueRules.js")).toMatch(/const GROUP_TARGET = 20;/);
+    expect(FUNCTIONS("leagues.js")).toMatch(/function leagueFirstName\(/);
+    const sharing = SHARING();
+    expect(sharing).toMatch(
+      /a Circle meet-up \(what it is, when, and the place you type\) by the Circle’s members/
+    );
+    expect(sharing).toMatch(
+      /If you join a challenge, your name, photo and progress in it are visible to other signed-in Tropos users/
+    );
+    expect(sharing).toMatch(
+      /the people in your group \(about 20\) see your first name/
+    );
+  });
+
+  it("names the run map images Cloud Storage keeps", () => {
+    expect(STORAGE_RULES).toMatch(
+      /match \/route-maps\/\{uid\}\/\{activityId\}\/\{name\}/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Cloud Storage \(progress, profile, post and Space photos, and the map images of runs you share\)/
+    );
+    expect(PRIVACY_PROSE).toMatch(/Run Map Images \(optional\)/);
+  });
+});
+
+describe("what the policy says about the build, food searches, alerts and errors holds", () => {
+  it("says Watch runs and workout export are not in the App Store version while its build leaves them out", () => {
+    // A standard (Release) build sets the connected training gate off: no
+    // Watch app embedded and no workout write. The policy describes both
+    // "when available". Flip the gate for release and this fails until the
+    // policy stops saying they are not there yet.
+    const released =
+      resolvedSetting("App", "Release", "WATCH_RUN_RELEASE_ENABLED") === "YES";
+    const notYet =
+      /Apple Watch runs and workout export are not yet in the App Store version of Tropos/;
+    if (released) {
+      expect(PRIVACY_PROSE).not.toMatch(notYet);
+    } else {
+      expect(PRIVACY_PROSE).toMatch(notYet);
+      expect(PRIVACY_PROSE).toMatch(/When available, Apple Watch runs/);
+      expect(PRIVACY_PROSE).toMatch(
+        /when available, run heart rate and workout export/
+      );
+    }
+  });
+
+  it("food searches go from the phone to Open Food Facts, and nothing keeps them", () => {
+    // The search is a fetch from the Food page; no server code asks Open
+    // Food Facts anything, so nothing of ours sees the words. The label
+    // says "not collected" for the same reason.
+    expect(read("../../pages/Food.tsx")).toMatch(
+      /fetch\(\s*`https:\/\/world\.openfoodfacts\.org\/cgi\/search\.pl\?search_terms=/
+    );
+    const server = readdirSync(resolve(repoRoot, "functions/lib"))
+      .filter((f) => f.endsWith(".js"))
+      .map((f) => readFileSync(resolve(repoRoot, "functions/lib", f), "utf8"))
+      .concat(readFileSync(resolve(repoRoot, "functions/index.js"), "utf8"));
+    expect(server.some((s) => /openfoodfacts/i.test(s))).toBe(false);
+    expect(
+      read("../../../docs/app-store/listing.md").replace(/\s+/g, " ")
+    ).toMatch(
+      /Food searches\*\* go from the phone straight to Open Food Facts and are not stored/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Tropos keeps none of your searches \(section 7\)/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /no account details are sent, and Tropos keeps none of your searches\./
+    );
+    expect(PRIVACY_PROSE).not.toMatch(/barcode scans, food searches, and/);
+  });
+
+  it("names the report alert Resend carries", () => {
+    // createReport emails the owner through Resend with the reason, the
+    // kind of thing and the reporter's note (functions/lib/reportAlert.js).
+    const ALERT = FUNCTIONS("reportAlert.js");
+    expect(ALERT).toMatch(/row\("Note", note \?/);
+    expect(ALERT).toMatch(/row\("Reason", escapeHtml\(reason\)\)/);
+    const resend = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("Resend:</strong>")
+    ).slice(0, 700);
+    expect(resend).toMatch(/the alert Tropos gets when someone makes a report/);
+    expect(resend).toMatch(/any note the person reporting wrote/);
+  });
+
+  it("says error reports keep the screen's address and the user agent", () => {
+    const REPORTING = read("../errorReporting.ts");
+    expect(REPORTING).toMatch(
+      /url: typeof window !== "undefined" \? window\.location\.href/
+    );
+    expect(REPORTING).toMatch(
+      /userAgent: typeof navigator !== "undefined" \? navigator\.userAgent/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /the address of the screen the app was on, and your device’s browser or app details \(its user agent\)/
+    );
+  });
+});
+
+describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
+  it("names where the server runs and both transfer safeguards", () => {
+    // No function sets a region, so every one runs in us-central1, the
+    // default the Hosting rewrite names; Gemini runs in Vertex AI's `us`.
+    expect(read("../../../firebase.json")).toMatch(
+      /"functionId": "publicPostPage",\s*"region": "us-central1"/
+    );
+    for (const source of [
+      read("../../../functions/index.js"),
+      ...readdirSync(resolve(repoRoot, "functions/lib"))
+        .filter((f) => f.endsWith(".js"))
+        .map((f) =>
+          readFileSync(resolve(repoRoot, "functions/lib", f), "utf8")
+        ),
+    ]) {
+      expect(source).not.toMatch(/\.region\(|\bregion:\s*["']/);
+    }
+    expect(FUNCTIONS("foodModel.js")).toMatch(
+      /const FOOD_MODEL_LOCATION = "us";/
+    );
+    const where = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("Where your data goes.")
+    ).slice(0, 1000);
+    expect(where).toMatch(/Google Cloud’s us-central1 region/);
+    expect(where).toMatch(/Vertex AI analyses meals in the US/);
+    for (const name of ["RevenueCat", "Resend", "Stripe"]) {
+      expect(where).toContain(name);
+    }
+    expect(where).toMatch(/UK Extension to the EU-US Data Privacy Framework/);
+    expect(where).toMatch(
+      /International Data Transfer Addendum to the EU standard contractual clauses/
+    );
+  });
+
+  it("gives a legal basis for each purpose, and Article 9's condition for health data", () => {
+    const gdpr = policySection("6. GDPR Compliance", "7. Third-Party Services");
+    expect(PRIVACY_PROSE).toMatch(/<th scope="col"/);
+    for (const basis of [
+      /basis: "Contract:/,
+      /"Your explicit consent, which you give in setup \(UK GDPR Article 9\(2\)\(a\)\)/,
+      /"Your consent, asked before the first one is sent/,
+      /"Legitimate interests: knowing how the app is used/,
+      /"Legitimate interests: keeping Tropos and the people on it safe\."/,
+    ]) {
+      expect(PRIVACY_PROSE).toMatch(basis);
+    }
+    // The one line that gave everything one basis is gone.
+    expect(gdpr).not.toMatch(/provided during account creation/);
+    expect(gdpr).toMatch(/Right to object:/);
+  });
+
+  it("says how to complain to Tropos and to the ICO", () => {
+    // DPA 2018 s.164A: a complaint is acknowledged within 30 days.
+    const gdpr = policySection("6. GDPR Compliance", "7. Third-Party Services");
+    expect(gdpr).toMatch(
+      /We acknowledge a complaint no later than 30 days after we receive it/
+    );
+    expect(gdpr).toMatch(/Information Commissioner’s Office \(ICO\)/);
+    expect(gdpr).toMatch(/href="https:\/\/ico\.org\.uk"/);
   });
 });
 
