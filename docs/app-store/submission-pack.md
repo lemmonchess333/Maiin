@@ -112,7 +112,7 @@ With other people
 • Choose who sees each session, and report or block anyone.
 
 Tropos Pro
-• Log a meal from a photo, up to 100 a day. The food and its macros are filled in for you to check. Photos are analysed by Google and kept only on your phone.
+• Log a meal from a photo, up to 15 a day. The food and its macros are filled in for you to check. Photos are analysed by Google and kept only on your phone.
 • Typed meals read by AI, which handles more than the built-in food list.
 • A calorie target that adapts to what you log, how your weight moves and, with Apple Health, your steps.
 • Protein, carbs and fat that shift with each day's training.
@@ -133,7 +133,7 @@ their rows are open), notifications for comments and follows on the iPhone
 (`docs/ios-push-notifications.md`), a heart-rate strap during a run, and
 recording with the screen locked (`docs/run-background-gps.md`). All of them
 are in the binary, so the review notes describe them. It also never says
-"unlimited": Pro allows 100 photo scans and 100 typed-meal reads a day
+"unlimited": Pro allows 15 photo scans and 15 typed-meal reads a day
 (`DAILY_AI_LIMITS`, `src/lib/dailyAiLimits.ts`).
 
 ### Keywords
