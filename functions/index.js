@@ -35,6 +35,7 @@ const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const weeklyRecap = require("./lib/weeklyRecap");
 const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
+const emailConsent = require("./lib/emailConsent");
 const { activationSport } = require("./lib/firstWeekActivation");
 // App1 Q17: the first session and week-4 return, kept once per account.
 const launchMilestones = require("./lib/launchMilestones");
@@ -805,6 +806,17 @@ exports.completeOnboarding = functions
         activationJourneyVersion,
         onboardingPlatform,
       } = data;
+      // App1 Q55: setup's email opt-in, outside profileData so the profile
+      // sanitiser never carries consent. Ticked, it is a yes to both emails
+      // the toggle names, recorded below with the server's time; unticked,
+      // nothing is recorded (absent already means no).
+      const emailOptIn = emailConsent.readSetupEmailOptIn(data);
+      if (emailOptIn.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          emailOptIn.error
+        );
+      }
       // Every account takes the one first-week journey (App1, whole-app
       // grill Q27), so the journey is stamped below whatever a client
       // sends. A client from before App1 sends 2 or nothing; anything else
@@ -1025,6 +1037,20 @@ exports.completeOnboarding = functions
             ONE_ACTIVATION_JOURNEY_VERSION;
           if (onboardingPlatform) {
             nextProfileData.onboardingPlatform = onboardingPlatform;
+          }
+        }
+        if (emailOptIn.optIn) {
+          const consent = emailConsent.applyEmailConsent(
+            existingData.emailConsent,
+            { weeklyReview: true, winBack: true },
+            {
+              via: "setup",
+              wording: emailOptIn.wording,
+              at: admin.firestore.FieldValue.serverTimestamp(),
+            }
+          );
+          if (consent.changed.length > 0) {
+            nextProfileData.emailConsent = consent.next;
           }
         }
         if (existing.exists) {
@@ -9255,6 +9281,10 @@ exports.sendPasswordResetLinkCallable =
   accountEmails.sendPasswordResetLinkCallable;
 exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
+
+/* The Settings switches for the two emails a person can choose (App1 Q55):
+   the consent record is written only on the server (lib/emailConsent.js). */
+exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
 
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)

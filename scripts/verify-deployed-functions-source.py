@@ -109,8 +109,10 @@ def source_targets():
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
-        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
+        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js", "lib/emailConsent.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
+        # App1 Q55: the email switches, and the consent record they write.
+        "setEmailConsent": ["index.js", "email/emailConsent.js", "lib/emailConsent.js"],
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
