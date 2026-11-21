@@ -1844,8 +1844,9 @@ where the bars were 47 pt and 34 pt.
 ## The iPhone Duo (Duo track, 2026-11-18)
 
 Affects: the native project's life cycle (`claude/duo-uiscene`), the
-shell's side insets and the two-pane layouts (`claude/duo-layouts`), and
-every screen on Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
+shell's side insets and the two-pane layouts (`claude/duo-layouts`, and
+Food's and Progress's in `claude/duo-more-panes`), and every screen on
+Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
 The `xcode-27` image's Xcode 27.1 has an iPhone Duo simulator, and with
 `claude/duo-sdk-27-1` each pull request's build is launched on it and both
 displays shot (`ios-native-compile.yml`). The simulator starts folded, so
@@ -1907,9 +1908,20 @@ On an iPhone Duo:
       side padding and the 44 pt top rule in `index.css` need another way
       to find the column. (sim)
 - [ ] **Open on its side**: Home in two columns with the gap on the fold,
-      the workout's exercises beside its sets, a run's map beside its
-      figures, and no control on the crease. Partly folded (like a book),
-      each pane is readable on its own half.
+      Food's day beside its composer and diary, Progress's score beside
+      its history, the workout's exercises beside its sets, a run's map
+      beside its figures, and no control on the crease. Partly folded
+      (like a book), each pane is readable on its own half.
+- [ ] **Food's keyboard, open on its side**: tap the composer and type a
+      meal: the field and the first suggestions stay above the keyboard.
+      Scroll the diary: if the empty half beside it reads as broken, the
+      day's pane wants to stay in view (a sticky pane, which History found
+      choking iOS scroll inside an animated page, so measure it here).
+- [ ] **The tab bar on the inner display**: open on its side and partly
+      folded, no tab sits on the crease, and on the outer display the
+      capsule clears the side column. If either fails, a side rail
+      (Tropos decision 6 in `docs/ios/iphone-duo.md`) is the thing to
+      reconsider.
 - [ ] **Standing up** (the inner display turned upright): one column, and a
       sheet a phone's width, centred.
 - [ ] **Fold mid-set and mid-rest**: the typed weight, the ticked sets and

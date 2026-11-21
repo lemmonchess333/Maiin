@@ -31,9 +31,10 @@ the shell's safe areas, or a screen's layout on wide screens.
 4. **The web layout is ready for the Duo's sizes.** On the inner display
    open on its side, Home, a workout and a run are drawn in two panes with
    the gap on the fold; the outer display stays a phone; folding mid-workout
-   or mid-run keeps everything. Draft PR `claude/duo-layouts`. It shows in
-   the web preview (a touch screen 800 px wide or more) and in the capture
-   rig now, and reaches a real Duo after steps 2 and 3.
+   or mid-run keeps everything. Draft PR `claude/duo-layouts`, and Food and
+   Progress's overview after it in `claude/duo-more-panes` (Tropos decision
+   7). It shows in the web preview (a touch screen 800 px wide or more) and
+   in the capture rig now, and reaches a real Duo after steps 2 and 3.
 
 ## The screens
 
@@ -196,7 +197,7 @@ insets honoured.
 **What Tropos does.** Tropos's tab bar is drawn by the web page, so the
 system cannot move it. It stays a bottom capsule on every screen (Tropos
 decision 3), which keeps controls "as similar as possible" across poses
-[HIG]. Whether to draw a side rail instead is owner decision B.
+[HIG]. It does not become a side rail (Tropos decision 6).
 
 ## Live Activities and widgets
 
@@ -335,6 +336,26 @@ with evidence from a device):
 5. **Two panes only at 800 or wider.** Standing up (669) the inner display
    keeps one column, as Apple's split arrangement stacks when taller than
    wide; 800 leaves room for an iOS 27 SDK build's side column.
+6. **No side rail** (21 November 2026, was owner decision B). The HIG moves
+   the system's tab bar to the side on the outer display and on the inner
+   display in landscape [HIG], but Tropos's is drawn by the page. A rail
+   would take its width from the outer display's phone layout, which is
+   already an iPhone mini's, and would be a second way round the app to
+   learn, against keeping controls "as similar as possible" [HIG]. Revisit
+   it on a device if, partly folded, the capsule's middle tab sits on the
+   crease, or if the side insets leave the capsule crowded.
+7. **Food and Progress's overview in two panes; the other screens keep the
+   centred column for now** (21 November 2026, was owner decision C).
+   `claude/duo-more-panes` draws Food as its day (the wheel, the week, the
+   macros) beside the composer, the diary and water, the composer high in
+   its pane so a landscape keyboard leaves it in view; and Progress's
+   overview as this week's score beside the range and the history it
+   scopes. A page's panes are `ui/TwoPanes`, whose `data-two-panes` marker
+   is what widens the column. Train, Social, Settings, the run's setup, an
+   indoor run and the detail pages keep the phone's column, centred: their
+   wide form is a list beside the item opened from it, which is a second
+   navigation level rather than two halves of one page, and is not built.
+   That is known debt; partly folded, their column sits across the crease.
 
 Owner decisions:
 
@@ -348,15 +369,6 @@ Owner decisions:
   `claude/duo-sdk-27-1` runs both workflows on `xcode-27` and selects
   Xcode 27.1 by name (`scripts/verify_ios_xcode.py`), stacked on the
   UIScene branch.
-- **B. A side rail instead of the bottom tab bar** on the outer display and
-  the inner display in landscape, as the HIG moves system tab bars. Not
-  built; decision 3 is the current answer.
-- **C. Two-pane layouts for more screens.** History, Food, Social, Settings,
-  the run's setup and an indoor run keep the phone's column, centred, on the
-  inner display. Open flat that reads as one column; partly folded, the
-  column sits across the crease, which is the case Tropos decision 1 avoids
-  for the three two-pane screens. Candidates: Food's diary beside its day's
-  totals, History's charts in a grid, Social's feed beside a post.
 
 ## Sources
 
