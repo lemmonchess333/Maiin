@@ -403,8 +403,8 @@ describe("what the policy says about analytics, sharing and deletion holds", () 
   });
 
   it("makes no 'exclusively' or 'solely' claim about how data is used", () => {
-    // Analytics, including some fitness figures, reach Google Analytics, so
-    // a claim that data is used for one purpose alone is untrue.
+    // Usage events reach Google Analytics, so a claim that data is used for
+    // one purpose alone is untrue.
     expect(PRIVACY_PROSE).not.toMatch(/exclusively|solely/i);
   });
 

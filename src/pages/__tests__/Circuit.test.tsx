@@ -348,6 +348,34 @@ describe("the circuit runner (Circ1 (10))", () => {
     expect(timer()).toBe("0:35");
     expect(screen.queryByText("Train")).not.toBeInTheDocument();
   });
+
+  it("goes straight back to the circuit on Keep going", async () => {
+    // Under the app's Back handling, as on a phone: the question's own
+    // Back guard hands over to the page's as it closes.
+    await startTenMinute((page) => (
+      <BackDismissProvider>{page}</BackDismissProvider>
+    ));
+    await seconds(15);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "End circuit" }));
+    });
+    await seconds(5);
+    expect(timer()).toBe("0:35");
+    await act(async () => {
+      fireEvent.click(
+        within(screen.getByRole("alertdialog")).getByRole("button", {
+          name: "Keep going",
+        })
+      );
+    });
+    await fadeOut();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Paused")).not.toBeInTheDocument();
+    // The clock runs on from where it stopped, and the question stays shut.
+    await seconds(5);
+    expect(timer()).toBe("0:30");
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
 });
 
 describe("the finish (Circ1 (11), (A))", () => {

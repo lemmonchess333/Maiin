@@ -39,7 +39,7 @@ vi.mock("recharts", async (importOriginal) => {
 beforeEach(() => track.mockClear());
 
 describe("tapping a macro slice", () => {
-  it("reports the tapped macro and its share of the calories", () => {
+  it("reports the tapped macro, and not its share of the calories", () => {
     const { container } = render(
       <MacroDistribution protein={48} carbs={72} fat={14} avgCalories={620} />
     );
@@ -54,12 +54,11 @@ describe("tapping a macro slice", () => {
     expect(track).toHaveBeenCalledTimes(1);
     const [event, props] = track.mock.calls[0] as [
       string,
-      { chart: string; binKey: string; value: number },
+      Record<string, unknown>,
     ];
     expect(event).toBe("history_chart_tap_attempted");
-    expect(props.chart).toBe("macro");
-    // 48 g protein × 4 = 192 of 606 Atwater calories: 32%.
-    expect(props.binKey).toBe("Protein");
-    expect(props.value).toBe(32);
+    // Which chart and which slice, nothing more: the slice's share of the
+    // calories (32% here) is health data and does not go to analytics.
+    expect(props).toEqual({ chart: "macro", binKey: "Protein" });
   });
 });
