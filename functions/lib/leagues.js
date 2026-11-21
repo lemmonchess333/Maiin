@@ -151,9 +151,17 @@ function standingFigures({
   const done = tallyWeek(workouts, runs).sessions;
   const keepPlanned =
     !weekIsCurrent && stored && Number.isInteger(stored.planned) && stored.planned > 0;
+  // Read on the member's own day, so race week leaves out the lifts the
+  // app rested (leaguePlanned.js, as the app counts them).
   const planned = keepPlanned
     ? stored.planned
-    : leaguePlanned(profile, programState, weekKey).planned;
+    : leaguePlanned(
+        profile,
+        programState,
+        weekKey,
+        weekKey,
+        currentWeek(profile && profile.timezone, now).today
+      ).planned;
   const points = rules.leaguePoints(done, planned);
   const reachedAt =
     stored && stored.points === points && stored.reachedAt

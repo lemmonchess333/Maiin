@@ -41,6 +41,8 @@ export const SETUP = {
   weekMinutes: "Minutes a week",
   longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
+  /** "What do you have?" beside a home gym, Minimal and no equipment. */
+  pullUpBar: "A pull-up bar",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",
@@ -68,7 +70,7 @@ export const SETUP_OPTIONS = {
   liftMinutes: ["30 min", "45 min", "60 min", "75+ min"],
   runners: ["New to running", "Occasional runner", "Regular runner"],
   raceDistances: ["5K", "10K", "Half", "Full"],
-  equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
+  equipment: ["Full gym", "Home gym", "Minimal", "No equipment"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
 } as const;

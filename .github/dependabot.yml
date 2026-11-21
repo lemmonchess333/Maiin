@@ -11,6 +11,14 @@
 # 7-day cooldown after its release: a malicious release is usually found
 # and pulled within days, before Dependabot offers it. The cooldown applies
 # to version updates only; security updates still open at once.
+#
+# Few pull requests, on different days. A dependency pull request changes
+# package-lock.json, so every CI job runs it whole: about 200 runner
+# minutes, 15 jobs, against an account limit of 20 jobs at once. On
+# 16 November 2026 the three ecosystems opened ten pull requests in the same
+# minute and the queue reached 65 minutes. So each ecosystem bundles its
+# minor and patch updates (root: one group for production dependencies,
+# one for development), and each runs on its own weekday.
 
 version: 2
 updates:
@@ -51,19 +59,46 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@eslint/js"
         update-types: ["version-update:semver-major"]
+      # Patched packages (patches/, applied by patch-package on install).
+      # A patch is cut against one exact version. patch-package only warns
+      # while it still applies to a new one, but once it does not, `npm ci`
+      # fails, and so does the group the update rides in. Each waits until
+      # its patch is re-cut against the new version in the same pull
+      # request; then lift its entry. Ignored by update type rather than by
+      # name alone, so that security updates still open.
+      # dependabotGroups.test.ts holds one entry per patch file.
+      - dependency-name: "@capacitor-firebase/authentication"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "capacitor-live-activities"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       # Bundle each ecosystem's updates together, so one PR carries the
       # whole update rather than several separate PRs that all need to
       # land at the same time. Majors stay inside their group on purpose:
       # Capacitor's packages must share a major, and the Firebase test
-      # package follows the SDK's.
+      # package follows the SDK's. A dependency goes to the FIRST group
+      # it matches, so the catch-alls come last.
       firebase:
         patterns:
           - "firebase*"
           - "@firebase/*"
+      # Every native plugin, not only @capacitor/*: they all compile into
+      # the iOS app together (ios/App/CapApp-SPM/Package.swift), and a
+      # plugin bumped alone can need the others' Capacitor major.
       capacitor:
         patterns:
           - "@capacitor/*"
+          - "@capacitor-firebase/*"
+          - "@capacitor-community/*"
+          - "@capgo/capacitor-health"
+          - "@revenuecat/purchases-capacitor"
+          - "capacitor-live-activities"
       lint-and-format:
         patterns:
           - "eslint*"
@@ -78,13 +113,30 @@ updates:
           - "@playwright/*"
           - "happy-dom"
           - "jsdom"
+      # Everything else: minor and patch updates in one PR for what ships
+      # and one for what only builds or tests it. A major of these still
+      # opens its own PR, for a person to read.
+      production-minor-and-patch:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+        patterns:
+          - "*"
+      development-minor-and-patch:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+        patterns:
+          - "*"
 
   # Cloud Functions package — plain JS / Node 22 (functions/package.json engines)
+  # Minor and patch in one PR. A major (firebase-admin, firebase-functions,
+  # stripe) still opens its own, rarely, and waits for a person: it is a
+  # migration to do against docs/agents/functions-deploy.md, and
+  # dependabot-auto-merge.yml merges minor and patch only.
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "tuesday"
       time: "06:00"
       timezone: "Europe/London"
     cooldown:
@@ -94,13 +146,20 @@ updates:
     labels:
       - "dependencies"
       - "functions"
+    groups:
+      functions-minor-and-patch:
+        update-types: ["minor", "patch"]
+        patterns:
+          - "*"
 
-  # GitHub Actions versions — keeps actions/checkout@v4, etc, current
+  # GitHub Actions versions — keeps actions/checkout@v4, etc, current.
+  # Minor and patch in one PR (each is a pinned sha the supply-chain
+  # guard checks); a major opens its own.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "wednesday"
       time: "06:00"
       timezone: "Europe/London"
     cooldown:
@@ -109,3 +168,8 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+    groups:
+      github-actions:
+        update-types: ["minor", "patch"]
+        patterns:
+          - "*"

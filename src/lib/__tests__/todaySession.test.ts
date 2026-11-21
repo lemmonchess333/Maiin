@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { todaySession, type TodaySessionInput } from "../todaySession";
+import { layOutWeek } from "../layOutWeek";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { DayType } from "@/lib/scheduleUtils";
@@ -104,10 +105,12 @@ const PUSH = workoutDay("Push — Chest Focus");
 const PULL = workoutDay("Pull — Lat Focus");
 const LEGS = workoutDay("Legs — Quad Focus");
 
-/** An account well past its first fortnight, with sessions and meals. */
+/** An account well past its first fortnight, with sessions and meals. The
+ *  week is laid out from the same plan and sessions, as Home lays it out,
+ *  unless a test gives one. */
 function input(extra: Partial<TodaySessionInput> = {}): TodaySessionInput {
   const nowMs = parseLocalDate(WEDNESDAY).getTime() + 12 * 3_600_000;
-  return {
+  const base = {
     today: WEDNESDAY,
     profile: profileWith({}),
     programState: programStateWith(),
@@ -118,6 +121,20 @@ function input(extra: Partial<TodaySessionInput> = {}): TodaySessionInput {
     lifetimeRuns: 12,
     lifetimeMeals: 40,
     ...extra,
+  };
+  return {
+    ...base,
+    week:
+      extra.week ??
+      layOutWeek({
+        weekKey: localWeekKey(parseLocalDate(base.today)),
+        today: base.today,
+        profile: base.profile,
+        programState: base.programState,
+        workouts: base.workouts,
+        runs: [],
+        claimMap: base.claimMap,
+      }),
   };
 }
 
@@ -223,6 +240,147 @@ describe("todaySession — a lifting day", () => {
       ).lift;
     expect(lift(four)?.muscleGroups).toBe("Chest · Back · Shoulders + more");
     expect(lift(three)?.muscleGroups).toBe("Chest · Shoulders");
+  });
+});
+
+/* TrainWk1 step 2: the lift a day holds is the one the week lays on it
+   (`layOutWeek`), the one Home's strip and day card draw there. Monday,
+   Wednesday and Friday lift; 28 September 2026 is a Monday. */
+describe("todaySession — the lift the week lays on the day", () => {
+  const TUESDAY = "2026-09-29";
+  const NEXT_SUNDAY = "2026-10-04";
+  const MWF = profileWith({ 1: "lift", 3: "lift", 5: "lift" });
+  const done = (day: ReturnType<typeof workoutDay>, id: string) => ({
+    ...day,
+    completed: true,
+    completedWorkoutId: id,
+  });
+
+  it("offers a lift whose day passed on the next lift day, as Train's next", () => {
+    // Monday's Push was not done: it is Wednesday's, moved from Monday.
+    const given = input({
+      profile: MWF,
+      programState: programStateWith({ workouts: [PUSH, PULL, LEGS] }),
+    });
+    const session = todaySession(given);
+    expect(session.type).toBe("lift");
+    expect(session.lift).toMatchObject({ index: 0, status: "planned" });
+    expect(given.week.days[2].sessions[0]).toMatchObject({
+      index: 0,
+      movedFrom: MONDAY,
+    });
+  });
+
+  it("names the next lift on the day the week lays it, not the weekday's slot", () => {
+    // Tuesday, Monday's Push not done: Wednesday holds Push, and the slot
+    // rule named Pull, Wednesday's own.
+    const session = todaySession(
+      input({
+        today: TUESDAY,
+        profile: MWF,
+        programState: programStateWith({ workouts: [PUSH, PULL, LEGS] }),
+      })
+    );
+    expect(session.type).toBe("rest");
+    expect(session.rest).toEqual({
+      kind: "rest",
+      tomorrow: { label: "Push", target: "/program?day=0" },
+    });
+  });
+
+  it("has no lift on a lift day once the week's lifts are done", () => {
+    // Done Monday, Tuesday and Wednesday: Friday holds nothing, where the
+    // weekday's slot showed Legs again, done.
+    const programState = programStateWith({
+      workouts: [done(PUSH, "w1"), done(PULL, "w2"), done(LEGS, "w3")],
+    });
+    const workouts = [
+      { id: "w1", date: MONDAY },
+      { id: "w2", date: TUESDAY },
+      { id: "w3", date: WEDNESDAY },
+    ];
+    const friday = todaySession(
+      input({ today: FRIDAY, profile: MWF, programState, workouts })
+    );
+    expect(friday.type).toBe("rest");
+    expect(friday.lift).toBeNull();
+    // Nor does Thursday's line name Friday's slot, done already.
+    const thursday = todaySession(
+      input({ today: THURSDAY, profile: MWF, programState, workouts })
+    );
+    expect(thursday.rest).toEqual({ kind: "rest", tomorrow: null });
+  });
+
+  it("shows a lift done today on a day the week gave it none", () => {
+    // Pull done from Train on Tuesday, a rest day: the day holds it.
+    const session = todaySession(
+      input({
+        today: TUESDAY,
+        profile: MWF,
+        programState: programStateWith({
+          workouts: [done(PUSH, "w1"), done(PULL, "w2"), LEGS],
+        }),
+        workouts: [
+          { id: "w1", date: MONDAY },
+          { id: "w2", date: TUESDAY },
+        ],
+      })
+    );
+    expect(session.type).toBe("lift");
+    expect(session.lift).toMatchObject({ index: 1, status: "completed" });
+    // Wednesday holds Legs, moved up from Friday.
+    expect(session.next).toMatchObject({
+      label: expect.stringMatching(/^Legs/),
+      target: "/program?day=2",
+      dateKey: WEDNESDAY,
+    });
+  });
+
+  it("rests a race's rest days: no lift on the card or in the line", () => {
+    // Race on Sunday: Friday, Saturday and Sunday take no lift, and the
+    // app skipped Legs (`raceRestSkips`). The weekday's slot showed Legs
+    // on Friday, skipped, and Thursday's line named it.
+    const raceProfile = profileWith(
+      { 1: "lift", 3: "lift", 5: "lift", 0: "run" },
+      { runMode: "race_prep" }
+    );
+    const programState = programStateWith({
+      raceWeek: "race",
+      workouts: [done(PUSH, "w1"), { ...PULL, skipped: true }, LEGS],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "half", targetDate: NEXT_SUNDAY },
+      },
+      runDays: [runDay(NEXT_SUNDAY, { templateId: "race", type: "race" })],
+    });
+    const workouts = [{ id: "w1", date: MONDAY }];
+    const friday = todaySession(
+      input({
+        today: FRIDAY,
+        profile: raceProfile,
+        programState: programStateWith({
+          ...programState,
+          workouts: [
+            done(PUSH, "w1"),
+            { ...PULL, skipped: true },
+            {
+              ...LEGS,
+              skipped: true,
+            },
+          ],
+        }),
+        workouts,
+      })
+    );
+    expect(friday.lift).toBeNull();
+    expect(friday.type).toBe("rest");
+    const thursday = todaySession(
+      input({ today: THURSDAY, profile: raceProfile, programState, workouts })
+    );
+    expect(thursday.rest?.kind).toBe("rest");
+    expect(
+      thursday.rest?.kind === "rest" ? thursday.rest.tomorrow?.target : null
+    ).toBe(`/program?tab=run&rday=${NEXT_SUNDAY}`);
   });
 });
 
@@ -810,9 +968,10 @@ describe("todaySession — one day", () => {
 
   it("judges which days have come by that day too", () => {
     /* Home's day can trail the clock; here the clock still says Sunday
-       and the day is Monday, whose workout, the week's only one, is done.
-       Against the clock Monday would not have come yet, and a day that
-       has not come shows its lift planned (ADR-0002). */
+       and the day is Monday, whose workout, the week's only one, was done
+       that morning. Against the clock Monday would not have come yet, and
+       a day that has not come holds no session done. The week lays a lift
+       done on the day its session was saved (TrainWk1). */
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(parseLocalDate(SUNDAY).getTime() + 23 * 3_600_000);
     const session = todaySession(
@@ -820,8 +979,11 @@ describe("todaySession — one day", () => {
         today: MONDAY,
         profile: profileWith({ 1: "lift" }),
         programState: programStateWith({
-          workouts: [{ ...PULL, completed: true }],
+          workouts: [
+            { ...PULL, completed: true, completedWorkoutId: "w-monday" },
+          ],
         }),
+        workouts: [{ id: "w-monday", date: MONDAY }],
       })
     );
     expect(session.lift).toMatchObject({
