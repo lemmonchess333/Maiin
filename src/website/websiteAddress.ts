@@ -24,12 +24,16 @@
  *   the web engine is open (Q77), and the parameter is unsigned, so anyone
  *   can type it: the line says what is true if they just paid, and nothing
  *   here claims a payment.
+ * - `?from=email`: a button in one of the emails a person chose (App1
+ *   Q55: `/review` for the weekly review, `/` after a break), which the
+ *   iPhone app opens when it is installed. Opened anywhere else, the line
+ *   says where it goes.
  */
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { INVITE_PARAM } from "@/lib/publicLinks";
 
 /** The line the App Store page adds for the address that brought someone. */
-export type LandingNote = "space" | "checkoutDone" | null;
+export type LandingNote = "space" | "checkoutDone" | "fromEmail" | null;
 
 export interface LandingContext {
   /** A friend's invite code from the address, as the server reads it. */
@@ -58,5 +62,7 @@ export function landingContext(
     new URLSearchParams(search).get("checkout") === "success"
   )
     note = "checkoutDone";
+  else if (new URLSearchParams(search).get("from") === "email")
+    note = "fromEmail";
   return { invite, note };
 }

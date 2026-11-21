@@ -286,6 +286,27 @@ const KEPT: Kept[] = [
     shows: { page: "site", heading: "Eat for the plan you’re on" },
   },
   {
+    address: "/review?from=email",
+    from: "the weekly review email's button (App1 Q55); iOS hands it to the app",
+    hosting: WEBSITE,
+    shows: { page: "landing", note: /straight to the Tropos app/ },
+  },
+  {
+    address: "/?from=email",
+    from: "the email after a break's button (App1 Q55); iOS hands it to the app",
+    hosting: WEBSITE,
+    shows: { page: "landing", note: /straight to the Tropos app/ },
+  },
+  {
+    address: "/email/unsubscribe?u=uid1&t=token",
+    from: "every chosen email's unsubscribe link (App1 Q55)",
+    hosting: {
+      kind: "function",
+      functionId: "emailUnsubscribe",
+      region: "us-central1",
+    },
+  },
+  {
     address: "/.well-known/apple-app-site-association",
     from: "Apple's CDN, for universal links (#3366)",
     hosting: { kind: "file", file: ".well-known/apple-app-site-association" },

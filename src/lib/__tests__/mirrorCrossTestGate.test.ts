@@ -357,6 +357,10 @@ const PINNED: Record<string, string> = {
   // basename pair with src/lib/emailConsent.ts.
   "functions/lib/emailConsent.js":
     "src/lib/__tests__/emailConsent.cross.test.ts",
+  // The weekly review email's food days and week dates (App1 Q55), so the
+  // email never says a number or a week the review page contradicts.
+  "functions/lib/weeklyReviewEmail.js":
+    "src/lib/__tests__/weeklyReviewEmail.cross.test.ts",
   // MET Norway's weather symbols as the WMO codes src/lib/weather.ts reads
   // for the strip's icon and the pre-run tips. Not a copy of client logic,
   // but an agreement both sides must keep: a code the client does not know

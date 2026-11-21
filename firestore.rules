@@ -304,6 +304,22 @@ service cloud.firestore {
         || approveFollowersValid();
     }
 
+    /* usageAnalytics is a boolean when present (Settings → Social &
+       privacy → Share usage analytics, Priv1 call 2): false when the person
+       turned Google Analytics off. Absent, or a null like the other
+       switches', means on. */
+    function usageAnalyticsValid() {
+      return !('usageAnalytics' in request.resource.data)
+        || request.resource.data.usageAnalytics == null
+        || request.resource.data.usageAnalytics is bool;
+    }
+
+    function usageAnalyticsUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['usageAnalytics'])
+        || usageAnalyticsValid();
+    }
+
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
        profile avatar, activity and space-post author avatars, and the
@@ -708,6 +724,10 @@ service cloud.firestore {
         // Polish2 call 4: whether each follower waits to be accepted.
         // Value-gated by approveFollowersValid() above.
         'approveFollowers',
+        // Priv1 call 2: Share usage analytics, false when off. Value-gated
+        // by usageAnalyticsValid() above; client-only, never through the
+        // sanitiser.
+        'usageAnalytics',
         // #984 "Hide the number" anti-anxiety toggle — written client-side via
         // updateProfile (Settings → toggleHideWeightNumber) AND set by the
         // onboarding CF (in profileSanitizer). It was in the sanitiser + the
@@ -840,6 +860,7 @@ service cloud.firestore {
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid()
+        && usageAnalyticsValid()
         && racePlanFreeWeekUsedValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
@@ -851,6 +872,7 @@ service cloud.firestore {
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid()
+        && usageAnalyticsUnchangedOrValid()
         && racePlanFreeWeekUsedUnchangedOrValid();
       // No client delete. Account deletion runs on the server with the
       // Admin SDK (deleteMyAccount), and nothing in the app deletes this
@@ -923,12 +945,15 @@ service cloud.firestore {
       // first, and leaves alone one that is not a bundle: a thousand
       // documents under one account with a due time in 1970 filled every
       // hour's read, and nobody's props were pushed again.
+      // `emailState` is server-owned too (App1 Q55): the unsubscribe token
+      // every chosen email links with, and what has been sent. Its owner may
+      // read it; a client that could write it could reset what was sent.
       allow delete: if isOwnerAndNotDeleting(uid)
         && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
-        && !(doc in ['propsBundle', 'pushBudget']);
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState']);
       allow create, update: if isOwnerAndNotDeleting(uid)
         && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
-        && !(doc in ['propsBundle', 'pushBudget'])
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState'])
         && !('propsBundleDueAt' in request.resource.data);
     }
     match /users/{uid}/foodFavourites/{doc} {
