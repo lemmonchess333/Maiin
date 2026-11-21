@@ -69,15 +69,18 @@ service firebase.storage {
       allow delete: if isOwnerAndWritable(uid);
     }
 
-    // Food diary photos — LEGACY, read and delete only. Food9: a meal
-    // photo is kept on the device (src/lib/foodPhotoStore.ts) and never
-    // uploaded, so nothing may write here. What was uploaded before Food9
-    // stays readable by its owner, so old diary rows keep rendering, and
-    // deletable; the account-deletion executor sweeps the whole prefix.
-    match /food-photos/{uid}/{allPaths=**} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
-      allow delete: if isOwnerAndWritable(uid);
+    // Meal photos older builds uploaded (Food8 until Food9), closed to
+    // every client, the owner included. A meal photo is kept on the device
+    // (src/lib/foodPhotoStore.ts) and never uploaded, and the app no longer
+    // shows a meal's server photo, so nothing reads, writes or deletes here
+    // from a client. What is left is deleted with the Admin SDK, which these
+    // rules do not bind: all of it by
+    // functions/scripts/purgeLegacyFoodPhotos.js (owner, 2026-11-21), and
+    // one account's by the account-deletion executor's prefix sweep. The
+    // default deny above says the same; this block is here so the prefix
+    // reads as closed on purpose.
+    match /food-photos/{allPaths=**} {
+      allow read, write: if false;
     }
 
     // Community Space post photos (Spc1 PR4) — owner-only write,
