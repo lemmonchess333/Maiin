@@ -344,6 +344,18 @@ function ActivityCard({
         )
       ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
+  /* A circuit leads with its rounds, as a lift with its volume. One ended
+     before a whole round leads with its minutes, never "0 rounds", and
+     the minutes are not said twice. */
+  const circuitMinutesLead = !!circuit && circuit.rounds === 0;
+  const circuitLead = circuit
+    ? circuitMinutesLead
+      ? { value: Math.round((activity?.duration ?? 0) / 60), label: "min" }
+      : {
+          value: circuit.rounds,
+          label: circuit.rounds === 1 ? "round" : "rounds",
+        }
+    : null;
   /* What happened to the author in the session (Soc15): read whole, so a
      malformed or older post draws none. */
   const moments = postMomentsOf(activity?.moments);
@@ -849,14 +861,14 @@ function ActivityCard({
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
-          {/* A circuit's rounds stand where a lift's volume does. */}
-          {circuit && (
+          {/* A circuit's lead figure stands where a lift's volume does. */}
+          {circuitLead && (
             <div className="min-w-0">
               <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting whitespace-nowrap">
-                {circuit.rounds}
+                {circuitLead.value}
               </p>
               <SectionLabel className="mt-0.5">
-                {circuit.rounds === 1 ? "round" : "rounds"}
+                {circuitLead.label}
               </SectionLabel>
             </div>
           )}
@@ -889,8 +901,9 @@ function ActivityCard({
               </SectionLabel>
             </div>
           )}
-          {/* A hybrid card's run stats above already carry the time. */}
-          {!isHybrid && (activity.duration ?? 0) > 0 && (
+          {/* A hybrid card's run stats above already carry the time, and
+              a circuit that leads with its minutes has said them. */}
+          {!isHybrid && !circuitMinutesLead && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}

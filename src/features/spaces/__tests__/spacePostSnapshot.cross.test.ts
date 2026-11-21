@@ -21,6 +21,8 @@ import {
   spacePostSnapshot,
 } from "../spacePostSnapshot";
 import type { RecentSession } from "../useRecentSessions";
+import { builtInCircuit } from "@/features/circuit/builtInCircuits";
+import { circuitWorkoutFields } from "@/lib/circuitCompletion";
 
 const repoRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -72,6 +74,30 @@ const WORKOUT = {
   },
 } as unknown as RecentSession;
 
+/** A finished 10-minute circuit, as the composer's recent sessions hold
+ *  it. */
+const TEN_MINUTE = builtInCircuit({ kit: "minimal", minutes: 10 });
+const CIRCUIT = {
+  kind: "workout",
+  workout: {
+    id: "free-c1",
+    ...circuitWorkoutFields({
+      uid: "u1",
+      completionId: "c1",
+      startedAt: new Date(2026, 8, 22, 7).getTime(),
+      circuit: TEN_MINUTE,
+      outcome: {
+        intervalsDone: 10,
+        roundsDone: 2,
+        workSecondsDone: 400,
+        activeSeconds: 580,
+        finished: true,
+      },
+      bodyweightKg: 70,
+    }),
+  },
+} as unknown as RecentSession;
+
 describe("a Space post's session — the snapshot and the rules agree", () => {
   const rules = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
   const ruleKeys = rulesSnapshotKeys(rules);
@@ -80,9 +106,9 @@ describe("a Space post's session — the snapshot and the rules agree", () => {
     expect([...SPACE_POST_SNAPSHOT_KEYS].sort()).toEqual([...ruleKeys].sort());
   });
 
-  it("writes only keys on the list, and between a run and a lift every one of them", () => {
+  it("writes only keys on the list, and between a run, a lift and a circuit every one of them", () => {
     const written = new Set<string>();
-    for (const session of [RUN, WORKOUT]) {
+    for (const session of [RUN, WORKOUT, CIRCUIT]) {
       for (const keepRouteEnds of [true, false]) {
         const keys = Object.keys(
           spacePostSnapshot(session, { keepRouteEnds, zones: [] })
@@ -96,41 +122,23 @@ describe("a Space post's session — the snapshot and the rules agree", () => {
     expect([...written].sort()).toEqual([...ruleKeys].sort());
   });
 
-  it("snapshots a circuit (Circ1) by its moves, on the list's keys", async () => {
-    const { builtInCircuit } =
-      await import("@/features/circuit/builtInCircuits");
-    const { circuitWorkoutFields } = await import("@/lib/circuitCompletion");
-    const circuit = builtInCircuit({ kit: "minimal", minutes: 10 });
-    const snapshot = spacePostSnapshot(
-      {
-        kind: "workout",
-        workout: {
-          id: "free-c1",
-          ...circuitWorkoutFields({
-            uid: "u1",
-            completionId: "c1",
-            startedAt: new Date(2026, 8, 22, 7).getTime(),
-            circuit,
-            outcome: {
-              intervalsDone: 10,
-              roundsDone: 2,
-              workSecondsDone: 400,
-              activeSeconds: 580,
-              finished: true,
-            },
-            bodyweightKg: 70,
-          }),
-        },
-      } as unknown as RecentSession,
-      { keepRouteEnds: false, zones: [] }
-    );
+  it("snapshots a circuit (Circ1) by its moves, marked as moves, on the list's keys", () => {
+    const snapshot = spacePostSnapshot(CIRCUIT, {
+      keepRouteEnds: false,
+      zones: [],
+    });
     expect(snapshot).toMatchObject({
       type: "workout",
       totalVolume: 0,
-      exerciseCount: circuit.moves.length,
+      exerciseCount: TEN_MINUTE.moves.length,
       duration: 600,
+      circuit: true,
     });
     for (const key of Object.keys(snapshot)) expect(ruleKeys).toContain(key);
+    // A lift carries no mark.
+    expect(
+      spacePostSnapshot(WORKOUT, { keepRouteEnds: false, zones: [] })
+    ).not.toHaveProperty("circuit");
   });
 
   it("the parser reads a mismatch as one", () => {

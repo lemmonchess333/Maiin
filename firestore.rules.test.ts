@@ -2533,21 +2533,17 @@ suite(
         );
       });
 
-      it("refuses moves that are not a short list of short words", async () => {
+      it("refuses moves that are not 1 to 12 of them", async () => {
         await assertFails(
           post("circuit-thirteen", {
             circuit: { ...CIRCUIT, moves: Array(13).fill("plank") },
           })
         );
         await assertFails(
-          post("circuit-long", {
-            circuit: { ...CIRCUIT, moves: ["x".repeat(601)] },
-          })
+          post("circuit-nomoves", { circuit: { ...CIRCUIT, moves: [] } })
         );
         await assertFails(
-          post("circuit-maps", {
-            circuit: { ...CIRCUIT, moves: [{ name: "Plank" }] },
-          })
+          post("circuit-notalist", { circuit: { ...CIRCUIT, moves: "plank" } })
         );
         await assertSucceeds(
           post("circuit-twelve", {
@@ -2555,6 +2551,38 @@ suite(
           })
         );
       });
+
+      /* Each move is an exercise id, checked slot by slot: a move is never
+         a map, a number or typed words, wherever it sits in the round. */
+      it("refuses a move that is not an exercise id, in any slot", async () => {
+        const notIds: [string, unknown][] = [
+          ["map", { name: "Plank" }],
+          ["number", 7],
+          ["words", "DM me"],
+          ["sentence", "great session, link in bio"],
+          ["empty", ""],
+          ["long", "x".repeat(61)],
+        ];
+        const twelve = Array(12).fill("plank");
+        for (const [what, move] of notIds)
+          for (const slot of [0, 4, 11]) {
+            const moves = [...twelve];
+            moves[slot] = move;
+            await assertFails(
+              post(`circuit-${what}-${slot}`, {
+                circuit: { ...CIRCUIT, moves },
+              })
+            );
+          }
+        // The twin: an id in each of those slots creates.
+        const ids = [...twelve];
+        ids[0] = "bodyweight-squat";
+        ids[4] = "single-leg-calf-raise";
+        ids[11] = "x".repeat(60);
+        await assertSucceeds(
+          post("circuit-ids", { circuit: { ...CIRCUIT, moves: ids } })
+        );
+      }, 30_000);
     });
 
     /* Moments (Soc15): a kind and its numbers, never typed text. Each

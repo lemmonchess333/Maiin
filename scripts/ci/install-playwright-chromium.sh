@@ -18,8 +18,9 @@
 # failed on the lock within a second. Before retrying, it stops that apt-get,
 # waits for dpkg's locks to be free, and repairs whatever dpkg left half-done.
 # A mirror can also keep downloading too slowly to finish before the bound.
-# On hosted runners, a timed-out attempt drops Azure from the runner's mirror
-# list so apt uses its existing official HTTPS Ubuntu fallback on the retry.
+# On hosted runners, a timed-out attempt drops the cloud's regional mirror
+# (Azure's, or EC2's on a runner hosted in AWS) from the runner's mirror list
+# so apt uses its existing official HTTPS Ubuntu fallback on the retry.
 #
 # Worst case, three stalled attempts: 3 x (SECONDS + 10), plus two clear-ups
 # of ASK_WAIT + KILL_WAIT + RETRY_PAUSE and a dpkg repair, about 50 s each.
@@ -39,19 +40,28 @@ KILL_WAIT=20
 RETRY_PAUSE=10
 APT_MIRRORS=/etc/apt/apt-mirrors.txt
 
-# GitHub's Ubuntu image supplies Azure first, then the official HTTPS archive
-# and security mirrors. A slow (but responding) Azure mirror never triggers
-# apt's own failover. Remove only that entry, and only when the runner already
-# supplies the official fallback; sources, suites and signature checks stay as
-# configured by the image. Local installs and other apt repositories are untouched.
+# GitHub's Ubuntu image supplies its cloud's regional mirror first (Azure's,
+# or a region's EC2 mirror on a runner hosted in AWS), then the official
+# HTTPS archive and security mirrors. A slow (but responding) regional mirror
+# never triggers apt's own failover: emulator-tests lost three attempts to
+# us-east-2.ec2.archive.ubuntu.com while only Azure's was dropped. Remove
+# only a regional entry, a host under archive.ubuntu.com, and only when the
+# runner already supplies the official fallback; sources, suites and
+# signature checks stay as configured by the image. Local installs and other
+# apt repositories are untouched. When there is nothing to fall back to, the
+# list is printed, so the next stall says what the runner had.
 fallback_apt_mirror() {
   [[ ${GITHUB_ACTIONS:-} == true && -f $APT_MIRRORS ]] || return 0
-  local azure='^http://azure\.archive\.ubuntu\.com/ubuntu/?([[:space:]]|$)'
+  local regional='^http://([a-z0-9-]+\.)+archive\.ubuntu\.com/ubuntu/?([[:space:]]|$)'
   local archive='^https://archive\.ubuntu\.com/ubuntu/?([[:space:]]|$)'
-  grep -Eq "$azure" "$APT_MIRRORS" || return 0
-  grep -Eq "$archive" "$APT_MIRRORS" || return 0
-  if sudo sed -i -E "\\~$azure~d" "$APT_MIRRORS"; then
-    echo "::warning::Azure apt mirror timed out; retrying with the runner's official HTTPS Ubuntu fallback"
+  if ! grep -Eq "$regional" "$APT_MIRRORS" ||
+    ! grep -Eq "$archive" "$APT_MIRRORS"; then
+    echo "::warning::No regional apt mirror to fall back from; the runner's list:"
+    cat "$APT_MIRRORS"
+    return 0
+  fi
+  if sudo sed -i -E "\\~$regional~d" "$APT_MIRRORS"; then
+    echo "::warning::Regional apt mirror timed out; retrying with the runner's official HTTPS Ubuntu fallback"
   else
     echo "::warning::Could not update the runner's apt mirror list; retaining bounded retries"
   fi

@@ -96,6 +96,30 @@ describe("a circuit's post (Circ1 (11))", () => {
     ).toContain(`/${lead!.exerciseId}.`);
   });
 
+  it("leads with its minutes when no whole round was done, said once", () => {
+    // Ended at 8 minutes, inside a round: never "0 rounds" as the figure.
+    const card = renderCard(
+      feedItem({
+        ...POST,
+        duration: 480,
+        circuit: { ...POST.circuit, rounds: 0 },
+      })
+    );
+    expect(screen.queryByText("rounds")).toBeNull();
+    expect(screen.getAllByText("min")).toHaveLength(1);
+    const lead = screen.getByText("min").previousElementSibling;
+    expect(lead).toHaveTextContent("8");
+    expect(lead).toHaveClass("text-2xl", "text-lifting");
+    expect(card.textContent).toContain("40 s on, 20 s off");
+  });
+
+  it("calls one round a round", () => {
+    renderCard(feedItem({ ...POST, circuit: { ...POST.circuit, rounds: 1 } }));
+    expect(screen.getByText("round").previousElementSibling).toHaveTextContent(
+      "1"
+    );
+  });
+
   it("lists every move on the post's own page", () => {
     renderCard(feedItem({ ...POST }), true);
     for (const move of circuit.moves)
