@@ -93,7 +93,13 @@ const NO_INDEX = "noindex";
 
 /** The page's robots tag, in place of any the app's own page carries. */
 const ROBOTS_TAG = `<meta name="robots" content="${NO_INDEX}" />`;
-const ROBOTS_META = /<meta\s+name="robots"[^>]*>\s*/g;
+
+/** A robots or googlebot tag however it is written: its name anywhere
+ *  among its attributes, in either quotes or none, in any case. Only
+ *  removed, never rewritten, so a tag that merely mentions the words
+ *  stays. */
+const ROBOTS_META =
+  /<meta\b(?=[^>]*\sname\s*=\s*(?:"(?:robots|googlebot)"|'(?:robots|googlebot)'|(?:robots|googlebot)(?=[\s/>])))[^>]*>\s*/gi;
 
 const METRES_PER_MILE = 1609.344;
 const KG_PER_LB = 0.45359237;

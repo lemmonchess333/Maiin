@@ -560,19 +560,43 @@ describe("the page Hosting serves", () => {
     expect(json.headers["X-Robots-Tag"]).toBe("noindex");
   });
 
-  it("keeps one robots tag when the app's page carries its own", async () => {
-    const shell = SHELL.replace(
-      "<title>Tropos</title>",
-      '<meta name="robots" content="index, follow" />\n    <title>Tropos</title>'
-    );
-    for (const path of ["/activity/run1", "/activity/nope"]) {
-      const res = await ask(memoryFirestore(seed()), path, { shell });
-      expect(res.body.match(/<meta name="robots"/g), path).toHaveLength(1);
-      expect(res.body, path).toContain(
-        '<meta name="robots" content="noindex" />'
+  /* Whatever robots or googlebot tag the app's page carries, however it
+     is written, goes, so the page asks one thing: noindex. Only tags whose
+     name is robots or googlebot: a tag that merely mentions the word
+     stays. */
+  const KEPT = [
+    '<meta name="keywords" content="robots, googlebot" />',
+    '<meta name="robots-note" content="index" />',
+    '<meta data-name="robots" content="index" />',
+  ];
+  it.each([
+    ["name first", '<meta name="robots" content="index, follow" />'],
+    ["content first", '<meta content="index, follow" name="robots" />'],
+    ["single quotes", "<meta name='robots' content='index, follow'>"],
+    ["googlebot", '<meta name="googlebot" content="index" />'],
+    ["capitals, unquoted", "<META NAME=Robots CONTENT=index>"],
+  ])(
+    "keeps one robots tag when the app's page carries its own (%s)",
+    async (_name, tag) => {
+      const shell = SHELL.replace(
+        "<title>Tropos</title>",
+        `${tag}\n    ${KEPT.join("\n    ")}\n    <title>Tropos</title>`
       );
+      for (const path of ["/activity/run1", "/activity/nope"]) {
+        const res = await ask(memoryFirestore(seed()), path, { shell });
+        const head = res.body.slice(0, res.body.indexOf("</head>"));
+        // The page's own tag is gone, and ours is there once.
+        expect(head, path).not.toContain(tag);
+        expect(
+          head.split('<meta name="robots" content="noindex" />').length - 1,
+          path
+        ).toBe(1);
+        // Delete-only: nothing else in the head is touched.
+        for (const kept of KEPT) expect(head, path).toContain(kept);
+        expect(head, path).toContain('<script src="/init.js"></script>');
+      }
     }
-  });
+  );
 });
 
 describe("the app's page, fetched from Hosting", () => {
