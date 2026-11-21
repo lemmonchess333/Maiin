@@ -3,6 +3,7 @@ import ArtHero from "@/website/blocks/ArtHero";
 import Feature from "@/website/blocks/Feature";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
+import liftBest from "@/website/screens/lift-best.webp";
 import liftDay from "@/website/screens/lift-day.webp";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
@@ -106,6 +107,14 @@ export default function Lifting() {
           "A map of the muscles you’ve trained",
           "A review of each week",
         ]}
+        picture={
+          <AppScreen
+            src={liftBest}
+            alt="A finished lift in Tropos: Pull A done, 2,295 kg lifted in 41 minutes, and a new best on the barbell row, 35 kg for 8."
+            width={660}
+            height={1431}
+          />
+        }
       >
         <p>
           A weekly score from 0 to 100 says how your training went, and

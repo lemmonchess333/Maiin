@@ -7,6 +7,8 @@ import Feature from "@/website/blocks/Feature";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import challengeBoard from "@/website/screens/challenge-board.webp";
+import feed from "@/website/screens/feed.webp";
+import together from "@/website/screens/together.webp";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
@@ -16,10 +18,10 @@ const MEDALS = ["bronze", "silver", "gold"] as const;
 /**
  * troposfit.com/social: people first (Strava's order), then what they do
  * together: Circles, challenges and medals, the league, Spaces, and the
- * person's own say over who sees what. Leagues, challenges and Spaces are
- * held back until enough people train on Tropos (App1 Q6,
- * `enoughPeople.ts`), and the page says so rather than show an empty room
- * as a busy one.
+ * person's own say over who sees what. Challenges, the league and Spaces
+ * are there from a person's first day (App1 Q6, `fillingUp.ts`); the
+ * league alone waits, until 10 people have joined it, and the page says
+ * so in the app's own words.
  */
 export default function Social() {
   usePageHead(sitePageHead(sitePage("social")));
@@ -52,6 +54,14 @@ export default function Social() {
           "Meet-ups for a run or a lift, with a time and a place",
           "A reminder about a day before, for everyone going",
         ]}
+        picture={
+          <AppScreen
+            src={together}
+            alt="Social’s Together tab: this week’s challenge, Weekly Warrior, the weekly leagues with Join the league, and a Circle checking in on its week."
+            width={660}
+            height={1431}
+          />
+        }
       >
         <p>
           Start a Circle with friends, a running group or a gym partner. Check
@@ -79,7 +89,6 @@ export default function Social() {
       >
         <p>
           Join a challenge and the sessions you already log count toward it.
-          Challenges open once at least 10 people are training on Tropos.
         </p>
         <ul className="flex gap-3 pt-2" aria-hidden="true">
           {MEDALS.map((tier) => (
@@ -122,8 +131,8 @@ export default function Social() {
       >
         <p>
           Join one if you want a stake in the week. Three sessions done of three
-          planned beats six runs half done. Leagues open once at least 10 people
-          are training on Tropos.
+          planned beats six runs half done. The league starts once 10 people
+          have joined it.
         </p>
       </Feature>
 
@@ -140,10 +149,6 @@ export default function Social() {
           Races have their own Spaces. Join the one for the race you’re training
           for, or one for a way of training you like.
         </p>
-        <p className="text-base">
-          Spaces open once at least 10 people are training on Tropos. Circles,
-          the feed and following work from your first day.
-        </p>
       </Feature>
 
       <Feature
@@ -153,6 +158,14 @@ export default function Social() {
           "Share each session with your followers, with everyone or not at all",
           "Block or report anyone",
         ]}
+        picture={
+          <AppScreen
+            src={feed}
+            alt="The feed in Tropos: an 8.24 km morning run with its route, pace, props and a comment, and a bench press session with two new bests."
+            width={660}
+            height={1376}
+          />
+        }
       >
         <p>You choose who follows you and who sees each session you share.</p>
       </Feature>

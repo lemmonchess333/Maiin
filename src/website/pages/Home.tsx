@@ -211,7 +211,7 @@ export default function Home() {
         points={[
           "Props and comments on the sessions you share",
           "Circles of up to 8, with meet-ups for a run or a lift",
-          "Challenges and a weekly league, once 10 people train on Tropos",
+          "Challenges with a medal for each, and a weekly league",
         ]}
         picture={
           <AppScreen

@@ -3,6 +3,7 @@ import ArtHero from "@/website/blocks/ArtHero";
 import Feature from "@/website/blocks/Feature";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
+import savedRun from "@/website/screens/run.webp";
 import trainRun from "@/website/screens/train-run.webp";
 import { sitePage } from "@/website/sitePages";
 import { sitePageHead, usePageHead } from "@/website/usePageHead";
@@ -76,20 +77,12 @@ export default function Running() {
           "Segments timed against the people you follow",
         ]}
         picture={
-          <div
-            className="art-hero-picture"
-            data-light="running"
-            style={{ maxWidth: "20rem" }}
-          >
-            <img
-              src="/form-art/run-easy.webp"
-              alt=""
-              width={232}
-              height={480}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
+          <AppScreen
+            src={savedRun}
+            alt="A saved run in Tropos: an 18 km long run on a map coloured by pace, 1:47:51 at 6:00 per kilometre, 98 m of climb, and its best efforts below."
+            width={660}
+            height={1376}
+          />
         }
       >
         <p>

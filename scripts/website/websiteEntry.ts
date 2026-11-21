@@ -49,7 +49,6 @@ export const RETIRED_WORKER_SOURCE = "scripts/website/retired-sw.js";
 export const WEBSITE_PUBLIC_ART = [
   "form-art/overhead-press.webp",
   "form-art/run-fast.webp",
-  "form-art/run-easy.webp",
   "form-art/squat.webp",
   "form-art/bench-press.webp",
   "form-art/deadlift.webp",
