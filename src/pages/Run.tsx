@@ -3151,7 +3151,10 @@ export default function Run() {
               } as CSSProperties
             }
           >
-            <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
+            {/* On a screen with room for two panes (`split`) the map, the
+                chips and the banners keep to the leading half, and
+                RunBottomSheet docks its figures in the trailing half. */}
+            <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-[calc(var(--safe-left)+1rem)] z-50">
               <GpsSignalChip
                 accuracy={gps.gpsAccuracy}
                 isTracking={gps.isTracking}
@@ -3164,7 +3167,7 @@ export default function Run() {
               runConfig?.activityType === "intervals") &&
               judgingPace &&
               barPace !== null && (
-                <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
+                <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-[calc(var(--safe-left)+1rem)] right-4 z-50 split:right-[calc(50%+1rem)]">
                   <PaceZoneBar
                     /* The last 30 seconds, as the alerts read it: the whole
                      run's average carries the warm-up into every reading. */
@@ -3187,7 +3190,7 @@ export default function Run() {
               markerUnit={unit}
               targetRoute={targetRoute ?? undefined}
               height="h-full"
-              className="absolute inset-0"
+              className="absolute inset-0 split:right-1/2 split:w-auto"
             />
 
             {/* Top-centre nav aid + run status banners, in ONE flow stack.
@@ -3220,7 +3223,7 @@ export default function Run() {
                 Clear of the left GPS indicator + the tempo/interval
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
-            <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
+            <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4 split:right-1/2">
               {recoveryNotice}
               {targetRoute ? (
                 <>

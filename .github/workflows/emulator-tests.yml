@@ -319,8 +319,10 @@ jobs:
   capture-specs:
     runs-on: ubuntu-latest
     # The specs take 25 to 29 minutes on a busy runner, so a 30-minute
-    # cap cancelled green runs and left their PRs unmergeable.
-    timeout-minutes: 45
+    # cap cancelled green runs and left their PRs unmergeable. The large-
+    # text spec on the iPhone Duo's two screens added about 10 more
+    # (2026-11-18), which took a run to the edge of the old 45.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

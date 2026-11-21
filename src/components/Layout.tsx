@@ -40,6 +40,7 @@ import {
   useState,
 } from "react";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
+import { TWO_PANE_PATHS } from "@/lib/wideScreen";
 
 /** Queue state describes local persistence, not network connectivity. */
 function useQueuedChanges(uid: string | null) {
@@ -187,6 +188,9 @@ export default function Layout() {
         paddingBottom: hideNav
           ? "var(--safe-bottom)"
           : "var(--page-bottom-pad)",
+        // 0 on a portrait iPhone; the iPhone Duo's side column otherwise.
+        paddingLeft: "var(--safe-left)",
+        paddingRight: "var(--safe-right)",
       }}
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
@@ -320,7 +324,11 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md mx-auto px-[16px] py-6 sm:py-7"
+        className={
+          TWO_PANE_PATHS.has(location.pathname)
+            ? "max-w-md mx-auto px-[16px] py-6 sm:py-7 split:max-w-[60rem]"
+            : "max-w-md mx-auto px-[16px] py-6 sm:py-7"
+        }
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >
