@@ -92,6 +92,30 @@ describe("report targets — client and server agree", () => {
     expect(target.targetRef.path).toBe("comments/act1/items/c1");
   });
 
+  it("a segment is reported by its own id, and resolves to its maker", async () => {
+    // The page reports the id it was opened with; the maker comes from the
+    // owner record, which the reporter cannot read.
+    expect(
+      server.normalizeCreateReportInput({
+        targetType: "segment",
+        targetId: "hill",
+        category: "inappropriate",
+      })
+    ).toMatchObject({ targetType: "segment", targetId: "hill" });
+    const firestore = fakeFirestore({
+      "segments/hill": { name: "Common hill" },
+      "segmentOwners/hill": { uid: "maker" },
+    });
+    const target = await server.resolveReportTarget({
+      firestore,
+      reporterUid: "stranger",
+      targetType: "segment",
+      targetId: "hill",
+    });
+    expect(target.targetRef.path).toBe("segments/hill");
+    expect(target.targetUid).toBe("maker");
+  });
+
   it("the parts cannot be swapped between the two comment kinds", () => {
     // A Space comment id is not a valid activity comment id, and the other
     // way round: each kind takes exactly its own number of parts.
@@ -125,6 +149,24 @@ describe("report reasons — the form, the server and the alert email agree", ()
     expect(
       Object.fromEntries(REPORT_CATEGORY_OPTIONS.map((c) => [c.value, c.label]))
     ).toEqual({ ...alert.CATEGORY_LABELS });
+  });
+
+  it("the server records every sub-reason the form offers, as written", () => {
+    // The server keeps the reporter's words rather than a list of its own,
+    // so a new sub-reason (Child safety, Copyright) is client-only, and
+    // this is what holds it to the server's limit.
+    for (const option of REPORT_CATEGORY_OPTIONS) {
+      for (const subReason of option.subReasons) {
+        expect(
+          server.normalizeCreateReportInput({
+            targetType: "segment",
+            targetId: "hill",
+            category: option.value,
+            subReason,
+          })
+        ).toMatchObject({ category: option.value, subReason });
+      }
+    }
   });
 
   it("the alert email has a name for every kind of target", () => {

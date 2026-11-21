@@ -54,6 +54,27 @@ describe("hiddenPostLine", () => {
     ).toBe("Pull · 6 exercises · 3 Oct");
   });
 
+  it("names a circuit (Circ1) by its rounds, not its moves", () => {
+    expect(
+      hiddenPostLine(
+        {
+          type: "workout",
+          workoutName: "20-minute circuit",
+          exerciseCount: 5,
+          circuit: {
+            rounds: 4,
+            workSeconds: 40,
+            restSeconds: 20,
+            moves: ["plank"],
+          },
+          createdAt: posted(2026, 9, 3),
+        },
+        "km",
+        NOW
+      )
+    ).toBe("20-minute circuit · 4 rounds · 3 Oct");
+  });
+
   it("carries the year for a post from another year", () => {
     expect(
       hiddenPostLine(

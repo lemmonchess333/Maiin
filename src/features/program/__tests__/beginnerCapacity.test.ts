@@ -94,21 +94,37 @@ describe("beginner plans never prescribe a bodyweight-floor pull", () => {
     }
   });
 
-  it("home/minimal: the floor slot lands on the inverted row, never back on pull-ups", () => {
+  // The inverted row needs a bar at waist height, a barbell in a rack at
+  // home (Lift4 (11), the owner's answer to the No equipment print), so
+  // without one the slot takes a dumbbell row.
+  it("home/minimal: the floor slot lands on a dumbbell row, or the inverted row with a rack, never back on pull-ups", () => {
     for (const equipment of ["home_gym", "minimal"]) {
       for (let days = 2; days <= 4; days++) {
-        const { programState } = buildPlan(
-          input(days, equipment, "hypertrophy", "beginner")
-        );
-        const ids = allIds(programState.workouts);
-        expect(
-          ids.filter((id) => id === "pull-ups" || id === "chin-ups"),
-          `${equipment} × ${days}d handed the beginner a floor pull back`
-        ).toHaveLength(0);
-        expect(
-          ids,
-          `${equipment} × ${days}d has no inverted row landing spot`
-        ).toContain("inverted-row");
+        for (const barbellAtHome of [false, true]) {
+          const { programState } = buildPlan({
+            ...input(days, equipment, "hypertrophy", "beginner"),
+            barbellAtHome,
+          });
+          const ids = allIds(programState.workouts);
+          const at = `${equipment} × ${days}d, rack ${String(barbellAtHome)}`;
+          expect(
+            ids.filter((id) => id === "pull-ups" || id === "chin-ups"),
+            `${at} handed the beginner a floor pull back`
+          ).toHaveLength(0);
+          if (barbellAtHome) {
+            expect(ids, `${at} has no inverted row`).toContain("inverted-row");
+          } else {
+            expect(ids, `${at} rows under a table`).not.toContain(
+              "inverted-row"
+            );
+            expect(
+              ids.some(
+                (id) => id === "db-row" || id === "chest-supported-db-row"
+              ),
+              `${at} has no dumbbell row`
+            ).toBe(true);
+          }
+        }
       }
     }
   });

@@ -27,12 +27,18 @@ import { dirname, resolve } from "node:path";
  * narrow.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const source = readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8");
 /** Comments name the old markup to explain the fix; matching raw source
  *  would flag that prose and push someone to delete the explanation. */
-const code = source
-  .replace(/\/\*[\s\S]*?\*\//g, " ")
-  .replace(/\/\/[^\n]*/g, " ");
+const strip = (path: string) =>
+  readFileSync(resolve(repoRoot, path), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ");
+/** The day's session: Train's Lift tab draws it, and so does a lift's own
+ *  page (`LiftSessionView`, TrainWk1 step 3). */
+const code = strip("src/components/program/LiftSessionView.tsx");
+/** Starting a session, and the workout it opens, on either screen. */
+const launch = strip("src/features/program/useLiftSession.ts");
+const overlays = strip("src/components/program/LiftSessionOverlays.tsx");
 
 describe("the card carries the day's action", () => {
   it("offers Make this next in the card's slot, not a row beneath it", () => {
@@ -124,11 +130,11 @@ describe("the week waits while a session is open", () => {
        `useProgramWriters.test.ts`); this holds that Train sets it from the
        state that puts the session on screen, and closes it through the
        effect's cleanup. */
-    expect(code).toMatch(/const sessionOpen = sessionDayIndex !== null;/);
-    expect(code).toMatch(
+    expect(launch).toMatch(/const sessionOpen = sessionDayIndex !== null;/);
+    expect(launch).toMatch(
       /useEffect\(\(\) => \(sessionOpen \? openLiftSession\(\) : undefined\), \[sessionOpen\]\);/
     );
-    expect(code).toMatch(/\{sessionDayIndex !== null &&/);
+    expect(overlays).toMatch(/\{sessionDayIndex !== null &&/);
   });
 });
 

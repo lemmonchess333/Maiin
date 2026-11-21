@@ -64,8 +64,9 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  * the form prefills from the preserved goal.
  *
  * What stays from PR-0d / PR-1 / PR-4:
- *   - DayActionSheet preserves manual-complete / skip-run /
- *     skip-lift / template swap.
+ *   - A run's own page (`/program/run/:date`, TrainWk1 call 2) keeps
+ *     manual-complete / skip-run / template swap / move; the card's ⋯
+ *     opens it.
  *   - Race-elapsed + compressed-plan banners + race progress
  *     card + this-week's-runs per-day list — unchanged.
  *   - Footer "Change plan ›" deep-links to /settings/run-plan
@@ -142,7 +143,6 @@ import {
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
 import { profileAge } from "@/lib/age";
-import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
 import {
@@ -203,6 +203,7 @@ import {
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { withStartOnArrival } from "@/features/run/startOnArrival";
+import { runSessionPath } from "@/lib/sessionPages";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
 import { IconButton } from "@/components/ui/IconButton";
@@ -240,29 +241,12 @@ interface ProgrammeRunSectionProps {
    *  target is 0 (malformed plan). Freeform users see the hero
    *  regardless. */
   runsTarget: number;
-  /** Async and outcome-reporting — see AdjustWeekSheet's note on why the
-   *  old `=> void` shape is what let a missing await through. */
-  overrideRunDay: (
-    idOrDayIndex: string | number,
-    templateId: string
-  ) => Promise<boolean>;
   /** RUN-EASE-01: the whole easier week as one command (resolves to the
    *  number of runs the server actually changed), and its undo. */
   applyEaseWeek: (
     swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
   ) => Promise<number | null>;
   revertEaseWeek: () => Promise<{ ok: boolean; message?: string }>;
-  /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
-   *  manualCompletions map; derivation surfaces ✅. */
-  markManualComplete: (runDayId: string) => Promise<ProgramOutcome>;
-  skipRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
-  skipWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
-  restoreRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
-  restoreWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
-  moveRunDay: (
-    idOrDayIndex: string | number,
-    targetDayIndex: number
-  ) => Promise<ProgramOutcome>;
   /** PR-C + Run9 ENG(j): atomic writer to exit the recovery phase
    *  early. Resolves the exit via `resolveRecoveryExit` — the race is
    *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
@@ -308,15 +292,8 @@ export default function ProgrammeRunSection({
   profile,
   programState,
   runsTarget,
-  overrideRunDay,
   applyEaseWeek,
   revertEaseWeek,
-  markManualComplete,
-  skipRunDay,
-  skipWorkoutDay,
-  restoreRunDay,
-  restoreWorkoutDay,
-  moveRunDay,
   skipRecoveryEarly,
   realignRacePlan,
   dismissFellBehindPrompt,
@@ -326,8 +303,12 @@ export default function ProgrammeRunSection({
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
-  // PR-1: which row is opening DayActionSheet.
-  const [manageDate, setManageDate] = useState<string | null>(null);
+  // A run's own page (TrainWk1 call 2): the run, why it is in the week,
+  // change it for the day, move, skip, mark as done. Opened from the card's
+  // ⋯, where the day's sheet opened, and back to this tab and day.
+  const openRunPage = (dateKey: string | null | undefined) => {
+    if (dateKey) navigate(runSessionPath(dateKey));
+  };
   // The day the person picked on the run-week selector (date-pinned,
   // ADR-0002), or null until they pick one; the tab then opens on
   // `defaultRunDayKey` (today's run, else the week's next one). It drives
@@ -376,12 +357,11 @@ export default function ProgrammeRunSection({
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
   // programState.manualCompletions; forwarded to RunWeekStrip so
-  // the strip's ✅ tracks manual/saved-run/legacy completions.
-  // Q5 chunk B3e — also forwards unclaimedByDate for the extras
-  // pills (saved runs that don't claim any planned slot). Read from the
-  // plan Train already holds: the old wrapper called useProgram() again,
-  // which started a second engine, empty, beside Train's.
-  const { claimMap, unclaimedByDate } = useClaimMapForProgram(programState);
+  // the strip's ✅ tracks manual/saved-run/legacy completions. Read
+  // from the plan Train already holds: the old wrapper called
+  // useProgram() again, which started a second engine, empty, beside
+  // Train's. The extras a day's run did not claim are its page's.
+  const { claimMap } = useClaimMapForProgram(programState);
 
   // Run8 PR1a — mode pills + race-goal form removed from this
   // surface. Mode + race goal now live on `/settings/run-plan`
@@ -432,8 +412,7 @@ export default function ProgrammeRunSection({
   // plan, its week and its Start, as the retired structured week did.
   const currentMode = runModeWithPlan(profile, programState);
   const rollingGoal = rollingGoalOf(programState, profile);
-  // Its weeks' places in the plan, for each run's "Why this run" here and
-  // on the day's sheet.
+  // Its weeks' places in the plan, for each run's "Why this run" here.
   const rollingContexts = useRollingSessionContexts({
     profile,
     programState,
@@ -810,19 +789,8 @@ export default function ProgrammeRunSection({
   useEffect(() => {
     if (!easeNudgeVisible) return;
     setLastShownAt(profile.uid, todayKeyDerivation);
-    trackProgram("ease_week_nudge_shown", {
-      trigger: easeNudgeTrigger,
-      count: easeNudgeCount,
-      total: easeNudgeTotal,
-    });
-  }, [
-    easeNudgeVisible,
-    profile.uid,
-    todayKeyDerivation,
-    easeNudgeTrigger,
-    easeNudgeCount,
-    easeNudgeTotal,
-  ]);
+    trackProgram("ease_week_nudge_shown", { trigger: easeNudgeTrigger });
+  }, [easeNudgeVisible, profile.uid, todayKeyDerivation, easeNudgeTrigger]);
 
   // A6: the post-ease bounce read — the week AFTER an applied easier
   // week, one factual line on whether the quality came back. Pure,
@@ -1129,11 +1097,9 @@ export default function ProgrammeRunSection({
       ? ROLLING_GOAL_NAMES[rollingGoal]
       : currentMode === "race_prep"
         ? "Race prep"
-        : currentMode === "structured"
-          ? "Structured"
-          : currentMode === "starter"
-            ? "30-minute goal"
-            : "Freeform";
+        : currentMode === "starter"
+          ? "30-minute goal"
+          : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1441,8 +1407,8 @@ export default function ProgrammeRunSection({
           /settings/training) was REMOVED here. It was fully redundant: the
           tab-aware page header (`programRunHeaderLine` in Program.tsx) now
           carries the same mode + week context ("Race prep · Marathon · Week
-          2/20" / "Structured · N runs/week"), and the RaceCockpitCard below
-          shows days-to-race. Worse, as a row directly above the day-selector it
+          2/20" / "30 minutes without stopping · Stage 3 of 9"), and the
+          RaceCockpitCard below shows days-to-race. Worse, as a row directly above the day-selector it
           forced the Run selector's day circles ~33px lower than the Lift tab's
           (the selector also has a weekday-letter row the Lift one lacks), so
           the stepper visibly jumped when toggling tabs. The way into the
@@ -1739,7 +1705,7 @@ export default function ProgrammeRunSection({
           (which is suppressed for this state below). A Trophy eyebrow + "Start
           race" CTA (logs against the race-day slot — onRunCreated writes the
           recovery entry server-side, exactly as the no-show / race-recent
-          paths do) + an overflow that opens DayActionSheet's race-day variant
+          paths do) + an overflow that opens the race day's own page
           for the DNF / DNS edge cases. */}
       {heroState === "race-today" && raceGoal && (
         <div className="w-full rounded-xl p-4 space-y-3 bg-running/8 border border-running/25">
@@ -1758,11 +1724,12 @@ export default function ProgrammeRunSection({
                 This is the one you’ve been training for. Good luck out there.
               </p>
             </div>
-            {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
+            {/* Overflow → the race day's own page, with its DNF / DNS
+                (PR1d). */}
             <IconButton
               onClick={() => {
                 haptic();
-                setManageDate(raceDayRunDay?.date ?? null);
+                openRunPage(raceDayRunDay?.date);
               }}
               aria-label={
                 ownGoal
@@ -1952,7 +1919,7 @@ export default function ProgrammeRunSection({
                   }}
                   onManage={() => {
                     haptic();
-                    setManageDate(selectedDateKey);
+                    openRunPage(selectedDateKey);
                   }}
                 />
                 <RunPlanPurpose
@@ -2244,29 +2211,6 @@ export default function ProgrammeRunSection({
           </button>
         </div>
       )}
-
-      {/* PR-1: per-day action sheet. scope="run" — the Run tab is sport-
-          partitioned by the Lift|Run control, so this manager shows only the
-          run block. The full whole-day (run + lift) view lives on Home, where
-          there's no sport partition. */}
-      <DayActionSheet
-        open={manageDate !== null}
-        onClose={() => setManageDate(null)}
-        dateKey={manageDate}
-        scope="run"
-        profile={profile}
-        programState={programState}
-        claimMap={claimMap}
-        unclaimedByDate={unclaimedByDate}
-        overrideRunDay={overrideRunDay}
-        markManualComplete={markManualComplete}
-        skipRunDay={skipRunDay}
-        skipWorkoutDay={skipWorkoutDay}
-        restoreRunDay={restoreRunDay}
-        restoreWorkoutDay={restoreWorkoutDay}
-        moveRunDay={moveRunDay}
-        rollingContexts={rollingContexts}
-      />
 
       {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
       {raceGoal && (

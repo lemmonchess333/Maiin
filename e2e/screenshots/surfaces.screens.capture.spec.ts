@@ -227,9 +227,13 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
       .getByRole("button", { name: /^(?!.*\(today\))\w+day \d+ \w+,/ })
       .first();
     await otherDay.click({ timeout: 10_000 });
-    await expect(page.getByText(/manage day|no sessions/i).first()).toBeVisible(
-      { timeout: 10_000 }
-    );
+    /* The peek is open once its close button is: every day's peek has
+       one. Its body differs by day (TrainWk1 step 2): a passed lift day
+       whose lift moved on says where it went and has no Manage day, so
+       "Manage day" is no anchor for an open peek. */
+    await expect(
+      page.getByRole("button", { name: "Close day details" })
+    ).toBeVisible({ timeout: 10_000 });
     await shoot(page, "home-day-peek");
     /* There is no `home-energy-expanded` frame any more, and its
        absence is the point rather than an omission: the nutrition card

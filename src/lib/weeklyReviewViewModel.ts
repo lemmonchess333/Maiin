@@ -11,11 +11,14 @@
  *    event (workout / run / meal / weigh-in — never passive data). A fully
  *    quiet week renders the gentle "quiet" variant ONLY for established
  *    users; brand-new users get nothing (never a guilt screen).
- *  - Headline PI collapses for zero-training weeks (no garbage PI on a
- *    one-meal first week); the delta renders only when the PREVIOUS week
- *    also has a PI (no "+41" return-from-vacation spikes); the verdict is
- *    TEMPLATED from the engine's band/deload flags (no AI) and a PI drop
- *    is never negative-framed in a detected deload week.
+ *  - The headline collapses for zero-training weeks (no verdict from a
+ *    garbage PI on a one-meal first week); the change on the week before
+ *    counts only when the PREVIOUS week also has a PI (no "+41"
+ *    return-from-vacation spikes); the verdict is TEMPLATED from the
+ *    engine's band/deload flags (no AI), and a deload week's verdict
+ *    never reads a drop as a loss. The headline is the verdict in words
+ *    and carries no number (App1 Q12): the score is shown in one place,
+ *    Progress's Score details.
  *  - Planned-vs-done comparisons render only when a plan exists (Run9a
  *    freeform substrate has no planned km → done-only framing).
  *  - Run stats count only runs passing the standard eligibility predicate
@@ -160,10 +163,9 @@ export interface WeeklyReview {
   /** The week the account began in, reviewed from that day: its first
    *  day and how many days it had. Null for any later week. */
   firstDays: { start: string; count: number } | null;
+  /** The week's verdict, in words, and no number (App1 Q12: the score
+   *  is shown in one place, Progress's Score details). */
   headline: {
-    pi: number;
-    /** Display delta — null when prior week has no PI OR suppressed (deload drop). */
-    delta: number | null;
     verdict: string;
     deload: boolean;
   } | null;
@@ -280,10 +282,10 @@ export function verdictFor(args: {
      lock decided on, and it is a choice about emphasis rather than a
      claim about why. */
   if (deloadRecommended) {
-    return "Load has run high, so this is a good week to ease off.";
+    return "You trained more than your usual week, so this is a good week to ease off.";
   }
   if (loadBand === "deload") {
-    return "A light week — the plan picks up from here.";
+    return "A light week. The plan picks up from here.";
   }
   if (loadBand === "overreach") {
     return "A big week. Keep an eye on recovery going into this one.";
@@ -293,7 +295,7 @@ export function verdictFor(args: {
   }
   if (delta !== null && delta >= 5) return "Momentum’s building.";
   if (delta !== null && delta <= -5) {
-    return "A softer week — this week’s plan resets the rhythm.";
+    return "A softer week. This week’s plan resets the rhythm.";
   }
   return "Steady week.";
 }
@@ -354,15 +356,12 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       data.perf.deloadRecommended || data.perf.loadBand === "deload";
     const rawDelta =
       data.prevPi !== null ? Math.round(data.perf.pi - data.prevPi) : null;
-    // Deload weeks: a PI drop is by design — never framed as a loss.
-    const delta = deload && rawDelta !== null && rawDelta < 0 ? null : rawDelta;
     headline = {
-      pi: Math.round(data.perf.pi),
-      delta,
       deload,
-      // A first week has nothing before it to be steady against.
+      // A first week has nothing before it to be steady against, and the
+      // review names no score (Q12), so it says what the next weeks build.
       verdict: firstDays
-        ? "Your first score. It settles over the next few weeks."
+        ? "Your usual week takes shape over the next few weeks."
         : verdictFor({
             delta: rawDelta,
             loadBand: data.perf.loadBand,

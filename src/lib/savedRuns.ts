@@ -5,8 +5,8 @@
  * its own query, its own projection and its own idea of which day a run
  * belongs to. That is how two readers came to order by `createdAt`, a field
  * no saved run has, and read nothing from May to October 2026, and how
- * Lift3's start-date rule reached History and the recap but not the streak,
- * Food's burn or the training-load chart.
+ * Lift3's start-date rule reached History and the recap but not the streak
+ * or Food's burn.
  *
  * This module is the one place that knows the stored shape:
  * - day-window reads combine the stored `date` with the legacy
