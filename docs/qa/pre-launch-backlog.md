@@ -2508,6 +2508,12 @@ STATUS 2026-10-25 — `storage.rules` now refuses every upload under
 not add to the legacy set; read and delete stay for the owner. The sweep of
 what is already there is still not done.
 
+STATUS 2026-11-21: the owner chose to delete every one ("Delete them
+all"). The app stops reading `photoUrl`, `storage.rules` closes the prefix
+to every client, and `functions/scripts/purgeLegacyFoodPhotos.js` deletes
+the objects and the meal fields. The rows that run it are under "Legacy
+meal photos in Storage (uploaded before Food9)" below.
+
 - [ ] **Public photos can be fetched, not listed (2026-10-25).** Space-post
       and profile photos grant `get`, not `read`, so nobody can list a
       person's folder; a deleted Space post's photo is now deleted with it
@@ -2970,6 +2976,81 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 - [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
 - [x] _(Proven 2026-10-17: functions/accountDeletion.js STORAGE_PREFIX_TEMPLATES includes food-photos/**UID**/; functions/**tests**/accountDeletion.test.js 'continues to next storage prefix when one prefix throws' asserts the 4 prefixes incl. food-photos in order and 'returns the scoped prefixes for the uid'. A failed sweep throws storage-cleanup-incomplete before the Auth delete, so a completed deletion proves it ran. Deployed source verified: run 39063239262 'Verified deployed source: deleteMyAccount, version 250' (accountDeletion.js byte-compared). Note: the executor logs only FAILED prefixes, so the row's 'logs the sweep' line will never appear.)_ Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
+
+### Every one deleted (owner, 2026-11-21: "Delete them all")
+
+Affects: `functions/scripts/purgeLegacyFoodPhotos.js` (new, operator-run,
+from the Actions tab through `.github/workflows/purge-legacy-food-photos.yml`),
+`storage.rules` (the `food-photos/` block is now read and write false, for
+the owner too), `useMeals.ts` (`parseMealDoc` no longer reads `photoUrl`),
+`FoodTimeline.tsx` and `FoodRow.tsx` (the device photo is the only one
+drawn). From 4 July to 18 August 2026 the app uploaded each scanned meal's
+photo to `food-photos/{uid}/{timestamp}.jpg` and wrote `photoUrl` and
+`photoPath` on the meal. The script deletes every object under
+`food-photos/` and takes both fields off every meal, soft-deleted ones
+included. Unit-tested against fakes (`purgeLegacyFoodPhotos.test.js`); it
+has not run on the real project. The storage rules tests need the Storage
+emulator, which CI's `emulator-tests` job runs.
+
+In this order:
+
+- [ ] **The release closes the prefix.** Merge, and let Deploy production
+      finish. Passing: its Storage stage is green, and Firebase console →
+      Storage → Rules shows the `food-photos` block as
+      `allow read, write: if false`.
+- [ ] **Dry run.** Actions tab → "Purge legacy meal photos" → Run
+      workflow, on main, mode `dry-run` (the default), bucket left empty
+      (it uses the app's own, `VITE_FIREBASE_STORAGE_BUCKET`). Passing:
+      the run is green, deletes and writes nothing, and its "Count, or
+      delete" step prints how many objects (and bytes) are under
+      `food-photos/` and how many meals hold `photoUrl` and `photoPath`,
+      and its last line how many of their photo URLs name this bucket,
+      which should be every meal holding `photoUrl`. Read those counts
+      before going on. The run stops, writing nothing, if any meal's photo
+      URL names another bucket (it says which: run again with that one) or
+      cannot be read at all (it says how many). If it fails on a Storage
+      permission (`storage.objects.list`), the service account behind
+      `FIREBASE_SERVICE_ACCOUNT` needs Storage Object Admin on that bucket
+      (Google Cloud console → Cloud Storage → the bucket → Permissions);
+      no new secret. If it says the bucket does not exist, run it again
+      with the bucket Firebase console → Storage shows, without `gs://`.
+- [ ] **Soft delete, before applying.** Google Cloud console → Cloud
+      Storage → the bucket → Protection → Soft delete policy. Cloud
+      Storage's default policy keeps a deleted object restorable for 7
+      days, and an object deleted while the policy is on cannot be
+      removed for good before that time is up, even by turning the policy
+      off afterwards. The policy is the whole bucket's, not a prefix's. If
+      it is on, either let it stand (the photos are truly gone on the apply
+      date plus the retention shown, and that later date is the one to
+      write into CLAUDE.md below), or, if the owner wants them gone at
+      once, turn it off before applying, knowing that profile, Space and
+      post photos in the same bucket lose their window while it is off,
+      and turn it back on after. Passing: the setting and the date the
+      photos are truly gone are written in this row.
+- [ ] **Apply.** Run it again with mode `apply`. It deletes the objects,
+      then takes the fields off the meals, then counts again in the same
+      run and fails unless both counts are 0. This cannot be undone. If a
+      run stops part-way, run `apply` again: what is already gone is not
+      listed or written again.
+- [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
+      `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
+      photo field`; Firebase console → Storage has no `food-photos`
+      folder; and in Firestore console a meal scanned before 18 August
+      2026 has neither `photoUrl` nor `photoPath`. Then write into
+      CLAUDE.md's "Meal photos are device-local" section, where it says
+      "Run in production on: not yet", the apply date and, if soft delete
+      was on, the date the photos are truly gone (the row above). (The
+      same script runs from a terminal with Admin credentials; its header
+      has the command.)
+- [ ] **An older build.** After the purge, a TestFlight build from before
+      this change, on an account with a meal scanned before 18 August
+      2026. Passing: that meal's row shows our drawing of the food, not a
+      broken picture (the row falls back when its photo fails to load).
+- [ ] **Then the account-deletion sweep can go.** Once the purge has run,
+      `food-photos/__UID__/` in `STORAGE_PREFIX_TEMPLATES`
+      (`functions/accountDeletion.js`) lists an empty prefix on every
+      deletion. Taking it out is optional and needs its test
+      (`accountDeletion.test.js` counts the prefixes) changed with it.
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
