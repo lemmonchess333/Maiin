@@ -12,7 +12,11 @@
  *
  *   lifts, runs, distance  weekTally.tallyWeek, the league's count of saved
  *                          sessions, pinned to the app's `weekDone` by
- *                          weekTally.cross.test.ts. The words say "saved":
+ *                          weekTally.cross.test.ts. A circuit (Circ1) is
+ *                          one of those lifts and is said as a circuit
+ *                          (`isCircuit`), as the score's breakdown
+ *                          says it, so a week of circuits never reads as
+ *                          lifts. The words say "saved":
  *                          a planned run marked done by hand is said apart
  *                          ("You marked 1 planned run done"), by the day it
  *                          was marked, since the review counts it by the
@@ -42,6 +46,13 @@ const { appUrl, renderEmail } = require("./updateEmailLayout");
 
 const DAY_MS = 86400000;
 const METRES_PER_MILE = 1609.344;
+
+/** A circuit (Circ1): a workout saved with `format: "circuit"`, the exact
+ *  match performanceEngine.isCircuitWorkout and firstWeekActivation make.
+ *  Not required from performanceEngine, which opens Firestore as it loads. */
+function isCircuit(workout) {
+  return Boolean(workout) && workout.format === "circuit";
+}
 
 function dayMs(dayKey) {
   const [y, m, d] = dayKey.split("-").map(Number);
@@ -95,13 +106,16 @@ function weekFigures({ workouts, runs, meals, week, markedDoneMs = [], timezone 
     typeof doc.date === "string" &&
     doc.date >= week.start &&
     doc.date <= week.end;
-  const tally = tallyWeek(workouts.filter(inWeek), runs.filter(inWeek));
+  const weekWorkouts = workouts.filter(inWeek);
+  const tally = tallyWeek(weekWorkouts, runs.filter(inWeek));
+  const circuits = weekWorkouts.filter(isCircuit).length;
   const markedDone = markedDoneMs.filter((ms) => {
     const day = localDateKeyInTz(new Date(ms), timezone);
     return day !== null && day >= week.start && day <= week.end;
   }).length;
   return {
-    lifts: tally.lifts,
+    lifts: tally.lifts - circuits,
+    circuits,
     runs: tally.runs,
     distanceM: tally.distanceM,
     markedDone,
@@ -112,7 +126,7 @@ function weekFigures({ workouts, runs, meals, week, markedDoneMs = [], timezone 
 /** Whether the week has anything to say. */
 function hasFigures(figures) {
   return (
-    figures.lifts + figures.runs > 0 ||
+    figures.lifts + (figures.circuits || 0) + figures.runs > 0 ||
     (figures.markedDone || 0) > 0 ||
     figures.foodDays > 0
   );
@@ -145,14 +159,23 @@ function count(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
+/** "a", "a and b", "a, b and c". */
+function listed(items) {
+  return items.length < 2
+    ? items.join("")
+    : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 /** What the person did, in their words: you, the number, its comparison. */
 function weekLines(figures, unit) {
   const lines = [];
   const sessions = [];
   if (figures.lifts > 0) sessions.push(count(figures.lifts, "lift", "lifts"));
+  if ((figures.circuits || 0) > 0)
+    sessions.push(count(figures.circuits, "circuit", "circuits"));
   if (figures.runs > 0) sessions.push(count(figures.runs, "run", "runs"));
   if (sessions.length > 0) {
-    let line = `You saved ${sessions.join(" and ")}.`;
+    let line = `You saved ${listed(sessions)}.`;
     if (figures.runs > 0 && figures.distanceM > 0) {
       line += ` You ran ${distanceLabel(figures.distanceM, unit)}.`;
     }
@@ -173,7 +196,7 @@ function weekLines(figures, unit) {
  * The email for one person's week.
  *
  * @param {object} args
- * @param {{ lifts: number, runs: number, distanceM: number, markedDone?: number, foodDays: number }} args.figures
+ * @param {{ lifts: number, circuits?: number, runs: number, distanceM: number, markedDone?: number, foodDays: number }} args.figures
  * @param {{ start: string, end: string }} args.week
  * @param {"km" | "mi"} [args.unit]
  * @param {string} args.unsubscribe - the person's unsubscribe link

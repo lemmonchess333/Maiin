@@ -74,11 +74,49 @@ describe("weekFigures", () => {
     });
     expect(figures).toEqual({
       lifts: 2,
+      circuits: 0,
       runs: 2,
       distanceM: 14200,
       markedDone: 0,
       foodDays: 2,
     });
+    expect(review.hasFigures(figures)).toBe(true);
+  });
+
+  it("counts a circuit apart from the lifts the league counts it with (Circ1)", () => {
+    const figures = review.weekFigures({
+      week,
+      workouts: [
+        { date: "2026-11-09", exercises: [] },
+        {
+          date: "2026-11-10",
+          format: "circuit",
+          exercises: [],
+          circuit: { activeSeconds: 1200 },
+        },
+        {
+          date: "2026-11-12",
+          format: "circuit",
+          exercises: [],
+          circuit: { activeSeconds: 600 },
+        },
+      ],
+      runs: [],
+      meals: [],
+    });
+    expect(figures).toMatchObject({ lifts: 1, circuits: 2, runs: 0 });
+    // Still the league's three: one lift and two circuits.
+    expect(figures.lifts + figures.circuits).toBe(3);
+  });
+
+  it("has something to say for a week of circuits alone", () => {
+    const figures = review.weekFigures({
+      week,
+      workouts: [{ date: "2026-11-10", format: "circuit", exercises: [] }],
+      runs: [],
+      meals: [],
+    });
+    expect(figures).toMatchObject({ lifts: 0, circuits: 1 });
     expect(review.hasFigures(figures)).toBe(true);
   });
 
@@ -137,6 +175,32 @@ describe("the email", () => {
     expect(email.text).toContain("You saved 1 run. You ran 5.0 mi.");
     expect(email.text).not.toContain("km");
     expect(email.text).not.toContain("food");
+  });
+
+  it("names circuits apart, so a week of circuits never reads as lifts", () => {
+    const mixed = review.buildWeeklyReviewEmail({
+      figures: {
+        lifts: 1,
+        circuits: 1,
+        runs: 2,
+        distanceM: 10000,
+        foodDays: 0,
+      },
+      week,
+      unit: "km",
+      unsubscribe: UNSUBSCRIBE,
+    });
+    expect(mixed.text).toContain(
+      "You saved 1 lift, 1 circuit and 2 runs. You ran 10.0 km."
+    );
+    const circuitsOnly = review.buildWeeklyReviewEmail({
+      figures: { lifts: 0, circuits: 2, runs: 0, distanceM: 0, foodDays: 0 },
+      week,
+      unit: "km",
+      unsubscribe: UNSUBSCRIBE,
+    });
+    expect(circuitsOnly.text).toContain("You saved 2 circuits.");
+    expect(circuitsOnly.text).not.toMatch(/\blifts?\b/);
   });
 
   it("leaves out what was not done, rather than saying 0", () => {
