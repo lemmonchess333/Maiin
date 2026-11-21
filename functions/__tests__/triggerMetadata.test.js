@@ -580,6 +580,18 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  hourlyEmailSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: ["RESEND_API_KEY"],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
+  emailUnsubscribe: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   weeklyFellBehindCheck: {
     kind: "schedule",
     maxInstances: 1,
