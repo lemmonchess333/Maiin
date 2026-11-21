@@ -39,6 +39,8 @@ import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
 import { elevationLabel } from "@/lib/runLabels";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { SPLIT_QUERY } from "@/lib/wideScreen";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
@@ -358,7 +360,15 @@ export default function RunBottomSheet({
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
-  const isExpanded = snapIdx === 2;
+  /* On the iPhone Duo's inner display open in landscape (index.css
+     `split`) the panel is docked beside the map, the full height, always
+     open and not dragged: the map takes the leading half and the figures
+     the trailing one, as Apple's split arrangement lays two views side by
+     side. The snap it had is kept, so folding back returns the panel to
+     where the runner left it. Its place comes from the same media query
+     in CSS; this only switches what it shows and stops the drag. */
+  const docked = useMediaQuery(SPLIT_QUERY);
+  const isExpanded = docked || snapIdx === 2;
   // A tap on the map raises a lowered panel (the map itself takes pans and
   // pinches, so nothing covers it any more). Adjusted while rendering, as
   // React advises for state that follows a prop.
@@ -367,7 +377,7 @@ export default function RunBottomSheet({
     setSeenExpandRequest(expandRequest);
     if (snapIdx !== 2) setSnapIdx(2);
   }
-  const isSplitsView = snapIdx === 1;
+  const isSplitsView = !docked && snapIdx === 1;
 
   // ── Draggable bottom sheet ────────────────────────────────────────────
   // Was a touchstart→touchend Y-delta wired ONLY to the 36px handle: tiny
@@ -485,7 +495,8 @@ export default function RunBottomSheet({
           the panel through `expandRequest` (DESIGN_GUIDE
           §14h). The grip still raises it by keyboard. */}
       <motion.div
-        className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
+        data-docked={docked ? "" : undefined}
+        className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px] split:left-1/2 split:!top-0 split:rounded-none split:border-l split:border-white/10 split:pt-[var(--safe-top)] split:pr-[var(--safe-right)]"
         style={{
           top,
           background: `linear-gradient(180deg, ${THEME.surface} 0%, ${THEME.bg} 100%)`,
@@ -493,10 +504,10 @@ export default function RunBottomSheet({
           borderTop: "1px solid rgba(255,255,255,0.07)",
           touchAction: "none",
         }}
-        onPointerDown={onSheetPointerDown}
-        onPointerMove={onSheetPointerMove}
-        onPointerUp={onSheetPointerUp}
-        onPointerCancel={onSheetPointerUp}
+        onPointerDown={docked ? undefined : onSheetPointerDown}
+        onPointerMove={docked ? undefined : onSheetPointerMove}
+        onPointerUp={docked ? undefined : onSheetPointerUp}
+        onPointerCancel={docked ? undefined : onSheetPointerUp}
       >
         {/* Drag handle — the whole sheet is draggable now, but the handle
             stays as the visible affordance + a keyboard target. */}
@@ -504,7 +515,7 @@ export default function RunBottomSheet({
           // The sheet is the run's dark stage in both themes, so its focus
           // ring is the running coral (5:1 on it), not the lifting purple
           // with a page-coloured offset.
-          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running"
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running split:hidden"
           role="button"
           tabIndex={0}
           aria-label="Drag to resize the run panel"

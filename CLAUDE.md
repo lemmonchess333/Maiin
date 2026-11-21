@@ -80,6 +80,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Train's one engine:** `/program` is a layout route (`ProgramEngineRoute`) holding one `useProgram()` for Train and a session's own page (`/program/lift/:day`, `/program/run/:date`, TrainWk1 call 2), read through `useProgramEngine`. `Layout` keys the three alike (`layoutKey`, `src/lib/sessionPages.ts`), so the engine stays mounted between them and a change made on a session's page is the one Train shows
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
+- **Wide screens (iPhone Duo):** the `wide` and `split` Tailwind variants in `src/index.css` (touch screens 640 and 800 px wide) lay Home, the workout and the live run out in two panes on the Duo's inner display; phones are unchanged. `src/lib/wideScreen.ts` holds the same queries for script. Read `docs/ios/iphone-duo.md` and DESIGN_GUIDE §14r first
 
 ## Pages (src/pages/)
 
@@ -294,7 +295,7 @@ its `exercises` stay empty (Circ1 (B)). v1 runs timed intervals only.
 `useFoodAnalysis`, `useMealReminders`
 
 **UI & UX:**
-`useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
+`useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`, `useMediaQuery` (a query kept current through a resize, as a fold is)
 
 **Payments:**
 `useProCheckout`

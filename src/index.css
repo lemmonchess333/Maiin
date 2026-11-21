@@ -17,6 +17,17 @@
    takes in its padding there, so an exercise's four set rows fit its
    first screen under the header's figures (DS4 pass, 8 November 2026). */
 @custom-variant short (@media (max-height: 640px));
+/* The iPhone Duo's inner display (docs/ios/iphone-duo.md): a touch screen
+   at least 640 pt wide. The outer display (466 pt) and an app in half of
+   Split View (about 475) stay phones. Touch, so a desktop browser window
+   keeps the phone layout every other spec measures. */
+@custom-variant wide (@media (min-width: 640px) and (pointer: coarse));
+/* Wide enough for two panes side by side: the inner display open in
+   landscape (951 pt, and still about 870 when the status bar keeps its
+   side). Home's two columns, a workout's list beside its sets, and a run's
+   map beside its figures. Inner portrait (669) keeps one column, stacked,
+   as Apple's split arrangement does when taller than wide. */
+@custom-variant split (@media (min-width: 800px) and (pointer: coarse));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
@@ -525,6 +536,11 @@
   --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* The sides: 0 on every portrait iPhone. The iPhone Duo keeps its
+     status bar and Dynamic Island in a column on one side, on the outer
+     display and the inner one in landscape. */
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   /* Enough room below scroll content that the bottom tab bar never
      hides the final row. Bottom nav height + home-indicator inset +
      breathing room. */
@@ -540,8 +556,32 @@
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 640px) and (pointer: coarse) {
     :root {
-      --safe-top: max(env(safe-area-inset-top, 0px), 44px);
+      /* Not where the status bar is on a side (the iPhone Duo's outer
+         display): any side inset takes the 44 px term below zero, and
+         the top is the top's own inset. */
+      --safe-top: max(
+        env(safe-area-inset-top, 0px),
+        calc(
+          44px -
+            (env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)) *
+            100
+        )
+      );
     }
+  }
+}
+
+/* On the iPhone Duo's inner display the fold runs down the middle, and a
+   two-pane layout puts its gap on it. The side column the status bar
+   keeps in landscape would push the panes off centre, so the wider side's
+   inset goes on both. */
+@media (min-width: 640px) and (pointer: coarse) {
+  :root {
+    --safe-left: max(
+      env(safe-area-inset-left, 0px),
+      env(safe-area-inset-right, 0px)
+    );
+    --safe-right: var(--safe-left);
   }
 }
 

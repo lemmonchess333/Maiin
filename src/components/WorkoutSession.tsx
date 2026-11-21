@@ -172,6 +172,8 @@ import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
 import SetCheck from "@/components/workout/SetCheck";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { SPLIT_QUERY } from "@/lib/wideScreen";
 import NewBestMoment, {
   type NewBest,
 } from "@/components/workout/NewBestMoment";
@@ -964,6 +966,10 @@ export default function WorkoutSession({
   const restSequence = useRef(0);
   const isResting = rest !== null;
   const reduceMotion = useReducedMotion();
+  // Two panes on the iPhone Duo's inner display open in landscape: the
+  // session's exercises listed down one side, the current one's sets on
+  // the other (index.css `split`). Only the list's names need to know.
+  const twoPanes = useMediaQuery(SPLIT_QUERY);
   // D-LIFT-16: the Settings → "Auto-start rest timer" toggle existed but was
   // never read here — the same dead-setting class PR E fixed for
   // defaultRestSeconds. Default ON (unset/legacy profiles keep today's
@@ -2405,7 +2411,15 @@ export default function WorkoutSession({
   const anySetDone = setLogs.some((sets) => sets.some((set) => set.completed));
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
+    /* On a screen with room for two panes (`split`) the same children
+       sit in a grid: the bar and the progress line across the top; the
+       session down the leading half (its exercises, then a new best and
+       the rest as they come); the current exercise's sets and their
+       button down the trailing half, the full height, so a rest or a
+       new best at large text never squeezes the set table out. The gap
+       between the halves is on the fold. Nothing is mounted or unmounted
+       to get there, so a fold mid-set keeps every typed value. */
+    <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb pl-[var(--safe-left)] pr-[var(--safe-right)] split:grid split:grid-cols-2 split:grid-rows-[auto_auto_minmax(0,1fr)_auto_auto_auto]">
       <GuideHint
         key={setHelpRequest}
         requested={setHelpRequest > 0}
@@ -2492,7 +2506,7 @@ export default function WorkoutSession({
           the session as figures (DS4): time, sets and kg lifted, where a
           12 px grey line said them, so the session has a number to look
           at between sets. */}
-      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5 short:pb-1.5">
+      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5 short:pb-1.5 split:col-span-2 split:row-start-1">
         <div className="flex min-h-11 items-center justify-between gap-3">
           {/* The session's title is the screen's heading, so a screen
               reader finds where it is from. A heading by role rather than
@@ -2543,7 +2557,7 @@ export default function WorkoutSession({
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-muted">
+      <div className="h-1 bg-muted split:col-span-2 split:row-start-2">
         <div
           className="h-full bg-primary transition-all duration-300"
           style={{
@@ -2557,11 +2571,11 @@ export default function WorkoutSession({
           call, DESIGN_GUIDE §8) and is one 56 pt row (DS4 rule 18):
           a name under every drawing made it 109 pt, 13% of a 393 × 852
           phone, for words the list's own heading already says. */}
-      <div className="relative border-b border-border/30">
+      <div className="relative border-b border-border/30 split:col-start-1 split:row-start-3 split:min-h-0 split:border-b-0">
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 short:py-1"
+          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 short:py-1 split:h-full split:flex-col split:items-stretch split:gap-1 split:overflow-x-hidden split:overflow-y-auto split:py-3"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
@@ -2594,8 +2608,8 @@ export default function WorkoutSession({
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
                 className={cn(
-                  "flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  active && "pl-0.5 pr-1"
+                  "flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary split:justify-start split:px-1.5 split:py-1",
+                  active && "pl-0.5 pr-1 split:bg-muted/60"
                 )}
               >
                 <span
@@ -2624,10 +2638,15 @@ export default function WorkoutSession({
                 {/* Two lines beside the drawing: "Straight-Arm Pulldown"
                     whole on a phone. A longer name is whole in the list's
                     heading under the strip. */}
-                {active && (
+                {(active || twoPanes) && (
                   <span
                     aria-hidden="true"
-                    className="line-clamp-2 max-w-[9rem] text-left text-xs font-bold leading-tight text-foreground break-words"
+                    className={cn(
+                      "line-clamp-2 max-w-[9rem] text-left text-xs font-bold leading-tight break-words split:max-w-none split:min-w-0 split:flex-1 split:text-sm",
+                      active
+                        ? "text-foreground"
+                        : "font-semibold text-muted-foreground"
+                    )}
                   >
                     {ex.name}
                   </span>
@@ -2644,14 +2663,14 @@ export default function WorkoutSession({
         <div
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-background to-transparent motion-safe:transition-opacity",
+            "pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-background to-transparent motion-safe:transition-opacity split:hidden",
             railAtStart ? "opacity-0" : "opacity-100"
           )}
         />
         <div
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent motion-safe:transition-opacity",
+            "pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent motion-safe:transition-opacity split:hidden",
             railAtEnd ? "opacity-0" : "opacity-100"
           )}
         />
@@ -2667,7 +2686,7 @@ export default function WorkoutSession({
         ref={contentRef}
         data-workout-list
         onScroll={releaseRoom}
-        className="flex-1 overflow-y-auto px-4 pb-[var(--dock-pad,1rem)] scroll-pb-[var(--dock-h,0px)] space-y-4 motion-safe:scroll-smooth short:space-y-3"
+        className="flex-1 overflow-y-auto px-4 pb-[var(--dock-pad,1rem)] scroll-pb-[var(--dock-h,0px)] space-y-4 motion-safe:scroll-smooth short:space-y-3 split:col-start-2 split:row-span-3 split:row-start-3 split:min-h-0 split:border-l split:border-border/30 split:pb-4 split:scroll-pb-0"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
@@ -3366,10 +3385,14 @@ export default function WorkoutSession({
           and taps; and it is held to the list's own box, scrolling inside
           past that, so at large text on a small phone it never climbs
           over the exercise strip (Pol1's declined 1B). */}
+      {/* On the iPhone Duo's inner display open on its side the dock
+          stands under the exercises in their pane, over nothing, so it
+          takes its own room there rather than pulling itself up over the
+          sets (DESIGN_GUIDE §14r). */}
       <div
         ref={setDock}
         data-workout-dock
-        className="pointer-events-none relative z-10 -mt-[var(--dock-h,0px)] flex max-h-[var(--dock-room,100%)] shrink-0 flex-col overflow-y-auto pt-2"
+        className="pointer-events-none relative z-10 -mt-[var(--dock-h,0px)] flex max-h-[var(--dock-room,100%)] shrink-0 flex-col overflow-y-auto pt-2 split:col-start-1 split:row-start-4 split:mt-0 split:max-h-none"
       >
         <NewBestMoment
           moment={newBest}
@@ -3429,7 +3452,7 @@ export default function WorkoutSession({
           list, in the flow: a lone button floating over the set rows
           would be words on words. Starting a rest moves nothing above it. */}
       {!rest && !autoRest && currentSets.some((st) => st.completed) && (
-        <div className="mx-4 mb-3 mt-3 flex justify-center">
+        <div className="mx-4 mb-3 mt-3 flex justify-center split:col-start-1 split:row-start-5">
           <Button
             variant="secondary"
             leftIcon={<Timer className="size-4" aria-hidden="true" />}
@@ -3451,7 +3474,7 @@ export default function WorkoutSession({
       )}
 
       {/* Bottom action bar */}
-      <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2">
+      <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2 split:col-start-2 split:row-start-6">
         {(() => {
           const allSetsComplete = isExerciseDone(currentSets);
           const next = nextIncompleteSet(setLogs, currentExIndex);

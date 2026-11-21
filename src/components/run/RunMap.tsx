@@ -685,7 +685,9 @@ export default function RunMap({
         // On-map control stack (right edge, clear of the top GPS pills and the
         // bottom stats sheet). Glass zoom +/- always; Recenter appears only
         // once follow has been suspended by a hand gesture. Coral = running.
-        <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
+        // On the iPhone Duo's inner display open on its side (`split`)
+        // the map's right edge is the fold, so the stack keeps to its left.
+        <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 split:right-auto split:left-[calc(var(--safe-left)+0.75rem)]">
           <IconButton
             aria-label="Zoom in"
             icon={<Plus />}
