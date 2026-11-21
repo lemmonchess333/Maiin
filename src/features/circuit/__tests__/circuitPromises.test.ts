@@ -24,12 +24,20 @@ function sources(dir: string): string[] {
 const FILES = [
   ...sources("src/features/circuit"),
   ...sources("src/components/circuit"),
-  ...["src/pages/Circuit.tsx"].filter((path) => existsSync(join(root, path))),
+  // The page, Train's way in, the save and the post.
+  ...[
+    "src/pages/Circuit.tsx",
+    "src/components/program/CircuitEntry.tsx",
+    "src/lib/circuitCompletion.ts",
+    "src/lib/circuitPost.ts",
+  ].filter((path) => existsSync(join(root, path))),
 ];
 
 describe("circuit mode's promises (Circ1 (1), (3))", () => {
   it("reads the feature's files", () => {
     expect(FILES).toContain("src/features/circuit/circuitMoves.ts");
+    expect(FILES).toContain("src/components/program/CircuitEntry.tsx");
+    expect(FILES).toContain("src/lib/circuitPost.ts");
   });
 
   it("is free: no file of it reaches for Pro (Circ1 (3))", () => {

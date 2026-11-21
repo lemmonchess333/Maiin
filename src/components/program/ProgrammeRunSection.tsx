@@ -1097,11 +1097,9 @@ export default function ProgrammeRunSection({
       ? ROLLING_GOAL_NAMES[rollingGoal]
       : currentMode === "race_prep"
         ? "Race prep"
-        : currentMode === "structured"
-          ? "Structured"
-          : currentMode === "starter"
-            ? "30-minute goal"
-            : "Freeform";
+        : currentMode === "starter"
+          ? "30-minute goal"
+          : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1409,8 +1407,8 @@ export default function ProgrammeRunSection({
           /settings/training) was REMOVED here. It was fully redundant: the
           tab-aware page header (`programRunHeaderLine` in Program.tsx) now
           carries the same mode + week context ("Race prep · Marathon · Week
-          2/20" / "Structured · N runs/week"), and the RaceCockpitCard below
-          shows days-to-race. Worse, as a row directly above the day-selector it
+          2/20" / "30 minutes without stopping · Stage 3 of 9"), and the
+          RaceCockpitCard below shows days-to-race. Worse, as a row directly above the day-selector it
           forced the Run selector's day circles ~33px lower than the Lift tab's
           (the selector also has a weekday-letter row the Lift one lacks), so
           the stepper visibly jumped when toggling tabs. The way into the

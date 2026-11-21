@@ -663,8 +663,9 @@ export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
 
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
-   *  at each stage (`starterPlan.ts`). */
-  mode: "structured" | "race_prep" | "starter" | "rolling";
+   *  at each stage (`starterPlan.ts`). A stored "structured" plan (retired,
+   *  App1 Q25) is dropped as it is read (`migrateProgramState`). */
+  mode: "race_prep" | "starter" | "rolling";
   /** `rolling` (Run24 (3), deep dive D7): a plan with no race date, on a
    *  four-week cycle that climbs to its goal's horizon and holds there
    *  (`generateRollingPlan`). Its goal, and its week, `currentWeek` from

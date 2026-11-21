@@ -17,6 +17,8 @@ import {
 import type { DistanceUnit } from "./distanceUnits";
 import { isVolumeEligible } from "./runStatsEligibility";
 import { formatDayMonthYear } from "@/utils/formatters";
+import { circuitHistorySummary } from "@/features/circuit/circuitCopy";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 
 export const HISTORY_PAGE_SIZE = 30;
 export type HistorySport = "all" | "lifts" | "runs";
@@ -135,9 +137,14 @@ export function trainingHistorySessions(
       const exercises = workout.exercises.length;
       const minutes = workout.durationMinutes;
       const volume = workoutTonnageKg(workout);
+      // A circuit (Circ1) is a lift whose moves are in `circuit`, with no
+      // exercises: it reads as its minutes, rounds and moves.
+      const circuit = workoutCircuit(workout);
       alsoMatches.set(
         `lift:${workout.id}`,
-        workout.exercises.map((exercise) => exercise.exerciseName ?? "")
+        circuit
+          ? circuit.moves.map((move) => move.name)
+          : workout.exercises.map((exercise) => exercise.exerciseName ?? "")
       );
       sessions.push({
         key: `lift:${workout.id}`,
@@ -146,17 +153,19 @@ export function trainingHistorySessions(
         day: workout.date,
         savedAtMs: workout.createdAt?.toMillis?.() ?? 0,
         title: workoutTitle(workout),
-        summary: [
-          ...(Number.isFinite(minutes) && minutes > 0
-            ? [`${Math.max(1, Math.round(minutes))} min`]
-            : []),
-          `${exercises} ${exercises === 1 ? "exercise" : "exercises"}`,
-          ...(volume > 0
-            ? [
-                `${Math.round(liftVolumeIn(volume, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`,
-              ]
-            : []),
-        ],
+        summary: circuit
+          ? circuitHistorySummary(circuit)
+          : [
+              ...(Number.isFinite(minutes) && minutes > 0
+                ? [`${Math.max(1, Math.round(minutes))} min`]
+                : []),
+              `${exercises} ${exercises === 1 ? "exercise" : "exercises"}`,
+              ...(volume > 0
+                ? [
+                    `${Math.round(liftVolumeIn(volume, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`,
+                  ]
+                : []),
+            ],
         href: `/workout/${encodeURIComponent(workout.id)}`,
         notCounted: false,
       });

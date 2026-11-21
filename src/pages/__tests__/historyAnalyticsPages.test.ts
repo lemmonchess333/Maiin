@@ -11,7 +11,7 @@ import { dirname, resolve } from "node:path";
  * There was a fifth page, Performance, behind the overview's Performance
  * card. Trim1 call 5 (11 November 2026) made that card the one place the
  * score is shown, and what the page held opens under it in place: five
- * views, not six.
+ * views, not six. App1 Q10 put the score itself among those details.
  *
  * Pinned at the source, as the other History tests are: the page mounts
  * charts, maps and several Firestore hooks, and a render test would pin
@@ -57,7 +57,6 @@ describe("Analytics — each discipline on its own page", () => {
 
   it.each([
     "<PerformanceSection",
-    "<TrainingLoadCard",
     "<PeriodSummaryCard",
     "<AnalyticsTrends",
     "<AnalyticsMuscles",
@@ -67,12 +66,9 @@ describe("Analytics — each discipline on its own page", () => {
     expect(pageOf(marker)).toBe("overview");
   });
 
-  it.each(["<PerformanceSection", "<TrainingLoadCard"])(
-    "%s is mounted once",
-    (marker) => {
-      expect(history.split(marker).length - 1).toBe(1);
-    }
-  );
+  it("mounts <PerformanceSection once", () => {
+    expect(history.split("<PerformanceSection").length - 1).toBe(1);
+  });
 
   it("has no Performance page: four pages and the overview", () => {
     const views = history.slice(
@@ -89,20 +85,17 @@ describe("Analytics — each discipline on its own page", () => {
     expect(history).not.toContain('setView("performance")');
   });
 
-  it("draws the training load inside the score's details, read only while they are open", () => {
-    const section = history.slice(
-      history.indexOf("<PerformanceSection"),
-      history.indexOf("</PerformanceSection>")
-    );
-    expect(section).toContain("<TrainingLoadCard");
-    expect(section).toContain("detailsOpen={scoreOpen}");
-    const hook = history.slice(
-      history.indexOf("useTrainingLoadSeries(rangeDays"),
-      history.indexOf("});", history.indexOf("useTrainingLoadSeries(rangeDays"))
-    );
-    expect(hook).toContain(
-      'enabled: filter === "analytics" && view === "overview" && scoreOpen'
-    );
+  it("keeps one load model: no minutes-based load curve under the score (App1 Q16)", () => {
+    /* Score details drew a second chart of effort-weighted minutes, with
+       its own fitness, fatigue and form and two warnings of its own,
+       beside the score's load against the usual week. The page hands the
+       section nothing to draw inside it now, and reads no session series
+       for one. */
+    const at = history.indexOf("<PerformanceSection");
+    const mount = history.slice(at, history.indexOf("/>", at));
+    expect(mount).toContain("detailsOpen={scoreOpen}");
+    expect(history).not.toContain("</PerformanceSection>");
+    expect(history).not.toMatch(/TrainingLoad|useTrainingLoadSeries/);
   });
 
   it("gives every page but the overview a way back", () => {

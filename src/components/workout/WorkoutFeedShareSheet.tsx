@@ -13,6 +13,7 @@
  * made here says the same as one made at the finish, with the exercise
  * rows the feed card draws and "Save as routine" copies. It built its own
  * before, with no summary on its rows, and the card that drew it broke.
+ * A circuit (Circ1) is posted by `circuitPost`, as its finish posts it.
  */
 import { useState } from "react";
 import { Users, Globe } from "lucide-react";
@@ -31,6 +32,8 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { Workout } from "@/hooks/useWorkouts";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
+import { circuitPost, circuitPostPreview } from "@/lib/circuitPost";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
@@ -75,7 +78,11 @@ export default function WorkoutFeedShareSheet({
     exercises: workout.exercises ?? [],
     durationMinutes: workout.durationMinutes ?? 0,
   };
-  const preview = liftPostPreview(lift, liftUnit);
+  const circuit = workoutCircuit(workout);
+  const forCircuit = circuit ? { title, circuit } : null;
+  const preview = forCircuit
+    ? circuitPostPreview(forCircuit)
+    : liftPostPreview(lift, liftUnit);
 
   const share = async (visibility: "followers" | "public") => {
     // Held while the email is unverified or the account is restricted —
@@ -88,16 +95,16 @@ export default function WorkoutFeedShareSheet({
     haptic("light");
     setPosting(true);
     try {
+      const author = {
+        uid,
+        displayName: profile?.displayName,
+        photoURL: profile?.photoURL,
+      };
+      const decision = { visibility, caption };
       const activityId = await postActivity(
-        liftPost(
-          {
-            uid,
-            displayName: profile?.displayName,
-            photoURL: profile?.photoURL,
-          },
-          lift,
-          { visibility, caption }
-        )
+        forCircuit
+          ? circuitPost(author, forCircuit, decision)
+          : liftPost(author, lift, decision)
       );
 
       // Best-effort dedupe marker. If this write fails the post still

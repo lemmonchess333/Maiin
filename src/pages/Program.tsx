@@ -43,6 +43,9 @@ import LiftSessionOverlays from "@/components/program/LiftSessionOverlays";
 const EmptyWorkoutEntry = lazyRetry(
   () => import("@/components/program/EmptyWorkoutEntry")
 );
+const CircuitEntry = lazyRetry(
+  () => import("@/components/program/CircuitEntry")
+);
 const SavedRoutinesSection = lazyRetry(
   () => import("@/components/program/SavedRoutinesSection")
 );
@@ -349,16 +352,21 @@ function ProgramInner() {
   }`;
   const deloadNotice = useDismissOnce(deloadDismissKey(noticeWeekKey));
 
-  // Auto-select on week change (not on individual completion). Skips the reset
-  // on the FIRST run when the URL pinned a day (back-navigation restore) — only
-  // a fresh open or a genuine week change snaps back to today.
+  // Auto-select on a new week or a new day (not on individual completion).
+  // Skips the reset on the FIRST run when the URL pinned a day
+  // (back-navigation restore) — only a fresh open, a new week or a new day
+  // snaps back to the session up next. A session finished stays in view for
+  // the rest of its day (Done comes back to it); the next day, with Train
+  // still open (an app brought back in the morning, the tab bar's Train
+  // being this page already), it lands on the next session as opening Train
+  // would (TrainWk1 step 6). A past week being looked at stays put.
   const prevWeekKeyRef = useRef("");
   useEffect(() => {
     if (!programState) return;
     const weekKey =
       viewingHistoryIndex !== null
         ? `h${viewingHistoryIndex}`
-        : `w${programState.weekNumber}`;
+        : `w${programState.weekNumber}|${todayKey}`;
     if (prevWeekKeyRef.current !== weekKey) {
       const isFirstRun = prevWeekKeyRef.current === "";
       prevWeekKeyRef.current = weekKey;
@@ -368,7 +376,14 @@ function ProgramInner() {
       // Reset the selection on week navigation.
       selectDay(target);
     }
-  }, [programState, viewingHistoryIndex, todayIndex, urlDay, selectDay]);
+  }, [
+    programState,
+    viewingHistoryIndex,
+    todayIndex,
+    todayKey,
+    urlDay,
+    selectDay,
+  ]);
 
   // Scroll reset on day change
   useEffect(() => {
@@ -540,16 +555,15 @@ function ProgramInner() {
 
   // Run-tab header line — so the subtitle stops being lift-led when the
   // user is on the Run tab. Race prep leads with distance + week-of-M;
-  // structured shows weekly run frequency; freeform is the calm default.
+  // freeform is the calm default.
   // (Run9 locked model: only freeform + race-goal overlay exist.)
   //
   // The GOAL now comes from the resolver. Taking it from the runPlan mirror
   // while the mode came from the profile is what made this render
   // "Race prep · Set your race goal" at users who had just set one, for as
   // long as regeneration took. The mode itself stays on the profile — that
-  // half was already canonical, and narrowing it to the resolver's RunMode
-  // would drop legacy `structured` profiles to freeform. The derivation
-  // moved to src/lib/runHeaderLine.ts so the case could be pinned by a test.
+  // half was already canonical. The derivation moved to
+  // src/lib/runHeaderLine.ts so the case could be pinned by a test.
   const resolvedRunPlan = resolveRunPlan(profile, programState, todayKey);
   /**
    * The one lighter-week decision (whole-app grill Q11): the engine's
@@ -602,7 +616,6 @@ function ProgramInner() {
       localWeekKey(parseLocalDate(todayKey))
         ? programState.runPlan.leadInWeek
         : null,
-    runsTarget,
     starterStage:
       programState?.runPlan?.mode === "starter"
         ? programState.runPlan.stage
@@ -874,7 +887,7 @@ function ProgramInner() {
       )}
 
       {/* ── RUN tab — ProgrammeRunSection (PR-4). The section owns
-            every state (freeform hero / structured next-run /
+            every state (freeform hero / starter next-run /
             race-prep progress / setup CTA / zero-runs CTA); no
             parallel Program.tsx fallback needed. A run's ⋯ opens the
             run's own page (`/program/run/:date`). */}
@@ -1031,10 +1044,12 @@ function ProgramInner() {
           away from the fields that fix it. Expanded it is a plan-quality
           readout, and the lift editor is where the days it rates are
           edited. */}
-      {/* An empty workout (Mob1 call 1): a lift with no plan day. */}
+      {/* An empty workout (Mob1 call 1): a lift with no plan day; a
+          circuit (Circ1 (8)) beside it. */}
       {activeTab === "lift" && (
         <Suspense fallback={null}>
           <EmptyWorkoutEntry />
+          <CircuitEntry />
           <SavedRoutinesSection />
         </Suspense>
       )}

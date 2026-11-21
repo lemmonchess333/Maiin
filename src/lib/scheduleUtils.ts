@@ -71,9 +71,10 @@ export const SCHEDULE_TYPE_META: Record<
 /**
  * The order the week's days are filled in: Mon, Wed, Fri, Tue, Thu, Sat,
  * Sun. Both days take the highest-priority slots (most-used training days)
- * so the user's hardest sessions land early in the week.
+ * so the user's hardest sessions land early in the week. A sport added
+ * after setup breaks its ties in the same order (`layoutWithSport`).
  */
-const SLOT_ORDER = [1, 3, 5, 2, 4, 6, 0];
+export const SLOT_ORDER: readonly number[] = [1, 3, 5, 2, 4, 6, 0];
 
 /**
  * Generate a sensible weekly schedule given lift + run day counts.
@@ -194,7 +195,7 @@ export function generateSchedule(
  *  Mon/Wed/Fri). Lift days follow, then run days. */
 function assembleSlots(
   counts: { bothCount: number; liftOnlyCount: number; runOnlyCount: number },
-  slotOrder: number[]
+  slotOrder: readonly number[]
 ): ScheduleDay[] {
   const schedule: ScheduleDay[] = Array.from({ length: 7 }, (_, i) => ({
     day: i,

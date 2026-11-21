@@ -19,7 +19,7 @@
  *     slightly different "today".
  *
  * This module reconciles the two stores ONCE (canonical raceGoal = profile ??
- * mirror, `runMode` materialized from it — mirroring run9Migration's rule and
+ * mirror, `runMode` materialized from it — the Run9 migration's rule, and
  * runModeResolution's write side) and owns the SINGLE definition of elapsed and
  * the recovery window. It is pure: callers pass the local `todayKey`
  * (YYYY-MM-DD), so output is deterministic and unit-testable — the interface is
@@ -76,8 +76,8 @@ export interface ResolvedRunPlan {
 
 type ProfileRunFields = Pick<UserProfile, "runMode" | "raceGoal">;
 
-/** The canonical race goal — profile wins, mirror backfills. Mirrors
- *  run9Migration's `canonicalRaceGoal`, applied at read time. */
+/** The canonical race goal — profile wins, mirror backfills: the Run9
+ *  migration's rule, applied at read time. */
 function reconcileRaceGoal(
   profile: ProfileRunFields | null | undefined,
   programState: ProgramState | null | undefined

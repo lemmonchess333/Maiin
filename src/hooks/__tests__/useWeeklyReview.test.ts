@@ -41,6 +41,7 @@ import {
   failNextFirestore,
 } from "@/test/firestoreHarness";
 import { savedRunDoc } from "@/test/sessionFixtures";
+import { verdictFor } from "@/lib/weeklyReviewViewModel";
 
 /** Wed 15 Jul 2026 → current week Mon 13th, reviewed week Mon 6th–Sun 12th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
@@ -122,7 +123,16 @@ describe("useWeeklyReview assembly", () => {
     const review = result.current.review!;
     expect(review.weekKey).toBe(WEEK);
     expect(review.range).toEqual({ start: WEEK, end: "2026-07-12" });
-    expect(review.headline).toMatchObject({ pi: 68, delta: 8 });
+    // 68 against 60: a change of 8 in the moderate band picks the verdict;
+    // the review carries no number (App1 Q12).
+    expect(review.headline).toEqual({
+      verdict: verdictFor({
+        delta: 8,
+        loadBand: "moderate",
+        deloadRecommended: false,
+      }),
+      deload: false,
+    });
     expect(review.training?.lifts).toMatchObject({ done: 2, planned: 3 });
     expect(review.training?.runs).toMatchObject({ count: 2, km: 15 });
     expect(review.nutrition).toMatchObject({
@@ -444,7 +454,11 @@ describe("performance docs are keyed by COMPUTE date, and read by range", () => 
     const { result } = renderHook(() => useWeeklyReview());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.review!.headline).toMatchObject({ pi: 68, delta: 8 });
+    // 68 against 60 (a change of 8) picks "Momentum’s building."; the
+    // mid-week 64 (4) would read "Steady week." and the later 75 is high.
+    expect(result.current.review!.headline!.verdict).toBe(
+      verdictFor({ delta: 8, loadBand: "moderate", deloadRecommended: false })
+    );
   });
 
   it("with no compute after the week ended, claims no PI rather than last week's", async () => {
@@ -469,6 +483,8 @@ describe("performance docs are keyed by COMPUTE date, and read by range", () => 
     const { result } = renderHook(() => useWeeklyReview());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.review!.headline).toMatchObject({ pi: 66, delta: 6 });
+    expect(result.current.review!.headline!.verdict).toBe(
+      verdictFor({ delta: 6, loadBand: "moderate", deloadRecommended: false })
+    );
   });
 });
