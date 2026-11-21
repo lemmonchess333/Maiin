@@ -47,6 +47,7 @@ src/
 │   └── social/         # Social feed, activity cards
 ├── features/           # Feature modules (see "Feature Modules" below)
 │   ├── challenges/     # Challenge system
+│   ├── circuit/        # Circuit mode: moves, built-in circuits, the ladder (Circ1)
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
@@ -97,6 +98,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan   |
 | `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)              |
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
+| `Circuit.tsx`                          | `/circuit`                         | Circuit mode (Circ1): pick a built-in circuit, run it on the clock, save it     |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
 | `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
 | `WeeklyReview.tsx`                     | `/review`                          | Last week’s recap, ending where the week ahead is agreed (App1 Q36)             |
@@ -173,6 +175,7 @@ Support & legal.
 | `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
+| `circuitCompletion.ts`  | Finishing a circuit: its workout, saved as a lift is (Circ1)   |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
 | `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
@@ -251,6 +254,22 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
 - `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
 
+### circuit/
+
+Circuit mode (Circ1): a way of lifting measured in work per minute, saved
+as a workout with `format: "circuit"`, never a third sport (ADR-0002's two
+kinds stand). Pure logic, no Firestore: `circuitTypes.ts` (the vocabulary),
+`circuitMoves.ts` (the move pool: released art ∩ kit tier ∩ injuries, each
+high or low impact), `builtInCircuits.ts` (six per kit tier: 10, 20 and 30
+minutes, standard 40/20 and low impact 30/30, named from their own
+seconds), `circuitSteps.ts` (the timer's steps as `useSessionPlayer`
+segments, and what of them was really run), `circuitDose.ts` (the
+Easy / Right / Hard ladder: more work, then harder moves, never a longer
+circuit), `circuitRules.ts` (the 7-minute rule, the Compendium burn) and
+`savedCircuit.ts` (the stored shape and its checked reader,
+`workoutCircuit`). A circuit's moves live in `workout.circuit.moves` and
+its `exercises` stay empty (Circ1 (B)). v1 runs timed intervals only.
+
 ## Custom Hooks (src/hooks/)
 
 **Data & State:**
@@ -304,6 +323,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 ## Data Model
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/hiddenPosts` (the posts a person hid from their feed, owner-only, App1 Q38), `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
+- **A circuit is a workout, saved as a lift is** (Circ1). `/circuit` saves to `users/{uid}/workouts` through `completeCircuit` (`src/lib/circuitCompletion.ts`, on the lift's own `saveFinishedWorkout`): `format: "circuit"`, the circuit as run under `circuit` (read only through `workoutCircuit`), `exercises: []`, `totalVolume: 0`, `source: "free"` and no programme completion, so it moves no plan; calories from the 2024 Compendium's circuit METs. Nothing is saved under 7 minutes of the session clock. Every reader that counts a workout counts it (the week, the streak, leagues, challenges); the performance index counts it for adherence only (`circuitSessions`, never lift load), on both copies, pinned to the running server by `circuitFormat.cross.test.ts`.
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
 - **Every badge is awarded by the server** (App1 Q33). The rules are `functions/lib/badgeRules.js` and the award is `functions/lib/badgeAwards.js`, one transaction per award that names the session that earned it (`earnedBy`), run by the triggers that see the facts: `onWorkoutCreated` and `onRunCreated` (the session badges, the hybrid windows, early_bird's day), `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten` (the food and water badges), `onStreakWritten` (the streak badges, from `streaks/data`'s certificate) and `onProgramStateWritten` (programme_complete). Earned badges stay where they always were, `users/{uid}/streaks/data.badges` and the public profile's `badgeSummary`, and the rules refuse a client change to either, or to `streaks/data.earlyLogDays`. The app's rings are pinned to the server's rules by `badgeRules.cross.test.ts`. A badge with `earnedBy` and earned within 14 days is revealed once per device (`pendingBadgeReveals.ts`), from Home's new-badge row, never over Home by itself; one earned before the server awarded them has no `earnedBy` and stays as it was.

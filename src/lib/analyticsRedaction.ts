@@ -113,6 +113,7 @@ export function sanitizeAnalyticsParams(
 const ROUTE_WORDS = new Set([
   "activity",
   "admin",
+  "circuit",
   "moderation",
   "dev",
   "badge-seal",
