@@ -147,10 +147,7 @@ describe("which meals go", () => {
         "users/u1/meals/number": ago(40 * DAY),
       },
       beforeTransaction: () => {
-        db.data.set(
-          "users/u1/meals/text",
-          meal("2026-09-01T00:00:00Z")
-        );
+        db.data.set("users/u1/meals/text", meal("2026-09-01T00:00:00Z"));
         db.data.set("users/u1/meals/number", meal(NOW - 40 * DAY));
       },
     });
@@ -178,7 +175,11 @@ describe("an account being deleted (F5c pin (b))", () => {
       "users/review/meals/m1": meal(ago(40 * DAY)),
       "accountDeletionRequests/review": { status: "operator_review" },
       "users/gone/meals/m1": meal(ago(40 * DAY)),
-      "deletedAccounts/gone": { expiresAt: Timestamp.fromMillis(NOW + DAY) },
+      // The tombstone's expiry is read against the real clock
+      // (isTombstoneLive), so it is set from the real clock too.
+      "deletedAccounts/gone": {
+        expiresAt: Timestamp.fromMillis(Date.now() + DAY),
+      },
       "users/cancelled/meals/m1": meal(ago(40 * DAY)),
       "accountDeletionRequests/cancelled": { status: "cancelled" },
       "users/ana/meals/m1": meal(ago(40 * DAY)),
