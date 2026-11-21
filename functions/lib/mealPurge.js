@@ -47,7 +47,7 @@
  *     (`restoreMealEntries`), so on the deleted document it makes a stub
  *     holding only that and `_offlineCreatedAt`. The stub has no `date` or
  *     `createdAt`, so no diary, total or export reads it. This is the
- *     same-instant edge the purge's pull request (#3467) discloses: a
+ *     known same-instant edge: a
  *     restore tapped as the job runs, or one queued offline across the 30
  *     days. Delete permanently on one phone with a restore queued on
  *     another makes the same stub.
