@@ -7279,6 +7279,31 @@ no phone has run it.
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
 
+## Analytics carries no food name and no real address (2026-11-21)
+
+A saved food's id is its name (`chicken_and_rice`), and five pantry events
+sent it to Google Analytics as `favouriteId`. They now send counts only
+(`useCount`, `totalBefore`, `source`, `fromPantry`), and the redaction
+denylist strips any key naming a favourite, a name, a title or a search.
+Unit-tested at `emit` (`Food.pantryAnalytics.test.tsx`); only DebugView
+shows what reaches Google. The app's own events carry a redacted page
+address, but two of gtag's automatic events read the browser's, and only
+the GA4 console turns them off.
+
+- [ ] **After Deploy production, the pantry events in GA4 DebugView.** On a
+      debug device, log a typed meal twice, tap it under Log again, pick it
+      from the typeahead and long-press it away. Passing: each
+      `food_pantry_*` event arrives with no parameter holding the food's
+      name or `favouriteId`. If GA4 has a custom dimension registered for
+      `favouriteId`, archive it.
+- [ ] **Enhanced Measurement is off where it reads the address bar.** In
+      GA4 Admin → Data streams → the web stream → Enhanced measurement,
+      open the settings. Passing: "Page changes based on browser history
+      events" (under Page views) and "Site search" are off. gtag sends
+      those `page_view` and `view_search_results` events itself, from the
+      real address (another person's uid on `/user/:uid`, a typed search in
+      `?q=`), past the redacted page fields `analyticsProvider.ts` sets.
+
 ## Second-review follow-ups: Space photo cap, public post noindex (2026-11-21)
 
 storage.rules now refuses a `space-photos` upload of 7 MB or more (it took

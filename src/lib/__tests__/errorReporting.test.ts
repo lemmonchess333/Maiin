@@ -1,5 +1,5 @@
 // @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   captureError,
   __getRecentErrors,
@@ -94,6 +94,40 @@ describe("errorReporting", () => {
     expect(__getPendingPreAuthCount()).toBe(1);
     setErrorReportingUid(null);
     expect(__getPendingPreAuthCount()).toBe(0);
+  });
+});
+
+/* The policy says error reports carry no workout details, and a page's
+   address can: a custom exercise's name on /history/exercise/:name,
+   another person's uid on /user/:uid, a typed search in ?q=. */
+describe("the page address a report stores", () => {
+  beforeEach(() => __clearErrors());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    window.history.replaceState(null, "", import.meta.env.BASE_URL);
+  });
+
+  it("is the route with its names and ids replaced, and no query or fragment", () => {
+    window.history.pushState(
+      null,
+      "",
+      `${import.meta.env.BASE_URL}history/exercise/My%20Secret%20Lift?q=secret#notes`
+    );
+    captureError(new Error("boom"), "component");
+    const [report] = __getRecentErrors();
+    expect(report.url).toBe(
+      `${window.location.origin}${import.meta.env.BASE_URL}history/exercise/:id`
+    );
+    expect(JSON.stringify(report)).not.toMatch(/secret/i);
+  });
+
+  it("keeps the base path the app is served under", () => {
+    vi.stubEnv("BASE_URL", "/Maiin/");
+    window.history.pushState(null, "", "/Maiin/user/their-uid-123");
+    captureError(new Error("boom"));
+    expect(__getRecentErrors()[0].url).toBe(
+      `${window.location.origin}/Maiin/user/:id`
+    );
   });
 });
 
