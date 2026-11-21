@@ -56,7 +56,8 @@ import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { summariseWeek } from "@/lib/weekSummary";
-import { trainingWeek, weekDays } from "@/lib/trainingWeek";
+import { weekDays } from "@/lib/trainingWeek";
+import { layOutWeek, manageLiftOn } from "@/lib/layOutWeek";
 import { todaySession } from "@/lib/todaySession";
 import { weekStripDays } from "@/lib/weekStripDays";
 import { useHomeWidgetSnapshot } from "@/hooks/useHomeWidgetSnapshot";
@@ -366,20 +367,30 @@ export default function Home() {
     [profile, programState, savedRuns]
   );
 
-  // What was done, by date: the strip fills a day for a logged lift
-  // session or run, and the week's counts read the same records.
-  const loggedLiftDates = useMemo(
-    () => new Set(workouts.map((w) => w.date)),
-    [workouts]
-  );
-  const extraRunDates = useMemo(
+  // The week laid out (TrainWk1 step 2): each session on a day, lifts that
+  // slide to the next lift day when theirs passes. Today's card, the strip,
+  // the day peek, its Manage sheet, "tomorrow" and the week's counts all
+  // read this one answer, so no two of them name two different lifts.
+  const week = useMemo(
     () =>
-      new Set(
-        [...unclaimedByDate.entries()]
-          .filter(([, runs]) => runs.length > 0)
-          .map(([date]) => date)
-      ),
-    [unclaimedByDate]
+      layOutWeek({
+        weekKey: currentWeekKey,
+        today: todayKey,
+        profile,
+        programState,
+        workouts,
+        runs: savedRuns,
+        claimMap,
+      }),
+    [
+      currentWeekKey,
+      todayKey,
+      profile,
+      programState,
+      workouts,
+      savedRuns,
+      claimMap,
+    ]
   );
 
   // The day the account began: the days before it plan nothing, on the
@@ -407,14 +418,7 @@ export default function Home() {
           )
         : null;
       return summariseWeek({
-        training: trainingWeek({
-          weekKey: currentWeekKey,
-          profile,
-          programState,
-          workouts,
-          runs: savedRuns,
-          now: today,
-        }),
+        training: week.count,
         caloriesByDate,
         startKey,
       });
@@ -422,11 +426,7 @@ export default function Home() {
     [
       startKey,
       currentWeekKey,
-      today,
-      profile,
-      programState,
-      workouts,
-      savedRuns,
+      week.count,
       getDailyTotals,
       mealsLoading,
       mealsError,
@@ -579,6 +579,7 @@ export default function Home() {
         programState,
         claimMap,
         workouts,
+        week,
         validWorkoutCount: workouts.filter(isFirstWeekWorkoutEligible).length,
         createdAtMs: activationStartMs,
         nowMs,
@@ -596,6 +597,7 @@ export default function Home() {
       programState,
       claimMap,
       workouts,
+      week,
       activationStartMs,
       nowMs,
       runStatsLoading,
@@ -1069,17 +1071,11 @@ export default function Home() {
     },
     [peekDate, getWorkoutsForDate]
   );
-  // The sessions logged on the day being managed: one done today keeps
-  // today's lift on the sheet, done, as it stays on the today card.
-  const manageSessions = useMemo(
-    function () {
-      return new Set(
-        (manageDate ? getWorkoutsForDate(manageDate) : []).flatMap((w) =>
-          w.id ? [w.id] : []
-        )
-      );
-    },
-    [manageDate, getWorkoutsForDate]
+  // The day being managed, as the week lays it out: its Manage sheet acts
+  // on the lift the day card names.
+  const manageLift = useMemo(
+    () => manageLiftOn(week.days.find((d) => d.date === manageDate) ?? null),
+    [week, manageDate]
   );
   const peekT = useMemo(
     function () {
@@ -1101,26 +1097,10 @@ export default function Home() {
     !(racePlanNeedsBuild && programMaintenanceFailed) &&
     (!firstWeekLifts || (!workoutsLoading && !workoutsFailed)) &&
     !savedRunsLoading;
+  // The week's segments, as the strip draws them, from the same layout.
   const widgetStrip = useMemo(
-    () =>
-      weekStripDays({
-        todayKey,
-        profile,
-        programState,
-        claimMap,
-        loggedLiftDates,
-        extraRunDates,
-        startKey,
-      }),
-    [
-      todayKey,
-      profile,
-      programState,
-      claimMap,
-      loggedLiftDates,
-      extraRunDates,
-      startKey,
-    ]
+    () => weekStripDays(week, todayKey),
+    [week, todayKey]
   );
   const widgetUid = user?.uid ?? null;
   // By value: the week's count and the drinks list are new objects on every
@@ -1483,14 +1463,9 @@ export default function Home() {
                   <WeekStrip
                     todayKey={todayKey}
                     dayMap={weeklyDayMap}
-                    profile={profile}
-                    programState={programState}
-                    claimMap={claimMap}
+                    week={week}
                     selectedDate={peekDate}
                     onDayTap={handleDayTap}
-                    loggedLiftDates={loggedLiftDates}
-                    extraRunDates={extraRunDates}
-                    startKey={startKey}
                   />
                   {/* What the count above is made of, and the way into the
                   Weekly Review while one waits (Trim1 call 1). Both were
@@ -1510,6 +1485,7 @@ export default function Home() {
                     <DayPeekCard
                       dateKey={peekDate}
                       todayKey={todayKey}
+                      day={week.days.find((d) => d.date === peekDate) ?? null}
                       profile={profile}
                       programState={programState}
                       claimMap={claimMap}
@@ -1758,7 +1734,7 @@ export default function Home() {
           restoreRunDay={restoreRunDay}
           restoreWorkoutDay={restoreWorkoutDay}
           moveRunDay={moveRunDay}
-          sessionsOnDate={manageSessions}
+          lift={manageLift}
           rollingContexts={rollingContexts}
         />
       </Suspense>

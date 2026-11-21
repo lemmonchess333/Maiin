@@ -259,6 +259,36 @@ const fixtures: Fixture[] = [
     bl: makeBl(),
     profile: { goal: "recomp", targetCalories: 2600, targetProtein: 170 },
   },
+  {
+    // Circ1 (6): a circuit counts as a session done and for nothing else.
+    // Two lifts and two circuits against a target of four score full
+    // adherence on both copies; a copy that dropped the circuits would
+    // score half.
+    name: "circuits — counted for adherence only",
+    agg: makeAgg({ liftSessions: 2, runSessions: 0, circuitSessions: 2 }),
+    bl: makeBl(),
+    profile: {
+      goal: "recomp",
+      weeklyWorkoutsTarget: 4,
+      targetCalories: 2500,
+      targetProtein: 170,
+    },
+  },
+  {
+    name: "circuits only — no lift load, the sessions still count",
+    agg: makeAgg({
+      liftTonnage: 0,
+      liftHardSets: 0,
+      liftSessions: 0,
+      runKm: 0,
+      runLongKm: 0,
+      runQualityCount: 0,
+      runSessions: 0,
+      circuitSessions: 3,
+    }),
+    bl: makeBl(),
+    profile: { goal: "cut", weeklyWorkoutsTarget: 3 },
+  },
 ];
 
 describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", () => {
@@ -274,6 +304,20 @@ describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", (
       expect(jsOut).toEqual(tsOut);
     });
   }
+
+  it("a circuit raises adherence on both copies, and nothing else (Circ1 (6))", () => {
+    const profile = { goal: "recomp", weeklyWorkoutsTarget: 4 } as const;
+    const without = makeAgg({ liftSessions: 2, runSessions: 0 });
+    const withCircuits = { ...without, circuitSessions: 2 };
+    for (const score of [scoreTs, scoreJs]) {
+      const a = score(without, makeBl(), profile);
+      const b = score(withCircuits, makeBl(), profile);
+      expect(b.adherenceScore).toBeGreaterThan(a.adherenceScore);
+      expect(b.liftLoadScore).toBe(a.liftLoadScore);
+      expect(b.runLoadScore).toBe(a.runLoadScore);
+      expect(b.recoveryScore).toBe(a.recoveryScore);
+    }
+  });
 
   // The whole point of the fix: with a cut goal the scored PI must differ from
   // a goal-blind (undefined) scoring of the same week. If this ever collapses

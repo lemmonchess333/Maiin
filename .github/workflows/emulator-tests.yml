@@ -395,18 +395,6 @@ jobs:
           firebase emulators:exec --only auth,firestore --project demo-tropos \
             'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run seed:season && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
-      # Each frame's hash, in the log, so two runs can be compared without
-      # the frames: a layout change meant to leave the phone untouched
-      # (the iPhone Duo's wide layouts) shows its frames byte-identical,
-      # and any that moved by name. Maps, sheets and the wall-clock badge
-      # vary run to run on their own (docs/agents/capture-rig.md).
-      - name: List the frames' hashes
-        if: always()
-        run: |
-          if compgen -G "screenshots/*.png" > /dev/null; then
-            sha256sum screenshots/*.png | sed 's|  screenshots/|  |' | sort -k2
-          fi
-
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -517,8 +505,9 @@ jobs:
   # signed-out specs, and the ones that catch a broken build or route.
   # Until now they ran in no CI job. Their own job, so one going red is
   # seen without turning emulator-tests red while they bed in. Not a
-  # required check (only `unit` is: requiredCheckComposition.test.ts),
-  # and not to be made one until they have been green for two weeks.
+  # required check (the required ones are `unit`, by the repository
+  # ruleset, and `emulator-tests`, by main's branch protection), and not
+  # to be made one until they have been green for two weeks.
   # The other six signed-out specs run nightly (nightly-e2e.yml).
   signed-out-specs:
     runs-on: ubuntu-latest

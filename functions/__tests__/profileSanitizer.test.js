@@ -66,8 +66,7 @@ describe("raceGoal — the ultras and the climb (Run26 (2))", () => {
         sanitizeProfileData({ raceGoal: { ...goal, climbM } }).raceGoal
       ).toEqual(goal);
     expect(
-      sanitizeProfileData({ raceGoal: { ...goal, distance: "100mi" } })
-        .raceGoal
+      sanitizeProfileData({ raceGoal: { ...goal, distance: "100mi" } }).raceGoal
     ).toEqual({ targetDate: goal.targetDate });
   });
 });
@@ -114,6 +113,18 @@ describe("barbellAtHome (Lift4 (11))", () => {
       barbellAtHome: false,
     });
     expect(sanitizeProfileData({ barbellAtHome: "yes" })).toEqual({});
+  });
+});
+
+describe("pullUpBar (Lift4 (11))", () => {
+  it("keeps a yes or a no, and drops anything else", () => {
+    expect(sanitizeProfileData({ pullUpBar: true })).toEqual({
+      pullUpBar: true,
+    });
+    expect(sanitizeProfileData({ pullUpBar: false })).toEqual({
+      pullUpBar: false,
+    });
+    expect(sanitizeProfileData({ pullUpBar: "yes" })).toEqual({});
   });
 });
 

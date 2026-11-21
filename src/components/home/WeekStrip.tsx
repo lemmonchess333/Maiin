@@ -1,68 +1,76 @@
 import { useMemo } from "react";
 import { format } from "date-fns";
-import type { UserProfile } from "@/lib/auth";
-import type { ProgramState } from "@/features/program/programTypes";
-import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { WeekLayout } from "@/lib/layOutWeek";
 import { cn } from "@/lib/utils";
-import { beforeStart } from "@/lib/startDay";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import {
   weekStripDays,
-  type StripDay,
   type WeekDayState,
+  type WeekStripDay,
 } from "@/lib/weekStripDays";
-import { formatDayMonthLong, formatWeekdayDayMonth } from "@/utils/formatters";
+import {
+  formatDayMonthLong,
+  formatWeekday,
+  formatWeekdayDayMonth,
+} from "@/utils/formatters";
 
 /* What each day shows, and why the strip is the calendar week holding
-   today, are `weekStripDays`'s (weekStripDays.ts): the Home Screen
-   widget's week reads the same seven days. Today is outlined in the
-   foreground on top of whichever state it is in, so a finished today
-   still reads as today. */
+   today, are `weekStripDays`'s (weekStripDays.ts), from the week laid out
+   (`layOutWeek`): the Home Screen widget's week reads the same seven days.
+   Today is outlined in the foreground on top of whichever state it is in,
+   so a finished today still reads as today. */
 
 /**
- * What the day's circle says, in words.
+ * What the day's segment says, in words: the training it shows, a planned
+ * session whose day has passed included. A lift is named by where the week
+ * put it: a day whose lift moved says where it went, so a passed lift day
+ * is never read out as missed. One session is announced once.
  *
  * The accessible name once said "(activity logged)", which came from
  * `dayMap` and is food: the one signal in this component with NO visual
- * counterpart, announced in place of every signal that has one. It now
- * names the training the circle shows, including a planned session whose
- * day has passed.
- *
- * A lift slot completed by a session on another day (lifts are
- * split-ordered, ADR-0002) leaves this day's circle bare, so the day is
- * named as done on another day. "Completed lift" belongs to the day whose
- * circle the session filled, and one session is announced once.
+ * counterpart, announced in place of every signal that has one.
  */
-function trainingLabel(
-  day: StripDay,
-  isPast: boolean,
-  startKey: string | null
-): string {
-  if (!day.liftLogged && !day.runDone && beforeStart(day.key, startKey))
+function trainingLabel(strip: WeekStripDay): string {
+  const { day } = strip;
+  const lifts = day.sessions.filter((s) => s.sport === "lift");
+  const runs = day.sessions.filter((s) => s.sport === "run");
+  if (lifts.length === 0 && runs.length === 0 && day.beforeStart)
     return "before you started";
-  const hasLift =
-    day.sType === "lift" || day.sType === "both" || day.liftLogged;
-  const hasRun = day.sType === "run" || day.sType === "both" || day.runDone;
-  if (!hasLift && !hasRun) return "rest day";
-  const run = day.runDone
-    ? "completed run"
-    : day.runSkipped
-      ? "skipped run"
-      : isPast
-        ? "missed run"
-        : "run day";
-  const lift = day.liftLogged
+  const lift = lifts.some((s) => s.state === "done")
     ? "completed lift"
-    : day.liftCompleted
-      ? "lift done on another day"
-      : day.liftSkipped
-        ? "skipped lift"
-        : isPast
-          ? "missed lift"
-          : "lift day";
-  if (hasLift && hasRun) return `${lift} and ${run}`;
-  if (hasLift) return lift;
-  return run;
+    : lifts.length > 0
+      ? "lift day"
+      : liftLeft(strip);
+  const run =
+    runs.length === 0
+      ? null
+      : day.lanes.run === "done"
+        ? "completed run"
+        : runs.some((s) => s.state === "skipped")
+          ? "skipped run"
+          : runs.some((s) => s.state === "not-recorded")
+            ? "race day passed"
+            : day.lanes.run === "missed"
+              ? "missed run"
+              : "run day";
+  if (lift && run) return `${lift} and ${run}`;
+  return lift ?? run ?? "rest day";
+}
+
+/** What a day with no lift on it says of the lift it was given: where it
+ *  went, that it was done on another day, or that it rests before a race.
+ *  Null for a day it gave none. */
+function liftLeft({ day, liftDoneOn }: WeekStripDay): string | null {
+  if (liftDoneOn) return "lift done on another day";
+  if (day.skippedHere.length > 0) return "skipped lift";
+  const gone = day.slidOut[0];
+  if (gone)
+    return gone.to === "skipped"
+      ? "skipped lift"
+      : gone.to === "still-to-do"
+        ? "lift still to do"
+        : `lift moved to ${formatWeekday(parseLocalDate(gone.to))}`;
+  return day.rest === "race" ? "rest before your race" : null;
 }
 
 /* A segment that holds nothing yet is a track (DESIGN_GUIDE §14o): in the
@@ -91,14 +99,9 @@ const PLANNED_EDGE: Record<string, string> = {
 export default function WeekStrip({
   todayKey,
   dayMap,
-  profile,
-  programState,
-  claimMap,
+  week,
   selectedDate,
   onDayTap,
-  loggedLiftDates,
-  extraRunDates,
-  startKey = null,
 }: {
   /** Today, "yyyy-MM-dd": Home's day key (`useLocalDateKey`), so the strip
    *  turns over with the rest of the page. It read `new Date()` inside a
@@ -108,39 +111,17 @@ export default function WeekStrip({
     string,
     { workouts: number; meals: number; caloriesHit: boolean }
   >;
-  /** P1-4 / PR-0c: profile + programState replace the previous
-   *  `schedule` + `runDays` props. The strip resolves a 7-day
-   *  window via the shared training resolver — every day inherits
-   *  one currentWeekKey anchored at today, so a strip-future
-   *  Monday no longer borrows this-Monday's runDay status (the
-   *  old `inSameWeek` heuristic + dayIndex-only match bug). */
-  profile: UserProfile | null;
-  programState: ProgramState | null;
-  /** PR-J Q3 chunk B3c — derived completion source of truth.
-   *  Forwarded to `resolveTrainingWindow` so the strip's run-day ✅
-   *  reflects manual / saved-run-claim / legacy completions
-   *  uniformly. Wired via `useClaimMapForProgram` in Home. */
-  claimMap: Map<string, ClaimState>;
+  /** The calendar week holding today, laid out (`layOutWeek`): the days
+   *  the strip draws, Monday to Sunday. Home's session card and day card
+   *  read the same layout, so the strip never puts a lift on a day another
+   *  surface gives another. */
+  week: WeekLayout;
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
-  /** Dates ("yyyy-MM-dd") with a logged lift session. */
-  loggedLiftDates?: ReadonlySet<string>;
-  /** Dates with a logged run that claimed no planned day. */
-  extraRunDates?: ReadonlySet<string>;
-  /** The day the account began (startDay.ts); earlier days plan nothing. */
-  startKey?: string | null;
 }) {
   const days = useMemo(
     () =>
-      weekStripDays({
-        todayKey,
-        profile,
-        programState,
-        claimMap,
-        loggedLiftDates,
-        extraRunDates,
-        startKey,
-      }).map((day) => {
+      weekStripDays(week, todayKey).map((day) => {
         const data = dayMap.get(day.key);
         return {
           ...day,
@@ -149,17 +130,7 @@ export default function WeekStrip({
           isSelected: day.key === selectedDate,
         };
       }),
-    [
-      todayKey,
-      dayMap,
-      profile,
-      programState,
-      claimMap,
-      selectedDate,
-      loggedLiftDates,
-      extraRunDates,
-      startKey,
-    ]
+    [week, dayMap, todayKey, selectedDate]
   );
   return (
     /* Seven equal columns, each segment its column's width less the gap.
@@ -187,8 +158,7 @@ export default function WeekStrip({
                   "linear-gradient(90deg, hsl(var(--lifting)) 50%, hsl(var(--running)) 50%)",
               }
             : undefined;
-        const sport =
-          day.sType === "both" ? "both" : day.sType === "run" ? "run" : "lift";
+        const sport = day.sType;
         return (
           <button
             type="button"
@@ -208,7 +178,7 @@ export default function WeekStrip({
               // weekStripCaptureSelector.test.tsx pins the two together.
               formatWeekdayDayMonth(day.date) +
               ", " +
-              trainingLabel(day, day.isPast, startKey) +
+              trainingLabel(day) +
               // Kept, but named for what it is: `dayMap` counts meals, and
               // Food.tsx is the only writer of the collection it comes from.
               (day.hasActivity ? " (food logged)" : "") +
