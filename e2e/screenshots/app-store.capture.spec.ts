@@ -895,6 +895,17 @@ for (const frameClass of FRAME_CLASSES) {
         .getByRole("button", { name: "Dismiss" })
         .click({ timeout: 3_000 })
         .catch(() => {});
+      // The personal target's trial offer, closed with its "Not now": no
+      // frame carries a trial or a price (Guideline 2.3.7), and the diary
+      // gets its room.
+      const targetOffer = page.getByRole("region", {
+        name: "Your personal target is ready",
+      });
+      await targetOffer
+        .getByRole("button", { name: "Not now" })
+        .click({ timeout: 10_000 })
+        .catch(() => {});
+      await expect(targetOffer).toHaveCount(0);
       await settled(page);
 
       // The week's rings, the day's ring and macros, and the diary, with

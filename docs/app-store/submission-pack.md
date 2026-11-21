@@ -386,39 +386,40 @@ Dynamic Island, medium display", and fills that from a "Face ID, large
 display" set when it has none of its own; the large Dynamic Island class
 falls back to the same set
 ([screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)).
-So there are two sets, each of eight frames in listing order. Neither is
-committed here: the capture spec writes them, under these names, to
-`screenshots/`:
+So there are two sets, each of eight frames in listing order, committed
+here ready to upload in name order:
 
-| Files                                     | App Store Connect class             | Pixels      | Phone it lays out as |
-| ----------------------------------------- | ----------------------------------- | ----------- | -------------------- |
-| `screenshots/app-store-01-home.png` …     | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
-| `screenshots/app-store-6.5-01-home.png` … | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
+| Folder                            | App Store Connect class             | Pixels      | Phone it lays out as |
+| --------------------------------- | ----------------------------------- | ----------- | -------------------- |
+| `docs/app-store/screenshots/6.9/` | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
+| `docs/app-store/screenshots/6.5/` | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
 
-| #   | Frame          | Shows                                                                |
-| --- | -------------- | -------------------------------------------------------------------- |
-| 1   | `01-home`      | Home: today's lift, the week and the day's food and water            |
-| 2   | `02-train`     | Train: the week and a lift day's exercises                           |
-| 3   | `03-workout`   | A lift in progress, two working sets done                            |
-| 4   | `04-food`      | Food: the calorie wheel, macros and the day's diary                  |
-| 5   | `05-analytics` | Progress: the overview, the last 30 days and the muscles trained     |
-| 6   | `06-race-plan` | A half-marathon plan: base, build, taper and race (Pro after week 1) |
-| 7   | `07-social`    | The feed, with a run and a lift shared                               |
-| 8   | `08-run`       | A saved run: its map, pace and splits                                |
+| #   | Frame          | Shows                                                                      |
+| --- | -------------- | -------------------------------------------------------------------------- |
+| 1   | `01-home`      | Home: today's lift against last time, a check-in and the week so far       |
+| 2   | `02-train`     | Train: the next lift in the rotation and its exercises                     |
+| 3   | `03-workout`   | A lift in progress, two working sets done                                  |
+| 4   | `04-food`      | Food: the calorie wheel, the week, macros and the day's diary              |
+| 5   | `05-analytics` | Progress: the performance score and the last 30 days                       |
+| 6   | `06-race-plan` | Train's run week: the next run and a half-marathon plan (Pro after week 1) |
+| 7   | `07-social`    | The feed, with a run and a lift shared                                     |
+| 8   | `08-run`       | A saved run: its route coloured by pace, its figures and best efforts      |
 
 They come from the capture rig (`e2e/screenshots/app-store.capture.spec.ts`,
 the season athlete's sixteen weeks, dark theme), run by `app-screenshots.yml`
 against the emulator. The status bar band is left as the app paints it, and
-no frame shows a price (2.3.14 rules prices out of creative assets; keep
-them out of these too). No frame shows a Space, a challenge or the
-league, which say "Filling up" at launch.
+no frame shows a price or a trial: Food's personal-target offer is closed
+with its "Not now" before the shot (2.3.7 keeps pricing out of metadata,
+and 2.3.14 out of creative assets). The Pro locks on Progress stay, since
+they say which features cost extra (2.3.2). No frame shows a Space, a
+challenge or the league, which say "Filling up" at launch.
 
-To get them: run App Screenshots (Actions → App Screenshots → Run
+To take them again: run App Screenshots (Actions → App Screenshots → Run
 workflow, on the branch to capture), which commits the frames to the
-`app-screenshots` branch. Fetch it and upload `screenshots/app-store-0*.png`
-as the 6.9" set and `screenshots/app-store-6.5-0*.png` as the 6.5" set.
-Upload the iPhone build's own screenshots instead if you prefer: they would
-show the real status bar.
+`app-screenshots` branch as `screenshots/app-store-0*.png` (6.9") and
+`screenshots/app-store-6.5-0*.png` (6.5"). Copy them into the two folders
+above without those prefixes. Upload the iPhone build's own screenshots
+instead if you prefer: they would show the real status bar.
 
 ## Before submitting
 
