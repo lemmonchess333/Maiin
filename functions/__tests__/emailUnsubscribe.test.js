@@ -177,7 +177,7 @@ describe("the token", () => {
 });
 
 describe("Hosting sends the link's address to the function", () => {
-  it("before the app's catch-all", () => {
+  it("before any rule that would take the address", () => {
     const { rewrites } = JSON.parse(
       readFileSync(resolve(repoRoot, "firebase.json"), "utf8")
     ).hosting;
@@ -188,8 +188,21 @@ describe("Hosting sends the link's address to the function", () => {
       source: "/email/unsubscribe",
       function: { functionId: "emailUnsubscribe", region: "us-central1" },
     });
-    expect(index).toBeLessThan(
-      rewrites.findIndex((rule) => rule.source === "**")
-    );
+    // troposfit.com has had no "**" catch-all since the website (#3436):
+    // the app's addresses go to Home by one regex. No rule ahead of this
+    // one, a glob or a regex, may answer the link's address first.
+    const takes = (rule) =>
+      rule.regex !== undefined
+        ? new RegExp(rule.regex).test("/email/unsubscribe")
+        : new RegExp(
+            `^${rule.source
+              .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+              .replace(/\*\*/g, "\u0000")
+              .replace(/\*/g, "[^/]*")
+              .replace(/\u0000/g, ".*")}$`
+          ).test("/email/unsubscribe");
+    expect(index).toBeGreaterThan(-1);
+    expect(rewrites.slice(0, index).filter(takes)).toEqual([]);
+    expect(takes({ source: "**" })).toBe(true);
   });
 });
