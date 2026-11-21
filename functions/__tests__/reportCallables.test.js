@@ -245,6 +245,52 @@ function pendingReport(id, authority) {
   };
 }
 
+describe("createReport — how many alerts go", () => {
+  beforeEach(() => {
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("PUBLIC_APP_BASE_URL", "https://troposfit.com/");
+    // The real limiter, over the in-memory database: the counts are the
+    // thing under test.
+    rateLimiter.isRateLimited = realIsRateLimited;
+  });
+
+  it("emails a reporter's first three in a day, and queues the rest without one", async () => {
+    const db = useMemoryFirestore(spaceCommentSeed());
+    const fetchMock = vi.fn(async () => ({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    for (let i = 0; i < 6; i++)
+      await createReport.run(SPACE_COMMENT_REPORT, REPORTER);
+
+    expect(storedReports(db)).toHaveLength(6);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("says the day's last alert is the last, and sends none after it", async () => {
+    const now = Date.now();
+    const db = useMemoryFirestore({
+      ...spaceCommentSeed(),
+      // Everyone's alerts today (the UTC day), one short of the day's number.
+      [`rateLimits/reportalert_all_${new Date(now).toISOString().slice(0, 10)}`]:
+        { count: 49 },
+    });
+    const fetchMock = vi.fn(async () => ({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createReport.run(SPACE_COMMENT_REPORT, REPORTER);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).html).toContain(
+      "This is the last alert until midnight UTC."
+    );
+
+    await createReport.run(SPACE_COMMENT_REPORT, {
+      auth: { uid: "reporter-2" },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(storedReports(db)).toHaveLength(2);
+  });
+});
+
 describe("listPendingReports — what Hide content can act on", () => {
   beforeEach(() => vi.stubEnv("ADMIN_UIDS", "admin-1"));
 

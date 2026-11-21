@@ -247,8 +247,9 @@ export default function FoodTimeline({
             first paint: the day's rows are simply there. */}
         <AnimatePresence initial={false}>
           {entries.map((group) => {
-            // aria-label replaces the row's visible text. Name collisions
-            // therefore need the portion details in both action labels.
+            // Rows with the same name read alike, so the portion's
+            // details name each one: after the row's own words in the
+            // row's name, and in its Delete label.
             const accessibleFoodName =
               (nameCounts.get(group.foodName.toLowerCase().trim()) ?? 0) > 1
                 ? [

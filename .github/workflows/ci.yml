@@ -31,6 +31,15 @@ on:
     branches: ["codex/**"]
   pull_request:
     branches: ["main"]
+  # Every job runs the whole suite on main twice a day. A pull request's
+  # unit variants run only the tests its changes reach (`changes` below),
+  # so this is where a variant meets the rest of the suite: a test that
+  # reaches a change by a path the selection cannot see, and the calendar
+  # (a fixture's date, a DST window), which changes nothing in git.
+  # Twice while many pull requests land a day; once a day would do after.
+  # A red run opens or updates one issue (`scheduled-run-issue`).
+  schedule:
+    - cron: "41 4,16 * * *"
   workflow_dispatch:
 
 # Supersede, don't stack. Measured 2026-09-18 on one commit
@@ -59,6 +68,46 @@ permissions:
   contents: read
 
 jobs:
+  # What changed, read once for every job after it (scripts/ci/
+  # classify-changes.mjs), on a sparse, blob-less checkout so it costs a
+  # few seconds: no setup-node (the runner's own node runs it), no npm ci.
+  #
+  #   app   false when every changed file is documentation (markdown at
+  #         the root, anything under docs/), a plan file or the native iOS
+  #         project. The unit variants then do not run;
+  #         `unit` does, whole, as on every pull request, and it holds the
+  #         tests that read those files as text. A plan-file lock skips
+  #         the eight variant jobs.
+  #   mode  "related": each unit variant runs `vitest related` on the
+  #         changed files, plus every test whose text names one, under its
+  #         own time zone, locale, clock or order (scripts/ci/
+  #         variant-suite.mjs, which also fails if a changed test file did
+  #         not run). "full": the whole suite, when a change can reach any
+  #         test without an import (dependencies, test config and setup,
+  #         __mocks__, the test wrapper, scripts/ci, this file), above 150
+  #         changed files, and on any event that is not a pull request or
+  #         a push it can diff (the schedule, a manual run).
+  #
+  # Every job that needs this one runs on
+  # `!cancelled() && needs.changes.outputs.app != 'false'`, so a failure
+  # here leaves the output empty and they run, in full. `unit` does not
+  # need it, and must not: a skipped required check reports as passed.
+  # ciChangeGating.test.ts holds all of this.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.classify.outputs.app }}
+      mode: ${{ steps.classify.outputs.mode }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          filter: blob:none
+          sparse-checkout: scripts/ci
+      - id: classify
+        run: node scripts/ci/classify-changes.mjs
+
   unit:
     runs-on: ubuntu-latest
     # The suite alone takes 10–12 minutes on a busy runner, and this job also
@@ -132,8 +181,12 @@ jobs:
   # Both signs are run because their failures were not the same set: an
   # eastern offset moves a fixture forward across local midnight, a
   # western one moves it back, and a test can be wrong in one direction
-  # only. Each zone is a full run of both suites, in parallel.
+  # only. Each zone runs both suites, in parallel: the whole of them on
+  # main, the tests a pull request's changes reach on the pull request
+  # (see `changes`).
   unit-timezone:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # As the unit job: the suites ran 11–15 minutes in these jobs on
     # 19 October, and Kiritimati was cancelled at 15 with its tests passing.
@@ -165,14 +218,19 @@ jobs:
         tz: ["Pacific/Kiritimati", "Pacific/Midway", "Pacific/Auckland"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The parent too: variant-suite.mjs diffs against it.
+          fetch-depth: 2
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: "npm"
       - run: npm ci
       - name: Unit suite in ${{ matrix.tz }}
-        run: npm run test -- --run
+        id: suite
+        run: node scripts/ci/variant-suite.mjs
         env:
+          SUITE_MODE: ${{ needs.changes.outputs.mode }}
           TZ: ${{ matrix.tz }}
       # The server does its own day and week bucketing — `localWeekKey`,
       # the scheduled rollups, the race sweep — so "never mix local-date
@@ -183,8 +241,10 @@ jobs:
       # suite's ~5 minutes, so it is nearly free HERE and a fourth job
       # would not be.
       - run: npm ci
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         working-directory: functions
       - name: Functions suite in ${{ matrix.tz }}
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         run: npm test
         working-directory: functions
         env:
@@ -213,6 +273,8 @@ jobs:
   # so this gate is not about forcing one rendering — it is about
   # assertions not quietly pinning whichever locale CI resolves.
   unit-locale:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
     timeout-minutes: 25
@@ -222,6 +284,9 @@ jobs:
         locale: ["de_DE.UTF-8", "fr_FR.UTF-8"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The parent too: variant-suite.mjs diffs against it.
+          fetch-depth: 2
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -252,8 +317,10 @@ jobs:
           LANG: ${{ matrix.locale }}
           LC_ALL: ${{ matrix.locale }}
       - name: Unit suite in ${{ matrix.locale }}
-        run: npm run test -- --run
+        id: suite
+        run: node scripts/ci/variant-suite.mjs
         env:
+          SUITE_MODE: ${{ needs.changes.outputs.mode }}
           LANG: ${{ matrix.locale }}
           LC_ALL: ${{ matrix.locale }}
       # The server suite belongs here too, and its absence was a real
@@ -267,8 +334,10 @@ jobs:
       # Cheap: the functions suite is ~22s against the client suite's
       # ~5 minutes.
       - run: npm ci
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         working-directory: functions
       - name: Functions suite in ${{ matrix.locale }}
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         run: npm test
         working-directory: functions
         env:
@@ -302,11 +371,16 @@ jobs:
   # So this gate goes red a quarter BEFORE a fixture expires, which is a
   # warning with slack rather than a morning surprise.
   unit-future:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The parent too: variant-suite.mjs diffs against it.
+          fetch-depth: 2
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -330,8 +404,10 @@ jobs:
             exit 1
           fi
       - name: Unit suite 90 days from now
-        run: npm run test -- --run
+        id: suite
+        run: node scripts/ci/variant-suite.mjs
         env:
+          SUITE_MODE: ${{ needs.changes.outputs.mode }}
           TROPOS_CLOCK_OFFSET_DAYS: 90
       # The server suite has its own expiring fixtures and does not go
       # through `run-unit-tests.mjs`, so the preload is named directly
@@ -342,8 +418,10 @@ jobs:
       # functions suite forward is also what turned up the `instanceof
       # Date` narrowing the preload now guards against.
       - run: npm ci
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         working-directory: functions
       - name: Functions suite 90 days from now
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         run: npm test
         working-directory: functions
         env:
@@ -414,6 +492,8 @@ jobs:
   # are kept because between them they caught all three, and neither
   # caught all three alone.
   unit-shuffle:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
     timeout-minutes: 25
@@ -423,6 +503,9 @@ jobs:
         seed: [23, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The parent too: variant-suite.mjs diffs against it.
+          fetch-depth: 2
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -464,15 +547,20 @@ jobs:
             exit 1
           fi
       - name: Unit suite in shuffled order (seed ${{ matrix.seed }})
-        run: npm run test -- --run --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+        id: suite
+        run: node scripts/ci/variant-suite.mjs --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+        env:
+          SUITE_MODE: ${{ needs.changes.outputs.mode }}
       # Same reasoning as the timezone leg: ~22 s riding an existing job
       # rather than a fourth matrix entry. The functions suite shares one
       # Firestore emulator across its files, which is exactly the shape
       # of global mutable state this job exists to find — and nothing had
       # ever run it in an order other than written.
       - run: npm ci
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         working-directory: functions
       - name: Functions suite in shuffled order (seed ${{ matrix.seed }})
+        if: ${{ steps.suite.outputs.functions != 'false' }}
         run: npm test -- --sequence.shuffle --sequence.seed=${{ matrix.seed }}
         working-directory: functions
 
@@ -517,3 +605,92 @@ jobs:
         run: |
           npm ci
           npm audit --omit=dev --audit-level=high
+
+  # One rolling issue for the scheduled runs, which run every job whole on
+  # main: opened (labelled ready-for-agent) on the first red run, commented
+  # on while it stays red, and closed on the next green one. It names the
+  # range from the last green scheduled run to this one and the failing
+  # tests from the failed jobs' logs, so whoever picks it up starts from
+  # the commits that could have done it. No checkout: it runs no code from
+  # the repository, and its token can write issues and read run logs only.
+  scheduled-run-issue:
+    needs:
+      - unit
+      - unit-timezone
+      - unit-locale
+      - unit-future
+      - unit-shuffle
+      - audit
+    if: ${{ always() && github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+      actions: read
+    steps:
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Green only when every job it needs succeeded. A timeout
+          # reports `cancelled`, and a skipped job tested nothing, so
+          # anything but `success` is red.
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          red=false
+          [ -n "$RESULTS" ] || red=true
+          for r in $RESULTS; do [ "$r" = success ] || red=true; done
+          title="Scheduled CI failing on main"
+          repo="$GITHUB_REPOSITORY"
+          run_url="$GITHUB_SERVER_URL/$repo/actions/runs/$GITHUB_RUN_ID"
+          existing=$(gh issue list --repo "$repo" --state open \
+            --search "\"$title\" in:title" --json number,title \
+            --jq "map(select(.title == \"$title\"))[0].number // empty")
+          if [ "$red" = false ]; then
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --repo "$repo" \
+                --body "Green again on $GITHUB_SHA: $run_url"
+              gh issue close "$existing" --repo "$repo"
+            fi
+            exit 0
+          fi
+          green=$(gh api \
+            "repos/$repo/actions/workflows/ci.yml/runs?branch=main&event=schedule&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty')
+          failed_jobs=$(gh api "repos/$repo/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" \
+            --jq '.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | "\(.id)\t\(.name) (\(.conclusion))"')
+          body="$RUNNER_TEMP/issue.md"
+          {
+            echo "The scheduled CI run on main failed: $run_url"
+            echo
+            echo "- This run: $GITHUB_SHA"
+            if [ -n "$green" ]; then
+              echo "- Last green scheduled run: $green"
+              echo "- Commits between them: $GITHUB_SERVER_URL/$repo/compare/$green...$GITHUB_SHA"
+            else
+              echo "- No green scheduled run on record."
+            fi
+            echo
+            echo "A scheduled run is the whole suite in every variant. A pull request's"
+            echo "variants run only the tests its changes reach, so a failure here comes"
+            echo "from a change in that range or from the calendar (a fixture's date, a"
+            echo "DST window)."
+            while IFS=$'\t' read -r id name; do
+              [ -n "$id" ] || continue
+              echo
+              echo "**$name**"
+              echo
+              echo '```'
+              { gh api "repos/$repo/actions/jobs/$id/logs" 2>/dev/null || true; } \
+                | sed -E 's/^[0-9T:.Z-]+ //; s/\x1b\[[0-9;]*m//g' \
+                | { grep -E '^ *(FAIL|×) ' || echo "(no test names in the log; read the job)"; } \
+                | sort -u | sed -n '1,40p' | cut -c1-160
+              echo '```'
+            done <<< "$failed_jobs"
+          } > "$body"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$repo" --body-file "$body"
+          else
+            gh issue create --repo "$repo" --title "$title" \
+              --label ready-for-agent --body-file "$body"
+          fi
