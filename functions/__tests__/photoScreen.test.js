@@ -15,6 +15,7 @@ const {
   safeSearch,
   screenStoredPhoto,
   screenedOwner,
+  SCREENED_PATHS,
   VISION_REQUEST_LIMIT_BYTES,
 } = require("../lib/photoScreen");
 
@@ -178,19 +179,29 @@ describe("safeSearch", () => {
      and then deleted as unscreenable. Read from storage.rules: each
      screened prefix's size cap, with a photo one byte under it, has to
      reach Vision. A Space photo was allowed 10 MB, and anything over
-     about 7.86 MB was deleted on arrival. */
+     about 7.86 MB was deleted on arrival. The prefixes are the screened
+     paths themselves (SCREENED_PATHS), so a new one is held to this too. */
   it("a photo just under each screened path's Storage cap reaches Vision", async () => {
     const rules = readFileSync(
       fileURLToPath(new URL("../../storage.rules", import.meta.url)),
       "utf8"
     );
+    const prefixes = SCREENED_PATHS.map((pattern) => {
+      const prefix = /^\^([a-z][a-z-]*)\\\//.exec(pattern.source);
+      expect(prefix, `${pattern} opens on a folder name`).not.toBeNull();
+      return prefix[1];
+    });
+    // Anchored, so the loop below cannot pass by reading no paths.
+    expect(prefixes).toEqual(
+      expect.arrayContaining([
+        "space-photos",
+        "profile-photos",
+        "route-maps",
+        "post-photos",
+      ])
+    );
     const caps = {};
-    for (const prefix of [
-      "space-photos",
-      "profile-photos",
-      "route-maps",
-      "post-photos",
-    ]) {
+    for (const prefix of prefixes) {
       const block = rules.match(
         new RegExp(
           `match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`
@@ -203,8 +214,6 @@ describe("safeSearch", () => {
       expect(size, `${prefix} caps its uploads`).not.toBeNull();
       caps[prefix] = Number(size[1]) * 1024 * (size[2] ? 1024 : 1);
     }
-    // Every screened path is one of the four read above.
-    expect(Object.keys(caps).length).toBe(4);
     const reachesVision = {};
     for (const [prefix, cap] of Object.entries(caps)) {
       const fetchImpl = visionAnswer({
@@ -216,13 +225,10 @@ describe("safeSearch", () => {
       reachesVision[prefix] =
         !isUnscreenable(failed) && fetchImpl.mock.calls.length === 1;
     }
-    expect(reachesVision).toEqual({
-      "space-photos": true,
-      "profile-photos": true,
-      "route-maps": true,
-      "post-photos": true,
-    });
-    for (const prefix of Object.keys(caps))
+    expect(reachesVision).toEqual(
+      Object.fromEntries(prefixes.map((prefix) => [prefix, true]))
+    );
+    for (const prefix of prefixes)
       expect(screenedOwner(`${prefix}/u/x.jpg`)).toBe("u");
   });
 });
