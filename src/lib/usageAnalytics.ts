@@ -1,5 +1,5 @@
 /**
- * Share usage analytics (Priv1 call 2, owner 2026-11-21): the switch in
+ * Share usage analytics (Priv1 call 2): the switch in
  * Settings → Social & privacy that stops Google Analytics on the iPhone
  * and on the web. On by default. Since 5 February 2026 PECR lets analytics
  * used only to improve the service run without asking first, provided the
@@ -32,7 +32,7 @@ export const USAGE_ANALYTICS_OFF_KEY = "tropos.usageAnalytics.off";
  *  parameters): app actions and screen names, setup's choices (the goal,
  *  days a week) and counts of what was logged, never what was logged, a
  *  figure about the person or anything typed. The words are the owner's
- *  to approve (#3470), and `UsageAnalyticsGroup.test.tsx` holds them. */
+ *  to approve, and `UsageAnalyticsGroup.test.tsx` holds them. */
 export const USAGE_ANALYTICS_DESCRIPTION =
   "Sends how you use the app and your plan choices to Google Analytics, " +
   "tied to this device, not your account. No names, and not what you log, " +
