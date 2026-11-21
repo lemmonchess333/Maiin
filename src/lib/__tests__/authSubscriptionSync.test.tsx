@@ -201,7 +201,7 @@ describe("AuthProvider — live subscription state", () => {
       await purchaseOrRestore(action);
 
       await waitFor(() => expect(state().tier).toBe("pro"));
-      expect(state().limit).toBe("100");
+      expect(state().limit).toBe("15");
       expect(state().source).toBe("ios_iap");
       expect(state().trial).toBe("com.tropos.app.pro.monthly");
       expect(h.sync).toHaveBeenCalledOnce();
@@ -219,7 +219,7 @@ describe("AuthProvider — live subscription state", () => {
 
       await writeSubscription(pro);
       await waitFor(() => expect(state().tier).toBe("pro"));
-      expect(state().limit).toBe("100");
+      expect(state().limit).toBe("15");
     }
   );
 

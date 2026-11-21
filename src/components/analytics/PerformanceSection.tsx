@@ -28,8 +28,9 @@ import {
   takeMoreLine,
 } from "@/lib/performanceLine";
 import {
+  leadEvidence,
   performanceWeekBreakdown,
-  trainedMoreThanUsual,
+  type LeadPlan,
 } from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
 import { haptic } from "@/lib/haptic";
@@ -68,6 +69,11 @@ interface PerformanceSectionProps {
   /** The details are Pro for this account (whole-app grill Q84): the row
    *  shows a lock and asks `onToggleDetails(true)`, which offers Pro. */
   detailsLocked?: boolean;
+  /** The plan, for the line's "3 of 5 planned sessions" (`leadPlan`, from
+   *  the profile and this week's count History has). The count is said only
+   *  when this week plans what the score divided by (`plannedForWindow`);
+   *  without it the line can't tell sessions from food. */
+  plan?: LeadPlan | null;
 }
 
 function Heading() {
@@ -111,6 +117,7 @@ export default function PerformanceSection({
   detailsOpen = false,
   onToggleDetails,
   detailsLocked = false,
+  plan = null,
 }: PerformanceSectionProps = {}) {
   const { currentWeek, docsAvailable, loading, failed, refresh } =
     usePerformanceWeeks();
@@ -195,7 +202,7 @@ export default function PerformanceSection({
     : getLine(
         verb.state,
         currentWeek.signals,
-        trainedMoreThanUsual(currentWeek)
+        leadEvidence(currentWeek, plan, new Date())
       );
   const { measures } = performanceWeekBreakdown(currentWeek, {
     distanceUnit,

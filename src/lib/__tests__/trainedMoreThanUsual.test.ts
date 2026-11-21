@@ -18,7 +18,10 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
-import { trainedMoreThanUsual } from "../performanceWeekBreakdown";
+import {
+  performanceWeekBreakdown,
+  trainedMoreThanUsual,
+} from "../performanceWeekBreakdown";
 import { verdictFor } from "../weeklyReviewViewModel";
 import { getLine, getVerbState } from "../performanceLine";
 import type {
@@ -120,7 +123,7 @@ function read(agg: WeeklyAggregates) {
       deloadRecommended: scored.deloadRecommended,
       trainedMore,
     }),
-    line: getLine(state, signalsFor(scored), trainedMore),
+    line: getLine(state, signalsFor(scored), { trainedMore }),
   };
 }
 
@@ -170,14 +173,40 @@ describe("trainedMoreThanUsual: more of one, less of neither", () => {
   it.each([
     ["both under", 11000, 19, false],
     ["both at the usual week", 12000, 20, false],
-    ["lifting over, running at", 12500, 20, true],
-    ["running over, lifting at", 12000, 21, true],
+    ["lifting over, running at", 13000, 20, true],
+    ["running over, lifting at", 12000, 22, true],
     ["both over", 13000, 22, true],
     ["lifting over, running under", 15000, 19, false],
     ["lifting over, no running against a usual 20 km", 15000, 0, false],
+    // The engine's margin (`computeSignals`: ahead above 1.05).
+    ["lifting 4% over, running at", 12500, 20, false],
+    ["running at exactly 5% over, lifting at", 12000, 21, false],
+    ["running 5.5% over, lifting at", 12000, 21.1, true],
   ])("%s", (_name, tonnage, km, expected) => {
     expect(trainedMoreThanUsual(doc({ liftTonnage: tonnage, runKm: km }))).toBe(
       expected
+    );
+  });
+
+  /* The stored kilometres are rounded to 0.1 (`aggregateWindow`) and the
+     usual week is not, so 20.0 km against a usual 19.975 km drew "20.0
+     km" beside "20.0 km" and still claimed more. */
+  it("does not call a difference the bars can't show more: 20.0 km against a usual 19.975", () => {
+    const d = doc(
+      { liftTonnage: 12000, runKm: 20 },
+      { ...BASELINE, runKm: 19.975 }
+    );
+    const running = performanceWeekBreakdown(d, {
+      distanceUnit: "km",
+      liftUnit: "kg",
+      establishing: false,
+    }).measures.find((m) => m.key === "running")!;
+    expect(running.valueText).toBe("20.0 km");
+    expect(running.usualText).toBe("20.0 km");
+    expect(trainedMoreThanUsual(d)).toBe(false);
+    // Nor a few kilos the tonnage figures round away.
+    expect(trainedMoreThanUsual(doc({ liftTonnage: 12040, runKm: 20 }))).toBe(
+      false
     );
   });
 
