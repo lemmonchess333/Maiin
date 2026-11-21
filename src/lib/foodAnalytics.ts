@@ -79,10 +79,10 @@ export interface FoodEventMetadata {
    *  fired — useful for confirming the SOFT_CAP threshold lines
    *  up with observed prune patterns. */
   totalBefore?: number;
-  /** food_pantry_graduated: originating source
-   *  ("manual" | "photo" | "barcode" | "search" | "nl") so the
-   *  graduation funnel can be split by entry path. */
-  source?: string;
+  /** food_pantry_graduated: originating source, so the graduation
+   *  funnel can be split by entry path. `FoodFavourite["source"]`'s
+   *  values, spelled here so lib does not import a hook. */
+  source?: "manual" | "photo" | "barcode" | "search" | "nl";
   /** food_log_saved / _undo: which entry path produced the meal. */
   path?: FoodLogPath;
   /** food_log_saved: taps between `food_log_start` and the write. The

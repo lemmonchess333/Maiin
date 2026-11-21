@@ -51,6 +51,10 @@
  * see, signing out of setup (A1b pin 4).
  */
 import { emit } from "./analyticsClient";
+import type { RunMode } from "@/features/program/runModeResolution";
+import type { GuideHintId } from "./firstGuide";
+import type { ONBOARDING_STEP_IDS, OnboardingDraft } from "./onboardingDraft";
+import type { WatchRunCommandRejection } from "./watchRunBridge";
 
 export type LifecycleEvent =
   | "auth_screen_viewed"
@@ -145,15 +149,16 @@ export interface LifecycleEventMetadata {
   method?: SignupMethod;
   /** onboarding_step_* and onboarding_abandoned: stable step identifier
    *  (non-PII), from ONBOARDING_STEP_IDS. */
-  step?: string;
+  step?: (typeof ONBOARDING_STEP_IDS)[number];
   /** onboarding_step_*: zero-based step position. */
   stepIndex?: number;
-  /** onboarding_completed: chosen goal enum (lose / gain / maintain / perform). */
-  primaryGoal?: string;
+  /** onboarding_completed: the goal picked from setup's list. */
+  primaryGoal?: OnboardingDraft["primaryGoal"];
   /** onboarding_completed: training days per week. */
   daysPerWeek?: number;
-  /** onboarding_completed: resolved run mode (freeform / race_prep). */
-  runMode?: string;
+  /** onboarding_completed: resolved run mode (freeform / race_prep /
+   *  starter). */
+  runMode?: RunMode;
   /** session_started, first_session_saved, week_4_returned: which
    *  discipline. */
   kind?: "lift" | "run";
@@ -203,7 +208,7 @@ export interface LifecycleEventMetadata {
   weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
   weekResetOutcome?: "applied" | "queued";
   /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
-  hint?: string;
+  hint?: GuideHintId;
   /** run_completed: the Watch companion joined the run. Absent otherwise. */
   watchCompanion?: boolean;
   /** run_completed, a Watch run: how much of its moving time the heart rate
@@ -213,8 +218,8 @@ export interface LifecycleEventMetadata {
   watchAction?: "pause" | "resume" | "end";
   /** watch_command_answered: whether the phone applied it. */
   accepted?: boolean;
-  /** watch_command_answered: why not (`WatchRunCommandRejection`). */
-  rejection?: string;
+  /** watch_command_answered: why not. */
+  rejection?: WatchRunCommandRejection;
   /** watch_command_answered: a retransmission, answered with the first
    *  answer and applied no second time. */
   repeated?: boolean;
