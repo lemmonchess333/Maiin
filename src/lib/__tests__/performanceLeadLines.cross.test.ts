@@ -16,6 +16,12 @@
  *     count is in neither. Every planned session done with food far off
  *     read "Fewer sessions than usual".
  *
+ * A count of planned sessions is said only where it is the plan's: the
+ * week as Home and Train count it (`trainingWeek`) holds the profile's
+ * count, and the window is not in a race's last weeks. Race week rests
+ * lifts and a free runner's week plans no runs, while the score still
+ * divides by the profile's days.
+ *
  * Each week here is scored by `functions/lib/perfScoring.js` and given its
  * signals by `functions/performanceEngine.js`'s `computeSignals`, the copy
  * the weekly rollup and the daily refresh write, and every line is checked
@@ -26,13 +32,24 @@ import Module, { createRequire } from "node:module";
 import { getLine, getVerbState } from "../performanceLine";
 import {
   leadEvidence,
+  leadPlan,
+  plannedForWindow,
   trainedMoreThanUsual,
+  type LeadPlan,
 } from "../performanceWeekBreakdown";
 import { plannedSessionCount } from "../performanceEngine";
 import {
   resolveDeloadRecommended,
   resolveLoadBand,
 } from "../performanceDocFields";
+import { trainingWeek } from "../trainingWeek";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "../dateHelpers";
+import type { ScheduledRunDay } from "@/features/program/programTypes";
 import type {
   Baseline,
   PerformanceSignals,
@@ -121,7 +138,21 @@ const PROFILE = {
   targetProtein: 160,
 };
 
-const COMPUTE_KEY = "2026-11-16";
+/** The window ends today, as the lead shows it ("Last 7 days"). Derived
+ *  from the clock: the plan's count is said only of a window that ends
+ *  now. */
+const TODAY = new Date();
+const TODAY_KEY = localDateString(TODAY);
+const THIS_WEEK = localWeekKey(TODAY);
+const dayIn = (weekKey: string, i: number) =>
+  localDateString(addLocalDays(parseLocalDate(weekKey), i));
+
+/** A week the app plans as the profile counts it: 3 lifts and 2 runs this
+ *  Monday to Sunday, no race. */
+const PLAN: LeadPlan = leadPlan(PROFILE, {
+  lifts: { planned: 3 },
+  runs: { planned: 2 },
+});
 
 interface WeekShape {
   /** The usual week's kilos and kilometres, times this. */
@@ -137,18 +168,21 @@ interface WeekShape {
 
 /** A week at `lift` and `run` times the usual one, steady weight, food on
  *  target on 6 days unless told otherwise. */
-function aggregates({
-  lift = 1,
-  run = 1,
-  lifts = 3,
-  runs = 2,
-  calories = 2500,
-  protein = 160,
-  foodDays = 6,
-  longKm,
-}: WeekShape): WeeklyAggregates {
+function aggregates(
+  {
+    lift = 1,
+    run = 1,
+    lifts = 3,
+    runs = 2,
+    calories = 2500,
+    protein = 160,
+    foodDays = 6,
+    longKm,
+  }: WeekShape,
+  computeKey = TODAY_KEY
+): WeeklyAggregates {
   return {
-    weekKey: COMPUTE_KEY,
+    weekKey: computeKey,
     liftTonnage: BASELINE.liftTonnage * lift,
     liftHardSets: BASELINE.liftHardSets * lift,
     liftSessions: lifts,
@@ -164,18 +198,23 @@ function aggregates({
   } as WeeklyAggregates;
 }
 
-/** The document as the server writes it, scored after two steady weeks. */
-function serverDoc(shape: WeekShape) {
-  const agg = aggregates(shape);
-  const scored = perfScoring.scorePerformance(agg, BASELINE, PROFILE, 70, 70);
+/** The document as the server writes it, scored after two steady weeks,
+ *  against the profile the server read when it scored. */
+function serverDoc(
+  shape: WeekShape,
+  profile: Record<string, unknown> = PROFILE,
+  computeKey = TODAY_KEY
+) {
+  const agg = aggregates(shape, computeKey);
+  const scored = perfScoring.scorePerformance(agg, BASELINE, profile, 70, 70);
   const signals = computeSignals({
     ...scored,
-    lifetimeData: { lastWorkoutDateStr: COMPUTE_KEY },
+    lifetimeData: { lastWorkoutDateStr: computeKey },
     baselineActiveWeeks: 8,
-    computeKey: COMPUTE_KEY,
+    computeKey,
   });
   return {
-    weekKey: COMPUTE_KEY,
+    weekKey: computeKey,
     ...scored,
     aggregates: agg,
     baseline: BASELINE,
@@ -183,19 +222,24 @@ function serverDoc(shape: WeekShape) {
   };
 }
 
-/** The lead, as `PerformanceSection` reads it. */
-function lead(shape: WeekShape) {
-  const doc = serverDoc(shape);
+type ServerDoc = ReturnType<typeof serverDoc>;
+
+/** The lead's line for a document, as `PerformanceSection` reads it. */
+function lineFor(doc: ServerDoc, plan: LeadPlan | null, today = TODAY) {
   const state = getVerbState(
     resolveLoadBand(doc),
     resolveDeloadRecommended(doc)
   );
-  const line = getLine(
+  return {
     state,
-    doc.signals,
-    leadEvidence(doc, plannedSessionCount(PROFILE))
-  );
-  return { doc, state, line };
+    line: getLine(state, doc.signals, leadEvidence(doc, plan, today)),
+  };
+}
+
+/** A week scored against PROFILE and read against a plan that holds it. */
+function lead(shape: WeekShape) {
+  const doc = serverDoc(shape);
+  return { doc, ...lineFor(doc, PLAN) };
 }
 
 /** What the server's adherence makes of the food alone: the calorie and
@@ -210,13 +254,21 @@ function foodAdherence(agg: WeeklyAggregates): number {
   );
 }
 
+const COUNT =
+  /You did (\d+) (?:of (\d+) planned sessions?|sessions against (\d+) planned) in these 7 days/;
+
 /**
  * Whether a line is true of the week it describes, on the week's own
  * figures. Every claim the lead's lines make about the person is checked:
  * more than the usual week, a count of planned sessions, food off its
  * targets, and none of the retired sentences.
  */
-function expectTrueOfItsWeek(line: string, doc: ReturnType<typeof serverDoc>) {
+function expectTrueOfItsWeek(
+  line: string,
+  doc: ServerDoc,
+  /** The plan's sessions this week, which a count must name. */
+  planned: number
+) {
   const agg = doc.aggregates;
   expect(line).not.toMatch(/than usual$/);
   expect(line).not.toMatch(/ease off/i);
@@ -230,23 +282,22 @@ function expectTrueOfItsWeek(line: string, doc: ReturnType<typeof serverDoc>) {
     expect(ratios.every((r) => r >= 1)).toBe(true);
   }
 
-  const count = line.match(
-    /You did (\d+) (?:of (\d+) planned|sessions against (\d+) planned)/
-  );
+  const count = line.match(COUNT);
   if (count) {
-    const done = Number(count[1]);
-    const planned = Number(count[2] ?? count[3]);
-    expect(done).toBe(
+    expect(Number(count[1])).toBe(
       agg.liftSessions + agg.runSessions + (agg.circuitSessions ?? 0)
     );
-    // The plan the server scored the week against.
-    expect(planned).toBe(perfScoring.weeklySessionTarget(PROFILE));
+    expect(Number(count[2] ?? count[3])).toBe(planned);
+  } else {
+    expect(line).not.toMatch(/planned/);
   }
 
   if (/food well off your targets/.test(line)) {
+    // The server counted the food (3 days or more), and it was off.
+    expect(agg.mealDaysLogged).toBeGreaterThanOrEqual(3);
     expect(foodAdherence(agg)).toBeLessThan(50);
   } else if (/food/.test(line)) {
-    throw new Error(`a line about food the test does not know: ${line}`);
+    expect(line).toBe("Your sessions or food were well off your plan");
   }
 }
 
@@ -263,19 +314,19 @@ describe("Backing off says what happened, not more than usual", () => {
     expect(state).toBe("backing-off");
 
     expect(line).toBe(
-      "You did 5 of 5 planned sessions, with food well off your targets"
+      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
     );
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("with sessions or food off and no plan to count against: says both, honestly", () => {
     const doc = serverDoc({ calories: 1200, protein: 40 });
-    const line = getLine(
-      getVerbState(resolveLoadBand(doc), resolveDeloadRecommended(doc)),
-      doc.signals,
-      leadEvidence(doc, plannedSessionCount({}))
+    expect(lineFor(doc, null).line).toBe(
+      "Your sessions or food were well off your plan"
     );
-    expect(line).toBe("Your sessions or food were well off your plan");
+    expect(lineFor(doc, leadPlan({}, planWeek(0, 0))).line).toBe(
+      "Your sessions or food were well off your plan"
+    );
   });
 
   it("over the usual week: says it, the reason the lines have always given", () => {
@@ -290,7 +341,7 @@ describe("Backing off says what happened, not more than usual", () => {
     expect(doc.signals.recoveryWeak).toBe(false);
     expect(trainedMoreThanUsual(doc)).toBe(true);
     expect(line).toBe("You trained more than your usual week");
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("overreaching on lifting while running less: names the sport that was up", () => {
@@ -302,7 +353,7 @@ describe("Backing off says what happened, not more than usual", () => {
     expect(trainedMoreThanUsual(doc)).toBe(false);
     expect(state).toBe("backing-off");
     expect(line).toBe("Lifting volume 50% above your usual week");
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("held at the top two weeks running at about the usual week: the sport line's last word, and no comparison", () => {
@@ -323,14 +374,15 @@ describe("Backing off says what happened, not more than usual", () => {
     };
     const scored = perfScoring.scorePerformance(agg, RUNNER, profile, 86, 70);
     const doc = {
+      weekKey: TODAY_KEY,
       ...scored,
       aggregates: agg,
       baseline: RUNNER,
       signals: computeSignals({
         ...scored,
-        lifetimeData: { lastWorkoutDateStr: COMPUTE_KEY },
+        lifetimeData: { lastWorkoutDateStr: TODAY_KEY },
         baselineActiveWeeks: 8,
-        computeKey: COMPUTE_KEY,
+        computeKey: TODAY_KEY,
       }),
     };
     expect({ pi: doc.performanceIndex, band: doc.loadBand }).toEqual({
@@ -338,11 +390,7 @@ describe("Backing off says what happened, not more than usual", () => {
       band: "moderate",
     });
     expect(doc.deloadRecommended).toBe(true);
-    const line = getLine(
-      getVerbState(resolveLoadBand(doc), resolveDeloadRecommended(doc)),
-      doc.signals,
-      leadEvidence(doc, plannedSessionCount(profile))
-    );
+    const { line } = lineFor(doc, leadPlan(profile, planWeek(0, 4)));
     expect(line).toBe("A strong 7 days");
     expect(line).not.toMatch(/usual|planned/);
   });
@@ -366,9 +414,9 @@ describe("Steady says what was off the plan, not fewer sessions than usual", () 
       expect(doc.signals.adherenceWeak).toBe(true);
       expect(state).toBe("cruising");
       expect(line).toBe(
-        "You did 5 of 5 planned sessions, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
       );
-      expectTrueOfItsWeek(line, doc);
+      expectTrueOfItsWeek(line, doc, 5);
     }
   );
 
@@ -387,8 +435,8 @@ describe("Steady says what was off the plan, not fewer sessions than usual", () 
     expect(doc.signals.adherenceWeak).toBe(false);
     expect(foodAdherence(doc.aggregates)).toBe(100);
     expect(state).toBe("cruising");
-    expect(line).toBe("You did 3 of 5 planned sessions");
-    expectTrueOfItsWeek(line, doc);
+    expect(line).toBe("You did 3 of 5 planned sessions in these 7 days");
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("sessions missed with no food logged: adherence is the sessions alone, and the line says the count", () => {
@@ -404,8 +452,8 @@ describe("Steady says what was off the plan, not fewer sessions than usual", () 
     });
     expect(doc.signals.adherenceWeak).toBe(true);
     expect(state).toBe("cruising");
-    expect(line).toBe("You did 2 of 5 planned sessions");
-    expectTrueOfItsWeek(line, doc);
+    expect(line).toBe("You did 2 of 5 planned sessions in these 7 days");
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("every planned session done, food on target: holding a steady rhythm", () => {
@@ -415,7 +463,7 @@ describe("Steady says what was off the plan, not fewer sessions than usual", () 
     expect(state).toBe("cruising");
     expect(doc.signals.adherenceWeak).toBe(false);
     expect(line).toBe("Holding a steady rhythm");
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
   });
 });
 
@@ -430,7 +478,7 @@ describe("a real more-than-usual week", () => {
     expect(state).toBe("sharpening");
     expect(trainedMoreThanUsual(doc)).toBe(true);
     expect(line).toBe("You trained more than your usual week");
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
   });
 
   it("both sports 10% up reads both strong, the engine's own signal", () => {
@@ -439,7 +487,186 @@ describe("a real more-than-usual week", () => {
     expect(doc.signals.bothLoadsStrong).toBe(true);
     expect(trainedMoreThanUsual(doc)).toBe(true);
     expect(line).toBe("Lifting and running both strong");
-    expectTrueOfItsWeek(line, doc);
+    expectTrueOfItsWeek(line, doc, 5);
+  });
+});
+
+/** A week whose plan holds `lifts` and `runs`, as `trainingWeek` counts. */
+function planWeek(lifts: number, runs: number) {
+  return {
+    lifts: { planned: lifts > 0 ? lifts : null },
+    runs: { planned: runs > 0 ? runs : null },
+  };
+}
+
+const runDay = (
+  fields: Partial<ScheduledRunDay> & { dayIndex: number }
+): ScheduledRunDay => ({ templateId: "easy", type: "easy", ...fields });
+
+const run = (day: string, km: number) => ({
+  day,
+  distance: km * 1000,
+  duration: km * 330,
+});
+
+describe("a count is the plan's, or none", () => {
+  it("race week: Home and Train count 4 of 4, so the lead says no count of 7", () => {
+    /* The second review's case. 3 lifts and 4 runs a week; race week's
+       rollover kept one lift and skipped two (`raceWeekSession`), and the
+       plan holds 2 runs and the race. All 4 done. The score still divides
+       by the profile's 7. */
+    const w = (i: number) => dayIn(THIS_WEEK, i);
+    const raceDay = w(6);
+    const onRaceDay = parseLocalDate(raceDay);
+    onRaceDay.setHours(12);
+    const profile = {
+      ...PROFILE,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 4,
+      raceGoal: { distance: "10k" as const, targetDate: raceDay },
+    };
+    const week = trainingWeek({
+      weekKey: THIS_WEEK,
+      profile,
+      programState: {
+        raceWeek: "race",
+        liftWeekKey: THIS_WEEK,
+        workouts: [{ completed: true }, { skipped: true }, { skipped: true }],
+        runPlan: { mode: "race_prep", raceGoal: profile.raceGoal },
+        runDays: [
+          runDay({ id: "e1", date: w(1), dayIndex: 2 }),
+          runDay({ id: "e2", date: w(3), dayIndex: 4 }),
+          runDay({
+            id: "race",
+            date: raceDay,
+            dayIndex: 0,
+            templateId: "race",
+            type: "race",
+          }),
+        ],
+      },
+      workouts: [{ date: w(0) }],
+      runs: [run(w(1), 5), run(w(3), 5), run(raceDay, 10)],
+      now: onRaceDay,
+    });
+    // As Home and Train count it.
+    expect(week.lifts).toEqual({ done: 1, planned: 1 });
+    expect({ done: week.runs.done, planned: week.runs.planned }).toEqual({
+      done: 3,
+      planned: 3,
+    });
+
+    // One lift of the usual three, the usual 20 km with the race in it.
+    const doc = serverDoc(
+      { lift: 1 / 3, run: 1, lifts: 1, runs: 3, longKm: 10 },
+      profile,
+      raceDay
+    );
+    // The score divides by the profile's 7: 4 of 7, food on target, not
+    // weak, and Steady.
+    expect(perfScoring.weeklySessionTarget(profile)).toBe(7);
+    expect(doc.signals.adherenceWeak).toBe(false);
+    const plan = leadPlan(profile, week);
+    expect(plan).toEqual({ perWeek: 7, thisWeek: 4, raceDate: raceDay });
+    expect(plannedForWindow(plan, raceDay, onRaceDay)).toBeNull();
+
+    const { state, line } = lineFor(doc, plan, onRaceDay);
+    expect(state).toBe("cruising");
+    // Before: "You did 4 of 7 planned sessions", beside Home's 4 of 4.
+    expect(line).toBe("Holding a steady rhythm");
+  });
+
+  it("a free runner: the week plans the lifts and no runs, so no count of the profile's run days", () => {
+    /* A profile written before free running set its run days to 0 still
+       holds 2; the plan has no run days, so the week counts runs done
+       only (trainingWeek.ts, Run9a). */
+    const week = trainingWeek({
+      weekKey: THIS_WEEK,
+      profile: PROFILE,
+      programState: { runDays: [] },
+      workouts: [],
+      runs: [],
+      now: TODAY,
+    });
+    expect(week.lifts.planned).toBe(3);
+    expect(week.runs.planned).toBeNull();
+
+    const doc = serverDoc({
+      lift: 2 / 3,
+      run: 0.5,
+      lifts: 2,
+      runs: 1,
+      longKm: 10,
+    });
+    const plan = leadPlan(PROFILE, week);
+    expect(plan.thisWeek).toBe(3);
+    const { state, line } = lineFor(doc, plan);
+    expect(state).toBe("cruising");
+    // Before: "You did 3 of 5 planned sessions", of a plan with 3.
+    expect(line).toBe("Holding a steady rhythm");
+  });
+
+  it("a window that reaches back into a race's last weeks says no count, though this week matches", () => {
+    const raceTwoDaysAgo = localDateString(addLocalDays(TODAY, -2));
+    const plan: LeadPlan = {
+      perWeek: 7,
+      thisWeek: 7,
+      raceDate: raceTwoDaysAgo,
+    };
+    expect(plannedForWindow(plan, TODAY_KEY, TODAY)).toBeNull();
+    // The two lighter weeks before the race's week count too.
+    const in3Weeks = localDateString(addLocalDays(TODAY, 21));
+    expect(
+      plannedForWindow({ ...plan, raceDate: in3Weeks }, TODAY_KEY, TODAY)
+    ).toBeNull();
+    // A race well ahead is not in the window.
+    const in8Weeks = localDateString(addLocalDays(TODAY, 56));
+    expect(
+      plannedForWindow({ ...plan, raceDate: in8Weeks }, TODAY_KEY, TODAY)
+    ).toBe(7);
+  });
+
+  it("says a count only of a window that ends now, of a week that has loaded", () => {
+    expect(plannedForWindow(PLAN, TODAY_KEY, TODAY)).toBe(5);
+    const yesterday = localDateString(addLocalDays(TODAY, -1));
+    expect(plannedForWindow(PLAN, yesterday, TODAY)).toBe(5);
+    // An older window was scored against the plan as it was then.
+    const threeDaysAgo = localDateString(addLocalDays(TODAY, -3));
+    expect(plannedForWindow(PLAN, threeDaysAgo, TODAY)).toBeNull();
+    expect(
+      plannedForWindow({ ...PLAN, thisWeek: null }, TODAY_KEY, TODAY)
+    ).toBeNull();
+    expect(plannedForWindow(null, TODAY_KEY, TODAY)).toBeNull();
+  });
+
+  it("a plan cut from 6 to 4 after scoring, 2 done, no food logged: the count, never the food", () => {
+    /* Scored against 6 (3 lifts, 3 runs), 2 done and no food logged:
+       adherence is the sessions alone, 33. The plan is 4 now, so 2 is
+       half of it, and the half-the-plan rule alone would say the food was
+       off. The server never counted food under 3 days. */
+    const doc = serverDoc(
+      {
+        lift: 2 / 3,
+        run: 0.5,
+        lifts: 1,
+        runs: 1,
+        longKm: 10,
+        foodDays: 0,
+        calories: 0,
+        protein: 0,
+      },
+      { ...PROFILE, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 3 }
+    );
+    expect(doc.adherenceScore).toBe(33);
+    expect(doc.signals.adherenceWeak).toBe(true);
+    const now = leadPlan(
+      { ...PROFILE, weeklyWorkoutsTarget: 2, weeklyRunDaysTarget: 2 },
+      planWeek(2, 2)
+    );
+    const { state, line } = lineFor(doc, now);
+    expect(state).toBe("cruising");
+    expect(line).toBe("You did 2 of 4 planned sessions in these 7 days");
+    expect(line).not.toMatch(/food/);
   });
 });
 

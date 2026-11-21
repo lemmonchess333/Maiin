@@ -36,7 +36,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
-import { plannedSessionCount } from "@/lib/performanceEngine";
+import { leadPlan } from "@/lib/performanceWeekBreakdown";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -1315,9 +1315,10 @@ export default function History() {
                     detailsOpen={scoreOpen}
                     onToggleDetails={setScoreOpen}
                     detailsLocked={!isPro}
-                    /* The plan the score's adherence counted against,
-                       so the lead can say "3 of 5 planned sessions". */
-                    plannedSessions={plannedSessionCount(profile ?? {})}
+                    /* The plan the score's adherence counted against
+                       and this week's own count, so the lead says "3 of
+                       5 planned sessions" only when the two agree. */
+                    plan={leadPlan(profile, weekPulse)}
                   />
                 </SectionErrorBoundary>
               )}

@@ -24,6 +24,13 @@ import {
   type DistanceUnit,
 } from "./distanceUnits";
 import { abbreviateK } from "@/utils/formatters";
+import { plannedSessionCount } from "./performanceEngine";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "./dateHelpers";
 
 /** Active weeks the baseline needs before it is anyone's usual week. */
 export const USUAL_WEEK_MIN_WEEKS = 2;
@@ -112,8 +119,11 @@ export interface WindowSessions {
   /** Lifts, runs and circuits saved in the 7 days, as adherence counts
    *  them (`computeAdherenceScore`). */
   done: number;
-  /** The sessions the plan holds a week (`plannedSessionCount`). */
+  /** The sessions the plan holds a week (`plannedForWindow`). */
   planned: number;
+  /** The score counted the food: logged on 3 days or more, with
+   *  something in it (`computeAdherenceScore`'s own condition). */
+  foodCounted: boolean;
 }
 
 /**
@@ -126,8 +136,8 @@ export interface WindowSessions {
  * week's count is always short of its plan. Seven days in a row hold each
  * weekday once, so a week's plan is the window's.
  *
- * Null when the plan is not known (nothing planned, so the score used the
- * goal's default) or the document carries no session counts.
+ * Null when the plan's count is not known (`plannedForWindow`) or the
+ * document carries no session counts.
  */
 export function sessionsAgainstPlan(
   doc: { aggregates?: Partial<WeeklyAggregates> | null },
@@ -144,20 +154,105 @@ export function sessionsAgainstPlan(
     done:
       num(agg.liftSessions) + num(agg.runSessions) + num(agg.circuitSessions),
     planned,
+    foodCounted:
+      num(agg.mealDaysLogged) >= 3 &&
+      (num(agg.avgDailyCalories) > 0 || num(agg.avgDailyProtein) > 0),
   };
+}
+
+/** What the lead knows of the plan (History reads it). */
+export interface LeadPlan {
+  /** The profile's sessions a week (`plannedSessionCount`): what the
+   *  score's adherence divided by. 0 when nothing is planned. */
+  perWeek: number;
+  /** This Monday to Sunday's planned sessions as `trainingWeek` counts
+   *  them, Home's and Train's count; null until the week has loaded. */
+  thisWeek: number | null;
+  /** The race the plan builds to, "yyyy-MM-dd", or null. */
+  raceDate: string | null;
+}
+
+/** The plan's count for a week, as `trainingWeek` and the week pulse give
+ *  it: a lane with nothing planned counts none. */
+interface PlannedWeek {
+  lifts: { planned: number | null } | null;
+  runs: { planned: number | null } | null;
+}
+
+export function leadPlan(
+  profile:
+    | (Parameters<typeof plannedSessionCount>[0] & {
+        raceGoal?: { targetDate?: string } | null;
+      })
+    | null
+    | undefined,
+  week: PlannedWeek | null | undefined
+): LeadPlan {
+  return {
+    perWeek: plannedSessionCount(profile ?? {}),
+    thisWeek: week
+      ? (week.lifts?.planned ?? 0) + (week.runs?.planned ?? 0)
+      : null,
+    raceDate: profile?.raceGoal?.targetDate || null,
+  };
+}
+
+/**
+ * The planned count the lead may say for the 7 days ending on
+ * `windowEnd`, or null when it can't be sure the plan held it.
+ *
+ * The score divides by the profile's days a week, but the app does not
+ * always plan them, and "3 of 5 planned" beside Home's "3 of 3" says two
+ * things about one week. So a count is said only when:
+ *
+ *   - the window ends today or yesterday ("Last 7 days"): the plan read
+ *     now is the plan of a window that ends now, not of an older one;
+ *   - this week as Home and Train count it holds the profile's count.
+ *     Race week rests lifts (`liftsAsked`), a free runner's week plans no
+ *     runs (Run9a), and a race plan's week holds its own run days;
+ *   - the window touches none of a race's last weeks: the three before
+ *     the race's week (a marathon's run taper is three), its week and the
+ *     one after (`raceLiftWeek`). This week can match while the window
+ *     still holds days of race week, on the Monday after it.
+ */
+export function plannedForWindow(
+  plan: LeadPlan | null | undefined,
+  windowEnd: string,
+  today: Date
+): number | null {
+  if (!plan || plan.perWeek <= 0 || plan.thisWeek === null) return null;
+  // yyyy-MM-dd keys compare in date order.
+  if (windowEnd < localDateString(addLocalDays(today, -1))) return null;
+  if (plan.thisWeek !== plan.perWeek) return null;
+  if (plan.raceDate) {
+    const raceMonday = parseLocalDate(
+      localWeekKey(parseLocalDate(plan.raceDate))
+    );
+    const firstDay = localDateString(addLocalDays(raceMonday, -21));
+    const lastDay = localDateString(addLocalDays(raceMonday, 13));
+    const windowStart = localDateString(
+      addLocalDays(parseLocalDate(windowEnd), -6)
+    );
+    if (windowStart <= lastDay && windowEnd >= firstDay) return null;
+  }
+  return plan.perWeek;
 }
 
 /** What the lead's line is told beside the engine's signals (`getLine`). */
 export function leadEvidence(
   doc: {
+    weekKey?: string;
     aggregates?: Partial<WeeklyAggregates> | null;
     baseline?: Partial<Baseline> | null;
   },
-  plannedSessions: number | null | undefined
+  plan: LeadPlan | null | undefined,
+  today: Date
 ): { trainedMore: boolean; sessions: WindowSessions | null } {
   return {
     trainedMore: trainedMoreThanUsual(doc),
-    sessions: sessionsAgainstPlan(doc, plannedSessions),
+    sessions: doc.weekKey
+      ? sessionsAgainstPlan(doc, plannedForWindow(plan, doc.weekKey, today))
+      : null,
   };
 }
 

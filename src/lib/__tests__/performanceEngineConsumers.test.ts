@@ -102,7 +102,8 @@ describe("client PI engine — production consumers", () => {
 
        `plannedSessionCount` joined on 21 November 2026: the lead says
        "3 of 5 planned sessions" against the count the score's adherence
-       divided by, the profile's lift and run days. It adds two profile
+       divided by, the profile's lift and run days, when this week plans
+       the same (`leadPlan`, `plannedForWindow`). It adds two profile
        fields; the session count beside it is the stored document's. Taking
        it from the copy `weeklySessionTarget` uses keeps the plan's count
        in one place on the client (performanceLeadLines.cross.test.ts pins
@@ -111,7 +112,7 @@ describe("client PI engine — production consumers", () => {
       "src/hooks/useWeeklyReview.ts": ["weekKeyMinusN"],
       "src/lib/lighterWeekOffer.ts": ["shouldRecommendDeload"],
       "src/lib/performanceDocFields.ts": ["computeLoadBand"],
-      "src/pages/History.tsx": ["plannedSessionCount"],
+      "src/lib/performanceWeekBreakdown.ts": ["plannedSessionCount"],
     });
   });
 

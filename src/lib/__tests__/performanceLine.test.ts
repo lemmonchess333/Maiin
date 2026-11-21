@@ -127,8 +127,12 @@ describe("getLine — backing-off state", () => {
   it("adherenceWeak and not more: what was off the plan", () => {
     const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
     expect(
-      getLine("backing-off", weak, { sessions: { done: 5, planned: 5 } })
-    ).toBe("You did 5 of 5 planned sessions, with food well off your targets");
+      getLine("backing-off", weak, {
+        sessions: { done: 5, planned: 5, foodCounted: true },
+      })
+    ).toBe(
+      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
+    );
     expect(getLine("backing-off", weak)).toBe(
       "Your sessions or food were well off your plan"
     );
@@ -156,7 +160,7 @@ describe("getLine — backing-off state", () => {
       getLine(
         "backing-off",
         { ...ZERO_SIGNALS, adherenceWeak: true },
-        { sessions: { done: 2, planned: 5 } }
+        { sessions: { done: 2, planned: 5, foodCounted: true } }
       ),
     ];
     for (const line of lines) expect(line).not.toMatch(/ease off/i);
@@ -239,16 +243,16 @@ describe("getLine — sharpening state", () => {
    count is in neither, so no Steady line compares sessions with usual. */
 describe("getLine — cruising state", () => {
   const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
-  const sessions = (done: number, planned: number) => ({
-    sessions: { done, planned },
+  const sessions = (done: number, planned: number, foodCounted = true) => ({
+    sessions: { done, planned, foodCounted },
   });
 
   it("adherenceWeak, every planned session done: the food was off", () => {
     expect(getLine("cruising", weak, sessions(5, 5))).toBe(
-      "You did 5 of 5 planned sessions, with food well off your targets"
+      "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
     );
     expect(getLine("cruising", weak, sessions(6, 5))).toBe(
-      "You did 6 sessions against 5 planned, with food well off your targets"
+      "You did 6 sessions against 5 planned in these 7 days, with food well off your targets"
     );
   });
 
@@ -257,16 +261,28 @@ describe("getLine — cruising state", () => {
      sessions alone can make it weak, and the food is not known. */
   it("adherenceWeak, sessions short: the count, and the food only when it must have been off", () => {
     expect(getLine("cruising", weak, sessions(3, 5))).toBe(
-      "You did 3 of 5 planned sessions, with food well off your targets"
+      "You did 3 of 5 planned sessions in these 7 days, with food well off your targets"
     );
     expect(getLine("cruising", weak, sessions(2, 4))).toBe(
-      "You did 2 of 4 planned sessions, with food well off your targets"
+      "You did 2 of 4 planned sessions in these 7 days, with food well off your targets"
     );
     expect(getLine("cruising", weak, sessions(2, 5))).toBe(
-      "You did 2 of 5 planned sessions"
+      "You did 2 of 5 planned sessions in these 7 days"
     );
     expect(getLine("cruising", weak, sessions(0, 1))).toBe(
-      "You did 0 of 1 planned session"
+      "You did 0 of 1 planned session in these 7 days"
+    );
+  });
+
+  /* The server counts food only once it is logged on 3 days
+     (`computeAdherenceScore`). Without that, the half-the-plan rule can
+     only be wrong: the plan the count reads has changed since. */
+  it("adherenceWeak, half the plan done, food not counted: the count alone", () => {
+    expect(getLine("cruising", weak, sessions(2, 4, false))).toBe(
+      "You did 2 of 4 planned sessions in these 7 days"
+    );
+    expect(getLine("cruising", weak, sessions(5, 5, false))).toBe(
+      "You did 5 of 5 planned sessions in these 7 days"
     );
   });
 
@@ -281,7 +297,7 @@ describe("getLine — cruising state", () => {
 
   it("adherence fine, sessions short: the count", () => {
     expect(getLine("cruising", ZERO_SIGNALS, sessions(3, 5))).toBe(
-      "You did 3 of 5 planned sessions"
+      "You did 3 of 5 planned sessions in these 7 days"
     );
   });
 

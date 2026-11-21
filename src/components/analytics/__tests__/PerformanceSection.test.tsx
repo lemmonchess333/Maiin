@@ -341,6 +341,9 @@ describe("the lead names its window (App1 Q13)", () => {
    usual week. The weeks are the server's (performanceLeadLines.cross.test.ts
    scores them); here the card draws what they say. */
 describe("the lead says what happened under Backing off and Steady", () => {
+  /** The profile's 3 lifts and 2 runs, and a week that plans them. */
+  const FIVE_A_WEEK = { perWeek: 5, thisWeek: 5, raceDate: null };
+
   /** The usual week exactly, 3 lifts and 2 runs, food far off target. */
   function offPlan(pi: number, band: string, deload: boolean) {
     const weeks = history(pi, band, deload);
@@ -354,7 +357,11 @@ describe("the lead says what happened under Backing off and Steady", () => {
         runSessions: 2,
         runKm: 28,
         runLongKm: 14.2,
-      },
+        // Food logged on 6 days, so the score counted it: far under target.
+        mealDaysLogged: 6,
+        avgDailyCalories: 1200,
+        avgDailyProtein: 40,
+      } as (typeof last)["aggregates"],
       signals: {
         ...last.signals,
         adherenceWeak: true,
@@ -365,11 +372,11 @@ describe("the lead says what happened under Backing off and Steady", () => {
 
   it("a week at the usual one, flagged by adherence, is not told it trained more", () => {
     serve(offPlan(73, "high", true));
-    renderSection({ plannedSessions: 5 });
+    renderSection({ plan: FIVE_A_WEEK });
     expect(within(lead()).getByText(/^Backing off$/)).toBeInTheDocument();
     expect(
       within(lead()).getByText(
-        "You did 5 of 5 planned sessions, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
       )
     ).toBeInTheDocument();
     expect(lead().textContent).not.toMatch(/more than your usual week/);
@@ -379,11 +386,11 @@ describe("the lead says what happened under Backing off and Steady", () => {
 
   it("Steady with every planned session done reads the food, not fewer sessions", () => {
     serve(offPlan(64, "moderate", false));
-    renderSection({ plannedSessions: 5 });
+    renderSection({ plan: FIVE_A_WEEK });
     expect(within(lead()).getByText(/^Steady$/)).toBeInTheDocument();
     expect(
       within(lead()).getByText(
-        "You did 5 of 5 planned sessions, with food well off your targets"
+        "You did 5 of 5 planned sessions in these 7 days, with food well off your targets"
       )
     ).toBeInTheDocument();
     expect(lead().textContent).not.toMatch(/fewer sessions/i);
@@ -395,6 +402,16 @@ describe("the lead says what happened under Backing off and Steady", () => {
     expect(
       within(lead()).getByText("Your sessions or food were well off your plan")
     ).toBeInTheDocument();
+  });
+
+  it("when this week's plan holds another count (race week), says no count", () => {
+    // Race week kept 1 lift and 3 runs of the profile's 3 and 4.
+    serve(offPlan(64, "moderate", false));
+    renderSection({ plan: { perWeek: 7, thisWeek: 4, raceDate: null } });
+    expect(
+      within(lead()).getByText("Your sessions or food were well off your plan")
+    ).toBeInTheDocument();
+    expect(lead().textContent).not.toMatch(/planned/);
   });
 });
 

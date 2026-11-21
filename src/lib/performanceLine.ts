@@ -103,12 +103,16 @@ function sportLine(s: PerformanceSignals): string | null {
   return null;
 }
 
-/** "You did 3 of 5 planned sessions", "You did 6 sessions against 5
- *  planned". A count of sessions, as adherence counts them. */
+/** "You did 3 of 5 planned sessions in these 7 days", "You did 6 sessions
+ *  against 5 planned in these 7 days". A count of sessions, as adherence
+ *  counts them, named for its window: Home's week runs Monday to Sunday,
+ *  and the two counts can differ. */
 function sessionCount({ done, planned }: WindowSessions): string {
-  if (done > planned)
-    return `You did ${done} sessions against ${planned} planned`;
-  return `You did ${done} of ${planned} planned ${planned === 1 ? "session" : "sessions"}`;
+  const count =
+    done > planned
+      ? `You did ${done} sessions against ${planned} planned`
+      : `You did ${done} of ${planned} planned ${planned === 1 ? "session" : "sessions"}`;
+  return `${count} in these 7 days`;
 }
 
 /**
@@ -120,16 +124,20 @@ function sessionCount({ done, planned }: WindowSessions): string {
  * carry only the average, so the sessions are counted here and the food
  * is read from what is left:
  *
- *   - half the plan or more done: the sessions score 50 or more, so an
- *     average under 50 needs the food under 50 too. Say both.
+ *   - half the plan or more done, and food counted: the sessions score 50
+ *     or more, so an average under 50 needs the food under 50 too. Say
+ *     both.
  *   - under half: the sessions alone can make it weak, and nothing here
  *     tells whether the food was off as well. Say the count only.
+ *   - food not counted (under 3 days): the score had no food in it, so
+ *     say nothing of it, whatever the count. Only a plan changed since
+ *     the score reaches this with half done.
  *   - no plan to count against: say both, as one or the other.
  */
 function offPlanLine(sessions: WindowSessions | null): string {
   if (!sessions) return "Your sessions or food were well off your plan";
   const count = sessionCount(sessions);
-  return sessions.done * 2 >= sessions.planned
+  return sessions.foodCounted && sessions.done * 2 >= sessions.planned
     ? `${count}, with food well off your targets`
     : count;
 }
@@ -141,7 +149,8 @@ export interface LineEvidence {
    *  proof: 100% of the usual week scores high. Absent reads as not. */
   trainedMore?: boolean;
   /** The 7 days' sessions against the plan (`sessionsAgainstPlan`).
-   *  Absent or null when the plan's count is not known. */
+   *  Absent or null when the plan's count is not known or not the plan's
+   *  this week (`plannedForWindow`). */
   sessions?: WindowSessions | null;
 }
 
@@ -216,7 +225,8 @@ export function getLine(
       if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
       /* Sessions missed with food on target keep adherence over 50 (the
          food's two factors hold it up), and Steady said "Holding a steady
-         rhythm" over 3 of 5 planned sessions. The count is the true line. */
+         rhythm" over 3 of 5 planned sessions. The count is the true line,
+         when the count is the plan's (`plannedForWindow`). */
       if (sessions && sessions.done < sessions.planned)
         return sessionCount(sessions);
       return "Holding a steady rhythm";
