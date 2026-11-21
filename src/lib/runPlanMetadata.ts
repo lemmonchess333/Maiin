@@ -53,10 +53,11 @@ import {
 // ─── Field types ─────────────────────────────────────────────────────
 
 /** A saved run's snapshot of `profile.runMode`. `starter`: Run9's starter
- *  goal, whose planned days are matched as any plan's are. */
+ *  goal, whose planned days are matched as any plan's are. A run saved
+ *  under the retired "structured" mode (App1 Q25) keeps it as history;
+ *  its readers ask only whether a run was race prep. */
 export type PlanMode =
   | "freeform"
-  | "structured"
   | "race_prep"
   | "starter"
   /** Run24 (3): a plan with no race date (`runModeWithPlan`). */

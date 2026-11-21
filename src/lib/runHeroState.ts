@@ -53,14 +53,16 @@ export type RunHeroState =
   | "race-prep-week"
   /** runPlan.phase === "recovery" and recoveryEndDate is in the future. */
   | "race-recovery"
-  /** Structured / race_prep, runDays exist, none startable. */
+  /** A plan (starter or race_prep), runDays exist, none startable. The
+   *  `structured-*` states above are named for the run mode they were
+   *  first drawn for (retired, App1 Q25); they are any non-race plan's. */
   | "all-done"
-  /** Structured / race_prep with no nextStartable and not all-done
+  /** A plan with no nextStartable and not all-done
    *  (e.g. plan empty / today is a planned rest day). */
   | "rest";
 
 export interface RunHeroStateInput {
-  mode: "freeform" | "structured" | "race_prep" | string | undefined;
+  mode: "freeform" | "race_prep" | "starter" | string | undefined;
   raceGoal: { distance: string; targetDate: string } | null | undefined;
   phase: string | null | undefined;
   recoveryEndDate: string | null | undefined;
@@ -142,7 +144,7 @@ export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
 
     if (isToday && isRace) return "race-today";
     if (isToday) {
-      // Structured + race_prep both land here for a non-race today.
+      // A starter plan and race_prep both land here for a non-race today.
       return mode === "race_prep" ? "race-prep-week" : "structured-today";
     }
     if (isPast) return "catch-up";
