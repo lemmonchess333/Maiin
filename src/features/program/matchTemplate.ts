@@ -21,6 +21,12 @@ import {
 } from "./startingLoads";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
 import { primaryJudgementForExercise } from "./volumeModel";
+import {
+  NO_EQUIPMENT_EXERCISE_IDS,
+  NO_EQUIPMENT_LAST_RESORT,
+  NO_EQUIPMENT_STAND_INS,
+} from "./noEquipment";
+import { hasPullUpBar } from "./programLabels";
 
 /**
  * How many times the week has each lift, kept as a filter swaps them, so a
@@ -151,13 +157,12 @@ export function restoreSwappedLifts(
   injuries: readonly string[],
   equipment: string,
   loadCtx?: StartingLoadContext,
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
-  const allowed = ownedKit(equipment, barbellAtHome);
-  const usable = (id: string) => {
-    const eq = getExerciseById(id)?.equipment;
-    return !allowed || eq === undefined || allowed.has(eq);
-  };
+  const owned = ownedKit(equipment, barbellAtHome, pullUpBar);
+  const usable = (id: string) => !owned || owned(id);
   return workouts.map((day) => {
     const ids = new Set(day.exercises.map((e) => e.exerciseId));
     return {
@@ -228,7 +233,9 @@ export function applyInjuryFiltersToWorkouts(
   equipment?: string,
   loadCtx?: StartingLoadContext,
   /** A barbell and a rack at home, beside the tier's kit. */
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -243,13 +250,7 @@ export function applyInjuryFiltersToWorkouts(
   const unsafe = Object.keys(CONTRAINDICATED).filter(
     (id) => contraindicatedFor(id, injuries).length > 0
   );
-  const allowedEq = ownedKit(equipment, barbellAtHome);
-  const isAvailable = allowedEq
-    ? (id: string) => {
-        const eq = getExerciseById(id)?.equipment;
-        return eq === undefined || allowedEq.has(eq);
-      }
-    : undefined;
+  const isAvailable = ownedKit(equipment, barbellAtHome, pullUpBar);
 
   const out = workouts.map(cloneDay);
   const week = weekLifts(out);
@@ -307,30 +308,102 @@ export function applyInjuryFiltersToWorkouts(
  * Which `Exercise.equipment` values each equipment tier can train with.
  * Derived from the EQUIPMENT_OPTIONS copy in ProgrammeSettings:
  *   full_gym  "Barbells, dumbbells, cables, machines"  → everything (no filter)
- *   home_gym  "Dumbbells, bench, pull-up bar"          → DB + bodyweight (+ KB)
+ *   home_gym  "Dumbbells, bench"                       → DB + bodyweight (+ KB)
  *   minimal   "Bands, bodyweight, maybe dumbbells"     → DB + bodyweight
  * home/minimal both EXCLUDE Barbell / Machine / Cable — the meaningful "no
  * barbell or machines" distinction the coarse equipment vocab supports. Bands
  * have no DB-vocab equivalent and are treated as bodyweight-adjacent.
  * REVERSIBLE product-data decision — adjust these sets if the tiers change.
+ *
+ * `no_equipment` is not a set of these values: "Bodyweight" takes in the
+ * pull-up bar, the dip bars and the bench, so that setup names its
+ * exercises instead (`noEquipment.ts`).
  */
 const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
   home_gym: new Set(["Dumbbells", "Bodyweight", "Kettlebell"]),
   minimal: new Set(["Dumbbells", "Bodyweight"]),
 };
 
+/** Whether a person can do an exercise with the kit they have. */
+type KitCheck = (exerciseId: string) => boolean;
+
+/** The bodyweight lifts that hang from a pull-up bar: what "A pull-up bar"
+ *  allows at home (Lift4 (11)). */
+export const PULL_UP_BAR_EXERCISE_IDS: ReadonlySet<string> = new Set([
+  "pull-ups",
+  "chin-ups",
+  "leg-raise",
+]);
+
 /**
- * The kit a person trains with: their equipment tier's, and a barbell with a
- * rack when they said they have one at home (Lift4 (11): "what do you
- * have?"). Undefined means everything (a full gym, or an unknown tier).
+ * The bodyweight lifts that need a bar at waist height: a barbell in a
+ * rack, at home. The inverted row is under one, or under a table, which no
+ * plan counts on (Lift4 (11), the owner's answer to its print: "who's going
+ * to pull the table?"). So a home gym or a Minimal plan has it only with
+ * "A barbell and a rack", and without one the slot takes a dumbbell row.
+ */
+export const RACK_EXERCISE_IDS: ReadonlySet<string> = new Set(["inverted-row"]);
+
+/** The end of the note a lift swapped for the kit carries in a plan the
+ *  person has: "Swapped from Barbell Row — not available with your
+ *  equipment." */
+const KIT_SWAP_NOTE_TAIL = " — not available with your equipment.";
+
+/**
+ * A new plan without the kit swaps' notes. Its lifts were chosen for the
+ * person's kit: "Swapped from Bench Press" names a lift they were never
+ * given. The swap itself is kept (`swappedFrom`), so a save with more kit
+ * still brings the original back. In a plan the person has, a swap moves a
+ * lift they had, and its note stays.
+ */
+export function withoutKitSwapNotes(
+  workouts: readonly WorkoutDay[]
+): WorkoutDay[] {
+  return workouts.map((day) =>
+    day.exercises.some((ex) => ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL))
+      ? {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL)) return ex;
+            const { notes: _swap, ...rest } = ex;
+            return rest;
+          }),
+        }
+      : day
+  );
+}
+
+/**
+ * What a person can do with their kit: their equipment tier's, a barbell
+ * with a rack when they said they have one at home (and with it the
+ * inverted row, `RACK_EXERCISE_IDS`), and the pull-ups, chin-ups and
+ * hanging leg raise only with a pull-up bar (Lift4 (11): "what do you
+ * have?"); or, with no equipment, the floor moves that setup names, and the
+ * bar's three when they said they have a doorway bar.
+ * Undefined means everything (a full gym, or an unknown tier). An exercise
+ * the catalogue doesn't know (a custom one) can't be judged, so it passes.
  */
 function ownedKit(
   equipment: string | undefined,
-  barbellAtHome?: boolean
-): ReadonlySet<string> | undefined {
+  barbellAtHome?: boolean,
+  pullUpBar?: boolean
+): KitCheck | undefined {
+  const bar = hasPullUpBar(equipment, pullUpBar);
+  if (equipment === "no_equipment") {
+    return (id) =>
+      getExerciseById(id) === undefined ||
+      NO_EQUIPMENT_EXERCISE_IDS.has(id) ||
+      (bar && PULL_UP_BAR_EXERCISE_IDS.has(id));
+  }
   const tier = equipment ? EQUIPMENT_AVAILABILITY[equipment] : undefined;
   if (!tier) return undefined;
-  return barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
+  const kit = barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
+  return (id) => {
+    if (!bar && PULL_UP_BAR_EXERCISE_IDS.has(id)) return false;
+    if (!barbellAtHome && RACK_EXERCISE_IDS.has(id)) return false;
+    const eq = getExerciseById(id)?.equipment;
+    return eq === undefined || kit.has(eq);
+  };
 }
 
 /**
@@ -357,23 +430,25 @@ export function applyEquipmentFilterToWorkouts(
   experience?: Experience,
   loadCtx?: StartingLoadContext,
   /** A barbell and a rack at home, beside the tier's kit. */
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
     exercises: d.exercises.map((e) => ({ ...e })),
   });
 
-  const allowed = ownedKit(equipment, barbellAtHome);
-  if (!allowed) return workouts.map(cloneDay); // full_gym / unknown → no filter
+  // Unknown id (custom exercise) → can't assess equipment, leave it be.
+  const isAvailable = ownedKit(equipment, barbellAtHome, pullUpBar);
+  if (!isAvailable) return workouts.map(cloneDay); // full_gym / unknown → no filter
 
   const isInjuryContra = (id: string): boolean =>
     contraindicatedFor(id, injuries).length > 0;
-  // Unknown id (custom exercise) → can't assess equipment, leave it be.
-  const isAvailable = (id: string): boolean => {
-    const eq = getExerciseById(id)?.equipment;
-    return eq === undefined || allowed.has(eq);
-  };
+  // With no equipment the bank's pools run short (a pull has one lift), so
+  // the setup's own stand-ins come next (`noEquipment.ts`).
+  const standIns =
+    equipment === "no_equipment" ? NO_EQUIPMENT_STAND_INS : undefined;
 
   const out = workouts.map(cloneDay);
   const week = weekLifts(out);
@@ -394,7 +469,7 @@ export function applyEquipmentFilterToWorkouts(
         id,
         exerciseDisplayName(id),
         loadCtx,
-        `Swapped from ${ex.name} — not available with your equipment.`
+        `Swapped from ${ex.name}${KIT_SWAP_NOTE_TAIL}`
       );
     };
     // Catalogue-pinned slots (direct calf work): their bank category pool
@@ -439,7 +514,7 @@ export function applyEquipmentFilterToWorkouts(
     // user owns and it is `bulgarian-split` (technical) — front squat is a
     // barbell, leg press and hack squat are machines. No predicate can
     // conjure an option that is not in the bank. See the backlog entry.
-    const eligible = (o: (typeof options)[number]) =>
+    const eligible = (o: { id: string }) =>
       o.id !== ex.exerciseId &&
       !usedIds.has(o.id) &&
       isAvailable(o.id) &&
@@ -456,12 +531,13 @@ export function applyEquipmentFilterToWorkouts(
     // bodyweight-floor rule): without the floor half, a beginner at
     // home/minimal whose gated lat pulldown lost its cable would be handed
     // straight back the pull-up the gate just removed.
-    let pick = firstUnderCap(
+    let pick: { id: string } | undefined = firstUnderCap(
       options.filter((o) => eligible(o) && offerableTo(experience, o))
     );
     // At home a beginner's scalable vertical pulls need a cable. Prefer
-    // the inverted row, then another available row if it already occupies
-    // this day. With only the inverted-row fallback, a five/six-day plan
+    // the inverted row where a rack is there to row under
+    // (`RACK_EXERCISE_IDS`), then another available row: a dumbbell row
+    // without one, or if the inverted row already occupies this day. With only the inverted-row fallback, a five/six-day plan
     // whose pull day already held it restored unassisted pull-ups through
     // the ungated fallback below. A row's load/angle can be reduced; a
     // pull-up's whole-body minimum cannot. Injury and equipment checks
@@ -476,11 +552,23 @@ export function applyEquipmentFilterToWorkouts(
         ...exerciseBank.horizontal_pull.filter((o) => o.id === "inverted-row"),
         ...exerciseBank.horizontal_pull.filter((o) => o.id !== "inverted-row"),
       ].filter(eligible);
+      // No row more than twice a week (`weekLifts`) where the level
+      // allows another, as every other pick; the level gate ranks above
+      // the cap. Complexity gives way only where the kit has no simpler
+      // row left for the day.
+      const atLevel = rows.filter((o) => offerableTo(experience, o));
       const row =
-        rows.find((o) => offerableTo(experience, o)) ??
+        atLevel.find((o) => week.underCap(o.id)) ??
+        atLevel[0] ??
         rows.find((o) => !o.bodyweightFloor);
       if (row) return swapTo(row.id);
     }
+    // With no equipment, the setup's stand-ins for the movement, at the
+    // person's level (`noEquipment.ts`): a plank for a cable crunch, a pike
+    // push-up for a lateral raise, a superman for a second hinge.
+    const fits = (standIns?.[ex.movementCategory] ?? []).filter(eligible);
+    const atLevel = fits.filter((o) => offerableTo(experience, o));
+    pick = pick ?? atLevel.find((o) => week.underCap(o.id)) ?? atLevel[0];
     // Complexity can give way when kit has no simpler choice, but never
     // reintroduce the bodyweight floor a beginner's level gate removed.
     pick =
@@ -488,6 +576,12 @@ export function applyEquipmentFilterToWorkouts(
       firstUnderCap(
         options.filter((o) => eligible(o) && !(beginner && o.bodyweightFloor))
       );
+    // A main lift takes a stand-in above the person's level rather than
+    // none: the day is built around it. A supporting lift with none at
+    // their level goes instead (`dropUnavailableAccessories`).
+    if (!pick && ex.isAccessory !== true) {
+      pick = fits.find((o) => week.underCap(o.id)) ?? fits[0];
+    }
     if (pick) return swapTo(pick.id);
     // No fitting alternative — keep but flag.
     return {
@@ -520,6 +614,11 @@ export function applyEquipmentFilterToWorkouts(
  * work. A main lift, or a supporting lift whose muscle nothing else on the
  * day trains, keeps the flag.
  *
+ * With no equipment a supporting lift goes whatever the day trains: the
+ * equipment filter has tried the setup's stand-ins, so nothing in the
+ * catalogue does its job without kit (a curl, a lateral raise, a second row
+ * beside the inverted row). A main lift stays for `standInForMissingKit`.
+ *
  * New plans only (`generateProgram`): a plan the person has is matched to
  * its saved state slot by slot, so a kit change there keeps the flag rather
  * than move every later lift's history up a place.
@@ -527,17 +626,17 @@ export function applyEquipmentFilterToWorkouts(
 export function dropUnavailableAccessories(
   workouts: readonly WorkoutDay[],
   equipment: string | undefined,
-  barbellAtHome?: boolean
+  barbellAtHome?: boolean,
+  /** A pull-up bar at home (`hasPullUpBar`). */
+  pullUpBar?: boolean
 ): WorkoutDay[] {
-  const kit = ownedKit(equipment, barbellAtHome);
-  if (!kit) return [...workouts];
-  const owned = (id: string) => {
-    const eq = getExerciseById(id)?.equipment;
-    return eq === undefined || kit.has(eq);
-  };
+  const owned = ownedKit(equipment, barbellAtHome, pullUpBar);
+  if (!owned) return [...workouts];
+  const nothing = equipment === "no_equipment";
   return workouts.map((day) => {
     const kept = day.exercises.filter((ex) => {
       if (!ex.isAccessory || owned(ex.exerciseId)) return true;
+      if (nothing) return false;
       const muscle = primaryJudgementForExercise(ex);
       return !day.exercises.some(
         (other) =>
@@ -551,4 +650,55 @@ export function dropUnavailableAccessories(
       ? day
       : { ...day, exercises: kept };
   });
+}
+
+/**
+ * With no equipment, a lift still left needing kit after the swaps takes
+ * the setup's last resort (`NO_EQUIPMENT_LAST_RESORT`): the first hold or
+ * floor lift that isn't on its day and that the person's injuries allow.
+ * That is a main lift whose whole movement the injuries rule out (a sore
+ * shoulder, elbow and wrist leave a push day no push), or, in a plan the
+ * person has, any lift with nothing in its movement to stand in for it.
+ *
+ * In a plan the person has, this stands where Lift14's drop does in a new
+ * one: the slot keeps its place, the lift its swap came from is recorded
+ * (`swappedFrom`), and a save with the kit back brings it back
+ * (`restoreSwappedLifts`), so a week away from the gym costs no lifts.
+ * A lift with no last resort left keeps the equipment filter's flag.
+ */
+export function standInForMissingKit(
+  workouts: readonly WorkoutDay[],
+  equipment: string | undefined,
+  injuries: readonly string[] = [],
+  loadCtx?: StartingLoadContext,
+  /** A doorway pull-up bar (`hasPullUpBar`): its lifts aren't missing. */
+  pullUpBar?: boolean
+): WorkoutDay[] {
+  if (equipment !== "no_equipment") return [...workouts];
+  const owned = ownedKit(equipment, false, pullUpBar);
+  if (!owned) return [...workouts];
+  const out = workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((e) => ({ ...e })),
+  }));
+  const week = weekLifts(out);
+  for (const [d, e] of swapOrder(out)) {
+    const ex = out[d].exercises[e];
+    if (owned(ex.exerciseId)) continue;
+    const onDay = new Set(out[d].exercises.map((x) => x.exerciseId));
+    const fits = NO_EQUIPMENT_LAST_RESORT.filter(
+      (id) => !onDay.has(id) && contraindicatedFor(id, injuries).length === 0
+    );
+    const id = fits.find((f) => week.underCap(f)) ?? fits[0];
+    if (!id) continue;
+    week.swapped(ex.exerciseId, id);
+    out[d].exercises[e] = replaceExercise(
+      ex,
+      id,
+      exerciseDisplayName(id),
+      loadCtx,
+      `Swapped from ${ex.name}${KIT_SWAP_NOTE_TAIL}`
+    );
+  }
+  return out;
 }
