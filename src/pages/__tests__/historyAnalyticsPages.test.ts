@@ -177,11 +177,12 @@ describe("Analytics — links into the pages", () => {
   });
 
   it("sends Train's workout-history link to the Lifting page", () => {
-    const program = readFileSync(
-      resolve(repoRoot, "src/pages/Program.tsx"),
+    // A finished day's record, on Train's Lift tab and a lift's own page.
+    const session = readFileSync(
+      resolve(repoRoot, "src/components/program/LiftSessionView.tsx"),
       "utf8"
     );
-    expect(program).toContain('"/history?view=lifting"');
+    expect(session).toContain('"/history?view=lifting"');
   });
 
   it("draws one control row on a page: the way back, with the range beside it", () => {
