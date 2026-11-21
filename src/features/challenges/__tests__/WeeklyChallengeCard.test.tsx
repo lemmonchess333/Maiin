@@ -193,4 +193,20 @@ describe("WeeklyChallengeCard — who has joined", () => {
     expect(band().textContent).toContain("3 joined");
     expect(within(band()).queryByText("Filling up")).toBeNull();
   });
+
+  /* A count still being read, or one that is not a number, says nothing,
+     and the band draws no line for it: its name is the last thing in it,
+     with no empty spaced line under it. */
+  it.each([
+    ["not yet read", undefined],
+    ["not a number", "12"],
+  ])("draws no line under the name while the count is %s", (_, count) => {
+    card({
+      weekly: { ...weekly, participantCount: count } as unknown as Challenge,
+    });
+    const name = within(band()).getByText(weekly.name);
+    expect(name.nextElementSibling).toBeNull();
+    expect(within(band()).queryByText("Filling up")).toBeNull();
+    expect(band().textContent).not.toMatch(/joined/);
+  });
 });

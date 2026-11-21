@@ -519,6 +519,84 @@ describe("the page Hosting serves", () => {
     });
     expect(res.statusCode).toBe(405);
   });
+
+  /* Legal audit §3.2: a public run must not be found by searching its
+     author's name. Every answer at /activity/** asks search engines not to
+     index it: the page in its head, and every answer in its headers, the
+     figures as JSON included. A link's preview still works: noindex asks a
+     search engine to leave the page out of its results, and the apps that
+     draw a pasted link's preview read its tags all the same. */
+  it("asks search engines not to index a post's page, whatever it shows", async () => {
+    const hidden = seed();
+    hidden["activities/run2"] = run({ visibility: "followers" });
+    const broken = memoryFirestore(seed());
+    broken.failures.set("get:activities/run1", new Error("unavailable"));
+    const cases = {
+      "a public post": await ask(memoryFirestore(seed()), "/activity/run1"),
+      "a post not shown": await ask(memoryFirestore(hidden), "/activity/run2"),
+      "no post": await ask(memoryFirestore(seed()), "/activity/nope"),
+      "a post that could not be read": await ask(broken, "/activity/run1"),
+      "the app's page not fetched": await ask(
+        memoryFirestore(seed()),
+        "/activity/run1",
+        { shell: null }
+      ),
+    };
+    const robots = /<meta name="robots" content="noindex" \/>/g;
+    for (const [name, res] of Object.entries(cases)) {
+      expect(res.statusCode, name).toBe(200);
+      expect(res.headers["X-Robots-Tag"], name).toBe("noindex");
+      expect((res.body.match(robots) || []).length, name).toBe(1);
+      // In the head, where a search engine reads it.
+      expect(res.body.indexOf('<meta name="robots"'), name).toBeLessThan(
+        res.body.indexOf("</head>")
+      );
+    }
+    // The preview is still the post's.
+    expect(cases["a public post"].body).toContain(
+      '<meta property="og:title" content="Sam’s run on Tropos" />'
+    );
+    const json = await answer(memoryFirestore(seed()), "run1");
+    expect(json.headers["X-Robots-Tag"]).toBe("noindex");
+  });
+
+  /* Whatever robots or googlebot tag the app's page carries, however it
+     is written, goes, so the page asks one thing: noindex. Only tags whose
+     name is robots or googlebot: a tag that merely mentions the word
+     stays. */
+  const KEPT = [
+    '<meta name="keywords" content="robots, googlebot" />',
+    '<meta name="robots-note" content="index" />',
+    '<meta data-name="robots" content="index" />',
+  ];
+  it.each([
+    ["name first", '<meta name="robots" content="index, follow" />'],
+    ["content first", '<meta content="index, follow" name="robots" />'],
+    ["single quotes", "<meta name='robots' content='index, follow'>"],
+    ["googlebot", '<meta name="googlebot" content="index" />'],
+    ["capitals, unquoted", "<META NAME=Robots CONTENT=index>"],
+  ])(
+    "keeps one robots tag when the app's page carries its own (%s)",
+    async (_name, tag) => {
+      const shell = SHELL.replace(
+        "<title>Tropos</title>",
+        `${tag}\n    ${KEPT.join("\n    ")}\n    <title>Tropos</title>`
+      );
+      for (const path of ["/activity/run1", "/activity/nope"]) {
+        const res = await ask(memoryFirestore(seed()), path, { shell });
+        const head = res.body.slice(0, res.body.indexOf("</head>"));
+        // The page's own tag is gone, and ours is there once.
+        expect(head, path).not.toContain(tag);
+        expect(
+          head.split('<meta name="robots" content="noindex" />').length - 1,
+          path
+        ).toBe(1);
+        // Delete-only: nothing else in the head is touched.
+        for (const kept of KEPT) expect(head, path).toContain(kept);
+        expect(head, path).toContain('<script src="/init.js"></script>');
+      }
+    }
+  );
 });
 
 describe("the app's page, fetched from Hosting", () => {

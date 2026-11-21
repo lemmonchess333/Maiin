@@ -147,21 +147,31 @@ describe("getLine — sharpening state", () => {
     expect(line).toBe("Lifting and running both strong");
   });
 
-  it("no signals: says what the band means, with no cheer", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS)).toBe(
+  /* The band is the whole score, so a high one is no proof of more
+     training: at 100% of the usual week the score is 79, high. The
+     comparison is said only on the week's own figures
+     (`trainedMoreThanUsual`, trainedMoreThanUsual.test.ts). */
+  it("no signals: says you trained more only when you did", () => {
+    expect(getLine("sharpening", ZERO_SIGNALS, true)).toBe(
       "You trained more than your usual week"
     );
+    expect(getLine("sharpening", ZERO_SIGNALS, false)).toBe("A strong 7 days");
+    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("A strong 7 days");
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
     expect(
-      getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
+      getLine(
+        "sharpening",
+        { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 },
+        true
+      )
     ).toBe("You trained more than your usual week");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
-      getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
+      getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 }, true)
     ).toBe("You trained more than your usual week");
   });
 });
