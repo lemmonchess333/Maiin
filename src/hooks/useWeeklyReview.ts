@@ -52,6 +52,7 @@ import {
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { isActiveMealDoc } from "@/lib/mealTotals";
+import { trainedMoreThanUsual } from "@/lib/performanceWeekBreakdown";
 import { logger } from "@/lib/logger";
 import { startDayKey } from "@/lib/startDay";
 import { trainingWeek, type TrainingWeekInput } from "@/lib/trainingWeek";
@@ -412,6 +413,11 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
                 ),
                 deloadRecommended: resolveDeloadRecommended(
                   perfData as Parameters<typeof resolveDeloadRecommended>[0]
+                ),
+                // The week's own figures against the usual week, never
+                // the band: the review says "more" only on these.
+                trainedMore: trainedMoreThanUsual(
+                  perfData as Parameters<typeof trainedMoreThanUsual>[0]
                 ),
               }
             : null;

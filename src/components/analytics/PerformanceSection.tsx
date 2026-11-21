@@ -27,7 +27,10 @@ import {
   scoreWindowLabel,
   takeMoreLine,
 } from "@/lib/performanceLine";
-import { performanceWeekBreakdown } from "@/lib/performanceWeekBreakdown";
+import {
+  performanceWeekBreakdown,
+  trainedMoreThanUsual,
+} from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
@@ -189,7 +192,11 @@ export default function PerformanceSection({
     : getCardColour(pi, loadBand, deloadRecommended);
   const line = establishing
     ? getEstablishingLine(currentWeek.signals)
-    : getLine(verb.state, currentWeek.signals);
+    : getLine(
+        verb.state,
+        currentWeek.signals,
+        trainedMoreThanUsual(currentWeek)
+      );
   const { measures } = performanceWeekBreakdown(currentWeek, {
     distanceUnit,
     liftUnit,
