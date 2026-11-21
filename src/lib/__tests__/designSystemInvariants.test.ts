@@ -400,7 +400,9 @@ describe("DS ratchets — surface-level drift", () => {
   // 292 → 294: Food's meal chip and the rows of its menu (Food11 call 3).
   // 294 → 292: the chip and its menu went again (11 November 2026): the
   // field asks for no meal.
-  const RAW_BUTTON_BASELINE = 292;
+  // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
+  // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
+  const RAW_BUTTON_BASELINE = 293;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length

@@ -515,7 +515,8 @@ describe("the no-equipment option", () => {
   };
 
   it.each([
-    "src/pages/Onboarding.tsx",
+    // Setup's kit question, shared with Add lifting since TrainWk1 6a.
+    "src/components/onboarding/LiftKitQuestion.tsx",
     "src/components/program/ProgrammeSettings.tsx",
   ])("says bodyweight on the floor, and names no kit: %s", (path) => {
     expect(copy(path)).toMatch(/bodyweight/i);

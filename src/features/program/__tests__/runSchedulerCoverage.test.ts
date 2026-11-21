@@ -4,7 +4,8 @@
  * RETARGETED 2026-07-25. The sweeps below drove `scheduleStructuredWeek`
  * and `generateRacePlan` — the V1 schedulers, which by then had ZERO
  * production callers. Every plan the app builds goes through
- * `scheduleStructuredWeekV2` / `generateRacePlanV2` via `planBuilder`.
+ * `generateRacePlanV2` via `planBuilder` (its structured-week sibling
+ * went with the retired structured run mode, App1 Q25).
  * So this suite swept 240 parameter combinations of code nobody runs,
  * and a templateId typo in the V2 generators would have sailed through
  * it: the exact ADR-0008 failure (the tested copy is not the running
@@ -36,7 +37,6 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  scheduleStructuredWeekV2,
   generateRacePlanV2,
   recoveryWeeksForDistance,
   type ScheduledRunDay,
@@ -71,20 +71,18 @@ const TEMPLATE_BY_ID = new Map(RUN_TEMPLATES.map((t) => [t.id, t]));
  * the feature depends on.
  */
 const SCHEDULER_EMITS = [
-  // Easy runs are a ladder in race plans (ramped) and fixed easy_30 in the
-  // structured week.
+  // Easy runs are a ladder in race plans (ramped).
   "easy_30",
   "easy_40",
   "easy_50",
-  // Quality ladders, chosen per WEEK by `qualityTemplateId`. The structured
-  // week still emits the base rungs only (tempo_20 / 5x1k / 8x400).
+  // Quality ladders, chosen per WEEK by `qualityTemplateId`.
   "tempo_20",
   "tempo_30",
   "tempo_40",
   "4x1k",
   "5x1k",
   "6x1k",
-  "8x400", // structured week (intervals, odd weeks, w%4>=2) + race plan taper phase
+  "8x400", // race plan taper phase
   // Race-plan long runs, chosen per WEEK by the ramp (longRunKmForWeek →
   // longTierForKm), not once per plan. Which tiers a given plan reaches
   // depends on its distance and volume knob; `longRunProgression.test.ts`
@@ -128,60 +126,6 @@ describe("RUN_TEMPLATES coverage — static set", () => {
       expect(tmpl).toBeDefined();
       expect(tmpl?.type).toBeTruthy();
     }
-  });
-});
-
-describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeekV2", () => {
-  it("emits only known templateIds across lift/run/week combinations", () => {
-    // Parameter space sized to hit every branch:
-    //   liftCount 0-5 × runCount 1-5 × weekNumber 0-7 = 240 combos.
-    //   Quality alternation triggers on weekNumber % 2 + weekNumber % 4.
-    const offenders: { id: string; ctx: string }[] = [];
-    for (let lift = 0; lift <= 5; lift++) {
-      for (let run = 1; run <= 5; run++) {
-        for (let week = 0; week <= 7; week++) {
-          const days = scheduleStructuredWeekV2({
-            weekSchedule: weekSchedule(lift, run),
-            weekNumber: week,
-            weekStart: WEEK_START,
-          });
-          for (const d of days) {
-            if (!KNOWN_TEMPLATE_IDS.has(d.templateId)) {
-              offenders.push({
-                id: d.templateId,
-                ctx: `lift=${lift} run=${run} week=${week}`,
-              });
-            }
-          }
-        }
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
-  it("every emitted day's .type matches the registry .type for its templateId", () => {
-    // If the scheduler emits `{ templateId: 'easy_30', type: 'long' }`
-    // the prefill writes plannedTemplateType: 'long' onto the run doc
-    // while the actual template is easy. This catches the silent
-    // type-fallback path.
-    const mismatches: ScheduledRunDay[] = [];
-    for (let lift = 0; lift <= 5; lift++) {
-      for (let run = 1; run <= 5; run++) {
-        for (let week = 0; week <= 7; week++) {
-          const days = scheduleStructuredWeekV2({
-            weekSchedule: weekSchedule(lift, run),
-            weekNumber: week,
-            weekStart: WEEK_START,
-          });
-          for (const d of days) {
-            const tmpl = TEMPLATE_BY_ID.get(d.templateId);
-            if (!tmpl) continue; // covered by the previous test
-            if (tmpl.type !== d.type) mismatches.push(d);
-          }
-        }
-      }
-    }
-    expect(mismatches).toEqual([]);
   });
 });
 

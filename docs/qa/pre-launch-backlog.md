@@ -614,7 +614,8 @@ confirm the triggers, the indexes and the share sheet.
       in a desktop browser, Share says "Link copied." Once
       `IOS_APP_ID_PREFIX` is set ("troposfit.com links open the app", below), tapping
       the link in Messages on a phone with Tropos opens that Space in the
-      app; without the app it opens the web app's sign-in.
+      app; without the app it opens troposfit.com's App Store page (App1
+      Q52; the web app's sign-in until then).
 - [ ] **Search.** Together → Spaces, type "brighton". Passing: Brighton
       Marathon and Brighton Half Marathon are listed, whatever the country
       chip says; tapping one opens its Space; Clear search brings the rows
@@ -1094,6 +1095,9 @@ Performance page (since Trim1 call 5, 2026-11-11: only while the score's
 details are open on the Analytics overview), and a return to the app re-claims an unchanged push token
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
+
+_Note 2026-11-15 (App1 Q16): the training-load curve is gone, so it reads
+nothing anywhere; the rows below stand for the other reads._
 
 - [ ] **Push survives a day of returns, and sign-out still works.** On a
       TestFlight build with push on: leave and return to the app thirty or
@@ -2822,6 +2826,22 @@ What is genuinely left is operator-only — there is no code change pending:
       the **Description** footer and the **Support URL** field. Do NOT submit
       with placeholder links.
 
+## troposfit.com is the App Store page, not the app (App1 Q52, 2026-11-15)
+
+The owner said yes on 15 November to Q52 after the audit found troposfit.com serving the whole app, sign-up included. The Firebase Hosting build is now `website.html` (`src/website/`): the page that points to the App Store, written out as `index.html` (`scripts/website/websiteEntry.ts`). The browser app stays on the GitHub Pages preview. Every address already handed out keeps answering; `src/website/__tests__/websiteAddresses.test.tsx` follows each through firebase.json and then draws the page. Only the live site and a phone can confirm the rest.
+
+- [ ] **The page.** After Deploy production, open `https://troposfit.com` in a private window on a phone and on a computer. Passing: the photographs, the lockup, "Your training and food, planned together", Apple's black "Download on the App Store" badge opening Tropos's App Store listing, Privacy Policy, Terms of Service and Support under it, Apple's trademark line (naming iPhone too), and no Get started or Sign in anywhere. View Source loads `/assets/website-….js`, not the app's `index-….js`.
+- [ ] **The legal and support pages.** `https://troposfit.com/privacy`, `/terms` and `/support`, signed out: each shows its own heading (the App Store listing's addresses, "App Store listing — public Terms/Privacy URLs" above), and Back on a page opened straight from its address leads to the front page.
+- [ ] **A shared post.** `https://troposfit.com/activity/<a public post's id>` shows the post's card, its author and Get Tropos, as "A shared post's public page (App1 Q51)" describes; a followers-only post's address shows "This post isn’t available".
+- [ ] **An invite.** `https://troposfit.com/?invite=<your code>` in Safari on a phone without Tropos. Passing: "<your first name> invited you to Tropos", the code as ABCD-2345, and Copy invite code copies it.
+- [ ] **A Space.** `https://troposfit.com/space/<a Space's id>` on a phone without Tropos: the App Store page with "Get Tropos on your iPhone to open this Space.", and the same for a Space post's address (`/space/<id>/post/<id>`)
+- [ ] **The checkout's return.** `https://troposfit.com/upgrade?checkout=success` shows "If you just paid, Pro is on for your account in the Tropos app." The parameter is unsigned, so the line claims no payment; no purchase can reach it yet ("The website sells through RevenueCat Billing on Stripe", below).
+- [ ] **The association file.** `https://troposfit.com/apple-app-site-association` and `/.well-known/apple-app-site-association` each answer 200 `application/json` naming `/activity/*` and `/space/*`, never the website's HTML. A Hosting build without `IOS_APP_ID_PREFIX` now fails rather than ship without the file.
+- [ ] **Universal links on a phone with Tropos.** Tap an invite link, a shared post's link and a Space's link from Messages. Passing: each opens the app, as before.
+- [ ] **A browser that used the web app here.** On a computer that opened troposfit.com's web app before, open `https://troposfit.com`. Passing: the App Store page, not the app, and after one more reload DevTools, Application, Service workers lists none for troposfit.com and Cache storage is empty: the old worker found the retiring one (`scripts/website/retired-sw.js`) at its address, which cleared the caches and unregistered, ending its push subscription.
+- [ ] **A password reset.** After the deploy, Forgot password in the app, then open the real email's link. Passing: it reaches Firebase's own handler (`/__/auth/action`), which sets the password, as before, and never the website's page.
+- [ ] **The badge is Apple's file (owner).** Download the App Store badges from Apple's Marketing Resources (developer.apple.com/app-store/marketing/guidelines) and compare the black US-UK SVG's SHA-256 with `src/assets/app-store/download-on-the-app-store-black.svg`'s, `a26fc5b38380272c92e9019a2eb8b45542a66814b3e2b203772db8904b9fb99f` (git blob `072b425a`). Apple's hosts could not be reached from the agent's sandbox, so the file came from public repositories that carry the same bytes.
+
 ## App Review submission checks (launch audit, 2026-11-18)
 
 What `docs/app-store/review-risk-audit.md` found that only the owner, a
@@ -2854,8 +2874,7 @@ answers are in `docs/app-store/submission-pack.md`.
       `location` and `bluetooth-central`.
 - [ ] **The demo account** (2.1(a)). Setup finished, email verified, a few
       weeks of workouts, runs, meals and weigh-ins, following someone, and a
-      member of one Space, joined from the Space's link while Spaces are
-      still quiet (`src/lib/enoughPeople.ts`). Its uid is on
+      member of one Space. Its uid is on
       `REVENUECAT_SANDBOX_UIDS` (if the guard stays) and
       `DISCOVERY_HIDDEN_UIDS`, then a Deploy production run.
 - [ ] **App Store Connect's new questions.** App Compliance → Regulated
@@ -2883,6 +2902,7 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
 
 - [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
+- [ ] **Before the Purchase Link goes live (App1 Q52, 15 November 2026):** troposfit.com no longer serves the app, so nothing on it can start this checkout. The return also needs a signed parameter: `?checkout=success` is unsigned, so anyone can type it, and until the return carries something the website can verify, the page can only say what is true if they paid. The website first needs either a signed-in Pro corner (an existing account signs in, then the checkout as that account, its `?checkout=success` return and Manage subscription) or an anonymous purchase the iPhone app redeems into the account (RevenueCat's redemption links, native work). The owner is choosing; either is its own PR. Until then `/upgrade` and `/settings/account` show the App Store page, and the web trial email's "sign in to Tropos on the web" steps (`functions/lib/trialReminderEmail.js`) and iOS Upgrade's "Manage your subscription at troposfit.com" point at nothing that manages a subscription.
 - [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
 - [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
 - [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
@@ -4502,7 +4522,8 @@ suites cover the logic; these need the release, the console and phones.
       week; each group in `leagueGroups` has 10 to 30 `memberUids` and a
       standing per member; `jobRuns/weeklyLeagueTurn` records a success.
       Before ten, the same run leaves `open: false` with the `joined`
-      count, and the card says "Leagues open when 10 people have joined."
+      count, and the card says "The league starts once 10 people have
+      joined." (worded so since App1 Q6, 2026-11-18)
       If it failed: Cloud Scheduler → Force run is safe (a second run does
       nothing twice).
 - [ ] **The second Monday settles the first.** Passing: every member of
@@ -4745,6 +4766,25 @@ Add rows' rules). Touch only, so a phone shows it.
       perfectly still. Passing: one medium haptic and the menu opens, and
       the exercise's history does not open behind it; a quick tap still
       opens the history; starting a scroll on a row never opens the menu.
+
+## A session opens its own page (TrainWk1 step 3, 2026-11-18)
+
+A lift's session (`/program/lift/:day`) and a run's (`/program/run/:date`)
+are pages of their own under Train, sharing Train's programme engine.
+Train's Lift tab still draws the lift's session under its day strip; the
+run card's ⋯ now opens the run's page where it opened the day's sheet, and
+an action there (Mark as done, Skip, Move, Restore) goes back to Train on
+that day. Unit tests render both pages; the iOS back gesture and the
+offline case only a phone shows.
+
+- [ ] **Back from a run's page.** On a TestFlight build, on Train's Run
+      tab, tap the ⋯ on a planned run's card, then swipe back from the
+      left edge. Passing: Train's Run tab, the same day selected, with no
+      skeleton flash on the way in or out.
+- [ ] **A change made offline shows on Train.** In flight mode, open a
+      run's page from its ⋯ and tap Skip this run. Passing: Train shows the
+      run skipped at once, and the skip holds once the phone is back
+      online.
 
 ## The water tile on the compositor (2026-11-09)
 
@@ -5025,6 +5065,13 @@ top of the Analytics overview, and "Score details" under it opens in place
 what the page held. The unit suites cover the words, the colours and the
 links; these need a phone.
 
+_Note 2026-11-15 (App1 Q10, Q16): the ring with the score, the six-week
+line and the training load's range pills described below have moved or
+gone. The ring is now the first card inside Score details, the six-week
+line and the load chart are gone, and the lead is the verdict over the
+bars. "The score in one place, one load model" below has the current
+checks; the link and tooltip rows here still apply._
+
 - [ ] **The ring holds its score at the largest text size.** With the
       phone's text size at its largest, open Analytics. Passing: the score
       sits inside the ring with room around it, the words wrap under the
@@ -5090,6 +5137,39 @@ Captured in Chromium at 393 and 320 px; a phone has not drawn them.
 - [ ] **An old link.** From Safari or a note, open a saved link to
       `/settings/training` in the installed app. Passing: Lift plan
       opens.
+
+## A sport added or removed in Lift plan and Run plan (TrainWk1 step 6a, 2026-11-18)
+
+Affects: Settings → Lift plan for someone with no lift days (Add lifting,
+setup's three lifting questions, one a screen), Settings → Run plan for
+someone with no running (Add running: setup's running question, then the
+goal cards with the 30-minute goal offered), and Stop lifting and Stop
+running at each editor's foot with one confirmation. Unit tests and the
+journey run them on the web; a phone has not drawn them.
+
+- [ ] **Add lifting on a phone.** As a runner, open Settings → Lift plan.
+      Passing: it opens on "How often will you lift?" with Continue above
+      the tab bar, not under it or the home indicator; Back and Continue
+      stack at the largest text size; Add lifting saves and the page turns
+      into the lift plan editor.
+- [ ] **The runs keep their days.** Before adding lifting, note the runner's
+      run days on Home's week. After, passing: the same days are run days,
+      and the lifts sit on the others.
+- [ ] **Add running on a phone.** As a lifter, open Settings → Run plan,
+      choose New to running. Passing: "30 minutes without stopping" is
+      chosen, Add running saves, and Train's Run tab shows the goal's
+      first runs.
+- [ ] **Stop running, then Stop lifting.** On a hybrid with no race, tap
+      Stop running. Passing: the confirmation opens over the tab bar,
+      Cancel changes nothing, Stop running takes the run days off Home's
+      week and every saved run stays in Progress. Then Lift plan's foot
+      reads "Your plan is lifting only. To stop lifting, add running
+      first." with no Stop lifting.
+- [ ] **Train the morning after a lift.** Finish a lift on Train, tap
+      Done, and leave the app on Train in the background overnight.
+      Passing: the next day, bringing the app back lands Train on the next
+      lift with Start workout; the same day, it still shows the lift just
+      finished as Completed.
 
 ## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
 
@@ -5333,6 +5413,11 @@ A person's sessions, bests, lifetime totals and exports stay free.
 Unit-tested; the capture specs that film 6M and the details now sign the
 test user in as Pro for the length of the capture.
 
+_Note 2026-11-15, updated 18 November (App1 Q10, Q16; the owner): the
+score's number is free and sits small in the lead beside "Last 7 days";
+Score details holds its card, its 12-week chart, average and breakdown,
+which are Pro. The training load chart is gone._
+
 - [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
       lock; tapping one opens the Pro page and leaves the range where it
       was; Score details shows "Pro" and opens the Pro page, not the fold.
@@ -5343,6 +5428,40 @@ test user in as Pro for the length of the capture.
       each locked one is read as "6M, Pro".
 - [ ] **After a trial starts.** Passing: every range and the details open
       at once, with no restart.
+
+## The score in one place, one load model (App1 Q10, Q12, Q13, Q16, 2026-11-15)
+
+Affects: the top of Progress (`PerformanceSection`, `LoadAgainstUsual`),
+Score details (`PerformanceDetails`) and the weekly review's first card.
+The lead is the verdict at hero size over the last 7 days' lifting and
+running against the usual week, with the 0–100 number small beside the
+window, free (the owner, 18 November); its card, 12-week chart, average
+and breakdown are under Score details, which is Pro (Q84); the
+minutes-based training load chart is gone. Unit-tested; the capture specs
+read the new lead and details on the emulator.
+
+- [ ] **A free account on Progress.** Passing: the top card reads "Last 7
+      days", a word such as Steady or Sharpening in large type, its line,
+      Lifting and Running each with a bar and a tick at the usual week,
+      and under them "No sign to ease off. Carry on with your plan" (or
+      "Ease off this week rather than add more" under Backing off); "Your
+      score 74" small at the top right of the card, never larger than the
+      word; Score details shows "Pro".
+- [ ] **A Pro account opens Score details.** Passing: "Your score" first,
+      the ring with the figure and "Last 7 days · out of 100", then "Your
+      score by week", Breakdown with the food logged, Load band and the
+      week average; no Training load card, and no Fitness, Fatigue or Form.
+- [ ] **Larger text.** Settings → Accessibility → Larger Text at the
+      largest step on a small iPhone. Passing: "Sharpening" stays one
+      word, a little smaller, and nothing runs past the card's edge
+      (iOS 15 has no container queries: there the word may break inside
+      the card instead).
+- [ ] **Back after a break.** On an account whose newest score is more
+      than a day old. Passing: the kicker names the window by its last day
+      ("7 days to 2 Aug"), not "Last 7 days".
+- [ ] **The weekly review.** Open a review for a week with training.
+      Passing: the first card ends on its verdict in words alone, with no
+      "performance" figure or change.
 
 ## The easy cue on easy and long runs (Run24 (12), 2026-11-13)
 
@@ -6326,6 +6445,54 @@ Unit-tested; no phone has drawn it.
       posts "completed a session" with no numbers. A saved routine or an empty
       workout offers no Share to circle there.
 
+## Circuit mode: the runner on a phone (Circ1, 2026-11-18)
+
+Affects: Train's Lift tab (the Circuit row under Empty workout), the new
+full-screen `/circuit` page (the picker, the runner, the end question and
+the finish) and a circuit's feed post. Unit-tested on a fake clock in jsdom; no phone has run one, and
+the iOS web view's screen lock, speech and haptics are only seen on a
+device.
+
+- [ ] **The screen stays awake.** On the iOS app, start a 10-minute circuit
+      and put the phone down without touching it. Passing: the screen stays
+      on to the end. The page asks for a screen wake lock on the native shell
+      too (`useWakeLock({ onNative: true })`) while the clock runs, and lets
+      it go on Pause; if the web view offers none, the screen sleeps after
+      the Auto-Lock time.
+- [ ] **Away and back.** Mid-work, switch to another app for about 10
+      seconds and come back. Passing: the runner shows the step the clock
+      says, with the right seconds left. Then switch away for two minutes.
+      Passing: on return the circuit is paused on the step it was left on,
+      with the seconds it had then, and the finish's minutes leave out the
+      time away. The voice says nothing while the app is in the background.
+- [ ] **Back asks.** In the browser, or with an Android back, press Back
+      mid-circuit. Passing: "End circuit?" opens and the clock stops; Keep
+      going carries on, and a second Back asks again.
+- [ ] **The voice.** With the ringer on, run a circuit. Passing: "First up,
+      Bodyweight Squat. Get ready." at the start, "Push-Ups. Go." at each
+      move, "Rest. Next, …" at each rest, "Last one. … Go." on the final
+      interval, "Switch sides." halfway through a Dumbbell Row (home gym,
+      20 minutes), and "Circuit done." at the end; the speaker
+      button mutes it.
+- [ ] **Haptics.** Passing: a tap at each work and rest, a light one at the
+      switch.
+- [ ] **Under 7 minutes.** End a circuit after a minute. Passing: "End
+      circuit?" says it won't be saved, End without saving goes back to Train,
+      and no workout appears in History.
+- [ ] **A save, online and offline.** Finish a 10-minute circuit, tap Easy and
+      Save circuit. Passing: "Circuit saved", back on Train, the week counts
+      one more session, and Home's streak counts the day. In flight mode:
+      "Circuit saved. It syncs when you’re back online.", and it appears once
+      the phone is back online. A first 7-minute circuit also ticks Home's
+      "Finish your first workout".
+- [ ] **The ladder.** Save a circuit rated Easy, then open Circuit again.
+      Passing: that circuit's row reads "45 s on, 15 s off".
+- [ ] **The post.** Save a circuit with automatic sharing on. Passing: the
+      finish says it was shared, and Done goes back to Train; on another
+      account that follows, the feed card reads the circuit's name, its
+      rounds and minutes, "40 s on, 20 s off", its first three moves and
+      "+2 more", with the first move's drawing. On a build from before
+      circuits, the same post reads as a workout of 5 exercises.
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
 Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of
@@ -6511,40 +6678,45 @@ In this order:
       the streak shows on Home and the profile badge; and in the console
       the new `users/{uid}` holds none of the fields above.
 
-## Leagues, challenges and Spaces quiet at small numbers (App1 Q6, 2026-11-14)
+## Leagues, challenges and Spaces from the first day, filling up (App1 Q6, 2026-11-18)
 
 Affects: Together (This week, Discover, the league card), the league page,
-the Spaces directory, the Feed's Spaces source and People's empty state,
-all gated by `useEnoughPeople` (`src/lib/enoughPeople.ts`): offered to
-someone not in them only once the server's counts say 10 or more people
-are training. Unit tests drive each surface on the Firestore fake; no phone
-or populated database has shown either side of the line.
+the Spaces directory, the Feed's Spaces source and People's empty state.
+The owner's "Show them, say filling up" reversed the 2026-11-14 section that
+stood here, whose rows checked surfaces hidden below 10 people: none is
+hidden now, whatever the count. Words: the league "The league starts once
+10 people have joined. 4 so far." (count and bar from 3, no number before
+`leagueStatus/current` exists) and "The league starts on Monday. 12 people
+have joined."; a challenge "Filling up" under 3 joined, "12 joined" from 3;
+a Space's card "Filling up" under 5 members (`src/lib/fillingUp.ts`). Unit
+tests drive each surface on the Firestore fake; captures were taken from a
+harness of the real components, since this sandbox has no Firebase CLI.
 
-- [ ] **A quiet Tropos.** On the production database while fewer than 10
-      people are training (the Firestore console: this month's and last
-      month's `challenges/group-goal-YYYY-MM-01.collectiveRunners` and
-      `leagueStatus/current.joined` all under 10), sign in on a phone with
-      an account that joined nothing. Passing: Together shows the race hero
-      (if bound) and Circles only, with no This week, no Discover, no league
-      card and no "coming soon" line; the Feed has two sources, Following
-      and Explore; People's "No suggestions yet" offers no Browse spaces;
-      opening `/league` lands on Together. Check in light and dark.
-- [ ] **What a person is in stays.** On the same quiet database, an account
-      that joined a challenge, a Space and the league. Passing: This week
-      shows the joined challenge with its progress and the league's waiting
-      card; "Your spaces" shows the joined Space; the Feed keeps its Spaces
-      source.
-- [ ] **It opens on its own.** On a populated database (the emulator rig
-      seeded with 10 or more runners in this month's community goal is
-      enough), the same account that joined nothing. Passing: Together's
-      This week offers the weekly challenge, the league card offers Join,
-      Discover shows races, Spaces, the community goal and the challenges,
-      and the Feed has its Spaces source, with no reload beyond reopening
-      Social.
-- [ ] **The 1st of a month.** On the first morning of a month on a
-      populated database, with this month's community goal still under 10
-      runners and last month's over. Passing: Together still offers its
-      challenges and Spaces.
+- [ ] **A new Tropos, on a phone.** On a database with no
+      `leagueStatus/current` and no challenge or Space over its floor (a
+      fresh emulator seeded with `seed:e2e` alone is one), sign in with an
+      account that joined nothing. Passing: Together shows This week (the
+      weekly challenge with "Filling up" under its name and Join challenge,
+      then the league card with "The league starts once 10 people have
+      joined." and Join the league), Circles, and Discover (races, Spaces
+      with "Filling up" on each interest card, the challenges to join);
+      the Feed has three sources, Following, Spaces and Explore; People's
+      "No suggestions yet" offers Browse spaces; `/league` shows the join
+      card. Check in light and dark, and at the largest text size.
+- [ ] **Joining while it fills.** On the same database, tap Join the league,
+      then join the weekly challenge and a Space. Passing: the league card
+      becomes "Weekly league" with the same line; the challenge and the
+      Space still say "Filling up" until the server's counts reach 3 and 5;
+      nothing says a number the console does not show.
+- [ ] **The counts arrive.** With `leagueStatus/current` at
+      `{ joined: 4, needed: 10, open: false }`, a weekly challenge at
+      `participantCount: 3` and a Space with 5 members. Passing: "The
+      league starts once 10 people have joined. 4 so far." over a bronze
+      bar, "3 joined" under the challenge's name, "5 members" on the
+      Space's card.
+- [ ] **App Review's account.** Signed in as the hidden review account on
+      production. Passing: Together, the league and the Spaces directory
+      are all drawn, each joinable, with no empty tab.
 
 ## One free week of a half or full marathon plan per account (Q85, 2026-11-13)
 
@@ -6915,3 +7087,41 @@ is deleted). Unit-tested on both sides (`Home.firstVisitGuide.test.tsx`,
       `ONE_ACTIVATION_JOURNEY_VERSION` and no `activationCohort`. Then the
       `activationJourneyV2Enabled` and `activationComparisonPercent` fields
       on `system/config` can be deleted: nothing reads them.
+
+## Report a segment, and the moderator's Remove segment (App Review 1.2, owner 2026-11-18)
+
+Someone else's segment page (`src/pages/Segment.tsx`) has a menu button
+beside the name with one item, Report segment, which opens the report form;
+its maker sees no menu and keeps Delete segment. The report goes to the
+queue against the segment's maker, whom the reporter is never told. On
+`/admin/moderation` a segment's card shows its name, "Made by" its maker's
+name and uid, the reporter's reason with its sub-reason, and Open segment;
+Remove segment deletes it as the maker's Delete does (everyone's times on
+it, its board, its owner record), and Restrict user restricts the maker.
+The report form also offers Child safety, Promotes eating disorders and
+Illegal content under Inappropriate content, and Copyright under
+Impersonation, for every kind of report. Unit-tested on both sides
+(`Segment.test.tsx`, `AdminModeration.test.tsx`, `ReportModal.test.tsx`,
+`reportTargets.cross.test.ts`, `functions/__tests__/reportCallables.test.js`);
+no phone has run it.
+
+- [ ] **The menu and the form on a phone.** On a TestFlight build, open a
+      segment someone else made (one your run was timed on: the run's
+      Segments card). Passing: the ⋯ button sits beside the name without
+      pushing a long name off the screen, at 2× text too; Report segment
+      opens the form titled "Report segment" with only Send to review
+      team below the note; Submit says "Report submitted." and the alert
+      email reads "New report: … (a segment)".
+- [ ] **Your own segment.** Passing: no ⋯ button, and Delete segment at the
+      foot as before.
+- [ ] **After Deploy production, Remove segment.** File a report on a test
+      segment from a second account, then on `/admin/moderation` check the
+      card's name, maker and reason, tap Open segment (its page opens), go
+      back and tap Remove segment. Passing: "Removed and resolved."; the
+      segment's page now says "Segment not found"; the run's Segments card
+      no longer lists it on either account; in the console
+      `segments/{id}`, `segmentOwners/{id}` and every
+      `users/*/segmentEfforts` with that `segmentId` are gone. A
+      `resolveReport.segment_cleanup_failed` log line means the sweep
+      stopped part way: the segment is still gone for everyone, and the
+      maker's Delete can't be repeated on it, so finish the sweep by hand.

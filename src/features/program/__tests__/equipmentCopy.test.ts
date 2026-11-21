@@ -29,7 +29,9 @@ function homeGymCopy(path: string): string {
 }
 
 const SURFACES = [
-  "src/pages/Onboarding.tsx",
+  // Setup's equipment question, which Lift plan's Add lifting asks too
+  // (TrainWk1 step 6). It was inline in `src/pages/Onboarding.tsx`.
+  "src/components/onboarding/LiftKitQuestion.tsx",
   "src/components/program/ProgrammeSettings.tsx",
 ];
 
