@@ -78,7 +78,7 @@ export default function StreakStandingBand({
           </div>
         )}
         <div className="w-full min-w-0 flex-1" aria-hidden="true">
-          <p className="text-sm font-semibold text-foreground break-words">
+          <p className="text-sm font-semibold font-mono tabular-nums text-foreground break-words">
             {lines.title}
           </p>
           {next && (
@@ -94,11 +94,13 @@ export default function StreakStandingBand({
           )}
           <div className="mt-1 text-xs text-muted-foreground">
             {lines.progress && (
-              <p className="tabular-nums break-words">{lines.progress}</p>
+              <p className="font-mono tabular-nums break-words">
+                {lines.progress}
+              </p>
             )}
             {lines.held && <p className="break-words">{lines.held}</p>}
             {lines.best && (
-              <p className="tabular-nums break-words">{lines.best}</p>
+              <p className="font-mono tabular-nums break-words">{lines.best}</p>
             )}
           </div>
         </div>
