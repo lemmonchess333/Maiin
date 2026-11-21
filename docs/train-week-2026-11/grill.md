@@ -749,6 +749,20 @@ taste or appetite decides more than the evidence does:
   skipped from a day stays on that day, skipped, from today on
   (`skippedHere`: the day it would be laid on were it not skipped), so
   its Manage sheet restores it where the skip was made.
+- STATUS 2026-11-18: step 3 built. A session opens its own page: a lift's
+  at `/program/lift/:day` (its day in the week, as Train's `?day=`) and a
+  run's at `/program/run/:date` (its date, as `?rday=`). Both sit under
+  `ProgramEngineRoute`, which holds one `useProgram()` for Train and the
+  two pages, and `Layout` keys the three alike, so a page opens with the
+  plan on screen and a change made there is the one Train shows. The
+  lift's session is `LiftSessionView` (with `useLiftSession` and
+  `LiftSessionOverlays` for its starts), which the Lift tab draws under its
+  day strip as before; the run's is `DayActionContent`, which Home's
+  `DayActionSheet` still wraps. The Run tab's ⋯ opens the run's page where
+  it opened the sheet; nothing else a person sees changed. `?start=1`,
+  `easier=1`, `express=1` and `resume=1` work on the lift's page as on
+  Train. Not built: steps 4 to 8; Home's sheet and first-week rows still
+  open as before.
 - STATUS 2026-11-18: step 6a built, the Settings side of adding and
   removing a sport (Q27, Q28, Q31 to Q33), under the TrainWk1 calls of
   18 November. `src/lib/sportChange.ts` gives the plan builder's input

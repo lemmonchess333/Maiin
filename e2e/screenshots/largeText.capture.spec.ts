@@ -253,6 +253,14 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading", { name: "Train" }));
       await measure(page, "train", width, found);
 
+      // A lift's own page (TrainWk1 call 2): the week's first lift.
+      await page.goto("program/lift/0");
+      await ready(
+        page,
+        page.getByRole("button", { name: "Reorder exercises", exact: true })
+      );
+      await measure(page, "lift-session", width, found);
+
       for (const view of ["", "lifting", "running", "body", "food"]) {
         await page.goto(view ? `history?view=${view}` : "history");
         await ready(page, nav);
@@ -1009,6 +1017,30 @@ test.describe("large text", () => {
         test.info().annotations.push({
           type: "skipped-surface",
           description: "move-run: no run left to move this week",
+        });
+      }
+
+      // A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's
+      // card: the day's run, or the week's next one. A week with none
+      // left to start has no ⋯; the plan page above still measured.
+      await page.goto("program?tab=run");
+      const manage = page.getByRole("button", {
+        name: "Manage session",
+        exact: true,
+      });
+      if (
+        await manage.waitFor({ state: "visible", timeout: 20_000 }).then(
+          () => true,
+          () => false
+        )
+      ) {
+        await manage.click();
+        await ready(page, page.getByText("Manage run", { exact: true }));
+        await measure(page, "run-session", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "run-session: no run left to start this week",
         });
       }
 

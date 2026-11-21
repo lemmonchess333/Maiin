@@ -113,6 +113,7 @@ describe("useMotionSafe", () => {
 const GATED = [
   "src/components/run/RunSetupModal.tsx",
   "src/pages/Program.tsx",
+  "src/components/program/LiftSessionView.tsx",
   "src/components/program/ExercisePicker.tsx",
   "src/features/challenges/ChallengeCard.tsx",
   "src/components/home/DayPeekCard.tsx",

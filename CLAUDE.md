@@ -76,6 +76,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
 - **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
+- **Train's one engine:** `/program` is a layout route (`ProgramEngineRoute`) holding one `useProgram()` for Train and a session's own page (`/program/lift/:day`, `/program/run/:date`, TrainWk1 call 2), read through `useProgramEngine`. `Layout` keys the three alike (`layoutKey`, `src/lib/sessionPages.ts`), so the engine stays mounted between them and a change made on a session's page is the one Train shows
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app). Route on `profileLoad` (`auth.tsx`), not on `profile === null`: an account with no profile yet is `missing` and goes to Onboarding, while one whose profile could not be read is `failed` and gets `ProfileUnavailable` (Try again, Sign out), because finishing setup replaces the programme
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
@@ -92,8 +93,10 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `History.tsx`                          | `/history`                         | Progress: an overview, with Lifting / Running / Body / Food pages (`?view=`)    |
 | `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
-| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                            |
+| `Program.tsx`                          | `/program`                         | Train; it and the session pages share one engine (`ProgramEngineRoute`)         |
 | `TrainingPlan.tsx`                     | `/program/plan`                    | Combined training week, rotation-based next lift and reviewed one-off run moves |
+| `LiftSession.tsx`                      | `/program/lift/:day`               | A lift's own page: the Lift tab's session alone (TrainWk1 call 2)               |
+| `RunSession.tsx`                       | `/program/run/:date`               | A run's own page: what the day sheet held for it, from the run card's ⋯         |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                          |
 | `EmptyWorkout.tsx`                     | `/empty-workout`                   | A lift with no plan day, built with Add exercise (Mob1); saves, moves no plan   |
 | `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)              |

@@ -6,7 +6,8 @@
  * ARIA that does not resolve, lists, labels, contrast) on the screens
  * people use and inside the sheets they open.
  *
- * The screens: Home, Food, Train, History and its Lifting page, Social
+ * The screens: Home, Food, Train, a lift's and a run's own page, History
+ * and its Lifting page, Social
  * (Together, again with a challenge's sheet open, and the Explore
  * feed), Settings and six of its sections, a
  * profile, a Space, an exercise, a run, a workout and the Weekly review.
@@ -256,6 +257,14 @@ test.describe("axe", () => {
 
     await open(page, "program", page.getByRole("heading", { name: "Train" }));
     await check(page, "train", found);
+
+    // A lift's own page (TrainWk1 call 2): the week's first lift.
+    await open(
+      page,
+      "program/lift/0",
+      page.getByRole("button", { name: "Reorder exercises", exact: true })
+    );
+    await check(page, "lift-session", found);
 
     await open(
       page,
@@ -583,6 +592,40 @@ test.describe("axe, other accounts", () => {
       page.locator(sheet).getByText("since your last run", { exact: false })
     );
     await check(page, "sheet-run-return", found, sheet);
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  /* A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's card,
+     as seed:fellbehind's race plan has this week's runs: the day's run, or
+     the week's next one. A week with none left to start has no ⋯. */
+  test("a run's own page", async ({ page }) => {
+    test.setTimeout(120_000);
+    const found: Finding[] = [];
+    await signInAsTestUser(page, {
+      email: "fellbehind-capture@tropos.test",
+      password: "test-password-123",
+    });
+    await page.goto("program?tab=run");
+    const manage = page.getByRole("button", {
+      name: "Manage session",
+      exact: true,
+    });
+    const shown = await manage
+      .waitFor({ state: "visible", timeout: 20_000 })
+      .then(
+        () => true,
+        () => false
+      );
+    if (!shown) {
+      test.info().annotations.push({
+        type: "skipped-surface",
+        description: "run-session: no run left to start this week",
+      });
+      return;
+    }
+    await manage.click();
+    await settle(page, page.getByText("Manage run", { exact: true }));
+    await check(page, "run-session", found);
     expect(unaccepted(found)).toEqual([]);
   });
 

@@ -1058,7 +1058,7 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 - **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
   title (the card's one big line, H2) + one quiet meta line + a single
   primary action (its own control, NOT the whole card) + an overflow that
-  opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
+  opens the run's own page (`/program/run/:date`, TrainWk1 call 2). Temporal eyebrow ("Up next" / "Due today" /
   "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
   eyebrow leads with its category and its title is the focus ("Pull · Up
   next" over "Lat focus", as on Home); its picture sits at the right, as
@@ -1113,7 +1113,8 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   `extras-pill-v1` coachmark went with it (the capture rigs' pre-dismissals
   of that key are now inert).
 - **`DayActionSheet`** — per-day command sheet (run + lift blocks of equal
-  visual weight). Race-day detection is by template **type** (`type ===
+  visual weight), Home's. Its content (`DayActionContent`) is also a run's
+  own page, run block only, opened from Train's run card. Race-day detection is by template **type** (`type ===
 "race"`), never `templateId === "race"` (race ids are `5k_race` …
   `marathon_race`). Template swap is scoped per-day ("Changes this day
   only.").

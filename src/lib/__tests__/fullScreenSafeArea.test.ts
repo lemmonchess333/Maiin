@@ -53,6 +53,35 @@ const OUTSIDE_LAYOUT: Record<string, string> = {
   "/settings/account": "App.tsx",
 };
 
+/**
+ * Where the `<Route>` opened at `start` closes: its `</Route>`, past the
+ * routes nested in it (Train's session pages sit inside `/program`).
+ */
+function closingRoute(app: string, start: number): number {
+  let depth = 0;
+  const tags = /<Route\b|<\/Route>/g;
+  tags.lastIndex = start;
+  for (let m = tags.exec(app); m; m = tags.exec(app)) {
+    if (m[0] === "</Route>") {
+      depth--;
+      if (depth === 0) return m.index;
+      continue;
+    }
+    // The opening tag ends at the first `>` outside its props' braces; a
+    // `/>` there closes it at once.
+    let braces = 0;
+    let i = m.index + m[0].length;
+    for (; i < app.length; i++) {
+      if (app[i] === "{") braces++;
+      else if (app[i] === "}") braces--;
+      else if (app[i] === ">" && braces === 0) break;
+    }
+    if (app[i - 1] !== "/") depth++;
+    tags.lastIndex = i;
+  }
+  throw new Error("a <Route> that never closes");
+}
+
 describe("full-screen layers clear the status bar", () => {
   it("pads every opaque full-screen layer by the safe area, on the layer or its top bar", () => {
     const layers: { where: string; clears: boolean }[] = [];
@@ -85,7 +114,7 @@ describe("full-screen layers clear the status bar", () => {
     const app = read("App.tsx");
     const start = app.indexOf("<Route element={<Layout />}>");
     expect(start, "App.tsx has no Layout route").toBeGreaterThan(-1);
-    const end = app.indexOf("</Route>", start);
+    const end = closingRoute(app, start);
     const outside = app.slice(0, start) + app.slice(end);
     const paths = [...outside.matchAll(/path="([^"]+)"/g)]
       .map((m) => m[1])

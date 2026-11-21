@@ -27,8 +27,19 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const strip = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 
+/* The day's session, which Train's Lift tab and a lift's own page both
+   draw (`LiftSessionView`, TrainWk1 step 3), and Train around it. */
 const code = strip(
+  readFileSync(
+    resolve(repoRoot, "src/components/program/LiftSessionView.tsx"),
+    "utf8"
+  )
+);
+const program = strip(
   readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8")
+);
+const liftPage = strip(
+  readFileSync(resolve(repoRoot, "src/pages/LiftSession.tsx"), "utf8")
 );
 const card = strip(
   readFileSync(
@@ -72,8 +83,14 @@ describe("the list renders with the day, ungated", () => {
     /* Anchored on the rows above: the day body has the list, and the
        page has no boolean deciding whether to show it. `reorderMode`
        chooses BETWEEN two row renderings; it does not gate them. */
-    expect(code).not.toMatch(/exercisesExpanded|ExerciseListFooter/);
-    expect(code).toMatch(/const \[reorderMode, setReorderMode\]/);
+    for (const source of [code, program, liftPage]) {
+      expect(source).not.toMatch(/exercisesExpanded|ExerciseListFooter/);
+    }
+    // Each screen holds drag mode for its header's Reorder and Done; the
+    // day takes it as it is.
+    expect(program).toMatch(/const \[reorderMode, setReorderMode\]/);
+    expect(liftPage).toMatch(/const \[reorderMode, setReorderMode\]/);
+    expect(code).toMatch(/\{reorderMode \? \(/);
   });
 
   it("offers no disclosure on the card that sits above it", () => {
@@ -143,6 +160,7 @@ describe("a bodyweight lift's load reads as weight added to it", () => {
   it("has one copy, in the shared row summary", () => {
     expect(lines(summary)).toHaveLength(1);
     expect(code).not.toMatch(/Last:\{" "\}/);
+    expect(program).not.toMatch(/Last:\{" "\}/);
   });
 
   it("marks a bodyweight lift's load as added, in the last sets and the prescription alike", () => {
@@ -197,29 +215,32 @@ describe("the day cells name the day, not the programme", () => {
     /* "Push A", "Pull B": a generated day's week name, and the part of its
        own name that varies for a day the person built. What the names are
        is pinned in liftDayLabel.test.ts. */
-    expect(code).toMatch(
+    expect(program).toMatch(
       /bottomLabel: generatedDayType\(w\.dayName\)\s*\?\s*weekDayNames\[i\]\s*:\s*dayFocusLabel\(w\.dayName\)/
     );
-    expect(code).toContain('from "@/lib/liftDayLabel"');
+    expect(program).toContain('from "@/lib/liftDayLabel"');
   });
 
   it("no longer keeps the half that repeats", () => {
     /* The split CATEGORY. A Full Body rotation labelled all three days
        "Full Body"; Push/Pull/Legs x2 labelled days 1 and 4 both "Push".
        Anchored on the positive above. */
-    expect(code).not.toMatch(/bottomLabel:\s*w\.dayName\.split/);
+    expect(program).not.toMatch(/bottomLabel:\s*w\.dayName\.split/);
   });
 });
 
 describe("the two repeats the card no longer carries", () => {
   it("does not count the exercises above a list of them", () => {
     expect(code).toMatch(/aboutMinutes\(estimatedMinutes\)/);
-    expect(code).not.toMatch(/\$\{exerciseCount\} exercises/);
-    expect(code).not.toMatch(/\bexerciseCount\b/);
+    for (const source of [code, program]) {
+      expect(source).not.toMatch(/\$\{exerciseCount\} exercises/);
+      expect(source).not.toMatch(/\bexerciseCount\b/);
+    }
   });
 
   it("does not number the day above a day cell already numbered", () => {
-    expect(code).toMatch(/<ProgrammeWeekSelector/);
+    expect(program).toMatch(/<ProgrammeWeekSelector/);
+    expect(program).not.toMatch(/· Day \$\{idx \+ 1\}/);
     expect(code).not.toMatch(/· Day \$\{idx \+ 1\}/);
   });
 });
