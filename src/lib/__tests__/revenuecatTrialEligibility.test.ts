@@ -8,6 +8,7 @@ import { INTRO_ELIGIBILITY_STATUS } from "@revenuecat/purchases-typescript-inter
  * revenuecatPurchase.test.ts does for purchases.
  */
 const mockPurchases = {
+  configure: vi.fn(),
   checkTrialOrIntroductoryPriceEligibility: vi.fn(),
 };
 
@@ -22,9 +23,12 @@ vi.mock("@capacitor/core", () => ({
 const MONTHLY = "com.tropos.app.pro.monthly";
 const YEARLY = "com.tropos.app.pro.yearly";
 
+/** The module, with the SDK set up as sign-in sets it up. */
 async function loadModule() {
   vi.resetModules();
-  return await import("../revenuecat");
+  const mod = await import("../revenuecat");
+  await mod.configureRevenueCat("u1");
+  return mod;
 }
 
 beforeEach(() => {
@@ -82,6 +86,25 @@ describe("rcTrialEligibility", () => {
     );
     const { rcTrialEligibility } = await loadModule();
     expect(await rcTrialEligibility([MONTHLY])).toBeNull();
+  });
+
+  it("waits for sign-in to set the SDK up before asking", async () => {
+    // Asked before set-up, the SDK refuses, and an offer that mounted at
+    // once kept "Try Pro free" for good.
+    mockPurchases.checkTrialOrIntroductoryPriceEligibility.mockResolvedValue({
+      [MONTHLY]: {
+        status: INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE,
+      },
+    });
+    vi.resetModules();
+    const mod = await import("../revenuecat");
+    const answer = mod.rcTrialEligibility([MONTHLY]);
+    await Promise.resolve();
+    expect(
+      mockPurchases.checkTrialOrIntroductoryPriceEligibility
+    ).not.toHaveBeenCalled();
+    await mod.configureRevenueCat("u1");
+    expect(await answer).toEqual({ [MONTHLY]: "ineligible" });
   });
 
   it("asks nothing without the key", async () => {
