@@ -103,34 +103,30 @@ describe("meal-photo retention — the quoted window matches the code", () => {
 
   it("the policy states the photo is device-only, not server-stored", () => {
     expect(PRIVACY_PROSE).toMatch(/only on the device that took it/);
-    expect(PRIVACY_PROSE).toMatch(
-      /does not store new food photos on its servers/
-    );
+    expect(PRIVACY_PROSE).toMatch(/does not keep meal photos on its servers/);
   });
 
-  it("says the meal photos earlier versions stored stay until the account is deleted", () => {
-    // Food8 uploaded scans to food-photos/{uid}/ until Food9. The rules keep
-    // them readable by their owner, deleting a meal leaves its photo, and
-    // only the account-deletion sweep removes the prefix. "Tropos does not
-    // store your food photos" was false for those accounts (fact-check of
-    // #3408).
-    expect(STORAGE_RULES).toMatch(
-      /match \/food-photos\/\{uid\}\/\{allPaths=\*\*\} \{ allow read: if request\.auth != null && request\.auth\.uid == uid; allow write: if false;/
-    );
-    expect(read("../../../functions/accountDeletion.js")).toMatch(
-      /"food-photos\/__UID__\/"/
-    );
-    for (const deleter of ["../mealEntry.ts", "../../hooks/useMeals.ts"]) {
-      expect(read(deleter)).not.toMatch(/firebase\/storage|deleteObject/);
-    }
-    expect(PRIVACY_PROSE).toMatch(
-      /Earlier versions of Tropos stored meal photos in Cloud Storage\. A photo stored then is still there, where only your account can open it, until you delete your account; deleting the meal does not remove it\./
-    );
-    expect(PRIVACY_PROSE).toMatch(
-      /meal photos stored by earlier versions of Tropos/
-    );
+  it("says flatly that no meal photo is kept on a server, and what happens to a deleted meal", () => {
+    // Prose only for now. Food9's STATUS of 21 November (#3463) deletes
+    // every photo older builds stored under food-photos/; the code that
+    // closes the prefix and stops the app reading photoUrl is #3465, and
+    // the purge is its workflow, run with apply. A deleted meal is purged
+    // 30 days after deletion (F5's STATUS, #3466), built on
+    // claude/deleted-meal-purge. Pin each sentence to its code once that
+    // code is on main: storage.rules' food-photos block read and write
+    // false, and the purge job's 30 days.
     expect(PRIVACY_PROSE).not.toMatch(
-      /meal photos are not on our servers|does not store your food photos/
+      /earlier versions? of Tropos stored|stored by earlier versions|deleting the meal does not remove it/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Tropos does not keep meal photos on its servers\. <\/strong>\{" "\} The photo stays on your phone and is sent to Google’s Gemini only to be read\./
+    );
+    // The page the sentence names is on main already.
+    expect(read("../../pages/settings/SettingsAccount.tsx")).toMatch(
+      /label="Recently deleted meals"/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /A meal you delete goes to Recently deleted meals \(Settings &gt; Account\), where for 30 days you can restore it or delete it permanently; after 30 days it is deleted for good\./
     );
   });
 
@@ -738,7 +734,7 @@ describe("who sees what, as the code lets them", () => {
       /match \/route-maps\/\{uid\}\/\{activityId\}\/\{name\}/
     );
     expect(PRIVACY_PROSE).toMatch(
-      /Cloud Storage \(progress, profile, post and Space photos, the map images of runs you share, and meal photos stored by earlier versions of Tropos\)/
+      /Cloud Storage \(progress, profile, post and Space photos, and the map images of runs you share\)/
     );
     expect(PRIVACY_PROSE).toMatch(/Run Map Images \(optional\)/);
   });

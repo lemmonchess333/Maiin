@@ -581,7 +581,10 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
-                retain your data while your account is active. Deletion freezes
+                retain your data while your account is active. A meal you delete
+                goes to Recently deleted meals (Settings &gt; Account), where
+                for 30 days you can restore it or delete it permanently; after
+                30 days it is deleted for good. Deleting your account freezes
                 new writes, removes your personal data, then removes your
                 sign-in. Failed cleanup is retried in the background. We retain
                 a minimal deletion record for 30 days and a protection record
@@ -612,13 +615,11 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   One limit on erasure, stated plainly:
                 </strong>{" "}
-                new meal photos are kept on your phone, not on our servers, and
-                no process of ours can reach a phone. Deleting your account
-                clears them from the device you delete from. If you have signed
-                in on another device, that device keeps its copies until they
-                expire after 90 days or you delete the app there. A meal photo
-                that an earlier version of Tropos stored on our servers is
-                deleted with your account (section 7).
+                meal photos are kept on your phone, not on our servers, and no
+                process of ours can reach a phone. Deleting your account clears
+                them from the device you delete from. If you have signed in on
+                another device, that device keeps its copies until they expire
+                after 90 days or you delete the app there.
               </li>
             </ul>
             <p>
@@ -655,14 +656,13 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Google (Firebase):</strong>{" "}
                 Firebase Authentication (sign-in), Cloud Firestore (your data),
-                Cloud Storage (progress, profile, post and Space photos, the map
-                images of runs you share, and meal photos stored by earlier
-                versions of Tropos), Cloud Functions (our server code), App
-                Check (which checks that requests come from the real app; on the
-                web it uses reCAPTCHA), Firebase Cloud Messaging (which delivers
-                notifications to your phone or browser), Google Analytics for
-                Firebase (usage analytics, section 2) and, in the iPhone app,
-                Firebase Crashlytics (crash reports, below).
+                Cloud Storage (progress, profile, post and Space photos, and the
+                map images of runs you share), Cloud Functions (our server
+                code), App Check (which checks that requests come from the real
+                app; on the web it uses reCAPTCHA), Firebase Cloud Messaging
+                (which delivers notifications to your phone or browser), Google
+                Analytics for Firebase (usage analytics, section 2) and, in the
+                iPhone app, Firebase Crashlytics (crash reports, below).
               </li>
               <li>
                 <strong className="text-foreground">
@@ -688,20 +688,17 @@ export default function PrivacyPolicy() {
                 for this service, for example to detect abuse. Google does not
                 use it to train its models.{" "}
                 <strong className="text-foreground">
-                  Tropos does not store new food photos on its servers.
+                  Tropos does not keep meal photos on its servers.
                 </strong>{" "}
-                After analysis, the photo is kept only on the device that took
-                it, so your meal diary can show it. It is not backed up to
-                iCloud, does not sync between your devices, and is deleted
+                The photo stays on your phone and is sent to Google’s Gemini
+                only to be read. After analysis, it is kept only on the device
+                that took it, so your meal diary can show it. It is not backed
+                up to iCloud, does not sync between your devices, and is deleted
                 automatically after 90 days, the furthest back the diary can be
                 viewed. Deleting the app, or getting a new phone, removes these
                 photos; your logged meals and their nutrition data are
-                unaffected. Earlier versions of Tropos stored meal photos in
-                Cloud Storage. A photo stored then is still there, where only
-                your account can open it, until you delete your account;
-                deleting the meal does not remove it. Barcode scans do not use
-                AI: the barcode is read on your phone and looked up in Open Food
-                Facts (below).
+                unaffected. Barcode scans do not use AI: the barcode is read on
+                your phone and looked up in Open Food Facts (below).
               </li>
               <li>
                 <strong className="text-foreground">Apple:</strong> Sign in with
