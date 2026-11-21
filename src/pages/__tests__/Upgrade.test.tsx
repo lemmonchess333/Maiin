@@ -373,7 +373,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
         .getAllByRole("listitem")
         .map((li) => li.textContent)
     ).toEqual([
-      "AI photo food logging, up to 100 scans a day",
+      "AI photo food logging, up to 15 scans a day",
       "A calorie target that adapts to you",
       "Macros that shift with your training",
       "Running paces that speed up as your races and sessions show you’re fitter",
