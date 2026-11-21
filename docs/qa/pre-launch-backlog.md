@@ -6916,3 +6916,41 @@ is deleted). Unit-tested on both sides (`Home.firstVisitGuide.test.tsx`,
       `ONE_ACTIVATION_JOURNEY_VERSION` and no `activationCohort`. Then the
       `activationJourneyV2Enabled` and `activationComparisonPercent` fields
       on `system/config` can be deleted: nothing reads them.
+
+## Report a segment, and the moderator's Remove segment (App Review 1.2, owner 2026-11-18)
+
+Someone else's segment page (`src/pages/Segment.tsx`) has a menu button
+beside the name with one item, Report segment, which opens the report form;
+its maker sees no menu and keeps Delete segment. The report goes to the
+queue against the segment's maker, whom the reporter is never told. On
+`/admin/moderation` a segment's card shows its name, "Made by" its maker's
+name and uid, the reporter's reason with its sub-reason, and Open segment;
+Remove segment deletes it as the maker's Delete does (everyone's times on
+it, its board, its owner record), and Restrict user restricts the maker.
+The report form also offers Child safety, Promotes eating disorders and
+Illegal content under Inappropriate content, and Copyright under
+Impersonation, for every kind of report. Unit-tested on both sides
+(`Segment.test.tsx`, `AdminModeration.test.tsx`, `ReportModal.test.tsx`,
+`reportTargets.cross.test.ts`, `functions/__tests__/reportCallables.test.js`);
+no phone has run it.
+
+- [ ] **The menu and the form on a phone.** On a TestFlight build, open a
+      segment someone else made (one your run was timed on: the run's
+      Segments card). Passing: the ⋯ button sits beside the name without
+      pushing a long name off the screen, at 2× text too; Report segment
+      opens the form titled "Report segment" with only Send to review
+      team below the note; Submit says "Report submitted." and the alert
+      email reads "New report: … (a segment)".
+- [ ] **Your own segment.** Passing: no ⋯ button, and Delete segment at the
+      foot as before.
+- [ ] **After Deploy production, Remove segment.** File a report on a test
+      segment from a second account, then on `/admin/moderation` check the
+      card's name, maker and reason, tap Open segment (its page opens), go
+      back and tap Remove segment. Passing: "Removed and resolved."; the
+      segment's page now says "Segment not found"; the run's Segments card
+      no longer lists it on either account; in the console
+      `segments/{id}`, `segmentOwners/{id}` and every
+      `users/*/segmentEfforts` with that `segmentId` are gone. A
+      `resolveReport.segment_cleanup_failed` log line means the sweep
+      stopped part way: the segment is still gone for everyone, and the
+      maker's Delete can't be repeated on it, so finish the sweep by hand.
