@@ -5,14 +5,12 @@
  * last of its kind and no further than the goal's peak; its short reps are
  * 200s at repetition pace; its opening week and the rotation's light turns
  * hold a fartlek or short hills in turn; a new runner's plan holds none of
- * them until they have run 40 minutes in one go (Run24 (8)). The retired
- * structured week takes a 10K's families in turn too. The rolling base
- * before a race far away is the same run (`rollingPlan.test.ts`).
+ * them until they have run 40 minutes in one go (Run24 (8)). The rolling
+ * base before a race far away is the same run (`rollingPlan.test.ts`).
  */
 import { describe, expect, it } from "vitest";
 import {
   generateRollingPlan,
-  scheduleStructuredWeekV2,
   type RunDifficultyPreset,
 } from "../runScheduler";
 import { ROLLING_GOALS, ROLLING_SPECS, type RollingGoal } from "../rollingPlan";
@@ -316,28 +314,5 @@ describe("a plan begun as a new runner (Run24 (8))", () => {
     );
     expect(firstTempo).toBe("tempo_20");
     expect(firstIntervals).toBe("4x1k");
-  });
-});
-
-describe("the structured week (Run24 (5))", () => {
-  it("takes a 10K's sessions in turn on the rungs it held, with no cruise intervals under its 20-minute tempo", () => {
-    const quality = (weekNumber: number) =>
-      scheduleStructuredWeekV2({
-        weekSchedule: generateSchedule(0, 4),
-        weekNumber,
-        weekStart: START,
-      }).find((run) => run.type === "tempo" || run.type === "intervals")!
-        .templateId;
-    expect(Array.from({ length: 9 }, (_, i) => quality(i + 1))).toEqual([
-      "5x1k",
-      "tempo_20",
-      "10k_pace_3x2k",
-      "progression_40",
-      "5x3min",
-      "tempo_20",
-      "10x200",
-      "progression_40",
-      "5x1k",
-    ]);
   });
 });

@@ -173,11 +173,13 @@ describe("MacroColumn — accessible toggle label", () => {
     );
   }
 
+  /* Each name starts with the tile's words as drawn (WCAG 2.5.3, Label
+     in Name), then the grams against the target and what a tap does. */
   it("in EATEN mode, offers to show what is remaining", () => {
     renderIn("eaten");
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 42g logged of 120g",
+        name: "42g logged Protein. 42g logged of 120g. Show protein remaining",
       })
     ).toBeInTheDocument();
   });
@@ -186,7 +188,7 @@ describe("MacroColumn — accessible toggle label", () => {
     renderIn("left");
     expect(
       screen.getByRole("button", {
-        name: "Show protein logged. 42g logged of 120g",
+        name: "78g left Protein. 42g logged of 120g. Show protein logged",
       })
     ).toBeInTheDocument();
   });
@@ -207,7 +209,7 @@ describe("MacroColumn — accessible toggle label", () => {
     );
     expect(
       screen.getByRole("button", {
-        name: "Show carbs remaining. 10g logged of 200g",
+        name: "10g logged Carbs. 10g logged of 200g. Show carbs remaining",
       })
     ).toBeInTheDocument();
   });
@@ -357,7 +359,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein logged. 0g logged of 150g",
+        name: "150g left Protein. 0g logged of 150g. Show protein logged",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
@@ -367,7 +369,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("eaten", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 0g logged of 150g",
+        name: "0g logged Protein. 0g logged of 150g. Show protein remaining",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
@@ -376,7 +378,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
   it("LEFT mode with the target reached draws the full bar at full strength", () => {
     const bar = renderAt("left", 150);
     expect(
-      screen.getByRole("button", { name: /150g logged of 150g$/ })
+      screen.getByRole("button", { name: /150g logged of 150g\./ })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("1");
   });
@@ -411,7 +413,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     for (const mode of ["left", "eaten"] as const) {
       const bar = renderAt(mode, 60);
       expect(
-        screen.getByRole("button", { name: /60g logged of 150g$/ })
+        screen.getByRole("button", { name: /60g logged of 150g\./ })
       ).toBeInTheDocument();
       expect(bar.style.opacity).toBe("1");
       cleanup();
@@ -600,7 +602,7 @@ describe("MacroColumn — the row form", () => {
     drawRow("eaten");
     expect(
       screen.getByRole("button", {
-        name: "Show carbs remaining. 172g logged of 273g",
+        name: "Carbs 172g logged. 172g logged of 273g. Show carbs remaining",
       })
     ).toBeInTheDocument();
   });

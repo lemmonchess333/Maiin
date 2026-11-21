@@ -90,20 +90,22 @@ it("emits a real JSON association only for a configured Hosting build", () => {
   expect(emit("A2B3C4D5E6", true).mock.calls).toEqual(emitted("A2B3C4D5E6"));
 });
 it.each([
-  [undefined, true],
-  ["", true],
+  [undefined, false],
+  ["", false],
   ["A2B3C4D5E6", false],
-] as const)(
-  "emits no placeholder for prefix %s, Hosting %s",
-  (prefix, hosting) => {
-    expect(emit(prefix, hosting)).not.toHaveBeenCalled();
+] as const)("emits nothing off Hosting, prefix %s", (prefix, hosting) => {
+  expect(emit(prefix, hosting)).not.toHaveBeenCalled();
+});
+it.each([undefined, "", " \n"])(
+  "fails a Hosting build whose prefix is %j, so Firebase's own file never stands in for ours",
+  (prefix) => {
+    expect(() => emit(prefix, true)).toThrow("IOS_APP_ID_PREFIX");
   }
 );
 it("reads the prefix as the iPhone build reads the secret, whitespace stripped", () => {
   expect(emit(" A2B3C4D5E6\n", true).mock.calls).toEqual(
     emitted("A2B3C4D5E6")
   );
-  expect(emit(" \n", true)).not.toHaveBeenCalled();
 });
 it("fails a configured Hosting build rather than emit an invalid association", () => {
   expect(() => emit("NOT_A_PREFIX", true)).toThrow("IOS_APP_ID_PREFIX");

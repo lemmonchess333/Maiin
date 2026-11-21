@@ -38,6 +38,8 @@ const pullDay = (): WorkoutDay => ({
 });
 
 describe("beginner pulling with limited equipment", () => {
+  // A barbell and a rack at home: the inverted row needs a bar at waist
+  // height (`RACK_EXERCISE_IDS`), so this day can hold one.
   it("uses a scalable row when the usual inverted-row regression is already in the session", () => {
     const input = [pullDay()];
     const before = JSON.stringify(input);
@@ -45,19 +47,41 @@ describe("beginner pulling with limited equipment", () => {
       input,
       "minimal",
       [],
-      "beginner"
+      "beginner",
+      undefined,
+      true
     );
     const replacement = out[0].exercises[2];
-    expect(replacement.exerciseId).toBe("chest-supported-db-row");
+    // With the rack, the barbell row is the next row the kit has.
+    expect(replacement.exerciseId).toBe("barbell-row");
     expect(replacement.movementCategory).toBe("horizontal_pull");
-    expect(getExerciseById(replacement.exerciseId)?.equipment).toBe(
-      "Dumbbells"
-    );
+    expect(getExerciseById(replacement.exerciseId)?.equipment).toBe("Barbell");
     expect(new Set(out[0].exercises.map((e) => e.exerciseId)).size).toBe(3);
     expect(JSON.stringify(input)).toBe(before);
     expect(
-      applyEquipmentFilterToWorkouts(out, "minimal", [], "beginner")
+      applyEquipmentFilterToWorkouts(
+        out,
+        "minimal",
+        [],
+        "beginner",
+        undefined,
+        true
+      )
     ).toEqual(out);
+  });
+
+  it("takes a dumbbell row for the inverted row without a rack to row under", () => {
+    const out = applyEquipmentFilterToWorkouts(
+      [pullDay()],
+      "minimal",
+      [],
+      "beginner"
+    );
+    const ids = out[0].exercises.map((e) => e.exerciseId);
+    expect(ids).not.toContain("inverted-row");
+    expect(ids).not.toContain("pull-ups");
+    expect(ids[0]).toBe("chest-supported-db-row");
+    expect(getExerciseById(ids[0])?.equipment).toBe("Dumbbells");
   });
 
   it("keeps pull-ups available to an experienced lifter", () => {

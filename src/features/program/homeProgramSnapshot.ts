@@ -34,7 +34,6 @@ export function homeProgramSnapshot(
     needsMaintenance:
       repaired !== programState ||
       !!backfillWeekScheduleIfMissing(profile) ||
-      profile.runMode === "structured" ||
       !sameStoredValue(raw, programState) ||
       !!(anchor && anchor < week) ||
       raceWeekNeedsBuilding(programState, profile, today) ||

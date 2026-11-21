@@ -10,7 +10,17 @@ const { isVolumeEligibleRun } = require("./runEligibility");
 
 const ACTIVATION_WINDOW_MS = 168 * 60 * 60 * 1000;
 
+/** A circuit counts once its session clock ran 7 minutes (Circ1 (6), (K)):
+ *  the app's CIRCUIT_MIN_SECONDS, pinned equal by
+ *  src/lib/__tests__/firstWeekActivation.cross.test.ts. */
+const CIRCUIT_MIN_SECONDS = 420;
+
 function isFirstWeekWorkoutEligible(workout) {
+  // A circuit's moves live in `circuit`, its exercises stay empty.
+  if (workout?.format === "circuit") {
+    const seconds = Number(workout.circuit?.activeSeconds);
+    return Number.isFinite(seconds) && seconds >= CIRCUIT_MIN_SECONDS;
+  }
   return (
     Array.isArray(workout?.exercises) &&
     workout.exercises.some(
@@ -80,6 +90,7 @@ function activationSport(athleteType) {
 
 module.exports = {
   ACTIVATION_WINDOW_MS,
+  CIRCUIT_MIN_SECONDS,
   isFirstWeekWorkoutEligible,
   activityWithinWindow,
   firstValidActivities,
