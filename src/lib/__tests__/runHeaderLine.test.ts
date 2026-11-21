@@ -23,7 +23,6 @@ describe("runHeaderLine", () => {
         runMode: "starter",
         raceGoal: null,
         todayKey: TODAY,
-        runsTarget: 3,
         starterStage: 3,
       })
     ).toBe("30 minutes without stopping · Stage 3 of 9");
@@ -33,7 +32,6 @@ describe("runHeaderLine", () => {
         runMode: "starter",
         raceGoal: null,
         todayKey: TODAY,
-        runsTarget: 3,
       })
     ).toBe("30 minutes without stopping");
   });
@@ -45,7 +43,6 @@ describe("runHeaderLine", () => {
         raceGoal: RACE,
         currentWeek: 2,
         totalWeeks: 12,
-        runsTarget: 3,
         todayKey: TODAY,
       })
       // currentWeek is 0-based on the wire and 1-based in the copy.
@@ -61,7 +58,6 @@ describe("runHeaderLine", () => {
         raceGoal: RACE,
         currentWeek: null,
         totalWeeks: null,
-        runsTarget: 3,
         todayKey: TODAY,
       })
     ).toBe("Race prep · 10K");
@@ -72,44 +68,18 @@ describe("runHeaderLine", () => {
       runHeaderLine({
         runMode: "race_prep",
         raceGoal: null,
-        runsTarget: 3,
         todayKey: TODAY,
       })
     ).toBe("Race prep · Set your race goal");
   });
 
-  // `structured` is legacy — Run9a locked the model to freeform + race
-  // overlay — but it is NOT dead. `run9Migration.migrateRunStateToRun9` sits
-  // in KNOWN_ORPHAN_EXPORTS, never wired, so unmigrated profiles still carry
-  // it. That is why this function takes the profile's own runMode rather
-  // than `resolveRunPlan`'s `RunMode` (which is freeform | race_prep): the
-  // narrower type would compile only by relabelling every such user
-  // "Free running · Start whenever". Keep this case until the migration runs.
-  it("pluralises the structured line", () => {
-    expect(
-      runHeaderLine({
-        runMode: "structured",
-        raceGoal: null,
-        runsTarget: 1,
-        todayKey: TODAY,
-      })
-    ).toBe("Structured · 1 run/week");
-    expect(
-      runHeaderLine({
-        runMode: "structured",
-        raceGoal: null,
-        runsTarget: 4,
-        todayKey: TODAY,
-      })
-    ).toBe("Structured · 4 runs/week");
-  });
-
+  // App1 Q25: a stored "structured" profile reaches this line as free
+  // running (`hydrateProfile`), so it reads as the free runner's.
   it("is calm for freeform", () => {
     expect(
       runHeaderLine({
         runMode: "freeform",
         raceGoal: null,
-        runsTarget: 0,
         todayKey: TODAY,
       })
     ).toBe("Free running · Start whenever");
@@ -130,7 +100,6 @@ describe("runHeaderLine — after race day", () => {
         raceGoal: MARATHON,
         ...lastWeek,
         todayKey: "2026-10-17",
-        runsTarget: 4,
       })
     ).toBe("Race prep · Marathon · Week 15/15");
   });
@@ -142,7 +111,6 @@ describe("runHeaderLine — after race day", () => {
         raceGoal: MARATHON,
         ...lastWeek,
         todayKey: "2026-11-01",
-        runsTarget: 4,
       })
     ).toBe("Race prep · Marathon");
   });
@@ -154,7 +122,6 @@ describe("runHeaderLine — after race day", () => {
       ...lastWeek,
       phase: "recovery",
       recoveryEndDate: "2026-11-14",
-      runsTarget: 4,
     };
     expect(runHeaderLine({ ...recovering, todayKey: "2026-10-18" })).toBe(
       "Race prep · Marathon · Recovery week 1/4"
@@ -199,7 +166,6 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
         raceGoal: resolved.raceGoal,
         currentWeek: programState.runPlan?.currentWeek,
         totalWeeks: programState.runPlan?.totalWeeks,
-        runsTarget: 3,
         todayKey: TODAY,
       })
     ).toBe("Race prep · 10K · Week 1/12");
@@ -213,7 +179,6 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
       runHeaderLine({
         runMode: profile.runMode!,
         raceGoal: resolved.raceGoal,
-        runsTarget: 3,
         todayKey: TODAY,
       })
     ).toBe("Race prep · 10K");
@@ -231,7 +196,6 @@ describe("runHeaderLine — fed by the resolver (the R4 regression)", () => {
       runHeaderLine({
         runMode: "race_prep",
         raceGoal: resolved.raceGoal,
-        runsTarget: 3,
         todayKey: TODAY,
       })
     ).toBe("Race prep · Set your race goal");
@@ -252,7 +216,6 @@ describe("runHeaderLine — a plan's lead-in week", () => {
         totalWeeks: 25,
         leadInWeek: "2026-10-26",
         todayKey: "2026-11-01",
-        runsTarget: 6,
       })
     ).toBe("Race prep · Marathon · Starts Mon 2 Nov");
     expect(
@@ -262,7 +225,6 @@ describe("runHeaderLine — a plan's lead-in week", () => {
         currentWeek: 0,
         totalWeeks: 25,
         todayKey: "2026-11-02",
-        runsTarget: 6,
       })
     ).toBe("Race prep · Marathon · Week 1/25");
   });

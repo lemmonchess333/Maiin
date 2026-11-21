@@ -72,7 +72,7 @@ const PAGES: {
     // this also holds that a saved link still lands on the details.
     name: "performance",
     path: "/Maiin/history?view=performance",
-    anchor: (page) => page.getByRole("heading", { name: "Performance Index" }),
+    anchor: (page) => page.getByRole("heading", { name: "Your score by week" }),
   },
   {
     name: "lifting",

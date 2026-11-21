@@ -52,9 +52,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
-  // Twelve people in the league trained lately: enough for challenges to
-  // be offered (App1 Q6). The quiet Tropos has its own tests.
-  seedFirestore({ "leagueStatus/current": { joined: 12 } });
   h.toastError.mockClear();
   h.toastSuccess.mockClear();
   seedFirestore({
@@ -87,7 +84,7 @@ async function openList() {
     </MemoryRouter>
   );
   await flushSnapshots();
-  return screen.findByRole("button", { name: "Join weekly challenge" });
+  return screen.findByRole("button", { name: "Join challenge" });
 }
 
 describe("weekly challenge membership", () => {
@@ -110,7 +107,7 @@ describe("weekly challenge membership", () => {
       screen.getByRole("button", { name: /Start today’s session/ })
     ).toBeInTheDocument();
     fireEvent.click(leave);
-    await screen.findByRole("button", { name: "Join weekly challenge" });
+    await screen.findByRole("button", { name: "Join challenge" });
     expect(readDoc(PATH)).toBeUndefined();
     expect(
       screen.queryByRole("button", { name: "Leave weekly challenge" })
@@ -150,7 +147,7 @@ describe("weekly challenge membership", () => {
     await waitFor(() => expect(leave).toBeEnabled());
     expect(readDoc(PATH)).toBeDefined();
     fireEvent.click(leave);
-    await screen.findByRole("button", { name: "Join weekly challenge" });
+    await screen.findByRole("button", { name: "Join challenge" });
     expect(readDoc(PATH)).toBeUndefined();
   });
 
@@ -175,9 +172,7 @@ describe("weekly challenge membership", () => {
     expect(
       await screen.findByRole("button", { name: "Leave weekly challenge" })
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Join challenge" })).toBeNull();
   });
 });
 
@@ -198,9 +193,7 @@ describe("the weekly challenge in its last day", () => {
     expect(
       await screen.findByText("Ends tonight. The next one starts Monday.")
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Join challenge" })).toBeNull();
     // The line takes the countdown's place rather than sitting beside it.
     expect(screen.queryByText(/hours? left|min left/)).toBeNull();
   });
@@ -375,9 +368,7 @@ describe("the featured monthly challenge", () => {
       .filter((b) =>
         /^Join/.test(b.getAttribute("aria-label") ?? b.textContent ?? "")
       );
-    expect(joins.map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Join weekly challenge",
-    ]);
+    expect(joins.map((b) => b.textContent)).toEqual(["Join challenge"]);
     expect(discoverList().textContent).not.toMatch(
       /Running|Lifting|Run or lift/
     );
@@ -391,7 +382,7 @@ describe("the featured monthly challenge", () => {
     );
     await flushSnapshots();
     const join = await screen.findByRole("button", {
-      name: "Join weekly challenge",
+      name: "Join challenge",
     });
     expect(join.className).toContain("bg-muted");
     expect(join.className).not.toContain("bg-primary-strong");
@@ -498,12 +489,10 @@ describe("the section has no standing intro", () => {
   });
 });
 
-/* App1 Q6: below ten people training on Tropos, Together offers no
-   challenge, no community goal and no Discover; what the person joined
-   stays, under This week. The Spaces slot stands for the directory, which
-   draws the person's own Spaces itself; it is drawn once the page knows
-   which Tropos it is on, so it anchors each test. */
-describe("at small numbers", () => {
+/* App1 Q6: on a new Tropos, with no league counted and almost nobody in
+   any challenge, Together offers everything it offers on a busy one, and a
+   challenge with fewer than 3 people says it is filling up. */
+describe("on a new Tropos", () => {
   const MONTH = {
     type: "monthly",
     startDate: Timestamp.fromDate(new Date("2026-09-01T00:00:00Z")),
@@ -513,7 +502,6 @@ describe("at small numbers", () => {
 
   beforeEach(() => {
     seedFirestore({
-      "leagueStatus/current": { joined: 3 },
       "challenges/monthly-2026-09-01": {
         ...MONTH,
         name: "September Mileage",
@@ -530,81 +518,39 @@ describe("at small numbers", () => {
         icon: "footprints",
         collectiveTarget: 1000,
         collectiveMeters: 42_000,
-        collectiveRunners: 6,
+        collectiveRunners: 2,
         tiers: { bronze: 1000, silver: 1000, gold: 1000 },
       },
     });
   });
 
-  function openQuiet() {
+  it("offers This week, the league and Discover, with Join, and the weekly challenge says it is filling up", async () => {
     render(
       <MemoryRouter>
-        <ChallengeList spaces={<p>Your spaces slot</p>} />
+        <ChallengeList
+          spaces={<p>Spaces slot</p>}
+          league={<p>League slot</p>}
+        />
       </MemoryRouter>
     );
-    return screen.findByText("Your spaces slot");
-  }
-
-  it("offers nothing to someone in nothing: no This week, no Discover, no Join", async () => {
-    await openQuiet();
-    expect(screen.queryByRole("heading", { name: "This week" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Discover" })).toBeNull();
+    await flushSnapshots();
     expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
-    ).toBeNull();
-    expect(
-      screen.queryByRole("list", { name: "Challenges to join" })
-    ).toBeNull();
-    expect(screen.queryByText("Together: 1,000 km")).toBeNull();
-    expect(screen.queryByText(/No active challenges/)).toBeNull();
-  });
-
-  it("keeps what the person joined, under This week", async () => {
-    seedFirestore({
-      [PATH]: {
-        currentValue: 1,
-        tierAchieved: null,
-        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
-        displayName: "Test member",
-      },
-      "challenges/monthly-2026-09-01/participants/weekly-member": {
-        currentValue: 4,
-        tierAchieved: null,
-        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
-        displayName: "Test member",
-      },
-    });
-    await openQuiet();
-    expect(
-      await screen.findByRole("heading", { name: "This week" })
+      await screen.findByRole("button", { name: /^Join (weekly )?challenge$/ })
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole("button", { name: "Leave weekly challenge" })
+      screen.getByRole("heading", { name: "This week" })
     ).toBeInTheDocument();
-    const yours = screen.getByRole("list", { name: "Your challenges" });
-    expect(within(yours).getByText("September Mileage")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Discover" })).toBeNull();
-    expect(screen.queryByText("Together: 1,000 km")).toBeNull();
-  });
-
-  it("offers them all once ten people are training", async () => {
-    seedFirestore({ "leagueStatus/current": { joined: 10 } });
-    render(
-      <MemoryRouter>
-        <ChallengeList spaces={<p>Your spaces slot</p>} />
-      </MemoryRouter>
-    );
-    expect(
-      await screen.findByRole("button", { name: "Join weekly challenge" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Discover" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Filling up")).toBeInTheDocument();
+    expect(screen.getByText("League slot")).toBeInTheDocument();
+    const discover = screen.getByRole("heading", { name: "Discover" });
+    expect(discover).toBeInTheDocument();
+    expect(screen.getByText("Spaces slot")).toBeInTheDocument();
     expect(
       within(
         screen.getByRole("list", { name: "Challenges to join" })
       ).getByText("September Mileage")
     ).toBeInTheDocument();
+    // The community goal, once someone has added to it.
     expect(screen.getByText("Together: 1,000 km")).toBeInTheDocument();
   });
 });

@@ -193,7 +193,8 @@ import {
 } from "@/lib/firstSession";
 import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
-import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
+import { firstSetBody } from "@/lib/firstGuide";
+import { nothingToLoad } from "@/lib/homeHero";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
 import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
@@ -455,7 +456,12 @@ export default function WorkoutSession({
   const [prescription, setPrescription] = useState<SessionPrescription>(
     () =>
       initialDraft?.prescription ??
-      sessionPrescription(initialDay, initialCompletionId, progressionBaseline)
+      sessionPrescription(
+        initialDay,
+        initialCompletionId,
+        progressionBaseline,
+        profile?.equipment
+      )
   );
   const [sessionProgrammeContext] = useState(
     initialDraft?.programmeContext ?? programmeContext
@@ -1050,8 +1056,9 @@ export default function WorkoutSession({
    * `sessionComplete` alone, so duration kept its `useState(0)` initial and
    * the completion screen read "0m". That 0 does not stay cosmetic: it is
    * sent in the save payload, where `useProgram` substitutes a fabricated
-   * `completedSetCount * 3`, which then feeds the calorie estimate and the
-   * training-load series. One entry point makes the pair un-droppable.
+   * `completedSetCount * 3`, which then feeds the calorie estimate and every
+   * figure read from the session's minutes. One entry point makes the pair
+   * un-droppable.
    */
   const completeSession = useCallback(() => {
     // Opened before the completion screen renders, so everything the finish
@@ -2166,7 +2173,8 @@ export default function WorkoutSession({
     const fresh = sessionPrescription(
       initialDay,
       initialCompletionId,
-      progressionBaseline
+      progressionBaseline,
+      profile?.equipment
     );
     setPrescription(fresh);
     setSkippedRows({});
@@ -2342,7 +2350,10 @@ export default function WorkoutSession({
           !editingSet &&
           (!rest || setHelpRequest > 0)
         }
-        body={autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST}
+        body={firstSetBody({
+          autoRest,
+          nothingToLoad: nothingToLoad(day.exercises),
+        })}
       />
       {editingSet && (
         <EditSetSheet

@@ -4,9 +4,9 @@
  * move down, the time left in the week, and Leave the league behind a
  * confirmation. Someone blocked either way is left out of the list while
  * the places still count them. Firestore runs on the one fake (ADR-0009);
- * the callable is stubbed; dates come from the clock. Until Tropos has
- * enough people for a league (App1 Q6), someone who has not joined is sent
- * back to Together rather than offered one.
+ * the callable is stubbed; dates come from the clock. Before groups are
+ * made (App1 Q6) the page says what the league starts at and how many are
+ * in so far, and someone who has not joined can join here.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,7 +17,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 
 const H = vi.hoisted(() => ({
   blocked: new Set<string>(),
@@ -59,7 +59,6 @@ import { Timestamp } from "firebase/firestore";
 import League from "../League";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 import { localWeekKey } from "@/lib/dateHelpers";
-import { communityGoalIds } from "@/lib/enoughPeople";
 
 const WEEK = localWeekKey(new Date());
 
@@ -222,18 +221,19 @@ describe("Leave the league", () => {
 });
 
 describe("before a group", () => {
-  it("someone who has not joined is offered Join, with what it shows", async () => {
+  it("someone who has not joined is offered Join, with what it shows and what it starts at (App1 Q6)", async () => {
     H.profile = { uid: "me" };
     seedFirestore({
       "leagueStatus/current": { joined: 4, needed: 10, open: false },
-      // Twelve people ran on Tropos this month: enough for a league.
-      [`challenges/${communityGoalIds(new Date())[0]}`]: {
-        collectiveRunners: 12,
-      },
     });
     renderPage();
     expect(
       await screen.findByRole("heading", { name: "Weekly leagues" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The league starts once 10 people have joined. 4 so far."
+      )
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Join the league" })
@@ -251,57 +251,14 @@ describe("before a group", () => {
     renderPage();
     expect(
       await screen.findByText(
-        "Leagues open when 10 people have joined. 4 so far."
+        "The league starts once 10 people have joined. 4 so far."
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "People who have joined" })
+    ).toHaveAttribute("aria-valuenow", "4");
     expect(
       screen.getByRole("button", { name: "Leave the league" })
     ).toBeInTheDocument();
-  });
-});
-
-describe("at small numbers", () => {
-  function Where() {
-    const { pathname, search } = useLocation();
-    return <p>{`At ${pathname}${search}`}</p>;
-  }
-
-  it("does not promise a way back to someone leaving", async () => {
-    seedFirestore({
-      "leagueStatus/current": { joined: 4, needed: 10, open: false },
-      "leagueMembers/me": { tier: "bronze", groupId: null, weekKey: null },
-    });
-    renderPage();
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Leave the league" })
-    );
-    const dialog = await screen.findByRole("alertdialog");
-    expect(
-      within(dialog).getByText(
-        /Social offers the league again once 10 people are training on Tropos\./
-      )
-    ).toBeInTheDocument();
-    expect(within(dialog).queryByText(/You can join again/)).toBeNull();
-  });
-
-  it("takes someone who has not joined back to Together, offering nothing", async () => {
-    H.profile = { uid: "me" };
-    seedFirestore({
-      "leagueStatus/current": { joined: 4, needed: 10, open: false },
-    });
-    render(
-      <MemoryRouter initialEntries={["/league"]}>
-        <Routes>
-          <Route path="/league" element={<League />} />
-          <Route path="/social" element={<Where />} />
-        </Routes>
-      </MemoryRouter>
-    );
-    expect(
-      await screen.findByText("At /social?tab=together")
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Join the league" })
-    ).toBeNull();
   });
 });

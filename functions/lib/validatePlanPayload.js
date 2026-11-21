@@ -39,12 +39,11 @@ const VALID_RUN_STATUSES = new Set([
   // "freeform_extra" lives on the run doc itself via planMetadata.
 ]);
 
-const VALID_RUN_MODES = new Set([
-  "freeform",
-  "structured",
-  "race_prep",
-  "starter",
-]);
+// The retired "structured" mode (App1 Q25) is refused, on the profile and
+// on the plan. Free running holds a plan only with no race date
+// (`rolling`, Run24 (3)).
+const VALID_RUN_MODES = new Set(["freeform", "race_prep", "starter"]);
+const VALID_RUN_PLAN_MODES = new Set(["race_prep", "starter", "rolling"]);
 
 /** A starter plan's stages (Run9's starter goal: STARTER_STAGES in
  *  src/features/program/starterPlan.ts). */
@@ -142,6 +141,16 @@ function validatePlanPayload({ profileData, programState, weekSchedule }) {
   if (profileData.runMode !== undefined && !VALID_RUN_MODES.has(profileData.runMode)) {
     errors.push(`profileData.runMode = "${profileData.runMode}" is invalid`);
   }
+  const runPlan = programState.runPlan;
+  if (
+    runPlan !== undefined &&
+    runPlan !== null &&
+    (typeof runPlan !== "object" || !VALID_RUN_PLAN_MODES.has(runPlan.mode))
+  ) {
+    errors.push(
+      `programState.runPlan.mode = "${runPlan && runPlan.mode}" is invalid`
+    );
+  }
   if (profileData.runMode === "race_prep") {
     if (!profileData.raceGoal) {
       errors.push("race_prep mode requires profileData.raceGoal");
@@ -201,4 +210,5 @@ module.exports = {
   VALID_WEEK_SCHEDULE_TYPES,
   VALID_RUN_STATUSES,
   VALID_RUN_MODES,
+  VALID_RUN_PLAN_MODES,
 };

@@ -17,6 +17,7 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 const h = vi.hoisted(() => ({
   list: vi.fn(),
@@ -239,6 +240,102 @@ describe("AdminModeration — Hide content", () => {
     expect(
       screen.getByRole("button", { name: "Hide content" })
     ).toBeInTheDocument();
+  });
+});
+
+function segmentReport() {
+  return {
+    reportId: "r-seg",
+    reporterId: "reporter",
+    targetType: "segment",
+    targetId: "hill",
+    targetUid: "maker",
+    targetActionable: true,
+    targetHideable: true,
+    reportedTargetType: "segment",
+    reportedTargetId: "hill",
+    reason: "inappropriate",
+    category: "inappropriate",
+    subReason: "Child safety",
+    details: null,
+    createdAt: 1,
+    target: {
+      authorId: "maker",
+      authorName: "Mo",
+      name: "Common hill",
+      segmentId: "hill",
+    },
+  };
+}
+
+describe("AdminModeration — a reported segment", () => {
+  beforeEach(() => h.resolve.mockReset());
+  const renderPage = () =>
+    render(<AdminModeration />, { wrapper: MemoryRouter });
+
+  it("shows its name, its maker, the reporter's reason and a link to its page", async () => {
+    h.list.mockResolvedValue(answer([segmentReport()]));
+    renderPage();
+
+    expect(await screen.findByText("Common hill")).toBeInTheDocument();
+    expect(
+      screen.getByText("Segment · Inappropriate content: Child safety")
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Made by Mo/)).toHaveTextContent(
+      "Made by Mo maker"
+    );
+    expect(screen.getByRole("link", { name: "Open segment" })).toHaveAttribute(
+      "href",
+      "/segment/hill"
+    );
+  });
+
+  it("removes it with the content action, and says what that takes", async () => {
+    h.list.mockResolvedValue(answer([segmentReport()]));
+    h.resolve.mockResolvedValue({ data: { ok: true } });
+    renderPage();
+
+    await screen.findByText("Common hill");
+    expect(screen.queryByRole("button", { name: "Hide content" })).toBeNull();
+    expect(
+      screen.getByText(/deletes it for everyone, with every time anyone has/)
+    ).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Remove segment" }));
+    });
+    expect(h.resolve).toHaveBeenCalledWith({
+      reportId: "r-seg",
+      hideActivity: true,
+      restrictUser: false,
+    });
+    expect(screen.queryByText("Common hill")).toBeNull();
+  });
+
+  it("restricts its maker", async () => {
+    h.list.mockResolvedValue(answer([segmentReport()]));
+    h.resolve.mockResolvedValue({ data: { ok: true } });
+    renderPage();
+
+    await screen.findByText("Common hill");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Restrict user/ }));
+    });
+    expect(h.resolve).toHaveBeenCalledWith({
+      reportId: "r-seg",
+      hideActivity: false,
+      restrictUser: true,
+    });
+  });
+
+  it("names a report from a server without the category by its reason", async () => {
+    const legacy = segmentReport() as Record<string, unknown>;
+    delete legacy.category;
+    delete legacy.subReason;
+    h.list.mockResolvedValue(answer([legacy]));
+    renderPage();
+
+    await screen.findByText("Common hill");
+    expect(screen.getByText("Segment · Inappropriate")).toBeInTheDocument();
   });
 });
 

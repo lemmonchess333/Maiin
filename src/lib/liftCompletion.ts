@@ -285,30 +285,12 @@ export async function completeLift(
     ...finished.extra,
   });
 
-  if (auth.currentUser?.uid !== uid)
-    throw new Error("Sign in again to save your workout.");
-  const queued =
-    navigator.onLine === false || hasQueuedWorkoutCompletion(uid, workoutId);
-  let committed: ProgramState | null | undefined;
-  let sync: Promise<"synced" | "failed">;
-  if (!queued) {
-    committed = await commitRecoverableWorkoutCompletion(
-      db,
-      uid,
-      workoutId,
-      data,
-      finished.completion
-    );
-    sync = Promise.resolve("synced");
-  } else {
-    sync = queueWorkoutCompletion(
-      db,
-      uid,
-      workoutId,
-      data,
-      finished.completion
-    );
-  }
+  const saved = await saveFinishedWorkout(
+    uid,
+    workoutId,
+    data,
+    finished.completion
+  );
 
   // Posting happens on the finish screen once the save has landed:
   // automatically when the user has said so, or from its share button.
@@ -330,8 +312,49 @@ export async function completeLift(
     workoutId,
     share,
     moments: liftPostMoments(finished.moments),
-    syncStatus: queued ? "queued" : "synced",
-    sync,
-    ...(queued ? {} : { committed }),
+    ...saved,
   };
+}
+
+/** A finished workout's save: now, or waiting in the offline queue. */
+export interface WorkoutSave {
+  syncStatus: "synced" | "queued";
+  /** Settles once the workout is saved, or cannot be. */
+  sync: Promise<"synced" | "failed">;
+  /**
+   * The plan as a save made now left it: null when the transaction changed
+   * no plan. Absent while the workout waits in the offline queue.
+   */
+  committed?: ProgramState | null;
+}
+
+/**
+ * Saves a finished workout document, now or through the offline queue:
+ * the one path every session written as a workout takes (a lift's, and a
+ * circuit's, `completeCircuit`). Throws when the signed-in account is not
+ * the one the workout is for, or when a save made now fails.
+ */
+export async function saveFinishedWorkout(
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  completion?: ProgrammeCompletionContext
+): Promise<WorkoutSave> {
+  if (auth.currentUser?.uid !== uid)
+    throw new Error("Sign in again to save your workout.");
+  const queued =
+    navigator.onLine === false || hasQueuedWorkoutCompletion(uid, workoutId);
+  if (queued)
+    return {
+      syncStatus: "queued",
+      sync: queueWorkoutCompletion(db, uid, workoutId, data, completion),
+    };
+  const committed = await commitRecoverableWorkoutCompletion(
+    db,
+    uid,
+    workoutId,
+    data,
+    completion
+  );
+  return { syncStatus: "synced", sync: Promise.resolve("synced"), committed };
 }

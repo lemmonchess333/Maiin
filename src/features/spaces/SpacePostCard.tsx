@@ -196,7 +196,13 @@ export default function SpacePostCard({
                 {activity.exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+                {activity.circuit
+                  ? activity.exerciseCount === 1
+                    ? "move"
+                    : "moves"
+                  : activity.exerciseCount === 1
+                    ? "exercise"
+                    : "exercises"}
               </SectionLabel>
             </div>
           )}
@@ -352,7 +358,17 @@ export default function SpacePostCard({
                 <button
                   type="button"
                   onClick={onToggleLike}
-                  aria-label={liked ? "Remove props" : "Give props"}
+                  /* With a count drawn beside the flame, the name starts
+                     with it ("5 props, give props"), as Voice Control is
+                     spoken to with the words on the screen (WCAG 2.5.3),
+                     then what a tap does, as the feed card's count says. */
+                  aria-label={
+                    displayLikeCount > 0
+                      ? `${displayLikeCount} props, ${liked ? "remove yours" : "give props"}`
+                      : liked
+                        ? "Remove props"
+                        : "Give props"
+                  }
                   aria-pressed={liked}
                   className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   style={liked ? { color: THEME.running } : undefined}
@@ -381,7 +397,11 @@ export default function SpacePostCard({
                   <button
                     type="button"
                     onClick={onOpenComments}
-                    aria-label="Comments"
+                    aria-label={
+                      displayCommentCount > 0
+                        ? `${displayCommentCount} ${displayCommentCount === 1 ? "comment" : "comments"}`
+                        : "Comments"
+                    }
                     className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   >
                     <MessageCircle className="size-4" aria-hidden />
