@@ -196,8 +196,9 @@ export interface LifecycleEventMetadata {
    * read as a regression signal rather than as a metric.
    */
   count?: number;
-  /** return_surface_shown / return_choice: which surface was shown. */
-  surface?: ReturnSurface;
+  /** return_surface_shown / return_choice: which surface was shown. Not
+   *  `surface`: `emit` writes the module's name there, over anything sent. */
+  returnSurface?: ReturnSurface;
   /** return_choice: what the user picked. */
   choice?: ReturnChoice;
   /** checkin_answered: 1-5, "did this week's plan make sense?". */

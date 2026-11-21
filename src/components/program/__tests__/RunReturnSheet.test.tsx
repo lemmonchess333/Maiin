@@ -64,7 +64,7 @@ describe("RunReturnSheet — what it offers", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(track).toHaveBeenCalledTimes(1);
     expect(track).toHaveBeenCalledWith("return_choice", {
-      surface: "run-return",
+      returnSurface: "run-return",
       choice: "easy_run",
     });
   });
@@ -76,7 +76,7 @@ describe("RunReturnSheet — what it offers", () => {
     expect(onEasyRun).not.toHaveBeenCalled();
     expect(track).toHaveBeenCalledTimes(1);
     expect(track).toHaveBeenCalledWith("return_choice", {
-      surface: "run-return",
+      returnSurface: "run-return",
       choice: "skip",
     });
   });

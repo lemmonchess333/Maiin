@@ -401,6 +401,18 @@ describe("the one door to analytics", () => {
     expect(loaders).toEqual(["src/lib/analyticsProvider.ts"]);
   });
 
+  it("declares no parameter the client writes over", () => {
+    // `emit` tags every event with its module's name as `surface`, after
+    // the metadata, so a parameter of that name never arrives: Lifecycle's
+    // return surface did not, from the day it was written.
+    const overwritten = schema.flatMap((s) =>
+      s.keys
+        .filter((k) => k === "surface")
+        .map((k) => `${s.path} ${s.name}: "${k}" is replaced by emit's own`)
+    );
+    expect(overwritten).toEqual([]);
+  });
+
   it("delivers every parameter a surface module declares", () => {
     // The redaction denylist matches substrings and the rules below match
     // whole words, so a name can pass every rule here, and tsc, and still
