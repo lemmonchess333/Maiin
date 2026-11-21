@@ -35,7 +35,8 @@ const UNDO_WINDOW_MS = 4000;
  * The reading, spoken. `formatWaterVolume` renders "2 L" / "250 ml",
  * whose units a screen reader pronounces as bare letters; Home's food
  * card spells "grams" in its macro names for the same reason. Visual copy
- * keeps the symbols — only the accessible name uses this.
+ * keeps the symbols, and so does a control's name, which carries the
+ * words drawn on it; only the announcement after a log uses this.
  */
 function spokenVolume(ml: number): string {
   const label = formatWaterVolume(ml);
@@ -177,6 +178,16 @@ export default function WaterCard({
      dropped, and a screen reader should not be told about a goal the
      screen no longer shows. */
   const reading = `Water ${spokenVolume(ml)} logged.`;
+  /* A body button's name is the words drawn on it, in order ("Water
+     500 ml, Tap + for 250 ml"), then what a tap does: Voice Control is
+     spoken to with what is on the screen (WCAG 2.5.3, Label in Name).
+     The meta line is drawn only on a day with water and while it is not
+     the way back. */
+  const shownReading = `Water ${formatWaterVolume(ml)}`;
+  const compactShown =
+    hasWater && !showUndo
+      ? `${shownReading}, Tap + for ${formatWaterVolume(servingMl)}`
+      : shownReading;
 
   useEffect(() => {
     const previous = wasMet.current;
@@ -378,7 +389,7 @@ export default function WaterCard({
           <button
             type="button"
             onClick={openSheet}
-            aria-label={`${reading} Add water — choose a container size.`}
+            aria-label={`${compactShown}. Add water, choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
@@ -402,6 +413,9 @@ export default function WaterCard({
                   numeral tier below, one line up. */}
               <SectionLabel>Water</SectionLabel>
             </div>
+            {/* Spaces in the text between the tile's words, so they read
+                as words, as the name does; between blocks they draw
+                nothing. */}{" "}
             {/* Matches the weight tile beside it, which is the canonical
                 compact-tile numeral treatment (text-2xl / 800, unit at
                 text-sm). This variant sat a full tier below it —
@@ -413,13 +427,16 @@ export default function WaterCard({
                 inside its own component too. */}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
+              {/* A space, not a margin: the figure and its unit read as
+                  two words, as the button's name has them. */}
               <span
-                className="ml-1 font-sans text-sm font-medium"
+                className="font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
+                {" "}
                 {splitWaterVolume(ml).unit}
               </span>
-            </p>
+            </p>{" "}
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
@@ -552,7 +569,7 @@ export default function WaterCard({
         <button
           type="button"
           onClick={openSheet}
-          aria-label="Add water — choose a container size"
+          aria-label={`${shownReading}. Add water, choose a container size.`}
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
@@ -565,13 +582,16 @@ export default function WaterCard({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <SectionLabel>Water</SectionLabel>
+            <SectionLabel>Water</SectionLabel>{" "}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
+              {/* A space, not a margin: the figure and its unit read as
+                  two words, as the button's name has them. */}
               <span
-                className="ml-1 font-sans text-sm font-medium"
+                className="font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
+                {" "}
                 {splitWaterVolume(ml).unit}
               </span>
             </p>

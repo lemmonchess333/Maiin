@@ -332,7 +332,10 @@ export default function PerformanceSection({
           "hover:text-lifting-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
       >
-        Score details
+        {/* A space in the text, so "Score details Pro" reads as the
+            words its name has (WCAG 2.5.3); the flex row draws nothing
+            for it. */}
+        Score details{" "}
         {detailsLocked ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Lock aria-hidden="true" className="size-3.5" />

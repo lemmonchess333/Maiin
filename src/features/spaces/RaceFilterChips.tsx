@@ -72,10 +72,14 @@ export default function RaceFilterChips({
   );
   const countryName =
     value.country === "all" ? "All countries" : RACE_COUNTRIES[value.country];
-  const countryChip =
+  const countryWords =
     value.country === "all"
       ? "All countries"
-      : `${countryFlag(value.country)} ${SHORT_COUNTRY[value.country] ?? countryName}`;
+      : (SHORT_COUNTRY[value.country] ?? countryName);
+  const countryChip =
+    value.country === "all"
+      ? countryWords
+      : `${countryFlag(value.country)} ${countryWords}`;
 
   return (
     <>
@@ -86,7 +90,10 @@ export default function RaceFilterChips({
         <button
           type="button"
           aria-haspopup="dialog"
-          aria-label={`Country: ${countryName}`}
+          /* The chip's own words after the field they set ("Country:
+             UK"): Voice Control is spoken to with the words on the
+             screen, so they are in the name as drawn (WCAG 2.5.3). */
+          aria-label={`Country: ${countryWords}`}
           onClick={() => {
             haptic("light");
             setCountryOpen(true);

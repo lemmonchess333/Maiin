@@ -132,7 +132,14 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Change profile photo"
+        /* With no photo the circle draws the initials, so the name
+           starts with them (WCAG 2.5.3, Label in Name: Voice Control is
+           spoken to with what is on the screen). */
+        aria-label={
+          !hasPhoto && initials
+            ? `${initials}, change profile photo`
+            : "Change profile photo"
+        }
         className="relative size-14 shrink-0 rounded-full active:scale-[0.97] transition-transform"
       >
         {hasPhoto ? (

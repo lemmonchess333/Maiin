@@ -2,7 +2,6 @@ import { useState, type ComponentType, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
-  Users,
   Clock,
   Trophy,
   ChevronDown,
@@ -40,6 +39,8 @@ import { useChallengePercentile } from "./useChallengePercentile";
 import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
 import ChallengeSportTag from "./ChallengeSportTag";
 import ChallengeMedalBand from "./ChallengeMedalBand";
+import ChallengePeople from "./ChallengePeople";
+import { PEOPLE_COUNT_MIN_VISIBLE, roomPeople } from "@/lib/fillingUp";
 import { challengeHasMedal } from "./rowMedal";
 import { collectiveTotal as goalTotal } from "./collectiveGoal";
 
@@ -63,12 +64,6 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
   silver: "Silver",
   gold: "Gold",
 };
-
-/* Below this many participants the meta row says nothing about who has
-   joined: "0 joined" is the loudest empty-lobby signal on the Social tab
-   and the most-seen state for every cold-start user. Counts are real or
-   withheld, never inflated, and nothing stands in for one. */
-const FOUNDING_COUNT_MIN = 3;
 
 /** A tier's metal as a ring around something drawn in the text colour,
  *  the leaderboard's rank treatment: as a fill or as text, silver and gold
@@ -222,10 +217,10 @@ export function ChallengeCard({
   const pct = Math.min((currentValue / maxTier) * 100, 100);
   const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
   const goal = challengeGoal(challenge, liftUnit, distanceUnit);
-  const joinedCount =
-    challenge.participantCount >= FOUNDING_COUNT_MIN
-      ? challenge.participantCount
-      : null;
+  /* Who is in it (App1 Q6): "12 joined" from 3, "Filling up" under it,
+     nothing while the count is not a number (`ChallengePeople`). */
+  const hasPeople =
+    roomPeople(challenge.participantCount, PEOPLE_COUNT_MIN_VISIBLE) !== null;
   /* The card wears its sport (`challengeSport`): the hero band, the icon,
      the sport tag and the bar's fill. The tier metal never fills the bar. */
   const sport = challengeSport(challenge.metric);
@@ -339,25 +334,15 @@ export function ChallengeCard({
           )}
         </p>
 
-        {/* Meta row: the facts (a real joined count, the season) on one
-            line, and the person's STANDING as a status pill in the shared
-            chip form. Drawn only when it has one of them. */}
-        {(joinedCount !== null || challenge.season || percentile !== null) && (
+        {/* Meta row: the facts (who is in it, the season) on one line,
+            and the person's STANDING as a status pill in the shared chip
+            form. Drawn only when it has one of them. */}
+        {(hasPeople || challenge.season || percentile !== null) && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
-            {(joinedCount !== null || challenge.season) && (
+            {(hasPeople || challenge.season) && (
               <span className="flex items-center gap-1">
-                {joinedCount !== null && (
-                  <>
-                    <Users className="size-3.5" aria-hidden="true" />
-                    <span>
-                      <span className="font-mono tabular-nums">
-                        {joinedCount.toLocaleString()}
-                      </span>{" "}
-                      joined
-                    </span>
-                  </>
-                )}
-                {joinedCount !== null && challenge.season && (
+                <ChallengePeople count={challenge.participantCount} />
+                {hasPeople && challenge.season && (
                   <span aria-hidden="true">·</span>
                 )}
                 {challenge.season && <span>{challenge.season}</span>}

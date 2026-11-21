@@ -5,14 +5,13 @@ import path from "path";
 import { shrinkFormFrames } from "./scripts/art/shrink-form-frames.ts";
 import { universalLinksPlugin } from "./scripts/ios/universal-links.ts";
 import { firstPaintFontPreloads } from "./scripts/first-paint-fonts.ts";
+import { websiteEntryPlugin } from "./scripts/website/websiteEntry.ts";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
-// Firebase Hosting serves from the domain root, AND from the same origin as the
-// Firebase auth handler (PROJECT.firebaseapp.com/__/auth/handler) — which is
-// what makes OAuth sign-in (Apple/Google popup) work on iOS Safari. GitHub
-// Pages serves under /Maiin/ on a *different* domain (…github.io), so its
-// cross-origin auth popup is severed by Safari ITP. Build with HOSTING_TARGET
-// =firebase for the root-based, same-origin Hosting bundle.
+// Firebase Hosting serves troposfit.com from the domain root. Since App1 Q52
+// (owner, 15 Nov 2026) it serves the website, not the app: build with
+// HOSTING_TARGET=firebase for the root-based website (websiteEntryPlugin).
+// GitHub Pages serves the whole app under /Maiin/, the development surface.
 const isFirebaseHosting = process.env.HOSTING_TARGET === "firebase";
 
 /**
@@ -144,6 +143,10 @@ export default defineConfig(({ mode }) => ({
       process.env.IOS_APP_ID_PREFIX,
       isFirebaseHosting && !isCapacitor
     ),
+    // troposfit.com is the website, not the app (App1 Q52): the Hosting
+    // build's index.html is website.html. Pages and the iPhone app keep
+    // the app's index.html.
+    websiteEntryPlugin(import.meta.dirname, isFirebaseHosting && !isCapacitor),
     shrinkFormFramesPlugin(),
     firstPaintFontsPlugin(),
     react(),
