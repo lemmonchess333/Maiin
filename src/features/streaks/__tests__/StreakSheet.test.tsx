@@ -190,12 +190,18 @@ describe("StreakSheet", () => {
   });
 
   describe("the count against something (DS5 rule 46)", () => {
-    it("shows the longest streak and how far off passing it is", () => {
+    it("names the next tier and the days to it, with how far along and the longest", () => {
       open();
       const sheet = screen.getByRole("dialog", { name: "12-day streak" });
-      expect(within(sheet).getByText("Longest")).toBeInTheDocument();
-      expect(sheet.textContent).toContain("21 days");
-      expect(sheet.textContent).toContain("10 days to pass it");
+      expect(
+        within(sheet).getByText("Two Week Wonder in 2 days")
+      ).toBeInTheDocument();
+      expect(within(sheet).getByText("12 of 14 days")).toBeInTheDocument();
+      expect(
+        within(sheet).getByText("Longest 21 days, 10 days to pass it")
+      ).toBeInTheDocument();
+      const art = sheet.querySelector("[data-next-tier]");
+      expect(art?.getAttribute("data-next-tier")).toBe("locked");
     });
 
     it("says when this streak is the longest", () => {
@@ -208,18 +214,16 @@ describe("StreakSheet", () => {
       expect(sheet.textContent).not.toMatch(/to pass it/);
     });
 
-    it("names the next tier, its badge and the days to it, drawn locked with its progress", () => {
+    it("keeps its words smaller than the sheet's title, the one hero (DS4)", () => {
       open();
-      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
-      expect(within(sheet).getByText("Next")).toBeInTheDocument();
-      expect(within(sheet).getByText("Two Week Wonder")).toBeInTheDocument();
-      expect(sheet.textContent).toContain("14 days");
-      expect(sheet.textContent).toContain("2 days to go");
-      const art = sheet.querySelector("[data-next-tier]");
-      expect(art?.getAttribute("data-next-tier")).toBe("locked");
+      const band = screen.getByRole("group", { name: /Two Week Wonder/ });
+      // The title is the BottomSheet's heading; nothing in the band is
+      // drawn at a heading's size or a figure's weight.
+      expect(band.innerHTML).not.toMatch(/text-(lg|xl|2xl|3xl)\b/);
+      expect(band.innerHTML).not.toMatch(/font-extrabold/);
     });
 
-    it("draws a tier already held as earned, with no progress ring", () => {
+    it("draws a tier already held as earned, says so, and points at the length", () => {
       // Longest 40, five days into a new streak: Week Warrior is two days
       // off and was earned on the long one.
       h.streak = 5;
@@ -231,22 +235,35 @@ describe("StreakSheet", () => {
       h.bridged = [];
       open();
       const sheet = screen.getByRole("dialog", { name: "5-day streak" });
-      expect(within(sheet).getByText("Week Warrior")).toBeInTheDocument();
-      expect(sheet.textContent).toContain("2 days to go");
+      expect(
+        within(sheet).getByText("2 days to a 7-day streak")
+      ).toBeInTheDocument();
+      expect(
+        within(sheet).getByText("5 of 7 days · Week Warrior already earned")
+      ).toBeInTheDocument();
+      expect(
+        within(sheet).getByText("Longest 40 days, 36 days to pass it")
+      ).toBeInTheDocument();
+      // Never "Week Warrior in 2 days", which reads as not yet earned.
+      expect(sheet.textContent).not.toMatch(/Week Warrior in/);
       const art = sheet.querySelector("[data-next-tier]");
       expect(art?.getAttribute("data-next-tier")).toBe("earned");
       expect(art?.querySelector("svg circle")).toBeNull();
     });
 
-    it("past the last tier, shows the longest alone", () => {
+    it("past the last tier, shows that badge and the longest, with no bar", () => {
       h.streak = 400;
       h.longest = 400;
+      h.earned = ["first_step", "three_day", "week_warrior", "year_long"];
       open();
       const sheet = screen.getByRole("dialog", { name: "400-day streak" });
-      expect(within(sheet).queryByText("Next")).toBeNull();
+      expect(within(sheet).getByText("Year of Tropos")).toBeInTheDocument();
+      expect(within(sheet).getByText("Already earned")).toBeInTheDocument();
       expect(
         within(sheet).getByText("This is your longest")
       ).toBeInTheDocument();
+      expect(sheet.querySelector("[data-streak-bar]")).toBeNull();
+      expect(sheet.textContent).not.toMatch(/tier/i);
     });
 
     it("draws the progress in the streak's purple, never a tier's gold", () => {
@@ -256,36 +273,29 @@ describe("StreakSheet", () => {
       h.longest = 20;
       open();
       const sheet = screen.getByRole("dialog", { name: "20-day streak" });
-      expect(within(sheet).getByText("Month Master")).toBeInTheDocument();
+      expect(
+        within(sheet).getByText("Month Master in 10 days")
+      ).toBeInTheDocument();
       const arc = sheet.querySelectorAll("[data-next-tier] svg circle");
       expect(arc.length).toBeGreaterThan(0);
       for (const circle of arc)
         expect(circle.getAttribute("stroke")?.toUpperCase()).toMatch(
           /^#7B72E9/
         );
+      const fill = sheet.querySelector<HTMLElement>("[data-streak-bar] > div");
+      expect(fill?.style.background.toUpperCase().replace(/\s/g, "")).toMatch(
+        /^(#7B72E9|RGB\(123,114,233\))/
+      );
+      expect(fill?.style.width).toBe(`${(20 / 30) * 100}%`);
       expect(sheet.innerHTML.toUpperCase()).not.toContain("#FFD700");
       expect(sheet.innerHTML).not.toMatch(/achievement/);
     });
 
-    it("says a held tier in words, not only in the art's colour", () => {
-      h.streak = 5;
-      h.longest = 40;
-      h.earned = ["first_step", "three_day", "week_warrior"];
-      open();
-      const sheet = screen.getByRole("dialog", { name: "5-day streak" });
-      expect(within(sheet).getByText("Already earned")).toBeInTheDocument();
-    });
-
-    it("reads each tile as one sentence", () => {
+    it("reads the band as one sentence", () => {
       open();
       expect(
         screen.getByRole("group", {
-          name: "Longest, 21 days, 10 days to pass it",
-        })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("group", {
-          name: "Next, 14 days, Two Week Wonder, 2 days to go",
+          name: "Two Week Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass it.",
         })
       ).toBeInTheDocument();
     });
@@ -295,12 +305,14 @@ describe("StreakSheet", () => {
       // locked, which is not this person's record.
       h.loadFailed = true;
       const { unmount } = open();
-      expect(screen.queryByText("Longest")).toBeNull();
+      expect(screen.queryByText(/Two Week Wonder/)).toBeNull();
+      expect(screen.queryByText(/Longest/)).toBeNull();
       unmount();
       h.loadFailed = false;
       h.loading = true;
       open();
-      expect(screen.queryByText("Longest")).toBeNull();
+      expect(screen.queryByText(/Two Week Wonder/)).toBeNull();
+      expect(screen.queryByText(/Longest/)).toBeNull();
     });
   });
 });

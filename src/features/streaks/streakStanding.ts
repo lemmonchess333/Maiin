@@ -37,6 +37,8 @@ export interface StreakStanding {
   isLongest: boolean;
   /** The next tier above the current streak; none past the last. */
   next: NextStreakTier | null;
+  /** The last tier, once the current streak has reached it; else none. */
+  lastTier: { badge: BadgeDef; earned: boolean } | null;
 }
 
 function days(value: unknown): number {
@@ -53,6 +55,7 @@ export function streakStanding(
   const current = days(currentStreak);
   const longest = Math.max(current, days(longestStreak));
   const tier = STREAK_TIERS.find((t) => (t.threshold ?? 0) > current);
+  const last = STREAK_TIERS[STREAK_TIERS.length - 1];
   return {
     longest,
     isLongest: current > 0 && current >= longest,
@@ -64,5 +67,45 @@ export function streakStanding(
           earned: earnedBadgeIds.has(tier.id),
         }
       : null,
+    lastTier:
+      !tier && last
+        ? { badge: last, earned: earnedBadgeIds.has(last.id) }
+        : null,
+  };
+}
+
+function daysOf(n: number): string {
+  return `${n} ${n === 1 ? "day" : "days"}`;
+}
+
+/** The band's words, shown and read as one sentence. */
+export function standingLines(
+  standing: StreakStanding,
+  current: number
+): { title: string; progress: string | null; best: string | null } {
+  const { longest, isLongest, next, lastTier } = standing;
+  const best = isLongest
+    ? "This is your longest"
+    : longest > 0
+      ? `Longest ${daysOf(longest)}, ${daysOf(longest - current + 1)} to pass it`
+      : null;
+  if (next && !next.earned)
+    return {
+      title: `${next.badge.name} in ${daysOf(next.toGo)}`,
+      progress: `${current} of ${daysOf(next.days)}`,
+      best,
+    };
+  if (next)
+    // Held from a longer streak: the badge is not what lies ahead, the
+    // length is.
+    return {
+      title: `${daysOf(next.toGo)} to a ${next.days}-day streak`,
+      progress: `${current} of ${daysOf(next.days)} · ${next.badge.name} already earned`,
+      best,
+    };
+  return {
+    title: lastTier?.badge.name ?? "",
+    progress: lastTier?.earned ? "Already earned" : null,
+    best,
   };
 }

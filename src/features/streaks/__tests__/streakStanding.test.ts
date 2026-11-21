@@ -3,7 +3,7 @@
  * streak, and the next tier above the current one with how far off it is.
  */
 import { describe, expect, it } from "vitest";
-import { STREAK_TIERS, streakStanding } from "../streakStanding";
+import { STREAK_TIERS, standingLines, streakStanding } from "../streakStanding";
 
 const none = new Set<string>();
 
@@ -72,6 +72,69 @@ describe("streakStanding", () => {
     expect(streakStanding(0, 30, none)).toMatchObject({
       longest: 30,
       isLongest: false,
+    });
+  });
+});
+
+describe("the band's words", () => {
+  const words = (current: number, longest: number, held: string[] = []) =>
+    standingLines(streakStanding(current, longest, new Set(held)), current);
+
+  it("names the badge ahead and the days to it, then the longest", () => {
+    expect(words(12, 21)).toEqual({
+      title: "Two Week Wonder in 2 days",
+      progress: "12 of 14 days",
+      best: "Longest 21 days, 10 days to pass it",
+    });
+  });
+
+  it("says one day, never one days", () => {
+    expect(words(13, 13).title).toBe("Two Week Wonder in 1 day");
+    expect(words(20, 21).best).toBe("Longest 21 days, 2 days to pass it");
+    expect(words(20, 20, []).best).toBe("This is your longest");
+    expect(words(2, 2).title).toBe("Getting Started in 1 day");
+    expect(words(0, 1).best).toBe("Longest 1 day, 2 days to pass it");
+  });
+
+  it("for a badge already held, points at the length and says it is held", () => {
+    expect(words(5, 40, ["three_day", "week_warrior"])).toEqual({
+      title: "2 days to a 7-day streak",
+      progress: "5 of 7 days · Week Warrior already earned",
+      best: "Longest 40 days, 36 days to pass it",
+    });
+  });
+
+  it("past the last tier, names its badge, held or not", () => {
+    expect(words(400, 400, ["year_long"])).toEqual({
+      title: "Year of Tropos",
+      progress: "Already earned",
+      best: "This is your longest",
+    });
+    // The server's award not read yet: no claim either way.
+    expect(words(365, 500)).toEqual({
+      title: "Year of Tropos",
+      progress: null,
+      best: "Longest 500 days, 136 days to pass it",
+    });
+  });
+
+  it("with no streak and no record, says nothing of a longest", () => {
+    expect(words(0, 0)).toEqual({
+      title: "Getting Started in 3 days",
+      progress: "0 of 3 days",
+      best: null,
+    });
+  });
+});
+
+describe("the last tier", () => {
+  it("is set only once the current streak has reached it", () => {
+    expect(streakStanding(364, 364, new Set()).lastTier).toBeNull();
+    expect(
+      streakStanding(365, 365, new Set(["year_long"])).lastTier
+    ).toMatchObject({
+      badge: { id: "year_long" },
+      earned: true,
     });
   });
 });

@@ -522,20 +522,23 @@ reading it.
 
 ## The streak against your longest and the next tier (DS5 rule 46, 2026-11-18)
 
-The streak's sheet gains two tiles under its first line: Longest, with
-how many days pass it ("10 days to pass it", or "This is your longest"),
-and Next, the next streak badge with its art, its length and the days to
-go ("Already earned" when it is held from a longer streak). The
-unit suites read the words and the large-text spec measures the sheet; a
-phone shows the badge art at its small size and VoiceOver's reading.
+The streak's sheet gains one row under its first line: the next streak
+badge with its art, how many days to it and a bar ("Two Week Wonder in 2
+days", "12 of 14 days"), then the longest ("Longest 21 days, 10 days to
+pass it", or "This is your longest"). A badge already held from a longer
+streak is drawn earned and points at the length instead ("2 days to a
+7-day streak", "Week Warrior already earned"). The unit suites read the
+words and the large-text spec measures the sheet; a phone shows the badge
+art at its small size and VoiceOver's reading.
 
-- [ ] **The tiles read.** On a TestFlight build, tap the flame. Passing:
-      both tiles show, side by side on a 393 pt phone at the standard text
-      size and one above the other at larger text, the badge art is sharp
-      and greyed with a ring round it until the badge is earned.
-- [ ] **VoiceOver.** Swipe through the two tiles. Passing: each is one
-      stop, "Longest, 21 days, 10 days to pass it" and then "Next, 14
-      days, Two Week Wonder, 2 days to go", and the art is skipped.
+- [ ] **The row reads.** On a TestFlight build, tap the flame. Passing:
+      the row shows with the art beside the words at the standard text
+      size and above them at the largest text sizes on a small phone, the
+      art is sharp and greyed with a purple ring round it until the badge
+      is earned, and the bar is the same purple.
+- [ ] **VoiceOver.** Swipe to the row. Passing: it is one stop, "Two Week
+      Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass
+      it.", and the art and the bar are skipped.
 
 ## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
 
