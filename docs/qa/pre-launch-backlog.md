@@ -3335,6 +3335,25 @@ sandbox Pro to nobody. Production purchases are unaffected.
       RevenueCat promotional grant does not grant Pro. Comps are written in
       Firestore directly.
 
+## A website subscription's warning before deletion (security audit, 2026-11-18)
+
+Affects: Settings → Account → Delete account (`AccountSection.tsx`). An
+account with a Pro subscription bought on the website now sees "Cancel
+your website subscription first" before the deletion, because deleting
+the account does not cancel it. Only a real website purchase shows it.
+
+- [ ] **The warning shows.** On an account that bought Pro on the website
+      (a sandbox purchase on an allow-listed uid will do), tap Delete
+      account. Passing: the warning shows, not the deletion's own dialog.
+- [ ] **Manage subscription opens the right page,** on the web and on the iPhone:
+      RevenueCat's billing page for that subscription, where it can be
+      cancelled. Then Delete anyway leads to the usual deletion. A website
+      subscription already cancelled, or a lifetime purchase, shows no warning.
+- [ ] **The deletion still cancels nothing on the website.** Until the
+      server cancels a website subscription itself (audit O3: it needs a
+      RevenueCat secret key for its API v2), check after a test deletion
+      that RevenueCat shows the subscription as the person left it.
+
 ## Purchases on iPad, iPhone-only, the paywall's prices (2026-10-04)
 
 Affects: `src/lib/purchaseProvider.ts` (`isNativeIOS` reads the native
