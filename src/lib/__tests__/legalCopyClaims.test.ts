@@ -27,6 +27,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
+import { redactPageUrl } from "@/lib/analyticsRedaction";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -103,7 +104,33 @@ describe("meal-photo retention — the quoted window matches the code", () => {
   it("the policy states the photo is device-only, not server-stored", () => {
     expect(PRIVACY_PROSE).toMatch(/only on the device that took it/);
     expect(PRIVACY_PROSE).toMatch(
-      /does not store your food photos on its servers/
+      /does not store new food photos on its servers/
+    );
+  });
+
+  it("says the meal photos earlier versions stored stay until the account is deleted", () => {
+    // Food8 uploaded scans to food-photos/{uid}/ until Food9. The rules keep
+    // them readable by their owner, deleting a meal leaves its photo, and
+    // only the account-deletion sweep removes the prefix. "Tropos does not
+    // store your food photos" was false for those accounts (fact-check of
+    // #3408).
+    expect(STORAGE_RULES).toMatch(
+      /match \/food-photos\/\{uid\}\/\{allPaths=\*\*\} \{ allow read: if request\.auth != null && request\.auth\.uid == uid; allow write: if false;/
+    );
+    expect(read("../../../functions/accountDeletion.js")).toMatch(
+      /"food-photos\/__UID__\/"/
+    );
+    for (const deleter of ["../mealEntry.ts", "../../hooks/useMeals.ts"]) {
+      expect(read(deleter)).not.toMatch(/firebase\/storage|deleteObject/);
+    }
+    expect(PRIVACY_PROSE).toMatch(
+      /Earlier versions of Tropos stored meal photos in Cloud Storage\. A photo stored then is still there, where only your account can open it, until you delete your account; deleting the meal does not remove it\./
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /meal photos stored by earlier versions of Tropos/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(
+      /meal photos are not on our servers|does not store your food photos/
     );
   });
 
@@ -447,10 +474,12 @@ describe("motion during runs matches the policy", () => {
 describe("what the policy says about analytics, sharing and deletion holds", () => {
   it("analytics never receives what the policy says it never receives", () => {
     // "Analytics never receives your email address, your name, GPS routes,
-    // what you type about meals, or your notes" — held by the redaction
-    // every event passes through.
+    // what you type about meals, the names of your foods, or your notes" —
+    // held by the redaction every event passes through. The food names are
+    // true once claude/analytics-no-food-names (which stops `favouriteId`)
+    // is on main; this page merges after it.
     expect(PRIVACY_PROSE).toMatch(
-      /Analytics never receives your email address, your name, GPS routes, what you type about meals, or your notes/
+      /Analytics never receives your email address, your name, GPS routes, what you type about meals, the names of your foods, or your notes/
     );
     for (const token of [
       "email",
@@ -641,14 +670,208 @@ describe("who sees what, as the code lets them", () => {
     );
   });
 
+  it("says Space posts, their comments and props, and who joined are open to anyone signed in", () => {
+    // spaces/{id}/posts with its likes and comments, and spaces/{id}/members
+    // all read on `request.auth != null`, and the Space page lists posts
+    // before Join. The policy said Space posts were seen by "the people in
+    // that Space" (fact-check of #3408).
+    const spaces = FIRESTORE_RULES.slice(
+      FIRESTORE_RULES.indexOf("match /spaces/{spaceId} {")
+    );
+    for (const block of [
+      "members/{uid}",
+      "posts/{postId}",
+      "likes/{likeUid}",
+      "comments/{commentId}",
+    ]) {
+      expect(spaces).toContain(
+        `match /${block} { allow read: if request.auth != null;`
+      );
+    }
+    const SPACE_PAGE = read("../../pages/Space.tsx");
+    expect(SPACE_PAGE).toMatch(/memberPosts\.map\(renderPost\)/);
+    expect(SPACE_PAGE).toMatch(/"Join to post here\."/);
+    expect(read("../socialApi.ts")).toMatch(
+      /collection\(db, "spaces", spaceId, "members"\)/
+    );
+    const sharing = SHARING();
+    expect(sharing).toMatch(
+      /anyone signed in to Tropos can read a Space’s posts, the comments and props on them, and who has joined it \(each member’s name and photo\), whether or not they have joined it themselves/
+    );
+    expect(sharing).toMatch(
+      /Comments on a session you share are seen by whoever can see that session/
+    );
+    expect(FIRESTORE_RULES).toMatch(
+      /match \/comments\/\{activityId\}\/items\/\{commentId\} \{ allow read: if canReadActivityChild\(activityId\);/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(/Space posts are seen by the people/);
+  });
+
+  it("says what a profile holds that the app does not show, and that names can be searched", () => {
+    // The public profile is listed and read by anyone signed in (search is a
+    // collection-group query on it), and its allowlist carries the setup
+    // answer, the account's creation time and the streak's last day. The
+    // profile page reads none of the three.
+    const profileRule = FIRESTORE_RULES.slice(
+      FIRESTORE_RULES.indexOf("match /users/{uid}/public/{doc} {")
+    ).slice(0, 2600);
+    expect(profileRule).toMatch(/allow list: if request\.auth != null;/);
+    for (const field of ["athleteType", "createdAt", "lastActiveDate"]) {
+      expect(profileRule).toContain(`'${field}'`);
+    }
+    expect(collapsed("../socialApi.ts")).toMatch(
+      /collectionGroup\(db, "public"\), where\("displayNameLower", ">=", lower\)/
+    );
+    const PROFILE_DATA = read("../../hooks/useUserProfileData.ts");
+    expect(PROFILE_DATA).not.toMatch(/athleteType|pubData\.createdAt/);
+    const sharing = SHARING();
+    expect(sharing).toMatch(
+      /Anyone signed in can find you by searching for your name/
+    );
+    expect(sharing).toMatch(
+      /whether you set up Tropos to lift, run or both, when your account was made and the last day your streak counted\. The app does not show those three to other people, but anyone signed in can read them/
+    );
+  });
+
   it("names the run map images Cloud Storage keeps", () => {
     expect(STORAGE_RULES).toMatch(
       /match \/route-maps\/\{uid\}\/\{activityId\}\/\{name\}/
     );
     expect(PRIVACY_PROSE).toMatch(
-      /Cloud Storage \(progress, profile, post and Space photos, and the map images of runs you share\)/
+      /Cloud Storage \(progress, profile, post and Space photos, the map images of runs you share, and meal photos stored by earlier versions of Tropos\)/
     );
     expect(PRIVACY_PROSE).toMatch(/Run Map Images \(optional\)/);
+  });
+});
+
+describe("what the fact-check of #3408 found left out, as the code keeps it", () => {
+  it("names the setup choices analytics receives, and that diary events carry counts", () => {
+    expect(collapsed("../../pages/Onboarding.tsx")).toMatch(
+      /trackLifecycle\("onboarding_completed", \{ primaryGoal, daysPerWeek, runMode: effectiveRunMode, \}\)/
+    );
+    expect(read("../../pages/Home.tsx")).toMatch(
+      /sport: setupSport\(profile\)/
+    );
+    // The examples the policy gives are in the goal's own list, and the run
+    // modes are the three it names.
+    expect(read("../auth.tsx")).toMatch(
+      /primaryGoal\?: "hypertrophy" \| "strength" \| "fat_loss" \| "general" \| "running";/
+    );
+    expect(read("../onboardingRunMode.ts")).toMatch(
+      /export type OnboardingRunMode = "freeform" \| "race_prep" \| "starter";/
+    );
+    expect(read("../../components/food/FoodTimeline.tsx")).toMatch(
+      /itemCount: entries\.length/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /It receives the choices you made in setup: your goal \(such as building muscle or losing fat\), how many days a week you train, whether you lift, run or both, and whether your runs follow a race plan, a starter plan or neither\./
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Events from your food diary carry counts, such as how many rows a day shows, never what is in them\./
+    );
+  });
+
+  it("says a new segment is matched with its maker's own latest runs, at the code's number", () => {
+    const declared = FUNCTIONS("segments.js").match(
+      /const BACKFILL_RUNS = (\d+);/
+    );
+    expect(declared).not.toBeNull();
+    expect(policySection("4. Data Sharing", "5. Your Rights")).toContain(
+      `When you make a segment, your own last ${declared![1]} runs are checked against it too.`
+    );
+  });
+
+  it("says reset and invite-lookup records hold a coded form, kept up to a day", () => {
+    // Both keys are a SHA-256 of what was typed or of the caller's IP, and
+    // every rateLimits record expires a window after its last call; no
+    // window here is longer than a day.
+    expect(FUNCTIONS("emailRateLimit.js")).toMatch(
+      /function passwordResetKey\(email\) \{ const hash = crypto \.createHash\("sha256"\)/
+    );
+    expect(FUNCTIONS("passwordResetRequest.js")).toMatch(
+      /key: passwordResetKey\(email\)/
+    );
+    expect(FUNCTIONS("inviteCodes.js")).toMatch(
+      /function lookupKey\(ip\) \{ const hash = crypto \.createHash\("sha256"\)/
+    );
+    const INDEX = collapsed("../../../functions/index.js");
+    expect(INDEX).toMatch(
+      /const key = inviteCodes\.lookupKey\( context\.rawRequest && context\.rawRequest\.ip \);/
+    );
+    expect(INDEX).toMatch(
+      /isRateLimited\(key, "inviteLookup", 20, 3_600_000\)\) \|\| \(await isRateLimited\(key, "inviteLookupDay", 60, 86_400_000\)\)/
+    );
+    const windows = [
+      ...FUNCTIONS("emailRateLimit.js").matchAll(
+        /windowMs: ([A-Z_]+|\d+ \* [A-Z_]+),/g
+      ),
+    ].map((m) => m[1]);
+    expect(windows).toEqual([
+      "5 * MINUTE_MS",
+      "DAY_MS",
+      "10 * MINUTE_MS",
+      "DAY_MS",
+    ]);
+    expect(collapsed("../../../functions/rateLimiter.js")).toMatch(
+      /expiresAt: new Date\(now \+ windowMs\)/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /A record of a password-reset request holds a coded form of the email address a reset was asked for, never the address itself, and is kept for up to a day after the last request\./
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /our server keeps a coded form of your connection’s IP address, never the address itself, for up to a day after the last lookup/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(
+      /which hold the email address a reset was asked for/
+    );
+  });
+
+  it("names in-app notifications, the name they carry, and how long they are kept", () => {
+    const FANOUT = FUNCTIONS("socialFanout.js");
+    const days = FANOUT.match(/const NOTIFICATION_RETENTION_DAYS = (\d+);/);
+    expect(days).not.toBeNull();
+    expect(FANOUT).toMatch(/out\.fromName = data\.fromName/);
+    expect(FANOUT).toMatch(
+      /expiresAt: new Date\(Date\.now\(\) \+ NOTIFICATION_RETENTION_DAYS \* DAY_MS\)/
+    );
+    expect(collapsed("../../../firestore.indexes.json")).toMatch(
+      /"collectionGroup": "items", "fieldPath": "expiresAt", "ttl": true/
+    );
+    // Gone with the recipient's account, and with the sender's.
+    expect(read("../../../functions/accountDeletion.js")).toMatch(
+      /\{ parent: "notifications", sub: "items" \}/
+    );
+    expect(FUNCTIONS("accountDeletionSocial.js")).toMatch(
+      /for \(const field of \["authorId", "fromUserId"\]\)[\s\S]*\(feeds\|notifications\)/
+    );
+    const sectionOne = policySection(
+      "1. Information We Collect",
+      "2. How We Use Your Data"
+    );
+    expect(sectionOne).toMatch(/Notifications in the app:/);
+    expect(sectionOne).toMatch(/your name goes into the other person’s tray/);
+    expect(sectionOne).toContain(
+      `Each notice is deleted after ${days![1]} days, and when either account is deleted.`
+    );
+  });
+
+  it("names saved routes and shoes, kept to the account and deleted with it", () => {
+    const DELETION = read("../../../functions/accountDeletion.js");
+    for (const sub of ["savedRoutes", "shoes"]) {
+      expect(DELETION).toContain(`"${sub}",`);
+      expect(FIRESTORE_RULES).toContain(`match /users/{uid}/${sub}/{`);
+    }
+    expect(read("../savedRoutes.ts")).toMatch(
+      /export type SavedRouteSource = "gpx" \| "run" \| "planned";/
+    );
+    expect(read("../../hooks/useShoes.ts")).toMatch(/totalKm: number;/);
+    const sectionOne = policySection(
+      "1. Information We Collect",
+      "2. How We Use Your Data"
+    );
+    expect(sectionOne).toMatch(
+      /the routes you save to follow again \(a route you import, plan or keep from a run\), and the running shoes you add with the distance run in each/
+    );
   });
 });
 
@@ -718,16 +941,27 @@ describe("what the policy says about the build, food searches, alerts and errors
     expect(resend).toMatch(/any note the person reporting wrote/);
   });
 
-  it("says error reports keep the screen's address and the user agent", () => {
+  it("says error reports keep the screen's address, names and ids taken out, and the user agent", () => {
+    // The address goes through redactPageUrl once claude/analytics-no-food-
+    // names is on main (the fact-check found the full href stored); this
+    // page merges after it. The example the policy gives is the function's
+    // own answer.
     const REPORTING = read("../errorReporting.ts");
-    expect(REPORTING).toMatch(
-      /url: typeof window !== "undefined" \? window\.location\.href/
+    expect(REPORTING).toMatch(/url: [^\n]*window\.location\.href/);
+    expect(
+      redactPageUrl("https://troposfit.com/history/exercise/My%20Secret%20Lift")
+    ).toBe("https://troposfit.com/history/exercise/:id");
+    expect(PRIVACY_PROSE).toMatch(
+      /the address of the screen the app was on with any name or id in it taken out \(an exercise’s page is kept as \/history\/exercise\/:id, never with the exercise’s name\)/
     );
+    expect(
+      policySection("1. Information We Collect", "2. How We Use Your Data")
+    ).toMatch(/the address of the screen \(any name or id in it taken out\)/);
     expect(REPORTING).toMatch(
       /userAgent: typeof navigator !== "undefined" \? navigator\.userAgent/
     );
     expect(PRIVACY_PROSE).toMatch(
-      /the address of the screen the app was on, and your device’s browser or app details \(its user agent\)/
+      /and your device’s browser or app details \(its user agent\)/
     );
   });
 });
@@ -771,7 +1005,7 @@ describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
     expect(PRIVACY_PROSE).toMatch(/<th scope="col"/);
     for (const basis of [
       /basis: "Contract:/,
-      /"Your explicit consent, which you give in setup \(UK GDPR Article 9\(2\)\(a\)\)/,
+      /"Your explicit consent \(UK GDPR Article 9\(2\)\(a\)\), which you give in setup before the questions about your body, or, for an account made before that question was added, the first time you open Tropos after the update\. You can withdraw it by deleting your account\."/,
       /"Your consent, asked before the first one is sent/,
       /"Legitimate interests: knowing how the app is used/,
       /"Legitimate interests: keeping Tropos and the people on it safe\."/,
