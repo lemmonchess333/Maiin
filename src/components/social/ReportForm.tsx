@@ -3,8 +3,8 @@
  *
  * Locked decision (S4b + S4c):
  *   - Five top-level categories (Harassment / Spam / Inappropriate /
- *     Impersonation / Other) × 2-4 sub-reasons each. Single screen,
- *     no modal stacking.
+ *     Impersonation / Other), each but Other with its sub-reasons
+ *     (src/lib/reportCategories.ts). Single screen, no modal stacking.
  *   - Three checkboxes at submit: Report (default-ON), Hide from feed
  *     (default-ON), Block author (default-OFF).
  *     Submit disabled only if all three are unchecked.
@@ -48,6 +48,7 @@ const TARGET_NOUN: Record<ReportTargetType, string> = {
   user: "user",
   space_post: "post",
   space_post_comment: "comment",
+  segment: "segment",
 };
 
 export interface ReportFormProps {

@@ -497,3 +497,114 @@ describe("queueContentHide — what Hide content writes", () => {
     expect(writes).toEqual([]);
   });
 });
+
+describe("segment — a segment someone else made", () => {
+  const seed = () => ({
+    "segments/hill": { name: "Common hill", lengthMeters: 800 },
+    "segmentOwners/hill": { uid: "maker", sourceRunId: "r1" },
+    "users/maker/public/profile": { displayName: "Mo" },
+  });
+
+  it("is a target type, and one the moderator can remove", () => {
+    expect(TARGET_TYPES).toContain("segment");
+    expect(HIDEABLE_TARGET_TYPES).toContain("segment");
+  });
+
+  it("takes the segment's plain id, as an activity's is", () => {
+    expect(
+      normalizeCreateReportInput({
+        targetType: "segment",
+        targetId: "hill",
+        category: "inappropriate",
+        subReason: "Illegal content",
+      })
+    ).toMatchObject({
+      targetType: "segment",
+      targetId: "hill",
+      subReason: "Illegal content",
+    });
+    for (const targetId of ["", " hill", "a/b", "..", 7]) {
+      expect(() =>
+        normalizeCreateReportInput({
+          targetType: "segment",
+          targetId,
+          category: "spam",
+        })
+      ).toThrow();
+    }
+  });
+
+  it("resolves its maker from the owner record, with the name the moderator reads", async () => {
+    const { firestore, txReader } = makeFs(seed());
+    for (const reader of [undefined, txReader]) {
+      const r = await resolveReportTarget({
+        firestore,
+        reader,
+        reporterUid: "stranger",
+        targetType: "segment",
+        targetId: "hill",
+      });
+      expect(r.targetUid).toBe("maker");
+      expect(r.targetRef._path).toBe("segments/hill");
+      expect(r.preview).toEqual({
+        authorId: "maker",
+        authorName: "Mo",
+        name: "Common hill",
+        segmentId: "hill",
+      });
+    }
+  });
+
+  it("still resolves a maker with no public profile, unnamed", async () => {
+    const docs = seed();
+    delete docs["users/maker/public/profile"];
+    const { firestore } = makeFs(docs);
+    const r = await resolveReportTarget({
+      firestore,
+      targetType: "segment",
+      targetId: "hill",
+    });
+    expect(r.targetUid).toBe("maker");
+    expect(r.preview.authorName).toBeNull();
+  });
+
+  it("is unavailable when the segment or its maker is gone", async () => {
+    const noSegment = seed();
+    delete noSegment["segments/hill"];
+    await expectFail(
+      resolveReportTarget({
+        firestore: makeFs(noSegment).firestore,
+        reporterUid: "stranger",
+        targetType: "segment",
+        targetId: "hill",
+      }),
+      "report-target-unavailable"
+    );
+    const noOwner = seed();
+    delete noOwner["segmentOwners/hill"];
+    await expectFail(
+      resolveReportTarget({
+        firestore: makeFs(noOwner).firestore,
+        targetType: "segment",
+        targetId: "hill",
+      }),
+      "report-target-unavailable"
+    );
+  });
+
+  it("is removed by deleting the segment, in the transaction", () => {
+    const writes = [];
+    const outcome = queueContentHide({
+      transaction: {
+        update: (ref, data) => writes.push(["update", ref._path, data]),
+        delete: (ref) => writes.push(["delete", ref._path]),
+      },
+      target: { targetType: "segment", targetRef: { _path: "segments/hill" } },
+      adminUid: "admin-1",
+      serverTimestamp: () => "SERVER_TS",
+      increment: (n) => ({ increment: n }),
+    });
+    expect(outcome).toBe("deleted");
+    expect(writes).toEqual([["delete", "segments/hill"]]);
+  });
+});
