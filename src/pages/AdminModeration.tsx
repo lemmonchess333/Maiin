@@ -516,7 +516,7 @@ export default function AdminModeration() {
                     </button>
                   )}
                   {canHide(report) && report.targetType === "segment" && (
-                    <p className="text-caption text-muted-foreground basis-full">
+                    <p className="text-micro text-muted-foreground basis-full">
                       Remove segment deletes it for everyone, with every time
                       anyone has on it, as its maker’s Delete does.
                     </p>
