@@ -1,0 +1,3 @@
+# Stamp how the commit was verified, from what the commit gate's hook saw
+# (docs/agents/verification-stamps.md). Never fails the commit.
+node scripts/verify-gate/stamp.mjs "$1" || true
