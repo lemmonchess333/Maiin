@@ -13,13 +13,16 @@
  * and a solid `transparency-reduce:bg-*`, the variant `src/index.css`
  * keys on the attribute `reducedTransparency.ts` sets. Taking the blur off
  * alone would leave a 55% fill over a busy photo, which reads worse than
- * the frosted one. A fill set inline (to keep a tapped chip's sticky
- * hover from greying it) needs the important form, `bg-black!`, to win.
+ * the frosted one. A fill set inline (which a button variant's hover tint
+ * cannot grey on a pointer) needs the important form, `bg-black!`, to win
+ * over the style: a blurred class string with a `background` style within
+ * a few lines of it is held to that form. Single-quoted strings are not
+ * read: the house style writes class strings in double quotes.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
 
-const FILES = globSync("src/**/*.tsx", { cwd: process.cwd() }).filter(
+const FILES = globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() }).filter(
   (f) => !f.includes("__tests__") && !f.includes("/dev/") && !/\.test\./.test(f)
 );
 
@@ -94,17 +97,26 @@ describe("Reduce Transparency reaches every frosted chip and bar (DS6, §14o)", 
   });
 
   it("a fill set inline is outranked by the important form", () => {
-    // These chips keep their scrim inline, so a tapped chip's sticky
-    // hover cannot grey it; only `!important` beats an inline style.
-    for (const [file, has] of [
-      ["src/pages/Space.tsx", "const PHOTO_CHIP"],
-      ["src/components/run/GpsSignalChip.tsx", "THEME.scrim"],
-      ["src/pages/RunDetail.tsx", "rgba(0,0,0,0.45)"],
-    ] as const) {
-      const src = readFileSync(file, "utf8");
-      expect(src, file).toContain(has);
-      expect(src, file).toContain("transparency-reduce:bg-black!");
-    }
+    // A blurred class string with a style that sets `background` close by
+    // (the same element): only `!important` beats an inline style.
+    const near = blurred.filter((l) => {
+      const lines = readFileSync(l.file, "utf8").split("\n");
+      const span = lines.slice(Math.max(0, l.line - 4), l.line + 12).join("\n");
+      return /style=\{[\s\S]*?\bbackground\s*:/.test(span);
+    });
+    const weak = near.filter((l) =>
+      words(l.text).some(
+        (w) => w.startsWith("transparency-reduce:bg-") && !w.endsWith("!")
+      )
+    );
+    expect(near.length).toBeGreaterThanOrEqual(3);
+    expect(weak.map(where)).toEqual([]);
+    // Space's chips set theirs far from the class constant, at each use.
+    const space = readFileSync("src/pages/Space.tsx", "utf8");
+    expect(space).toContain("style={photo ? { background: THEME.scrim }");
+    expect(space).toMatch(
+      /const PHOTO_CHIP =[^;]*transparency-reduce:bg-black!/
+    );
   });
 
   it("no blur is set as a style prop, where the class's fallback cannot reach it", () => {
