@@ -42,6 +42,29 @@
   pointer-events: none;
 }
 
+/* The fade under the bar (DS6 step 3, DESIGN_GUIDE §14o). The bar floats
+   above the home indicator, and words scrolled past it read in plain view
+   in the gap and the safe area below it (the owner's recording, 10
+   November 2026). The page's own colour rises behind the bar, from nothing
+   at its top edge to solid at its bottom edge, and stays solid to the
+   screen's foot: nothing reads below the bar, and the glass still has what
+   passes behind its upper half. A static gradient with no blur of its own,
+   since a second full-width backdrop filter on every tab would double the
+   paint cost DS6 names as its risk. It sits behind the bar in the frame's
+   own stacking context and, like the frame, takes no taps. */
+.bottom-nav-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--background) / 0),
+    hsl(var(--background)) calc(100% - var(--safe-bottom) - var(--tab-bar-gap))
+  );
+}
+
 .bottom-nav-frost {
   pointer-events: auto;
   background: var(--surface-solid);
@@ -116,7 +139,10 @@
   }
 }
 
-/* Reduced transparency → solid bar, no blur. */
+/* Reduce Transparency → solid bar, no blur. The media query is how a
+   browser says so; WebKit has no such query (WebKit bug 175497), so on
+   iPhone the app marks the page from the phone's own setting instead
+   (`src/lib/reducedTransparency.ts`), and the attribute does the same. */
 @media (prefers-reduced-transparency: reduce) {
   .bottom-nav-frost,
   .dark .bottom-nav-frost {
@@ -124,6 +150,11 @@
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+}
+:root[data-reduced-transparency] .bottom-nav-frost {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 @media (forced-colors: active) {
@@ -552,6 +583,33 @@ select.ds-input:focus {
   bottom: -18%;
   border-radius: 50%;
 }
+/* ─── SHEETS — THE LIT RIM (DS6 step 4, DESIGN_GUIDE §14o) ─────────
+   DS6 lets a sheet be frosted. Measured, it buys nothing: under the
+   sheet's 50% black overlay the dark page is near black already, and at
+   the 90% fill the words need, a blur of what is behind changed no pixel
+   of the sheet by more than 3 levels in 255 (the captures of
+   `docs/visual-audit/ds6-2026-11-18/`); on light no translucency is
+   possible at all, since at 90% over a dark backdrop the grey line falls
+   to between 3.7:1 and 4.1:1, under AA (§10). A blur that cannot be seen still costs
+   paint on every slide of an 85%-tall sheet, the risk DS6 names. So a
+   sheet keeps its solid page colour (`bg-background`), and on dark it
+   takes what does show: the card's lit edge, a hairline of light along
+   its rounded top. No sheet draws a top border of its own, so the edge is
+   never doubled (`sheetToastGlass.test.ts`). */
+.dark .sheet-surface {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+/* The grab handle. The border grey it was drawn in measured 1.33:1 on
+   the dark sheet and 1.13:1 on the light one, so the sign that the sheet
+   can be pulled down all but went. The secondary grey at 45% is 2.4:1 on
+   dark and 1.8:1 on light: seen, and still quieter than any word on the
+   sheet. It is a hint, not the control: the overlay, Escape, Back and
+   each sheet's own button close it too, so the 3:1 a control's edge
+   needs (§10) does not bind it. */
+.sheet-handle {
+  background-color: hsl(var(--muted-foreground) / 0.45);
+}
+
 /* Fixed iOS safe-area cover. Sits behind the iOS status bar /
    Dynamic Island and hides scrolling content from showing behind the
    clock. Implemented as a soft gradient scrim (see below) so it never
@@ -592,6 +650,20 @@ select.ds-input:focus {
      contrast). translateZ(0) pins the layer so the bg + blur survive
      scrolling on every page. */
   transform: translateZ(0);
+}
+
+/* Under Reduce Transparency the scrim keeps its gradient and drops its
+   blur: the media query where a browser has it, the app's attribute where
+   WebKit does not (`src/lib/reducedTransparency.ts`). */
+@media (prefers-reduced-transparency: reduce) {
+  .ds-safe-top-occluder {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+:root[data-reduced-transparency] .ds-safe-top-occluder {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* The launch overlay. index.html paints #boot-splash with these classes
@@ -744,6 +816,61 @@ html.launching [data-brand-mark] {
    two rows. */
 .ds-display-figure.ds-display-rest {
   font-size: clamp(64px, 18vw, 72px);
+}
+
+/* The workout's docked cards, frosted (DS6 step 5, DESIGN_GUIDE §14o):
+   the new best and the rest card float over the foot of the set list, so
+   they are glass: the card's colour over a static blur of the rows behind.
+   The fill keeps enough of the card that every mark on them holds its
+   floor with no blur at all, over the worst thing that can pass behind:
+   94% on light over black (the grey line 4.77:1, the gold 5.56:1, the
+   "New best" pill 4.69:1, the rest ring 3.36:1) and 90% on dark over
+   white (5.28:1, 8.34:1, 5.87:1 and 3.18:1). At 92% and 88% the pill and
+   the ring sat on their floors with nothing to spare. The card's lit edge
+   (`card-shadow`) stays. The blur is written out, never through a
+   variable (WebKit ignores one in -webkit-backdrop-filter), and sits on
+   the element that fades, so no fading parent cuts it off; the new best
+   arrives with a fade and no scale, so the blur is never redrawn in
+   motion (§14h). Solid where the blur cannot be drawn, under Reduce
+   Transparency (the media query, and the attribute the app sets from the
+   phone's own setting, `src/lib/reducedTransparency.ts`, #3398), and in
+   forced colours. */
+.dock-glass {
+  background-color: hsl(var(--card) / 0.94);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  backdrop-filter: blur(24px) saturate(1.3);
+}
+.dark .dock-glass {
+  background-color: hsl(var(--card) / 0.9);
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .dock-glass,
+  .dark .dock-glass {
+    background-color: hsl(var(--card));
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dock-glass,
+  .dark .dock-glass {
+    background-color: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+:root[data-reduced-transparency] .dock-glass {
+  background-color: hsl(var(--card));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (forced-colors: active) {
+  .dock-glass,
+  .dark .dock-glass {
+    background-color: Canvas;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 /* The run's 3-2-1 (Run27 (1), StartCountdown): one digit on the run

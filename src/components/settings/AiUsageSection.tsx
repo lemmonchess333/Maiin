@@ -34,7 +34,7 @@ export default function AiUsageSection() {
     // doesn't jump when the snapshot arrives.
     return (
       <div
-        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card"
+        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card dark:card-shadow"
         aria-busy="true"
       >
         <Sparkles className="size-5 text-muted-foreground" aria-hidden="true" />
@@ -50,7 +50,7 @@ export default function AiUsageSection() {
   if (isPro) {
     return (
       <div
-        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card"
+        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card dark:card-shadow"
         role="group"
         aria-label="AI usage"
       >
@@ -79,7 +79,7 @@ export default function AiUsageSection() {
     <button
       type="button"
       onClick={() => navigate("/upgrade?from=settings")}
-      className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
+      className="w-full flex items-center justify-between p-4 rounded-2xl bg-card dark:card-shadow"
       aria-label="AI food logging is part of Pro — see Pro"
     >
       <div className="flex items-center gap-3">

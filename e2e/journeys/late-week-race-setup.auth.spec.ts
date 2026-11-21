@@ -122,7 +122,6 @@ test("a marathon set up late in the week, from about 3 km a run", async ({
           currentWeek: 0,
           totalWeeks: 25,
           todayKey: monday,
-          runsTarget: 6,
         }),
         { exact: true }
       )

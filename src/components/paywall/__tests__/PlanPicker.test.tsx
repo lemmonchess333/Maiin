@@ -4,7 +4,7 @@
  *
  * A per-week figure that cannot be written in the plan's currency is left
  * off the card rather than shown in pounds: the cards used to print
- * "≈ £0.67/wk" under whatever price the App Store returned.
+ * "≈ £0.77/wk" under whatever price the App Store returned.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -21,11 +21,11 @@ function renderPicker(plans: ProPlan[]) {
 describe("PlanPicker — prices and per-week figures", () => {
   it("the pound plans: price, period and the per-week anchor", () => {
     const [monthly, yearly] = renderPicker(PRO_PLANS);
-    expect(monthly.textContent).toContain("£3.99/month");
-    expect(monthly.textContent).toContain("≈ £0.92/wk");
-    expect(yearly.textContent).toContain("£34.99/year");
-    expect(yearly.textContent).toContain("≈ £0.67/wk");
-    expect(yearly.textContent).toContain("Save 27%");
+    expect(monthly.textContent).toContain("£6.99/month");
+    expect(monthly.textContent).toContain("≈ £1.61/wk");
+    expect(yearly.textContent).toContain("£39.99/year");
+    expect(yearly.textContent).toContain("≈ £0.77/wk");
+    expect(yearly.textContent).toContain("Save 52%");
   });
 
   it("a store's plans: the per-week figures in the store's currency", () => {
@@ -49,10 +49,10 @@ describe("PlanPicker — prices and per-week figures", () => {
       p.id === "yearly" ? { ...p, currencyCode: "" } : p
     );
     const [monthly, yearly] = renderPicker(unwritable);
-    expect(yearly.textContent).toContain("£34.99/year");
+    expect(yearly.textContent).toContain("£39.99/year");
     expect(yearly.textContent).not.toMatch(/\/wk/);
     // Anchor: the other card still has its figure, so the absence above is
     // this card's, not a picker that stopped drawing them.
-    expect(monthly.textContent).toContain("≈ £0.92/wk");
+    expect(monthly.textContent).toContain("≈ £1.61/wk");
   });
 });

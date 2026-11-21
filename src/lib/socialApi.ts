@@ -1060,6 +1060,7 @@ export const REPORT_TARGET_TYPES = [
   "user",
   "space_post",
   "space_post_comment",
+  "segment",
 ] as const;
 
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];

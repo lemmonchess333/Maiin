@@ -89,9 +89,7 @@ function normal(overrides: Record<string, unknown> = {}) {
     weekKey: "2026-06-29",
     range: { start: "2026-06-29", end: "2026-07-05" },
     headline: {
-      pi: 92,
-      delta: 2,
-      verdict: "Load has run high.",
+      verdict: "You trained more than your usual week.",
       deload: false,
     },
     training: {
@@ -223,12 +221,16 @@ describe("WeeklyReview — the recap as cards", () => {
     }
   });
 
-  it("closes the first card on the week's index and its verdict", () => {
+  it("closes the first card on the week's verdict, in words alone (App1 Q12)", () => {
+    /* The score is shown on Progress alone, its number on the lead and
+       its details under Score details. The review printed it as well
+       ("92 performance, up 2"), so one week's number was on two pages. */
     mockReview = normal();
     renderRecap();
-    const line = screen.getByText(/performance, up/);
-    expect(line.textContent).toBe("92 performance, up 2");
-    expect(screen.getByText("Load has run high.")).toBeInTheDocument();
+    expect(
+      screen.getByText("You trained more than your usual week.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/performance/i)).toBeNull();
   });
 
   it("shows the best moment: the lift, the figure, what it beat", () => {

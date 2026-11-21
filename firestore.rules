@@ -201,6 +201,35 @@ service cloud.firestore {
         );
     }
 
+    /* One move on a circuit post (Circ1, src/lib/circuitPost.ts): an
+       exercise id, a slug the app names from its catalogue, so a move
+       never carries typed words. */
+    function isCircuitMoveId(m) {
+      return m is string && m.matches('^[a-z0-9-]{1,60}$');
+    }
+
+    /* A circuit post's moves: one round's, 1 to 12, each an exercise id.
+       The rules have no loop, so each slot is checked by index, as a
+       post's moments are. circuitPost.test.ts holds every move a circuit
+       can post to the pattern above. */
+    function validCircuitMoves(moves) {
+      return moves is list
+        && moves.size() >= 1
+        && moves.size() <= 12
+        && isCircuitMoveId(moves[0])
+        && (moves.size() < 2 || isCircuitMoveId(moves[1]))
+        && (moves.size() < 3 || isCircuitMoveId(moves[2]))
+        && (moves.size() < 4 || isCircuitMoveId(moves[3]))
+        && (moves.size() < 5 || isCircuitMoveId(moves[4]))
+        && (moves.size() < 6 || isCircuitMoveId(moves[5]))
+        && (moves.size() < 7 || isCircuitMoveId(moves[6]))
+        && (moves.size() < 8 || isCircuitMoveId(moves[7]))
+        && (moves.size() < 9 || isCircuitMoveId(moves[8]))
+        && (moves.size() < 10 || isCircuitMoveId(moves[9]))
+        && (moves.size() < 11 || isCircuitMoveId(moves[10]))
+        && (moves.size() < 12 || isCircuitMoveId(moves[11]));
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -1350,7 +1379,8 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'routeMap', 'caption', 'moments'
+          'routePreview', 'routeMap', 'caption', 'moments',
+          'circuit'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1422,6 +1452,29 @@ service cloud.firestore {
                   || validPostMoment(request.resource.data.moments[1]))
               && (request.resource.data.moments.size() < 3
                   || validPostMoment(request.resource.data.moments[2])))
+        )
+        // A circuit (Circ1): a workout post's rounds, its interval and one
+        // round's moves, as exercise ids the app names from its catalogue.
+        // Whole numbers in a plausible range, each move an id
+        // (validCircuitMoves), and no field more.
+        && (
+          !('circuit' in request.resource.data.keys())
+          || (request.resource.data.type == 'workout'
+              && request.resource.data.circuit is map
+              && request.resource.data.circuit.keys().hasOnly(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.keys().hasAll(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.rounds is int
+              && request.resource.data.circuit.rounds >= 0
+              && request.resource.data.circuit.rounds <= 50
+              && request.resource.data.circuit.workSeconds is int
+              && request.resource.data.circuit.workSeconds >= 1
+              && request.resource.data.circuit.workSeconds <= 600
+              && request.resource.data.circuit.restSeconds is int
+              && request.resource.data.circuit.restSeconds >= 0
+              && request.resource.data.circuit.restSeconds <= 600
+              && validCircuitMoves(request.resource.data.circuit.moves))
         )
         && (
           !('prHit' in request.resource.data.keys())
@@ -2023,7 +2076,8 @@ service cloud.firestore {
                 && request.resource.data.activity.keys().hasOnly([
                      'type', 'distance', 'avgPace', 'duration',
                      'elevationGain', 'routePreview', 'totalVolume',
-                     'exerciseCount', 'muscleGroups', 'leadExerciseId'
+                     'exerciseCount', 'muscleGroups', 'leadExerciseId',
+                     'circuit'
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
@@ -2059,6 +2113,13 @@ service cloud.firestore {
                   !('leadExerciseId' in request.resource.data.activity)
                   || (request.resource.data.activity.leadExerciseId is string
                       && request.resource.data.activity.leadExerciseId.size() <= 200)
+                )
+                // A circuit (Circ1): a workout's mark that its count is of
+                // moves. Only ever true.
+                && (
+                  !('circuit' in request.resource.data.activity)
+                  || (request.resource.data.activity.circuit == true
+                      && request.resource.data.activity.type == 'workout')
                 ))
           )
           // The server's time, as the composer sends it: the Space's

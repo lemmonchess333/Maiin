@@ -66,7 +66,7 @@ export default function HeartRateZonesSection({
     <div className="space-y-3">
       <SectionHeading size="compact">Heart-rate zones</SectionHeading>
 
-      <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
+      <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3 dark:card-shadow dark:border-transparent">
         {maxHr > 0 ? (
           <>
             {/* The button drops under the words, at the right, once they

@@ -5,7 +5,8 @@
  * post as colon-joined document ids and splits them itself. These build
  * exactly that shape, and reportTargets.cross.test.ts runs what they build
  * through the server's own parser, so a report can never be refused for
- * the shape of its id. An activity or a user is reported by its plain id.
+ * the shape of its id. An activity, a user or a segment is reported by its
+ * plain id.
  */
 
 /** A comment on a feed activity: "activityId:commentId". */

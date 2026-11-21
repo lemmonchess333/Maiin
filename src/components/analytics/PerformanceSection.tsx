@@ -1,25 +1,18 @@
 import PerformanceReadError from "./PerformanceReadError";
-import { Suspense, useId, type ReactNode } from "react";
-import {
-  Activity,
-  ChevronDown,
-  Info,
-  Lock,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { Suspense, useId } from "react";
+import { Activity, ChevronDown, Info, Lock } from "lucide-react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import SectionHeading from "@/components/ui/SectionHeading";
-import ProgressRing from "@/components/ui/ProgressRing";
 import UITooltip from "@/components/ui/Tooltip";
 import { PerformanceCardSkeleton } from "@/components/LoadingSkeleton";
 import ArrivalFade from "@/components/ui/ArrivalFade";
 import { useArrivedAfterLoading } from "@/hooks/useArrivedAfterLoading";
-import Sparkline from "@/components/analytics/Sparkline";
+import LoadAgainstUsual from "@/components/analytics/LoadAgainstUsual";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import {
   resolveLoadBand,
@@ -31,10 +24,14 @@ import {
   getLine,
   getEstablishingLine,
   performanceEmptyCopy,
+  scoreWindowLabel,
+  takeMoreLine,
 } from "@/lib/performanceLine";
+import {
+  performanceWeekBreakdown,
+  trainedMoreThanUsual,
+} from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
-import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth, formatSigned } from "@/utils/formatters";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -43,42 +40,27 @@ const PerformanceDetails = lazyRetry(
   () => import("@/components/analytics/PerformanceDetails")
 );
 
-/** How many weekly scores the card's line draws. */
-const WEEKS_SHOWN = 6;
-
 /** What stands in the verb's place until the baseline has formed. */
 const EARLY_READ = "Early read";
 
-/** The ring's size at the default text size. It is sized in rem
- *  (`scaleWithText`), so the score inside still fits at larger text. */
-const RING = 96;
-const RING_STROKE = 8;
-
-/* The only explanation of this number anywhere in the app. PI = 65% load
- * + 25% recovery + 10% adherence per `src/lib/performanceTypes.ts`; the
- * tooltip distils that without leaking the weights, which would invite
- * over-optimisation against a single dimension.
- *
- * The WINDOW is the part that was once wrong. The engine scores a 7-day
- * window (`WINDOW_DAYS`) against a 28-day baseline (`BASELINE_DAYS`)
- * normalised to a 7-day equivalent — every one of the three factors is
- * measured over the current week. The sentence said the score combined
- * them "over the last 4 weeks", which describes the baseline as though
- * it were the scored period: a reader is told a bad week will weigh on
- * the figure for a month, when the opposite is nearer the truth, because
- * a hard week is scored against a calm four.
- *
- * `piExplainerWindow.test.ts` reads both constants out of
- * `functions/performanceEngine.js` and fails if this sentence stops
- * agreeing with the engine that actually runs. */
-const PI_EXPLAINER =
-  "0–100 score for your last 7 days — training load, recovery and consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder — read it alongside your load and recovery guidance.";
+/* How to read the lead. "Usual week" is the engine's baseline, the active
+ * weeks in the 28 days before the window (`performanceWeekBreakdown`), and
+ * the verb is the engine's own verdict (PI1): only "Backing off" says to
+ * ease off. So the card answers "can I take more?" with the engine's word,
+ * on screen under the bars (`takeMoreLine`), and adds no rule of its own:
+ * the score's band cannot say "room for more" safely, since a week of one
+ * sport tops out in Steady however big it was (LIFT-EV-10,
+ * `performanceLine.ts`). "These" 7 days, because a score kept from before
+ * a break names an older window. The windows are pinned to the engine by
+ * `piExplainerWindow.test.ts`. */
+const LEAD_EXPLAINER =
+  "These 7 days of lifting and running, against your usual week: the average of the weeks you trained in the 4 before them. Backing off means ease off. Any other word means carry on with your plan.";
 
 interface PerformanceSectionProps {
   /** Whether anything is logged at all: see `performanceEmptyCopy`. */
   hasLoggedSession?: boolean;
-  /** The reader's distance unit, for the running figures in the details.
-   *  History passes its own; `km` stands in only where nothing does. */
+  /** The reader's distance unit, for the running figures. History passes
+   *  its own; `km` stands in only where nothing does. */
   distanceUnit?: DistanceUnit;
   /** Whether "Score details" is open. History keeps it in the URL. */
   detailsOpen?: boolean;
@@ -86,19 +68,16 @@ interface PerformanceSectionProps {
   /** The details are Pro for this account (whole-app grill Q84): the row
    *  shows a lock and asks `onToggleDetails(true)`, which offers Pro. */
   detailsLocked?: boolean;
-  /** Drawn inside the open details, after the index chart: the training
-   *  load card, which History feeds from its own range. */
-  children?: ReactNode;
 }
 
 function Heading() {
   return (
     <div className="flex items-center gap-1">
       <SectionHeading>Performance</SectionHeading>
-      <UITooltip content={PI_EXPLAINER}>
+      <UITooltip content={LEAD_EXPLAINER}>
         <button
           type="button"
-          aria-label="About Performance Index"
+          aria-label="About your usual week"
           className="p-4 -m-4 text-muted-foreground hover:text-foreground transition-colors"
         >
           <Info className="size-3" aria-hidden="true" />
@@ -109,22 +88,22 @@ function Heading() {
 }
 
 /**
- * The one place the Performance Index is shown (Trim1 call 5, 11 November
- * 2026): the top of the Analytics overview.
+ * The top of the Progress overview (App1 Q10, 13 November 2026): "the
+ * page leads with load against your usual and whether you can take more".
  *
- * It was on Home's closing row, on this card as bare digits and again on
- * a Performance page as a gauge, with three sets of words for one week
- * (the verb and line, a headline and a body) and two colour scales. This
- * is the verdict's face as PI1 and PI3 locked it and DESIGN_GUIDE §3f
- * keeps it: the ring in the band's colour with the score in it, the verb
- * and its line, and the chip. The last six weeks are one line under it.
+ * The lead is the engine's verdict in words, the verb and its line (PI1),
+ * over the last seven days' lifting and running against the usual week,
+ * each figure from the score's own document. It is the screen's hero:
+ * the verb is its largest text (§14m), in the band's colour, so the word,
+ * its colour and the bars say one thing.
  *
- * What the score is made of opens in place, under "Score details": the
- * seven days against the usual week, the index over twelve weeks, the
- * four factors, the load band, and the training load. That is Hist6's
- * one tap (and Hist5b's "no drawer, no new route"); the Performance page
- * DS3 added is gone, and its links open the overview with the details
- * open (`History.tsx`).
+ * The 0–100 number is free and small (the owner, 18 November 2026): it
+ * sits beside the window, under the verdict in rank, so the screen keeps
+ * one hero. Its history, its 12-week chart and average, and what it is
+ * made of are the details under "Score details" (`PerformanceDetails`),
+ * which are Pro (Q84). Progress is the one surface that shows it: the
+ * weekly review keeps its verdict in words and drops the number (Q12).
+ * The details keep one load model, the score's (Q16).
  */
 export default function PerformanceSection({
   hasLoggedSession = false,
@@ -132,23 +111,16 @@ export default function PerformanceSection({
   detailsOpen = false,
   onToggleDetails,
   detailsLocked = false,
-  children,
 }: PerformanceSectionProps = {}) {
-  const {
-    weeks,
-    currentWeek,
-    previousWeek,
-    docsAvailable,
-    loading,
-    failed,
-    refresh,
-  } = usePerformanceWeeks(WEEKS_SHOWN);
+  const { currentWeek, docsAvailable, loading, failed, refresh } =
+    usePerformanceWeeks();
+  const liftUnit = useLiftUnit();
   const arrival = useArrivedAfterLoading(loading);
   const detailsId = useId();
 
   /* While the week loads, the heading is already the loaded one and the
-     card holds the loaded card's shape (Pol1), so the score arriving
-     moves nothing under it. */
+     card holds the loaded card's shape (Pol1), so the week arriving moves
+     nothing under it. */
   if (loading) {
     return (
       <section aria-label="Performance" className="space-y-2">
@@ -169,8 +141,8 @@ export default function PerformanceSection({
     );
   }
 
-  /* No score yet. Which sentence, and whether there is an action at all,
-     depends on whether anything has been logged: `performanceEmptyCopy`
+  /* Nothing scored yet. Which sentence, and whether there is an action at
+     all, depends on whether anything has been logged: `performanceEmptyCopy`
      owns that split. */
   if (!currentWeek) {
     const copy = performanceEmptyCopy(hasLoggedSession);
@@ -209,109 +181,73 @@ export default function PerformanceSection({
     docsAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
-  /* While the baseline is still forming the score is a real number but
-     not yet a verdict. A first-week 81 once read "Peak" in a confident
-     green over "Establishing your baseline", two statements saying
-     opposite things about whether the number means anything. So the
-     verb gives way to "Early read", and the colour, a verdict too, to
-     the brand's: a first week is not told to back off in amber. */
+  /* While the baseline is still forming there is no usual week, so no
+     verdict. A first-week 81 once read "Peak" in a confident green over
+     "Establishing your baseline", two statements saying opposite things.
+     So the verb gives way to "Early read", and the colour, a verdict too,
+     to the brand's: a first week is not told to back off in amber. */
   const label = establishing ? EARLY_READ : verb.label;
-  const { hue, textHue } = establishing
-    ? { hue: THEME.brand, textHue: "hsl(var(--primary-strong))" }
+  const { textHue } = establishing
+    ? { textHue: "hsl(var(--primary-strong))" }
     : getCardColour(pi, loadBand, deloadRecommended);
   const line = establishing
     ? getEstablishingLine(currentWeek.signals)
-    : getLine(verb.state, currentWeek.signals);
-  // The week directly before, never an older one standing in for it.
-  const delta = previousWeek
-    ? Math.round(
-        (currentWeek.performanceIndex ?? 0) -
-          (previousWeek.performanceIndex ?? 0)
-      )
-    : null;
-  // A change is noise until the baseline forms, and a zero is not a gain.
-  const showDelta = !establishing && delta !== null && delta !== 0;
-
-  const series = weeks.map((w) => w.performanceIndex ?? 0);
-  const firstDate = parseLocalDate(weeks[0].weekKey);
-  const lastDate = parseLocalDate(currentWeek.weekKey);
-  /* The newest score is not always this week's: someone back after a
-     break keeps the last one they earned. The label says which. */
-  const lastIsThisWeek = lastDate > addLocalDays(new Date(), -7);
+    : getLine(
+        verb.state,
+        currentWeek.signals,
+        trainedMoreThanUsual(currentWeek)
+      );
+  const { measures } = performanceWeekBreakdown(currentWeek, {
+    distanceUnit,
+    liftUnit,
+    establishing,
+  });
 
   return (
     <section aria-label="Performance" className="space-y-2">
       <Heading />
       <ArrivalFade {...arrival}>
-        <Card className="space-y-3">
-          {/* The words keep at least 9em beside the ring and go under it
-            when they cannot, rather than one word to a line at larger
-            text. */}
-          <div className="flex flex-wrap items-center gap-4">
-            <ProgressRing
-              value={pi / 100}
-              size={RING}
-              stroke={RING_STROKE}
-              color={hue}
-              cut
-              scaleWithText
+        <Card className="space-y-4" data-performance-lead="">
+          <div className="@container space-y-1">
+            {/* The window, and the number at caption rank beside it:
+                free (owner, 18 November), never a second hero. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <p className="text-xs font-semibold text-muted-foreground">
+                {scoreWindowLabel(currentWeek.weekKey, new Date())}
+              </p>
+              <p
+                className="text-xs font-semibold text-muted-foreground"
+                data-lead-score=""
+              >
+                Your score{" "}
+                <span className="text-sm font-bold font-mono tabular-nums text-foreground">
+                  {pi}
+                </span>
+              </p>
+            </div>
+            {/* The verdict. Its longest words ("Sharpening", "Recovering")
+                are about 5.3 em wide, so where the card is narrower than
+                that at the reader's text size (a 320 pt phone at the
+                largest text) the type steps down to 17% of the card's
+                width rather than split the word. Where container queries
+                are missing (iOS 15) it keeps its size and may break
+                inside the word, never past the card. */}
+            <p
+              className="text-hero supports-[container-type:inline-size]:text-[length:min(var(--text-hero),17cqi)] font-extrabold leading-[1.05] tracking-tight break-words hyphens-auto"
+              style={{ color: textHue }}
             >
-              <p className="text-4xl font-extrabold font-figure tabular-nums leading-none text-foreground">
-                <span className="sr-only">Performance Index </span>
-                {pi}
-              </p>
-            </ProgressRing>
-            <div className="min-w-[min(100%,9em)] flex-1 space-y-1">
-              {showDelta && (
-                <span
-                  className={
-                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                    (delta! > 0
-                      ? "bg-success/10 text-success-strong"
-                      : "bg-running/10 text-running-strong")
-                  }
-                >
-                  {delta! > 0 ? (
-                    <TrendingUp className="size-3" aria-hidden="true" />
-                  ) : (
-                    <TrendingDown className="size-3" aria-hidden="true" />
-                  )}
-                  <span aria-hidden="true">{formatSigned(delta!)}</span>
-                  <span className="sr-only">
-                    {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on last week`}
-                  </span>
-                </span>
-              )}
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold" style={{ color: textHue }}>
-                  {label}
-                </span>
-                {". "}
-                {line}
-              </p>
-            </div>
+              {label}
+            </p>
+            <p className="text-sm text-muted-foreground">{line}</p>
           </div>
-          {/* The six weeks as one line. With the details open the twelve
-            weeks' chart below says the same and more, so the line gives
-            way to it. */}
-          {series.length >= 2 && !detailsOpen && (
-            <div data-performance-trend="">
-              <Sparkline
-                values={series}
-                color={hue}
-                width={300}
-                height={44}
-                fluid
-                endDot
-              />
-              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                <span>{formatDayMonth(firstDate)}</span>
-                <span>
-                  {lastIsThisWeek ? "This week" : formatDayMonth(lastDate)}
-                </span>
-              </div>
-            </div>
-          )}
+          <LoadAgainstUsual measures={measures} />
+          {/* Whether you can take more (Q10), in the engine's own terms. */}
+          <p
+            className="text-sm font-semibold text-foreground"
+            data-take-more=""
+          >
+            {takeMoreLine(establishing ? null : verb.state)}
+          </p>
         </Card>
       </ArrivalFade>
 
@@ -357,12 +293,10 @@ export default function PerformanceSection({
           <SectionErrorBoundary sectionName="performance-details">
             <Suspense
               fallback={
-                <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
+                <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48 dark:card-shadow" />
               }
             >
-              <PerformanceDetails distanceUnit={distanceUnit}>
-                {children}
-              </PerformanceDetails>
+              <PerformanceDetails distanceUnit={distanceUnit} />
             </Suspense>
           </SectionErrorBoundary>
         </div>

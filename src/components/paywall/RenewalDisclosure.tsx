@@ -16,8 +16,8 @@ import {
  * free trial at least as prominent as the trial. The trial's button reads
  * "Start your 7-day free trial" and names no price, so the price line sits
  * directly beneath it at the size and weight of that label ("7 days free,
- * then £34.99 a year."), not in the small print. Without a trial the price
- * is already on the button ("Start Pro — £34.99/yr"), and the whole block
+ * then £39.99 a year."), not in the small print. Without a trial the price
+ * is already on the button ("Start Pro — £39.99/yr"), and the whole block
  * is small print.
  *
  * Either way the text reads, whole, as `getRenewalDisclosure`: the price

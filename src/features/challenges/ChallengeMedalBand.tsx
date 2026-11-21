@@ -27,6 +27,7 @@ export default function ChallengeMedalBand({
   timeLeft,
   medalSize = 72,
   children,
+  meta,
 }: {
   challenge: Challenge;
   /** The person's place in it, when they have joined: the medal is then
@@ -38,6 +39,9 @@ export default function ChallengeMedalBand({
   medalSize?: number;
   /** Drawn over the band's corner (the sheet's tier badge). */
   children?: ReactNode;
+  /** A line under the name: who is in it (the weekly card's
+   *  `ChallengePeople`). */
+  meta?: ReactNode;
 }) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
@@ -71,6 +75,9 @@ export default function ChallengeMedalBand({
           <p className="text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 text-foreground">
             {challenge.name}
           </p>
+          {meta && (
+            <div className="mt-1 text-xs text-muted-foreground">{meta}</div>
+          )}
         </div>
       </div>
       {children}

@@ -27,13 +27,16 @@ const STATIC_HREF: Record<string, string> = {
 /**
  * The page's content as the static copy carries it: the title, the
  * "Last updated" line and every section, with the app's classes and its
- * Back button removed and in-app links pointed at the static copies.
+ * Back removed and in-app links pointed at the static copies.
  */
 export function renderStaticBody(Page: ComponentType): string {
   const markup = renderToStaticMarkup(
     createElement(MemoryRouter, null, createElement(Page))
   )
     .replace(/<button\b[\s\S]*?<\/button>/g, "")
+    // The page's Back (LegalBack), a link to the front page when the page
+    // opens with nothing behind it, as a render with no history does.
+    .replace(/<a\b[^>]*data-legal-back[^>]*>[\s\S]*?<\/a>/g, "")
     .replace(/\sclass="[^"]*"/g, "")
     .replace(/href="([^"]*)"/g, (whole, href: string) =>
       STATIC_HREF[href] ? `href="${STATIC_HREF[href]}"` : whole
