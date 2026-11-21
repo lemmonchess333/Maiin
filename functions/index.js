@@ -7898,22 +7898,37 @@ exports.createReport = functions
     // Tell the owner a report is waiting. After the commit, so an alert
     // never announces a report that failed to store. sendReportAlert never
     // throws and gives up on a slow provider: a reporter told their report
-    // failed would file it again.
-    await reportAlert.sendReportAlert({
-      sendEmail: sendViaResend,
-      to: reportAlert.alertRecipient(),
-      queueUrl: reportAlert.moderationQueueUrl(
-        helpers.getStripeReturnBaseUrl()
-      ),
-      report: {
-        reportId: reportRef.id,
-        targetType: target.targetType,
-        category: input.category,
-        subReason: input.subReason,
-        freeformNote: input.freeformNote,
-      },
-      logger: functions.logger,
+    // failed would file it again. At most a few a day from one reporter and
+    // fifty from everyone (reportAlert.alertAllowance); past that the
+    // report waits in the queue without an email.
+    const allowance = await reportAlert.alertAllowance({
+      firestore,
+      reporterUid: context.auth.uid,
+      isLimited: isRateLimited,
     });
+    if (allowance.send) {
+      await reportAlert.sendReportAlert({
+        sendEmail: sendViaResend,
+        to: reportAlert.alertRecipient(),
+        queueUrl: reportAlert.moderationQueueUrl(
+          helpers.getStripeReturnBaseUrl()
+        ),
+        report: {
+          reportId: reportRef.id,
+          targetType: target.targetType,
+          category: input.category,
+          subReason: input.subReason,
+          freeformNote: input.freeformNote,
+          lastForNow: allowance.last,
+        },
+        logger: functions.logger,
+      });
+    } else {
+      functions.logger.warn("createReport.alert_held", {
+        reportId: reportRef.id,
+        held: allowance.held,
+      });
+    }
 
     return { reportId: reportRef.id };
   });

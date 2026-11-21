@@ -74,15 +74,22 @@ export default function ActivityCommentRows({
                   {REACTION_KEYS.map((k) => {
                     const uids = c.reactions?.[k] ?? [];
                     const mine = !!viewerUid && uids.includes(viewerUid);
+                    const word = k === "muscle" ? "strong" : "fire";
                     return (
                       <button
                         key={k}
                         type="button"
                         onClick={() => react(c.id, k)}
                         aria-pressed={mine}
-                        aria-label={`${mine ? "Remove" : "Add"} ${
-                          k === "muscle" ? "strong" : "fire"
-                        } reaction`}
+                        /* With a count drawn beside the emoji, the name
+                           starts with it ("2 fire reactions, add yours"),
+                           as Voice Control is spoken to with the words on
+                           the screen (WCAG 2.5.3), then what a tap does. */
+                        aria-label={
+                          uids.length > 0
+                            ? `${uids.length} ${word} ${uids.length === 1 ? "reaction" : "reactions"}, ${mine ? "remove yours" : "add yours"}`
+                            : `Add ${word} reaction`
+                        }
                         className="p-2.5 -m-1.5"
                       >
                         <span
