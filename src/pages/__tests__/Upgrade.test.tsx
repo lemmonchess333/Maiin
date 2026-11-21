@@ -239,7 +239,7 @@ describe("Upgrade — the buttons are the app's neutral filled button", () => {
     expect(next.getAttribute("style") ?? "").not.toMatch(/gradient/);
     fireEvent.click(next);
     const checkout = screen.getByRole("button", {
-      name: "Start Pro — £34.99/yr",
+      name: "Start Pro — £39.99/yr",
     });
     expect(checkout.className).toMatch(/(^|\s)bg-foreground(\s|$)/);
     expect(checkout.getAttribute("style") ?? "").not.toMatch(/gradient/);
@@ -247,18 +247,18 @@ describe("Upgrade — the buttons are the app's neutral filled button", () => {
 });
 
 describe("Upgrade — CTA copy reflects selected plan", () => {
-  it("CTA reads 'Start Pro — £34.99/yr' by default (yearly)", () => {
+  it("CTA reads 'Start Pro — £39.99/yr' by default (yearly)", () => {
     renderPlans();
-    expect(screen.getByText("Start Pro — £34.99/yr")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £39.99/yr")).toBeTruthy();
   });
 
-  it("CTA flips to 'Start Pro — £3.99/mo' after selecting Monthly", () => {
+  it("CTA flips to 'Start Pro — £6.99/mo' after selecting Monthly", () => {
     renderPlans();
     const monthly = screen
       .getAllByRole("radio")
       .find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
-    expect(screen.getByText("Start Pro — £3.99/mo")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £6.99/mo")).toBeTruthy();
   });
 
   it("disclosure flips between the yearly and monthly price with the selected plan", () => {
@@ -266,7 +266,7 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
     // Default yearly: what is charged, that it renews, and how to stop it.
     expect(
       screen.getByText(
-        "£34.99 a year. Renews automatically until cancelled. Cancel any time."
+        "£39.99 a year. Renews automatically until cancelled. Cancel any time."
       )
     ).toBeTruthy();
     const monthly = screen
@@ -275,7 +275,7 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
     fireEvent.click(monthly);
     expect(
       screen.getByText(
-        "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+        "£6.99 a month. Renews automatically until cancelled. Cancel any time."
       )
     ).toBeTruthy();
   });
@@ -437,7 +437,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     // anywhere on the screen.
     authProfileMock.mockReturnValue({ hasUsedTrial: false });
     renderPage();
-    const lead = screen.getByText("7 days free, then £34.99 a year");
+    const lead = screen.getByText("7 days free, then £39.99 a year");
     expect(lead.className).toContain("font-bold");
     expect(lead.className).toContain("text-base");
     const reassurance = screen.getByText("No payment due today");
@@ -467,7 +467,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       screen.getByRole("button", { name: "Back to the Pro overview" })
     );
     expect(
-      screen.getByText("7 days free, then £3.99 a month")
+      screen.getByText("7 days free, then £6.99 a month")
     ).toBeInTheDocument();
   });
 
@@ -480,12 +480,12 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     });
     const beneath = cta.nextElementSibling as HTMLElement;
     expect(beneath.textContent).toBe(
-      "7 days free, then £34.99 a year. Renews automatically until cancelled. Cancel any time."
+      "7 days free, then £39.99 a year. Renews automatically until cancelled. Cancel any time."
     );
     // As loud as the trial: the price line takes the button label's own
     // size and weight.
     const priceLine = within(beneath).getByText(
-      "7 days free, then £34.99 a year."
+      "7 days free, then £39.99 a year."
     );
     for (const cls of ["text-base", "font-semibold"]) {
       expect(cta.className).toContain(cls);
@@ -494,7 +494,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     expect(
       screen.getByRole("list", { name: "How your free trial works" })
         .textContent
-    ).toContain("Day 7 — Your subscription starts at £34.99 a year");
+    ).toContain("Day 7 — Your subscription starts at £39.99 a year");
   });
 
   it("shows the price when the App Store says this Apple ID has had the trial", () => {
@@ -568,7 +568,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
   it("shows a post-trial user the prices instead of a trial promise", () => {
     renderPage();
     expect(
-      screen.getByText("£3.99 a month or £34.99 a year")
+      screen.getByText("£6.99 a month or £39.99 a year")
     ).toBeInTheDocument();
     expect(screen.queryByText("No payment due today")).toBeNull();
   });
@@ -666,7 +666,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       screen.getByText(
-        "£34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+        "£39.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
       )
     ).toBeInTheDocument();
     expect(screen.queryByText(/Apple ID/)).toBeNull();
