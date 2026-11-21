@@ -539,8 +539,15 @@ Locked as Food9 (2026-08-18), reinstating F3d after Food8 reversed it
 silently. **Tropos never stores a meal photo on a server.** The AI-scan
 capture is written to the device via `src/lib/foodPhotoStore.ts`
 (`food-photos/{uid}/{mealId}.jpg`, `Directory.LibraryNoCloud`) and NO
-photo field is persisted to Firestore. `photoUrl` on a meal doc is
-legacy-only — pre-Food9 documents keep rendering, nothing writes it.
+photo field is persisted to Firestore. No meal photo is kept on a
+server either: the app neither writes nor reads one (`parseMealDoc`
+drops a meal's `photoUrl`, so the diary draws only the device's photo),
+`storage.rules` closes `food-photos/` to every client, and the photos
+builds before Food9 uploaded there are deleted, with the `photoUrl` and
+`photoPath` they left on meals, by
+`functions/scripts/purgeLegacyFoodPhotos.js` (owner, 2026-11-21). Run in
+production on: not yet (the operator puts the date here, from its row in
+`docs/qa/pre-launch-backlog.md`).
 
 - **"Device-local" is about RETENTION, not transmission.** The photo is
   still sent to Gemini to be analysed; there is no on-device model. Copy

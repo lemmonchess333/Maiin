@@ -72,18 +72,14 @@ export interface Meal {
    *  "+ Breakfast" / ... targeting flow so a snack logged at 9am goes to
    *  Snacks, not Breakfast. */
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
-  /** LEGACY ONLY — a Firebase Storage download URL for a meal photo,
-   *  written by the pre-Food9 background upload. NOTHING WRITES THIS ANY
-   *  MORE: captures now live on the device (`src/lib/foodPhotoStore.ts`)
-   *  and no photo field is persisted at all. It stays parsed so docs
-   *  written before the swap keep rendering their photo, and it
-   *  drains on its own as those meals fall out of the diary's 90-day
-   *  tap-back window. Do not add new writers.
-   *
-   *  Its sibling `photoPath` was deleted with the swap: it was written,
-   *  typed and parsed, and read by nothing anywhere in the repo — the
-   *  account-deletion executor sweeps by PREFIX, not by that field. */
-  photoUrl?: string;
+  /* No photo field. A meal's photo is kept on the device, keyed by the
+     meal's id (`src/lib/foodPhotoStore.ts`), and nothing about it is
+     stored on the meal. Builds before Food9 uploaded the photo to Storage
+     and wrote `photoUrl` and `photoPath` here; the owner had every one of
+     those photos deleted (2026-11-21,
+     functions/scripts/purgeLegacyFoodPhotos.js, which also takes the two
+     fields off), so `parseMealDoc` reads neither, and a document the purge
+     has not reached yet shows no photo rather than a deleted one. */
   confidence: string;
   createdAt: unknown;
   /** F5c — soft-delete sentinel. Set to a Firestore Timestamp when
@@ -182,7 +178,6 @@ export function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
       raw.meal === "dinner"
         ? raw.meal
         : undefined,
-    photoUrl: typeof raw.photoUrl === "string" ? raw.photoUrl : undefined,
     confidence: typeof raw.confidence === "string" ? raw.confidence : "",
     createdAt: raw.createdAt,
     // F5c: missing field is interpreted as active (null). Restored
