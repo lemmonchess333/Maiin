@@ -7024,3 +7024,25 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## Second-review follow-ups: Space photo cap, public post noindex (2026-11-21)
+
+storage.rules now refuses a `space-photos` upload of 7 MB or more (it took
+10 MB, and anything over about 7.86 MB was deleted on arrival because Vision
+could not screen it). `publicPostPage` now answers every `/activity/**`
+request with `X-Robots-Tag: noindex` and a `<meta name="robots"
+content="noindex" />` in the page's head (legal audit §3.2). Unit-tested
+(`functions/__tests__/photoScreen.test.js`,
+`functions/__tests__/publicPost.test.js`); `storage.rules.test.ts` was
+updated but could not run locally (the emulator jar's host is blocked
+there), so CI's emulator job is its first run.
+
+- [ ] **The storage rules suite in CI.** On the pull request, the
+      emulator job's `storage.rules.test.ts` passes, "refuses a photo of
+      7MB or more, which Vision could not screen" among it.
+- [ ] **After Deploy production, the post page's headers.** Passing:
+      `curl -sI https://troposfit.com/activity/<id>`, for a public post's
+      id, shows `x-robots-tag: noindex`, and `curl -s` of the same address has one
+      `<meta name="robots" content="noindex" />` in its head. Pasting the
+      address into Messages or Slack still draws the post's preview
+      ("Sam’s run on Tropos").

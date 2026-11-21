@@ -192,9 +192,10 @@ const VISION_URL = "https://vision.googleapis.com/v1/images:annotate";
  * Vision's limit on one request's JSON (its documented content limits:
  * "Base64-encoded images may exceed the JSON size limit, even if they are
  * within the image file size limit"). A photo whose request is larger is
- * refused by Vision every time, so it can never be screened. Storage
- * allows a Space photo up to 10 MB, about 13.3 MB as base64; the app
- * re-encodes every photo far under this.
+ * refused by Vision every time, so it can never be screened: anything
+ * over about 7.86 MB. Storage refuses every screened upload of that size
+ * (storage.rules: a Space photo under 7 MB, the others smaller), pinned by
+ * photoScreen.test.js; the app re-encodes every photo far under it.
  */
 const VISION_REQUEST_LIMIT_BYTES = 10 * 1024 * 1024;
 

@@ -5,6 +5,8 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const {
@@ -169,6 +171,59 @@ describe("safeSearch", () => {
     });
     await safeSearch(Buffer.alloc(2 * 1024 * 1024), "t", fits);
     expect(fits).toHaveBeenCalledOnce();
+  });
+
+  /* Storage must refuse a screened upload that Vision could never take,
+     so the person is told at upload instead of having the photo accepted
+     and then deleted as unscreenable. Read from storage.rules: each
+     screened prefix's size cap, with a photo one byte under it, has to
+     reach Vision. A Space photo was allowed 10 MB, and anything over
+     about 7.86 MB was deleted on arrival. */
+  it("a photo just under each screened path's Storage cap reaches Vision", async () => {
+    const rules = readFileSync(
+      fileURLToPath(new URL("../../storage.rules", import.meta.url)),
+      "utf8"
+    );
+    const caps = {};
+    for (const prefix of [
+      "space-photos",
+      "profile-photos",
+      "route-maps",
+      "post-photos",
+    ]) {
+      const block = rules.match(
+        new RegExp(
+          `match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`
+        )
+      );
+      expect(block, `${prefix} has a match block`).not.toBeNull();
+      const size = block[1].match(
+        /request\.resource\.size < (\d+) \* 1024(?: \* (1024))?/
+      );
+      expect(size, `${prefix} caps its uploads`).not.toBeNull();
+      caps[prefix] = Number(size[1]) * 1024 * (size[2] ? 1024 : 1);
+    }
+    // Every screened path is one of the four read above.
+    expect(Object.keys(caps).length).toBe(4);
+    const reachesVision = {};
+    for (const [prefix, cap] of Object.entries(caps)) {
+      const fetchImpl = visionAnswer({
+        responses: [{ safeSearchAnnotation: annotation("UNLIKELY") }],
+      });
+      const failed = await safeSearch(Buffer.alloc(cap - 1), "t", fetchImpl)
+        .then(() => null)
+        .catch((err) => err);
+      reachesVision[prefix] =
+        !isUnscreenable(failed) && fetchImpl.mock.calls.length === 1;
+    }
+    expect(reachesVision).toEqual({
+      "space-photos": true,
+      "profile-photos": true,
+      "route-maps": true,
+      "post-photos": true,
+    });
+    for (const prefix of Object.keys(caps))
+      expect(screenedOwner(`${prefix}/u/x.jpg`)).toBe("u");
   });
 });
 
