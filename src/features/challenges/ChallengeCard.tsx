@@ -247,7 +247,7 @@ export function ChallengeCard({
     /* No entrance of its own: the card is shown only inside a bottom
        sheet (ChallengeList), whose slide is the entrance; a rise inside
        it was a second one. */
-    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden dark:card-shadow dark:border-transparent">
       {/* The header (Soc16): the medal the challenge is working toward,
           at poster size, beside its name and time left. A challenge
           carries no photograph; its picture is its own medal. The
