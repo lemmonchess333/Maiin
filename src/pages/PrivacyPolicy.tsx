@@ -22,7 +22,7 @@ const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
   },
   {
     purpose:
-      "Your health details: weight, height, sex, injuries, the food diary, heart rate from your runs, and what you allow from Apple Health",
+      "Your health details: weight, height, sex, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health",
     basis:
       "Your explicit consent (UK GDPR Article 9(2)(a)), which you give in setup before the questions about your body, or, for an account made before that question was added, the first time you open Tropos after the update. You can withdraw it by deleting your account.",
   },
@@ -427,13 +427,13 @@ export default function PrivacyPolicy() {
                 Public posts on the web.
               </strong>{" "}
               Anyone with the link to a session you shared publicly can open it
-              on troposfit.com, signed in or not, and a search engine that finds
-              the link may list it. That page shows your display name and
-              profile photo, the session’s name and date, its figures (a run’s
-              distance, time, pace and climb, or a workout’s time, volume,
-              number of exercises and any record) and, for a run, a map of its
-              route with the start and finish cut off and your privacy zones
-              removed. A followers-only or private post never opens there.
+              on troposfit.com, signed in or not. The page asks search engines
+              not to list it. That page shows your display name and profile
+              photo, the session’s name and date, its figures (a run’s distance,
+              time, pace and climb, or a workout’s time, volume, number of
+              exercises and any record) and, for a run, a map of its route with
+              the start and finish cut off and your privacy zones removed. A
+              followers-only or private post never opens there.
             </p>
             <p>
               <strong className="text-foreground">Segments.</strong> A segment

@@ -553,8 +553,18 @@ describe("who sees what, as the code lets them", () => {
     expect(POST).toMatch(/view\.totalVolumeKg = volume;/);
     expect(POST).toMatch(/if \(route\) view\.route = route;/);
     expect(FUNCTIONS("publicRoute.js")).toMatch(/const END_CUT_M = [1-9]\d*;/);
+    // Every answer asks search engines not to index it (#3460).
+    expect(POST).toMatch(/const NO_INDEX = "noindex";/);
+    expect(POST).toMatch(/res\.set\("X-Robots-Tag", NO_INDEX\);/);
+    expect(POST).toMatch(
+      /const ROBOTS_TAG = `<meta name="robots" content="\$\{NO_INDEX\}" \/>`;/
+    );
     const sharing = SHARING();
     expect(sharing).toMatch(/can open it on troposfit\.com, signed in or not/);
+    expect(sharing).toMatch(/The page asks search engines not to list it\./);
+    expect(sharing).not.toMatch(
+      /search engine that finds the link may list it/
+    );
     expect(sharing).toMatch(/display name and profile photo/);
     expect(sharing).toMatch(/with the start and finish cut off/);
     expect(sharing).toMatch(
@@ -1008,6 +1018,11 @@ describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
     ]) {
       expect(PRIVACY_PROSE).toMatch(basis);
     }
+    // The health row lists what the consent screen names, steps included
+    // (#3471's words); pinned to that screen's copy once #3471 is on main.
+    expect(PRIVACY_PROSE).toMatch(
+      /"Your health details: weight, height, sex, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health"/
+    );
     // The one line that gave everything one basis is gone.
     expect(gdpr).not.toMatch(/provided during account creation/);
     expect(gdpr).toMatch(/Right to object:/);
