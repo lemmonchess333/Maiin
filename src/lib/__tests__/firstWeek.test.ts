@@ -87,4 +87,16 @@ describe("firstWeek", () => {
     ).toBe(true);
     expect(eligible([{ durationMinutes: 3, sets: [] }])).toBe(false);
   });
+
+  it("ticks the workout for a circuit that ran 7 minutes, as the streak counts it", () => {
+    const circuit = (activeSeconds: number) =>
+      isFirstWeekWorkoutEligible({
+        format: "circuit",
+        exercises: [],
+        circuit: { activeSeconds },
+      } as never);
+    expect(circuit(420)).toBe(true);
+    expect(circuit(1500)).toBe(true);
+    expect(circuit(419)).toBe(false);
+  });
 });

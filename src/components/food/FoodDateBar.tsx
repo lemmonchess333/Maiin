@@ -96,6 +96,9 @@ function FoodDateBar({
               Today
             </span>
           )}
+          {/* A space in the text, so "Today 18 Nov" reads as the words
+              the name starts with (WCAG 2.5.3); the flex box draws
+              nothing for it. */}{" "}
           <span
             className={
               isToday

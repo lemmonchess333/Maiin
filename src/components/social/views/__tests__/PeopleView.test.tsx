@@ -27,12 +27,6 @@ vi.mock("@/lib/auth", () => ({
     refreshProfile: vi.fn().mockResolvedValue(undefined),
   }),
 }));
-/* Enough people training on Tropos for Spaces to be offered (App1 Q6),
-   unless a test says otherwise. */
-const people = vi.hoisted(() => ({ enough: true as boolean | null }));
-vi.mock("@/hooks/useEnoughPeople", () => ({
-  useEnoughPeople: () => people.enough,
-}));
 vi.mock("@/lib/invites", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/invites")>()),
   fetchMyInviteCode: A.fetchCode,
@@ -86,7 +80,6 @@ afterEach(() => {
 });
 beforeEach(() => {
   A.profile = { uid: "me", inviteCode: undefined };
-  people.enough = true;
   A.creationTime = new Date().toUTCString();
   A.fetchCode.mockReset().mockResolvedValue("K7P49M2H");
   H.people = [];
@@ -147,16 +140,7 @@ it("asks someone in no space to join one, and someone in a space where suggestio
   ).toBeInTheDocument();
 });
 
-it("offers no Space while Tropos is too quiet for them, to someone in none (App1 Q6)", () => {
-  people.enough = false;
-  renderPeople(true);
-  expect(
-    screen.getByText("Follow people to start seeing suggestions.")
-  ).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Browse spaces" })).toBeNull();
-  cleanup();
-  // Someone in a Space keeps the way to it.
-  H.entries = [{ def: { id: "womens-running" }, joined: true }];
+it("offers Browse spaces to someone in no Space, from their first day (App1 Q6)", () => {
   renderPeople(true);
   expect(
     screen.getByRole("button", { name: "Browse spaces" })

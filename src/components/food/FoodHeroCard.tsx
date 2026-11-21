@@ -363,10 +363,12 @@ export default function FoodHeroCard({
               haptic("light");
               onTapDrillDown();
             }}
-            aria-label="View nutrition breakdown"
             className="relative flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-medium text-foreground hover:bg-muted/60 active:scale-95 transition-all"
           >
+            {/* Named "Details", the word on it, then what it opens, unseen
+                (WCAG 2.5.3, Label in Name). */}
             <span>Details</span>
+            <span className="sr-only">, view nutrition breakdown</span>
             <ChevronRight aria-hidden="true" className="size-4" />
           </button>
         )}

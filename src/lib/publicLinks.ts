@@ -5,12 +5,13 @@
  * Never `window.location.origin`. In the iPhone app that is
  * `capacitor://localhost`, which opens nothing anywhere else, and on the
  * GitHub Pages preview it drops the `/Maiin/` base the app is served
- * under. Every shared link names the production web app instead, the
- * origin the server's Stripe allow-list also requires
- * (`functions/index.js`).
+ * under. Every shared link names troposfit.com instead, the origin the
+ * server's Stripe allow-list also requires (`functions/index.js`). Since
+ * App1 Q52 that origin is the website, which points to the App Store and
+ * keeps answering every address below (src/website).
  */
 
-/** The production web app's origin. */
+/** troposfit.com: the website, and the address every shared link names. */
 export const PUBLIC_APP_ORIGIN = "https://troposfit.com";
 
 /** Tropos on the App Store (Apple ID 6762416918, docs/app-store/listing.md).
@@ -23,9 +24,10 @@ export const APP_STORE_URL = "https://apps.apple.com/app/id6762416918";
  *  keeps it from the first page it opens (`pendingInvite.ts`). */
 export const INVITE_PARAM = "invite";
 
-/** The link an invite shares: the app's front door, which signs a new
- *  person up or a returning one in. With a person's code (Soc15) it
- *  carries who sent it, so joining from it follows both ways. */
+/** The link an invite shares: the iPhone app opens it, and without the
+ *  app the website shows the code to copy before installing. With a
+ *  person's code (Soc15) it carries who sent it, so joining from it
+ *  follows both ways. */
 export function appInviteUrl(code?: string): string {
   return code
     ? `${PUBLIC_APP_ORIGIN}/?${INVITE_PARAM}=${encodeURIComponent(code)}`
@@ -42,8 +44,8 @@ export function publicPostUrl(activityId: string): string {
 
 /** A Space's own address (Run27 call 11): the Space in the app, the same
  *  path as the in-app route, so the iPhone app opens it as it is once the
- *  universal-links file names it, and the web app's sign-in leads to it
- *  for anyone else. */
+ *  universal-links file names it. For anyone else troposfit.com's page
+ *  points to the App Store (App1 Q52, src/website). */
 export function publicSpaceUrl(spaceId: string): string {
   return `${PUBLIC_APP_ORIGIN}/space/${encodeURIComponent(spaceId)}`;
 }
