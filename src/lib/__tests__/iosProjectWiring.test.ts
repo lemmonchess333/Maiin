@@ -822,7 +822,9 @@ describe("iOS project wiring — the app's own plugins", () => {
       .map(([, cls, jsName]) => ({ cls, jsName }));
     // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
     // HomeWidgets: the Home Screen widgets' snapshot and queued drinks (Wid1).
+    // AccessibilityPrefs: Reduce Transparency, which WebKit cannot see (DS6).
     expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "AccessibilityPrefs",
       "HeartRateSensor",
       "HomeWidgets",
       "MotionActivity",
@@ -833,6 +835,7 @@ describe("iOS project wiring — the app's own plugins", () => {
       const callers = [
         "src/lib/heartRateSensorBridge.ts",
         "src/lib/homeWidgets.ts",
+        "src/lib/reducedTransparency.ts",
         "src/lib/runMotionSource.ts",
         "src/lib/watchRunBridge.ts",
       ].filter((file) =>
