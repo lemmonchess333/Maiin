@@ -1,7 +1,14 @@
 import { useEffect, useRef, useCallback } from "react";
 import { isNativePlatform } from "@/lib/platform";
 
-export function useWakeLock() {
+export interface WakeLockOptions {
+  /** Ask on the native shell too. A circuit (Circ1 (10)) has no
+   *  background service to keep it going, and its timer is its screen, so
+   *  it asks wherever the web view offers a lock. */
+  onNative?: boolean;
+}
+
+export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   // Guards the async acquisition gap. request() is called from several places
   // that can fire on the SAME visibilitychange (useWakeLock's own handler +
@@ -10,19 +17,32 @@ export function useWakeLock() {
   // sentinel, and the second overwrites the first — orphaning a screen wake
   // lock (never released until page close) plus its stray release listener.
   const acquiringRef = useRef(false);
+  // Whether the caller wants the screen kept on: from `request` until
+  // `release`. The system drops a lock while the page is hidden, and it is
+  // taken again on the way back only while this holds, so a session that
+  // was paused or finished leaves the screen free to sleep.
+  const wantedRef = useRef(false);
 
   const request = useCallback(async () => {
+    wantedRef.current = true;
     // Native-gated (RUN-01): on the native shell, background run tracking is
     // owned by the background-geolocation foreground service — pinning the
     // screen awake would only burn battery for no tracking benefit (the doc's
     // "keep useWakeLock only on the web path"). Web keeps the lock so the
     // foreground-only web watcher isn't killed by the screen sleeping.
-    if (isNativePlatform()) return false;
+    if (isNativePlatform() && !onNative) return false;
     if (!("wakeLock" in navigator)) return false;
     if (wakeLockRef.current || acquiringRef.current) return false;
     acquiringRef.current = true;
     try {
       const sentinel = await navigator.wakeLock.request("screen");
+      // Released (or unmounted) while the system was granting it: a pause
+      // tapped in the gap must still let the screen sleep, so the lock
+      // that arrives late goes straight back.
+      if (!wantedRef.current) {
+        sentinel.release().catch(() => {});
+        return false;
+      }
       wakeLockRef.current = sentinel;
       sentinel.addEventListener("release", () => {
         wakeLockRef.current = null;
@@ -33,9 +53,10 @@ export function useWakeLock() {
     } finally {
       acquiringRef.current = false;
     }
-  }, []);
+  }, [onNative]);
 
   const release = useCallback(async () => {
+    wantedRef.current = false;
     if (wakeLockRef.current) {
       await wakeLockRef.current.release();
       wakeLockRef.current = null;
@@ -44,7 +65,11 @@ export function useWakeLock() {
 
   useEffect(() => {
     const handleVisibility = async () => {
-      if (document.visibilityState === "visible" && !wakeLockRef.current)
+      if (
+        document.visibilityState === "visible" &&
+        wantedRef.current &&
+        !wakeLockRef.current
+      )
         await request();
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -53,7 +78,9 @@ export function useWakeLock() {
       // Release the lock on unmount so the screen doesn't stay
       // awake after the consumer (e.g. Run page) tears down. Without
       // this the OS only reclaims the lock when the tab closes —
-      // a route error / nav-away mid-run silently drains battery.
+      // a route error / nav-away mid-run silently drains battery. A lock
+      // still being granted is let go as it arrives.
+      wantedRef.current = false;
       const lock = wakeLockRef.current;
       if (lock) {
         wakeLockRef.current = null;

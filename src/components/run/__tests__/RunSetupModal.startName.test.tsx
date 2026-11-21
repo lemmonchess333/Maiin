@@ -60,7 +60,7 @@ describe("RunSetupModal — the Start button's name", () => {
   it("names it from the plan's own prefill, as the Run page passes it", () => {
     const { metadata, prefill } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: 3,
       todayDate: "2027-03-03",
       runPlan: undefined,
@@ -197,7 +197,7 @@ describe("RunSetupModal — a planned time trial (Run24 (4))", () => {
   it("shows the trial's own structure and starts it with no repeats", async () => {
     const { metadata, prefill } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: 3,
       todayDate: "2027-03-03",
       runPlan: undefined,

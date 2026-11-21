@@ -69,6 +69,7 @@ import {
   manageSubscription,
 } from "@/lib/purchaseProvider";
 import ProNotOnSale from "@/components/paywall/ProNotOnSale";
+import PlanPricesPending from "@/components/paywall/PlanPricesPending";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialDetails from "@/components/TrialDetails";
 import { runningTrial } from "@/lib/subscriptionTrial";
@@ -183,11 +184,16 @@ export default function Upgrade() {
   const [beat, setBeat] = useState<Beat>("offer");
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
-  // Apple-localized prices on the RC build; hardcoded proPlans fallback
-  // elsewhere (IAP slice 3, #1099). Every price on the page is read from
-  // these plans, never looked up by id, so it is all in one currency.
-  const plans = useProPlanPrices();
-  const selected = findPlan(plans, selectedPlan);
+  // The App Store's prices on the RC build, and no price until they come;
+  // the pound plans on the web (IAP slice 3, #1099; Guideline 3.1.2).
+  // Every price on the page is read from these plans, never looked up by
+  // id, so it is all in one currency.
+  const {
+    plans,
+    failed: pricesFailed,
+    retry: retryPrices,
+  } = useProPlanPrices(user?.uid);
+  const selected = plans ? findPlan(plans, selectedPlan) : null;
   const withTrial = offersTrial(
     accountTrialEligible,
     storeTrialEligibility,
@@ -218,6 +224,15 @@ export default function Upgrade() {
   useEffect(() => {
     track("paywall_viewed", { source, platform });
   }, [source, platform]);
+
+  // A store outage would otherwise read as a paywall nobody tapped.
+  useEffect(() => {
+    if (pricesFailed) track("paywall_prices_failed", { source, platform });
+  }, [pricesFailed, source, platform]);
+
+  // The plans beat prints the prices; without them it would be a header
+  // and nothing else, so the page shows the offer, which says why.
+  const shownBeat: Beat = plans ? beat : "offer";
 
   // Checkout round-trip status. The web checkout returns here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
@@ -343,7 +358,7 @@ export default function Upgrade() {
     <div className="space-y-4">
       {/* Header: back on the plans beat, close on the offer beat. */}
       <header className="flex items-center justify-between min-h-11">
-        {beat === "plans" ? (
+        {shownBeat === "plans" ? (
           <button
             onClick={() => setBeat("offer")}
             type="button"
@@ -514,7 +529,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 1: the offer ─────────────────────────────────────── */}
-      {canBuy && beat === "offer" && (
+      {canBuy && shownBeat === "offer" && (
         <section className="space-y-4" aria-labelledby="pro-offer-heading">
           <div className="text-center space-y-2 pt-2">
             <h1
@@ -568,6 +583,8 @@ export default function Upgrade() {
               until the person picks another on the plans beat. */}
           {!onSale ? (
             <ProNotOnSale />
+          ) : !plans || !selected ? (
+            <PlanPricesPending failed={pricesFailed} onRetry={retryPrices} />
           ) : withTrial ? (
             <div className="space-y-1 text-center">
               <p className="text-base font-bold text-foreground text-balance">
@@ -592,7 +609,7 @@ export default function Upgrade() {
           <div className="space-y-2">
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
-            {onSale && (
+            {onSale && plans && (
               <Button
                 variant="neutral"
                 size="lg"
@@ -612,7 +629,9 @@ export default function Upgrade() {
             </Button>
           </div>
 
-          {onSale && (
+          {/* Renewal terms belong under a price: with none yet there is
+              nothing for them to qualify. */}
+          {onSale && plans && (
             <p className="text-micro text-muted-foreground text-center leading-snug">
               {withTrial
                 ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
@@ -624,7 +643,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
-      {canBuy && onSale && beat === "plans" && (
+      {canBuy && onSale && plans && selected && shownBeat === "plans" && (
         <section className="space-y-4" aria-labelledby="pro-plans-heading">
           <div className="space-y-1">
             <h1

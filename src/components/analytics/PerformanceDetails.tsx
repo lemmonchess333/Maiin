@@ -1,13 +1,18 @@
 import PerformanceReadError from "./PerformanceReadError";
-import type { ReactNode } from "react";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
-import PerformanceWeekBreakdown from "@/components/analytics/PerformanceWeekBreakdown";
+import Card from "@/components/ui/Card";
+import ProgressRing from "@/components/ui/ProgressRing";
+import UITooltip from "@/components/ui/Tooltip";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { performanceWeekBreakdown } from "@/lib/performanceWeekBreakdown";
+import {
+  performanceWeekBreakdown,
+  type WeekFood,
+} from "@/lib/performanceWeekBreakdown";
 import type { DistanceUnit } from "@/lib/distanceUnits";
+import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import {
   averagePerformanceIndex,
   averageWeekCount,
@@ -15,9 +20,156 @@ import {
 import { THEME } from "@/lib/theme";
 import {
   resolveLoadBand,
+  resolveDeloadRecommended,
   isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
-import { Footprints } from "lucide-react";
+import { scoreWindowLabel } from "@/lib/performanceLine";
+import { getCardColour } from "@/lib/performanceColour";
+import { formatSigned } from "@/utils/formatters";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { Footprints, Info, TrendingDown, TrendingUp } from "lucide-react";
+
+/* The only explanation of the 0–100 number anywhere in the app. PI = 65%
+ * load + 25% recovery + 10% adherence per `src/lib/performanceTypes.ts`;
+ * the tooltip distils that without leaking the weights, which would invite
+ * over-optimisation against a single dimension.
+ *
+ * The engine scores a 7-day window (`WINDOW_DAYS`) against a 28-day
+ * baseline (`BASELINE_DAYS`) normalised to a 7-day equivalent, so every
+ * one of the three factors is measured over the scored seven days, and a
+ * hard week is scored against a calm four. `piExplainerWindow.test.ts`
+ * reads both constants out of `functions/performanceEngine.js` and fails
+ * if this sentence stops agreeing with the engine that actually runs. */
+const PI_EXPLAINER =
+  "0–100 score for your last 7 days: how much you lifted and ran, your recovery and your consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder.";
+
+/** The ring's size at the default text size. A step down from the lead's
+ *  verb above it, which is the screen's largest text (§14m); sized in rem
+ *  (`scaleWithText`), so the score inside still fits at larger text. */
+const RING = 72;
+const RING_STROKE = 6;
+
+/**
+ * The 0–100 score's own card, the first of its details: its ring in the
+ * band's colour with the figure in it, the window it covers (Q13), its
+ * change on the seven days before and what the number means. The figure
+ * itself is free and sits small in the lead above (the owner, 18
+ * November); this card, with the history below it, is Pro (Q84). The
+ * verb is the lead's, and is not repeated here.
+ */
+function ScoreCard({
+  week,
+  previous,
+  establishing,
+}: {
+  week: PerformanceWeekDoc;
+  previous: PerformanceWeekDoc | null;
+  establishing: boolean;
+}) {
+  const pi = Math.round(week.performanceIndex ?? 0);
+  // Until the baseline forms the colour is the brand's, as the lead's is.
+  const hue = establishing
+    ? THEME.brand
+    : getCardColour(pi, resolveLoadBand(week), resolveDeloadRecommended(week))
+        .hue;
+  // The window directly before, never an older one standing in for it.
+  const delta = previous
+    ? Math.round(
+        (week.performanceIndex ?? 0) - (previous.performanceIndex ?? 0)
+      )
+    : null;
+  // A change is noise until the baseline forms, and a zero is not a gain.
+  const showDelta = !establishing && delta !== null && delta !== 0;
+  return (
+    <Card as="section" aria-label="Your score">
+      {/* The words keep at least 9em beside the ring and go under it
+          when they cannot, rather than one word to a line at larger
+          text. */}
+      <div className="flex flex-wrap items-center gap-4">
+        <ProgressRing
+          value={pi / 100}
+          size={RING}
+          stroke={RING_STROKE}
+          color={hue}
+          cut
+          scaleWithText
+        >
+          <p className="text-h2 font-extrabold font-figure tabular-nums leading-none text-foreground">
+            <span className="sr-only">Your score </span>
+            {pi}
+          </p>
+        </ProgressRing>
+        <div className="min-w-[min(100%,9em)] flex-1 space-y-1">
+          <div className="flex items-center gap-1">
+            <h3 className="text-base font-bold text-foreground">Your score</h3>
+            <UITooltip content={PI_EXPLAINER}>
+              <button
+                type="button"
+                aria-label="About your score"
+                className="p-4 -m-4 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Info className="size-3" aria-hidden="true" />
+              </button>
+            </UITooltip>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {scoreWindowLabel(week.weekKey, new Date())} · out of 100
+          </p>
+          {showDelta && (
+            <span
+              className={
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
+                (delta! > 0
+                  ? "bg-success/10 text-success-strong"
+                  : "bg-running/10 text-running-strong")
+              }
+            >
+              {delta! > 0 ? (
+                <TrendingUp className="size-3" aria-hidden="true" />
+              ) : (
+                <TrendingDown className="size-3" aria-hidden="true" />
+              )}
+              <span aria-hidden="true">{formatSigned(delta!)}</span>
+              <span className="sr-only">
+                {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on the 7 days before`}
+              </span>
+            </span>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/** The food logged in the score's seven days, which its recovery and
+ *  adherence read. The lifting and running beside the usual week lead the
+ *  page (`LoadAgainstUsual`), so they are not repeated here. */
+function FoodLogged({ food }: { food: WeekFood }) {
+  return (
+    <div className="space-y-1 border-t border-border/60 pt-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+          <span
+            aria-hidden="true"
+            className="size-2 rounded-full bg-nutrition"
+          />
+          Food
+        </span>
+        <span className="text-xs font-bold font-mono tabular-nums text-foreground">
+          {food.daysLogged} of 7 days
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        <span className="font-mono tabular-nums">
+          {formatCalories(food.caloriesPerDay)}
+        </span>{" "}
+        {CALORIE_UNIT} and{" "}
+        <span className="font-mono tabular-nums">{food.proteinPerDay}</span> g
+        protein a day, on the days logged
+      </p>
+    </div>
+  );
+}
 
 // Mini bar for breakdown scores
 function ScoreBar({
@@ -85,13 +237,18 @@ function loadBandLabel(band: string): string {
 }
 
 /**
- * What the Performance Index is made of, opened in place under the
- * overview's Performance card by "Score details" (Trim1 call 5).
+ * The score's details, opened in place under the Progress lead by "Score
+ * details" (Trim1 call 5, App1 Q10): its own card, its 12-week chart and
+ * average, and what it is made of. Pro (Q84; the owner, 18 November: the
+ * number is free and shown in the lead, its history and details are Pro),
+ * so a free account's page never mounts it.
  *
- * The score itself, its verb and its change on last week are the card's
- * (`PerformanceSection`), and are not repeated here. This was the
- * Performance page's body, which opened with a gauge of the same score
- * under a second set of words; both went with the page.
+ * The verdict and the last seven days against the usual week are the
+ * lead's (`PerformanceSection`), and are not repeated here. One load model,
+ * the score's own (Q16): the factor bars and the band below read the same
+ * document as the lead. A second, minutes-based curve with its own two
+ * warnings stood here, so one week could read two ways; it is gone, and
+ * the lighter-week offer stays the engine's alone (Q11).
  *
  * One tap shows all of it. The four factor bars, the load band and the
  * average sat behind a second "Score details" fold inside the page, which
@@ -99,16 +256,19 @@ function loadBandLabel(band: string): string {
  */
 export default function PerformanceDetails({
   distanceUnit = "km",
-  children,
 }: {
   /** The reader's unit, for the running figures in the breakdown. */
   distanceUnit?: DistanceUnit;
-  /** Drawn after the index chart: the training load card, the load
-   *  behind the index, which History feeds from its own range. */
-  children?: ReactNode;
 } = {}) {
-  const { weeks, currentWeek, docsAvailable, loading, failed, refresh } =
-    usePerformanceWeeks(12);
+  const {
+    weeks,
+    currentWeek,
+    previousWeek,
+    docsAvailable,
+    loading,
+    failed,
+    refresh,
+  } = usePerformanceWeeks(12);
   const liftUnit = useLiftUnit();
 
   if (loading) {
@@ -119,19 +279,10 @@ export default function PerformanceDetails({
     );
   }
 
-  /* The training load reads the sessions, not the score's documents, so
-     it is still drawn when those cannot be read. */
-  if (failed) {
-    return (
-      <div className="space-y-4">
-        <PerformanceReadError onRetry={refresh} />
-        {children}
-      </div>
-    );
-  }
+  if (failed) return <PerformanceReadError onRetry={refresh} />;
 
-  // The card above says so when there is no score; nothing to add here.
-  if (!weeks.length || !currentWeek) return <>{children}</>;
+  // The lead says so when there is no score; nothing to add here.
+  if (!weeks.length || !currentWeek) return null;
 
   const avgPI = averagePerformanceIndex(weeks);
   const avgWeeks = averageWeekCount(weeks);
@@ -139,22 +290,19 @@ export default function PerformanceDetails({
 
   /* Canonical read (2026-08-09 fix). This was `currentWeek.labels?.loadBand`
      — a field NO writer emits — so it resolved undefined on every doc.
-     `resolveLoadBand` is total and shared with the card above and the PI
+     `resolveLoadBand` is total and shared with the lead above and the PI
      chart, so the surfaces cannot disagree again. */
   const loadBand = resolveLoadBand(currentWeek);
-  // Cold-start gate: until the baseline is established the load band and
-  // the "against your usual week" framing aren't meaningful (the baseline
-  // is derived from prior weeks). The same predicate as the card's.
+  // Cold-start gate: until the baseline is established the load band
+  // isn't meaningful (the baseline is derived from prior weeks). The same
+  // predicate as the lead's.
   const establishing = isEstablishingBaseline({
     docsAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
 
-  /* What went into the score, from the score's own document: the seven
-     days against the usual week, and the food logged. It replaces the
-     server's bullets ("…great progression"), one of which cited sleep the
-     app never records. */
-  const weekBreakdown = performanceWeekBreakdown(currentWeek, {
+  /* The food logged in the seven days, from the score's own document. */
+  const { food } = performanceWeekBreakdown(currentWeek, {
     distanceUnit,
     liftUnit,
     establishing,
@@ -165,14 +313,15 @@ export default function PerformanceDetails({
 
   return (
     <div className="space-y-4">
-      <PerformanceWeekBreakdown breakdown={weekBreakdown} />
+      <ScoreCard
+        week={currentWeek}
+        previous={previousWeek}
+        establishing={establishing}
+      />
 
       {/* The canonical PI area chart (zone reference lines, band-coloured
-          dots, tap telemetry): the single twelve-week trend. The card's
-          six-week line gives way to it while this is open. */}
+          dots, tap telemetry): the score over twelve weeks. */}
       {weeks.length >= 2 && <PerformanceIndexChart weeks={weeks} />}
-
-      {children}
 
       {/* Breakdown bars */}
       <div className="p-4 rounded-2xl bg-card space-y-3">
@@ -201,9 +350,12 @@ export default function PerformanceDetails({
           color={THEME.teal}
           textColor="hsl(var(--teal))"
         />
+        {food && <FoodLogged food={food} />}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      {/* Two across while each card gets 8rem; one across at larger
+          text, where "Overreaching" broke mid-word in half a phone. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-3">
         <StatCard
           label="Load band"
           /* Was `labels?.loadBand || "—"`, so this card rendered a
@@ -216,18 +368,17 @@ export default function PerformanceDetails({
           unit=""
           accentColor={THEME.brand}
         />
-        {/* The window in the label is the window in the number.
+        {/* The window in the label is the window in the number, and
+            the number is "your score" as everywhere on Progress.
 
-            It read "Avg PI (12w)" over a mean of every fetched week, so
-            a user three weeks in was told twelve, and a user back from
-            a break had their silent weeks pulling the figure down. P2d
-            pins both halves by hand — "user with 5 weeks shows 5-week
-            average … honest about sample size", and "computed only
-            from weeks with confidence >= medium — inactive weeks
-            excluded". `performanceAverage` owns the arithmetic; this
+            P2d pins both halves by hand: "user with 5 weeks shows
+            5-week average … honest about sample size", and "computed
+            only from weeks with confidence >= medium — inactive weeks
+            excluded", so silent weeks back from a break never pull the
+            figure down. `performanceAverage` owns the arithmetic; this
             reads the count it actually used. */}
         <StatCard
-          label={`Avg PI (${avgWeeks}w)`}
+          label={`${avgWeeks}-week average`}
           value={avgPI === null ? "—" : String(avgPI)}
           unit={avgPI === null ? "" : "/100"}
           accentColor={THEME.brand}
@@ -262,11 +413,10 @@ export default function PerformanceDetails({
         </div>
       )}
 
-      {/* Rev1 — the Weekly Review's permanent way in, with the same
-          eligibility as the Home entry (hidden until the reviewed week
-          has content, so no dead row for a new account). It was one tap
-          from the overview on the Performance page and is one tap from
-          it here. */}
+      {/* Rev1: the weekly review's permanent way in, one tap from the
+          Progress overview, with the same eligibility as the Home entry
+          (hidden until the reviewed week has content, so no dead row for
+          a new account). */}
       <WeeklyReviewRow />
     </div>
   );

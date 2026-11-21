@@ -293,12 +293,15 @@ describe("browsers", () => {
 
 describe("a slow hosted-runner apt mirror", () => {
   const azure = "http://azure.archive.ubuntu.com/ubuntu/\tpriority:1\n";
+  /** A runner hosted in AWS lists its region's EC2 mirror where Azure's
+   *  stands: the one that stalled emulator-tests three times. */
+  const ec2 = "http://us-east-2.ec2.archive.ubuntu.com/ubuntu/\tpriority:1\n";
   const archive = "https://archive.ubuntu.com/ubuntu/\tpriority:2\n";
   const security = "https://security.ubuntu.com/ubuntu/\tpriority:3\n";
   const unrelated =
     "https://packages.microsoft.com/ubuntu/24.04/prod\tpriority:4\n";
 
-  /** Every attempt stalls while Azure is selected; the same install completes
+  /** Every attempt stalls while a regional mirror is selected; the same install completes
    *  only when a retry can use the existing HTTPS fallback. No network or apt
    *  command runs, and all source changes stay inside this scratch directory. */
   const run = (
@@ -320,7 +323,7 @@ describe("a slow hosted-runner apt mirror", () => {
         'echo attempt >> "$fixture_dir/attempts"',
         // Missing configuration represents an unsupported runner, where the
         // retry still fails but must not invent or write an apt source file.
-        'if [[ ! -f "$fixture_dir/apt-mirrors.txt" ]] || grep -Eq "^http://azure\\.archive\\.ubuntu\\.com/ubuntu/?([[:space:]]|$)" "$fixture_dir/apt-mirrors.txt"; then',
+        'if [[ ! -f "$fixture_dir/apt-mirrors.txt" ]] || grep -Eq "^http://([a-z0-9-]+\\.)+archive\\.ubuntu\\.com/ubuntu/?([[:space:]]|$)" "$fixture_dir/apt-mirrors.txt"; then',
         `  exit ${failure}`,
         "fi",
         'echo "npx $*"',
@@ -377,6 +380,22 @@ describe("a slow hosted-runner apt mirror", () => {
     }
   );
 
+  it("falls back from a region's EC2 mirror on a runner hosted in AWS", () => {
+    const result = run(ec2 + archive + security + unrelated);
+    expect(result.status).toBe(0);
+    expect(result.attempts).toBe(2);
+    expect(result.mirrors).toBe(archive + security + unrelated);
+    expect(result.stdout).toContain("official HTTPS Ubuntu fallback");
+  });
+
+  it("prints the runner's list when it has nothing to fall back to", () => {
+    const result = run(ec2 + security);
+    expect(result.status).toBe(1);
+    expect(result.mirrors).toBe(ec2 + security);
+    expect(result.stdout).toContain("the runner's list:");
+    expect(result.stdout).toContain("us-east-2.ec2.archive.ubuntu.com");
+  });
+
   it("also falls back when timeout has to kill a stalled attempt", () => {
     const result = run(azure + archive, { failure: 137 });
     expect(result.status).toBe(0);
@@ -420,10 +439,12 @@ describe("a slow hosted-runner apt mirror", () => {
     expect(result.mirrors).toBe(mirrors);
   });
 
-  it("preserves lookalike Azure hosts and paths along with their priorities", () => {
+  it("preserves lookalike regional hosts and paths along with their priorities", () => {
     const lookalikes =
       "http://azure.archive.ubuntu.com.example/ubuntu/\tpriority:5\n" +
-      "http://azure.archive.ubuntu.com/ubuntu/extra\tpriority:6\n";
+      "http://azure.archive.ubuntu.com/ubuntu/extra\tpriority:6\n" +
+      "http://us-east-2.ec2.archive.ubuntu.com.example/ubuntu/\tpriority:7\n" +
+      "http://archive.ubuntu.com/ubuntu/\tpriority:8\n";
     const result = run(azure + archive + lookalikes);
     expect(result.status).toBe(0);
     expect(result.mirrors).toBe(archive + lookalikes);

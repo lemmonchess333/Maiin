@@ -2458,6 +2458,133 @@ suite(
       );
     });
 
+    /* A circuit (Circ1): a workout post's rounds, interval and moves.
+       Each refusal has a twin that creates, so the rule refuses the one
+       thing wrong and not the field. */
+    describe("circuit (Circ1)", () => {
+      const CIRCUIT = {
+        rounds: 4,
+        workSeconds: 40,
+        restSeconds: 20,
+        moves: [
+          "bodyweight-squat",
+          "push-ups",
+          "glute-bridge",
+          "plank",
+          "mountain-climbers",
+        ],
+      };
+      const post = (id: string, fields: Record<string, unknown>) =>
+        setDoc(
+          doc(
+            env.authenticatedContext(OWNER_UID, VERIFIED).firestore(),
+            "activities",
+            id
+          ),
+          makeValidActivity({
+            type: "workout",
+            workoutName: "20-minute circuit",
+            activityTitle: "20-minute circuit",
+            exerciseCount: 5,
+            duration: 1180,
+            ...fields,
+          })
+        );
+
+      it("a workout post carries its circuit", async () => {
+        await assertSucceeds(post("circuit-ok", { circuit: CIRCUIT }));
+        await assertSucceeds(
+          post("circuit-none-done", { circuit: { ...CIRCUIT, rounds: 0 } })
+        );
+      });
+
+      it("refuses one on a run's post; a workout's creates", async () => {
+        await assertFails(
+          post("circuit-run", { type: "run", circuit: CIRCUIT })
+        );
+        await assertSucceeds(post("circuit-workout", { circuit: CIRCUIT }));
+      });
+
+      it("refuses a field too many and a field missing", async () => {
+        await assertFails(
+          post("circuit-extra", { circuit: { ...CIRCUIT, level: 2 } })
+        );
+        const { moves: _moves, ...noMoves } = CIRCUIT;
+        await assertFails(post("circuit-short", { circuit: noMoves }));
+      });
+
+      it("refuses figures that are not whole or out of range", async () => {
+        await assertFails(
+          post("circuit-half", { circuit: { ...CIRCUIT, rounds: 2.5 } })
+        );
+        await assertFails(
+          post("circuit-many", { circuit: { ...CIRCUIT, rounds: 51 } })
+        );
+        await assertFails(
+          post("circuit-nowork", { circuit: { ...CIRCUIT, workSeconds: 0 } })
+        );
+        await assertFails(
+          post("circuit-rest", { circuit: { ...CIRCUIT, restSeconds: -1 } })
+        );
+        await assertSucceeds(
+          post("circuit-edge", {
+            circuit: { ...CIRCUIT, rounds: 50, workSeconds: 600 },
+          })
+        );
+      });
+
+      it("refuses moves that are not 1 to 12 of them", async () => {
+        await assertFails(
+          post("circuit-thirteen", {
+            circuit: { ...CIRCUIT, moves: Array(13).fill("plank") },
+          })
+        );
+        await assertFails(
+          post("circuit-nomoves", { circuit: { ...CIRCUIT, moves: [] } })
+        );
+        await assertFails(
+          post("circuit-notalist", { circuit: { ...CIRCUIT, moves: "plank" } })
+        );
+        await assertSucceeds(
+          post("circuit-twelve", {
+            circuit: { ...CIRCUIT, moves: Array(12).fill("plank") },
+          })
+        );
+      });
+
+      /* Each move is an exercise id, checked slot by slot: a move is never
+         a map, a number or typed words, wherever it sits in the round. */
+      it("refuses a move that is not an exercise id, in any slot", async () => {
+        const notIds: [string, unknown][] = [
+          ["map", { name: "Plank" }],
+          ["number", 7],
+          ["words", "DM me"],
+          ["sentence", "great session, link in bio"],
+          ["empty", ""],
+          ["long", "x".repeat(61)],
+        ];
+        const twelve = Array(12).fill("plank");
+        for (const [what, move] of notIds)
+          for (const slot of [0, 4, 11]) {
+            const moves = [...twelve];
+            moves[slot] = move;
+            await assertFails(
+              post(`circuit-${what}-${slot}`, {
+                circuit: { ...CIRCUIT, moves },
+              })
+            );
+          }
+        // The twin: an id in each of those slots creates.
+        const ids = [...twelve];
+        ids[0] = "bodyweight-squat";
+        ids[4] = "single-leg-calf-raise";
+        ids[11] = "x".repeat(60);
+        await assertSucceeds(
+          post("circuit-ids", { circuit: { ...CIRCUIT, moves: ids } })
+        );
+      }, 30_000);
+    });
+
     /* Moments (Soc15): a kind and its numbers, never typed text. Each
        refusal below has a twin that creates, so the rule refuses the one
        thing wrong with it and not the field. activityPostFields.cross

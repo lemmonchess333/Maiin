@@ -61,7 +61,8 @@ describe("Recharts charts share one tick and one tooltip", () => {
   const files = rechartsFiles();
 
   it("finds the chart files (a scan that matches nothing proves nothing)", () => {
-    expect(files.length).toBeGreaterThanOrEqual(8);
+    // 8 → 7: the minutes-based training load chart went (App1 Q16).
+    expect(files.length).toBeGreaterThanOrEqual(7);
     expect(files).toContain("components/progress/TrendWeight.tsx");
     expect(files).toContain("components/progress/CalorieBalanceChart.tsx");
   });

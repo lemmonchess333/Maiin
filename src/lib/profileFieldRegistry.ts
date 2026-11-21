@@ -280,6 +280,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // card and the year recap (src/lib/proReport.ts).
   { field: "proChanges", sanitized: false },
   { field: "program", sanitized: true },
+  // Lift4 (11): "A pull-up bar" beside a home gym's, a minimal or a
+  // no-equipment kit.
+  { field: "pullUpBar", sanitized: true },
   { field: "raceGoal", sanitized: true },
   { field: "raceLegTrim", sanitized: true },
   // Q85: the account has had its free week of a half, marathon or ultra

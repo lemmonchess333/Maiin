@@ -219,4 +219,24 @@ describe("analyticsProvider — the page address on web", () => {
       expect(JSON.stringify(params)).not.toMatch(/their-uid-123|tempo/);
     }
   });
+
+  it("names the app as the page's title, not the tab's (a rest counts down there)", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
+
+    const before = document.title;
+    document.title = "1:23 rest";
+    mod.logAnalyticsEvent("guide_hint_viewed", { surface: "lifecycle" });
+    document.title = before;
+
+    const config = initializeAnalytics.mock.calls[0][1]?.config;
+    expect(config?.page_title).toBe("Tropos");
+    const params = (logEvent.mock.calls[0] as unknown[])[2] as Record<
+      string,
+      unknown
+    >;
+    expect(params.page_title).toBe("Tropos");
+  });
 });

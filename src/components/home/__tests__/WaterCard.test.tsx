@@ -91,8 +91,8 @@ describe("WaterCard hero — the quick pair", () => {
        grounds these sit on, a solid teal edge 4.04-6.08:1. This card is
        the only surface that still carries the pair. */
     render(<WaterCard ml={500} targetMl={2000} onLog={vi.fn()} />);
-    // Exact form: on this variant the card BODY is also named "Add water —
-    // choose a container size", so a bare /^Add/ matches two buttons.
+    // Exact form: on this variant the card BODY's name also says "Add
+    // water, choose a container size", so a loose /Add/ matches two buttons.
     const add = screen.getByRole("button", { name: /^Add \d+ ml$/ });
     const remove = screen.getByRole("button", { name: /^Remove \d+ ml$/ });
     for (const cls of ["rounded-full", "border", "border-teal", "text-teal"]) {
@@ -374,10 +374,11 @@ describe("WaterCard — it reports what you logged, not a score", () => {
 
   it("says one litre in the singular", () => {
     /* The App Store screenshot capture logged four 250 ml glasses and the
-       card's name read "1 litres". */
+       card's name read "1 litres". The name now carries the volume as
+       drawn ("1 L", WCAG 2.5.3), once. */
     render(<WaterCard compact ml={1000} targetMl={2000} onLog={vi.fn()} />);
     const body = screen.getByRole("button", { name: /add water/i });
-    expect(body).toHaveAccessibleName(/\b1 litre\b/i);
+    expect(body).toHaveAccessibleName(/^Water 1 L\b/);
     expect(body).not.toHaveAccessibleName(/1 litres/i);
   });
 

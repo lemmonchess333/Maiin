@@ -39,9 +39,9 @@ const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
  * around the parts that read their own data: the race hero, the Circles
  * section and the races and Spaces directory.
  *
- * Until Tropos has enough people training to fill them (App1 Q6,
- * `src/lib/enoughPeople.ts`), the page offers no challenge, league or
- * Space: it is the person's race, what they joined, and their Circles.
+ * All of it from the person's first day, however few people are on Tropos
+ * (App1 Q6): a challenge, a Space or the league that is still small says
+ * it is filling up (`src/lib/fillingUp.ts`), and Join stays.
  */
 export interface CommunityViewProps {
   /** True when the Together tab is the active top-level tab. The view

@@ -28,6 +28,7 @@ import { readJson, remove } from "@/lib/localStore";
 import { createdAtMs } from "@/lib/activityFeedItem";
 import { generatedDayType } from "@/lib/liftDayLabel";
 import { liftPostExerciseCount } from "@/lib/liftPost";
+import { circuitPostOf } from "@/lib/circuitPost";
 import { distanceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
@@ -111,8 +112,9 @@ export function migrateLocalHiddenPosts(uid: string): Promise<void> {
 
 /**
  * A hidden post's one line: its name, then its distance or how many
- * exercises, then the day it was posted. "Easy run · 5.2 km · 12 Nov",
- * "Pull · 6 exercises · 3 Oct". A post from another year carries it.
+ * exercises (a circuit's rounds), then the day it was posted. "Easy run ·
+ * 5.2 km · 12 Nov", "Pull · 6 exercises · 3 Oct", "20-minute circuit · 4
+ * rounds · 3 Oct". A post from another year carries it.
  */
 export function hiddenPostLine(
   post: Record<string, unknown>,
@@ -133,8 +135,13 @@ export function hiddenPostLine(
     const metres = typeof post.distance === "number" ? post.distance : 0;
     if (metres > 0) parts.push(distanceLabel(metres, unit));
   } else {
-    const count = liftPostExerciseCount(post);
-    if (count > 0)
+    const circuit = circuitPostOf(post.circuit);
+    const count = circuit ? 0 : liftPostExerciseCount(post);
+    if (circuit)
+      parts.push(
+        `${circuit.rounds} ${circuit.rounds === 1 ? "round" : "rounds"}`
+      );
+    else if (count > 0)
       parts.push(`${count} ${count === 1 ? "exercise" : "exercises"}`);
   }
   const ms = createdAtMs(post.createdAt);

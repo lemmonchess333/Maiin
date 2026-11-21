@@ -22,7 +22,9 @@ import {
   liftPostLeadArt,
   liftPostRowDone,
   liftPostRows,
+  type LiftPostRow,
 } from "../../lib/liftPost";
+import { circuitPostOf } from "../../lib/circuitPost";
 import { generatedDayType } from "@/lib/liftDayLabel";
 import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -298,17 +300,32 @@ function ActivityCard({
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
   const chips = commentQuickChips(feedItem.type);
 
+  /* A circuit (Circ1) posts no exercise rows: its rounds, interval and
+     moves come under `circuit`, and its moves are drawn as the rows are,
+     by name. An app from before circuits draws the same post as a workout
+     with a count of exercises and its minutes. */
+  const circuit = isRun ? null : circuitPostOf(activity?.circuit);
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
-  const exercises = liftPostRows(activity?.exercises, liftUnit);
+  const exercises: LiftPostRow[] = circuit
+    ? circuit.moves.map((move) => ({
+        name: move.name,
+        summary: "",
+        structured: null,
+      }))
+    : liftPostRows(activity?.exercises, liftUnit);
   const shownExercises = allExercises
     ? exercises
     : exercises.slice(0, FEED_EXERCISE_ROWS);
   const moreExercises = exercises.length - shownExercises.length;
   /* The exercises done, as the post's page lists them: a stored count can
      include one with no set done. */
-  const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  const exerciseCount = circuit
+    ? circuit.moves.length
+    : activity
+      ? liftPostExerciseCount(activity)
+      : 0;
   /* The count says something only where the rows don't: when the card
      lists every exercise, "3 exercises" under three rows repeats them. */
   const showExerciseCount =
@@ -317,14 +334,28 @@ function ActivityCard({
      summary drawn in its place): a Push day's post is titled "Push"
      already. */
   const titleKey = (activityTitle || feedItem.summary)?.trim().toLowerCase();
-  const muscleLabels = Array.from(
-    new Set(
-      ((activity?.muscleGroups as string[] | undefined) ?? []).map(
-        movementCategoryLabel
-      )
-    )
-  ).filter((label) => label.trim().toLowerCase() !== titleKey);
+  const muscleLabels = circuit
+    ? [`${circuit.workSeconds} s on, ${circuit.restSeconds} s off`]
+    : Array.from(
+        new Set(
+          ((activity?.muscleGroups as string[] | undefined) ?? []).map(
+            movementCategoryLabel
+          )
+        )
+      ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
+  /* A circuit leads with its rounds, as a lift with its volume. One ended
+     before a whole round leads with its minutes, never "0 rounds", and
+     the minutes are not said twice. */
+  const circuitMinutesLead = !!circuit && circuit.rounds === 0;
+  const circuitLead = circuit
+    ? circuitMinutesLead
+      ? { value: Math.round((activity?.duration ?? 0) / 60), label: "min" }
+      : {
+          value: circuit.rounds,
+          label: circuit.rounds === 1 ? "round" : "rounds",
+        }
+    : null;
   /* What happened to the author in the session (Soc15): read whole, so a
      malformed or older post draws none. */
   const moments = postMomentsOf(activity?.moments);
@@ -358,7 +389,9 @@ function ActivityCard({
   const muscleCategories =
     (activity?.muscleGroups as string[] | undefined) ?? [];
   const leadArt =
-    !isRun && !isHybrid ? liftPostLeadArt(activity?.exercises) : null;
+    !isRun && !isHybrid
+      ? liftPostLeadArt(circuit ? circuit.moves : activity?.exercises)
+      : null;
   const showMuscleHero =
     !leadArt && !isRun && !isHybrid && hasMuscleFigure(muscleCategories);
   const showLiftHero = !!leadArt || showMuscleHero;
@@ -375,6 +408,7 @@ function ActivityCard({
   /* What the lift's numbers link holds: a link with nothing in it would
      be an empty stop for a screen reader. */
   const hasLiftStats =
+    !!circuit ||
     muscleLabels.length > 0 ||
     (!showVolumeOverlay && (activity?.totalVolume ?? 0) > 0) ||
     showExerciseCount ||
@@ -744,16 +778,22 @@ function ActivityCard({
                       ...structured,
                     })
                   }
-                  aria-label={`Compare your ${ex.name}`}
                   className="w-full flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
+                  {/* Named by its words, the exercise first, then what a
+                      tap does, unseen (WCAG 2.5.3, Label in Name). The
+                      spaces keep the words apart in its text; the flex
+                      row draws nothing for them. */}
                   <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
-                  </span>
+                  </span>{" "}
                   {ex.superset !== undefined && (
-                    <SupersetTag group={ex.superset} />
+                    <>
+                      <SupersetTag group={ex.superset} />{" "}
+                    </>
                   )}
                   <span className={summaryClass}>{displaySummary}</span>
+                  <span className="sr-only">, compare with yours</span>
                 </button>
               );
             })}
@@ -771,7 +811,13 @@ function ActivityCard({
                   </span>{" "}
                   more{" "}
                   <span className="sr-only">
-                    {moreExercises === 1 ? "exercise" : "exercises"}
+                    {circuit
+                      ? moreExercises === 1
+                        ? "move"
+                        : "moves"
+                      : moreExercises === 1
+                        ? "exercise"
+                        : "exercises"}
                   </span>
                 </span>
               </Link>
@@ -821,13 +867,30 @@ function ActivityCard({
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
+          {/* A circuit's lead figure stands where a lift's volume does. */}
+          {circuitLead && (
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting whitespace-nowrap">
+                {circuitLead.value}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {circuitLead.label}
+              </SectionLabel>
+            </div>
+          )}
           {showExerciseCount && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {exerciseCount === 1 ? "exercise" : "exercises"}
+                {circuit
+                  ? exerciseCount === 1
+                    ? "move"
+                    : "moves"
+                  : exerciseCount === 1
+                    ? "exercise"
+                    : "exercises"}
               </SectionLabel>
             </div>
           )}
@@ -844,8 +907,9 @@ function ActivityCard({
               </SectionLabel>
             </div>
           )}
-          {/* A hybrid card's run stats above already carry the time. */}
-          {!isHybrid && (activity.duration ?? 0) > 0 && (
+          {/* A hybrid card's run stats above already carry the time, and
+              a circuit that leads with its minutes has said them. */}
+          {!isHybrid && !circuitMinutesLead && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
@@ -1115,7 +1179,19 @@ function ActivityCard({
             onClick={() =>
               onComment ? onComment() : setShowCommentSheet(true)
             }
-            aria-label={onComment ? "Add a comment" : "View comments"}
+            /* With a count drawn beside the icon, the name starts with
+               it ("2 comments"): Voice Control is spoken to with the
+               words on the screen (WCAG 2.5.3, Label in Name). On the
+               post's own page the comments are already showing and a
+               tap goes to the box to write one, which the name says. */
+            aria-label={
+              commentTotal > 0
+                ? `${commentTotal.toLocaleString()} ${commentTotal === 1 ? "comment" : "comments"}` +
+                  (onComment ? ", add a comment" : "")
+                : onComment
+                  ? "Add a comment"
+                  : "View comments"
+            }
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
             <MessageCircle className="size-5" />

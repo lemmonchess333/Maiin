@@ -1,11 +1,12 @@
 /**
- * ChallengeCard: the joined count, the goal and the time left.
+ * ChallengeCard: who has joined, the goal and the time left.
  *
- * Below FOUNDING_COUNT_MIN participants the card says nothing about who
- * has joined. "0 joined" was the loudest empty-lobby signal on the Social
- * tab, and the founding line that replaced it ("Just launched · founding
- * spots open") said "just launched" late in the month. Counts are real or
- * withheld, never inflated, and nothing stands in for one.
+ * Below 3 participants (PEOPLE_COUNT_MIN_VISIBLE) the card says it is
+ * filling up (App1 Q6, `src/lib/fillingUp.ts`) rather than a count. "0
+ * joined" was the loudest empty-lobby signal on the Social tab, and the
+ * founding line that once stood in for it ("Just launched · founding spots
+ * open") said "just launched" late in the month. Counts are real, never
+ * inflated, and "Filling up" claims no time.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -65,22 +66,29 @@ function renderCard(
 const text = (container: HTMLElement) =>
   (container.textContent ?? "").replace(/\s+/g, " ");
 
-describe("ChallengeCard: the joined count below the floor", () => {
-  it("says nothing about who has joined, not '0 joined' and no founding line", () => {
+describe("ChallengeCard: who has joined, below the floor", () => {
+  it("says it is filling up, not '0 joined' and no founding line (App1 Q6)", () => {
     const { container } = renderCard(0, false);
+    expect(text(container)).toContain("Filling up");
     expect(text(container)).not.toMatch(/joined|founding|launched/i);
   });
 
-  it("says nothing for an enrolled person either: the card is theirs already", () => {
-    const { container } = renderCard(1, true);
+  it("says so to an enrolled person too, with no count of one", () => {
+    const { container } = renderCard(2, true);
+    expect(text(container)).toContain("Filling up");
     expect(text(container)).not.toMatch(/joined|founding|You’re in/i);
     expect(text(container)).not.toContain("—");
+  });
+
+  it("says neither while the count is not a number", () => {
+    const { container } = renderCard(undefined as unknown as number, false);
+    expect(text(container)).not.toMatch(/Filling up|joined/);
   });
 
   it("shows the real count once it clears the floor", () => {
     const { container } = renderCard(3, false);
     expect(text(container)).toContain("3 joined");
-    expect(text(container)).not.toMatch(/founding/i);
+    expect(text(container)).not.toMatch(/founding|Filling up/i);
   });
 
   it("keeps the real count for large cohorts", () => {

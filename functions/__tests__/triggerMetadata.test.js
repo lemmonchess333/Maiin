@@ -875,27 +875,45 @@ describe("functions trigger metadata snapshot", () => {
     }
   });
 
-  /* Every Firestore trigger is delivered again when it throws
+  /* Every event trigger is delivered again when it throws
      (failurePolicy), and its header says why a second delivery is safe.
      Until 2026-10-20 the six social triggers and the participant recount
      had no retry, and the session triggers caught their own failures, so
      a transient error lost the work for good (lib/triggerRetry.js). A
-     trigger that cannot safely run twice goes here, with its reason. */
+     trigger that cannot safely run twice goes here, with its reason.
+
+     Every event trigger, not only Firestore's: the Storage trigger
+     `screenUploadedPhoto` throws on a failed screen so that it is
+     delivered again, and only a retried delivery past the window marks
+     the file and logs `keptUnscreened`. Without its policy a thrown
+     screen is dropped, the file kept and never marked, and until
+     2026-11-21 nothing here noticed, since this read Firestore triggers
+     alone. `onAuthUserCreated` is held the same way. */
   const NO_RETRY = {};
 
-  it("every Firestore trigger is retried unless listed with a reason", () => {
+  it("every event trigger is retried unless listed with a reason", () => {
     const noRetry = Object.entries(fns)
       .filter(([, fn]) => {
         const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
-        return (
-          trigger &&
-          /cloud\.firestore/.test(trigger.eventType) &&
-          trigger.retry !== true
-        );
+        return trigger && trigger.retry !== true;
       })
       .map(([name]) => name)
       .sort();
     expect(noRetry).toEqual(Object.keys(NO_RETRY).sort());
+  });
+
+  /* The two event triggers that are not Firestore's, named, so that
+     widening the rule above cannot pass by finding none of them. */
+  it("the Storage and Auth triggers are retried", () => {
+    const retryOf = (name) =>
+      fns[name] &&
+      fns[name].__endpoint &&
+      fns[name].__endpoint.eventTrigger &&
+      fns[name].__endpoint.eventTrigger.retry;
+    expect({
+      screenUploadedPhoto: retryOf("screenUploadedPhoto"),
+      onAuthUserCreated: retryOf("onAuthUserCreated"),
+    }).toEqual({ screenUploadedPhoto: true, onAuthUserCreated: true });
   });
 
   /* A retried trigger that throws on a bug is delivered again, with
@@ -915,7 +933,7 @@ describe("functions trigger metadata snapshot", () => {
       "the join backfill has no other path, and its join time is the event's",
   };
 
-  it("every retried Firestore trigger drops an event past the retry window", () => {
+  it("every retried event trigger drops an event past the retry window", () => {
     const source = readFileSync(
       fileURLToPath(new URL("../index.js", import.meta.url)),
       "utf8"
@@ -930,11 +948,7 @@ describe("functions trigger metadata snapshot", () => {
     const retried = Object.entries(fns)
       .filter(([, fn]) => {
         const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
-        return (
-          trigger &&
-          /cloud\.firestore/.test(trigger.eventType) &&
-          trigger.retry === true
-        );
+        return trigger && trigger.retry === true;
       })
       .map(([name]) => name);
     expect(retried.length).toBeGreaterThan(10);

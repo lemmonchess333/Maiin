@@ -213,13 +213,28 @@ test.describe("Monday migration on an existing account", () => {
           exact: true,
         });
         await expect(week.getByRole("tab")).toHaveCount(7);
+        // Each tab is named by the date its circle shows, then its run.
         expect(
           await week
             .getByRole("tab")
             .evaluateAll((els) =>
-              els.map((el) => el.getAttribute("aria-label")?.split(",")[0])
+              els.map((el) =>
+                el
+                  .getAttribute("aria-label")
+                  ?.split(", ")
+                  .slice(0, 2)
+                  .join(", ")
+              )
             )
-        ).toEqual(["7", "Easy 30", "9", "10", "Easy 30", "12", "13"]);
+        ).toEqual([
+          "7",
+          "8, Easy 30",
+          "9, today",
+          "10",
+          "11, Easy 30",
+          "12",
+          "13",
+        ]);
         expect(
           await week
             .locator(":scope > div")

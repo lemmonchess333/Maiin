@@ -1,8 +1,35 @@
 name: iOS native compile
 
+# A pull request compiles the native app only when it changes something
+# the compile reads: the iOS project, the packages the Swift packages
+# resolve from node_modules (package.json, package-lock.json, patches), the
+# Capacitor config, the web build's config (build:ios runs tsc -b and vite
+# build first; its only difference from unit's build is the base path,
+# which unit's build already compiles), and the scripts this file runs
+# with every local module they import. The web bundle is copied in as
+# resources and cannot break the compile; `unit` builds it on every pull
+# request. Not a required check, so a pull request that skips it shows no
+# check at all rather than a pending one.
+#
+# The schedule compiles main once a day, for what changes without a
+# commit: the runner image's Xcode and simulator SDK.
+# ciChangeGating.test.ts holds the paths to the scripts' imports.
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "ios/**"
+      - "package.json"
+      - "package-lock.json"
+      - "patches/**"
+      - "capacitor.config.ts"
+      - "vite.config.ts"
+      - "tsconfig*.json"
+      - "scripts/verify_ios_watch.py"
+      - "scripts/verify_ios_push.py"
+      - ".github/workflows/ios-native-compile.yml"
+  schedule:
+    - cron: "23 5 * * *"
   workflow_dispatch:
 
 concurrency:

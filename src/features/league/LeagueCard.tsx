@@ -4,9 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { Button } from "@/components/ui/Button";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { roomShown } from "@/lib/enoughPeople";
 import { cn } from "@/lib/utils";
 import {
   endsLine,
@@ -18,6 +16,7 @@ import {
 } from "./league";
 import { ordinal, tierName } from "./leagueRules";
 import LeagueJoin from "./LeagueJoin";
+import LeagueJoinedBar from "./LeagueJoinedBar";
 import TierBadge from "./TierBadge";
 import { useLeague } from "./useLeague";
 import { useLeagueJoin } from "./useLeagueJoin";
@@ -27,18 +26,18 @@ import { useLeagueJoin } from "./useLeagueJoin";
  * under the weekly challenge: both are this week's, and both end on
  * Sunday. Four states:
  *
- *   not joined   what a league is, what joining shows and to whom, Join
+ *   not joined   what a league is, what joining shows and to whom, Join,
+ *                and while it fills, what it starts at
  *   locked       joined, and the league is waiting for enough people:
- *                "Leagues open when 10 people have joined. 3 so far."
+ *                "The league starts once 10 people have joined. 4 so far."
  *   waiting      joined, and the next groups are made on Monday
  *   in a group   the tier, the place ("4th of 18"), the points, the
  *                sessions against the plan ("3 of 4 sessions") and
  *                "Ends Sunday"; the card opens the league page
  *
- * Someone who has not joined sees no card at all until Tropos has enough
- * people to fill a league (App1 Q6, `roomShown`): before then it draws
- * nothing, not a card saying leagues are coming. Someone who joined keeps
- * theirs whatever the count.
+ * Drawn from a person's first day (App1 Q6, `src/lib/fillingUp.ts`): the
+ * server makes no group under 10, so until then the card offers Join and
+ * says what the league starts at and how many are in so far.
  *
  * Social may be loud (DESIGN_GUIDE §14l): the group's card wears its
  * tier's metal.
@@ -46,14 +45,9 @@ import { useLeagueJoin } from "./useLeagueJoin";
 export default function LeagueCard({ uid }: { uid: string }) {
   const { profile } = useAuth();
   const optedIn = profile?.leagueOptIn === true;
-  const enough = useEnoughPeople();
-  const shown = roomShown(optedIn, enough);
-  /* A league that is not offered is not read either. */
-  const league = useLeague(shown ? uid : null);
+  const league = useLeague(uid);
   const { isRestricted } = useRestrictedStatus(uid);
   const sharing = useLeagueJoin(league.reload);
-
-  if (!shown) return null;
 
   if (league.loading) {
     return (
@@ -133,7 +127,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
                 {lockedLine(state.joined, state.needed)}
               </p>
               {showsJoinedCount(state.joined) && (
-                <JoinedBar joined={state.joined} needed={state.needed} />
+                <LeagueJoinedBar joined={state.joined} needed={state.needed} />
               )}
             </>
           ) : (
@@ -217,27 +211,5 @@ export default function LeagueCard({ uid }: { uid: string }) {
         </div>
       </div>
     </Link>
-  );
-}
-
-/** How far the league is from opening: joined out of needed. */
-function JoinedBar({ joined, needed }: { joined: number; needed: number }) {
-  return (
-    <div
-      className="h-2 overflow-hidden rounded-full track-cut"
-      role="progressbar"
-      aria-label="People who have joined"
-      aria-valuemin={0}
-      aria-valuemax={needed}
-      aria-valuenow={Math.min(joined, needed)}
-    >
-      <div
-        className="h-full rounded-full"
-        style={{
-          width: `${Math.min(100, (100 * joined) / needed)}%`,
-          background: LEAGUE_LIGHT.bronze,
-        }}
-      />
-    </div>
   );
 }
