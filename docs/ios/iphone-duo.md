@@ -299,8 +299,12 @@ That is where Tropos is today (see the short version).
   request's build on it: each display is shot before the launch and 25
   seconds after it, the app has to be running, and the display that showed
   the home screen has to show the app (the `ios-simulator-duo` artifact).
-  It cannot fold the simulator, sign in or open a sheet; those are device
-  checks in `docs/qa/pre-launch-backlog.md` ("The iPhone Duo").
+  The simulator starts folded: in the first green run the outer display
+  showed the home screen and then the app, and the inner display stayed
+  dark throughout [CI-DUO]. So CI sees the outer display only. It cannot
+  unfold the simulator, sign in or open a sheet; the inner display and
+  folding are device checks in `docs/qa/pre-launch-backlog.md` ("The
+  iPhone Duo"), or Xcode 27.1's Duo simulator unfolded by hand.
 - **The capture rig** has the Duo's sizes as touch screens
   (`e2e/helpers/screenSize.ts`, `src/test/iphoneDuo.ts`):
   `largeText.capture.spec.ts` measures every screen at 466 × 678 and
@@ -395,10 +399,14 @@ Owner decisions:
   `xcode-27-arm64-Readme.md` (read 18 November 2026).
   https://github.com/actions/runner-images
 - [CI-DUO] Tropos CI, "iOS native compile", job `simulator-build` on
-  `claude/duo-sdk-27-1` (18 November 2026): `simctl` lists the iPhone Duo's
-  displays as `--display=3 LCD-1 (primary-1) 2007x2853` and
-  `--display=1 LCD (primary) 1398x2034`.
+  `claude/duo-sdk-27-1` (18 November 2026). The first run: `simctl` lists
+  the iPhone Duo's displays as `--display=3 LCD-1 (primary-1) 2007x2853`
+  and `--display=1 LCD (primary) 1398x2034`.
   https://github.com/lemmonchess333/Maiin/actions/runs/44244821762/job/134601125367
+  The first green run: before the launch the outer display is lit (the
+  home screen) and the inner is black; 25 seconds after it the outer
+  display shows the app and the inner is still black.
+  https://github.com/lemmonchess333/Maiin/actions/runs/44265705127/job/134669569009
 
 Quotes from the tech talks and the DTS lab were read from their transcripts
 through a summarising fetch, not copied by hand; check a quote against the

@@ -1848,10 +1848,11 @@ shell's side insets and the two-pane layouts (`claude/duo-layouts`), and
 every screen on Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
 The `xcode-27` image's Xcode 27.1 has an iPhone Duo simulator, and with
 `claude/duo-sdk-27-1` each pull request's build is launched on it and both
-displays shot (`ios-native-compile.yml`); that run cannot fold it, sign in
-or open a sheet. The capture rig checks the layouts at the Duo's sizes in
-Chromium. The rest needs an iPhone Duo, or Xcode 27.1's Duo simulator on a
-Mac for the rows marked (sim).
+displays shot (`ios-native-compile.yml`). The simulator starts folded, so
+that run sees the app on the outer display only; it cannot unfold it, sign
+in or open a sheet. The capture rig checks the layouts at the Duo's sizes
+in Chromium. The rest needs an iPhone Duo, or Xcode 27.1's Duo simulator on
+a Mac for the rows marked (sim).
 
 Today's builds (iOS 26 SDK), in compatibility mode:
 
