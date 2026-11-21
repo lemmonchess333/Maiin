@@ -78,7 +78,7 @@ export default function UpcomingRacePicker({
           haptic();
           setOpen((o) => !o);
         }}
-        className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2.5 text-left"
+        className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2.5 text-left chip-edge"
       >
         <span className="flex items-center gap-2 min-w-0">
           <Flag className="size-4 shrink-0 text-running" aria-hidden />

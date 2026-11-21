@@ -206,7 +206,7 @@ export default function MuscleHeatMap({
   }
 
   return (
-    <div className="p-4 rounded-2xl border border-border/50 bg-card">
+    <div className="p-4 rounded-2xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
       <div className="mb-3">
         <h3 className="text-base font-bold text-foreground">
           Muscle groups trained

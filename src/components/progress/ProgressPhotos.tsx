@@ -217,7 +217,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
                         .map((p) => POSE_LABELS[p.pose].toLowerCase())
                         .join(", ")}`}
                       onClick={() => openDay(day.date)}
-                      className="w-full space-y-2 rounded-lg bg-muted p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="w-full space-y-2 rounded-lg bg-muted p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary chip-edge"
                     >
                       <span className="block font-mono text-sm font-semibold tabular-nums text-foreground">
                         {dayLabel(day.date)}

@@ -1035,7 +1035,7 @@ export default function CirclesSection({
           retry block replaces the list/empty state so a network blip
           never funnels an existing member into the cold-start selector. */}
       {!loading && loadFailed && (
-        <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3">
+        <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3 dark:card-shadow">
           <p className="text-sm text-muted-foreground">
             Couldn’t load your circles.
           </p>
@@ -1057,7 +1057,7 @@ export default function CirclesSection({
           only (!loadFailed). "Join with code" sits beside Start so an
           invited user isn't funneled into creating. */}
       {!loading && !loadFailed && circles.length === 0 && (
-        <div className="rounded-2xl bg-card p-4 space-y-3">
+        <div className="rounded-2xl bg-card p-4 space-y-3 dark:card-shadow">
           <div className="flex items-start gap-3">
             <div className="size-9 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
               <Users className="size-4 text-primary-strong" aria-hidden />
@@ -1371,7 +1371,7 @@ export default function CirclesSection({
                 setGoalPrechosen(true); // goal chosen here — skip the re-pick
                 setShowCreate(true);
               }}
-              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
+              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97] chip-edge"
             >
               <p className="text-sm font-semibold text-foreground">{t.label}</p>
               <p className="text-xs text-muted-foreground">{t.description}</p>
@@ -1384,7 +1384,7 @@ export default function CirclesSection({
               setChooserOpen(false);
               navigate("/review");
             }}
-            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
+            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97] chip-edge"
           >
             <p className="text-sm font-semibold text-foreground">
               Private progress
@@ -1471,7 +1471,7 @@ export default function CirclesSection({
                     "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     template === t.type
                       ? "bg-primary/10 border border-primary/40"
-                      : "bg-muted border border-transparent"
+                      : "bg-muted chip-edge border border-transparent"
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground">
@@ -1612,7 +1612,7 @@ export default function CirclesSection({
                   {members.map((m) => (
                     <span
                       key={m.uid}
-                      className="px-3 py-2 rounded-xl bg-muted text-xs font-semibold text-foreground"
+                      className="px-3 py-2 rounded-xl bg-muted text-xs font-semibold text-foreground chip-edge"
                     >
                       {m.displayName}
                       {m.role === "owner" && (
@@ -1946,7 +1946,7 @@ export default function CirclesSection({
             {/* An expired code is not shown or offered; the one way on is
                 a new code, which this sheet then shows. */}
             {!handoffCodeExpired && (
-              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
+              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all chip-edge">
                 {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
               </p>
             )}

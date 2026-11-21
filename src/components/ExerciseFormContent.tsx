@@ -259,7 +259,7 @@ function ExerciseFormContent({
       {/* Muscle diagram — the hero only when there's no demo to show, so we
           never stack two body silhouettes. */}
       {!hasLocalGuide && !hasAnimation && (
-        <div className="bg-muted rounded-2xl p-5 mt-4">
+        <div className="bg-muted rounded-2xl p-5 mt-4 chip-edge">
           <div
             style={{
               display: "flex",
