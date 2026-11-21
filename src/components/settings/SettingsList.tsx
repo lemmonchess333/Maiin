@@ -39,7 +39,7 @@ export function SettingsGroup({
           {title}
         </SectionHeading>
       )}
-      <ul className="@container rounded-xl bg-card overflow-hidden divide-y divide-border/40">
+      <ul className="@container rounded-xl bg-card overflow-hidden divide-y divide-border/40 dark:card-shadow">
         {children}
       </ul>
       {footer && <p className="px-1 text-xs text-muted-foreground">{footer}</p>}

@@ -181,7 +181,7 @@ export default function SettingsIndex() {
           a button cannot sit inside a button. */}
       <motion.div
         variants={pageItemVariant}
-        className="rounded-xl bg-card flex flex-wrap items-center gap-x-3 pl-3"
+        className="rounded-xl bg-card flex flex-wrap items-center gap-x-3 pl-3 dark:card-shadow"
       >
         {profile ? <SettingsAvatar profile={profile} /> : null}
         <button

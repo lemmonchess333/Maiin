@@ -17,6 +17,7 @@ import { registerServiceWorker } from "./lib/register-sw";
 import { initErrorMonitoring } from "./lib/errorReporting";
 import { startSystemChromeSync } from "./lib/systemChrome";
 import { startSystemTextSizeSync } from "./lib/systemTextSize";
+import { startReducedTransparencySync } from "./lib/reducedTransparency";
 import { captureInviteFromUrl } from "./lib/pendingInvite";
 import { traceBoot, watchBootErrors } from "./lib/bootTrace";
 
@@ -44,6 +45,9 @@ startSystemChromeSync();
 
 // On iPhone, the text follows the phone's text size (Dynamic Type).
 startSystemTextSizeSync();
+
+// Under Reduce Transparency, the frosted surfaces draw solid (DS6).
+startReducedTransparencySync();
 
 // Attach window.error and unhandledrejection listeners. captureError is
 // already called at known failure sites throughout the app; this catches
