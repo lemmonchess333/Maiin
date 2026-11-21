@@ -139,8 +139,8 @@ words rather than promise a busy league to the first hundred people.
 ### Pro
 
 "What Pro adds", with the Pro page's own list (`PRO_INCLUDES`, seven lines),
-the free line (`FREE_KEEPS`) and the price card: "7 days free, then £34.99 a
-year", "Or £3.99 a month. The App Store shows the price in your own
+the free line (`FREE_KEEPS`) and the price card: "7 days free, then £39.99 a
+year", "Or £6.99 a month. The App Store shows the price in your own
 currency.", and the renewal terms the iPhone paywall shows. Every figure is
 read from `proPlans.ts`, so the site cannot drift from the app. Four
 questions, answered from the same sources: do I need Pro, how the trial
@@ -269,13 +269,13 @@ Where each claim comes from:
 | Half marathon and longer are Pro after the first week; 5K and 10K free                                                                                                                                        | `FREE_KEEPS`, `PRO_INCLUDES`                                             |
 | Privacy zones; segments against the people you follow                                                                                                                                                         | `privacyZones.ts`; Run26 call 3                                          |
 | The calorie target's inputs; typing, search, barcode; usual breakfast in one tap; water and weight trend                                                                                                      | App Store listing, Food                                                  |
-| Photo logging, 15 scans a day; asked before sending; read by Google's Gemini; kept on the phone                                                                                                              | `PRO_INCLUDES`, `DAILY_AI_LIMITS`, Food9, `aiConsent.ts`, Privacy Policy |
+| Photo logging, 15 scans a day; asked before sending; read by Google's Gemini; kept on the phone                                                                                                               | `PRO_INCLUDES`, `DAILY_AI_LIMITS`, Food9, `aiConsent.ts`, Privacy Policy |
 | Circles of up to 8; meet-ups, weekly repeats, pace groups, the reminder about a day before                                                                                                                    | `GOAL_SPACE_MAX_MEMBERS`; Run26 call 4; Run27 call 10                    |
 | Weekly, monthly and seasonal challenges; medals and the trophy case                                                                                                                                           | App Store listing; Soc15                                                 |
 | The league: opt-in, about 20, points out of 100 for your plan, five tiers                                                                                                                                     | Soc15 call 3, `leagueRules.ts`                                           |
 | The league starts once 10 people have joined it                                                                                                                                                               | App1 Q6 (18 Nov), `league.ts`                                            |
 | Approve followers; followers or everyone; block and report                                                                                                                                                    | Polish2; `shareComposer.ts`; S4                                          |
-| Pro's list, what stays free, £3.99 a month, £34.99 a year, the 7-day trial, renewal terms                                                                                                                     | `proIncludesCopy.ts`, `proPlans.ts`                                      |
+| Pro's list, what stays free, £6.99 a month, £39.99 a year (#3432), the 7-day trial, renewal terms                                                                                                             | `proIncludesCopy.ts`, `proPlans.ts`                                      |
 | No adverts, data not sold                                                                                                                                                                                     | Privacy Policy                                                           |
 | A planned rest day keeps the streak                                                                                                                                                                           | App1 Q32, `restDays.ts`                                                  |
 | iOS 15.4 or later                                                                                                                                                                                             | `IPHONEOS_DEPLOYMENT_TARGET`                                             |
