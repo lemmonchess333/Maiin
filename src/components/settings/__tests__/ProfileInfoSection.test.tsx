@@ -253,22 +253,22 @@ describe("ProfileInfoSection — year of birth", () => {
     );
   });
 
-  it("takes this year less 16, setup's limit", async () => {
+  it("takes this year less 18, setup's limit", async () => {
     const { updateProfile } = renderSection(
       makeProfile({ goalWeightKg: undefined })
     );
-    enter(String(year - 16));
+    enter(String(year - 18));
     await waitFor(() =>
-      expect(updateProfile).toHaveBeenCalledWith({ birthYear: year - 16 })
+      expect(updateProfile).toHaveBeenCalledWith({ birthYear: year - 18 })
     );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it.each([
     [
-      "under 16",
-      String(year - 15),
-      "You need to be at least 16 to use Tropos.",
+      "under 18",
+      String(year - 17),
+      "You need to be at least 18 to use Tropos.",
     ],
     ["over 120", String(year - 121), "Check the year you were born."],
     ["in the future", String(year + 1), "Check the year you were born."],
