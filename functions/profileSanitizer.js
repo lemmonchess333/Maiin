@@ -56,6 +56,11 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   // App1 Q17: the first session and week-4 return, stamped empty by
   // completeOnboarding and kept by the session triggers.
   "launchMilestones",
+  // App1 Q55: the email consent record. Setup's yes reaches
+  // completeOnboarding as its own `emailOptIn`, never inside profileData,
+  // and the server writes the record with its own time
+  // (lib/emailConsent.js); one sent in profileData is dropped.
+  "emailConsent",
 ]);
 
 /**
