@@ -20,7 +20,7 @@ export default function FollowRequestsSection({ active }: { active: boolean }) {
 
   if (status === "failed") {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-card p-3">
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-card p-3 dark:card-shadow">
         <p className="text-small text-muted-foreground">
           Couldn&rsquo;t load your follow requests.
         </p>
@@ -41,7 +41,7 @@ export default function FollowRequestsSection({ active }: { active: boolean }) {
         {requests.map((r) => (
           <li
             key={r.uid}
-            className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-3"
+            className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <Link
               to={`/user/${r.uid}`}

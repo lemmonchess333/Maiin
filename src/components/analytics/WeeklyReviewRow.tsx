@@ -23,7 +23,7 @@ export default function WeeklyReviewRow() {
         haptic("light");
         navigate("/review");
       }}
-      className="w-full flex items-center gap-[12px] p-[12px] rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition active:scale-[0.98] min-h-[44px]"
+      className="w-full flex items-center gap-[12px] p-[12px] rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition active:scale-[0.98] min-h-[44px] dark:card-shadow dark:border-transparent"
     >
       {/* The icon, the chevron and the gaps in px, so at larger text the
           words get the room ("Weekly review" overflowed at 320 px, 2x). */}

@@ -22,7 +22,9 @@ export default function BootSteps({ onDark = false }: { onDark?: boolean }) {
       aria-label="What Tropos has done so far"
       className={cn(
         "max-h-48 space-y-1 overflow-y-auto rounded-xl p-3 text-left font-mono text-micro leading-snug break-words",
-        onDark ? "bg-white/10 text-white/80" : "bg-muted text-muted-foreground"
+        onDark
+          ? "bg-white/10 text-white/80"
+          : "bg-muted chip-edge text-muted-foreground"
       )}
     >
       {steps.map((entry, index) => (

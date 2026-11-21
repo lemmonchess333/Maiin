@@ -55,7 +55,7 @@ import { isNativePlatform } from "@/lib/platform";
    one word, and a time field ran off the screen. At the designed size
    every row is one line, as before. */
 const ROW =
-  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted chip-edge";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
 
 /** The kinds only the server can send, each with no time and no phone

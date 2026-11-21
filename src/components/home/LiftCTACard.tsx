@@ -65,7 +65,6 @@ export default function LiftCTACard({
 }: {
   nextWorkout: {
     completed?: boolean;
-    skipped?: boolean;
     dayName: string;
     dayType: string;
     exercises: LiftCardExercise[];

@@ -184,11 +184,11 @@ since September.
 | Question                                                   | Answer    | Why                                                                                                                   |
 | ---------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
 | Parental controls                                          | No        |                                                                                                                       |
-| Age assurance                                              | No        | Setup asks for the year of birth and turns away anyone under 16 (`src/lib/age.ts`), but nothing verifies it           |
+| Age assurance                                              | No        | Setup asks for the year of birth and turns away anyone under 18 (`src/lib/age.ts`), but nothing verifies it           |
 | Unrestricted web access                                    | No        | Outside links open in Safari                                                                                          |
 | User-generated content                                     | Yes       | Posts, comments, Space posts with photos, profile photos, segment and Circle names                                    |
 | Social media                                               | Yes       | A feed with props, comments and sharing that reaches people beyond those you follow (Explore)                         |
-| Social media disabled for users under 13                   | No        | Not offered: no one under 16 can finish setup                                                                         |
+| Social media disabled for users under 13                   | No        | Not offered: no one under 18 can finish setup                                                                         |
 | Messaging and chat                                         | Yes       | No private messages, but Apple's definition includes public posting and comments                                      |
 | Shared location                                            | Yes       | A shared run carries its route map, with its ends cut off, to followers or everyone, and Circle meet-ups name a place |
 | Dating and relationships                                   | No        |                                                                                                                       |
@@ -199,9 +199,9 @@ since September.
 | Profanity, sexual content, violence, horror, mature themes | None      |                                                                                                                       |
 | Gambling, simulated gambling, contests, loot boxes         | No / None | Challenges and leagues carry no prizes                                                                                |
 
-Then raise the rating to **16+**, the minimum age in the Terms (section 2)
+Then raise the rating to **18+**, the minimum age in the Terms (section 2)
 and at setup. Apple allows a higher rating than the questionnaire gives. In
-Brazil, Shared Location means A16, which matches.
+Brazil, Shared Location alone means A16; the 18+ rating is above it.
 
 ## App Privacy
 
@@ -347,7 +347,8 @@ in App Store Connect. The iPhone paywall shows the App Store's own prices.
 | Reference name     | Tropos Pro Monthly                               | Tropos Pro Yearly             |
 | Product ID         | `com.tropos.app.pro.monthly`                     | `com.tropos.app.pro.yearly`   |
 | Duration           | 1 month                                          | 1 year                        |
-| Price (UK)         | £3.99                                            | £34.99                        |
+| Price (UK)         | £6.99                                            | £39.99                        |
+| Price (US)         | $7.99                                            | $49.99                        |
 | Introductory offer | Free, 1 week, new subscribers                    | Free, 1 week, new subscribers |
 | Review screenshot  | The paywall's plan screen, from the iPhone build | The same                      |
 
