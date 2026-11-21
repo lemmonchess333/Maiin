@@ -11,7 +11,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: October 2026
+            Last updated: November 2026
           </p>
         </div>
 
@@ -81,6 +81,10 @@ export default function TermsOfService() {
                 Refunds are handled by Apple under its own policies. We cannot
                 cancel or refund App Store purchases on your behalf.
               </li>
+              <li>
+                Pro bought in the App Store is also covered by Apple’s own terms
+                for App Store purchases.
+              </li>
             </ul>
           </section>
 
@@ -111,10 +115,10 @@ export default function TermsOfService() {
               6. User-Generated Content
             </h2>
             <p>
-              Content you share publicly (e.g. social feed posts, activity
-              summaries) remains yours but you grant Tropos a non-exclusive
-              licence to display it within the App. We may remove content that
-              violates these Terms.
+              Content you share (posts, comments, photos and activity summaries)
+              stays yours. You give Tropos a non-exclusive licence to host, show
+              and share it in Tropos and on troposfit.com, as your sharing
+              choices allow. We may remove content that breaks these Terms.
             </p>
           </section>
 
@@ -132,6 +136,7 @@ export default function TermsOfService() {
               <li>is hateful or discriminatory, including slurs</li>
               <li>is sexually explicit</li>
               <li>is violent or graphic, or encourages self-harm</li>
+              <li>promotes eating disorders</li>
               <li>is spam, a scam or deliberately misleading</li>
               <li>impersonates another person or organisation</li>
               <li>is otherwise unlawful or objectionable</li>
@@ -144,6 +149,10 @@ export default function TermsOfService() {
             <p>
               Content that breaks these rules is removed, and the accounts that
               post it can be suspended or removed from Tropos without notice.
+            </p>
+            <p>
+              If we removed something you posted, or restricted your account,
+              you can ask for a review at support@troposfit.com.
             </p>
           </section>
 
@@ -158,17 +167,36 @@ export default function TermsOfService() {
               only. Always consult a qualified healthcare professional before
               making changes to your diet or exercise routine.
             </p>
+            <p>
+              You exercise at your own risk; follow the warnings in the app.
+            </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              9. Limitation of Liability
+              9. Our Liability to You
             </h2>
             <p>
-              To the maximum extent permitted by law, Tropos and its creators
-              shall not be liable for any indirect, incidental, or consequential
-              damages arising from your use of the App. The App is provided "as
-              is" without warranties of any kind.
+              Nothing in these Terms takes away your legal rights as a consumer
+              (your statutory rights).
+            </p>
+            <p>
+              We are responsible for loss or damage you suffer that is a
+              foreseeable result of our breaking these Terms or of our not using
+              reasonable care and skill. Loss is foreseeable if it was obvious
+              it would happen, or if you and we both knew it might happen when
+              you agreed to these Terms.
+            </p>
+            <p>
+              We are not responsible for loss that was not foreseeable, or for
+              business losses: Tropos is for personal use. Our total liability
+              to you is limited to what you paid for Pro in the 12 months before
+              the claim arose, or £100 if that is more.
+            </p>
+            <p>
+              None of this limits or excludes our liability for death or
+              personal injury caused by our negligence, for fraud, or for
+              anything else the law does not let us limit.
             </p>
           </section>
 
@@ -194,15 +222,31 @@ export default function TermsOfService() {
               11. Changes to These Terms
             </h2>
             <p>
-              We may update these Terms from time to time. We will notify you of
-              significant changes through the App. Continued use after changes
-              constitutes acceptance of the updated Terms.
+              We may update these Terms, for example when the law or Tropos
+              changes. Before a material change takes effect, we tell you about
+              it in the app.
+            </p>
+            <p>
+              If you don’t accept a change, you can cancel Pro or delete your
+              account before it takes effect. If you keep using Tropos after
+              that, the updated Terms apply.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              12. Contact
+              12. Governing Law
+            </h2>
+            <p>
+              These Terms are governed by the law of England and Wales. If you
+              live elsewhere in the UK, you can bring a claim in your local
+              courts.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">
+              13. Contact
             </h2>
             <p>
               Tropos is operated by{" "}

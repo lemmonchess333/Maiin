@@ -7024,3 +7024,34 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## The exercise warning in setup and Lift plan, and the Terms' consumer fixes (legal audit 6.3, 7.2 and 9.4, 2026-11-21)
+
+One sentence (`src/lib/exerciseWarning.ts`, drawn by
+`src/components/legal/ExerciseWarning.tsx`) now shows in four places: under
+setup's limitation choices, on setup's review just above the footer, under
+Lift plan's Add lifting limitation choices, and under Lift plan's Injuries
+group. The Terms' Health section points at it ("follow the warnings in the
+app"). Unit-tested in each spot (`Onboarding.test.tsx`,
+`AddLiftingFlow.test.tsx`, `ProgrammeSettings.test.tsx`,
+`legalCopyClaims.test.ts`), and measured in a browser harness at 393 and
+320 px with 135% and 200% text: no breaks, seven lines at the extreme. No
+phone has shown it.
+
+- [ ] **Setup on a phone.** On a TestFlight build, make a new account and go
+      through setup as a lifter. Passing: "Check with a doctor before you
+      start…" is under Wrist on the limitations step, in the grey small
+      print, and stays put when Knee opens "What this changes" below it;
+      on the review it is under the invite code, just above the footer,
+      and Start my plan is still reachable without the footer covering it,
+      at the largest text size too.
+- [ ] **Setup as a runner.** Choose Running. Passing: no limitations
+      step, and the warning is on the review.
+- [ ] **Lift plan.** Settings → Lift plan. Passing: the warning is under
+      Elbow in Injuries. On an account with no lift days, Add lifting's
+      third question shows it under Wrist.
+- [ ] **The Terms' first material change after launch.** The Terms now
+      promise notice in the app before a material change takes effect
+      (section 11), and the app has no notice built for it. Before the
+      first such change, decide how it is told (a Home card or a push)
+      and when, and leave time to cancel Pro or delete the account.
