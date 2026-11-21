@@ -121,8 +121,8 @@ What the description leaves out on purpose, because the app can't do it
 yet: phone notifications for social activity (iPhone gets reminders only,
 `isRemotePushOffered` in `src/lib/pushNotifications.ts`), live heart rate
 or Apple Watch (`src/lib/heartRateSource.ts`), lock-screen Live
-Activities, and "unlimited" anything: Pro allows 100 photo scans and 100
-typed-meal reads a day (`DAILY_AI_LIMITS`, `src/lib/subscription.ts`). It
+Activities, and "unlimited" anything: Pro allows 15 photo scans and 15
+typed-meal reads a day (`DAILY_AI_LIMITS`, `src/lib/dailyAiLimits.ts`). It
 also doesn't promise recording with the screen locked until a device run
 has proved it (`docs/run-background-gps.md`).
 
