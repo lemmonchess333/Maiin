@@ -38,6 +38,7 @@ import { previewWeekLayout } from "@/lib/weekReset";
 import { weekPosition } from "@/lib/dateHelpers";
 import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
+import { buildsNoPullDay } from "@/features/program/programLabels";
 import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
@@ -213,13 +214,13 @@ function ScheduleLayoutSheetBody({
                   className="grid grid-cols-2 gap-2"
                   aria-label="Before and after training days"
                 >
-                  <div className="rounded-2xl border border-border bg-card p-3">
+                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Lift days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.lifts} → {preview.after.lifts}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-border bg-card p-3">
+                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Run days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.runs} → {preview.after.runs}
@@ -228,7 +229,7 @@ function ScheduleLayoutSheetBody({
                 </div>
                 <div className="space-y-2">
                   <SectionLabel as="h3">Changed days</SectionLabel>
-                  <ul className="divide-y divide-border rounded-2xl border border-border bg-card px-3">
+                  <ul className="divide-y divide-border rounded-2xl border border-border bg-card px-3 dark:card-shadow dark:border-transparent">
                     {preview.changes.map((change) => (
                       <li
                         key={change.day}
@@ -323,7 +324,7 @@ function ScheduleLayoutSheetBody({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center"
+                  className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center dark:card-shadow dark:border-transparent"
                 >
                   <p
                     className="text-lg font-extrabold leading-none font-figure tabular-nums"
@@ -483,7 +484,12 @@ function ScheduleLayoutSheetBody({
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
               <span className="text-lifting-strong">
-                {splitLabel(chooseSplit(pendingLiftDays))}
+                {splitLabel(
+                  chooseSplit(
+                    pendingLiftDays,
+                    buildsNoPullDay(profile?.equipment)
+                  )
+                )}
               </span>{" "}
               split.
             </p>

@@ -104,10 +104,10 @@ describe("findPlan", () => {
 describe("getCheckoutCtaLabel", () => {
   it("formats as 'Start Pro — <price>/<short-period>'", () => {
     expect(getCheckoutCtaLabel(getPlan("monthly"))).toBe(
-      "Start Pro — £3.99/mo"
+      "Start Pro — £6.99/mo"
     );
     expect(getCheckoutCtaLabel(getPlan("yearly"))).toBe(
-      "Start Pro — £34.99/yr"
+      "Start Pro — £39.99/yr"
     );
   });
 
@@ -129,16 +129,16 @@ describe("getCheckoutCtaLabel", () => {
 describe("getBilledPriceLine — what is billed, and from when", () => {
   it("with the trial, the trial and the price in one line", () => {
     expect(getBilledPriceLine(getPlan("yearly"), true)).toBe(
-      "7 days free, then £34.99 a year"
+      "7 days free, then £39.99 a year"
     );
     expect(getBilledPriceLine(getPlan("monthly"), true)).toBe(
-      "7 days free, then £3.99 a month"
+      "7 days free, then £6.99 a month"
     );
   });
 
   it("without the trial, the price and its period", () => {
-    expect(getBilledPriceLine(getPlan("yearly"), false)).toBe("£34.99 a year");
-    expect(getBilledPriceLine(getPlan("monthly"), false)).toBe("£3.99 a month");
+    expect(getBilledPriceLine(getPlan("yearly"), false)).toBe("£39.99 a year");
+    expect(getBilledPriceLine(getPlan("monthly"), false)).toBe("£6.99 a month");
   });
 });
 
@@ -150,24 +150,24 @@ describe("getRenewalDisclosure", () => {
         withTrial: true,
       })
     ).toBe(
-      "7 days free, then £34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+      "7 days free, then £39.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
     );
   });
 
   it("iOS without the trial: the price, then the same renewal sentence", () => {
     expect(getRenewalDisclosure(getPlan("monthly"), { platform: "ios" })).toBe(
-      "£3.99 a month. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+      "£6.99 a month. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
     );
   });
 
   it("names the selected plan's period, so it flips with the selection", () => {
-    expect(getRenewalDisclosure(getPlan("yearly"))).toContain("£34.99 a year");
-    expect(getRenewalDisclosure(getPlan("monthly"))).toContain("£3.99 a month");
+    expect(getRenewalDisclosure(getPlan("yearly"))).toContain("£39.99 a year");
+    expect(getRenewalDisclosure(getPlan("monthly"))).toContain("£6.99 a month");
   });
 
   it("web: renews until cancelled, and can be cancelled any time", () => {
     expect(getRenewalDisclosure(getPlan("monthly"), { platform: "web" })).toBe(
-      "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+      "£6.99 a month. Renews automatically until cancelled. Cancel any time."
     );
   });
 
@@ -185,7 +185,7 @@ describe("getRenewalDisclosure", () => {
 describe("getInlinePriceSummary", () => {
   it("both plans, from the list it is given", () => {
     expect(getInlinePriceSummary(PRO_PLANS)).toBe(
-      "£3.99 a month or £34.99 a year"
+      "£6.99 a month or £39.99 a year"
     );
     expect(getInlinePriceSummary(localizePlans(US_STOREFRONT))).toBe(
       "$4.99 a month or $39.99 a year"
@@ -198,8 +198,8 @@ describe("getInlinePriceSummary", () => {
  * shows and that yearly reads cheaper per week than monthly. */
 describe("weeklyPriceLabel", () => {
   it("expresses both plans per week", () => {
-    expect(weeklyPriceLabel(getPlan("monthly"))).toBe("≈ £0.92/wk");
-    expect(weeklyPriceLabel(getPlan("yearly"))).toBe("≈ £0.67/wk");
+    expect(weeklyPriceLabel(getPlan("monthly"))).toBe("≈ £1.61/wk");
+    expect(weeklyPriceLabel(getPlan("yearly"))).toBe("≈ £0.77/wk");
   });
 
   it("yearly per-week undercuts monthly per-week (the anchoring point)", () => {
@@ -245,7 +245,7 @@ describe("localizePlans — the App Store's prices, in one currency", () => {
   });
 
   it("works the saving out from the store's own prices", () => {
-    // $4.99 × 12 = $59.88 against $39.99: 33%, not the pound plans' 27%.
+    // $4.99 × 12 = $59.88 against $39.99: 33%, not the pound plans' 52%.
     const plans = localizePlans(US_STOREFRONT);
     expect(yearlySavingPercent(plans)).toBe(33);
     expect(findPlan(plans, "yearly").savingsLabel).toBe("Save 33%");
@@ -325,7 +325,7 @@ describe("localizePlans — the App Store's prices, in one currency", () => {
  * number and the STRING agree — and they are two hand-written fields on the
  * same object literal, bound by nothing. Edit `price` to "£4.99" and forget
  * `priceValue` and every existing test here still passes, while the paywall
- * shows £4.99 and anchors it at "≈ £0.92/wk".
+ * shows £4.99 and anchors it at "≈ £1.61/wk".
  *
  * `savingsLabel` is the third copy of the same two numbers, and the one most
  * likely to be left behind: it reads as marketing copy rather than as a
@@ -368,7 +368,7 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
   it("periodsPerYear and periodPhrase agree with the billing frequency", () => {
     // weeklyPriceLabel multiplies by periodsPerYear; a yearly plan with 12
     // would anchor the annual price twelve times too high. periodPhrase is
-    // the disclosure's "£34.99 a year".
+    // the disclosure's "£39.99 a year".
     for (const plan of PRO_PLANS) {
       const monthly = plan.billingFrequency === "monthly";
       expect(plan.periodsPerYear).toBe(monthly ? 12 : 1);
@@ -382,7 +382,7 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
     /* Computed from the DISPLAYED numbers, not from `priceValue`. A
        mutation run showed why: raising the monthly price string while
        leaving `priceValue` behind made the label wrong against what the
-       user reads (£4.99×12 vs £34.99 is 42%, not 27%) while a
+       user reads (£4.99×12 vs £39.99 is 42%, not 27%) while a
        priceValue-based check stayed happily green — it would have been
        consistent with the stale field rather than with the card. */
     const monthlyShown = displayedNumber(monthly.price);

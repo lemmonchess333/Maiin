@@ -201,6 +201,35 @@ service cloud.firestore {
         );
     }
 
+    /* One move on a circuit post (Circ1, src/lib/circuitPost.ts): an
+       exercise id, a slug the app names from its catalogue, so a move
+       never carries typed words. */
+    function isCircuitMoveId(m) {
+      return m is string && m.matches('^[a-z0-9-]{1,60}$');
+    }
+
+    /* A circuit post's moves: one round's, 1 to 12, each an exercise id.
+       The rules have no loop, so each slot is checked by index, as a
+       post's moments are. circuitPost.test.ts holds every move a circuit
+       can post to the pattern above. */
+    function validCircuitMoves(moves) {
+      return moves is list
+        && moves.size() >= 1
+        && moves.size() <= 12
+        && isCircuitMoveId(moves[0])
+        && (moves.size() < 2 || isCircuitMoveId(moves[1]))
+        && (moves.size() < 3 || isCircuitMoveId(moves[2]))
+        && (moves.size() < 4 || isCircuitMoveId(moves[3]))
+        && (moves.size() < 5 || isCircuitMoveId(moves[4]))
+        && (moves.size() < 6 || isCircuitMoveId(moves[5]))
+        && (moves.size() < 7 || isCircuitMoveId(moves[6]))
+        && (moves.size() < 8 || isCircuitMoveId(moves[7]))
+        && (moves.size() < 9 || isCircuitMoveId(moves[8]))
+        && (moves.size() < 10 || isCircuitMoveId(moves[9]))
+        && (moves.size() < 11 || isCircuitMoveId(moves[10]))
+        && (moves.size() < 12 || isCircuitMoveId(moves[11]));
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -738,7 +767,7 @@ service cloud.firestore {
         // Experience auto-detection: dismissed-suggestion marker, client-only.
         'experienceSuggestionDismissed',
         'daysPerWeek',
-        'equipment', 'barbellAtHome', 'preferredSplit', 'runFrequency', 'injuries',
+        'equipment', 'barbellAtHome', 'pullUpBar', 'preferredSplit', 'runFrequency', 'injuries',
         // D16 personal "why" — free-text motivation captured at onboarding and
         // editable in Settings. Client-written via updateProfile + set by the
         // onboarding CF (in profileSanitizer.js). Pinned by the D1 parity test.
@@ -885,12 +914,25 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       // Monthly push claims are server-owned. Ordinary consent settings stay
       // writable; the deletion executor already erases this whole collection.
+      //
+      // So are the props bundle and the push budget (functions/lib/
+      // socialPush.js, pushBudget.js), and the bundle's due time on any
+      // document here. hourlyPropsBundle reads every `settings` document
+      // whose `propsBundleDueAt` has passed, a thousand at a time, oldest
+      // first, and leaves alone one that is not a bundle: a thousand
+      // documents under one account with a due time in 1970 filled every
+      // hour's read, and nobody's props were pushed again.
+      //
       // `emailState` is server-owned too (App1 Q55): the unsubscribe token
       // every chosen email links with, and what has been sent. Its owner may
       // read it; a client that could write it could reset what was sent.
-      allow write: if isOwnerAndNotDeleting(uid)
+      allow delete: if isOwnerAndNotDeleting(uid)
         && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
-        && doc != 'emailState';
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState']);
+      allow create, update: if isOwnerAndNotDeleting(uid)
+        && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState'])
+        && !('propsBundleDueAt' in request.resource.data);
     }
     match /users/{uid}/foodFavourites/{doc} {
       allow read: if isOwner(uid);
@@ -1341,7 +1383,8 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'routeMap', 'caption', 'moments'
+          'routePreview', 'routeMap', 'caption', 'moments',
+          'circuit'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1413,6 +1456,29 @@ service cloud.firestore {
                   || validPostMoment(request.resource.data.moments[1]))
               && (request.resource.data.moments.size() < 3
                   || validPostMoment(request.resource.data.moments[2])))
+        )
+        // A circuit (Circ1): a workout post's rounds, its interval and one
+        // round's moves, as exercise ids the app names from its catalogue.
+        // Whole numbers in a plausible range, each move an id
+        // (validCircuitMoves), and no field more.
+        && (
+          !('circuit' in request.resource.data.keys())
+          || (request.resource.data.type == 'workout'
+              && request.resource.data.circuit is map
+              && request.resource.data.circuit.keys().hasOnly(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.keys().hasAll(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.rounds is int
+              && request.resource.data.circuit.rounds >= 0
+              && request.resource.data.circuit.rounds <= 50
+              && request.resource.data.circuit.workSeconds is int
+              && request.resource.data.circuit.workSeconds >= 1
+              && request.resource.data.circuit.workSeconds <= 600
+              && request.resource.data.circuit.restSeconds is int
+              && request.resource.data.circuit.restSeconds >= 0
+              && request.resource.data.circuit.restSeconds <= 600
+              && validCircuitMoves(request.resource.data.circuit.moves))
         )
         && (
           !('prHit' in request.resource.data.keys())
@@ -2014,7 +2080,8 @@ service cloud.firestore {
                 && request.resource.data.activity.keys().hasOnly([
                      'type', 'distance', 'avgPace', 'duration',
                      'elevationGain', 'routePreview', 'totalVolume',
-                     'exerciseCount', 'muscleGroups', 'leadExerciseId'
+                     'exerciseCount', 'muscleGroups', 'leadExerciseId',
+                     'circuit'
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
@@ -2050,6 +2117,13 @@ service cloud.firestore {
                   !('leadExerciseId' in request.resource.data.activity)
                   || (request.resource.data.activity.leadExerciseId is string
                       && request.resource.data.activity.leadExerciseId.size() <= 200)
+                )
+                // A circuit (Circ1): a workout's mark that its count is of
+                // moves. Only ever true.
+                && (
+                  !('circuit' in request.resource.data.activity)
+                  || (request.resource.data.activity.circuit == true
+                      && request.resource.data.activity.type == 'workout')
                 ))
           )
           // The server's time, as the composer sends it: the Space's
@@ -2179,6 +2253,12 @@ service cloud.firestore {
     // private or followers-only activity. This mirrors the parent
     // activities/{id} read relation exactly (public / owner / accepted
     // follower). References only the parent activity + one follower doc.
+    /* A post's props and comments are refused across a block either way,
+       public posts included, as a single read of the post is (Polish3 call
+       1). The post's id is in the path, so unlike a query over posts this
+       can be checked for the list as well as for one row. Before, someone
+       its author blocked could still read who gave a public post props and
+       every comment on it, holding only its id. */
     function canReadActivityChild(activityId) {
       let activityPath =
         /databases/$(database)/documents/activities/$(activityId);
@@ -2186,15 +2266,18 @@ service cloud.firestore {
       return request.auth != null
         && exists(activityPath)
         && (
-          get(activityPath).data.visibility == 'public'
-          || get(activityPath).data.authorId == request.auth.uid
+          get(activityPath).data.authorId == request.auth.uid
           || (
-            get(activityPath).data.visibility == 'followers'
-            && exists(
-              /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
+            !blockExistsBetween(get(activityPath).data.authorId, request.auth.uid)
+            && (
+              get(activityPath).data.visibility == 'public'
+              || (
+                get(activityPath).data.visibility == 'followers'
+                && exists(
+                  /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
+                )
+              )
             )
-            // The parent's block check: a follow edge can outlive a block.
-            && !blockExistsBetween(get(activityPath).data.authorId, request.auth.uid)
           )
         );
     }

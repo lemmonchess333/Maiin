@@ -116,6 +116,18 @@ describe("barbellAtHome (Lift4 (11))", () => {
   });
 });
 
+describe("pullUpBar (Lift4 (11))", () => {
+  it("keeps a yes or a no, and drops anything else", () => {
+    expect(sanitizeProfileData({ pullUpBar: true })).toEqual({
+      pullUpBar: true,
+    });
+    expect(sanitizeProfileData({ pullUpBar: false })).toEqual({
+      pullUpBar: false,
+    });
+    expect(sanitizeProfileData({ pullUpBar: "yes" })).toEqual({});
+  });
+});
+
 describe("raceLegTrim (Lift4 (10))", () => {
   it("keeps a yes or a no, and drops anything else", () => {
     expect(sanitizeProfileData({ raceLegTrim: true })).toEqual({

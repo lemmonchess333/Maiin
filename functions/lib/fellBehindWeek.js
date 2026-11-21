@@ -135,13 +135,13 @@ function _racePlanFirstWeek(runPlan, raceDate) {
  *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
  *  Monday-8am recap push) so the two can't drift. */
 function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
-  // Gate 1 — a race plan is graded here, and the retired structured week
-  // a profile not yet migrated may still carry. Free running has no
-  // prescriptive target, the starter goal repeats a missed week rather
-  // than falling behind one, and a plan of a kind this check does not know
-  // is not "behind" anything either.
+  // Gate 1 — a race plan is graded here. Free running has no prescriptive
+  // target, the starter goal repeats a missed week rather than falling
+  // behind one, and a plan of a kind this check does not know is not
+  // "behind" anything either: the retired structured week (App1 Q25) among
+  // them, which a profile written before then may still carry.
   const runMode = profile && profile.runMode;
-  if (runMode !== "race_prep" && runMode !== "structured") {
+  if (runMode !== "race_prep") {
     return null;
   }
 

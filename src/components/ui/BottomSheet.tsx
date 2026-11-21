@@ -6,9 +6,11 @@
  *
  *   - Backdrop:      `fixed inset-0 bg-black/50 z-40`
  *   - Content:       `fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl
- *                     flex flex-col bg-background safe-area-pb` with
- *                     max-height the caller supplies (default 85vh)
- *   - Drag handle:   centred 40×4 pill with bg-border
+ *                     flex flex-col bg-background sheet-surface
+ *                     safe-area-pb` with max-height the caller supplies
+ *                     (default 85vh); `sheet-surface` is the lit rim along
+ *                     the top on dark (DS6, components.css)
+ *   - Drag handle:   centred 40×4 pill, `sheet-handle`
  *   - Header:        `px-4 pb-3 border-b border-border/30` rendering
  *                    Drawer.Title (aria-labelledby is wired by vaul)
  *
@@ -128,7 +130,7 @@ export function BottomSheet({
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50",
-            "rounded-t-2xl flex flex-col bg-background safe-area-pb",
+            "rounded-t-2xl flex flex-col bg-background sheet-surface safe-area-pb",
             maxHeight,
             className
           )}
@@ -164,7 +166,7 @@ export function BottomSheet({
               {/* Drag handle — vaul styles this as the drag affordance
                   out of the box; this is the visual one Tropos uses. */}
               <div className="flex justify-center pt-3 pb-2">
-                <div className="w-10 h-1 rounded-full bg-border" />
+                <div className="w-10 h-1 rounded-full sheet-handle" />
               </div>
               {title ? (
                 <div className="px-4 pb-3 border-b border-border/30">

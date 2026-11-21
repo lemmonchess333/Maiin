@@ -26,6 +26,7 @@ const { postPhotoUrls } = require("./postPhotos");
  *   user                → "<uid>"
  *   space_post          → "<spaceId>:<postId>"
  *   space_post_comment  → "<spaceId>:<postId>:<commentId>"
+ *   segment             → "<segmentId>"
  * The client builds them in src/lib/reportTargetIds.ts, and
  * src/lib/__tests__/reportTargets.cross.test.ts feeds what it builds
  * through normalizeCreateReportInput, so the two cannot drift apart. */
@@ -35,6 +36,7 @@ const TARGET_TYPES = Object.freeze([
   "user",
   "space_post",
   "space_post_comment",
+  "segment",
 ]);
 
 /* What "Hide content" can act on in the moderation queue. A user report
@@ -44,6 +46,7 @@ const HIDEABLE_TARGET_TYPES = Object.freeze([
   "comment",
   "space_post",
   "space_post_comment",
+  "segment",
 ]);
 
 const REPORT_CATEGORIES = Object.freeze([
@@ -112,6 +115,11 @@ function normalizeTarget(targetType, targetId) {
   if (targetType === "user") {
     const uid = assertDocumentId(targetId);
     return { targetType, targetId: uid, uid };
+  }
+
+  if (targetType === "segment") {
+    const segmentId = assertDocumentId(targetId);
+    return { targetType, targetId: segmentId, segmentId };
   }
 
   if (targetType === "comment") {
@@ -338,6 +346,38 @@ async function resolveReportTarget({
     };
   }
 
+  if (target.targetType === "segment") {
+    // Anyone signed in reads a segment by its id (firestore.rules), so
+    // there is no reporter visibility gate, as for a space post. Its maker
+    // is the owner record, which only the maker and the server read: the
+    // moderator sees who made it, the reporter is never told. A segment
+    // with no readable maker is unavailable, as a post with no author is.
+    const ref = firestore.doc("segments/" + target.segmentId);
+    const data = await readExisting(reader, ref);
+    const owner = await readExisting(
+      reader,
+      firestore.doc("segmentOwners/" + target.segmentId)
+    );
+    const uid = targetUid(owner.uid);
+    const profile = await readSnapshot(
+      reader,
+      firestore.doc("users/" + uid + "/public/profile")
+    );
+    const maker = profile.exists ? profile.data() || {} : {};
+    return {
+      targetType: target.targetType,
+      targetId: target.targetId,
+      targetUid: uid,
+      targetRef: ref,
+      preview: {
+        authorId: uid,
+        authorName: previewString(maker.displayName),
+        name: previewString(data.name),
+        segmentId: target.segmentId,
+      },
+    };
+  }
+
   if (target.targetType === "user") {
     const ref = firestore.doc("users/" + target.uid + "/public/profile");
     const data = await readExisting(reader, ref);
@@ -387,6 +427,12 @@ async function resolveReportTarget({
  *                         likes and comments subcollections are removed by
  *                         the caller after the commit (recursiveDelete
  *                         cannot run inside a transaction).
+ *   segment             → deleted, which is what its maker's Delete does
+ *                         first: no page opens it and no run is timed on
+ *                         it again. Everyone's efforts on it, its board
+ *                         and its owner record are removed by the caller
+ *                         after the commit (lib/segments.js removeSegment,
+ *                         whose queries cannot run inside a transaction).
  *
  * Comments and posts are deleted rather than flagged because a flag would
  * hide nothing: the rules let every signed-in user read them, and rules
