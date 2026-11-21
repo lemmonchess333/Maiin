@@ -271,4 +271,51 @@ suite("firestore.rules — blocking both ways", () => {
       await assertFails(profilePosts(db(BOB), ALICE, "followers"));
     });
   });
+
+  describe("a public post's props and comments", () => {
+    beforeEach(async () => {
+      for (const id of ["alice-public", "bob-public"]) {
+        await seed(`kudos/${id}/users/${CAROL}`, { createdAt: 1 });
+        await seed(`comments/${id}/items/c1`, { authorId: CAROL, text: "hi" });
+      }
+    });
+
+    const props = (as: Firestore, id: string) =>
+      getDocs(collection(as, "kudos", id, "users"));
+    const oneProp = (as: Firestore, id: string) =>
+      getDoc(doc(as, "kudos", id, "users", CAROL));
+    const comments = (as: Firestore, id: string) =>
+      getDocs(collection(as, "comments", id, "items"));
+    const oneComment = (as: Firestore, id: string) =>
+      getDoc(doc(as, "comments", id, "items", "c1"));
+
+    it("are refused across a block either way, as the post is", async () => {
+      // Alice blocked Bob: Bob cannot read her post's props or comments,
+      // listed or one at a time, nor she his.
+      for (const [as, id] of [
+        [BOB, "alice-public"],
+        [ALICE, "bob-public"],
+      ] as const) {
+        await assertFails(props(db(as), id));
+        await assertFails(oneProp(db(as), id));
+        await assertFails(comments(db(as), id));
+        await assertFails(oneComment(db(as), id));
+      }
+    });
+
+    it("are read by the post's author and by anyone with no block", async () => {
+      await assertSucceeds(props(db(ALICE), "alice-public"));
+      await assertSucceeds(comments(db(ALICE), "alice-public"));
+      await assertSucceeds(props(db(CAROL), "alice-public"));
+      await assertSucceeds(oneComment(db(CAROL), "bob-public"));
+    });
+
+    it("are open again once the block is lifted", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(doc(ctx.firestore(), `blocks/${ALICE}/users/${BOB}`));
+      });
+      await assertSucceeds(props(db(BOB), "alice-public"));
+      await assertSucceeds(comments(db(ALICE), "bob-public"));
+    });
+  });
 });
