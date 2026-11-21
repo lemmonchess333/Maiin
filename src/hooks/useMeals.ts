@@ -380,7 +380,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   //
   // A soft-deleted meal is hard-deleted 30 days after its `deletedAt` by
   // the server's hourly `purgeSoftDeletedMeals` (functions/lib/mealPurge.js,
-  // F5c STATUS 2026-11-21; before then nothing purged, and this comment
+  // F5c's STATUS; before then nothing purged, and this comment
   // once claimed a 24-hour job that never existed), sooner if the user taps
   // "Delete permanently" in Settings → Recently Deleted (`hardDeleteMeal`),
   // or with the account. Until then the archive lists it, with the days it

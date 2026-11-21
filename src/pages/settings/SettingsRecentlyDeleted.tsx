@@ -6,8 +6,8 @@
  * 3-second toast undo on the Food page — that surface handles the
  * "I just clicked wrong" case; this page handles the "I need that
  * one back from last night" case.
- * Each meal is removed for good 30 days after it was deleted (F5c, STATUS
- * 2026-11-21), by the server's hourly `purgeSoftDeletedMeals`
+ * Each meal is removed for good 30 days after it was deleted (F5c), by
+ * the server's hourly `purgeSoftDeletedMeals`
  * (functions/lib/mealPurge.js). The page says so, and each row says how
  * long that meal has left (`purgeCountdown`, src/lib/mealPurge.ts). It
  * lists every soft-deleted meal still stored, one whose 30 days are up

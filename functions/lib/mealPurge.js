@@ -2,7 +2,7 @@
 
 /**
  * Deleted meals are removed for good 30 days after they were deleted (F5c,
- * STATUS 2026-11-21, the owner's "Purge after 30 days": Apple Photos' and
+ * the owner's "Purge after 30 days": Apple Photos' and
  * iCloud's Recently Deleted window).
  *
  * Deleting a meal in the diary is soft: the app stamps `deletedAt` on

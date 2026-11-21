@@ -6271,7 +6271,7 @@ exports.onMealWritten = functions
     return null;
   });
 
-// ── F5c (STATUS 2026-11-21): a soft-deleted meal is removed for good 30
+// ── F5c: a soft-deleted meal is removed for good 30
 // days after it was deleted. Each hour, at quarter to, clear of the jobs on
 // the hour and the meet-up sweep at half past. lib/mealPurge.js has the
 // rule, the caps and the account-deletion check; its collection-group index

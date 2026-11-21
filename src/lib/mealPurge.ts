@@ -1,5 +1,5 @@
 /**
- * When a deleted meal is removed for good (F5c, STATUS 2026-11-21).
+ * When a deleted meal is removed for good (F5c).
  *
  * Deleting a meal in the diary stamps `deletedAt` on it and it waits in
  * Settings, Recently deleted meals. The server's hourly
