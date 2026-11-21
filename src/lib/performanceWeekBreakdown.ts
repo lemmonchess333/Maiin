@@ -38,7 +38,8 @@ export interface WeekMeasure {
   /** The usual week in the same units, or null when there is none yet. */
   usual: number | null;
   usualText: string | null;
-  /** "4 sessions", "3 runs · longest 14.2 km", "No runs in these 7 days". */
+  /** "4 sessions", "3 sessions · 1 circuit", "3 runs · longest 14.2 km",
+   *  "No runs in these 7 days". */
   detail: string;
 }
 
@@ -92,11 +93,23 @@ export function performanceWeekBreakdown(
   const measures: WeekMeasure[] = [];
 
   const liftSessions = num(agg.liftSessions);
+  // Circuits (Circ1) are a way of lifting that counts for adherence and
+  // never for the tonnage: said beside the sessions, so a score raised by
+  // a circuit has its reason on the page.
+  const circuits = num(agg.circuitSessions);
   const tonnage = num(agg.liftTonnage);
   const usualTonnage = comparable ? num(base.liftTonnage) : 0;
   // A discipline the user does not train says nothing; one they usually
   // train and skipped this week says so, against the usual week.
-  if (liftSessions > 0 || usualTonnage > 0) {
+  if (liftSessions > 0 || usualTonnage > 0 || circuits > 0) {
+    const sessionsText =
+      liftSessions > 0
+        ? plural(liftSessions, "session", "sessions")
+        : circuits > 0
+          ? null
+          : "No lifting in these 7 days";
+    const circuitsText =
+      circuits > 0 ? plural(circuits, "circuit", "circuits") : null;
     measures.push({
       key: "lifting",
       label: "Lifting",
@@ -105,10 +118,7 @@ export function performanceWeekBreakdown(
       usual: usualTonnage > 0 ? usualTonnage : null,
       usualText:
         usualTonnage > 0 ? tonnageText(usualTonnage, options.liftUnit) : null,
-      detail:
-        liftSessions > 0
-          ? plural(liftSessions, "session", "sessions")
-          : "No lifting in these 7 days",
+      detail: [sessionsText, circuitsText].filter(Boolean).join(" · "),
     });
   }
 

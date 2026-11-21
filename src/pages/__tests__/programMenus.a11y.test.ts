@@ -19,23 +19,31 @@ import { dirname, resolve } from "node:path";
  * Dialog, which every other dialog uses.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const source = readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8");
-const code = source
-  .replace(/\/\*[\s\S]*?\*\//g, " ")
-  .replace(/\/\/[^\n]*/g, " ");
+const strip = (path: string) =>
+  readFileSync(resolve(repoRoot, path), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ");
+/** Train, which holds the More options sheet. */
+const program = strip("src/pages/Program.tsx");
+/** The day's session, which holds an exercise's menu, on Train's Lift tab
+ *  and on a lift's own page (TrainWk1 step 3). */
+const view = strip("src/components/program/LiftSessionView.tsx");
+/** Starting a session, and the workout it opens, on either screen. */
+const launch = strip("src/features/program/useLiftSession.ts");
+const overlays = strip("src/components/program/LiftSessionOverlays.tsx");
 
 /** The JSX from `marker` to the end of its AnimatePresence. */
-function block(marker: string): string {
+function block(code: string, marker: string): string {
   const at = code.indexOf(marker);
   expect(at, marker).toBeGreaterThan(-1);
   return code.slice(at, code.indexOf("</AnimatePresence>", at));
 }
 
 describe("the More options sheet", () => {
-  const sheet = block("{showOverflow && (");
+  const sheet = block(program, "{showOverflow && (");
 
   it("is named, and holds focus while open", () => {
-    expect(code).toMatch(
+    expect(program).toMatch(
       /const overflowRef = useFocusTrap<HTMLDivElement>\(showOverflow\)/
     );
     expect(sheet).toMatch(/ref=\{overflowRef\}/);
@@ -44,17 +52,17 @@ describe("the More options sheet", () => {
   });
 
   it("closes on Back", () => {
-    expect(code).toMatch(
+    expect(program).toMatch(
       /useBackDismiss\(showOverflow, \(\) => setShowOverflow\(false\)\)/
     );
   });
 });
 
 describe("an exercise's menu", () => {
-  const menu = block("{contextMenu && (");
+  const menu = block(view, "{contextMenu && (");
 
   it("is a named menu of menu items, holding focus while open", () => {
-    expect(code).toMatch(
+    expect(view).toMatch(
       /const contextMenuRef = useFocusTrap<HTMLDivElement>\(\s*contextMenu !== null\s*\)/
     );
     expect(menu).toMatch(/ref=\{contextMenuRef\}/);
@@ -67,48 +75,53 @@ describe("an exercise's menu", () => {
   });
 
   it("says it opens a menu, and whether it is open", () => {
-    const trigger = code.slice(
-      code.indexOf("aria-label={`More options for ${ex.name}`}"),
-      code.indexOf("aria-label={`More options for ${ex.name}`}") + 300
+    const trigger = view.slice(
+      view.indexOf("aria-label={`More options for ${ex.name}`}"),
+      view.indexOf("aria-label={`More options for ${ex.name}`}") + 300
     );
     expect(trigger).toMatch(/aria-haspopup="menu"/);
     expect(trigger).toMatch(/aria-expanded=/);
   });
 
   it("closes on Back", () => {
-    expect(code).toMatch(
+    expect(view).toMatch(
       /useBackDismiss\(contextMenu !== null, \(\) => setContextMenu\(null\)\)/
     );
   });
 });
 
 describe("Escape closes either", () => {
-  it("listens for Escape while one is open, and closes both", () => {
-    const at = code.indexOf(
-      "if (!showOverflow && contextMenu === null) return;"
-    );
+  it("listens for Escape while the sheet is open, and closes it", () => {
+    const at = program.indexOf("if (!showOverflow) return;");
     expect(at).toBeGreaterThan(-1);
-    const effect = code.slice(
+    const effect = program.slice(
       at,
-      code.indexOf("}, [showOverflow, contextMenu]);", at)
+      program.indexOf("}, [showOverflow]);", at)
     );
     expect(effect).toMatch(/e\.key !== "Escape"/);
     expect(effect).toMatch(/setShowOverflow\(false\)/);
+  });
+
+  it("listens for Escape while an exercise's menu is open, and closes it", () => {
+    const at = view.indexOf("if (contextMenu === null) return;");
+    expect(at).toBeGreaterThan(-1);
+    const effect = view.slice(at, view.indexOf("}, [contextMenu]);", at));
+    expect(effect).toMatch(/e\.key !== "Escape"/);
     expect(effect).toMatch(/setContextMenu\(null\)/);
   });
 });
 
 describe("an open lift session", () => {
   it("closes to Train on Back, as its own Close does", () => {
-    expect(code).toMatch(/useBackDismiss\(sessionOpen, closeSession\)/);
-    expect(code).toMatch(/onClose=\{closeSession\}/);
+    expect(launch).toMatch(/useBackDismiss\(sessionOpen, closeSession\)/);
+    expect(overlays).toMatch(/onClose=\{closeSession\}/);
   });
 });
 
 describe("the drop flash", () => {
   it("is held in a ref and cleared on unmount", () => {
-    expect(code).toMatch(/dropFlashTimer\.current = setTimeout\(/);
-    expect(code).toMatch(
+    expect(view).toMatch(/dropFlashTimer\.current = setTimeout\(/);
+    expect(view).toMatch(
       /\(\) => \(\) => \{\s*if \(dropFlashTimer\.current\) clearTimeout\(dropFlashTimer\.current\);/
     );
   });

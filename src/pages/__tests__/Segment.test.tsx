@@ -5,7 +5,7 @@
  * among them. Nobody else is on it: the board comes from the server's
  * getSegmentBoard, which shows only who you follow (the server's tests
  * hold that), and someone blocked since is left out here too. Its maker
- * can delete it.
+ * can delete it; anyone else can report it (App Review 1.2).
  *
  * Firestore runs on the one fake (ADR-0009); the callables are stubbed.
  */
@@ -26,8 +26,13 @@ const H = vi.hoisted(() => ({
 }));
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: { currentUser: { uid: "me" } },
+}));
 vi.mock("firebase/functions", () => ({
+  getFunctions: () => ({}),
   httpsCallable: (_f: unknown, name: string) => (data: unknown) =>
     H.call(name, data),
 }));
@@ -228,6 +233,44 @@ describe("Segment page", () => {
     // POSITIVE anchor: the page and its board drew.
     await screen.findByRole("list", { name: "Common hill board" });
     expect(screen.queryByRole("button", { name: "Delete segment" })).toBeNull();
+  });
+
+  it("lets anyone else report it, from the menu beside its name", async () => {
+    renderPage();
+    await screen.findByRole("heading", { level: 1, name: "Common hill" });
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Report segment" }));
+    const form = screen.getByRole("dialog", { name: "Report segment" });
+    fireEvent.click(
+      within(form).getByRole("radio", { name: "Inappropriate content" })
+    );
+    fireEvent.click(within(form).getByRole("radio", { name: "Child safety" }));
+    fireEvent.click(within(form).getByRole("button", { name: "Submit" }));
+    await waitFor(() =>
+      expect(H.call).toHaveBeenCalledWith(
+        "createReport",
+        expect.objectContaining({
+          targetType: "segment",
+          targetId: "hill",
+          category: "inappropriate",
+          subReason: "Child safety",
+        })
+      )
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Report segment" })
+      ).toBeNull()
+    );
+  });
+
+  it("offers its maker no Report, only Delete", async () => {
+    seedFirestore({ "segmentOwners/hill": { uid: "me", sourceRunId: "r1" } });
+    renderPage();
+    // POSITIVE anchor: the maker's own action drew.
+    await screen.findByRole("button", { name: "Delete segment" });
+    expect(screen.queryByRole("button", { name: "More options" })).toBeNull();
+    expect(screen.queryByText("Report segment")).toBeNull();
   });
 
   it("says a deleted segment is gone", async () => {
