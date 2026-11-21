@@ -191,8 +191,13 @@ describe("SettingsAccount from the health-details agreement", () => {
     expect(
       screen.getByRole("button", { name: "Back to health details" })
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
-      3
-    );
+    // The whole page: its first export and its last row, not a count of
+    // exports that grows with each new one.
+    expect(
+      screen.getByRole("button", { name: "Export workouts" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete account" })
+    ).toBeInTheDocument();
   });
 });
