@@ -13,6 +13,7 @@ import {
   WEBSITE_HTML,
   WEBSITE_OUTPUT,
   websiteEntryPlugin,
+  WEBSITE_PUBLIC_ART,
   websitePublicFiles,
 } from "./websiteEntry";
 
@@ -23,9 +24,10 @@ type Bundle = Record<
 
 const ROOT = process.cwd();
 
-function callConfig(plugin: Plugin) {
-  const hook = plugin.config as (() => unknown) | undefined;
-  return hook?.();
+function callConfig(plugin: Plugin, env?: { isSsrBuild?: boolean }) {
+  const hook = plugin.config as
+    ((config: unknown, env?: { isSsrBuild?: boolean }) => unknown) | undefined;
+  return hook?.({}, env);
 }
 
 function generate(plugin: Plugin, bundle: Bundle) {
@@ -88,12 +90,16 @@ describe("websiteEntryPlugin", () => {
     for (const path of RETIRED_WORKER_PATHS) {
       expect(emitted.get(path), path).toBe(worker);
     }
-    // The app's own files stay with the app.
+    // The app's own files stay with the app: of its picture folders, only
+    // the few drawings the website's pages draw (`WEBSITE_PUBLIC_ART`).
+    const art = new Set<string>(WEBSITE_PUBLIC_ART);
     for (const name of emitted.keys()) {
+      if (art.has(name)) continue;
       expect(name).not.toMatch(
         /^(form-frames|form-art|badges|medals|run-form|food-art)\/|^(init\.js|404\.html|manifest\.json|vite\.svg)$/
       );
     }
+    expect(WEBSITE_PUBLIC_ART.length).toBeLessThan(30);
     expect([...emitted.keys()].sort()).toEqual(
       [
         WEBSITE_OUTPUT,
@@ -123,6 +129,13 @@ describe("websiteEntryPlugin", () => {
     const emitFile = generate(plugin, bundle);
     expect(emitFile).not.toHaveBeenCalled();
     expect(Object.keys(bundle)).toEqual([WEBSITE_OUTPUT]);
+  });
+
+  it("leaves the server build that draws each page alone (prerender.ts)", () => {
+    const plugin = websiteEntryPlugin("/repo", true);
+    expect(callConfig(plugin, { isSsrBuild: true })).toBeUndefined();
+    const emitFile = generate(plugin, {});
+    expect(emitFile).not.toHaveBeenCalled();
   });
 
   it("is on for the Hosting build only, as the association file is", () => {
