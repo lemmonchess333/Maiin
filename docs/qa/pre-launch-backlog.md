@@ -7024,3 +7024,19 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## Analytics carries no food name (2026-11-21)
+
+A saved food's id is its name (`chicken_and_rice`), and five pantry events
+sent it to Google Analytics as `favouriteId`. They now send counts only
+(`useCount`, `totalBefore`, `source`, `fromPantry`), and the redaction
+denylist strips any key naming a favourite, a name, a title or a search.
+Unit-tested at `emit` (`Food.pantryAnalytics.test.tsx`); only DebugView
+shows what reaches Google.
+
+- [ ] **After Deploy production, the pantry events in GA4 DebugView.** On a
+      debug device, log a typed meal twice, tap it under Log again, pick it
+      from the typeahead and long-press it away. Passing: each
+      `food_pantry_*` event arrives with no parameter holding the food's
+      name or `favouriteId`. If GA4 has a custom dimension registered for
+      `favouriteId`, archive it.
