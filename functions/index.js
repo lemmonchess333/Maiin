@@ -35,6 +35,7 @@ const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const weeklyRecap = require("./lib/weeklyRecap");
 const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
+const emailConsent = require("./lib/emailConsent");
 const { activationSport } = require("./lib/firstWeekActivation");
 // App1 Q17: the first session and week-4 return, kept once per account.
 const launchMilestones = require("./lib/launchMilestones");
@@ -807,6 +808,17 @@ exports.completeOnboarding = functions
         onboardingPlatform,
         healthDataConsent: setupHealthConsent,
       } = data;
+      // App1 Q55: setup's email opt-in, outside profileData so the profile
+      // sanitiser never carries consent. Ticked, it is a yes to both emails
+      // the toggle names, recorded below with the server's time; unticked,
+      // nothing is recorded (absent already means no).
+      const emailOptIn = emailConsent.readSetupEmailOptIn(data);
+      if (emailOptIn.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          emailOptIn.error
+        );
+      }
       // Every account takes the one first-week journey (App1, whole-app
       // grill Q27), so the journey is stamped below whatever a client
       // sends. A client from before App1 sends 2 or nothing; anything else
@@ -1041,6 +1053,20 @@ exports.completeOnboarding = functions
             ONE_ACTIVATION_JOURNEY_VERSION;
           if (onboardingPlatform) {
             nextProfileData.onboardingPlatform = onboardingPlatform;
+          }
+        }
+        if (emailOptIn.optIn) {
+          const consent = emailConsent.applyEmailConsent(
+            existingData.emailConsent,
+            { weeklyReview: true, winBack: true },
+            {
+              via: "setup",
+              wording: emailOptIn.wording,
+              at: admin.firestore.FieldValue.serverTimestamp(),
+            }
+          );
+          if (consent.changed.length > 0) {
+            nextProfileData.emailConsent = consent.next;
           }
         }
         if (existing.exists) {
@@ -6287,6 +6313,30 @@ exports.onMealWritten = functions
     return null;
   });
 
+// ── F5c: a soft-deleted meal is removed for good 30
+// days after it was deleted. Each hour, at quarter to, clear of the jobs on
+// the hour and the meet-up sweep at half past. lib/mealPurge.js has the
+// rule, the caps and the account-deletion check; its collection-group index
+// is in firestore.indexes.json. Each meal it deletes fires onMealWritten
+// above, which does nothing for a delete, as for Delete permanently.
+const mealPurge = require("./lib/mealPurge");
+
+exports.purgeSoftDeletedMeals = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("45 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "purgeSoftDeletedMeals", async () => {
+      const summary = await mealPurge.purgeSoftDeletedMeals({
+        firestore: db,
+        toTimestamp: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+        nowMs: Date.now(),
+      });
+      functions.logger.info("purgeSoftDeletedMeals.done", summary);
+      return summary;
+    })
+  );
+
 /** A day's water written (`waterLog/{date}`): hydration_hero. */
 exports.onWaterLogWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -9247,6 +9297,10 @@ exports.sendPasswordResetLinkCallable =
   accountEmails.sendPasswordResetLinkCallable;
 exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
+
+/* The Settings switches for the two emails a person can choose (App1 Q55):
+   the consent record is written only on the server (lib/emailConsent.js). */
+exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
 
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)

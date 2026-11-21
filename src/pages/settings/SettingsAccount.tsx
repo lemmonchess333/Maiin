@@ -118,7 +118,10 @@ export default function SettingsAccount({
       {settled && (
         <TrackSettingsSectionView section="data_storage">
           <div className="space-y-4">
-            <DataExportSection user={user} />
+            <DataExportSection
+              user={user}
+              emailConsent={profile?.emailConsent}
+            />
             <SettingsGroup title="Recently deleted">
               <SettingsRow
                 icon={Trash2}

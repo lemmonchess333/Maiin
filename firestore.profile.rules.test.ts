@@ -1586,3 +1586,64 @@ suite("users/{uid} — racePlanFreeWeekUsed value gate", () => {
     );
   });
 });
+
+suite("users/{uid}.emailConsent — the server's record (App1 Q55)", () => {
+  /**
+   * Consent to the two emails is recorded only by the server, with its own
+   * time (functions/lib/emailConsent.js): setup through completeOnboarding,
+   * the Settings switches through setEmailConsent, and the unsubscribe
+   * link. A client that could write it could record a yes nobody gave, or
+   * backdate one, or quietly undo an unsubscribe. The registry loop above
+   * refuses `false`; these refuse the record's real shape, both ways in.
+   */
+  const yes = {
+    weeklyReview: {
+      on: true,
+      givenAt: serverTimestamp(),
+      givenVia: "settings",
+      wording: 1,
+    },
+  };
+
+  it("is refused on sign-up", async () => {
+    const db = env.authenticatedContext("ec1").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec1"), {
+        ...signupProfile("ec1"),
+        emailConsent: yes,
+      })
+    );
+  });
+
+  it("is refused on an update, even with the server's time", async () => {
+    await seedProfile("ec2");
+    const db = env.authenticatedContext("ec2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec2"), { emailConsent: yes }, { merge: true })
+    );
+    await assertFails(
+      updateDoc(doc(db, "users/ec2"), { "emailConsent.winBack.on": true })
+    );
+  });
+
+  it("cannot be taken off a profile the server wrote it to", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/ec3"), {
+        ...signupProfile("ec3"),
+        emailConsent: {
+          weeklyReview: {
+            on: false,
+            withdrawnAt: Timestamp.now(),
+            withdrawnVia: "unsubscribe",
+          },
+        },
+      });
+    });
+    const db = env.authenticatedContext("ec3").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/ec3"), { emailConsent: deleteField() })
+    );
+    // The rest of the profile stays the owner's to change.
+    await assertSucceeds(updateDoc(doc(db, "users/ec3"), { darkMode: false }));
+  });
+});

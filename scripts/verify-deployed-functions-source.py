@@ -111,8 +111,10 @@ def source_targets():
         "resumeAccountDeletions": deletion_paths,
         # Priv1 call 1: setup is refused without the health-details agreement.
         "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js",
-                               "lib/healthConsent.js"],
+                               "lib/emailConsent.js", "lib/healthConsent.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
+        # App1 Q55: the email switches, and the consent record they write.
+        "setEmailConsent": ["index.js", "email/emailConsent.js", "lib/emailConsent.js"],
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
@@ -154,6 +156,11 @@ def source_targets():
                               "lib/socialFanout.js", "lib/notificationPreferences.js",
                               "lib/blockGuard.js", "lib/deletionTransactionGuard.js",
                               "lib/restriction.js", "lib/jobRuns.js", "profanityFilter.js"],
+        # F5c: deletes each meal 30 days after it was deleted, reading the
+        # account's deletion freeze in the same transaction.
+        "purgeSoftDeletedMeals": ["index.js", "package-lock.json", "lib/mealPurge.js",
+                                  "lib/deletionTransactionGuard.js",
+                                  "lib/accountDeletionStatus.js", "lib/jobRuns.js"],
         # Soc15 invites: the one writer of follows both ways from a code, and
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],

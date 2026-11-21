@@ -267,4 +267,16 @@ describe("profile field registry — UserProfile type parity", () => {
     expect(PROFILE_ALLOWED_FIELDS).not.toContain("activationJourneyVersion");
     expect(rulesAllowList()).not.toContain("activationJourneyVersion");
   });
+
+  it("the email consent record is server-owned on every profile write path (App1 Q55)", () => {
+    // A client that could write it could record a yes nobody gave, or
+    // backdate one; the server writes it with its own time.
+    const record = PROFILE_FIELD_REGISTRY.find(
+      (entry) => entry.field === "emailConsent"
+    );
+    expect(record?.serverOnly).toBe(true);
+    expect(SERVER_MANAGED_PROFILE_FIELDS).toContain("emailConsent");
+    expect(PROFILE_ALLOWED_FIELDS).not.toContain("emailConsent");
+    expect(rulesAllowList()).not.toContain("emailConsent");
+  });
 });
