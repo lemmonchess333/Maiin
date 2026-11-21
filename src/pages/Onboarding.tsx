@@ -2317,10 +2317,11 @@ export default function Onboarding() {
                 disabled={saving}
               />
               {askEmail && (
-                <div className="flex items-start gap-3 rounded-2xl bg-card card-shadow p-4">
-                  <div className="flex-1 min-w-0 space-y-1">
-                    {/* A word wider than the row breaks rather than run
-                        past the card at 200% text on a 320 px screen. */}
+                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                  <div className="min-w-0 flex-1 basis-40 space-y-1">
+                    {/* At 200% text on a 320 px screen the switch drops
+                        under the words rather than squeezing them until a
+                        word breaks mid-way. */}
                     <p className="text-base font-semibold break-words">
                       {EMAIL_CONSENT_COPY.setupLabel}
                     </p>
