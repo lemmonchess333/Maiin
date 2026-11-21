@@ -137,6 +137,19 @@ export function onboardingActivity(
   return "lifting";
 }
 
+/** Every stored step in the order setup reaches them, the longest flow's
+ *  order with the retired preview (6) before the review. Step numbers are
+ *  ids, not places: the agreement to store health details (8) comes before
+ *  the limitations (4) and About you (5). */
+const SETUP_ORDER = [0, 1, 3, 2, HEALTH_CONSENT_STEP, 4, 5, 6, 7];
+
+/** Whether a draft saved on `saved` had got past `step`, where both are
+ *  steps about the body or after them (5 onwards): the agreement is not
+ *  past About you, though its number is higher. */
+export function savedPastStep(saved: number, step: number): boolean {
+  return SETUP_ORDER.indexOf(saved) > SETUP_ORDER.indexOf(step);
+}
+
 /** Stored IDs stay stable even when irrelevant lifting/running chapters are
  *  omitted. The agreement to store health details (8, Priv1 call 1) comes
  *  before the first body question: a lifter's limitations (4), or About

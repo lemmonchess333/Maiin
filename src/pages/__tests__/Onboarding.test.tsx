@@ -2327,6 +2327,43 @@ describe("the agreement to store health details", () => {
     ).not.toContain("health");
   });
 
+  /* Step numbers are ids, not places: the agreement (8) comes before About
+     you (5). A setup left on the agreement, with no year of birth yet (as
+     every setup there has), opened on About you's numbers, past the
+     question that has to come first. */
+  it("reopens a setup left on the agreement on the agreement, before any body question", () => {
+    const {
+      healthConsentVersion: _agreed,
+      bodyAnswered: _body,
+      ...before
+    } = {
+      ...draft,
+      bodyAnswered: undefined,
+    };
+    void _agreed;
+    void _body;
+    saveOnboardingDraft("setup-test", {
+      ...before,
+      step: HEALTH_CONSENT_STEP,
+      birthYearText: "",
+      returnToReview: false,
+      trainingActivity: "lifting",
+    });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: SETUP.agreeHealth })
+    ).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    // The numbers are still the person's to give: none is taken as given.
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: SETUP.weight })).toHaveValue("");
+    expect(screen.getByRole("button", { name: SETUP.continue })).toBeDisabled();
+  });
+
   it("takes back a yes given before, when Not now is chosen", () => {
     saveOnboardingDraft("setup-test", {
       ...draft,

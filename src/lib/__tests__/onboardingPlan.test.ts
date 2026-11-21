@@ -14,6 +14,7 @@ import {
   buildOnboardingPlan,
   onboardingActivity,
   onboardingFlow,
+  savedPastStep,
 } from "../onboardingPlan";
 import { ONBOARDING_STEP_IDS, type OnboardingDraft } from "../onboardingDraft";
 import { getRaceGoalPlannerState } from "../raceGoalPlanner";
@@ -210,6 +211,15 @@ describe("supported running-only plans", () => {
     expect(onboardingFlow("running")).toEqual([0, 1, 3, 8, 5, 7]);
     expect(onboardingFlow("lifting")).toEqual([0, 1, 2, 8, 4, 5, 7]);
     expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 8, 4, 5, 7]);
+  });
+
+  it("places a saved step by where setup reaches it, not by its number", () => {
+    // Every older step keeps the order its number gave against About you.
+    for (const saved of [0, 1, 2, 3, 4, 5, 6, 7])
+      expect(savedPastStep(saved, 5)).toBe(saved > 5);
+    // The agreement's number is higher, and it comes first.
+    expect(savedPastStep(ONBOARDING_STEP_IDS.indexOf("health"), 5)).toBe(false);
+    expect(savedPastStep(5, ONBOARDING_STEP_IDS.indexOf("health"))).toBe(true);
   });
 
   /* Priv1 call 1: the agreement to store health details comes before the

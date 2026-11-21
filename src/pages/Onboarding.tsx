@@ -82,6 +82,7 @@ import {
   buildOnboardingPlan,
   onboardingActivity,
   onboardingFlow,
+  savedPastStep,
 } from "@/lib/onboardingPlan";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -243,7 +244,7 @@ export default function Onboarding() {
   const [askBirthYearAgain] = useState(
     () =>
       !!draft &&
-      draft.step > 5 &&
+      savedPastStep(draft.step, 5) &&
       parseBirthYear(draft.birthYearText ?? "") === null
   );
   const storedStep =
@@ -337,7 +338,7 @@ export default function Onboarding() {
      treated as the user's until they supply it: the fields render empty
      and `BodyInputs` reports unanswered as invalid. */
   const [bodyAnswered, setBodyAnswered] = useState(
-    draft?.bodyAnswered ?? Boolean(draft && draft.step > 5)
+    draft?.bodyAnswered ?? Boolean(draft && savedPastStep(draft.step, 5))
   );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
