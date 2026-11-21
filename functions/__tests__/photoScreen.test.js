@@ -192,7 +192,9 @@ describe("safeSearch", () => {
       "post-photos",
     ]) {
       const block = rules.match(
-        new RegExp(`match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`)
+        new RegExp(
+          `match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`
+        )
       );
       expect(block, `${prefix} has a match block`).not.toBeNull();
       const size = block[1].match(
