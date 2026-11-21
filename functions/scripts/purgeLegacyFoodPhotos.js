@@ -80,8 +80,8 @@ const { FieldPath } = require("firebase-admin/firestore");
 /** Every object older builds uploaded for a meal is under this prefix. */
 const FOOD_PHOTO_PREFIX = "food-photos/";
 
-/** The fields older builds wrote onto a meal for its photo
- *  (src/lib/foodPhotoUpload.ts, deleted with Food9). */
+/** The fields older builds wrote onto a meal for its photo (their
+ *  uploader was deleted with Food9). */
 const MEAL_PHOTO_FIELDS = Object.freeze(["photoUrl", "photoPath"]);
 
 /** A person's meal. Another collection named `meals` is not one. */

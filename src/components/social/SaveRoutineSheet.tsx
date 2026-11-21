@@ -225,7 +225,7 @@ export default function SaveRoutineSheet({
             type="button"
             onClick={onClose}
             disabled={saving || saved}
-            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="flex-1 py-3 rounded-xl bg-muted chip-edge text-foreground text-sm font-medium transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             Cancel
           </button>

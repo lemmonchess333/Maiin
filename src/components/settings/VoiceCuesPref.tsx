@@ -22,7 +22,7 @@ export default function VoiceCuesPref({
   /* The control drops under its label once the label would be narrower
      than 8em, as the rest timer's rows do. */
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-card border border-border/40 px-[14px] py-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-card border border-border/40 px-[14px] py-3 dark:card-shadow dark:border-transparent">
       <div className="min-w-[min(100%,8em)] flex-1">
         <p className="text-sm font-medium text-foreground">Audio cues</p>
         <p className="text-xs text-muted-foreground">

@@ -49,7 +49,7 @@ export default function PRCard({
 
   return (
     <div
-      className="rounded-xl bg-card overflow-hidden"
+      className="rounded-xl bg-card overflow-hidden dark:card-shadow"
       style={{
         background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)`,
       }}

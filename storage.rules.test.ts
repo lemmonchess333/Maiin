@@ -32,7 +32,8 @@
  *                            ANY-authenticated get, no list
  *   - MIME allowlist is closed-set (jpeg/png/webp) — svg+xml (XSS
  *     carrier) and gif must be rejected
- *   - size caps: 10MB progress, 5MB profile
+ *   - size caps: 10MB progress, 7MB space (the most Vision can screen),
+ *     5MB profile
  */
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import {
@@ -91,6 +92,10 @@ const smallBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // JPEG magic
 const sixMB = new Uint8Array(6 * 1024 * 1024);
 /** Just over the 10MB progress cap. */
 const elevenMB = new Uint8Array(11 * 1024 * 1024);
+/** Exactly the 7MB space cap (the rule is `<`). */
+const sevenMB = new Uint8Array(7 * 1024 * 1024);
+/** One byte under the 7MB space cap. */
+const justUnderSevenMB = new Uint8Array(7 * 1024 * 1024 - 1);
 
 let env: RulesTestEnvironment;
 
@@ -274,11 +279,21 @@ suite("storage.rules", () => {
       await assertFails(deleteObject(ref(authed(OTHER), path)));
     });
 
-    it("rejects SVG/GIF and the over-10MB size", async () => {
+    it("rejects SVG/GIF", async () => {
       await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, SVG));
       await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, GIF));
+    });
+
+    // Every space photo is screened by Vision, whose request (base64
+    // included) is at most 10MB: a photo over about 7.86MB could never be
+    // screened and was deleted on arrival, so the rule refuses it at
+    // upload (functions/__tests__/photoScreen.test.js reads this cap).
+    it("refuses a photo of 7MB or more, which Vision could not screen", async () => {
       await assertFails(uploadBytes(ref(authed(OWNER), path), elevenMB, JPEG));
-      await assertSucceeds(uploadBytes(ref(authed(OWNER), path), sixMB, JPEG));
+      await assertFails(uploadBytes(ref(authed(OWNER), path), sevenMB, JPEG));
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), path), justUnderSevenMB, JPEG)
+      );
     });
   });
 

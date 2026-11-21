@@ -192,9 +192,19 @@ describe("verdict templates (no AI)", () => {
     expect(
       verdictFor({ delta: 0, loadBand: "overreach", deloadRecommended: false })
     ).toMatch(/recovery/i);
+    // The high band bands the whole score, not the training: it says you
+    // trained more only on the week's own figures (trainedMoreThanUsual.test).
     expect(
       verdictFor({ delta: 0, loadBand: "high", deloadRecommended: false })
-    ).toMatch(/high/i);
+    ).toBe("A strong week.");
+    expect(
+      verdictFor({
+        delta: 0,
+        loadBand: "high",
+        deloadRecommended: false,
+        trainedMore: true,
+      })
+    ).toBe("A strong week. You trained more than your usual week.");
     expect(
       verdictFor({ delta: 7, loadBand: "moderate", deloadRecommended: false })
     ).toMatch(/momentum/i);
@@ -241,12 +251,22 @@ describe("verdict templates (no AI)", () => {
       delta: 2,
       loadBand: "overreach",
       deloadRecommended: true,
+      trainedMore: true,
     });
     // About the person and their usual week, never "load" (house voice).
     expect(v).toBe(
       "You trained more than your usual week, so this is a good week to ease off."
     );
     expect(v).not.toMatch(/a light week|lighter week|load/i);
+    /* The flag also fires on a high score with sessions or food well off
+       plan (adherence under 50), at or under the usual week: then only
+       the advice is said. */
+    const unproven = verdictFor({
+      delta: 2,
+      loadBand: "high",
+      deloadRecommended: true,
+    });
+    expect(unproven).toBe("This is a good week to ease off.");
   });
 
   it("uses only bands computeLoadBand can emit", () => {
@@ -613,6 +633,29 @@ describe("the week the account began", () => {
 });
 
 describe("verdict words (house voice)", () => {
+  it("is about you, never about load", () => {
+    /* App1 Q12's rule for the review: a line is about the person, never
+       about load. The high band read "A strong week, with training load
+       running high.", a metric as the actor. Every band and flag. */
+    for (const loadBand of [
+      "deload",
+      "low",
+      "moderate",
+      "high",
+      "overreach",
+      null,
+    ]) {
+      for (const delta of [-10, 0, 10, null]) {
+        for (const deloadRecommended of [false, true]) {
+          const args = { delta, loadBand, deloadRecommended };
+          expect(verdictFor(args), JSON.stringify(args)).not.toMatch(
+            /\bload\b/i
+          );
+        }
+      }
+    }
+  });
+
   it("joins two statements with a full stop, never an em dash", () => {
     for (const args of [
       { delta: -10, loadBand: "deload", deloadRecommended: false },

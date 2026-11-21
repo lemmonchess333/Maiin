@@ -41,7 +41,7 @@ export default function DayActionSheet({
     >
       <div className="px-5 pb-6 pt-3 space-y-4">
         {/* Drag handle */}
-        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        <div className="w-9 h-1 rounded-full sheet-handle mx-auto" />
         <DayActionContent
           {...content}
           dateKey={dateKey}

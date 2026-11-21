@@ -22,7 +22,7 @@ export default function FollowRequestBanner({
   return (
     <div
       role="status"
-      className="space-y-3 rounded-xl border border-border/50 bg-card p-3"
+      className="space-y-3 rounded-xl border border-border/50 bg-card p-3 dark:card-shadow dark:border-transparent"
     >
       <p className="text-sm font-medium text-foreground">
         {name} asked to follow you

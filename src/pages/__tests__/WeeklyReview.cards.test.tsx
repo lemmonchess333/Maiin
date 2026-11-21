@@ -222,9 +222,9 @@ describe("WeeklyReview — the recap as cards", () => {
   });
 
   it("closes the first card on the week's verdict, in words alone (App1 Q12)", () => {
-    /* The score is shown in one place, Progress's Score details. The
-       review printed it as well ("92 performance, up 2"), so one week's
-       number was on two pages. */
+    /* The score is shown on Progress alone, its number on the lead and
+       its details under Score details. The review printed it as well
+       ("92 performance, up 2"), so one week's number was on two pages. */
     mockReview = normal();
     renderRecap();
     expect(

@@ -129,7 +129,7 @@ interface Props {
   featureKey?: ProFeatureKey;
   /** Pre-select a plan when the modal opens. Defaults to the
    *  recommended plan (DEFAULT_PLAN). Used by entry points that
-   *  want a specific plan focused — e.g. a "Save 27% with yearly"
+   *  want a specific plan focused — e.g. a "Save 52% with yearly"
    *  promo could pass "yearly" explicitly. */
   initialPlan?: PlanId;
 }
@@ -275,7 +275,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           sr-only Drawer.Title + Drawer.Description for SRs. */}
       <div className="relative shrink-0 px-5 pt-3 pb-2">
         <div
-          className="w-10 h-1 rounded-full bg-border mx-auto"
+          className="w-10 h-1 rounded-full sheet-handle mx-auto"
           aria-hidden="true"
         />
         <button
