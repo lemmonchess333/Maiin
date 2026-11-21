@@ -145,13 +145,30 @@ export default function CalorieRing({
     delay: reduce ? 0 : ringDelaySec + 0.15,
   };
 
-  const ariaLabel = hasTarget
+  /* The words in the ring, as drawn: the figure `AnimatedNumber` settles
+     on, its label, and the trajectory line under it. */
+  const centreLabel = hero
+    ? labelMode === "over"
+      ? `${CALORIE_UNIT} over ${formatCalories(target)}`
+      : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`
+    : `${CALORIE_UNIT} ${labelMode}`;
+  const shownWords = hasTarget
+    ? [`${formatCalories(displayValue)} ${centreLabel}`, trajectoryLabel]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+  const totals = hasTarget
     ? isOver
       ? `${consumed} of ${target} calories logged, ${Math.abs(remaining)} over target`
       : isLeftMode
         ? `${consumed} of ${target} calories logged, ${remaining} remaining`
         : `${consumed} of ${target} calories logged`
     : `${consumed} calories logged, no target set`;
+  /* The name starts with the ring's own words (WCAG 2.5.3, Label in
+     Name: Voice Control is spoken to with what is on the screen), then
+     the totals behind them and what a tap does. With no target the ring
+     shows a dash, which is not a word. */
+  const ariaLabel = [shownWords, totals].filter(Boolean).join(". ");
 
   return (
     <button
@@ -287,6 +304,9 @@ export default function CalorieRing({
                 fromZero={drawIn}
               />
             </p>
+            {/* A space in the text between the figure and its words, so
+                they read as words, as the button's name does; the column
+                draws nothing for it. */}{" "}
             {/* The label is the only mode indicator ("kcal left",
                   "kcal logged", "kcal over"), in the tiles' register:
                   plain text. The whole ring is the tap target, and the
@@ -328,7 +348,7 @@ export default function CalorieRing({
               ) : (
                 `${CALORIE_UNIT} ${labelMode}`
               )}
-            </p>
+            </p>{" "}
             {trajectoryLabel && (
               <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                 {trajectoryLabel}

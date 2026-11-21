@@ -102,7 +102,9 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onToggleLike={onToggleLike}
       />
     );
-    const btn = screen.getByRole("button", { name: /give props/i });
+    // Named by the count it shows (WCAG 2.5.3).
+    const btn = screen.getByRole("button", { name: "2 props, give props" });
+    expect(btn).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(btn);
     expect(onToggleLike).toHaveBeenCalledTimes(1);
   });
@@ -119,7 +121,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onToggleLike={() => {}}
       />
     );
-    const btn = screen.getByRole("button", { name: /remove props/i });
+    const btn = screen.getByRole("button", { name: "3 props, remove yours" });
     expect(btn).toHaveAttribute("aria-pressed", "true");
     expect(btn.textContent).toContain("3");
   });
@@ -133,7 +135,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onRemoved={() => {}}
       />
     );
-    expect(screen.queryByRole("button", { name: /give props/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /props/i })).toBeNull();
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 });
@@ -180,5 +182,41 @@ describe("SpacePostCard — an attached workout's picture", () => {
       })
     );
     expect(container.querySelector("img[data-lead-drawing]")).toBeNull();
+  });
+});
+
+describe("SpacePostCard — an attached circuit (Circ1)", () => {
+  it("counts its moves as moves, as the feed does", () => {
+    renderCard(
+      makePost({
+        activity: {
+          type: "workout",
+          totalVolume: 0,
+          exerciseCount: 5,
+          muscleGroups: [],
+          leadExerciseId: "plank",
+          circuit: true,
+        },
+      })
+    );
+    expect(screen.getByText("moves").previousElementSibling).toHaveTextContent(
+      "5"
+    );
+    expect(screen.queryByText("exercises")).toBeNull();
+  });
+
+  it("keeps a lift's count as exercises", () => {
+    renderCard(
+      makePost({
+        activity: {
+          type: "workout",
+          exerciseCount: 1,
+          muscleGroups: ["quads"],
+          leadExerciseId: "squat",
+        },
+      })
+    );
+    expect(screen.getByText("exercise")).toBeInTheDocument();
+    expect(screen.queryByText(/^moves?$/)).toBeNull();
   });
 });

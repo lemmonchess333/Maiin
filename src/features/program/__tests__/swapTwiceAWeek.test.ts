@@ -58,6 +58,26 @@ const pastTheCap = (workouts: readonly WorkoutDay[]) =>
     .filter(([, n]) => n > MAX_WEEKLY_LIFT_EXPOSURES)
     .map(([id, n]) => `${id} ×${n}`);
 
+/**
+ * The one lift a beginner at home without a rack may have a third time:
+ * the dumbbell row. The inverted row needs a bar at waist height (Lift4
+ * (11), the owner's answer to the No equipment print), so the dumbbell row
+ * is the one row at a beginner's level the kit has, and the level gate
+ * ranks above the cap (`applyEquipmentFilterToWorkouts`).
+ */
+const pastTheCapForKit = (
+  workouts: readonly WorkoutDay[],
+  over: Partial<PlanBuilderInput>
+) => {
+  const oneRow =
+    (over.experience ?? "beginner") === "beginner" &&
+    (over.equipment === "home_gym" || over.equipment === "minimal") &&
+    over.barbellAtHome !== true;
+  return pastTheCap(workouts).filter(
+    (entry) => !(oneRow && entry.startsWith("db-row "))
+  );
+};
+
 /** The lifts of a day, `id` for a main lift and `id~` for a supporting
  *  one. */
 const liftsOn = (workouts: readonly WorkoutDay[], dayName: string) =>
@@ -77,7 +97,7 @@ const POSTERIOR_DAY = "Full Body — Posterior Focus";
 describe("the swaps for a home gym keep every lift to two days a week", () => {
   it("without a barbell: the dumbbell RDL and the goblet squat twice each", () => {
     const workouts = workoutsFor({ equipment: "home_gym" });
-    expect(pastTheCap(workouts)).toEqual([]);
+    expect(pastTheCapForKit(workouts, { equipment: "home_gym" })).toEqual([]);
     // The main lifts keep the swap's first choice; the supporting slots
     // take the next lift the person can do once the week has it twice.
     expect(daysWith(workouts, "db-rdl")).toEqual([DEADLIFT_DAY, POSTERIOR_DAY]);
@@ -110,7 +130,7 @@ describe("the swaps for a home gym keep every lift to two days a week", () => {
 
   it("with minimal kit, as at home", () => {
     const noBarbell = workoutsFor({ equipment: "minimal" });
-    expect(pastTheCap(noBarbell)).toEqual([]);
+    expect(pastTheCapForKit(noBarbell, { equipment: "minimal" })).toEqual([]);
     expect(daysWith(noBarbell, "db-rdl")).toEqual([
       DEADLIFT_DAY,
       POSTERIOR_DAY,
@@ -168,7 +188,7 @@ describe("the swaps for a home gym keep every lift to two days a week", () => {
         preserveHistory: true,
       })
     ).programState.workouts;
-    expect(pastTheCap(moved)).toEqual([]);
+    expect(pastTheCapForKit(moved, { equipment: "home_gym" })).toEqual([]);
     expect(daysWith(moved, "goblet-squat")).toEqual([SQUAT_DAY, DEADLIFT_DAY]);
     expect(liftsOn(moved, POSTERIOR_DAY)).toContain("bodyweight-squat~");
   });
@@ -267,7 +287,10 @@ describe("no plan has a lift more than twice a week", () => {
             });
             plans += 1;
             if (swapMeetsTheCap(workouts)) atTheCap += 1;
-            const over = pastTheCap(workouts);
+            const over = pastTheCapForKit(workouts, {
+              experience,
+              ...kit,
+            } as Partial<PlanBuilderInput>);
             if (over.length > 0) {
               past.push(
                 `${experience} ${primaryGoal} ${liftDays}d ${kit.equipment}` +

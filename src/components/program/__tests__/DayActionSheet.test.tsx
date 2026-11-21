@@ -42,6 +42,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { ResolvedLift } from "@/lib/trainingResolver";
 import type { SavedRunDoc } from "@/lib/runClaims";
 import { APPLIED } from "@/features/program/programOutcome";
 
@@ -1420,7 +1421,27 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
   });
 });
 
+/** The day's lift as Home hands it to the sheet: the plan's first, by
+ *  its marks (done, skipped, or to do). */
+function sheetLift(programState: ProgramState): ResolvedLift {
+  const workout = programState.workouts[0];
+  const status = workout.completed
+    ? "completed"
+    : workout.skipped
+      ? "skipped"
+      : "planned";
+  return {
+    index: 0,
+    workout,
+    status,
+    isTerminal: status !== "planned",
+    isStartable: status === "planned",
+  };
+}
+
 describe("DayActionSheet — lift section", () => {
+  /* The sheet acts on the lift Home's week lays on the day
+     (`manageLiftOn`), which Home hands it; these give it that lift. */
   function setup(workoutOverrides: Partial<WorkoutDay> = {}) {
     const profile = makeProfile(
       Array.from({ length: 7 }, (_, i) => ({
@@ -1428,15 +1449,17 @@ describe("DayActionSheet — lift section", () => {
         type: i === todayDow() ? ("lift" as const) : ("rest" as const),
       }))
     );
+    const programState = makeProgramState([], [makeWorkout(workoutOverrides)]);
     return {
       profile,
-      programState: makeProgramState([], [makeWorkout(workoutOverrides)]),
+      programState,
       callbacks: commonCallbacks(),
+      lift: sheetLift(programState),
     };
   }
 
   it("planned lift: renders 'Skip this lift' button", () => {
-    const { profile, programState, callbacks } = setup();
+    const { profile, programState, callbacks, lift } = setup();
     render(
       <DayActionSheet
         open={true}
@@ -1444,6 +1467,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1453,7 +1477,7 @@ describe("DayActionSheet — lift section", () => {
   });
 
   it("Skip this lift calls skipWorkoutDay with the lift index", () => {
-    const { profile, programState, callbacks } = setup();
+    const { profile, programState, callbacks, lift } = setup();
     render(
       <DayActionSheet
         open={true}
@@ -1461,6 +1485,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1471,7 +1496,9 @@ describe("DayActionSheet — lift section", () => {
   });
 
   it("completed lift: 'Completed' badge, no Skip button", () => {
-    const { profile, programState, callbacks } = setup({ completed: true });
+    const { profile, programState, callbacks, lift } = setup({
+      completed: true,
+    });
     render(
       <DayActionSheet
         open={true}
@@ -1479,6 +1506,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1489,7 +1517,7 @@ describe("DayActionSheet — lift section", () => {
   });
 
   it("gives the lift its reason behind 'Why this session', with the plan's rules", async () => {
-    const { profile, programState, callbacks } = setup();
+    const { profile, programState, callbacks, lift } = setup();
     programState.weekNumber = 3;
     programState.currentPhase = "progression";
     programState.primaryGoal = "strength";
@@ -1507,16 +1535,17 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={{ ...profile!, experience: "intermediate" }}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
-    const lift = screen.getByRole("region", { name: "Lift actions" });
+    const actions = screen.getByRole("region", { name: "Lift actions" });
     // Closed until asked for.
     expect(screen.queryByText(/built for strength/)).toBeNull();
     fireEvent.click(
-      within(lift).getByRole("button", { name: "Why this session" })
+      within(actions).getByRole("button", { name: "Why this session" })
     );
     const why = await screen.findByRole(
       "dialog",
@@ -1533,7 +1562,7 @@ describe("DayActionSheet — lift section", () => {
   });
 
   it("offers no reason it cannot place in the programme", () => {
-    const { profile, programState, callbacks } = setup();
+    const { profile, programState, callbacks, lift } = setup();
     programState.weekNumber = 0;
     render(
       <DayActionSheet
@@ -1542,6 +1571,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1552,7 +1582,7 @@ describe("DayActionSheet — lift section", () => {
   });
 
   it("skipped lift: 'Skipped' badge, no Skip button", () => {
-    const { profile, programState, callbacks } = setup({ skipped: true });
+    const { profile, programState, callbacks, lift } = setup({ skipped: true });
     render(
       <DayActionSheet
         open={true}
@@ -1560,6 +1590,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1587,11 +1618,16 @@ describe("DayActionSheet — scope (Run tab shows run only)", () => {
       status: "planned",
     });
     const programState = makeProgramState([runDay], [makeWorkout()]);
-    return { profile, programState, callbacks: commonCallbacks() };
+    return {
+      profile,
+      programState,
+      callbacks: commonCallbacks(),
+      lift: sheetLift(programState),
+    };
   }
 
   it("default (day) scope on a hybrid day shows BOTH run and lift", () => {
-    const { profile, programState, callbacks } = setupHybrid();
+    const { profile, programState, callbacks, lift } = setupHybrid();
     render(
       <DayActionSheet
         open={true}
@@ -1599,6 +1635,7 @@ describe("DayActionSheet — scope (Run tab shows run only)", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}
@@ -1610,7 +1647,7 @@ describe("DayActionSheet — scope (Run tab shows run only)", () => {
   });
 
   it('scope="run" on the same hybrid day shows ONLY the run block', () => {
-    const { profile, programState, callbacks } = setupHybrid();
+    const { profile, programState, callbacks, lift } = setupHybrid();
     render(
       <DayActionSheet
         open={true}
@@ -1619,6 +1656,7 @@ describe("DayActionSheet — scope (Run tab shows run only)", () => {
         scope="run"
         profile={profile}
         programState={programState}
+        lift={lift}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
         {...callbacks}

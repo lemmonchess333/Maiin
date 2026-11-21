@@ -73,6 +73,17 @@ says which.
     (it can be "saved" and "needs attention" at once) and checkout (a
     completed purchase can be reported as failed).
 
+STATUS 2026-11-15: Q10, Q12, Q13's score window and Q16 built on
+`claude/app1-score-one-place`. Progress leads with the engine's verdict
+over the last 7 days' lifting and running against the usual week, says
+on screen whether to ease off, and carries the 0–100 number small beside
+the window, free (the owner, 18 November: the number is free; its
+12-week chart, average and details are Pro); the window is "Last 7 days" (or "7
+days to" a date for a kept score), never "This week"; the weekly review
+keeps its verdict and drops the number; and the minutes-based training
+load chart went with its two warnings, which did not feed the lighter-week
+decision: that stays the engine's alone (Q11), so one model decides it.
+
 ## Round 3. Settings and leftovers
 
 Three settings faults found, to be fixed: Gender in Settings writes a field
@@ -140,6 +151,18 @@ planned sessions read `daysPerWeek`, written once at setup.
 51. A public post gets a public page with the card and "Get Tropos", route
     ends hidden.
 52. The website does not offer the app itself in the browser yet.
+    STATUS 2026-11-15: built, after the owner's "yes" on 15 November (the
+    audit had found troposfit.com serving the whole app, sign-up
+    included). troposfit.com is now one page, `website.html`
+    (`src/website/`): Q50's explainer on the welcome's photographs with
+    Apple's App Store badge, a shared post's page (Q51), the legal and
+    support pages, and the invite code to copy for a link opened without
+    the app. Every address already handed out keeps answering
+    (`websiteAddresses.test.tsx`). Not built: the website's checkout
+    (Q77), which started from the signed-in web app. The owner is
+    choosing between a signed-in Pro corner on the website and an
+    anonymous purchase the iPhone app redeems; until then
+    `/upgrade?checkout=success` says Pro is on in the app if they just paid.
 53. What people rely on is "my next session is ready"; the streak supports
     it.
 54. A ladder for someone who stops (about day 3, 7, 14 and 30), then
