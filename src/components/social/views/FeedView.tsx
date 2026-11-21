@@ -470,7 +470,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCountFailed && (
               <div
                 role="alert"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 dark:card-shadow"
               >
                 <p className="text-small text-muted-foreground">
                   Couldn&rsquo;t load who you follow.
