@@ -133,9 +133,10 @@ export default function MacroDistribution({
                 isAnimationActive={false}
                 rootTabIndex={-1}
                 /* Hist5f S1 + P4: tap-attempt telemetry. Fires on
-                   slice click with the macro name as binKey + the
-                   calorie-share % as value. P6 honoured — a slice
-                   with value === 0 short-circuits via the falsy
+                   slice click with the macro name as binKey, and not
+                   its share of the calories: a macro share is health
+                   data and stays out of analytics. P6 honoured — a
+                   slice with value === 0 short-circuits via the falsy
                    guard below (`!e?.value`). */
                 onClick={(entry) => {
                   /* The sector's `payload` is this slice's datum, as the
@@ -147,7 +148,6 @@ export default function MacroDistribution({
                   trackHistoryEvent("history_chart_tap_attempted", {
                     chart: "macro",
                     binKey: String(e.name ?? ""),
-                    value: pct(e.name),
                   });
                 }}
               >

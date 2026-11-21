@@ -1,0 +1,82 @@
+// Scratch: the weeks Pgm9 asks to be printed for Lift4's No equipment
+// setup (STATUS 2026-11-09), and the Minimal and Home gym weeks the same
+// change moves. Each plan is the real builder's (`buildPlan`), priced by the
+// app's own clock (`estimateSessionMinutes`), as Train shows them. Writes
+// JSON to $PRINT_OUT; `print.py` beside it lays the weeks out side by side.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+
+type Lift = {
+  name: string;
+  exerciseId: string;
+  sets: number;
+  reps: number;
+  repRangeMax?: number;
+  repUnit?: string;
+  isAccessory?: boolean;
+  weight?: number;
+};
+
+const EQUIPMENT = (process.env.PRINT_EQUIPMENT ?? "no_equipment,minimal,home_gym").split(",");
+const SETUPS: Array<{ goal: string; level: string; minutes: number; days: number[] }> = [
+  { goal: "general", level: "intermediate", minutes: 45, days: [2, 3, 4, 5, 6] },
+  { goal: "general", level: "beginner", minutes: 45, days: [3, 6] },
+  { goal: "strength", level: "intermediate", minutes: 60, days: [4] },
+  { goal: "hypertrophy", level: "intermediate", minutes: 60, days: [4] },
+];
+
+it("prints the weeks", () => {
+  const out: unknown[] = [];
+  for (const equipment of EQUIPMENT)
+    for (const s of SETUPS)
+      for (const days of s.days)
+        for (const pullUpBar of [undefined, false, true]) {
+          const input = {
+            primaryGoal: s.goal,
+            nutritionPhase: "recomp",
+            experience: s.level,
+            sessionMinutes: s.minutes,
+            bodyweightKg: 80,
+            sex: "male",
+            liftDays: days,
+            preferredSplit: "auto",
+            runMode: "freeform",
+            weeklyRunDays: 0,
+            equipment,
+            ...(pullUpBar === undefined ? {} : { pullUpBar }),
+            injuries: [],
+            currentDate: "2026-11-16",
+          } as unknown as PlanBuilderInput;
+          const plan = buildPlan(input).programState as unknown as {
+            splitType: string;
+            workouts: Array<{ dayName: string; exercises: Lift[] }>;
+          };
+          out.push({
+            equipment,
+            goal: s.goal,
+            level: s.level,
+            minutes: s.minutes,
+            days,
+            pullUpBar: pullUpBar ?? null,
+            splitType: plan.splitType,
+            workouts: plan.workouts.map((d) => ({
+              dayName: d.dayName,
+              minutes: estimateSessionMinutes(d.exercises as never, {
+                sessionMinutes: s.minutes,
+              }),
+              lifts: d.exercises.map((e) => ({
+                name: e.name,
+                id: e.exerciseId,
+                sets: e.sets,
+                reps: e.reps,
+                top: e.repRangeMax ?? null,
+                unit: e.repUnit ?? null,
+                main: e.isAccessory !== true,
+              })),
+            })),
+          });
+        }
+  writeFileSync(process.env.PRINT_OUT ?? "/tmp/print.json", JSON.stringify(out, null, 1));
+});
