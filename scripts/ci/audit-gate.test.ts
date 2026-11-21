@@ -498,11 +498,16 @@ describe("ci.yml runs the gate", () => {
     resolve(repoRoot, ".github/workflows/ci.yml"),
     "utf8"
   );
-  const audit = ci.slice(ci.indexOf("\n  audit:\n"));
+  /* The audit job alone: from its key to the next job's, so a job added
+     after it is not read as part of it. */
+  const fromAudit = ci.slice(ci.indexOf("\n  audit:\n") + 1);
+  const next = fromAudit.slice(1).search(/^ {2}[a-z][\w-]*:\s*$/m);
+  const audit = next === -1 ? fromAudit : fromAudit.slice(0, next + 1);
 
-  it("finds the audit job", () => {
+  it("finds the audit job, and only it", () => {
     expect(audit.length).toBeGreaterThan(100);
     expect(audit).toContain("runs-on: ubuntu-latest");
+    expect(audit.match(/^ {2}[a-z][\w-]*:\s*$/gm)).toEqual(["  audit:"]);
   });
 
   it("gates the root tree through the allowlist, and the functions tree as before", () => {

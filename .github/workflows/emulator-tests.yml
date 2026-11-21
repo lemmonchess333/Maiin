@@ -503,8 +503,9 @@ jobs:
   # signed-out specs, and the ones that catch a broken build or route.
   # Until now they ran in no CI job. Their own job, so one going red is
   # seen without turning emulator-tests red while they bed in. Not a
-  # required check (only `unit` is: requiredCheckComposition.test.ts),
-  # and not to be made one until they have been green for two weeks.
+  # required check (the required ones are `unit`, by the repository
+  # ruleset, and `emulator-tests`, by main's branch protection), and not
+  # to be made one until they have been green for two weeks.
   # The other six signed-out specs run nightly (nightly-e2e.yml).
   signed-out-specs:
     runs-on: ubuntu-latest
