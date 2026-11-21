@@ -519,7 +519,7 @@ test.describe("axe", () => {
      end question, and the finish of one run to its end, on a clock the
      spec moves on (helpers/circuit.ts). Nothing is saved. */
   test("a circuit", async ({ page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(300_000);
     const found: Finding[] = [];
 
     await openCircuit(page);

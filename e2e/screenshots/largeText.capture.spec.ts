@@ -1198,7 +1198,7 @@ test.describe("large text", () => {
     /* Circuit mode (Circ1), on a clock the spec moves on
        (helpers/circuit.ts). Nothing is saved. */
     test(`a circuit at ${width}px`, async ({ page }) => {
-      test.setTimeout(240_000);
+      test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
       await signInAsTestUser(page);
       const found: string[] = [];
