@@ -5,6 +5,8 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const {
@@ -13,6 +15,7 @@ const {
   safeSearch,
   screenStoredPhoto,
   screenedOwner,
+  SCREENED_PATHS,
   VISION_REQUEST_LIMIT_BYTES,
 } = require("../lib/photoScreen");
 
@@ -169,6 +172,64 @@ describe("safeSearch", () => {
     });
     await safeSearch(Buffer.alloc(2 * 1024 * 1024), "t", fits);
     expect(fits).toHaveBeenCalledOnce();
+  });
+
+  /* Storage must refuse a screened upload that Vision could never take,
+     so the person is told at upload instead of having the photo accepted
+     and then deleted as unscreenable. Read from storage.rules: each
+     screened prefix's size cap, with a photo one byte under it, has to
+     reach Vision. A Space photo was allowed 10 MB, and anything over
+     about 7.86 MB was deleted on arrival. The prefixes are the screened
+     paths themselves (SCREENED_PATHS), so a new one is held to this too. */
+  it("a photo just under each screened path's Storage cap reaches Vision", async () => {
+    const rules = readFileSync(
+      fileURLToPath(new URL("../../storage.rules", import.meta.url)),
+      "utf8"
+    );
+    const prefixes = SCREENED_PATHS.map((pattern) => {
+      const prefix = /^\^([a-z][a-z-]*)\\\//.exec(pattern.source);
+      expect(prefix, `${pattern} opens on a folder name`).not.toBeNull();
+      return prefix[1];
+    });
+    // Anchored, so the loop below cannot pass by reading no paths.
+    expect(prefixes).toEqual(
+      expect.arrayContaining([
+        "space-photos",
+        "profile-photos",
+        "route-maps",
+        "post-photos",
+      ])
+    );
+    const caps = {};
+    for (const prefix of prefixes) {
+      const block = rules.match(
+        new RegExp(
+          `match /${prefix}/\\{uid\\}[^\\n]* \\{\\n([\\s\\S]*?)\\n    \\}`
+        )
+      );
+      expect(block, `${prefix} has a match block`).not.toBeNull();
+      const size = block[1].match(
+        /request\.resource\.size < (\d+) \* 1024(?: \* (1024))?/
+      );
+      expect(size, `${prefix} caps its uploads`).not.toBeNull();
+      caps[prefix] = Number(size[1]) * 1024 * (size[2] ? 1024 : 1);
+    }
+    const reachesVision = {};
+    for (const [prefix, cap] of Object.entries(caps)) {
+      const fetchImpl = visionAnswer({
+        responses: [{ safeSearchAnnotation: annotation("UNLIKELY") }],
+      });
+      const failed = await safeSearch(Buffer.alloc(cap - 1), "t", fetchImpl)
+        .then(() => null)
+        .catch((err) => err);
+      reachesVision[prefix] =
+        !isUnscreenable(failed) && fetchImpl.mock.calls.length === 1;
+    }
+    expect(reachesVision).toEqual(
+      Object.fromEntries(prefixes.map((prefix) => [prefix, true]))
+    );
+    for (const prefix of prefixes)
+      expect(screenedOwner(`${prefix}/u/x.jpg`)).toBe("u");
   });
 });
 

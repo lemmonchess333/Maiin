@@ -76,7 +76,7 @@ const WORST_FILE_BASELINE = 8;
  * reason became one sentence ("The whole plan has led to race day."), a
  * cause took "so" ("Windy, so expect a slower pace"), and a statement with
  * its detail took "with" ("A strong week, with training load running
- * high."). The rest stayed: where every line of a set opened the same way,
+ * high.", since reworded without "load"). The rest stayed: where every line of a set opened the same way,
  * a third reshaped is enough to break the cadence without making a set
  * that reads as nine rewrites. 327 is where the count already stood when
  * the Together copy pass found this number four above it. 322 once the
