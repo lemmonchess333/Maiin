@@ -8,10 +8,12 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const {
+  isUnscreenable,
   refusesPhoto,
   safeSearch,
   screenStoredPhoto,
   screenedOwner,
+  VISION_REQUEST_LIMIT_BYTES,
 } = require("../lib/photoScreen");
 
 const annotation = (adult, racy = "UNLIKELY") => ({
@@ -114,6 +116,60 @@ describe("safeSearch", () => {
       )
     ).rejects.toThrow(/Bad image/);
   });
+
+  it("reads only Vision's per-image INVALID_ARGUMENT as the photo's own fault", async () => {
+    const unreadable = await safeSearch(
+      Buffer.from("x"),
+      "t",
+      visionAnswer({
+        responses: [{ error: { code: 3, message: "Bad image data." } }],
+      })
+    ).catch((err) => err);
+    expect(isUnscreenable(unreadable)).toBe(true);
+    expect(unreadable.message).toMatch(/Bad image data/);
+    // The service failing, per image or as a whole, is never the photo's.
+    for (const [body, status] of [
+      [{ responses: [{ error: { code: 14, message: "Unavailable" } }] }, 200],
+      [{ responses: [{ error: { code: 13, message: "Internal" } }] }, 200],
+      [{ responses: [{ error: { code: 8, message: "Quota" } }] }, 200],
+      [{ responses: [{ error: { message: "Bad image" } }] }, 200],
+      [{ responses: [{}] }, 200],
+      [{ error: { message: "Cloud Vision API has not been used" } }, 403],
+      [{ error: { message: "Quota exceeded" } }, 429],
+      [{ error: { message: "Invalid JSON payload" } }, 400],
+      [{ error: { message: "Backend Error" } }, 503],
+    ]) {
+      const failed = await safeSearch(
+        Buffer.from("x"),
+        "t",
+        visionAnswer(body, status)
+      ).catch((err) => err);
+      expect(failed).toBeInstanceOf(Error);
+      expect(isUnscreenable(failed)).toBe(false);
+    }
+    const transport = await safeSearch(Buffer.from("x"), "t", async () => {
+      throw new TypeError("fetch failed");
+    }).catch((err) => err);
+    expect(isUnscreenable(transport)).toBe(false);
+  });
+
+  it("does not send Vision a photo past its request limit, and reads it as unscreenable", async () => {
+    const fetchImpl = vi.fn();
+    const tooLarge = Buffer.alloc(
+      Math.ceil((VISION_REQUEST_LIMIT_BYTES * 3) / 4) + 1
+    );
+    const failed = await safeSearch(tooLarge, "t", fetchImpl).catch(
+      (err) => err
+    );
+    expect(isUnscreenable(failed)).toBe(true);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    // Anchor: a photo the app makes is sent.
+    const fits = visionAnswer({
+      responses: [{ safeSearchAnnotation: annotation("UNLIKELY") }],
+    });
+    await safeSearch(Buffer.alloc(2 * 1024 * 1024), "t", fits);
+    expect(fits).toHaveBeenCalledOnce();
+  });
 });
 
 describe("screenStoredPhoto", () => {
@@ -136,7 +192,12 @@ describe("screenStoredPhoto", () => {
         responses: [{ safeSearchAnnotation: annotation("VERY_LIKELY") }],
       }),
     });
-    expect(result).toEqual({ refused: true, adult: "VERY_LIKELY" });
+    // The generation screened comes back, for the callable's record of a pass.
+    expect(result).toEqual({
+      refused: true,
+      adult: "VERY_LIKELY",
+      generation: "1700000000000001",
+    });
     expect(bucket.file).toHaveBeenLastCalledWith("space-photos/u1/1.jpg", {
       generation: "1700000000000001",
       preconditionOpts: { ifGenerationMatch: "1700000000000001" },

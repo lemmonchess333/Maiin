@@ -7622,7 +7622,10 @@ function queueReason(value) {
  * uses it
  * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
  * refused as nudity, its file already deleted, and "unavailable" when it
- * could not be checked, so the app posts nothing it couldn't check.
+ * could not be checked, so the app posts nothing it couldn't check. A
+ * photo it passes is recorded against its generation, so the upload
+ * trigger neither screens that file again nor deletes it on the owner's
+ * day of screens.
  */
 exports.screenPhoto = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -7649,22 +7652,41 @@ exports.screenPhoto = functions
         "Too many photos checked at once. Wait a few minutes and try again."
       );
     }
+    const dayOfChecksSpent = () =>
+      new functions.https.HttpsError(
+        "resource-exhausted",
+        "That's as many photos as can be checked in a day. Try again later."
+      );
+    // And a day's worth (photoScreen.js says why the number).
+    if (
+      await isRateLimited(
+        context.auth.uid,
+        "screenPhotoDay",
+        photoScreen.CALLABLE_SCREENS_PER_DAY,
+        photoScreen.SCREEN_BUDGET_WINDOW_MS
+      )
+    ) {
+      throw dayOfChecksSpent();
+    }
+    let screened;
     try {
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
-      const { refused, adult } = await photoScreen.screenStoredPhoto({
+      screened = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(),
         path,
         accessToken: accessToken.access_token,
       });
-      if (refused)
-        functions.logger.warn("screenPhoto.refused", {
-          uid: context.auth.uid,
-          path,
-          adult,
-        });
-      return { ok: !refused };
+      if (!screened.refused)
+        screened.recorded = await photoScreen.recordCallablePass(
+          admin.firestore(),
+          {
+            owner: context.auth.uid,
+            path,
+            generation: screened.generation,
+          }
+        );
     } catch (error) {
       functions.logger.error("screenPhoto.failed", {
         path,
@@ -7675,40 +7697,104 @@ exports.screenPhoto = functions
         "Couldn't check this photo. Try again."
       );
     }
+    if (screened.refused) {
+      functions.logger.warn("screenPhoto.refused", {
+        uid: context.auth.uid,
+        path,
+        adult: screened.adult,
+      });
+      return { ok: false };
+    }
+    // The upload trigger got there first and dropped this file on the
+    // owner's day of upload screens: it is gone, so the app must not post it.
+    if (!screened.recorded) throw dayOfChecksSpent();
+    return { ok: true };
   });
 
 /**
  * The same check on every upload to a screened path, for a client that
  * skips `screenPhoto`: a refused photo's file is deleted, so a post or
  * profile that names it shows nothing.
+ *
+ * The photo itself is the only ground for deleting it, never the service:
+ *   - the callable passed this very file: nothing to do;
+ *   - past its owner's day of screens (photoScreen.UPLOAD_SCREENS_PER_DAY)
+ *     it is deleted without one, since every screen is a paid Vision
+ *     request and Storage limits no account's number of uploads;
+ *   - an image Vision cannot read, or too large to send it, is deleted at
+ *     once and never retried: it can never be screened;
+ *   - refused as nudity, it is deleted.
+ * A screen that fails for any other reason (Vision down, switched off,
+ * rate limited or refusing our credentials; Storage or the count
+ * unreadable) throws, so the event is delivered again. An upload still
+ * unscreened after a day of that is kept, marked unscreened in its
+ * metadata and logged as `screenUploadedPhoto.keptUnscreened`. It cannot
+ * be hidden from other people meanwhile: a post names a photo by its
+ * download URL, which Storage serves to anyone holding it whatever the
+ * rules say. The app posts no photo its own check couldn't screen, so
+ * such a file is only ever shown by a client that skipped the callable.
  */
 exports.screenUploadedPhoto = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .storage.object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
     const path = object.name;
-    if (photoScreen.screenedOwner(path) === null) return;
+    const owner = photoScreen.screenedOwner(path);
+    if (owner === null) return;
+    const bucket = admin.storage().bucket(object.bucket);
+    const { generation } = object;
+    const deleteUnscreened = async (reason) => {
+      await photoScreen.deleteUnscreenedPhoto({ bucket, path, generation });
+      functions.logger.warn("screenUploadedPhoto.deletedUnscreened", {
+        path,
+        reason,
+      });
+    };
     try {
+      const claim = await photoScreen.claimUploadScreen(admin.firestore(), {
+        owner,
+        path,
+        generation,
+        eventId: context && context.eventId,
+      });
+      if (claim === "passed") return;
+      if (claim === "over") {
+        await deleteUnscreened("daily-budget");
+        return;
+      }
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
       const { refused, adult } = await photoScreen.screenStoredPhoto({
-        bucket: admin.storage().bucket(object.bucket),
+        bucket,
         path,
-        generation: object.generation,
+        generation,
         accessToken: accessToken.access_token,
       });
       if (refused)
         functions.logger.warn("screenUploadedPhoto.refused", { path, adult });
     } catch (error) {
-      // Gone already: the callable refused it first.
+      // Gone already: the callable refused it first, or it was replaced.
       if (error && error.code === 404) return;
-      // Vision unavailable: the callable is the gate the app waits on,
-      // and this is the backstop.
+      if (photoScreen.isUnscreenable(error)) {
+        await deleteUnscreened("unscreenable");
+        return;
+      }
       functions.logger.error("screenUploadedPhoto.failed", {
         path,
         message: String(error && error.message),
       });
+      if (!pastRetryWindow(context)) throw error;
+      try {
+        await photoScreen.markUnscreenedPhoto({ bucket, path, generation });
+      } catch (markError) {
+        // Gone, replaced, or Storage failing too: the log line is the record.
+        functions.logger.error("screenUploadedPhoto.markFailed", {
+          path,
+          message: String(markError && markError.message),
+        });
+      }
+      functions.logger.warn("screenUploadedPhoto.keptUnscreened", { path });
     }
   });
 
