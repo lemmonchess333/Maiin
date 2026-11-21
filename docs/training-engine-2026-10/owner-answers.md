@@ -208,6 +208,10 @@ evidence argues against the ratio as a risk score, and this line isn't one.
 The run plan's progression check is the single-run guard (Phase 5b), not the
 ratio.
 
+STATUS 2026-11-21: the line is gone, with the card and `trainingLoad.ts` (A2's
+STATUS: App1 Q16 kept one load model in Score details). The app draws no ACWR
+line; the run plan's progression check is still the single-run guard.
+
 ### A11. The signed-out specs that run in no CI job
 
 **Answer.** Wire `smoke`, `navigation` and `legal-pages` into the existing
