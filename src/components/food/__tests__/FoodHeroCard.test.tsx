@@ -214,7 +214,7 @@ describe("FoodHeroCard — the day's fuel label", () => {
     renderWithFuel(true);
     const line = screen.getByText("Long 20K tomorrow, fuel up today");
     const details = screen.getByRole("button", {
-      name: "View nutrition breakdown",
+      name: "Details, view nutrition breakdown",
     });
     expect(
       ringButton().compareDocumentPosition(line) &
@@ -307,18 +307,18 @@ describe("FoodHeroCard — the wheel waits for a logged food's flight", () => {
 
   it("keeps the old calories while held, then takes the new ones", () => {
     const { rerender } = render(hero(900, false));
-    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(/\b900 of 2000 calories logged/);
     // The log and the hold arrive in one commit.
     rerender(hero(1440, true));
-    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(/\b900 of 2000 calories logged/);
     rerender(hero(1440, false));
-    expect(ringButton()).toHaveAccessibleName(/^1440 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(/\b1440 of 2000 calories logged/);
   });
 
   it("follows the day's calories at once when nothing is in the air", () => {
     const { rerender } = render(hero(900, false));
     rerender(hero(700, false));
-    expect(ringButton()).toHaveAccessibleName(/^700 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(/\b700 of 2000 calories logged/);
   });
 
   it("grows in 350 ms with no wait of its own", () => {

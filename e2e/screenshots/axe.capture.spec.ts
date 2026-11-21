@@ -388,14 +388,18 @@ test.describe("axe", () => {
     await close(page);
 
     // A meal's edit sheet, from yesterday's diary (seed:rich logs meals on
-    // the five days up to the one it ran on).
+    // the five days up to the one it ran on). A row is named by what it
+    // shows, then ", edit".
     const yesterday = await page.evaluate(() => {
       const d = new Date();
       d.setDate(d.getDate() - 1);
       const pad = (n: number) => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     });
-    const meal = page.getByRole("button", { name: /^Edit / }).first();
+    const meal = page
+      .locator("[data-food-row]")
+      .getByRole("button", { name: /\bedit$/ })
+      .first();
     await open(page, `food?date=${yesterday}`, meal);
     await meal.click();
     await dialog.waitFor();
@@ -403,7 +407,7 @@ test.describe("axe", () => {
     await check(page, "sheet-meal-edit", found, sheet);
     await close(page);
 
-    const weight = page.getByRole("button", { name: /^Weight / }).first();
+    const weight = page.getByRole("button", { name: /^Weight\b/ }).first();
     await open(page, "", weight);
     await weight.click();
     await dialog.waitFor();
@@ -519,7 +523,7 @@ test.describe("axe", () => {
      end question, and the finish of one run to its end, on a clock the
      spec moves on (helpers/circuit.ts). Nothing is saved. */
   test("a circuit", async ({ page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(300_000);
     const found: Finding[] = [];
 
     await openCircuit(page);

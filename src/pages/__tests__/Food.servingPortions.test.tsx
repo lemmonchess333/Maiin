@@ -110,7 +110,8 @@ function meal(id: string, calories: number): Meal {
 }
 function openPortion(calories: number) {
   const row = screen.getByRole("button", {
-    name: new RegExp(`^Edit Oats(?:, Breakfast, ${calories} kcal,.*)?$`),
+    // A row is named by what it shows, then what a tap does.
+    name: new RegExp(`^Oats\\b.* ${calories} kcal\\b.*, edit$`),
   });
   fireEvent.keyDown(row, { key: "Enter" });
 }
@@ -172,7 +173,7 @@ describe("serving preview and saved portion", () => {
         <Food />
       </MemoryRouter>
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Rice" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Rice .*, edit$/ }), {
       key: "Enter",
     });
     fireEvent.change(screen.getByLabelText("Grams"), {
