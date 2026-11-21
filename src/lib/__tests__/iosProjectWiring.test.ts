@@ -413,8 +413,8 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
   });
 
   it("builds with Xcode 27.1, before anything else touches the project", () => {
-    // Owner decision A (18 November 2026, docs/ios/iphone-duo.md): only an
-    // iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
+    // Owner decision A (18 November 2026, the iPhone Duo notes, #3420): only
+    // an iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
     // 27 SDK is required for every upload from April 2027. macos-26 tops
     // out at Xcode 26.6 (macos-14, the first image, is deprecated:
     // actions/runner-images#13518); the xcode-27 image carries several
