@@ -141,7 +141,7 @@ describe("ProModal — visible copy (no white-on-white regression)", () => {
         `Log meals from a photo, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day. No manual searching.`
       )
     ).toBeInTheDocument();
-    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(100);
+    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(15);
     expect(container.ownerDocument.body.textContent).not.toMatch(/unlimited/i);
   });
 });

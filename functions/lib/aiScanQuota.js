@@ -5,9 +5,16 @@
  *
  *   action     | free / day | pro / day | Notes
  *   -----------|------------|-----------|----------------------------------
- *   text_ai    | 0          | 100       | 100 is the server-side
+ *   text_ai    | 0          | 15        | 15 is the server-side
  *               |            |           | abuse-protection cap.
- *   image_ai   | 0          | 100       | Image-AI is Pro-only (free=0).
+ *   image_ai   | 0          | 15        | Image-AI is Pro-only (free=0).
+ *
+ * 15 a day, not the 100 F1b first set (Biz1 call 7, 18 November 2026):
+ * someone eating five times a day, with a rescan of each, stays under it,
+ * and one account at the cap costs about $7 a month in Gemini 3.8 Flash
+ * at the prices from 1 January 2027, where 100 of each could cost about
+ * $46, many times what a yearly subscriber pays (the business plan in
+ * PR #3415, section 6.4).
  *
  * The free plan has no AI: Apple's 7-day trial is how someone tries it.
  *
@@ -66,7 +73,7 @@ const VALID_ACTIONS = Object.freeze([ACTION_TEXT_AI, ACTION_IMAGE_AI]);
 
 const DAILY_LIMITS = Object.freeze({
   free: { text_ai: 0, image_ai: 0 },
-  pro: { text_ai: 100, image_ai: 100 },
+  pro: { text_ai: 15, image_ai: 15 },
 });
 
 /** The day a scan counts against: the UTC date at `now`. See the header. */
@@ -178,8 +185,9 @@ const OUR_OWN_MODEL_REFUSALS = [401, 403, 404];
  * failure after the charge, and one the person can bring about counts too:
  * a typed list of a hundred and fifty foods runs the answer past its token
  * limit, so it comes back cut short and unreadable, at the most a scan can
- * cost. Without a bound the 100-a-day cap became the rate limit, about
- * 2,000 full-cost calls a day for one Pro or trial account. Five a day is
+ * cost. Without a bound the daily cap became the rate limit: at the
+ * 100 a day it was then, about 2,000 full-cost calls a day for one Pro or
+ * trial account. Five a day is
  * a Tropos heuristic: more than an honest bad day of the service, far
  * fewer than a loop. The count is kept beside the action's own, with its
  * own day, so the charge's shape is unchanged.

@@ -13,7 +13,8 @@
  */
 export const HEIGHT_CM = { min: 120, max: 230 } as const;
 /** Whole years; the sanitizer drops a fraction as well as a value outside. */
-export const AGE_YEARS = { min: 16, max: 120 } as const;
+/** 18 since Biz1 call 4 (18 November 2026), overturning App1 Q65's 16. */
+export const AGE_YEARS = { min: 18, max: 120 } as const;
 
 /**
  * An age as typed, or null when it is not one the profile keeps: empty,

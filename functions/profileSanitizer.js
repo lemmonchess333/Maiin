@@ -137,18 +137,19 @@ function isCalendarDay(s) {
 }
 
 /** The age range a profile keeps, as `age` below holds it. */
-const AGE_YEARS = Object.freeze({ min: 16, max: 120 });
+/** 18 since Biz1 call 4 (18 November 2026), overturning App1 Q65's 16. */
+const AGE_YEARS = Object.freeze({ min: 18, max: 120 });
 
 /**
  * A year of birth (App1, grill Q57; the owner chose the year over a full
  * date, 13 November 2026): a whole year from this year less 120 to this
- * year less 16, or undefined. The app holds a person to exactly that on
+ * year less 18, or undefined. The app holds a person to exactly that on
  * their own year (`birthYearProblem`, src/lib/age.ts, held to this by
  * bodyMetrics.cross.test.ts). This runs on the server's year, in UTC, and
  * at New Year a person's own year can already be the next one: Auckland
  * is in January while UTC is still in December. So the young end, here
  * and in firestore.rules' birthYearValid() only, takes one year more, and
- * someone born this year less 15 by UTC's count is not refused for being
+ * someone born this year less 17 by UTC's count is not refused for being
  * in a time zone ahead of it. The app keeps the exact limit.
  */
 function cleanBirthYear(value, now = new Date()) {
