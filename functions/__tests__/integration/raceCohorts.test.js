@@ -87,7 +87,9 @@ const programState = (runPlan) => ({
   settings: { autoProgression: true, smallPlates: true },
   weekHistory: [],
   runDays: [],
-  runPlan,
+  // Free running with no goal holds no plan, as the app saves it. The
+  // validator refuses a plan of a kind it does not know (App1 Q25).
+  ...(runPlan ? { runPlan } : {}),
 });
 
 /** The plan save a person makes in the run-plan editor, then the trigger. */
@@ -104,7 +106,7 @@ async function savePlan(goal) {
         }
       : {
           profileUpdates: profile({ raceGoal: null }),
-          programState: programState({ mode: "freeform" }),
+          programState: programState(),
           weekSchedule: weekSchedule(),
         },
     { auth: { uid: RUNNER } }

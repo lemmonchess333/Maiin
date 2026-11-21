@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 7107097,
+  "total": 7109159,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -215,7 +215,7 @@
     "KeepSwapSheet": 1343,
     "launchEvents": 2093,
     "layoffDetection": 19468,
-    "Layout": 23893,
+    "Layout": 25955,
     "league": 5105,
     "League": 7518,
     "LeagueCard": 4773,
