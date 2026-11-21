@@ -15,7 +15,7 @@ export type ProgramEvent =
   | "adjust_week_intent_selected"
   | "adjust_week_applied"
   | "adjust_week_cancelled"
-  // Run14 ease-week nudge (RUN-05): shown (with the evidence counts),
+  // Run14 ease-week nudge (RUN-05): shown (with which signal fired),
   // applied (CTA → AdjustWeekSheet), or dismissed. Lets us tell later
   // whether nudges get acted on or waved away.
   | "ease_week_nudge_shown"
@@ -34,14 +34,11 @@ export interface ProgramEventMetadata {
   swapCount?: number;
   /** adjust_week_opened: which entry point. */
   source?: "cockpit";
-  /** ease_week_nudge_shown: the evidence surfaced in the card. */
-  harderCount?: number;
-  ratedCount?: number;
-  /** A6: which nudge signal fired (user-authored vs measured), and the
-   *  trigger-agnostic evidence counts. */
+  /** ease_week_nudge_shown: A6, which nudge signal fired (user-authored vs
+   *  measured). Not the evidence behind it: how many sessions were rated
+   *  harder, missed their pace or ran short is a training figure and stays
+   *  out of analytics (`analyticsHealthFigures.test.ts`). */
   trigger?: "harder_ratings" | "pace_misses" | "short_sessions" | null;
-  count?: number;
-  total?: number;
 }
 
 export function track(
