@@ -384,8 +384,10 @@ no Android, no chat coach, and no ratings yet.
   anything that protects a person stay free (Q46, Q86)
   ([grill](../whole-app-2026-11/grill.md);
   [App1 row](../../.claude/plans/programme-run-followups.md)).
-- **The AI scan** allows 100 photo scans and 100 typed meals a day on Pro
-  and none on free ([aiScanQuota.js](../../functions/lib/aiScanQuota.js)).
+- **The AI scan** allowed 100 photo scans and 100 typed meals a day on Pro
+  and none on free when this was written. The owner took this document's
+  15 of each (Biz1 call 7), on main since 21 November (#3431,
+  [aiScanQuota.js](../../functions/lib/aiScanQuota.js)).
 - **Apple's cut** is 15%: Tropos was accepted into the Small Business
   Program on 18 August 2026
   ([pre-launch backlog](../qa/pre-launch-backlog.md)).
@@ -1177,8 +1179,8 @@ A paying subscriber brings £3.22 a month on this mix: two thirds at £28.33
    $0.0061) = **$46 a month**, about fifteen times what a yearly
    subscriber pays. At 15 of each a day the worst case is 30 × 15 ×
    $0.0154 = $6.93, still generous for someone eating five times a day.
-   Lower the cap, and test medium image resolution, which halves the
-   image's tokens.
+   Lower the cap (done: 15 of each since 21 November, #3431), and test
+   medium image resolution, which halves the image's tokens.
 4. **Apple still takes about as much as all the infrastructure together**
    at 10,000 users (£284 against £299).
 5. **This is a small business at 10,000 users.** Proceeds of £1,612 a
