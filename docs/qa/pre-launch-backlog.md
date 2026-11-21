@@ -1096,6 +1096,9 @@ details are open on the Analytics overview), and a return to the app re-claims a
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
+_Note 2026-11-15 (App1 Q16): the training-load curve is gone, so it reads
+nothing anywhere; the rows below stand for the other reads._
+
 - [ ] **Push survives a day of returns, and sign-out still works.** On a
       TestFlight build with push on: leave and return to the app thirty or
       more times over a day, then sign out. Passing: sign-out completes, and
@@ -4969,6 +4972,13 @@ top of the Analytics overview, and "Score details" under it opens in place
 what the page held. The unit suites cover the words, the colours and the
 links; these need a phone.
 
+_Note 2026-11-15 (App1 Q10, Q16): the ring with the score, the six-week
+line and the training load's range pills described below have moved or
+gone. The ring is now the first card inside Score details, the six-week
+line and the load chart are gone, and the lead is the verdict over the
+bars. "The score in one place, one load model" below has the current
+checks; the link and tooltip rows here still apply._
+
 - [ ] **The ring holds its score at the largest text size.** With the
       phone's text size at its largest, open Analytics. Passing: the score
       sits inside the ring with room around it, the words wrap under the
@@ -5034,6 +5044,39 @@ Captured in Chromium at 393 and 320 px; a phone has not drawn them.
 - [ ] **An old link.** From Safari or a note, open a saved link to
       `/settings/training` in the installed app. Passing: Lift plan
       opens.
+
+## A sport added or removed in Lift plan and Run plan (TrainWk1 step 6a, 2026-11-18)
+
+Affects: Settings → Lift plan for someone with no lift days (Add lifting,
+setup's three lifting questions, one a screen), Settings → Run plan for
+someone with no running (Add running: setup's running question, then the
+goal cards with the 30-minute goal offered), and Stop lifting and Stop
+running at each editor's foot with one confirmation. Unit tests and the
+journey run them on the web; a phone has not drawn them.
+
+- [ ] **Add lifting on a phone.** As a runner, open Settings → Lift plan.
+      Passing: it opens on "How often will you lift?" with Continue above
+      the tab bar, not under it or the home indicator; Back and Continue
+      stack at the largest text size; Add lifting saves and the page turns
+      into the lift plan editor.
+- [ ] **The runs keep their days.** Before adding lifting, note the runner's
+      run days on Home's week. After, passing: the same days are run days,
+      and the lifts sit on the others.
+- [ ] **Add running on a phone.** As a lifter, open Settings → Run plan,
+      choose New to running. Passing: "30 minutes without stopping" is
+      chosen, Add running saves, and Train's Run tab shows the goal's
+      first runs.
+- [ ] **Stop running, then Stop lifting.** On a hybrid with no race, tap
+      Stop running. Passing: the confirmation opens over the tab bar,
+      Cancel changes nothing, Stop running takes the run days off Home's
+      week and every saved run stays in Progress. Then Lift plan's foot
+      reads "Your plan is lifting only. To stop lifting, add running
+      first." with no Stop lifting.
+- [ ] **Train the morning after a lift.** Finish a lift on Train, tap
+      Done, and leave the app on Train in the background overnight.
+      Passing: the next day, bringing the app back lands Train on the next
+      lift with Start workout; the same day, it still shows the lift just
+      finished as Completed.
 
 ## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
 
@@ -5277,6 +5320,11 @@ A person's sessions, bests, lifetime totals and exports stay free.
 Unit-tested; the capture specs that film 6M and the details now sign the
 test user in as Pro for the length of the capture.
 
+_Note 2026-11-15, updated 18 November (App1 Q10, Q16; the owner): the
+score's number is free and sits small in the lead beside "Last 7 days";
+Score details holds its card, its 12-week chart, average and breakdown,
+which are Pro. The training load chart is gone._
+
 - [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
       lock; tapping one opens the Pro page and leaves the range where it
       was; Score details shows "Pro" and opens the Pro page, not the fold.
@@ -5287,6 +5335,40 @@ test user in as Pro for the length of the capture.
       each locked one is read as "6M, Pro".
 - [ ] **After a trial starts.** Passing: every range and the details open
       at once, with no restart.
+
+## The score in one place, one load model (App1 Q10, Q12, Q13, Q16, 2026-11-15)
+
+Affects: the top of Progress (`PerformanceSection`, `LoadAgainstUsual`),
+Score details (`PerformanceDetails`) and the weekly review's first card.
+The lead is the verdict at hero size over the last 7 days' lifting and
+running against the usual week, with the 0–100 number small beside the
+window, free (the owner, 18 November); its card, 12-week chart, average
+and breakdown are under Score details, which is Pro (Q84); the
+minutes-based training load chart is gone. Unit-tested; the capture specs
+read the new lead and details on the emulator.
+
+- [ ] **A free account on Progress.** Passing: the top card reads "Last 7
+      days", a word such as Steady or Sharpening in large type, its line,
+      Lifting and Running each with a bar and a tick at the usual week,
+      and under them "No sign to ease off. Carry on with your plan" (or
+      "Ease off this week rather than add more" under Backing off); "Your
+      score 74" small at the top right of the card, never larger than the
+      word; Score details shows "Pro".
+- [ ] **A Pro account opens Score details.** Passing: "Your score" first,
+      the ring with the figure and "Last 7 days · out of 100", then "Your
+      score by week", Breakdown with the food logged, Load band and the
+      week average; no Training load card, and no Fitness, Fatigue or Form.
+- [ ] **Larger text.** Settings → Accessibility → Larger Text at the
+      largest step on a small iPhone. Passing: "Sharpening" stays one
+      word, a little smaller, and nothing runs past the card's edge
+      (iOS 15 has no container queries: there the word may break inside
+      the card instead).
+- [ ] **Back after a break.** On an account whose newest score is more
+      than a day old. Passing: the kicker names the window by its last day
+      ("7 days to 2 Aug"), not "Last 7 days".
+- [ ] **The weekly review.** Open a review for a week with training.
+      Passing: the first card ends on its verdict in words alone, with no
+      "performance" figure or change.
 
 ## The easy cue on easy and long runs (Run24 (12), 2026-11-13)
 
@@ -6272,9 +6354,9 @@ Unit-tested; no phone has drawn it.
 
 ## Circuit mode: the runner on a phone (Circ1, 2026-11-18)
 
-Affects: the new full-screen `/circuit` page: the picker, the runner, the
-end question and the finish, and Train's Lift tab (the Circuit row under
-Empty workout) once the feed post ships with it. Unit-tested on a fake clock in jsdom; no phone has run one, and
+Affects: Train's Lift tab (the Circuit row under Empty workout), the new
+full-screen `/circuit` page (the picker, the runner, the end question and
+the finish) and a circuit's feed post. Unit-tested on a fake clock in jsdom; no phone has run one, and
 the iOS web view's screen lock, speech and haptics are only seen on a
 device.
 
@@ -6312,6 +6394,12 @@ device.
       "Finish your first workout".
 - [ ] **The ladder.** Save a circuit rated Easy, then open Circuit again.
       Passing: that circuit's row reads "45 s on, 15 s off".
+- [ ] **The post.** Save a circuit with automatic sharing on. Passing: the
+      finish says it was shared, and Done goes back to Train; on another
+      account that follows, the feed card reads the circuit's name, its
+      rounds and minutes, "40 s on, 20 s off", its first three moves and
+      "+2 more", with the first move's drawing. On a build from before
+      circuits, the same post reads as a workout of 5 exercises.
 
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 

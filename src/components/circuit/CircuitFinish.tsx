@@ -1,4 +1,5 @@
 import { useId } from "react";
+import CompletionExtras from "@/components/workout/CompletionExtras";
 import FinishHero from "@/components/workout/FinishHero";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import {
 } from "@/features/circuit/circuitCopy";
 import type { Circuit, CircuitEffort } from "@/features/circuit/circuitTypes";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
+import type { SessionShareAction } from "@/lib/sessionPost";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,8 +23,9 @@ import { cn } from "@/lib/utils";
  * with confetti (DS4 call 3); any other is the calm summary. Then the one
  * tap for how it felt, which steers the ladder (Circ1 (7)), Save, and
  * Discard, which asks first: iOS has no Back, so the way out without
- * saving is always on the screen. A circuit under 7 minutes says so and
- * saves nothing.
+ * saving is always on the screen. Saved, it shows the post as a lift's
+ * finish does (`CompletionExtras`), then Done. A circuit under 7 minutes
+ * says so and saves nothing.
  */
 export default function CircuitFinish({
   circuit,
@@ -33,11 +36,13 @@ export default function CircuitFinish({
   reward,
   effort,
   saving,
+  share,
   error,
   onRate,
   onSave,
   onDiscard,
   onClose,
+  onDone,
 }: {
   circuit: Circuit;
   finished: boolean;
@@ -49,6 +54,8 @@ export default function CircuitFinish({
   reward: "first" | null;
   effort?: CircuitEffort;
   saving: boolean;
+  /** The saved circuit's post: present once it is saved. */
+  share?: SessionShareAction | null;
   error?: string;
   onRate: (effort: CircuitEffort | undefined) => void;
   onSave: () => void;
@@ -56,6 +63,7 @@ export default function CircuitFinish({
   onDiscard: () => void;
   /** Leaves a finish that saves nothing. */
   onClose: () => void;
+  onDone: () => void;
 }) {
   const feelId = useId();
   const minutes = circuitMinutes(activeSeconds);
@@ -107,7 +115,14 @@ export default function CircuitFinish({
           ))}
         </ul>
 
-        {saves ? (
+        {share ? (
+          <>
+            <CompletionExtras share={share} kind="lift" />
+            <Button variant="neutral" size="lg" fullWidth onClick={onDone}>
+              Done
+            </Button>
+          </>
+        ) : saves ? (
           <>
             <fieldset className="space-y-[8px]">
               <legend

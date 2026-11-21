@@ -51,7 +51,7 @@ describe("savedCircuits", () => {
     const lift = { date: "2026-11-10", exercises: [] };
     expect(
       savedCircuits([lift, workout("2026-11-09", 100, {})]).map(
-        (saved) => saved.circuitId
+        ({ saved }) => saved.circuitId
       )
     ).toEqual([base.id]);
   });
@@ -68,17 +68,16 @@ describe("savedCircuits", () => {
     });
     const evening = workout("2026-11-10", 18 * 3600, { effort: "easy" });
     const history = savedCircuits([morning, evening]);
-    expect(history.map((saved) => saved.effort)).toEqual(["easy", "hard"]);
+    expect(history.map(({ saved }) => saved.effort)).toEqual(["easy", "hard"]);
     expect(circuitForToday(base, history).level).toBe(1);
   });
 
   it("keeps the day first, whatever the save times say", () => {
     const older = workout("2026-11-09", 20 * 3600, { effort: "easy" });
     const newer = workout("2026-11-10", 8 * 3600, { effort: "hard" });
-    expect(savedCircuits([older, newer]).map((saved) => saved.effort)).toEqual([
-      "hard",
-      "easy",
-    ]);
+    expect(
+      savedCircuits([older, newer]).map(({ saved }) => saved.effort)
+    ).toEqual(["hard", "easy"]);
   });
 });
 
@@ -108,7 +107,7 @@ describe("a circuit chosen while the history could not be read", () => {
       circuitForToday(base, null)
     );
     const history = savedCircuits([atTop, blind]);
-    expect(history[0]).toMatchObject({ level: 0, historyUnknown: true });
+    expect(history[0].saved).toMatchObject({ level: 0, historyUnknown: true });
     const today = circuitForToday(base, history);
     expect(today.level).toBe(top);
     expect(today).toEqual(doseAt(base, top));
