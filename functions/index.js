@@ -891,7 +891,7 @@ exports.completeOnboarding = functions
       // The age comes as a year of birth (App1, grill Q57), from which it is
       // worked out when it is read, or as `age` from a client still running
       // an older bundle. A year sent is the one asked for, so a year the
-      // sanitiser refused (under 16) fails here as itself. Nothing derived
+      // sanitiser refused (under 18) fails here as itself. Nothing derived
       // from it is stored: the year is the one copy of the fact (Q21).
       const requiredFields = [
         "weightKg",

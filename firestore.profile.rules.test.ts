@@ -180,7 +180,8 @@ suite("users/{uid} update — the client-writable surface", () => {
 });
 
 /* App1 (grill Q57): the year of birth Settings → Profile writes. A whole
-   year from this year less 120 to this year less 16, with one year more at
+   year from this year less 120 to this year less 18 (Biz1 call 4; 16
+   before it), with one year more at
    the young end for New Year across time zones (the app holds the exact
    limit). The years come from the clock the rules read. */
 suite("users/{uid} update — the year of birth", () => {
@@ -193,15 +194,15 @@ suite("users/{uid} update — the year of birth", () => {
 
   it.each([
     ["thirty years back", year - 30],
-    ["this year less 16", year - 16],
-    ["this year less 15, the New Year slack", year - 15],
+    ["this year less 18", year - 18],
+    ["this year less 17, the New Year slack", year - 17],
     ["this year less 120", year - 120],
   ])("accepts %s", async (_case, birthYear) => {
     await assertSucceeds(write(`by-ok-${birthYear}`, birthYear));
   });
 
   it.each([
-    ["this year less 14", year - 14],
+    ["this year less 16", year - 16],
     ["this year less 121", year - 121],
     ["a year as text", String(year - 30)],
     ["a fraction", year - 30.5],

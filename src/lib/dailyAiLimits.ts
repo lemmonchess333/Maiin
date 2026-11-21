@@ -1,5 +1,6 @@
 /**
- * F1b — daily AI scan limits, per action. Mirror of
+ * F1b — daily AI scan limits, per action: 15 a day on Pro since Biz1
+ * (18 November 2026), which lowered F1b's 100 for cost. Mirror of
  * `functions/lib/aiScanQuota.js DAILY_LIMITS`. Both must move
  * together if the lock is renegotiated — pinned by
  * `aiScanQuota.parity.cross.test.ts` (drift fails CI). AI is Pro-only
@@ -9,5 +10,5 @@
  */
 export const DAILY_AI_LIMITS = {
   free: { text_ai: 0, image_ai: 0 },
-  pro: { text_ai: 100, image_ai: 100 },
+  pro: { text_ai: 15, image_ai: 15 },
 } as const;

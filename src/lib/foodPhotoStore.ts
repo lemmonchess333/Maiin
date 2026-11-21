@@ -90,10 +90,10 @@ export const MAX_AGE_DAYS = 90;
 
 /**
  * Byte backstop. The age cap alone does not bound the reachable ceiling:
- * image AI allows 100 scans/day for Pro, and re-scanning a plate to fix a
- * bad estimate is ordinary behaviour, so 90 days × 100/day × ~250 KB is
- * ~2 GB. At a realistic 2 saved photos/day the age cap binds first (about
- * 44 MB held) and this never fires.
+ * image AI allows 15 scans/day for Pro (Biz1; 100 before it), and
+ * re-scanning a plate to fix a bad estimate is ordinary behaviour, so
+ * 90 days × 15/day × ~250 KB is ~330 MB. At a realistic 2 saved photos/day
+ * the age cap binds first (about 44 MB held) and this never fires.
  */
 export const MAX_TOTAL_BYTES = 250 * 1024 * 1024;
 
