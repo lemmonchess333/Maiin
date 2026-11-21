@@ -362,14 +362,16 @@ no Android, no chat coach, and no ratings yet.
 
 ### 3.1 What Pro is today
 
-- **Price:** £3.99 a month or £34.99 a year, with the yearly plan selected
-  by default and labelled "Save 27%"
-  ([proPlans.ts](../../src/lib/proPlans.ts)). On the phone the paywall
-  shows only the App Store's own prices, and no price or Continue until
-  RevenueCat returns them (#3406,
-  [useProPlanPrices.ts](../../src/hooks/useProPlanPrices.ts)). The pound
-  prices above are what the web build shows and what the App Store
-  products should be set to.
+- **Price:** £3.99 a month or £34.99 a year when this was written, with
+  the yearly plan selected by default and labelled "Save 27%". The owner
+  took this document's UK price (Biz1 call 2), and since 21 November the
+  app's plans are £6.99 and £39.99, "Save 52%" (#3432,
+  [proPlans.ts](../../src/lib/proPlans.ts)). This section's tables still
+  call the old price "today", since that is what they compare against.
+  On the phone the paywall shows only the App Store's own prices, and no
+  price or Continue until RevenueCat returns them (#3406,
+  [useProPlanPrices.ts](../../src/hooks/useProPlanPrices.ts)), so the App
+  Store products must be set to the new prices in App Store Connect.
 - **Trial:** 7 days, one per account; an account that ever held the old
   onboarding free week is offered the price, not a trial
   ([subscription.ts](../../src/lib/subscription.ts)).
