@@ -48,6 +48,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative, basename } from "node:path";
+import { sanitizeAnalyticsParams } from "../analyticsRedaction";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -396,6 +397,20 @@ describe("the one door to analytics", () => {
       )
       .map((f) => f.path);
     expect(loaders).toEqual(["src/lib/analyticsProvider.ts"]);
+  });
+
+  it("delivers every parameter a surface module declares", () => {
+    // The redaction denylist matches substrings and the rules below match
+    // whole words, so a name can pass every rule here, and tsc, and still
+    // be dropped on its way to Google: "renamed" holds "name",
+    // "researchTab" "search", "guideStep" "uid". A key the denylist would
+    // eat fails here instead of going quiet.
+    const eaten = schema.flatMap((s) =>
+      s.keys
+        .filter((k) => !(k in sanitizeAnalyticsParams({ [k]: "x" })))
+        .map((k) => `${s.path} ${s.name}: "${k}" is dropped by redaction`)
+    );
+    expect(eaten).toEqual([]);
   });
 });
 
