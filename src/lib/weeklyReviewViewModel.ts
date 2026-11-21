@@ -17,8 +17,9 @@
  *    return-from-vacation spikes); the verdict is TEMPLATED from the
  *    engine's band/deload flags (no AI), and a deload week's verdict
  *    never reads a drop as a loss. The headline is the verdict in words
- *    and carries no number (App1 Q12): the score is shown in one place,
- *    Progress's Score details.
+ *    and carries no number (App1 Q12): the score is shown on Progress
+ *    alone, its number on the lead (free) and its details under Score
+ *    details (Pro).
  *  - Planned-vs-done comparisons render only when a plan exists (Run9a
  *    freeform substrate has no planned km → done-only framing).
  *  - Run stats count only runs passing the standard eligibility predicate
@@ -164,7 +165,8 @@ export interface WeeklyReview {
    *  day and how many days it had. Null for any later week. */
   firstDays: { start: string; count: number } | null;
   /** The week's verdict, in words, and no number (App1 Q12: the score
-   *  is shown in one place, Progress's Score details). */
+   *  is shown on Progress alone, its number on the lead and its details
+   *  under Score details). */
   headline: {
     verdict: string;
     deload: boolean;

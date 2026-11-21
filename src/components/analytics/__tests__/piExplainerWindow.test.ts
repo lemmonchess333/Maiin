@@ -19,8 +19,9 @@ import { readFileSync } from "node:fs";
  */
 
 const ENGINE = readFileSync("functions/performanceEngine.js", "utf8");
-// The sentence sits beside the score, the first of Progress's Score
-// details: the one place the score is shown (Trim1 call 5, App1 Q10).
+// The sentence sits beside the score's ring, the first of Progress's
+// Score details (Trim1 call 5, App1 Q10), which are Pro; the number itself
+// is free, small on the lead above (the owner, 18 November 2026).
 const TAB = readFileSync(
   "src/components/analytics/PerformanceDetails.tsx",
   "utf8"
