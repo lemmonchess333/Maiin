@@ -2383,7 +2383,8 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
         }),
       ])
     );
-    expect(screen.getByRole("tab", { name: "Easy 30" })).toHaveAttribute(
+    // The circle shows the 12th, so the name leads with it (WCAG 2.5.3).
+    expect(screen.getByRole("tab", { name: "12, Easy 30" })).toHaveAttribute(
       "aria-selected",
       "true"
     );
@@ -2467,7 +2468,9 @@ describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", ()
     );
     const strip = screen.getByRole("tablist", { name: "Run week" });
     expect(
-      within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
+      within(strip).getByRole("tab", {
+        name: `${today.getDate()}, Easy 30 + strides, today`,
+      })
     ).toBeInTheDocument();
     expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
   });
@@ -2584,11 +2587,17 @@ describe("ProgrammeRunSection — one run is up next", () => {
       }),
     ]);
 
-  const open = (name: string) =>
+  /* A day's tab is named by the date its circle shows, then its run
+     (WCAG 2.5.3), so the run is found after the number. */
+  const open = (run: string) =>
     fireEvent.click(
       within(screen.getByRole("tablist", { name: "Run week" })).getByRole(
         "tab",
-        { name }
+        {
+          name: new RegExp(
+            `^\\d+, ${run.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(, |$)`
+          ),
+        }
       )
     );
 

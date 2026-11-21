@@ -244,8 +244,14 @@ export default function ProgrammeWeekSelector({
                 role="tab"
                 aria-selected={isSelected}
                 tabIndex={isSelected ? 0 : -1}
+                /* The name starts with what the circle shows, its number,
+                   then the day's name drawn under it (WCAG 2.5.3, Label
+                   in Name: Voice Control is spoken to with the words on
+                   the screen). A done or skipped day draws an icon and
+                   no number, so the number is still the day's position
+                   or date, not a word it hides. */
                 aria-label={
-                  `${cell.bottomLabel || cell.center}` +
+                  [cell.center, cell.bottomLabel].filter(Boolean).join(", ") +
                   (isCompleted
                     ? ", completed"
                     : isSkipped

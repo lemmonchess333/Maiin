@@ -52,5 +52,6 @@ describe("programme labels (onboarding preview register)", () => {
     expect(goalLabel("fat_loss")).toBe("Lose fat");
     expect(goalLabel("hypertrophy")).toBe("Build muscle");
     expect(equipmentLabel("minimal")).toBe("Minimal");
+    expect(equipmentLabel("no_equipment")).toBe("No equipment");
   });
 });
