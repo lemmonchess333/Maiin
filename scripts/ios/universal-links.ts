@@ -30,7 +30,7 @@ export function appleAppSiteAssociation(prefix: string) {
             {
               "/": "/space/*",
               comment:
-                "A shared Space opens in the app (Run27 call 11); without the app it is the web app's sign-in, then the Space.",
+                "A shared Space opens in the app (Run27 call 11); without the app it is the website's page pointing to the App Store.",
             },
           ],
         },
@@ -54,7 +54,11 @@ export const ASSOCIATION_PATHS = [
   "apple-app-site-association",
 ] as const;
 
-/** Opt-in until the signed app's public identifier has been verified. */
+/** Required on the Hosting build, never written on any other. Without
+ *  it Hosting would answer both addresses with Firebase's own generated
+ *  file, which claims every path for the app (the 15 Nov 2026 STATUS in
+ *  docs/ios-invite-links.md), so a Hosting build without the prefix fails
+ *  rather than ship without ours. */
 export function universalLinksPlugin(
   prefix: string | undefined,
   isFirebaseHosting: boolean
@@ -63,11 +67,16 @@ export function universalLinksPlugin(
     name: "tropos-universal-links",
     apply: "build",
     generateBundle() {
+      if (!isFirebaseHosting) return;
       // The Hosting deploy passes the APPLE_TEAM_ID secret, which the iPhone
       // build also strips of whitespace before use (deploy-ios.yml): a
       // pasted newline must not fail every website deploy.
-      const value = prefix?.replace(/\s/g, "");
-      if (!isFirebaseHosting || !value) return;
+      const value = prefix?.replace(/\s/g, "") ?? "";
+      if (!value) {
+        throw new Error(
+          "The Hosting build needs IOS_APP_ID_PREFIX for troposfit.com's universal-links file (docs/ios-invite-links.md)."
+        );
+      }
       const source = JSON.stringify(appleAppSiteAssociation(value));
       for (const fileName of ASSOCIATION_PATHS) {
         this.emitFile({ type: "asset", fileName, source });

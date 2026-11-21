@@ -14,7 +14,12 @@ import { dirname, resolve } from "node:path";
  * length in `outgrownDay.test.ts`; the rebuild in `liftDaysRebuild.test.ts`.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const source = readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8");
+/* The day's session, drawn on Train's Lift tab and on a lift's own page
+   (`LiftSessionView`, TrainWk1 step 3). */
+const source = readFileSync(
+  resolve(repoRoot, "src/components/program/LiftSessionView.tsx"),
+  "utf8"
+);
 const code = source
   .replace(/\/\*[\s\S]*?\*\//g, " ")
   .replace(/\/\/[^\n]*/g, " ");

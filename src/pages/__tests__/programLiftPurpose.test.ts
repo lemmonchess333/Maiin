@@ -15,22 +15,29 @@ import { dirname, resolve } from "node:path";
  * `DayActionSheet.test.tsx`; this file pins only where the page puts it.
  */
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const source = readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8");
-const code = source
-  .replace(/\/\*[\s\S]*?\*\//g, " ")
-  .replace(/\/\/[^\n]*/g, " ");
+const strip = (path: string) =>
+  readFileSync(resolve(repoRoot, path), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ");
+const code = strip("src/pages/Program.tsx");
+/* The day's session, drawn on the Lift tab and on a lift's own page
+   (`LiftSessionView`, TrainWk1 step 3). */
+const view = strip("src/components/program/LiftSessionView.tsx");
 
 describe("Train's lift tab explains the session", () => {
-  const at = code.indexOf("<LiftPurpose");
+  const at = view.indexOf("<LiftPurpose");
 
   it("renders it once, after the session card", () => {
     expect(at).toBeGreaterThan(-1);
-    expect(code.indexOf("<LiftPurpose", at + 1)).toBe(-1);
-    expect(at).toBeGreaterThan(code.indexOf('sport="lift"'));
+    expect(view.indexOf("<LiftPurpose", at + 1)).toBe(-1);
+    expect(at).toBeGreaterThan(view.indexOf('sport="lift"'));
+    // Train draws the day's, and adds none of its own.
+    expect(code).toContain("<LiftSessionView");
+    expect(code).not.toContain("<LiftPurpose");
   });
 
   it("explains the selected day from the programme", () => {
-    const props = code.slice(at, code.indexOf("/>", at));
+    const props = view.slice(at, view.indexOf("/>", at));
     expect(props).toMatch(/programme=\{programState\}/);
     expect(props).toMatch(/day=\{selectedWorkout\}/);
   });
@@ -38,7 +45,7 @@ describe("Train's lift tab explains the session", () => {
   it("only on a day still to train this week", () => {
     /* A completed, skipped or missed day — and every day of a past week,
        which liftDayStatus calls missed — has nothing left to explain. */
-    expect(code.slice(Math.max(0, at - 160), at)).toMatch(
+    expect(view.slice(Math.max(0, at - 160), at)).toMatch(
       /status === "today" \|\| status === "upcoming"/
     );
   });
@@ -58,6 +65,7 @@ describe("Train's lift tab has one way into the rules sheet", () => {
 describe("Train names the focus in Settings' words", () => {
   it("does not use the engine's own labels anywhere on the page", () => {
     expect(code).not.toMatch(/primaryGoalLabel/);
+    expect(view).not.toMatch(/primaryGoalLabel/);
   });
 
   it("names a run-only plan's focus and says it has no lift days", () => {
