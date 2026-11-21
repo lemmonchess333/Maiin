@@ -11,6 +11,7 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { answerRunningLevelIfAsked } from "../helpers/runPlan";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -79,6 +80,8 @@ test.describe("race event header + door-2 picker screenshots", () => {
   }) => {
     test.setTimeout(120_000);
     await page.goto("settings/run-plan");
+    // The seeded user lifts only: Run plan asks how much they run first.
+    await answerRunningLevelIfAsked(page);
     await page
       .getByRole("radio", { name: /training for a race/i })
       .waitFor({ state: "visible", timeout: 15000 });

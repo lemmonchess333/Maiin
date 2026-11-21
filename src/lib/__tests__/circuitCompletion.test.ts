@@ -49,6 +49,7 @@ const finished = (over: Partial<FinishedCircuit> = {}): FinishedCircuit => ({
     effort: "hard",
   },
   bodyweightKg: 80,
+  author: { displayName: "Sam Lee" },
   ...over,
 });
 
@@ -128,6 +129,33 @@ describe("completeCircuit (Circ1 (11))", () => {
     expect(receipt.syncStatus).toBe("queued");
     expect(receipt).not.toHaveProperty("committed");
     expect(hasQueuedWorkoutCompletion("lifter", "free-c1")).toBe(true);
+  });
+
+  it("shares the circuit's own post: rounds, interval and moves, no exercise rows", async () => {
+    const receipt = await completeCircuit(finished());
+    expect(receipt.share.source).toEqual({ kind: "workout", id: "free-c1" });
+    const outcome = await receipt.share.post({
+      visibility: "followers",
+      caption: "",
+    });
+    expect(outcome.status).toBe("posted");
+    const path = allPaths().find((p) => p.startsWith("activities/"));
+    expect(readDoc(path!)).toMatchObject({
+      authorId: "lifter",
+      authorName: "Sam Lee",
+      type: "workout",
+      visibility: "followers",
+      workoutName: "20-minute circuit",
+      exerciseCount: 5,
+      duration: 1180,
+      circuit: {
+        rounds: 4,
+        workSeconds: circuit.workSeconds,
+        restSeconds: circuit.restSeconds,
+        moves: circuit.moves.map((move) => move.exerciseId),
+      },
+    });
+    expect(readDoc(path!)).not.toHaveProperty("exercises");
   });
 
   it("refuses to save for another account", async () => {

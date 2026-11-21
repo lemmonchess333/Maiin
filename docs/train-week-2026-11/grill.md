@@ -763,3 +763,19 @@ taste or appetite decides more than the evidence does:
   `easier=1`, `express=1` and `resume=1` work on the lift's page as on
   Train. Not built: steps 4 to 8; Home's sheet and first-week rows still
   open as before.
+- STATUS 2026-11-18: step 6a built, the Settings side of adding and
+  removing a sport (Q27, Q28, Q31 to Q33), under the TrainWk1 calls of
+  18 November. `src/lib/sportChange.ts` gives the plan builder's input
+  and the profile fields for each of the four changes, or a refusal with
+  its sentence; it writes the plan and `runFrequency`, never
+  `athleteType`. Lift plan for someone with no lift days asks setup's
+  three lifting questions (now shared components) and builds the lifting
+  around their runs, which keep their days; Run plan for someone with no
+  running asks setup's running question, then shows its four goal cards
+  with the 30-minute goal offered. Stop lifting and Stop running take a
+  sport's days off after one confirmation and keep every saved session;
+  the last sport, a race goal and a training block refuse with a
+  sentence. The real `configurePlan` handler was run on every move from
+  some lifts or runs to none and back, and accepted each. Not built: 6b,
+  Train's Add rows, which wait for step 4; Q47's run-move disagreement,
+  which is under `functions/`.

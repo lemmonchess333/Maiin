@@ -78,10 +78,7 @@ describe("decorative charts do not take a tab stop", () => {
        on an informative chart REMOVES keyboard access rather than tidying
        it. These are the page's real Recharts charts; the sport pages'
        week bars are SVG with a button per bar (`TrainingWeeksCard`). */
-    for (const f of [
-      "src/components/analytics/TrainingLoadCard.tsx",
-      "src/components/analytics/PerformanceIndexChart.tsx",
-    ]) {
+    for (const f of ["src/components/analytics/PerformanceIndexChart.tsx"]) {
       expect(read(f), f).not.toMatch(/accessibilityLayer=\{false\}/);
     }
   });

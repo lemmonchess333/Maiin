@@ -96,10 +96,17 @@ vi.mock("@/lib/subscription", async () => {
 
 // The plans the page prints. The pound plans by default, which is what the
 // real hook returns on the web; a storefront in another currency where a
-// test says so (`localizePlans`, what the hook does with Apple's prices).
-const plansMock = vi.fn<() => ProPlan[]>();
+// test says so (`localizePlans`, what the hook does with Apple's prices);
+// null while the iPhone waits for the App Store's, or after they failed.
+const plansMock = vi.fn<() => ProPlan[] | null>();
+const pricesFailedMock = vi.fn(() => false);
+const retryPricesMock = vi.fn();
 vi.mock("@/hooks/useProPlanPrices", () => ({
-  useProPlanPrices: () => plansMock(),
+  useProPlanPrices: () => ({
+    plans: plansMock(),
+    failed: pricesFailedMock(),
+    retry: retryPricesMock,
+  }),
 }));
 
 // The App Store's answer on the trial: none on the web (null), and what a
@@ -156,6 +163,8 @@ beforeEach(() => {
   canSellMock.mockReturnValue(true);
   plansMock.mockReset();
   plansMock.mockReturnValue(PRO_PLANS);
+  pricesFailedMock.mockReturnValue(false);
+  retryPricesMock.mockReset();
   storeTrialMock.mockReturnValue(null);
   // Baseline: free user on web with the post-trial flag set (so the
   // existing pricing-page tests rendering "Start Pro — £X" still pass).
@@ -369,7 +378,10 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "Macros that shift with your training",
       "Running paces that speed up as your races and sessions show you’re fitter",
       "Readiness from your sleep and heart rate in Apple Health",
-      "Charts older than 3 months, your training load and your score’s details",
+      // The owner, 18 November: the score's number is free; its 12-week
+      // chart, average and details are Pro. Q16 took the minutes-based
+      // training load chart out of them, so the line names what is there.
+      "Charts older than 3 months, and your score’s 12-week chart, average and details",
       // Run27 (18): the ultras are Pro after week 1 too.
       "Plans for a half marathon or longer, after their first week",
     ]);
@@ -708,6 +720,48 @@ describe("Upgrade — a storefront that does not charge in pounds", () => {
       screen.getByRole("button", { name: "Start Pro — $39.99/yr" })
     ).toBeInTheDocument();
     expect(container.textContent).not.toContain("£");
+  });
+});
+
+describe("Upgrade — on the iPhone, only the App Store's prices", () => {
+  /* The page used to print the pound plans until RevenueCat answered, and
+     keep them if it never did, so a US storefront could read £34.99 above
+     a sheet charging dollars (Guideline 3.1.2, launch audit 2026-11-18). */
+  beforeEach(() => {
+    isNativeIOSMock.mockReturnValue(true);
+    plansMock.mockReturnValue(null);
+  });
+
+  it("prints no price, and offers no Continue, until the App Store's prices come", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    const { container } = renderPage();
+    expect(screen.getByText("Getting prices from the App Store")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/£|\$/);
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    // Renewal terms qualify a price; with none on the page they don't show.
+    expect(screen.queryByText(/Renews automatically/)).toBeNull();
+    // The way out and the legal links stay.
+    expect(screen.getByRole("button", { name: "Not now" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^Terms/ })).toBeTruthy();
+  });
+
+  it("says when they couldn't be read, and asks again on Try again", () => {
+    pricesFailedMock.mockReturnValue(true);
+    const { container } = renderPage();
+    expect(
+      screen.getByText("Couldn’t get prices from the App Store.")
+    ).toBeTruthy();
+    expect(container.textContent).not.toContain("£");
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    expect(screen.queryByText(/Renews automatically/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(retryPricesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("prints the renewal terms once the App Store's prices are there", () => {
+    plansMock.mockReturnValue(PRO_PLANS);
+    renderPage();
+    expect(screen.getByText(/Renews automatically/)).toBeTruthy();
   });
 });
 

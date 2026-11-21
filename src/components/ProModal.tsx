@@ -29,7 +29,7 @@
  *      one implementation for ProModal and Upgrade.tsx so they
  *      can't diverge on loading / error / auth handling.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
@@ -56,6 +56,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import StepDetails from "@/components/StepDetails";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
+import PlanPricesPending from "@/components/paywall/PlanPricesPending";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
@@ -149,13 +150,18 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   }
   const { loading, error, notice, startCheckout, requiresSignIn } =
     useProCheckout();
-  const { profile } = useAuth();
-  // Apple-localized prices on the RC build; hardcoded proPlans fallback
-  // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
-  // sheet — a mismatch is an App Review flag. The CTA, the timeline and
-  // the disclosure all read the selected plan from these, never by id.
-  const plans = useProPlanPrices();
-  const selected = findPlan(plans, selectedPlan);
+  const { user, profile } = useAuth();
+  // The App Store's prices on the RC build, and no price until they come;
+  // the pound plans on the web (IAP slice 3, #1099; Guideline 3.1.2), so
+  // the displayed price matches Apple's sheet, a mismatch being an App
+  // Review flag. The CTA, the timeline and the disclosure all read the
+  // selected plan from these, never by id.
+  const {
+    plans,
+    failed: pricesFailed,
+    retry: retryPrices,
+  } = useProPlanPrices(user?.uid);
+  const selected = plans ? findPlan(plans, selectedPlan) : null;
   const storeTrialEligibility = useStoreTrialEligibility();
 
   // Sub1a P1 — trial offer eligibility (client-side hint; server is
@@ -171,6 +177,16 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   );
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
+
+  // A store outage would otherwise read as a paywall nobody tapped.
+  useEffect(() => {
+    if (pricesFailed)
+      track("paywall_prices_failed", {
+        source: featureKey ? "feature_gate" : "unknown",
+        featureKey,
+        platform,
+      });
+  }, [pricesFailed, featureKey, platform]);
   // A build that cannot take a purchase shows no price, no checkout and no
   // Restore (`canSellInThisBuild`).
   const onSale = canSellInThisBuild();
@@ -238,7 +254,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   // plan-priced default.
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
-    : getCheckoutCtaLabel(selected, withTrial);
+    : selected
+      ? getCheckoutCtaLabel(selected, withTrial)
+      : null;
 
   return (
     <BottomSheet
@@ -317,7 +335,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         </ul>
 
         {/* Plan selector — shared with the Upgrade page. */}
-        {onSale ? (
+        {!onSale ? (
+          <ProNotOnSale />
+        ) : plans ? (
           <PlanPicker
             plans={plans}
             selectedPlan={selectedPlan}
@@ -325,7 +345,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             disabled={loading}
           />
         ) : (
-          <ProNotOnSale />
+          <PlanPricesPending failed={pricesFailed} onRetry={retryPrices} />
         )}
       </div>
 
@@ -348,7 +368,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           </p>
         ) : null}
 
-        {onSale ? (
+        {onSale && selected ? (
           <>
             {/* Sub1a trial transparency — what actually happens, before the ask. */}
             {withTrial ? <TrialTimeline plan={selected} /> : null}
@@ -384,7 +404,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             />
             <StepDetails failed={!!error} waiting={loading} />
           </>
-        ) : (
+        ) : onSale ? null : (
           <Button size="lg" variant="secondary" fullWidth onClick={onClose}>
             Close
           </Button>
