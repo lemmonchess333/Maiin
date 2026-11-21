@@ -112,6 +112,7 @@ import {
 import { weekScheduleFor } from "@/lib/trainingResolver";
 import { configureLiftPlan } from "@/features/program/liftPlanRebuild";
 import RunLevelQuestion from "@/components/onboarding/RunLevelQuestion";
+import ExerciseWarning from "@/components/legal/ExerciseWarning";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import StopSportDialog from "./StopSportDialog";
@@ -1190,6 +1191,9 @@ export default function RunPlanSettings({
               setWeeklyRunDays(start.weeklyRunDays);
             }}
           />
+          {/* Someone starting to run sees the warning setup shows a runner
+              (legal audit 6.3, `EXERCISE_WARNING`). */}
+          <ExerciseWarning />
         </div>
       )}
       {showPlan && (

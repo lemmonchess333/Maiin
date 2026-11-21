@@ -1,8 +1,8 @@
 /**
  * The exercise warning, in one place. Setup's review, the limitation
- * choices (setup, Lift plan's Add lifting) and Lift plan's Injuries group
- * all show it (`ExerciseWarning`), and the Terms' Health section points at
- * it: "follow the warnings in the app".
+ * choices (setup, Lift plan's Add lifting), Lift plan's Injuries group and
+ * Run plan's Add running all show it (`ExerciseWarning`), and the Terms'
+ * Health section points at it: "follow the warnings in the app".
  *
  * Why it is on screen and not only in the Terms: UK law never lets a
  * trader exclude liability for death or injury caused by negligence

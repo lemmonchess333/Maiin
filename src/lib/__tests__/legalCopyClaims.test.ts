@@ -601,11 +601,12 @@ describe("the warning the Terms point at is in the app", () => {
     );
   });
 
-  it("setup's review, the limitation choices and Lift plan's injuries draw it", () => {
+  it("setup's review, the limitation choices, Lift plan's injuries and Add running draw it", () => {
     for (const file of [
       "../../pages/Onboarding.tsx",
       "../../components/onboarding/LiftLimitsQuestion.tsx",
       "../../components/program/ProgrammeSettings.tsx",
+      "../../components/program/RunPlanSettings.tsx",
     ]) {
       expect(read(file), file).toMatch(/<ExerciseWarning\b/);
     }
