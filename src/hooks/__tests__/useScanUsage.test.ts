@@ -7,9 +7,9 @@
  *      hook layer so callers can render an upgrade CTA instead of
  *      a normal counter.
  *   2. Free user + text_ai → limit=10, used reflects today's count.
- *   3. Pro user + image_ai → limit=100; used decremented from
+ *   3. Pro user + image_ai → limit=15; used decremented from
  *      remaining correctly.
- *   4. Pro user + text_ai → limit=100.
+ *   4. Pro user + text_ai → limit=15.
  *   5. Trial user (isInTrial=true) → treated as Pro for limits.
  *   6. Stale day in the doc → used=0 (server-side reset model;
  *      client-side display matches). The day is the UTC day on both
@@ -109,26 +109,26 @@ describe("useScanUsage", () => {
     expect(result.current.action).toBe("text_ai");
   });
 
-  it("Cycle 3: pro user + image_ai reports limit=100; remaining decrements from used", async () => {
+  it("Cycle 3: pro user + image_ai reports limit=15; remaining decrements from used", async () => {
     subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
-    seedUsage({ image_ai: { day: todayKey(), count: 80 } });
+    seedUsage({ image_ai: { day: todayKey(), count: 12 } });
     const { result } = renderHook(() => useScanUsage("image_ai"));
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    expect(result.current.limit).toBe(100);
-    expect(result.current.used).toBe(80);
-    expect(result.current.remaining).toBe(20);
+    expect(result.current.limit).toBe(15);
+    expect(result.current.used).toBe(12);
+    expect(result.current.remaining).toBe(3);
     expect(result.current.isUnlimited).toBe(true);
   });
 
-  it("Cycle 4: pro user + text_ai reports limit=100", async () => {
+  it("Cycle 4: pro user + text_ai reports limit=15", async () => {
     subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
-    seedUsage({ text_ai: { day: todayKey(), count: 30 } });
+    seedUsage({ text_ai: { day: todayKey(), count: 5 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.limit).toBe(100);
-    expect(result.current.remaining).toBe(70);
+    expect(result.current.limit).toBe(15);
+    expect(result.current.remaining).toBe(10);
   });
 
   it("Cycle 5: trial user (isInTrial=true) gets Pro limits", async () => {
@@ -136,18 +136,18 @@ describe("useScanUsage", () => {
     seedUsage({ image_ai: { day: todayKey(), count: 0 } });
     const { result } = renderHook(() => useScanUsage("image_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.limit).toBe(100);
-    expect(result.current.remaining).toBe(100);
+    expect(result.current.limit).toBe(15);
+    expect(result.current.remaining).toBe(15);
     expect(result.current.isUnlimited).toBe(true);
   });
 
   it("Cycle 6: stale day in doc → used=0 (counter resets at local midnight)", async () => {
     subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
-    seedUsage({ text_ai: { day: "2020-01-01", count: 99 } });
+    seedUsage({ text_ai: { day: "2020-01-01", count: 14 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
-    expect(result.current.remaining).toBe(100);
+    expect(result.current.remaining).toBe(15);
   });
 
   it("Cycle 7: legacy {count, month} doc shape → used=0 (no migration script needed)", async () => {
@@ -156,7 +156,7 @@ describe("useScanUsage", () => {
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
-    expect(result.current.remaining).toBe(100);
+    expect(result.current.remaining).toBe(15);
   });
 
   it("Cycle 8: reads the count by the UTC day, and resets at 00:00 UTC, in any zone", async () => {

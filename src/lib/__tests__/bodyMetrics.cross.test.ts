@@ -63,7 +63,7 @@ describe("onboarding's body metrics are the server's", () => {
 });
 
 /* Settings' age field took any number and saved it; the sanitizer keeps
-   whole years from 16 to 120, so the field takes the same. */
+   whole years from 18 to 120, so the field takes the same. */
 describe("the age a profile keeps is the server's", () => {
   it("both bounds survive, a year past either and a fraction are dropped", () => {
     expect(kept("age", AGE_YEARS.min)).toBe(AGE_YEARS.min);
@@ -75,14 +75,14 @@ describe("the age a profile keeps is the server's", () => {
 
   it.each([
     ["30", 30],
-    [" 16 ", 16],
+    [" 18 ", 18],
     ["120", 120],
   ])("parses %j as %i", (text, years) => {
     expect(parseAgeYears(text)).toBe(years);
     expect(kept("age", years)).toBe(years);
   });
 
-  it.each(["", "15", "121", "0", "-5", "30.5", "3e1", "abc"])(
+  it.each(["", "17", "121", "0", "-5", "30.5", "3e1", "abc"])(
     "refuses %j",
     (text) => {
       expect(parseAgeYears(text)).toBeNull();
@@ -97,7 +97,7 @@ describe("onboarding's gender answers are the server's", () => {
 });
 
 /* App1 (grill Q57): setup and Settings hold a year of birth to this year
-   less 120 up to this year less 16, on the person's own year
+   less 120 up to this year less 18, on the person's own year
    (src/lib/age.ts); the sanitizer checks it on the server's, in UTC, and
    takes one year more at the young end for a person whose own year is
    already the next one at New Year. So the server keeps every year the app
@@ -133,7 +133,7 @@ describe("a year of birth the app takes is one the server keeps", () => {
         cleanBirthYear(year, now) === undefined &&
         birthYearProblem(year, "2026-11-13") === null
     );
-    expect(serverOnly).toEqual([2011]);
+    expect(serverOnly).toEqual([2009]);
     expect(appOnly).toEqual([]);
   });
 });
