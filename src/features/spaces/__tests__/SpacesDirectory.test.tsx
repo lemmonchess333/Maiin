@@ -127,7 +127,7 @@ describe("SpacesDirectory — Races & Events", () => {
     renderDirectory();
     expect(
       within(
-        screen.getByRole("link", { name: "Great North Run space" })
+        screen.getByRole("link", { name: /^Great North Run\b/ })
       ).getByText("Half marathon")
     ).toBeInTheDocument();
     expect(screen.getByText(/13 Sept? 2099/)).toBeInTheDocument();
@@ -168,12 +168,13 @@ describe("SpacesDirectory — Races & Events", () => {
     renderDirectory();
     const card = (name: string) =>
       screen.getByRole("link", { name: new RegExp(`^${name}\\b`) }).textContent;
-    expect(card("Runners")).toBe("Runners12 members");
-    expect(card("Five")).toBe("Five5 members");
-    expect(card("Four")).toBe("FourFilling up");
-    expect(card("Empty")).toBe("EmptyFilling up");
-    // A count still being read, or one that failed, claims neither.
-    expect(card("Unknown")).toBe("Unknown");
+    expect(card("Runners")).toBe("Runners space12 members");
+    expect(card("Five")).toBe("Five space5 members");
+    expect(card("Four")).toBe("Four spaceFilling up");
+    expect(card("Empty")).toBe("Empty spaceFilling up");
+    // A count still being read, or one that failed, claims neither. Each
+    // name is followed by the unseen "space" (#3429).
+    expect(card("Unknown")).toBe("Unknown space");
     expect(screen.queryByText(/0 members|4 members/)).toBeNull();
   });
 
@@ -205,12 +206,10 @@ it("keeps filters visible through no matches and recovers across countries", asy
   }));
   renderDirectory();
   expect(
-    screen.queryByRole("link", { name: "Berlin Marathon space" })
+    screen.queryByRole("link", { name: /^Berlin Marathon\b/ })
   ).not.toBeInTheDocument();
   // The country chip names the default and opens its sheet.
-  fireEvent.click(
-    screen.getByRole("button", { name: "Country: United Kingdom" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Country: UK" }));
   fireEvent.click(
     within(screen.getByRole("radiogroup", { name: "Country" })).getByRole(
       "radio",
@@ -232,15 +231,13 @@ it("keeps filters visible through no matches and recovers across countries", asy
   expect(
     screen.getByRole("button", { name: "Country: Germany" })
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("link", { name: "Runners space" })
-  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /^Runners\b/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
   expect(
-    screen.getByRole("link", { name: "Berlin Marathon space" })
+    screen.getByRole("link", { name: /^Berlin Marathon\b/ })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
 });
 
@@ -255,7 +252,7 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   });
   renderDirectory();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
   expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
@@ -277,7 +274,7 @@ describe("SpacesDirectory on a new Tropos (App1 Q6)", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^Runners\b/ }).textContent).toBe(
-      "RunnersFilling up"
+      "Runners spaceFilling up"
     );
     expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
     expect(screen.getByRole("searchbox")).toBeInTheDocument();

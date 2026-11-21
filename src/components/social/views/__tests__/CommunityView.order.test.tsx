@@ -185,7 +185,7 @@ async function openTogether() {
     </MemoryRouter>
   );
   await flushSnapshots();
-  await screen.findByRole("button", { name: "Join weekly challenge" });
+  await screen.findByRole("button", { name: "Join challenge" });
   await flushSnapshots();
 }
 
@@ -226,7 +226,7 @@ describe("the Together page's order", () => {
 
     const week = screen.getByRole("region", { name: "This week" });
     const weekly = within(week).getByRole("button", {
-      name: "Join weekly challenge",
+      name: "Join challenge",
     });
     const joined = await within(week).findByRole("list", {
       name: "Your challenges",
@@ -391,9 +391,9 @@ describe("the page's one filled button", () => {
       circle("solo", "Hear", 1),
     ];
     await openTogether();
-    expect(filledButtons()).toEqual(["Join weekly challenge"]);
+    expect(filledButtons()).toEqual(["Join challenge"]);
     expect(
-      screen.getByRole("button", { name: "Join weekly challenge" }).className
+      screen.getByRole("button", { name: "Join challenge" }).className
     ).toMatch(NEUTRAL);
   });
 
