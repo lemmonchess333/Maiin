@@ -555,16 +555,15 @@ function ProgramInner() {
 
   // Run-tab header line — so the subtitle stops being lift-led when the
   // user is on the Run tab. Race prep leads with distance + week-of-M;
-  // structured shows weekly run frequency; freeform is the calm default.
+  // freeform is the calm default.
   // (Run9 locked model: only freeform + race-goal overlay exist.)
   //
   // The GOAL now comes from the resolver. Taking it from the runPlan mirror
   // while the mode came from the profile is what made this render
   // "Race prep · Set your race goal" at users who had just set one, for as
   // long as regeneration took. The mode itself stays on the profile — that
-  // half was already canonical, and narrowing it to the resolver's RunMode
-  // would drop legacy `structured` profiles to freeform. The derivation
-  // moved to src/lib/runHeaderLine.ts so the case could be pinned by a test.
+  // half was already canonical. The derivation moved to
+  // src/lib/runHeaderLine.ts so the case could be pinned by a test.
   const resolvedRunPlan = resolveRunPlan(profile, programState, todayKey);
   /**
    * The one lighter-week decision (whole-app grill Q11): the engine's
@@ -617,7 +616,6 @@ function ProgramInner() {
       localWeekKey(parseLocalDate(todayKey))
         ? programState.runPlan.leadInWeek
         : null,
-    runsTarget,
     starterStage:
       programState?.runPlan?.mode === "starter"
         ? programState.runPlan.stage
@@ -889,7 +887,7 @@ function ProgramInner() {
       )}
 
       {/* ── RUN tab — ProgrammeRunSection (PR-4). The section owns
-            every state (freeform hero / structured next-run /
+            every state (freeform hero / starter next-run /
             race-prep progress / setup CTA / zero-runs CTA); no
             parallel Program.tsx fallback needed. A run's ⋯ opens the
             run's own page (`/program/run/:date`). */}

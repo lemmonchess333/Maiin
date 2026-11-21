@@ -76,7 +76,7 @@ describe("buildPlan · purity", () => {
   // identity, runPlan metadata, profileUpdates).
 
   it("weekSchedule + profileUpdates + runDays-without-workouts are byte-identical across calls", () => {
-    const input = makeInput({ runMode: "structured", weeklyRunDays: 3 });
+    const input = makeInput({ runMode: "starter", weeklyRunDays: 3 });
     const a = buildPlan(input);
     const b = buildPlan(input);
     expect(a.weekSchedule).toEqual(b.weekSchedule);
@@ -167,9 +167,7 @@ describe("buildPlan · output shape", () => {
   });
 
   it("profileUpdates writes BOTH weeklyRunDaysTarget and weeklyRunsTarget (legacy field sync)", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(out.profileUpdates.weeklyRunDaysTarget).toBe(3);
     expect(out.profileUpdates.weeklyRunsTarget).toBe(3);
   });
@@ -230,22 +228,18 @@ describe("buildPlan · freeform mode", () => {
   });
 });
 
-/* ─── Mode: structured ──────────────────────────────────────── */
+/* ─── A plan with run days and no race: the starter goal's ────── */
 
-describe("buildPlan · structured mode", () => {
+describe("buildPlan · starter mode", () => {
   it("produces runDays without raceGoal", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(out.programState.runDays?.length).toBeGreaterThan(0);
-    expect(out.programState.runPlan?.mode).toBe("structured");
+    expect(out.programState.runPlan?.mode).toBe("starter");
     expect(out.programState.runPlan?.raceGoal).toBeUndefined();
   });
 
   it("every runDay has id / date / weekKey / status", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.id).toBeTruthy();
       expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -255,9 +249,7 @@ describe("buildPlan · structured mode", () => {
   });
 
   it("initial runDays status is 'planned'", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.status).toBe("planned");
     });
@@ -266,7 +258,7 @@ describe("buildPlan · structured mode", () => {
   it("weekSchedule has correct run-day count", () => {
     const out = buildPlan(
       makeInput({
-        runMode: "structured",
+        runMode: "starter",
         liftDays: 3,
         weeklyRunDays: 2,
       })
@@ -280,7 +272,7 @@ describe("buildPlan · structured mode", () => {
   it("handles hybrid (overflow to Both days)", () => {
     const out = buildPlan(
       makeInput({
-        runMode: "structured",
+        runMode: "starter",
         liftDays: 6,
         weeklyRunDays: 2,
       })
@@ -457,17 +449,18 @@ describe("buildPlan · a plan made mid-week plans no run before that day (Run19)
     expect(made(sunday).programState.runPlan).toEqual(monday.runPlan);
   });
 
-  it("plans a structured week from that day too", () => {
+  it("plans a starter week from that day too", () => {
     const runs = runsOf(
       buildPlan(
         makeInput({
           currentDate: thursday,
-          runMode: "structured",
+          runMode: "starter",
           liftDays: 3,
           weeklyRunDays: 4,
         })
       )
     );
+    expect(runs.length).toBeGreaterThan(0);
     expect(runs.every((run) => run.date! >= thursday)).toBe(true);
   });
 });
@@ -577,9 +570,7 @@ describe("buildPlan · no heavy legs the day before an ultra's back-to-back", ()
 
 describe("validatePlanOutput", () => {
   it("accepts a freshly built plan", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(() => validatePlanOutput(out)).not.toThrow();
   });
 
@@ -590,9 +581,7 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when runDay missing id", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     const bad = {
       ...out,
       programState: {
@@ -606,9 +595,7 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when runDay date is UTC ISO format", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     const bad = {
       ...out,
       programState: {

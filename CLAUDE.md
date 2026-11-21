@@ -257,7 +257,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `programTypes.ts` — TypeScript interfaces for program state
 - `useProgram.ts` — Program state management hook
 - `variationBank.ts` — Exercise variation database
-- `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
+- `runScheduler.ts` — Goal-driven run scheduling engine (race prep, its recovery, the starter goal)
 - `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
 
 ### circuit/

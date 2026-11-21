@@ -205,7 +205,6 @@ const KNOWN_ORPHAN_EXPORTS = [
 
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
-  "src/features/program/run9Migration.ts:migrateRunStateToRun9",
   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
   "src/lib/aiFoodIdentification.ts:isEmptyAiFoodResult",
   "src/lib/analyticsProvider.ts:isAnalyticsActive",
