@@ -562,9 +562,13 @@ describe("the Terms' content licence covers where posts are shown", () => {
       /licence to host, show and share it in Tropos and on troposfit\.com, as your sharing choices allow/
     );
     expect(TERMS_PROSE).not.toMatch(/within the App/);
+    // The website loads its pages through one table (#3436).
     const website = read("../../website/WebsiteRoutes.tsx");
     expect(website).toMatch(/path="\/activity\/:activityId"/);
-    expect(website).toMatch(/import\("@\/pages\/PublicPost"\)/);
+    expect(website).toMatch(/lazyRetry\(WEBSITE_PAGE_MODULES\.post\)/);
+    expect(read("../../website/pageModules.ts")).toMatch(
+      /post: \(\) => import\("@\/pages\/PublicPost"\)/
+    );
   });
 });
 
