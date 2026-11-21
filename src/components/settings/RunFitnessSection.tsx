@@ -134,7 +134,7 @@ export default function RunFitnessSection({
         />
       )}
 
-      <div className="@container rounded-xl bg-card border border-border/40 p-3 space-y-3">
+      <div className="@container rounded-xl bg-card border border-border/40 p-3 space-y-3 dark:card-shadow dark:border-transparent">
         {paceTable ? (
           <>
             {/* "Update" drops under the heading, at the right, once the

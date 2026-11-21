@@ -46,6 +46,7 @@ import {
   canSellInThisBuild,
   isNativeIOS,
   manageSubscription,
+  openWebSubscription,
   purchase,
   reportTrialPrice,
   restorePurchases,
@@ -311,6 +312,20 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     expect(result.error).toBe("Couldn’t open billing portal. Try again.");
     expect(result.detail).toBe("internal");
+  });
+
+  it("a website subscription opens RevenueCat's page by going to it, and says when it can't", async () => {
+    syncEntitlement.mockResolvedValueOnce({
+      data: { url: "https://billing.example/portal/2" },
+    });
+    expect(await openWebSubscription()).toEqual({ ok: true });
+    expect(window.location.href).toBe("https://billing.example/portal/2");
+
+    syncEntitlement.mockResolvedValueOnce({ data: {} });
+    expect(await openWebSubscription()).toEqual({
+      ok: false,
+      error: "Couldn’t open your subscription. Try again.",
+    });
   });
 
   it("Restore says it is an iOS action", async () => {

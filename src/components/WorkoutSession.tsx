@@ -67,6 +67,7 @@ import {
 } from "@/features/program/superset";
 
 import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/cardClasses";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   FIELD_EDGE,
@@ -1283,6 +1284,80 @@ export default function WorkoutSession({
   const placedOnce = useRef(false);
   const shownExercise = useRef(currentExIndex);
   const bestDocked = newBest?.setKey ?? null;
+  /* The dock floats over the list's foot (DS6 step 5). It pulls itself up
+     by its own height (`--dock-h`), so it takes no room in the column, and
+     it is held to the list's box (`--dock-room`), so it never climbs over
+     the exercise strip. The list keeps the dock's height as scroll padding
+     and as room at its end (`--dock-pad`), and that room never shrinks by
+     more than is out of view: a card leaving while the list is scrolled to
+     its end moves no row, as on main where the list's box grew instead,
+     and the room goes as the list is scrolled back.
+     Written in a layout effect on every commit, before the one below asks
+     the set row into view (layout effects run in the order written), so a
+     row is never placed under a card that arrived in the same commit; on
+     a scroll; and on the frame after the dock or the list changes size by
+     itself (a word wrapping, the phone turning), a frame later so writing
+     the dock's ceiling inside the observer cannot loop it. Style
+     properties, not state: no render for them. */
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  const dockObserver = useRef<ResizeObserver | null>(null);
+  const writeDock = useCallback(() => {
+    const list = contentRef.current;
+    const dock = dockRef.current;
+    if (!list || !dock) return;
+    const set = (el: HTMLElement, name: string, px: number) => {
+      const value = `${Math.round(px)}px`;
+      if (el.style.getPropertyValue(name) !== value)
+        el.style.setProperty(name, value);
+    };
+    // The margin first, so the list's box stops depending on the dock...
+    const natural = dock.offsetHeight;
+    set(list, "--dock-h", natural);
+    set(dock, "--dock-h", natural);
+    // ...then that box is the dock's ceiling, and its height again if the
+    // ceiling held it.
+    set(dock, "--dock-room", list.offsetHeight);
+    const height = dock.offsetHeight;
+    if (height !== natural) {
+      set(list, "--dock-h", height);
+      set(dock, "--dock-h", height);
+    }
+    const room = parseFloat(list.style.getPropertyValue("--dock-pad")) || 0;
+    const roomInView =
+      list.scrollTop + list.clientHeight - (list.scrollHeight - room);
+    set(list, "--dock-pad", Math.max(height + 16, roomInView));
+  }, []);
+  /* On a scroll, only room that is being held needs a look: the common
+     scroll reads nothing. */
+  const releaseRoom = useCallback(() => {
+    const list = contentRef.current;
+    if (!list) return;
+    const room = parseFloat(list.style.getPropertyValue("--dock-pad")) || 0;
+    const dockH = parseFloat(list.style.getPropertyValue("--dock-h")) || 0;
+    if (room > dockH + 16) writeDock();
+  }, [writeDock]);
+  /* A callback ref, so the observer follows the dock in and out with the
+     screen it is on, whichever render first draws it. */
+  const setDock = useCallback(
+    (node: HTMLDivElement | null) => {
+      dockObserver.current?.disconnect();
+      dockObserver.current = null;
+      dockRef.current = node;
+      if (node && typeof ResizeObserver !== "undefined") {
+        const observer = new ResizeObserver(() => {
+          requestAnimationFrame(writeDock);
+        });
+        observer.observe(node);
+        dockObserver.current = observer;
+      }
+    },
+    [writeDock]
+  );
+  useLayoutEffect(() => {
+    const list = contentRef.current;
+    if (list) dockObserver.current?.observe(list);
+    writeDock();
+  });
   useLayoutEffect(() => {
     const row = contentRef.current?.querySelector<HTMLElement>(
       `[data-set-row="${currentSetIndex}"]`
@@ -2582,10 +2657,17 @@ export default function WorkoutSession({
         />
       </div>
 
-      {/* Main content area */}
+      {/* Main content area. It runs on under the dock below it (the new
+          best and the rest card), which floats over its foot, frosted, as
+          DS6 asks of what floats (DESIGN_GUIDE §14o). The list keeps the
+          dock's height as scroll padding (`--dock-h`) and as room at its
+          end (`--dock-pad`), so the last row still scrolls clear and the
+          set being logged is never left under a card. */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3"
+        data-workout-list
+        onScroll={releaseRoom}
+        className="flex-1 overflow-y-auto px-4 pb-[var(--dock-pad,1rem)] scroll-pb-[var(--dock-h,0px)] space-y-4 motion-safe:scroll-smooth short:space-y-3"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
@@ -3275,78 +3357,98 @@ export default function WorkoutSession({
         </Button>
       </div>
 
-      {/* Docked above the bar, not in the scroll: it takes its room from
-          the bottom of the list, so it is whole on screen however long
-          the table is, and nothing above it moves under the thumb that
-          just ticked the set. */}
-      <NewBestMoment
-        moment={newBest}
-        onUndo={
-          newBest &&
-          lastCompleted &&
-          `${lastCompleted.exIdx}:${lastCompleted.setIdx}` === newBest.setKey
-            ? handleUndo
-            : undefined
-        }
-        className="mx-4 mb-3"
-      />
+      {/* Docked over the foot of the list, by the thumb that just ticked
+          the set: whole on screen however long the table is, and nothing
+          above it moves when it arrives (Pol1). It pulls itself up over
+          the list by its own height (`--dock-h`), so it floats there
+          rather than taking the list's room. It takes no taps itself,
+          only its cards do, so the list under its margins still scrolls
+          and taps; and it is held to the list's own box, scrolling inside
+          past that, so at large text on a small phone it never climbs
+          over the exercise strip (Pol1's declined 1B). */}
+      <div
+        ref={setDock}
+        data-workout-dock
+        className="pointer-events-none relative z-10 -mt-[var(--dock-h,0px)] flex max-h-[var(--dock-room,100%)] shrink-0 flex-col overflow-y-auto pt-2"
+      >
+        <NewBestMoment
+          moment={newBest}
+          onUndo={
+            newBest &&
+            lastCompleted &&
+            `${lastCompleted.exIdx}:${lastCompleted.setIdx}` === newBest.setKey
+              ? handleUndo
+              : undefined
+          }
+          className="pointer-events-auto mx-4 mb-3 dock-glass"
+        />
 
-      {/* The rest timer docks here too, under the new best when a set
-          earns one (Pol1). A row in the header would push the exercise strip
-          and the set table down 61 px the moment a set is ticked. One key
-          for every rest, so a set completed during a rest swaps the
-          countdown inside the card rather than sending one card out as
-          another comes in. With auto-start off (D-LIFT-16) the manual
-          start waits in the same place, so starting a rest moves nothing
-          either. */}
+        {/* The rest timer docks here too, under the new best when a set
+            earns one (Pol1). A row in the header would push the exercise
+            strip and the set table down 61 px the moment a set is ticked.
+            One key for every rest, so a set completed during a rest swaps
+            the countdown inside the card rather than sending one card out
+            as another comes in. The card's surface and its frost are on
+            the element that fades, so no fading parent cuts the blur off
+            from the rows behind it (a backdrop root, §14o). */}
+        <AnimatePresence initial={false}>
+          {rest && (
+            <motion.div
+              key="rest"
+              /* A fade, no rise: it arrives after every set, and a 26 px
+                 rise there out-moved the new best above it
+                 (DESIGN_GUIDE §14h). */
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className={cardClasses({
+                size: "compact",
+                padded: false,
+                className: "pointer-events-auto mx-4 mb-3 shrink-0 dock-glass",
+              })}
+            >
+              <WorkoutRestTimer
+                key={rest.id}
+                startedAt={rest.startedAt}
+                initialTarget={rest.target}
+                exerciseName={day.exercises[currentExIndex]?.name}
+                next={restNext}
+                onStop={stopRest}
+                onAnnounce={announceRest}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <p role="status" className="sr-only">
         <span key={restWords.line}>{restWords.words}</span>
       </p>
-      <AnimatePresence initial={false}>
-        {rest ? (
-          <motion.div
-            key="rest"
-            /* A fade, no rise: it arrives after every set, and a 26 px
-               rise there out-moved the new best above it
-               (DESIGN_GUIDE §14h). */
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="mx-4 mb-3 shrink-0"
+      {/* With auto-start off (D-LIFT-16) the manual start waits under the
+          list, in the flow: a lone button floating over the set rows
+          would be words on words. Starting a rest moves nothing above it. */}
+      {!rest && !autoRest && currentSets.some((st) => st.completed) && (
+        <div className="mx-4 mb-3 mt-3 flex justify-center">
+          <Button
+            variant="secondary"
+            leftIcon={<Timer className="size-4" aria-hidden="true" />}
+            onClick={() => {
+              haptic("light");
+              // The rest after the set just done: the last ticked row.
+              const lastDone = [...currentSets]
+                .reverse()
+                .find((st) => st.completed);
+              startRest(
+                day.exercises[currentExIndex],
+                lastDone?.type === "warmup"
+              );
+            }}
           >
-            <WorkoutRestTimer
-              key={rest.id}
-              startedAt={rest.startedAt}
-              initialTarget={rest.target}
-              exerciseName={day.exercises[currentExIndex]?.name}
-              next={restNext}
-              onStop={stopRest}
-              onAnnounce={announceRest}
-            />
-          </motion.div>
-        ) : !autoRest && currentSets.some((st) => st.completed) ? (
-          <div key="start-rest" className="mx-4 mb-3 flex justify-center">
-            <Button
-              variant="secondary"
-              leftIcon={<Timer className="size-4" aria-hidden="true" />}
-              onClick={() => {
-                haptic("light");
-                // The rest after the set just done: the last ticked row.
-                const lastDone = [...currentSets]
-                  .reverse()
-                  .find((st) => st.completed);
-                startRest(
-                  day.exercises[currentExIndex],
-                  lastDone?.type === "warmup"
-                );
-              }}
-            >
-              Start rest timer
-            </Button>
-          </div>
-        ) : null}
-      </AnimatePresence>
+            Start rest timer
+          </Button>
+        </div>
+      )}
 
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2">

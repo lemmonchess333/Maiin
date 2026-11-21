@@ -33,6 +33,11 @@ import { isAppleRelayEmail } from "@/lib/appleRelay";
 const APPLE_MANAGE_SUBSCRIPTIONS_URL =
   "https://apps.apple.com/account/subscriptions";
 
+/** RevenueCat's stores for a purchase made on the website (RevenueCat
+ *  Billing, Paddle, a Stripe purchase sent to RevenueCat), as
+ *  functions/lib/revenueCatEntitlement.js maps them to "stripe". */
+const WEB_STORES = ["rc_billing", "paddle", "stripe"];
+
 interface AccountSectionProps {
   user: User | null;
   signOut: () => Promise<void>;
@@ -104,6 +109,26 @@ function AccountSectionContent({
     !!profile?.appleOriginalTransactionId ||
     profile?.subscriptionSource === "ios_iap";
   const [showAppleWarning, setShowAppleWarning] = useState(false);
+  // A subscription bought on the website (RevenueCat Billing): deleting the
+  // account does not cancel it, and Tropos has no way to from here, so it
+  // kept renewing on a card for an account that no longer existed
+  // (November 2026 security audit, item O3, in PR #3411). A legacy
+  // Stripe Checkout subscription carries its own id and is cancelled by
+  // the deletion itself (functions/lib/accountDeletionRetry.js).
+  // Read from the RevenueCat record the server keeps: a website store, the
+  // entitlement active and renewal on. A subscription already cancelled
+  // (renewal off) renews no more, and a lifetime purchase never did, so
+  // neither is warned about.
+  const revenueCat = profile?.revenueCat;
+  const hasWebSubscription =
+    profile?.subscriptionTier === "pro" &&
+    !profile?.stripeSubscriptionId &&
+    revenueCat?.entitlementActive === true &&
+    typeof revenueCat.store === "string" &&
+    WEB_STORES.includes(revenueCat.store) &&
+    revenueCat.willRenew !== false &&
+    revenueCat.period !== null;
+  const [showWebWarning, setShowWebWarning] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [password, setPassword] = useState("");
   const [reauthError, setReauthError] = useState<string | null>(null);
@@ -411,7 +436,9 @@ function AccountSectionContent({
                 // user has an IAP-originated subscription. Apple's API
                 // doesn't expose admin cancellation; we must hand them
                 // off to the App Store before purge.
-                if (hasAppleSubscription) {
+                if (hasWebSubscription) {
+                  setShowWebWarning(true);
+                } else if (hasAppleSubscription) {
                   setShowAppleWarning(true);
                 } else {
                   openDeletion();
@@ -465,6 +492,52 @@ function AccountSectionContent({
             variant="ghost"
             fullWidth
             onClick={() => setShowAppleWarning(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* A website subscription's warning, as the Apple one above: deleting
+          the account leaves it renewing until the person cancels it. */}
+      <Dialog
+        open={showWebWarning}
+        onClose={() => setShowWebWarning(false)}
+        title="Cancel your website subscription first"
+        description="Deleting your account doesn’t cancel the subscription you bought on the website. Cancel it first, or it keeps renewing."
+        role="alertdialog"
+      >
+        <div className="space-y-2">
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={() => {
+              void import("@/lib/purchaseProvider")
+                .then(({ openWebSubscription }) => openWebSubscription())
+                .then((result) => {
+                  if (!result.ok) toast.error(result.error);
+                });
+            }}
+          >
+            Manage subscription
+          </Button>
+          <Button
+            variant="destructive-tinted"
+            fullWidth
+            onClick={() => {
+              setShowWebWarning(false);
+              // An older App Store purchase on the same account has its
+              // own warning, which still applies.
+              if (hasAppleSubscription) setShowAppleWarning(true);
+              else openDeletion();
+            }}
+          >
+            Delete anyway
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => setShowWebWarning(false)}
           >
             Cancel
           </Button>

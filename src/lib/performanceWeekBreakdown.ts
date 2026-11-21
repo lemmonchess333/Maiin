@@ -60,6 +60,39 @@ function num(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+/**
+ * Whether these 7 days hold more training than the usual week: more
+ * kilos lifted or kilometres run than usual in at least one, and less in
+ * neither, of the sports you usually do. The figures are the engine's own
+ * ratio inputs (`liftProgression`, `runVolume` are this week's over the
+ * baseline's), read from `aggregates` and `baseline` rather than those
+ * ratios because the app reads a stored 0, a sport dropped for the week,
+ * as 1 (`normalisePerformanceDoc`).
+ *
+ * The band is no evidence of it: it bands the whole score, and a week at
+ * the usual one with recovery and food on track scores in the high band
+ * (`trainedMoreThanUsual.test.ts`). So "You trained more than your usual
+ * week" is said on this alone. A sport you don't usually do weighs
+ * neither way, and with no usual week the bars would draw (under
+ * `USUAL_WEEK_MIN_WEEKS` of it) nothing is claimed.
+ */
+export function trainedMoreThanUsual(doc: {
+  aggregates?: Partial<WeeklyAggregates> | null;
+  baseline?: Partial<Baseline> | null;
+}): boolean {
+  const agg = doc.aggregates ?? {};
+  const base = doc.baseline ?? {};
+  if (num(base.weeksUsed) < USUAL_WEEK_MIN_WEEKS) return false;
+  const pairs = [
+    [num(agg.liftTonnage), num(base.liftTonnage)],
+    [num(agg.runKm), num(base.runKm)],
+  ].filter(([, usual]) => usual > 0);
+  return (
+    pairs.some(([done, usual]) => done > usual) &&
+    pairs.every(([done, usual]) => done >= usual)
+  );
+}
+
 function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }

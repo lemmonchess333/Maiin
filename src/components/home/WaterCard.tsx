@@ -320,7 +320,7 @@ export default function WaterCard({
   if (compact) {
     return (
       <div
-        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
+        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col dark:card-shadow"
         style={{ boxShadow: iconBoxShadow }}
       >
         {heading}
@@ -550,7 +550,7 @@ export default function WaterCard({
 
   return (
     <div
-      className="relative overflow-hidden p-4 rounded-xl bg-card"
+      className="relative overflow-hidden p-4 rounded-xl bg-card dark:card-shadow"
       style={{ boxShadow: iconBoxShadow }}
     >
       {heading}
