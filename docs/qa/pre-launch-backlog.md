@@ -527,9 +527,9 @@ badge with its art, how many days to it and a bar ("Two Week Wonder in 2
 days", "12 of 14 days"), then the longest ("Longest 21 days, 10 days to
 pass it", or "This is your longest"). A badge already held from a longer
 streak is drawn earned and points at the length instead ("2 days to a
-7-day streak", "Week Warrior already earned"). The unit suites read the
-words and the large-text spec measures the sheet; a phone shows the badge
-art at its small size and VoiceOver's reading.
+7-day streak", then "Week Warrior already earned" on its own line). The
+unit suites read the words and the large-text spec measures the sheet; a
+phone shows the badge art at its small size and VoiceOver's reading.
 
 - [ ] **The row reads.** On a TestFlight build, tap the flame. Passing:
       the row shows with the art beside the words at the standard text
@@ -538,7 +538,9 @@ art at its small size and VoiceOver's reading.
       is earned, and the bar is the same purple.
 - [ ] **VoiceOver.** Swipe to the row. Passing: it is one stop, "Two Week
       Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass
-      it.", and the art and the bar are skipped.
+      it.", and the art and the bar are skipped. With a badge held from a
+      longer streak it reads "2 days to a 7-day streak. 5 of 7 days. Week
+      Warrior already earned. Longest 40 days, 36 days to pass it."
 
 ## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
 

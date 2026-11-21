@@ -238,8 +238,9 @@ describe("StreakSheet", () => {
       expect(
         within(sheet).getByText("2 days to a 7-day streak")
       ).toBeInTheDocument();
+      expect(within(sheet).getByText("5 of 7 days")).toBeInTheDocument();
       expect(
-        within(sheet).getByText("5 of 7 days · Week Warrior already earned")
+        within(sheet).getByText("Week Warrior already earned")
       ).toBeInTheDocument();
       expect(
         within(sheet).getByText("Longest 40 days, 36 days to pass it")
@@ -264,6 +265,18 @@ describe("StreakSheet", () => {
       ).toBeInTheDocument();
       expect(sheet.querySelector("[data-streak-bar]")).toBeNull();
       expect(sheet.textContent).not.toMatch(/tier/i);
+    });
+
+    it("past the last tier with its award not read yet, draws no ring to fill", () => {
+      h.streak = 365;
+      h.longest = 365;
+      h.earned = ["first_step", "three_day", "week_warrior"];
+      open();
+      const sheet = screen.getByRole("dialog", { name: "365-day streak" });
+      expect(within(sheet).getByText("Year of Tropos")).toBeInTheDocument();
+      expect(within(sheet).queryByText("Already earned")).toBeNull();
+      const art = sheet.querySelector("[data-next-tier]");
+      expect(art?.querySelector("svg circle")).toBeNull();
     });
 
     it("draws the progress in the streak's purple, never a tier's gold", () => {
@@ -296,6 +309,18 @@ describe("StreakSheet", () => {
       expect(
         screen.getByRole("group", {
           name: "Two Week Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass it.",
+        })
+      ).toBeInTheDocument();
+    });
+
+    it("reads a held badge as words, with no symbol in the sentence", () => {
+      h.streak = 5;
+      h.longest = 40;
+      h.earned = ["first_step", "three_day", "week_warrior"];
+      open();
+      expect(
+        screen.getByRole("group", {
+          name: "2 days to a 7-day streak. 5 of 7 days. Week Warrior already earned. Longest 40 days, 36 days to pass it.",
         })
       ).toBeInTheDocument();
     });

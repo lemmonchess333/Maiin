@@ -29,13 +29,13 @@ export default function StreakStandingBand({
   const lines = standingLines(standing, current);
   const art: { badge: BadgeDef; earned: boolean } | null = next ?? lastTier;
   const pct = next ? Math.min(1, current / next.days) : 1;
-  const sentence = [lines.title, lines.progress, lines.best]
+  const sentence = [lines.title, lines.progress, lines.held, lines.best]
     .filter(Boolean)
     .join(". ");
   return (
-    // The art beside the words down to 15em of band (a 320 pt phone at
-    // the standard text size keeps the row); above them under that, at
-    // larger text on a narrow phone. Wide-first, so a phone without
+    // The art beside the words down to 12em of band (a 320 pt phone keeps
+    // the row up to about 135% text); above them under that, at the
+    // largest text on a small phone. Wide-first, so a phone without
     // container queries (iOS 15) keeps the row.
     <div className="@container">
       {/* One stop for VoiceOver: the band's sentence, not its lines one
@@ -46,7 +46,7 @@ export default function StreakStandingBand({
         className={cardClasses({
           size: "compact",
           className:
-            "flex min-w-0 items-center gap-3 @max-[15em]:flex-col @max-[15em]:items-start",
+            "flex min-w-0 items-center gap-3 @max-[12em]:flex-col @max-[12em]:items-start",
         })}
       >
         {art && (
@@ -58,7 +58,7 @@ export default function StreakStandingBand({
             {/* The streak's own purple, not the tier's metal: gold, the
                 metal of the 30 and 60 day badges, means a new best and
                 nothing else (`flameTiers.ts`). The art keeps its metal. */}
-            {!art.earned && (
+            {next && !art.earned && (
               <ProgressRing
                 pct={pct}
                 color={THEME.brand}
@@ -92,16 +92,15 @@ export default function StreakStandingBand({
               />
             </div>
           )}
-          {lines.progress && (
-            <p className="mt-1 text-xs tabular-nums text-muted-foreground break-words">
-              {lines.progress}
-            </p>
-          )}
-          {lines.best && (
-            <p className="text-xs tabular-nums text-muted-foreground break-words">
-              {lines.best}
-            </p>
-          )}
+          <div className="mt-1 text-xs text-muted-foreground">
+            {lines.progress && (
+              <p className="tabular-nums break-words">{lines.progress}</p>
+            )}
+            {lines.held && <p className="break-words">{lines.held}</p>}
+            {lines.best && (
+              <p className="tabular-nums break-words">{lines.best}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

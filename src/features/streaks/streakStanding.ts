@@ -78,11 +78,21 @@ function daysOf(n: number): string {
   return `${n} ${n === 1 ? "day" : "days"}`;
 }
 
-/** The band's words, shown and read as one sentence. */
+/** The band's words, each a line, read together as one sentence. */
+export interface StandingLines {
+  title: string;
+  /** How far along the next tier: "12 of 14 days". */
+  progress: string | null;
+  /** The badge ahead is already held: "Week Warrior already earned". */
+  held: string | null;
+  /** The longest, and how far off passing it. */
+  best: string | null;
+}
+
 export function standingLines(
   standing: StreakStanding,
   current: number
-): { title: string; progress: string | null; best: string | null } {
+): StandingLines {
   const { longest, isLongest, next, lastTier } = standing;
   const best = isLongest
     ? "This is your longest"
@@ -93,6 +103,7 @@ export function standingLines(
     return {
       title: `${next.badge.name} in ${daysOf(next.toGo)}`,
       progress: `${current} of ${daysOf(next.days)}`,
+      held: null,
       best,
     };
   if (next)
@@ -100,12 +111,14 @@ export function standingLines(
     // length is.
     return {
       title: `${daysOf(next.toGo)} to a ${next.days}-day streak`,
-      progress: `${current} of ${daysOf(next.days)} · ${next.badge.name} already earned`,
+      progress: `${current} of ${daysOf(next.days)}`,
+      held: `${next.badge.name} already earned`,
       best,
     };
   return {
     title: lastTier?.badge.name ?? "",
-    progress: lastTier?.earned ? "Already earned" : null,
+    progress: null,
+    held: lastTier?.earned ? "Already earned" : null,
     best,
   };
 }

@@ -84,6 +84,7 @@ describe("the band's words", () => {
     expect(words(12, 21)).toEqual({
       title: "Two Week Wonder in 2 days",
       progress: "12 of 14 days",
+      held: null,
       best: "Longest 21 days, 10 days to pass it",
     });
   });
@@ -99,7 +100,8 @@ describe("the band's words", () => {
   it("for a badge already held, points at the length and says it is held", () => {
     expect(words(5, 40, ["three_day", "week_warrior"])).toEqual({
       title: "2 days to a 7-day streak",
-      progress: "5 of 7 days · Week Warrior already earned",
+      progress: "5 of 7 days",
+      held: "Week Warrior already earned",
       best: "Longest 40 days, 36 days to pass it",
     });
   });
@@ -107,13 +109,15 @@ describe("the band's words", () => {
   it("past the last tier, names its badge, held or not", () => {
     expect(words(400, 400, ["year_long"])).toEqual({
       title: "Year of Tropos",
-      progress: "Already earned",
+      progress: null,
+      held: "Already earned",
       best: "This is your longest",
     });
     // The server's award not read yet: no claim either way.
     expect(words(365, 500)).toEqual({
       title: "Year of Tropos",
       progress: null,
+      held: null,
       best: "Longest 500 days, 136 days to pass it",
     });
   });
@@ -122,6 +126,7 @@ describe("the band's words", () => {
     expect(words(0, 0)).toEqual({
       title: "Getting Started in 3 days",
       progress: "0 of 3 days",
+      held: null,
       best: null,
     });
   });
