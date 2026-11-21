@@ -1841,6 +1841,95 @@ where the bars were 47 pt and 34 pt.
       the launch image ("The handover from the launch image" names this
       setting as a cause of a jump).
 
+## The iPhone Duo (Duo track, 2026-11-18)
+
+Affects: the native project's life cycle (`claude/duo-uiscene`), the
+shell's side insets and the two-pane layouts (`claude/duo-layouts`), and
+every screen on Apple's foldable. `docs/ios/iphone-duo.md` has the sources.
+The `xcode-27` image's Xcode 27.1 has an iPhone Duo simulator, and with
+`claude/duo-sdk-27-1` each pull request's build is launched on it and both
+displays shot (`ios-native-compile.yml`). The simulator starts folded, so
+that run sees the app on the outer display only; it cannot unfold it, sign
+in or open a sheet. The capture rig checks the layouts at the Duo's sizes
+in Chromium. The rest needs an iPhone Duo, or Xcode 27.1's Duo simulator on
+a Mac for the rows marked (sim).
+
+Today's builds (iOS 26 SDK), in compatibility mode:
+
+- [ ] **The outer display**: the app as an iPhone mini's shape with a bar
+      where the side column is, and nothing cut off; the tab bar, a sheet
+      and the keyboard as on any iPhone. (sim)
+- [ ] **Unfolded**: the same shape centred on the inner display. Fold and
+      unfold mid-workout and mid-run: nothing restarts, the run keeps
+      recording, the set table keeps what was typed.
+
+Once `claude/duo-uiscene` is merged, on any iPhone (a TestFlight build):
+
+- [ ] **It launches** to Home, signed in, with no black screen, on a cold
+      start and after being killed.
+- [ ] **Leaving and coming back** fires pause and resume: the rest timer
+      and a run's clock are right after a minute away, and Home's day moves
+      on after midnight.
+- [ ] **Sign in with Google and with Apple** from a signed-out start, and
+      once more with the app killed while the sign-in sheet is open: the
+      return lands on the app signed in or back on sign-in, never on a
+      blank page or a wrong screen (a URL that wakes the app now arrives
+      through the scene, and every one reaches the app's link listeners,
+      which ignore any they do not know).
+- [ ] **Links open the app where they point**, cold and warm: an invite
+      link, a shared post, a widget's tap, a Live Activity's tap, and the
+      return from the website's checkout.
+- [ ] **Push**: a comment's push arrives and opens its post; a reminder
+      from the phone fires at its time.
+
+Once the app is built with the iOS 27.1 SDK (owner decision A in
+`docs/ios/iphone-duo.md`, approved 18 November 2026):
+
+- [ ] **The first TestFlight build from Xcode 27.1**: `deploy-ios.yml`'s
+      log names Xcode 27.1 and iOS SDK 27.1 or later, App Store Connect
+      accepts the upload, and it installs and opens on any iPhone with no
+      change from the last iOS 26 SDK build.
+- [ ] **The Duo launch fills the display**: in a green
+      `ios-native-compile.yml` run, the `ios-simulator-duo` screenshot of
+      the display the job summary names shows the app edge to edge, with no
+      bars of a letterboxed iPhone mini's shape (the check only asks that
+      the middle of the display is drawn).
+
+On an iPhone Duo:
+
+- [ ] **The outer display fills the screen** beside the side column: no
+      content under the status bar or the camera, no empty band at the top
+      where the status bar no longer is, and the tab bar clear of both.
+      (sim)
+- [ ] **The side insets are reported** to the page: `--safe-left` or
+      `--safe-right` is not 0 on the outer display (Safari's Web Inspector,
+      or a pixel gap beside the side column). If both read 0, the shell's
+      side padding and the 44 pt top rule in `index.css` need another way
+      to find the column. (sim)
+- [ ] **Open on its side**: Home in two columns with the gap on the fold,
+      the workout's exercises beside its sets, a run's map beside its
+      figures, and no control on the crease. Partly folded (like a book),
+      each pane is readable on its own half.
+- [ ] **Standing up** (the inner display turned upright): one column, and a
+      sheet a phone's width, centred.
+- [ ] **Fold mid-set and mid-rest**: the typed weight, the ticked sets and
+      the rest's countdown are as they were; the keyboard comes back to the
+      same field. Fold mid-run: the clock, the distance and the route keep
+      going, the panel docks and undocks without a jump, and the map fills
+      its half.
+- [ ] **Split View** with another app on the inner display: Tropos is the
+      phone layout in its half, with its side controls clear of content.
+- [ ] **The Live Activities** (a run, a lift) in the vertical Dynamic Island
+      on both displays: compact, minimal and expanded each read, and the
+      Lock Screen card on the inner display.
+- [ ] **The widgets** on the inner Home Screen and in StandBy on each
+      display (not in the simulator, which has no StandBy).
+- [ ] **No Face ID anywhere**: the purchase sheet and Sign in with Apple ask
+      for Touch ID or the passcode, and no Tropos screen names Face ID.
+- [ ] **App Store screenshots** at 1398 × 2034 (outer) and 2007 × 2853
+      (inner) before the first 27.1 upload, from
+      `app-store.capture.spec.ts` once it has Duo frames.
+
 ## Privacy and consent for App Review (2026-10-04)
 
 Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
