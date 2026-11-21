@@ -22,7 +22,9 @@ vi.mock("@zxing/browser", () => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { hasUsedTrial: false } }),
 }));
-const nativeMock = vi.fn(() => false);
+// Hoisted: FoodCameraModal's imports reach firebaseApp, which asks
+// isNativePlatform while the module loads, before this file's body runs.
+const nativeMock = vi.hoisted(() => vi.fn(() => false));
 vi.mock("@/lib/platform", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/platform")>()),
   isNativePlatform: () => nativeMock(),

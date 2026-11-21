@@ -153,13 +153,14 @@ async function expectRunWeek(
     .click();
   const week = page.getByRole("tablist", { name: TRAIN.runWeek });
   for (const run of runs) {
-    const name = runWeekTabName(
-      runWeekLabel(templateOf(run), "km"),
-      run.date === today ? "today" : undefined
-    );
     // A day's tab shows its day of the month: a week's easy runs can share
     // a name.
     const day = String(Number(run.date!.slice(8)));
+    const name = runWeekTabName(
+      day,
+      runWeekLabel(templateOf(run), "km"),
+      run.date === today ? "today" : undefined
+    );
     await expect(
       week
         .getByRole("tab", { name, exact: true })
