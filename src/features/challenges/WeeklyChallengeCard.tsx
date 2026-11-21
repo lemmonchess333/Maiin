@@ -11,6 +11,7 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { finalDayLine, inFinalDay } from "./challengeEditions";
 import ChallengeMedalBand from "./ChallengeMedalBand";
+import ChallengePeople from "./ChallengePeople";
 import { countMyWeekLifts } from "./myWeekLifts";
 import { challengeHasMedal } from "./rowMedal";
 import {
@@ -38,6 +39,10 @@ const TOP_SHOWN = 3;
  * is the one weekly ranking. Like `ChallengeCard`, the card shows its
  * leaders only to someone who has joined and has a session in, so the
  * figures have something to be read against.
+ *
+ * Under its name, who is in it (`ChallengePeople`): "12 joined", or
+ * "Filling up" while fewer than 3 have joined (App1 Q6), since the card is
+ * offered from a person's first day however few people are on Tropos.
  *
  * `leads`: its action is the page's one filled button, unless the page
  * has a Start a circle card, which takes that place (no Circle yet).
@@ -166,6 +171,7 @@ export default function WeeklyChallengeCard({
           challenge={weekly}
           progress={progress}
           timeLeft={timeLeft}
+          meta={<ChallengePeople count={weekly.participantCount} />}
         />
       )}
       <div className="p-4">
@@ -208,6 +214,13 @@ export default function WeeklyChallengeCard({
               >
                 {sub}
               </p>
+              {/* Without a medal band, who is in it sits under the line. */}
+              {!medal && weekly && (
+                <ChallengePeople
+                  count={weekly.participantCount}
+                  className="mt-1 text-xs text-muted-foreground"
+                />
+              )}
             </div>
             {timeLeft && !medal && (
               <span className="text-caption text-muted-foreground shrink-0 mt-0.5">

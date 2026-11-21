@@ -17,8 +17,9 @@
  * was a genuine client gap until planBuilder.ts was aligned alongside this test.
  *
  * JUSTIFIED ASYMMETRY (NOT drift — asserted as server-only, documented): the
- * server also validates `runMode` vocabulary, `weekScheduleVersion` is a
- * number, and the object-shape of profileData/programState. The client receives
+ * server also validates `runMode` and `runPlan.mode` vocabulary,
+ * `weekScheduleVersion` is a number, and the object-shape of
+ * profileData/programState. The client receives
  * a *typed* `PlanBuilderOutput` (runMode: RunMode, weekScheduleVersion: number,
  * objects guaranteed), so re-checking those would be re-validating what the
  * compiler already proves — the server checks them only because it validates
@@ -105,7 +106,7 @@ function racePrepBase(): Scenario {
     programState: {
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [validRunDay],
-      runPlan: { raceGoal },
+      runPlan: { mode: "race_prep", raceGoal },
     },
     weekSchedule: validWeekSchedule,
   };
@@ -190,7 +191,8 @@ const PARITY: Array<{ name: string; build: () => Scenario }> = [
     name: "race_prep missing runPlan.raceGoal (the newly-aligned arm)",
     build: () => {
       const s = racePrepBase();
-      s.programState.runPlan = {}; // runPlan present but no raceGoal
+      // runPlan present but no raceGoal
+      s.programState.runPlan = { mode: "race_prep" };
       return s;
     },
   },
@@ -237,6 +239,14 @@ describe("plan-payload validation — client (.ts) ↔ server (.js) parity", () 
       const s = freeformBase();
       s.profile.runMode = "banana";
       expect(serverRejects(s)).toBe(true);
+    });
+    it("server rejects the retired structured mode on the profile and the plan (App1 Q25)", () => {
+      const s = freeformBase();
+      s.profile.runMode = "structured";
+      expect(serverRejects(s)).toBe(true);
+      const plan = freeformBase();
+      plan.programState.runPlan = { mode: "structured" };
+      expect(serverRejects(plan)).toBe(true);
     });
     it("server rejects a missing/non-number weekScheduleVersion", () => {
       const s = freeformBase();

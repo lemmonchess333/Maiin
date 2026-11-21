@@ -169,16 +169,17 @@ describe("the tab bar the journeys move by", () => {
 
 describe("Train's start, as the journeys press it", () => {
   it("the startable day's card is started by its name", () => {
-    // Train hands the card its label (`Program.tsx`), and the card makes it
-    // the button's name.
-    const program = readFileSync(
+    // The day's session hands the card its label (`LiftSessionView`, on
+    // Train's Lift tab and a lift's own page), and the card makes it the
+    // button's name.
+    const session = readFileSync(
       resolve(
         dirname(fileURLToPath(import.meta.url)),
-        "../../pages/Program.tsx"
+        "../../components/program/LiftSessionView.tsx"
       ),
       "utf8"
     );
-    expect(program).toContain(`? "${WORKOUT.start}"`);
+    expect(session).toContain(`? "${WORKOUT.start}"`);
     const start = vi.fn();
     render(
       <SessionCommandCard

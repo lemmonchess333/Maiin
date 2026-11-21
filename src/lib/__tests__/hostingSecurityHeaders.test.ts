@@ -146,3 +146,47 @@ describe("index.html <meta> Content-Security-Policy", () => {
     expect(meta?.[1] ?? "").not.toMatch(/frame-ancestors/);
   });
 });
+
+/* troposfit.com's own page since App1 Q52: the Hosting build's index.html
+   is website.html (scripts/website/websiteEntry.ts), so the policy Hosting
+   serves is this one, under the same headers above. */
+describe("website.html <meta> Content-Security-Policy (troposfit.com)", () => {
+  const websiteHtml = readFileSync(resolve(repoRoot, "website.html"), "utf8");
+  const policy =
+    websiteHtml.match(
+      /http-equiv="Content-Security-Policy"\s+content="([\s\S]*?)"/
+    )?.[1] ?? "";
+  const directives = new Map(
+    policy
+      .split(";")
+      .map((part) => part.trim().split(/\s+/))
+      .filter(([name]) => name)
+      .map(([name, ...sources]) => [name, sources])
+  );
+
+  it("declares form-action 'self' and leaves frame-ancestors to the header", () => {
+    expect(directives.get("form-action")).toEqual(["'self'"]);
+    expect(policy).not.toMatch(/frame-ancestors/);
+  });
+
+  it("runs only its own scripts: no inline script and no third-party host", () => {
+    expect(directives.get("script-src")).toEqual(["'self'"]);
+    expect(directives.get("object-src")).toEqual(["'none'"]);
+    expect(directives.get("base-uri")).toEqual(["'self'"]);
+  });
+
+  it("lets a shared post's page draw its map and its author's photo", () => {
+    expect(directives.get("connect-src")).toContain(
+      "https://tiles.openfreemap.org"
+    );
+    expect(directives.get("img-src")).toEqual(
+      expect.arrayContaining([
+        "https://tiles.openfreemap.org",
+        "https://firebasestorage.googleapis.com",
+        "https://lh3.googleusercontent.com",
+        "https://appleid.cdn-apple.com",
+      ])
+    );
+    expect(directives.get("worker-src")).toContain("blob:");
+  });
+});

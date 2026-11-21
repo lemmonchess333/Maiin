@@ -36,7 +36,6 @@ import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
 import DailyTarget from "@/components/onboarding/DailyTarget";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
-import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   equipmentLabel,
   experienceLabel,
@@ -64,7 +63,6 @@ import {
   saveOnboardingDraft,
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
-  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
@@ -82,7 +80,14 @@ import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
-import SessionLengthLabel from "@/components/program/SessionLengthLabel";
+import LiftWeekQuestion from "@/components/onboarding/LiftWeekQuestion";
+import LiftKitQuestion from "@/components/onboarding/LiftKitQuestion";
+import LiftLimitsQuestion from "@/components/onboarding/LiftLimitsQuestion";
+import RunLevelQuestion from "@/components/onboarding/RunLevelQuestion";
+import {
+  LIFT_KIT_QUESTION,
+  LIFT_LIMITS_QUESTION,
+} from "@/lib/liftingQuestions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
@@ -109,7 +114,6 @@ import {
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
 import { runDoseLine } from "@/lib/runDose";
-import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
@@ -156,15 +160,9 @@ const STEP_META = [
     "Find your starting rhythm",
     "Choose the training you want in your week. You can change this later.",
   ],
-  [
-    "Make the plan fit your setup",
-    "Equipment and experience shape the exercises in your plan.",
-  ],
+  [LIFT_KIT_QUESTION.title, LIFT_KIT_QUESTION.hint],
   ["How does running fit in?", "Keep runs flexible, or work towards a race."],
-  [
-    "Anything to work around?",
-    "Choose any relevant limitations, or select None.",
-  ],
+  [LIFT_LIMITS_QUESTION.title, LIFT_LIMITS_QUESTION.hint],
   [
     "Start with your numbers",
     "These set your nutrition targets and your initial loads.",
@@ -335,13 +333,6 @@ export default function Onboarding() {
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
     draft?.experience ?? "beginner"
-  );
-  // What a no-equipment plan can't pull, under the bar switch: the level
-  // counts once it's chosen (`noEquipmentPullNote`).
-  const pullNote = noEquipmentPullNote(
-    equipment,
-    pullUpBar,
-    experienceConfirmed ? experience : undefined
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -1466,35 +1457,11 @@ export default function Onboarding() {
                 tone={trainingActivity === "running" ? "running" : "lifting"}
               />
               {hasLifting && (
-                <SegmentedControl<Exclude<OnboardingDraft["daysPerWeek"], 0>>
-                  ariaLabel="Lift sessions per week"
-                  value={liftDaysPreference}
-                  options={([2, 3, 4, 5, 6] as const).map((n) => ({
-                    value: n,
-                    label: (
-                      <span className="font-figure tabular-nums text-xl">
-                        {n}
-                      </span>
-                    ),
-                  }))}
-                  onChange={setDaysPerWeek}
-                  tone="lifting"
-                  className="py-2"
-                />
-              )}
-              {hasLifting && (
-                <SegmentedControl<
-                  NonNullable<OnboardingDraft["sessionMinutes"]>
-                >
-                  ariaLabel="Minutes per lift session"
-                  value={sessionMinutes}
-                  options={DRAFT_SESSION_MINUTES.map((n) => ({
-                    value: n,
-                    label: <SessionLengthLabel minutes={n} />,
-                  }))}
-                  onChange={setSessionMinutes}
-                  tone="lifting"
-                  className="@container"
+                <LiftWeekQuestion
+                  days={liftDaysPreference}
+                  onDaysChange={setDaysPerWeek}
+                  minutes={sessionMinutes}
+                  onMinutesChange={setSessionMinutes}
                 />
               )}
               <p className="text-sm text-muted-foreground">
@@ -1518,64 +1485,34 @@ export default function Onboarding() {
           {step === 3 && (
             <div className="space-y-5">
               <div className="space-y-3">
-                {(
-                  [
-                    {
-                      id: "new",
-                      label: "New to running",
-                      desc: "Starting out, or coming back after a long gap.",
-                      distance: 1,
-                    },
-                    {
-                      id: "occasional",
-                      label: "Occasional runner",
-                      desc: "Usually one or two runs a week.",
-                      distance: 2,
-                    },
-                    {
-                      id: "regular",
-                      label: "Regular runner",
-                      desc: "Usually three or more runs a week.",
-                      distance: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={runConfirmed && runFrequency === option.id}
-                    tone="running"
-                    /* A route that grows with the running: one footprint
-                       icon three times over said nothing about which. */
-                    icon={
-                      <ChoiceArt
-                        art={{ kind: "route", distance: option.distance }}
-                      />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                    onSelect={() => {
-                      setRunConfirmed(true);
-                      setRunFrequency(option.id);
-                      // Run9: New to running starts on the 30-minute goal;
-                      // the other plans stay a tap away.
-                      if (option.id === "new") setRunMode("starter");
-                      /* This lands on the RACE-PREP plan only. Freeform
-                         is a substrate with no scheduled runs (Run9a), so
-                         its weekly target is 0 whichever tier is picked —
-                         pinned in Onboarding.test.tsx. The beginner tier
-                         earns its place on the default path by letting
-                         someone starting out say so, instead of filing
-                         themselves under "occasional runner"; it does not
-                         change a freeform plan, and reading it as a
-                         freeform scheduling lever is reading it wrong.
-                         Two a week when a race IS set: a race plan needs
-                         at least two run days (Pgm7 A7). */
-                      setWeeklyRunDays(
-                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
-                      );
-                    }}
-                  />
-                ))}
+                <RunLevelQuestion
+                  value={
+                    runConfirmed && runFrequency !== "none"
+                      ? runFrequency
+                      : null
+                  }
+                  onChange={(level) => {
+                    setRunConfirmed(true);
+                    setRunFrequency(level);
+                    // Run9: New to running starts on the 30-minute goal;
+                    // the other plans stay a tap away.
+                    if (level === "new") setRunMode("starter");
+                    /* This lands on the RACE-PREP plan only. Freeform is a
+                       substrate with no scheduled runs (Run9a), so its
+                       weekly target is 0 whichever tier is picked — pinned
+                       in Onboarding.test.tsx. The beginner tier earns its
+                       place on the default path by letting someone
+                       starting out say so, instead of filing themselves
+                       under "occasional runner"; it does not change a
+                       freeform plan, and reading it as a freeform
+                       scheduling lever is reading it wrong. Two a week
+                       when a race IS set: a race plan needs at least two
+                       run days (Pgm7 A7). */
+                    setWeeklyRunDays(
+                      level === "regular" ? 3 : MIN_RACE_RUN_DAYS
+                    );
+                  }}
+                />
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
@@ -1921,171 +1858,27 @@ export default function Onboarding() {
           )}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Equipment access</h2>
-                {(
-                  [
-                    {
-                      id: "full_gym",
-                      label: "Full gym",
-                      desc: "Barbells, dumbbells, cables and machines.",
-                      art: "chest-press-machine",
-                    },
-                    {
-                      id: "home_gym",
-                      label: "Home gym",
-                      desc: "Dumbbells and a bench.",
-                      art: "incline-db-press",
-                    },
-                    {
-                      id: "minimal",
-                      label: "Minimal",
-                      desc: "Dumbbells and your bodyweight.",
-                      art: "goblet-squat",
-                    },
-                    {
-                      id: "no_equipment",
-                      label: "No equipment",
-                      desc: "Just your bodyweight, on the floor.",
-                      art: "bodyweight-squat",
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={equipmentConfirmed && equipment === option.id}
-                    onSelect={() => {
-                      setEquipmentConfirmed(true);
-                      // A setup chosen anew starts from its own bar answer.
-                      if (option.id !== equipment)
-                        setPullUpBar(pullUpBarWhenChosen(option.id));
-                      setEquipment(option.id);
-                    }}
-                    /* The kit each setup means, drawn: a machine, dumbbells
-                       on a bench, a dumbbell alone, no equipment at all. */
-                    icon={
-                      <ChoiceArt art={{ kind: "exercise", id: option.art }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
-              {/* With no equipment the one thing to add is a doorway bar:
-                  there are no plates to make small. */}
-              {equipmentConfirmed &&
-                (takesSmallPlates(equipment) || takesPullUpBar(equipment)) && (
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-semibold">
-                        What do you have?
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Optional. The plan uses what you have.
-                      </p>
-                    </div>
-                    {takesBarbellAtHome(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            A barbell and a rack
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Squats, deadlifts and presses with the bar.
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={barbellAtHome}
-                          label="A barbell and a rack"
-                          className="ml-3"
-                          onChange={() => setBarbellAtHome((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {takesPullUpBar(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            A pull-up bar
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            A doorway bar works. Pull-ups and chin-ups.
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={pullUpBar}
-                          label="A pull-up bar"
-                          className="ml-3"
-                          onChange={() => setPullUpBar((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {takesSmallPlates(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            Small plates
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {smallPlatesHint(liftUnit)}
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={smallPlates}
-                          label="Small plates"
-                          className="ml-3"
-                          onChange={() => setSmallPlates((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {/* What a no-equipment plan can't train, under its bar
-                      switch, once, where the setup is chosen. */}
-                    {pullNote && (
-                      <p className="text-sm text-muted-foreground">
-                        {pullNote}
-                      </p>
-                    )}
-                  </div>
-                )}
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Lifting experience</h2>
-                {(
-                  [
-                    {
-                      id: "beginner",
-                      label: "New to lifting",
-                      desc: "Up to six months of consistent training.",
-                      level: 1,
-                    },
-                    {
-                      id: "intermediate",
-                      label: "Some experience",
-                      desc: "Six months to two years.",
-                      level: 2,
-                    },
-                    {
-                      id: "advanced",
-                      label: "Experienced",
-                      desc: "More than two years of consistent training.",
-                      level: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={experienceConfirmed && experience === option.id}
-                    onSelect={() => {
-                      setExperienceConfirmed(true);
-                      setExperience(option.id);
-                    }}
-                    icon={
-                      <ChoiceArt art={{ kind: "level", level: option.level }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
+              <LiftKitQuestion
+                equipment={equipment}
+                equipmentConfirmed={equipmentConfirmed}
+                onEquipmentChange={(next) => {
+                  setEquipmentConfirmed(true);
+                  setEquipment(next);
+                }}
+                barbellAtHome={barbellAtHome}
+                onBarbellAtHomeChange={setBarbellAtHome}
+                pullUpBar={pullUpBar}
+                onPullUpBarChange={setPullUpBar}
+                smallPlates={smallPlates}
+                onSmallPlatesChange={setSmallPlates}
+                liftUnit={liftUnit}
+                experience={experience}
+                experienceConfirmed={experienceConfirmed}
+                onExperienceChange={(next) => {
+                  setExperienceConfirmed(true);
+                  setExperience(next);
+                }}
+              />
               {/* What the kit just chosen builds (FV3): the first lift and
                   its first exercises, which change as the kit does. */}
               {equipmentConfirmed && (
@@ -2122,32 +1915,7 @@ export default function Onboarding() {
           )}
           {step === 4 && (
             <div className="space-y-3">
-              {[
-                { id: "none", label: "None" },
-                { id: "lower_back", label: "Lower back" },
-                { id: "shoulder", label: "Shoulder" },
-                { id: "knee", label: "Knee" },
-                { id: "elbow", label: "Elbow" },
-                { id: "wrist", label: "Wrist" },
-              ].map((option) => (
-                <OptionCard
-                  key={option.id}
-                  selected={injuries.includes(option.id)}
-                  label={option.label}
-                  onSelect={() =>
-                    setInjuries((previous) =>
-                      option.id === "none"
-                        ? ["none"]
-                        : previous.includes(option.id)
-                          ? previous.filter((id) => id !== option.id)
-                          : [
-                              ...previous.filter((id) => id !== "none"),
-                              option.id,
-                            ]
-                    )
-                  }
-                />
-              ))}
+              <LiftLimitsQuestion injuries={injuries} onChange={setInjuries} />
               {/* What the limitations just chosen changed (FV3), live.
                   Limitations stay editable in Settings. */}
               {injuries.some((id) => id !== "none") && (

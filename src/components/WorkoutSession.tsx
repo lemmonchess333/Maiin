@@ -1062,8 +1062,9 @@ export default function WorkoutSession({
    * `sessionComplete` alone, so duration kept its `useState(0)` initial and
    * the completion screen read "0m". That 0 does not stay cosmetic: it is
    * sent in the save payload, where `useProgram` substitutes a fabricated
-   * `completedSetCount * 3`, which then feeds the calorie estimate and the
-   * training-load series. One entry point makes the pair un-droppable.
+   * `completedSetCount * 3`, which then feeds the calorie estimate and every
+   * figure read from the session's minutes. One entry point makes the pair
+   * un-droppable.
    */
   const completeSession = useCallback(() => {
     // Opened before the completion screen renders, so everything the finish

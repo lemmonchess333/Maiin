@@ -193,13 +193,17 @@ export function leagueCardState({
   return { kind: "locked", joined: status?.joined ?? 0, needed };
 }
 
-/** The locked league's line: how many have joined, or when it opens. */
+/** The league's filling-up line (App1 Q6, `src/lib/fillingUp.ts`), for
+ *  someone who has joined and for someone deciding whether to: what it
+ *  starts at and how many are in so far, or, once there are enough, when
+ *  it starts. The server makes no group under `GROUP_MIN`, so this is the
+ *  one room that says what it is waiting for. */
 export function lockedLine(joined: number, needed: number): string {
   if (joined >= needed)
-    return `Leagues start on Monday. ${joined} people have joined.`;
+    return `The league starts on Monday. ${joined} people have joined.`;
   if (!showsJoinedCount(joined))
-    return `Leagues open when ${needed} people have joined.`;
-  return `Leagues open when ${needed} people have joined. ${joined} so far.`;
+    return `The league starts once ${needed} people have joined.`;
+  return `The league starts once ${needed} people have joined. ${joined} so far.`;
 }
 
 /** The fewest people joined that the waiting league counts aloud (Soc16):

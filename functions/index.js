@@ -7627,6 +7627,11 @@ function queueReason(value) {
     ? value
     : "other";
 }
+/** A stored report's category, when it is one the report form offers;
+ *  the queue names it as the alert email does. */
+function queueCategory(value) {
+  return reportTargets.REPORT_CATEGORIES.includes(value) ? value : null;
+}
 
 /**
  * Screens a photo the caller just uploaded for other people to see, a
@@ -8004,6 +8009,11 @@ exports.listPendingReports = functions
           reportedTargetType: nullableString(report.targetType),
           reportedTargetId: nullableString(report.targetId),
           reason: queueReason(report.reason),
+          // What the reporter picked, as the alert email names it: a
+          // sub-reason such as "Child safety" is the triage signal, and
+          // `reason` alone folds it into one of four legacy words.
+          category: queueCategory(report.category),
+          subReason: nullableString(report.subReason),
           details:
             nullableString(report.freeformNote) ||
             nullableString(report.details),
@@ -8023,7 +8033,8 @@ exports.listPendingReports = functions
  * flag takes the reported content out of the app in the same call so
  * a moderator can dismiss + hide in one click: an activity becomes
  * `flagged: true, visibility: 'private'`; a comment (activity or space
- * post) or a space post is deleted. See reportTargets.queueContentHide.
+ * post), a space post or a segment is deleted. See
+ * reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -8066,9 +8077,12 @@ exports.resolveReport = functions
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
     // A hidden space post's likes and comments, swept after the commit.
     let removedSpacePostRef = null;
+    // A removed segment's efforts, board and owner record, swept after it.
+    let removedSegmentId = null;
 
     await firestore.runTransaction(async (transaction) => {
       removedSpacePostRef = null; // a retried attempt starts clean
+      removedSegmentId = null;
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -8151,6 +8165,9 @@ exports.resolveReport = functions
       if (hideActivity && target.targetType === "space_post") {
         removedSpacePostRef = target.targetRef;
       }
+      if (hideActivity && target.targetType === "segment") {
+        removedSegmentId = target.targetId;
+      }
 
       transaction.update(reportRef, {
         status: "resolved",
@@ -8189,6 +8206,24 @@ exports.resolveReport = functions
         await firestore.recursiveDelete(removedSpacePostRef);
       } catch (err) {
         functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
+
+    if (removedSegmentId) {
+      // The segment is gone, so no page opens it, no run is timed on it
+      // and no board is read. The rest of its maker's Delete follows:
+      // everyone's efforts on it, its board and its owner record
+      // (lib/segments.js removeSegment, whose queries cannot run in a
+      // transaction). Best effort, as for a space post: the app leaves out
+      // an effort whose segment is gone, and the maker's account deletion
+      // sweeps an owner record left behind.
+      try {
+        await segments.removeSegment(firestore, removedSegmentId);
+      } catch (err) {
+        functions.logger.warn("resolveReport.segment_cleanup_failed", {
           reportId,
           error: err && err.message,
         });

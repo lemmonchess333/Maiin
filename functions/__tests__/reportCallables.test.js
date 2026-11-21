@@ -644,3 +644,177 @@ describe("listRestrictedUsers and liftRestriction (S4e)", () => {
     expect(db.data.has("globalRestrictedUids/u1")).toBe(true);
   });
 });
+
+describe("a reported segment", () => {
+  beforeEach(() => {
+    vi.stubEnv("ADMIN_UIDS", "admin-1");
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("PUBLIC_APP_BASE_URL", "https://troposfit.com/");
+  });
+
+  const effort = (uid, segmentId, runId) => ({
+    [`users/${uid}/segmentEfforts/${runId}_${segmentId}_1`]: {
+      uid,
+      segmentId,
+      runId,
+      lap: 1,
+      elapsedSeconds: 250,
+    },
+  });
+
+  function segmentSeed() {
+    return {
+      "segments/hill": { name: "Common hill", lengthMeters: 800 },
+      "segmentOwners/hill": { uid: "maker", sourceRunId: "r1" },
+      "segments/hill/board/runner": { uid: "runner", elapsedSeconds: 240 },
+      "users/maker/public/profile": { displayName: "Mo" },
+      ...effort("maker", "hill", "r1"),
+      ...effort("runner", "hill", "r9"),
+      // Someone else's segment, which nothing here touches.
+      "segments/lane": { name: "Back lane", lengthMeters: 500 },
+      "segmentOwners/lane": { uid: "runner", sourceRunId: "r9" },
+      ...effort("runner", "lane", "r9"),
+    };
+  }
+
+  it("is filed against its maker, whom the reporter never names", async () => {
+    const db = useMemoryFirestore(segmentSeed());
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { reportId } = await createReport.run(
+      {
+        targetType: "segment",
+        targetId: "hill",
+        category: "inappropriate",
+        subReason: "Child safety",
+      },
+      REPORTER
+    );
+
+    expect(db.data.get(`reports/${reportId}`)).toMatchObject({
+      targetType: "segment",
+      targetId: "hill",
+      targetUid: "maker",
+      category: "inappropriate",
+      subReason: "Child safety",
+      status: "pending",
+    });
+    expect(db.data.get(`reportAuthority/${reportId}`)).toMatchObject({
+      version: 1,
+      targetType: "segment",
+      targetUid: "maker",
+    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toBe("New report: Inappropriate content (a segment)");
+    expect(body.html).toContain("Inappropriate content: Child safety");
+    expect(body.html).not.toContain("maker");
+  });
+
+  it("shows the moderator its name, its maker and the reporter's reason", async () => {
+    const db = useMemoryFirestore({
+      ...segmentSeed(),
+      ...pendingReport("r1", {
+        targetType: "segment",
+        targetId: "hill",
+        targetUid: "maker",
+      }),
+    });
+    db.data.set("reports/r1", {
+      ...db.data.get("reports/r1"),
+      reason: "inappropriate",
+      category: "inappropriate",
+      subReason: "Promotes eating disorders",
+    });
+
+    const { reports } = await listPendingReports.run({}, ADMIN);
+
+    expect(reports[0]).toMatchObject({
+      targetType: "segment",
+      targetUid: "maker",
+      targetActionable: true,
+      targetHideable: true,
+      category: "inappropriate",
+      subReason: "Promotes eating disorders",
+      target: {
+        authorId: "maker",
+        authorName: "Mo",
+        name: "Common hill",
+        segmentId: "hill",
+      },
+    });
+  });
+
+  it("is removed as its maker's Delete removes it: everyone's times, its board, its owner", async () => {
+    const db = useMemoryFirestore({
+      ...segmentSeed(),
+      ...pendingReport("r1", {
+        targetType: "segment",
+        targetId: "hill",
+        targetUid: "maker",
+      }),
+    });
+
+    await expect(
+      resolveReport.run({ reportId: "r1", hideActivity: true }, ADMIN)
+    ).resolves.toEqual({ ok: true });
+
+    const keys = [...db.data.keys()];
+    expect(keys.filter((k) => k.includes("hill"))).toEqual([]);
+    // The other segment, and the runner's time on it, stay.
+    expect(db.data.has("segments/lane")).toBe(true);
+    expect(db.data.has("users/runner/segmentEfforts/r9_lane_1")).toBe(true);
+    expect(db.data.get("reports/r1")).toMatchObject({
+      status: "resolved",
+      hideAppliedByAdmin: true,
+      hideOutcome: "deleted",
+      restrictAppliedByAdmin: false,
+    });
+    // Removing the segment is not restricting its maker.
+    expect(db.data.has("globalRestrictedUids/maker")).toBe(false);
+  });
+
+  it("still resolves when the sweep after the commit fails", async () => {
+    const db = useMemoryFirestore({
+      ...segmentSeed(),
+      ...pendingReport("r1", {
+        targetType: "segment",
+        targetId: "hill",
+        targetUid: "maker",
+      }),
+    });
+    db.failures.set(
+      "delete:segmentOwners/hill",
+      new Error("cleanup unavailable")
+    );
+
+    await expect(
+      resolveReport.run({ reportId: "r1", hideActivity: true }, ADMIN)
+    ).resolves.toEqual({ ok: true });
+    expect(db.data.has("segments/hill")).toBe(false);
+    expect(db.data.get("reports/r1").status).toBe("resolved");
+  });
+
+  it("restricts its maker, and leaves the segment until it is removed", async () => {
+    const db = useMemoryFirestore({
+      ...segmentSeed(),
+      ...pendingReport("r1", {
+        targetType: "segment",
+        targetId: "hill",
+        targetUid: "maker",
+      }),
+    });
+
+    await resolveReport.run(
+      { reportId: "r1", hideActivity: false, restrictUser: true },
+      ADMIN
+    );
+
+    expect(db.data.get("globalRestrictedUids/maker")).toMatchObject({
+      uid: "maker",
+      lastActionedReport: "r1",
+    });
+    expect(db.data.has("segments/hill")).toBe(true);
+    expect(db.data.has("users/runner/segmentEfforts/r9_hill_1")).toBe(true);
+  });
+});

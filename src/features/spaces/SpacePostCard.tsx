@@ -196,7 +196,13 @@ export default function SpacePostCard({
                 {activity.exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+                {activity.circuit
+                  ? activity.exerciseCount === 1
+                    ? "move"
+                    : "moves"
+                  : activity.exerciseCount === 1
+                    ? "exercise"
+                    : "exercises"}
               </SectionLabel>
             </div>
           )}

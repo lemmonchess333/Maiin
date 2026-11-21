@@ -28,6 +28,7 @@ import { toast } from "@/lib/toast";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
+import { layoutKey } from "@/lib/sessionPages";
 import { useUid } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -333,8 +334,9 @@ export default function Layout() {
         {/* Keyed by path, so /user/a to /user/b mounts a fresh page, but
             with no fade: a page arrives at once, as a native tab does,
             and PageShell's content starts settled for the same reason
-            (DESIGN_GUIDE §14h). */}
-        <div key={location.pathname}>
+            (DESIGN_GUIDE §14h). Train and its session pages share a key,
+            so the engine they share stays mounted (`layoutKey`). */}
+        <div key={layoutKey(location.pathname)}>
           <Suspense
             fallback={
               <PageContentSkeleton

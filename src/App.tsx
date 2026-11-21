@@ -187,7 +187,14 @@ const SettingsHiddenPosts = lazyRetry(
   () => import("@/pages/settings/SettingsHiddenPosts")
 );
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
+// Train and the session pages under it share one programme engine, held
+// by this route (TrainWk1 call 2).
+const ProgramEngineRoute = lazyRetry(
+  () => import("@/features/program/ProgramEngineRoute")
+);
 const Program = lazyRetry(() => import("@/pages/Program"));
+const LiftSession = lazyRetry(() => import("@/pages/LiftSession"));
+const RunSession = lazyRetry(() => import("@/pages/RunSession"));
 const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
@@ -199,6 +206,7 @@ const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
+const Circuit = lazyRetry(() => import("@/pages/Circuit"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 // Soc15 call 3: the weekly league, opened from its card on Social.
@@ -935,14 +943,43 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Train, a lift's page and a run's page, under the
+                            one engine they share (TrainWk1 call 2). Layout
+                            keys the three alike (`layoutKey`), so the engine
+                            stays mounted between them. */}
                         <Route
                           path="/program"
                           element={
                             <RouteErrorBoundary>
-                              <Program />
+                              <ProgramEngineRoute />
                             </RouteErrorBoundary>
                           }
-                        />
+                        >
+                          <Route
+                            index
+                            element={
+                              <RouteErrorBoundary>
+                                <Program />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/lift/:day"
+                            element={
+                              <RouteErrorBoundary>
+                                <LiftSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/run/:date"
+                            element={
+                              <RouteErrorBoundary>
+                                <RunSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                        </Route>
                         <Route
                           path="/program/plan"
                           element={
@@ -1068,6 +1105,15 @@ function SignedInRoutes({
                         element={
                           <RouteErrorBoundary>
                             <Run />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      {/* Circuit mode (Circ1): full screen, as a run is. */}
+                      <Route
+                        path="/circuit"
+                        element={
+                          <RouteErrorBoundary>
+                            <Circuit />
                           </RouteErrorBoundary>
                         }
                       />

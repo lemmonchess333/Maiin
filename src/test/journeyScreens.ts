@@ -15,6 +15,8 @@
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
  *   title and the tab bar: `journeyScreens.test.tsx`.
+ * - A sport added or removed in Settings: `AddLiftingFlow.test.tsx`,
+ *   `RunPlanSettings.test.tsx` and `ProgrammeSettings.test.tsx`.
  */
 import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -77,6 +79,23 @@ export const SETUP_OPTIONS = {
 
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =
   (typeof SETUP_OPTIONS)[Question][number];
+
+/** A sport added or removed after setup (TrainWk1 step 6): Lift plan's Add
+ *  lifting (`AddLiftingFlow`, setup's questions under `SETUP`'s names),
+ *  Run plan's Add running, and each editor's Stop and its confirmation
+ *  (`StopSportDialog`). */
+export const SPORT_CHANGE = {
+  liftPlan: "/settings/lift-plan",
+  runPlan: "/settings/run-plan",
+  addLiftingQuestion: "How often will you lift?",
+  addLifting: "Add lifting",
+  addRunningQuestion: "How much do you run now?",
+  addRunning: "Add running",
+  stopLifting: "Stop lifting",
+  stopLiftingAsked: "Stop lifting?",
+  stopRunning: "Stop running",
+  stopRunningAsked: "Stop running?",
+} as const;
 
 /** The workout screen (`WorkoutSession`), from Train's Start workout. */
 export const WORKOUT = {

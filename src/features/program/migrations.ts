@@ -56,6 +56,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+import { isRetiredRunMode } from "./runModeResolution";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 
 /**
@@ -493,6 +494,14 @@ export function migrateProgramState(
   // time), and an older build cannot know what a newer one's shape means.
   if ((state.programSchemaVersion ?? 1) > CURRENT_PROGRAM_SCHEMA_VERSION) {
     return state;
+  }
+  // A plan of the run mode Run9 (3a) retired, "structured", is free
+  // running, which has no run plan and no planned runs (App1 Q25). The
+  // loader cleared these as it met them; one left over is cleared as it is
+  // read, and the loader stores what this returns.
+  if (isRetiredRunMode(state.runPlan?.mode)) {
+    const { runPlan: _retired, ...freeRunning } = state;
+    return migrateProgramState({ ...freeRunning, runDays: [] }, weekStart);
   }
 
   const normalizedWeekStart = localWeekKey(parseLocalDate(weekStart));
