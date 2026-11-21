@@ -9985,6 +9985,15 @@ exports.onGoalSpaceEventCreated = functions
  * createNotification holds the block check and each recipient's switch,
  * and skips an account that is being deleted.
  */
+/** A follow request, or a direct follow, made again within a day of the
+ *  last one the person was told about tells them nothing new
+ *  (createNotification's `quietForMs`): no second push, and the row is not
+ *  made unread again. A request can be cancelled and made again, and a
+ *  follow undone and made again, as often as a client can write; each
+ *  request was pushed until the person blocked. Tropos heuristic: a day,
+ *  the same window as the props bundle's once a day. */
+const FOLLOW_NOTICE_QUIET_MS = 24 * 60 * 60 * 1000;
+
 async function sendFollowNotice({
   toUid,
   fromUid,
@@ -10011,6 +10020,13 @@ async function sendFollowNotice({
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
+      // A request made by joining from an invite is told whatever came
+      // before it: it is the one notice of the join, and its words differ.
+      // A direct follow too: unfollowing and following again made the
+      // row unread each time (it is not pushed, and is off by default).
+      ...((type === "follow_request" || type === "follow") && !fromInvite
+        ? { quietForMs: FOLLOW_NOTICE_QUIET_MS }
+        : {}),
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {
