@@ -390,7 +390,7 @@ export default function ExercisePicker({
                 >
                   {/* The question keeps 8em beside its two answers, or
                       the answers go under it. */}
-                  <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-muted">
+                  <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-muted chip-edge">
                     <p className="min-w-[min(100%,8em)] flex-1 text-sm text-foreground">
                       Discard {newlySelectedCount} selections?
                     </p>
@@ -610,7 +610,7 @@ export default function ExercisePicker({
                 </div>
                 <div className="border-t border-border/30 px-4 pt-3 pb-4">
                   {pendingProgressName ? (
-                    <div className="rounded-xl bg-muted p-3">
+                    <div className="rounded-xl bg-muted p-3 chip-edge">
                       <p
                         ref={progressPromptRef}
                         tabIndex={-1}
@@ -732,7 +732,7 @@ function ExerciseRow({
         "w-full flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl border transition-colors min-h-[64px]",
         isSelected
           ? "bg-lifting/8 border-lifting/40"
-          : "bg-card border-border/40"
+          : "bg-card border-border/40 dark:card-shadow dark:border-transparent"
       )}
     >
       {/* Body → detail sheet (owner request 2026-09-02: tap to SEE it). */}

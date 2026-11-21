@@ -1531,6 +1531,51 @@ need an iPhone.
       and nothing moves as the score and the range card arrive, at the
       default text size and at a larger one.
 
+## The workout's docked cards, frosted over the list (DS6 step 5, 2026-11-18)
+
+Affects: the workout screen's dock (`WorkoutSession.tsx`: the new best and
+the rest card, `CompactRestTimer.tsx`, `NewBestMoment.tsx`). The set list
+now runs on under the dock, which floats over its foot, frosted (the
+card's colour at 94% on light and 90% on dark over a blur), and the list
+keeps the dock's height as room at its end and as scroll padding. The
+manual Start rest timer (auto-start off) stays under the list in the flow.
+The unit tests pin the structure, the order of the writes and the
+contrast floors; the captures were the real cards in a harness page on a
+desktop Chrome. Scrolling, the blur's cost and `scrollIntoView` with
+scroll padding in WebKit are for a phone.
+
+- [ ] **The current set is never under a card.** On a TestFlight build,
+      start a lift with five or more sets on the first exercise and tick
+      sets one by one. Passing: after each tick the next set's row is in
+      view above the rest card, never behind it, and nothing above the
+      set table moves when the rest card arrives.
+- [ ] **The last row scrolls clear.** With a rest running, scroll the list
+      to its end. Passing: Add exercise and the last row can be scrolled
+      above the rest card and tapped.
+- [ ] **Nothing jumps when a card leaves.** Scroll the list to its end
+      with the rest card up, then let the rest end (or wait out a new
+      best). Passing: the rows stay where they are until you scroll; the
+      room under them goes once you do.
+- [ ] **What is behind is blurred.** Scroll the set table slowly under the
+      rest card in both themes. Passing: the rows show through only as a
+      soft blur, every word on the card reads as before, and in dark mode
+      the card keeps its lighter top edge.
+- [ ] **Taps go where they look.** With the rest card up, tap a row's
+      check in the strip of list showing between the new best and the rest
+      card, and beside the cards. Passing: the row takes the tap; the
+      cards' buttons (+15 s, End rest, Undo) take theirs.
+- [ ] **Large text on a small phone.** At the largest standard text size
+      on a 320 pt phone (or Display Zoom), tick a set that is a new best.
+      Passing: both cards show whole or the dock scrolls inside itself,
+      and the exercise strip at the top stays uncovered.
+- [ ] **Reduce Transparency.** Once #3398 is in the build (it sets the
+      attribute this rule reads), turn on Settings, Accessibility, Display
+      & Text Size, Reduce Transparency, and go back to a workout with a
+      rest running. Passing: both cards are solid, with no blur.
+- [ ] **Frames.** Scroll a long set table under the rest card. Passing:
+      no stutter; if there is, the cards go back to solid with their edge
+      (DS6's named risk).
+
 ## Race plans the rollover dropped end on the server (2026-10-10)
 
 Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
@@ -3338,6 +3383,25 @@ sandbox Pro to nobody. Production purchases are unaffected.
       RevenueCat promotional grant does not grant Pro. Comps are written in
       Firestore directly.
 
+## A website subscription's warning before deletion (security audit, 2026-11-18)
+
+Affects: Settings → Account → Delete account (`AccountSection.tsx`). An
+account with a Pro subscription bought on the website now sees "Cancel
+your website subscription first" before the deletion, because deleting
+the account does not cancel it. Only a real website purchase shows it.
+
+- [ ] **The warning shows.** On an account that bought Pro on the website
+      (a sandbox purchase on an allow-listed uid will do), tap Delete
+      account. Passing: the warning shows, not the deletion's own dialog.
+- [ ] **Manage subscription opens the right page,** on the web and on the iPhone:
+      RevenueCat's billing page for that subscription, where it can be
+      cancelled. Then Delete anyway leads to the usual deletion. A website
+      subscription already cancelled, or a lifetime purchase, shows no warning.
+- [ ] **The deletion still cancels nothing on the website.** Until the
+      server cancels a website subscription itself (audit O3: it needs a
+      RevenueCat secret key for its API v2), check after a test deletion
+      that RevenueCat shows the subscription as the person left it.
+
 ## Purchases on iPad, iPhone-only, the paywall's prices (2026-10-04)
 
 Affects: `src/lib/purchaseProvider.ts` (`isNativeIOS` reads the native
@@ -4786,6 +4850,14 @@ of thing a phone's screen and WebKit decide.
       streak chip and the "Swap" style pills have one too, and no card has
       a doubled line. At the lowest screen brightness the cards still part
       from the page.
+- [ ] **The edges reach every card (2026-11-18).** In dark mode, open
+      Settings and a few of its sections, Social's People, a profile's
+      followers, Progress (the charts and PRs), the badges, a run's setup,
+      a Circle, the league's standings and a challenge card. Passing:
+      every card and tile has the thin lighter line along its top (on a
+      challenge card, over the medal band too), none has both a grey
+      outline and the line, a chosen option keeps its coloured outline,
+      and in light mode they look as they did.
 - [ ] **The tracks read as slots.** On Home, the week's rest days and the
       empty part of each This week bar are darker than the card, and a
       day's colour or a bar's fill stands out more than before. Tap a day:
@@ -4794,6 +4866,42 @@ of thing a phone's screen and WebKit decide.
 - [ ] **Focus is not lost.** With a keyboard attached (or on the web
       build), Tab to a "Swap" style pill in dark mode. Passing: the purple
       focus ring shows, with the pill's edge still under it.
+
+## The tab bar's rim, the fade under it and Reduce Transparency (DS6 step 3, 2026-11-18)
+
+Affects: the tab bar on every tab (`.bottom-nav-frost`, the new
+`.bottom-nav-frame::before` fade) and Reduce Transparency, which WebKit
+cannot see by itself and now reaches the page through the app's own
+`AccessibilityPrefsPlugin` (`src/lib/reducedTransparency.ts`). The
+captures were the real tab bar in a harness page on a desktop Chrome; a
+phone's safe area, its blur and its brightness are for a phone to show.
+
+- [ ] **Nothing reads below the bar.** On a TestFlight build, scroll Home,
+      Food and Social so text passes under the tab bar. Passing: no words
+      can be read in the gap under the bar or over the home indicator, the
+      bar's upper half still shows a frosted blur of what passes behind,
+      and every tab can be tapped where it could before.
+- [ ] **The rim shows.** In dark mode at the lowest screen brightness,
+      look at the bar over a card and over the bare page. Passing: a thin
+      lighter line runs along the bar's top edge, as on the cards.
+- [ ] **Reduce Transparency.** Settings → Accessibility → Display & Text
+      Size → Reduce Transparency on, then back to Tropos without closing
+      it. Passing: the bar is solid with no blur. Turn it off and return:
+      the bar is frosted again, with no relaunch.
+- [ ] **An older iPhone.** On iOS 15, 16 or 17, if one is to hand, scroll
+      under the bar. Passing: the tab names are as readable as on iOS 18,
+      blur or no blur.
+- [ ] **Frames.** Scroll a long Social feed quickly. Passing: the bar and
+      the page move without stutter. If they stutter, the bar goes back to
+      solid with its rim (DS6's named risk).
+- [ ] **Still blurred under Reduce Transparency (follow-up, not a
+      check).** With the setting on, these keep a backdrop blur, since
+      they predate the attribute: a Space's hero chips (`Space.tsx`,
+      `SpacesDirectory.tsx`), a post's comment bar
+      (`ActivityPostComments.tsx`), History's chip row and the run map's
+      chips (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
+      `GhostDeltaChip`, `RunMap.tsx`). Each wants the same solid fallback;
+      tick this when they have it.
 
 ## Motion 14 under every animation (2026-11-11)
 
@@ -4819,6 +4927,35 @@ are checked on the first TestFlight build that carries it.
 - [ ] **Reduce Motion.** With Reduce Motion on in iOS Settings, repeat
       the first check. Passing: sheets and screens still appear and
       close, with a fade in place of the slide.
+
+## Glass toasts, and the sheet's lit rim and handle (DS6 step 4, 2026-11-18)
+
+Affects: every toast (`ToastProvider`: the card's colour at 94% on
+light and 90% on dark over a static blur, the lit edge on dark) and every
+sheet (`BottomSheet`, the sheets that draw their own handle, and Train's
+plan options sheet: a hairline of light along the top on dark, and a grab
+handle in the secondary grey at 45%). Sheets stay solid: a blur under
+them measured as nothing. The captures were the real components in a
+harness page on a desktop Chrome at 1x, the scale at which it draws a
+backdrop blur.
+
+- [ ] **A toast over a busy screen.** On a TestFlight build, delete a meal
+      on Food so its Undo toast shows over the diary, in both themes.
+      Passing: the toast's words read as clearly as before, what is behind
+      it shows only as a soft blur, and in dark mode a thin lighter line
+      runs along its top edge.
+- [ ] **Two toasts.** Trigger two toasts in a row (a deleted meal, then
+      another). Passing: the one behind does not show through the front
+      one's words.
+- [ ] **An older iPhone.** On iOS 15, 16 or 17, if one is to hand, show a
+      toast. Passing: it reads as well as on iOS 18, blur or no blur.
+- [ ] **Reduce Transparency.** With it on (Settings → Accessibility →
+      Display & Text Size), show a toast. Passing: the toast is solid.
+      This needs #3398's plugin on the build.
+- [ ] **Sheets.** Open the streak's sheet from Home and an exercise's
+      menu in a workout, in dark mode. Passing: a thin lighter line
+      follows the sheet's rounded top, no sheet shows two lines there, and
+      the grab handle can be seen in both themes.
 
 ## Food leads with the calorie wheel (Food11, 2026-11-11)
 
@@ -7024,3 +7161,25 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## Second-review follow-ups: Space photo cap, public post noindex (2026-11-21)
+
+storage.rules now refuses a `space-photos` upload of 7 MB or more (it took
+10 MB, and anything over about 7.86 MB was deleted on arrival because Vision
+could not screen it). `publicPostPage` now answers every `/activity/**`
+request with `X-Robots-Tag: noindex` and a `<meta name="robots"
+content="noindex" />` in the page's head (legal audit §3.2). Unit-tested
+(`functions/__tests__/photoScreen.test.js`,
+`functions/__tests__/publicPost.test.js`); `storage.rules.test.ts` was
+updated but could not run locally (the emulator jar's host is blocked
+there), so CI's emulator job is its first run.
+
+- [ ] **The storage rules suite in CI.** On the pull request, the
+      emulator job's `storage.rules.test.ts` passes, "refuses a photo of
+      7MB or more, which Vision could not screen" among it.
+- [ ] **After Deploy production, the post page's headers.** Passing:
+      `curl -sI https://troposfit.com/activity/<id>`, for a public post's
+      id, shows `x-robots-tag: noindex`, and `curl -s` of the same address has one
+      `<meta name="robots" content="noindex" />` in its head. Pasting the
+      address into Messages or Slack still draws the post's preview
+      ("Sam’s run on Tropos").

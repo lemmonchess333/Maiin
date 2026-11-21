@@ -401,9 +401,11 @@ export default function History() {
     tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
     (typeof window !== "undefined" &&
       PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
-  /* Q84: the score's details (the 0–100 score among them, App1 Q10) and
-     the ranges older than 3 months are Pro. A free account's link to
-     either lands on what it has: the lead's verdict, 3 months. */
+  /* Q84: the score's details (its card and ring, its 12-week chart and
+     average, what it is made of) and the ranges older than 3 months are
+     Pro. The 0–100 number itself is free, small on the lead (the owner,
+     18 November 2026). A free account's link to either lands on what it
+     has: the lead, with its verdict and number, and 3 months. */
   const { isPro } = useSubscription();
   const navigate = useNavigate();
   const openHistoryPro = useCallback(() => {
@@ -1289,9 +1291,11 @@ export default function History() {
                 (the last 7 days). The range below scopes only the
                 history under it, so changing it never moves the lead.
                 App1 Q10: the lead is the verdict and the last 7 days
-                against the usual week; the 0–100 score is the first of
-                its details, opened in place under "Score details", the
-                one place it is shown (Q12). Suppressed in cold-start:
+                against the usual week, with the 0–100 number small
+                beside the window, free (the owner, 18 November 2026).
+                Its details, opened in place under "Score details", are
+                Pro (Q84), and Progress is the one page that shows the
+                score (Q12). Suppressed in cold-start:
                 the "Your first week starts here" card below stands in
                 until the first session is logged. */}
             {filter === "analytics" &&

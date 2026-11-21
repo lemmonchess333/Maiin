@@ -19,8 +19,9 @@ import { readFileSync } from "node:fs";
  */
 
 const ENGINE = readFileSync("functions/performanceEngine.js", "utf8");
-// The sentence sits beside the score, the first of Progress's Score
-// details: the one place the score is shown (Trim1 call 5, App1 Q10).
+// The sentence sits beside the score's ring, the first of Progress's
+// Score details (Trim1 call 5, App1 Q10), which are Pro; the number itself
+// is free, small on the lead above (the owner, 18 November 2026).
 const TAB = readFileSync(
   "src/components/analytics/PerformanceDetails.tsx",
   "utf8"
@@ -77,6 +78,14 @@ describe("the Performance Index explainer names the engine's windows", () => {
     expect(explainer()).not.toMatch(
       new RegExp(`(combining|over|across)[^.]*last ${weeks} weeks`)
     );
+  });
+
+  it("says what the score is made of in your training, never as load", () => {
+    /* "training load, recovery and consistency" named a metric where the
+       person's lifting and running are (house voice: say sessions, kilos
+       and kilometres; no load unless the screen explains it). */
+    expect(explainer()).not.toMatch(/\bload\b/i);
+    expect(explainer()).toContain("how much you lifted and ran");
   });
 
   it("keeps the sentence that stops the score reading as a target", () => {

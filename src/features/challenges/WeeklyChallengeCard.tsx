@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import LeaderboardRow from "@/components/social/LeaderboardRow";
 import { useAuth } from "@/lib/auth";
+import { PEOPLE_COUNT_MIN_VISIBLE, roomPeople } from "@/lib/fillingUp";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -119,7 +120,7 @@ export default function WeeklyChallengeCard({
 
   if (!hasChallenges) {
     return (
-      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: `${THEME.brand}14` }}
@@ -154,6 +155,11 @@ export default function WeeklyChallengeCard({
      the name again. */
   const medal = !!weekly && challengeHasMedal(weekly);
   const showTitle = !(medal && weekly && title === weekly.name);
+  /* Who is in it says nothing while the count is unknown, so the band is
+     given no line for it then: a line it was given would be drawn empty. */
+  const hasPeople =
+    !!weekly &&
+    roomPeople(weekly.participantCount, PEOPLE_COUNT_MIN_VISIBLE) !== null;
   /* Leading, the action is the page's one filled button, and neutral
      (Soc16, §0 rule 12): white on dark, the colour left to the medal and
      the progress. */
@@ -171,7 +177,11 @@ export default function WeeklyChallengeCard({
           challenge={weekly}
           progress={progress}
           timeLeft={timeLeft}
-          meta={<ChallengePeople count={weekly.participantCount} />}
+          meta={
+            hasPeople ? (
+              <ChallengePeople count={weekly.participantCount} />
+            ) : undefined
+          }
         />
       )}
       <div className="p-4">

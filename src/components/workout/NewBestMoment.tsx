@@ -88,9 +88,12 @@ export default function NewBestMoment({
           <motion.div
             key={moment.setKey}
             data-testid="new-best-moment"
-            initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={reducedMotion ? undefined : { opacity: 0, scale: 0.98 }}
+            // A fade, no scale: in the workout's dock the card is frosted,
+            // and a blur is never animated (DS6, §14o); scaling it would
+            // redraw the blur on every frame.
+            initial={reducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reducedMotion ? undefined : { opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
             className={cardClasses({
               className: cn(
