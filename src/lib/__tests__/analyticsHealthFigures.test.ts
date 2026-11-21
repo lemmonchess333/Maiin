@@ -30,10 +30,12 @@
  * decision.
  *
  * What it cannot see: a figure passed under an allowed name (a run's length
- * as Food's `durationMs`, a set count as Lifecycle's `count`), or a cast at
- * a call site that slips past the interface. Those are for review.
+ * as Food's `durationMs`, a set count as Lifecycle's `count`), a cast at a
+ * call site that slips past the interface, or what a spread
+ * (`{ ...dimensions }`) or an object passed by name carries, which the
+ * call-site scan below cannot read. Those are for review.
  *
- * Nor does anything a person typed or named go (the second describe below):
+ * Nor does anything a person typed or named go (the last describe below):
  * a food, meal, exercise, routine, segment, Space, Circle, shoe or route is
  * known by its name, a search by its text, and another person by their uid.
  * A saved food's id is its name, lower-cased (`chicken_and_rice`), and went
@@ -491,18 +493,32 @@ describe("no health figure in an analytics event", () => {
   });
 });
 
-/** Every call to a surface module's `track`, under whatever name the file
- *  imports it as, with the text of its arguments. */
-const calls = files.flatMap((f) => {
-  const aliases = [
-    ...f.code.matchAll(
-      /import\s*\{([^}]*)\}\s*from\s*"(?:\.\/|@\/lib\/)\w+Analytics"/g
-    ),
-  ]
+/** An import from a surface module, by any path: `@/lib/foodAnalytics`,
+ *  `./foodAnalytics`, `../../lib/foodAnalytics`. */
+const SURFACE_IMPORT = new RegExp(
+  `import\\s*\\{([^}]*)\\}\\s*from\\s*"(?:[^"]*/)?(?:${schema
+    .map((s) => s.module)
+    .join("|")})"`,
+  "g"
+);
+
+/** The names `code` imports a surface module's `track` under:
+ *  `import { track as trackFoodEvent } from "@/lib/foodAnalytics"`. */
+function trackAliases(code: string): string[] {
+  return [...code.matchAll(SURFACE_IMPORT)]
     .flatMap((m) => m[1].split(","))
     .map((part) => /^track(?:\s+as\s+(\w+))?$/.exec(part.trim()))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => m[1] ?? "track");
+}
+
+/** Every call to a surface module's `track`, under whatever name the file
+ *  imports it as, with the text of its arguments. An argument the scan
+ *  cannot read is passed by name (`track("checkout_started", dimensions)`)
+ *  or spread (`{ ...dimensions, pending }`): what those carry is held by
+ *  the metadata interface, and by review. */
+const calls = files.flatMap((f) => {
+  const aliases = trackAliases(f.code);
   return aliases.flatMap((alias) =>
     [...f.code.matchAll(new RegExp(`\\b${alias}\\(`, "g"))].map((m) => {
       const start = (m.index ?? 0) + m[0].length;
@@ -542,6 +558,32 @@ describe("nothing a person typed in an analytics event", () => {
     expect(passesKey("{\n  favouriteId,\n  useCount }", "favouriteId")).toBe(
       true
     );
+  });
+
+  it("finds track under any import path, alias or none", () => {
+    for (const from of [
+      "@/lib/foodAnalytics",
+      "./foodAnalytics",
+      "../foodAnalytics",
+      "../lib/foodAnalytics",
+      "../../lib/foodAnalytics",
+      "../../../lib/foodAnalytics",
+    ]) {
+      expect(
+        trackAliases(`import { track as trackFood } from "${from}";`),
+        from
+      ).toEqual(["trackFood"]);
+      expect(
+        trackAliases(
+          `import {\n  track,\n  type FoodEvent,\n} from "${from}";`
+        ),
+        from
+      ).toEqual(["track"]);
+    }
+    // Not a surface module: its `track` is someone else's.
+    expect(
+      trackAliases(`import { track } from "./activationTracker";`)
+    ).toEqual([]);
   });
 
   it("no surface module declares a parameter that carries one", () => {
