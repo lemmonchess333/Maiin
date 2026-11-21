@@ -139,7 +139,7 @@ describe("globToRegExp", () => {
     ["src/**/*.{ts,tsx}", "src/a.ts", true],
     ["src/**/*.{ts,tsx}", "src/a/b/c.tsx", true],
     ["src/**/*.{ts,tsx}", "src/a.css", false],
-    ["**/__tests__/**", "src/lib/__tests__/x.test.ts", true],
+    ["**/__tests__/**", "src/lib/__tests__/gps.test.ts", true],
     ["**/__tests__/**", "src/lib/x.ts", false],
     [
       "src/lib/__tests__/*Guard*.test.ts",
