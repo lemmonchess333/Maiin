@@ -295,7 +295,12 @@ describe("the lead names its window (App1 Q13)", () => {
       week("2026-08-02", 72, "high"),
     ]);
     renderSection();
-    expect(within(lead()).getByText("7 days to 2 Aug")).toBeInTheDocument();
+    // The day carries its year once the clock has left 2026 (unit-future
+    // runs 90 days ahead).
+    const lastDay = new Date().getFullYear() === 2026 ? "2 Aug" : "2 Aug 2026";
+    expect(
+      within(lead()).getByText(`7 days to ${lastDay}`)
+    ).toBeInTheDocument();
     expect(screen.queryByText("Last 7 days")).toBeNull();
   });
 

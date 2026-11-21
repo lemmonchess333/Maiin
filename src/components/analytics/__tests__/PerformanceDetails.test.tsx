@@ -151,9 +151,11 @@ describe("PerformanceDetails: the score (App1 Q10)", () => {
 
   it("labels its window the 7 days, never this week (Q13)", () => {
     renderWeeks(warm());
-    // The newest score here is weeks old: named by its last day.
+    // The newest score here is weeks old: named by its last day, with its
+    // year once the clock has left 2026 (unit-future runs 90 days ahead).
+    const lastDay = new Date().getFullYear() === 2026 ? "2 Aug" : "2 Aug 2026";
     expect(
-      within(scoreCard()).getByText("7 days to 2 Aug · out of 100")
+      within(scoreCard()).getByText(`7 days to ${lastDay} · out of 100`)
     ).toBeInTheDocument();
     expect(screen.queryByText(/this week/i)).toBeNull();
   });
