@@ -76,10 +76,13 @@ permissions:
 
 jobs:
   testflight:
-    # macos-14 is deprecated (actions/runner-images#13518). macos-26 carries
-    # the current Xcode as its default, which is what App Store Connect
-    # accepts uploads from; the Archive step prints the version it used.
-    runs-on: macos-26
+    # Xcode 27.1 and its iOS 27.1 SDK, which the iPhone Duo needs to show
+    # the app on its whole display, and which App Store Connect requires
+    # (the iOS 27 SDK) for every upload from April 2027. GitHub's xcode-27
+    # image carries it; macos-26 tops out at Xcode 26.6. The step below
+    # selects it by name, and the Archive step prints the version it used.
+    # (macos-14, the first image, is deprecated: actions/runner-images#13518.)
+    runs-on: xcode-27
     # The production environment holds the release credentials: only a
     # job that names it can read its secrets, and its branch rule decides
     # where such a job may run. Repository secrets still reach this job.
@@ -109,6 +112,39 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The iOS SDK the app links decides what an iPhone Duo shows it: only
+      # a build with the iOS 27.1 SDK uses the whole display; anything older
+      # runs there in compatibility mode (docs/ios/iphone-duo.md, owner
+      # decision A, 18 November 2026). The xcode-27 image carries several
+      # Xcodes and its default is not 27.1, so this selects 27.1 by name
+      # (the final release, a point release, or its release candidate) and
+      # fails rather than build with another.
+      - name: Select Xcode 27.1
+        run: |
+          set -euo pipefail
+          XCODE=$(python3 scripts/verify_ios_xcode.py --want 27.1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          SDK=$(xcrun --sdk iphoneos --show-sdk-version)
+          python3 scripts/verify_ios_xcode.py --want 27.1 --sdk "$SDK"
+          # Building for iOS (asset catalogs, storyboards) and for the
+          # embedded Watch app needs the selected Xcode's own platforms,
+          # which an image may carry only for its default Xcode. Fetched
+          # here when missing, not 40 minutes into the archive.
+          for PLATFORM in iOS watchOS; do
+            if xcrun simctl list runtimes | grep -q "^$PLATFORM 27\.1"; then
+              echo "$PLATFORM 27.1 platform present"
+            else
+              echo "Downloading the $PLATFORM platform for $(basename "$XCODE")"
+              xcodebuild -downloadPlatform "$PLATFORM"
+            fi
+          done
+          xcrun simctl list runtimes
+          {
+            echo "Xcode: $(basename "$XCODE") ($(xcodebuild -version | tr '\n' ' '))"
+            echo "iOS SDK: $SDK; macOS $(sw_vers -productVersion)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # One explicit dispatch choice makes a build standard or a pilot. A
       # standard build (the default, and the committed Release project)
