@@ -32,8 +32,11 @@
  * BUCKET is the project's default Storage bucket as Firebase console →
  * Storage shows it, without `gs://` (`PROJECT_ID.firebasestorage.app` or
  * `PROJECT_ID.appspot.com`; the app's own `VITE_FIREBASE_STORAGE_BUCKET`,
- * which is where older builds uploaded). A bucket that does not exist
- * stops the run before any meal is read.
+ * which is where older builds uploaded). Each meal's `photoUrl` names the
+ * bucket its photo is in, and the run reads every meal first: if any names
+ * another bucket, it stops before deleting or writing anything, a dry run
+ * included, and says which bucket to name instead. A bucket that does not
+ * exist stops it too.
  *
  * The Actions tab runs it too, with the production credentials and no
  * terminal: .github/workflows/purge-legacy-food-photos.yml (a dry run
@@ -46,21 +49,22 @@
  *
  * Without `--apply` it is a dry run that deletes and writes nothing: it
  * reports how many objects (and bytes) are under the prefix and how many
- * meals hold each field. With `--apply` it deletes the objects first, a page
- * of 1000 at a time, a missing object counted as done; then the fields, one
- * batch per page of 200 meals, printing a checkpoint after each page (the
- * counts so far and the last meal's path). An object it cannot delete
- * stops the run before any meal is written. A batch is all or nothing, so a
- * page that fails (a meal deleted while the run reached it, say) writes
- * nothing, and running again, from the start or with `--after` the last
- * checkpoint's path, finishes it: the objects already deleted are not
- * listed again, and a meal with neither field is not written. The output is
- * counts and the checkpoint path, nothing else about an account.
+ * meals hold each field. With `--apply` it checks the meals, then deletes
+ * the objects, a page of 1000 at a time, a missing object counted as done;
+ * then the fields, one batch per page of 200 meals, printing a checkpoint
+ * after each page (the counts so far and the last meal's path). An object
+ * it cannot delete stops the run before any meal is written. A batch is all
+ * or nothing, so a page that fails (a meal deleted while the run reached
+ * it, say) writes nothing, and running again, from the start or with
+ * `--after` the last checkpoint's path, finishes it: the objects already
+ * deleted are not listed again, and a meal with neither field is not
+ * written. The output is counts and the checkpoint path, nothing else about
+ * an account.
  *
- * Every `meals` document is read rather than queried for the fields: a
- * collection-group query on `photoUrl` needs an index this project does not
- * keep, for a field nothing else asks about. Only the two fields are fetched
- * (`select`). Each meal written fires `onMealWritten` once, which returns
+ * Every `meals` document is read (twice with `--apply`: the check, then
+ * the writes) rather than queried for the fields: a collection-group query
+ * on `photoUrl` needs an index this project does not keep, for a field
+ * nothing else asks about. Only the two fields are fetched (`select`). Each meal written fires `onMealWritten` once, which returns
  * before reading anything: removing a photo changes nothing a badge reads.
  *
  * Account deletion keeps its sweep of `food-photos/{uid}/` (an empty prefix
@@ -134,8 +138,80 @@ async function purgeObjects({ bucket, apply, objectPageSize, report }) {
 }
 
 /**
+ * The bucket a meal's download URL names
+ * (`https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{object}`), or
+ * null when the value is not one. A path (`photoPath`) names no bucket.
+ */
+function photoUrlBucket(photoUrl) {
+  if (typeof photoUrl !== "string" || !photoUrl) return null;
+  let url;
+  try {
+    url = new URL(photoUrl);
+  } catch {
+    return null;
+  }
+  if (url.hostname !== "firebasestorage.googleapis.com") return null;
+  const match = /^\/v0\/b\/([^/]+)\/o\//.exec(url.pathname);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every page of meals from `after`, at most `maxPages` of them, handed to
+ * `visit` with the documents that are a person's meal and the count of
+ * those that are not. Returns where it stopped.
+ */
+async function eachMealPage({ firestore, after, maxPages, visit }) {
+  const query = firestore
+    .collectionGroup("meals")
+    .orderBy(FieldPath.documentId())
+    .select(...MEAL_PHOTO_FIELDS)
+    .limit(PAGE_SIZE);
+  let cursor = after ? firestore.doc(after) : null;
+  let pages = 0;
+  while (pages < maxPages) {
+    const page = await (cursor ? query.startAfter(cursor) : query).get();
+    if (page.docs.length === 0) break;
+    const meals = page.docs.filter((doc) => MEAL_PATH.test(doc.ref.path));
+    cursor = page.docs[page.docs.length - 1].ref;
+    pages += 1;
+    await visit({
+      meals,
+      foreign: page.docs.length - meals.length,
+      cursor: cursor.path,
+      pages,
+    });
+    if (page.docs.length < PAGE_SIZE) break;
+  }
+}
+
+/** Why the run stops when a meal's photo is in another bucket. */
+function otherBucketError(buckets, bucketName) {
+  const named = [...buckets].sort();
+  return new Error(
+    `The meals' photos are in ${named.join(", ")}, not ${bucketName}. Nothing was deleted or written: run again with --bucket ${named[0]}.`
+  );
+}
+
+/**
  * `fieldDelete` is `FieldValue.delete()` and `bucket` a Storage bucket,
  * passed in so the logic runs against fakes without the Admin SDK.
+ *
+ * Three steps. First every meal is read, counted and checked: a meal whose
+ * download URL names a bucket other than `bucket` stops the run before
+ * anything is deleted or written, a dry run included. A bucket that exists
+ * but is the wrong one lists nothing under the prefix and answers no 404,
+ * so without this an apply would strip every meal of the only record of
+ * where its photo is, and its recount would pass. The check reads the
+ * meals, never the counts, so a run again after an apply that stopped
+ * part-way (objects gone, meals not yet stripped) goes on. Then the
+ * objects; then, with --apply, the fields, a batch per page. Nothing
+ * writes a meal's photoUrl any more, so the meals the second pass strips
+ * are the ones the first pass checked.
  */
 async function purgeLegacyFoodPhotos({
   firestore,
@@ -160,49 +236,64 @@ async function purgeLegacyFoodPhotos({
     cursor: after,
     dryRun: !apply,
   };
+  const checkpoint = (cursor, pages) => {
+    report.cursor = cursor;
+    report.pages = pages;
+    return onPage({ ...report, fields: { ...report.fields } });
+  };
 
-  // The photos first: they are what the purge is for, and a run that stops
-  // part-way leaves the fields pointing at nothing, which no build shows.
+  const otherBuckets = new Set();
+  await eachMealPage({
+    firestore,
+    after,
+    maxPages,
+    visit: async ({ meals, foreign, cursor, pages }) => {
+      report.foreign += foreign;
+      for (const doc of meals) {
+        report.scanned += 1;
+        const data = doc.data() || {};
+        const fields = storedPhotoFields(data);
+        if (fields.length === 0) continue;
+        report.holding += 1;
+        for (const field of fields) report.fields[field] += 1;
+        const named = photoUrlBucket(data.photoUrl);
+        if (named && named !== bucket.name) otherBuckets.add(named);
+      }
+      // A dry run's checkpoints are this pass's; an apply's, the writes'.
+      if (!apply) await checkpoint(cursor, pages);
+    },
+  });
+  if (otherBuckets.size > 0) throw otherBucketError(otherBuckets, bucket.name);
+
+  // The photos before the fields: a run that stops part-way leaves fields
+  // pointing at nothing, which no build shows.
   await purgeObjects({ bucket, apply, objectPageSize, report });
 
-  const query = firestore
-    .collectionGroup("meals")
-    .orderBy(FieldPath.documentId())
-    .select(...MEAL_PHOTO_FIELDS)
-    .limit(PAGE_SIZE);
-  let cursor = after ? firestore.doc(after) : null;
-  while (report.pages < maxPages) {
-    const page = await (cursor ? query.startAfter(cursor) : query).get();
-    if (page.docs.length === 0) break;
-    const batch = apply ? firestore.batch() : null;
-    let writes = 0;
-    for (const doc of page.docs) {
-      if (!MEAL_PATH.test(doc.ref.path)) {
-        report.foreign += 1;
-        continue;
+  if (!apply) return report;
+  await eachMealPage({
+    firestore,
+    after,
+    maxPages,
+    visit: async ({ meals, cursor, pages }) => {
+      const batch = firestore.batch();
+      let writes = 0;
+      for (const doc of meals) {
+        const data = doc.data() || {};
+        const fields = storedPhotoFields(data);
+        if (fields.length === 0) continue;
+        batch.update(
+          doc.ref,
+          Object.fromEntries(fields.map((field) => [field, fieldDelete]))
+        );
+        writes += 1;
       }
-      report.scanned += 1;
-      const fields = storedPhotoFields(doc.data() || {});
-      if (fields.length === 0) continue;
-      report.holding += 1;
-      for (const field of fields) report.fields[field] += 1;
-      if (!batch) continue;
-      batch.update(
-        doc.ref,
-        Object.fromEntries(fields.map((field) => [field, fieldDelete]))
-      );
-      writes += 1;
-    }
-    if (writes > 0) {
-      await batch.commit();
-      report.stripped += writes;
-    }
-    cursor = page.docs[page.docs.length - 1].ref;
-    report.cursor = cursor.path;
-    report.pages += 1;
-    await onPage({ ...report, fields: { ...report.fields } });
-    if (page.docs.length < PAGE_SIZE) break;
-  }
+      if (writes > 0) {
+        await batch.commit();
+        report.stripped += writes;
+      }
+      await checkpoint(cursor, pages);
+    },
+  });
   return report;
 }
 
@@ -252,6 +343,7 @@ module.exports = {
   FOOD_PHOTO_PREFIX,
   MEAL_PHOTO_FIELDS,
   storedPhotoFields,
+  photoUrlBucket,
   purgeLegacyFoodPhotos,
   parseArgs,
 };

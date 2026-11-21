@@ -18,6 +18,7 @@ const {
   FOOD_PHOTO_PREFIX,
   MEAL_PHOTO_FIELDS,
   storedPhotoFields,
+  photoUrlBucket,
   purgeLegacyFoodPhotos,
   parseArgs,
 } = require("../scripts/purgeLegacyFoodPhotos");
@@ -30,7 +31,10 @@ const BUCKET = "demo-tropos.firebasestorage.app";
  * a page at a time (`autoPaginate: false` hands back the next query), and
  * a file's delete with `ignoreNotFound` treats a missing object as done.
  */
-function fakeBucket(objects, { failDelete = null, missing = false } = {}) {
+function fakeBucket(
+  objects,
+  { failDelete = null, missing = false, name = BUCKET } = {}
+) {
   const stored = new Map(Object.entries(objects));
   const deleteCalls = [];
   const file = (name) => ({
@@ -49,7 +53,7 @@ function fakeBucket(objects, { failDelete = null, missing = false } = {}) {
     },
   });
   return {
-    name: BUCKET,
+    name,
     stored,
     deleteCalls,
     file,
@@ -331,7 +335,7 @@ describe("purgeLegacyFoodPhotos", () => {
      the purge needs anyway, where asking for the bucket itself
      (bucket.exists) needs storage.buckets.get, which the CI account that
      runs this may not hold. */
-  it("refuses a bucket that does not exist, before reading any meal", async () => {
+  it("refuses a bucket that does not exist, before deleting or writing anything", async () => {
     const bucket = fakeBucket(seededObjects(), { missing: true });
     const fs = seededFirestore();
     await expect(
@@ -357,6 +361,134 @@ describe("purgeLegacyFoodPhotos", () => {
         fieldDelete: DELETE,
       })
     ).rejects.toThrow("storage.objects.list");
+  });
+});
+
+/* A bucket that exists but is not the one older builds uploaded to (the
+   project's appspot.com bucket when uploads went to firebasestorage.app,
+   say) lists nothing under food-photos/ and answers no 404. Stripping the
+   meals then would lose the only record of where the photos are, and the
+   recount would pass. Each meal's download URL names its bucket, so the
+   run checks every one before it deletes or writes anything. It is not a
+   check on counts: a run again after an apply that stopped part-way finds
+   the meals left still naming the right bucket, and goes on. */
+describe("the bucket the meals' photos are in", () => {
+  const OTHER = "demo-tropos.appspot.com";
+
+  it("is read out of a download URL, and nothing else names one", () => {
+    expect(photoUrlBucket(legacyUrl("ana", 1))).toBe(BUCKET);
+    expect(
+      photoUrlBucket(
+        `https://firebasestorage.googleapis.com/v0/b/${OTHER}/o/food-photos%2Fa%2F1.jpg?alt=media`
+      )
+    ).toBe(OTHER);
+    expect(photoUrlBucket("https://example.test/plan.jpg")).toBeNull();
+    expect(photoUrlBucket("data:image/svg+xml,%3Csvg%3E")).toBeNull();
+    expect(photoUrlBucket("not a url")).toBeNull();
+    expect(photoUrlBucket(undefined)).toBeNull();
+  });
+
+  it("strips when every meal's photo is in the bucket named", async () => {
+    const fs = seededFirestore();
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket(seededObjects()),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ objectsDeleted: 3, stripped: 3 });
+  });
+
+  it.each([
+    ["a dry run", false],
+    ["--apply", true],
+  ])(
+    "%s refuses, naming the meals' bucket, when the bucket named is another one, and touches nothing",
+    async (_label, apply) => {
+      const bucket = fakeBucket(seededObjects(), { name: OTHER });
+      const fs = seededFirestore();
+      await expect(
+        purgeLegacyFoodPhotos({
+          firestore: fs,
+          bucket,
+          fieldDelete: DELETE,
+          apply,
+        })
+      ).rejects.toThrow(
+        `The meals' photos are in ${BUCKET}, not ${OTHER}. Nothing was deleted or written: run again with --bucket ${BUCKET}.`
+      );
+      expect(bucket.deleteCalls).toEqual([]);
+      expect(bucket.stored.size).toBe(6);
+      expect(fs.operations).toEqual([]);
+    }
+  );
+
+  it("refuses when one meal among many names another bucket", async () => {
+    const fs = seededFirestore();
+    fs.data.set("users/cy/meals/m9", {
+      ...scannedMeal("cy", 9),
+      photoUrl: `https://firebasestorage.googleapis.com/v0/b/${OTHER}/o/food-photos%2Fcy%2F9.jpg?alt=media`,
+    });
+    const bucket = fakeBucket(seededObjects());
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket,
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow(`The meals' photos are in ${OTHER}, not ${BUCKET}.`);
+    expect(bucket.deleteCalls).toEqual([]);
+    expect(fs.operations).toEqual([]);
+  });
+
+  /* Older builds wrote the URL and the path in one merge, so a meal with a
+     path and no URL is not one they left. A path names no bucket, so it
+     cannot refuse the run: the meal is stripped as before, like any other
+     meal holding a photo field. */
+  it("strips a meal with only photoPath, which names no bucket", async () => {
+    const fs = memoryFirestore({
+      "users/ana/meals/p1": {
+        ...withoutPhoto(scannedMeal("ana", 1)),
+        photoPath: "food-photos/ana/1.jpg",
+      },
+    });
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket({ "food-photos/ana/1.jpg": 1 }),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ objectsDeleted: 1, stripped: 1 });
+    expect(fs.data.get("users/ana/meals/p1")).toEqual(
+      withoutPhoto(scannedMeal("ana", 1))
+    );
+  });
+
+  it("goes on after an apply that stopped part-way, whatever the counts", async () => {
+    const fs = seededFirestore();
+    const bucket = fakeBucket(seededObjects());
+    fs.failures.set("update:users/ben/meals/m3", new Error("NOT_FOUND"));
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket,
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow("NOT_FOUND");
+    // The objects are gone and the meals still name them: 0 objects beside
+    // 3 meals holding a field is what a part-way run leaves, not a sign of
+    // the wrong bucket.
+    expect(bucket.stored.size).toBe(3);
+    fs.failures.clear();
+    const again = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(again).toMatchObject({ objects: 0, holding: 3, stripped: 3 });
   });
 });
 
