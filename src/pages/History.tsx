@@ -1553,7 +1553,6 @@ export default function History() {
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "distance",
                             binKey: b.key,
-                            value: b.distanceM,
                           })
                         }
                         average={
@@ -1666,7 +1665,6 @@ export default function History() {
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "volume",
                             binKey: b.key,
-                            value: b.volumeKg,
                           })
                         }
                         average={

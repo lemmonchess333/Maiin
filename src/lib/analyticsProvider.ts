@@ -141,10 +141,17 @@ function initWeb(app: FirebaseApp): void {
 }
 
 /** The page fields a web event carries, in place of the ones gtag would
- *  read from the address bar. */
-function redactedPage(): { page_location: string; page_referrer: string } {
+ *  read from the address bar and the tab's title. The title is the app's
+ *  name, never `document.title`: during a lift's rest that counts the rest
+ *  down (`restOutside.ts`), a training figure. */
+function redactedPage(): {
+  page_location: string;
+  page_referrer: string;
+  page_title: string;
+} {
   const base = import.meta.env.BASE_URL;
   return {
+    page_title: "Tropos",
     page_location: redactPageUrl(window.location.href, base),
     page_referrer: redactPageReferrer(
       document.referrer,

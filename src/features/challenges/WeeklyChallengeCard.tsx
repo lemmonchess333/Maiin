@@ -226,9 +226,10 @@ export default function WeeklyChallengeCard({
             fullWidth
             loading={busy}
             onClick={changeMembership}
-            aria-label="Join weekly challenge"
             {...actionStyle}
           >
+            {/* Named by its words, which the card's title puts in context
+                (WCAG 2.5.3, Label in Name). */}
             Join challenge
           </Button>
         ) : (

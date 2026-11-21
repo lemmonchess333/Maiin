@@ -31,8 +31,9 @@ type LiftCardExercise = Partial<PricedExercise> &
  * Two actions, two controls. Start begins the session: it deep-links to
  * the day with `start=1`, and Train starts it the way its own Start does.
  * Anywhere else on the hero opens the day in Train to look it over first.
- * A finished or skipped day has no Start; the hero says what happened and
- * still opens the day. A workout already under way offers Resume in
+ * A finished day has no Start; the hero says so and still opens the day.
+ * A skipped lift is not today's: the week lays the next one on the day
+ * (`layOutWeek`), and the day card keeps the skip with its Restore. A workout already under way offers Resume in
  * Start's place (`InProgressStrip`).
  *
  * The picture is the first exercise in the day that has released art,
@@ -76,10 +77,10 @@ export default function LiftCTACard({
    *  (`liftTargets`), as it does for the first-week card. */
   dayTarget: string;
   startTarget: string;
-  /** HOME-ACTION-01: false when the lift slot is already completed/skipped
-   *  (terminal). The card names its status and offers no Start. */
+  /** HOME-ACTION-01: false when the lift is already done (terminal). The
+   *  card names its status and offers no Start. */
   isStartable?: boolean;
-  status?: "none" | "planned" | "completed" | "skipped";
+  status?: "none" | "planned" | "completed";
   /** How the session's timer will rest, so the minutes price it. */
   rest?: RestContext;
   /** The day as Train names it in its week ("Pull B", `liftDayNameIn`).
@@ -104,19 +105,8 @@ export default function LiftCTACard({
 }) {
   const state =
     status ??
-    (nextWorkout.completed
-      ? "completed"
-      : nextWorkout.skipped
-        ? "skipped"
-        : isStartable
-          ? "planned"
-          : "none");
-  const statusLabel =
-    state === "completed"
-      ? "Completed"
-      : state === "skipped"
-        ? "Skipped"
-        : "Needs review";
+    (nextWorkout.completed ? "completed" : isStartable ? "planned" : "none");
+  const statusLabel = state === "completed" ? "Completed" : "Needs review";
 
   const count = nextWorkout.exercises.length;
   const { category } = liftDayTitle(nextWorkout.dayName);
@@ -226,7 +216,7 @@ export default function LiftCTACard({
         </Button>
       )
     ) : (
-      // HOME-ACTION-01: a completed/skipped lift is not launchable —
+      // HOME-ACTION-01: a completed lift is not launchable —
       // say what happened. The hero behind still opens the day.
       <p className="pointer-events-none inline-flex min-h-11 items-center rounded-full bg-muted px-4 text-sm font-semibold text-muted-foreground">
         {statusLabel}

@@ -131,6 +131,11 @@ const exerciseCountShown = () =>
     .find((el) => !el.classList.contains("sr-only"))?.previousElementSibling
     ?.textContent;
 
+/* A compare row is named by its words, the exercise first, then what a
+   tap does (WCAG 2.5.3, Label in Name). */
+const compareRow = (exercise: string) =>
+  new RegExp(`^${exercise} .*, compare with yours$`);
+
 describe("a superset on a lift card (Mob1 call 2)", () => {
   it("tags the exercises done in it, and no others", () => {
     const post = liftPost(
@@ -155,17 +160,17 @@ describe("a superset on a lift card (Mob1 call 2)", () => {
     renderCard(feedItem(post as unknown as Record<string, unknown>));
     expect(
       within(
-        screen.getByRole("button", { name: "Compare your Bench Press" })
+        screen.getByRole("button", { name: compareRow("Bench Press") })
       ).getByText("Superset A")
     ).toBeInTheDocument();
     expect(
       within(
-        screen.getByRole("button", { name: "Compare your Cable Fly" })
+        screen.getByRole("button", { name: compareRow("Cable Fly") })
       ).getByText("Superset A")
     ).toBeInTheDocument();
     expect(
       within(
-        screen.getByRole("button", { name: "Compare your Overhead Press" })
+        screen.getByRole("button", { name: compareRow("Overhead Press") })
       ).queryByText(/^Superset/)
     ).toBeNull();
   });
@@ -180,11 +185,11 @@ describe("a lift card's exercise list", () => {
       "Incline Dumbbell Press",
     ])
       expect(
-        screen.getByRole("button", { name: `Compare your ${name}` })
+        screen.getByRole("button", { name: compareRow(name) })
       ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
-        name: "Compare your Rope Tricep Pushdown",
+        name: compareRow("Rope Tricep Pushdown"),
       })
     ).toBeNull();
     const more = screen.getByRole("link", { name: "+2 more exercises" });
@@ -197,11 +202,11 @@ describe("a lift card's exercise list", () => {
     renderCard(feedItem(PUSH_DAY as unknown as Record<string, unknown>), true);
     expect(
       screen.getByRole("button", {
-        name: "Compare your Overhead Tricep Extension",
+        name: compareRow("Overhead Tricep Extension"),
       })
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("button", { name: /^Compare your / })
+      screen.getAllByRole("button", { name: /, compare with yours$/ })
     ).toHaveLength(5);
     expect(screen.queryByRole("link", { name: /more exercise/ })).toBeNull();
     expect(screen.queryByText("Lateral Raise")).toBeNull();
@@ -216,7 +221,7 @@ describe("a lift card's exercise list", () => {
       })
     );
     expect(
-      screen.getAllByRole("button", { name: /^Compare your / })
+      screen.getAllByRole("button", { name: /, compare with yours$/ })
     ).toHaveLength(3);
     expect(screen.queryByRole("link", { name: /more/ })).toBeNull();
   });

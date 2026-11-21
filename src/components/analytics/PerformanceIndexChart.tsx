@@ -92,21 +92,20 @@ export default function PerformanceIndexChart({ weeks }: Props) {
              onClick on the AreaChart fires when a data-point's
              activeDot is tapped. activePayload[0].payload is the
              tapped week's full record; we only emit chart + binKey
-             + the PI value (not the sub-scores) per the locked
-             event payload.
+             (the week). The score itself is health data and stays
+             out of analytics, as do its sub-scores.
              Recharts' typed MouseHandlerDataParam omits the
              `activePayload` field that exists at runtime — narrow
              via a local cast. */
           onClick={(state) => {
             const s = state as {
-              activePayload?: Array<{ payload?: { week: string; pi: number } }>;
+              activePayload?: Array<{ payload?: { week: string } }>;
             };
             const payload = s.activePayload?.[0]?.payload;
             if (!payload) return;
             trackHistoryEvent("history_chart_tap_attempted", {
               chart: "pi",
               binKey: payload.week,
-              value: payload.pi,
             });
           }}
         >
