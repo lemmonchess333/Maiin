@@ -86,15 +86,17 @@ export function setupHealthConsent(): { version: number } {
 export const HEALTH_CONSENT_COPY = {
   title: "Your health details",
   stored:
-    "Tropos stores your weight, height, injuries, the food you log and the " +
-    "heart rate from your runs, and builds your plan and calorie target " +
-    "from them.",
+    "Tropos stores your weight, height, injuries, steps, the food you log " +
+    "and the heart rate from your runs, and builds your plan and calorie " +
+    "target from them.",
   use: "This is health data. Tropos uses it only for your plan, never for ads.",
   withdraw:
     "You can delete all of it at any time by deleting your account in " +
     "Settings › Account. That also withdraws this agreement.",
   agree: "I agree",
   decline: "Not now",
+  /** The link to the policy, readable before agreeing. */
+  policy: "Privacy Policy",
 } as const;
 
 /** What "Not now" opens: why Tropos cannot work without the details, and
@@ -103,8 +105,8 @@ export const HEALTH_CONSENT_DECLINED_COPY = {
   title: "Your plan needs these details",
   body:
     "Tropos builds your plan and calorie target from your weight, height, " +
-    "injuries, food and runs, so it can’t work without them. You can go " +
-    "back and agree, sign out, or delete your account.",
+    "injuries, steps, food and runs, so it can’t work without them. You " +
+    "can go back and agree, sign out, or delete your account.",
   back: "Go back",
   deleteAccount: "Delete my account",
   signOut: "Sign out",

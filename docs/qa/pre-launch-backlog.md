@@ -35,7 +35,8 @@ server's date.
       build. Passing: setup shows "Your health details" after the kit (a
       lifter) or after the run (a runner), before any body question; Not
       now says why and offers Go back, Delete my account and Sign out, and
-      Go back returns to I agree; finishing setup opens Home with no gate,
+      Go back returns to I agree; Privacy Policy opens the policy and its
+      Back returns to the question; finishing setup opens Home with no gate,
       and the account carries `healthDataConsent` dated when Start my plan
       was tapped.
 - [ ] **An older build is told to update.** On a TestFlight build from

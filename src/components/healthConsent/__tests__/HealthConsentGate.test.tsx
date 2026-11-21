@@ -38,7 +38,7 @@ function Where() {
   );
 }
 
-const onAgreed = vi.fn<() => Promise<void>>();
+const onAgreed = vi.fn<() => Promise<boolean>>();
 const onSignOut = vi.fn<() => Promise<void>>();
 
 function show() {
@@ -67,7 +67,7 @@ const button = (name: string) => screen.getByRole("button", { name });
 
 beforeEach(() => {
   vi.mocked(agreeToHealthData).mockReset().mockResolvedValue("saved");
-  onAgreed.mockReset().mockResolvedValue(undefined);
+  onAgreed.mockReset().mockResolvedValue(true);
   onSignOut.mockReset().mockResolvedValue(undefined);
   vi.mocked(toast.error).mockClear();
 });
@@ -91,10 +91,10 @@ describe("HealthConsentGate", () => {
   });
 
   it("writes the agreement for this account, then reads the account again", async () => {
-    let finish!: () => void;
+    let finish!: (seen: boolean) => void;
     onAgreed.mockImplementation(
       () =>
-        new Promise<void>((resolve) => {
+        new Promise<boolean>((resolve) => {
           finish = resolve;
         })
     );
@@ -111,9 +111,35 @@ describe("HealthConsentGate", () => {
       screen.getByRole("button", { name: HEALTH_CONSENT_COPY.agree })
     ).toHaveAttribute("aria-busy", "true");
     expect(button(HEALTH_CONSENT_COPY.decline)).toBeDisabled();
-    finish();
+    finish(true);
     await waitFor(() =>
       expect(button(HEALTH_CONSENT_COPY.agree)).not.toHaveAttribute("aria-busy")
+    );
+    // The account showed the agreement: the app takes over, nothing to say.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("says so when the account, read again, still shows no agreement", async () => {
+    onAgreed.mockResolvedValueOnce(false);
+    show();
+    fireEvent.click(button(HEALTH_CONSENT_COPY.agree));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      HEALTH_CONSENT_SAVE_FAILED
+    );
+    expect(agreeToHealthData).toHaveBeenCalledTimes(1);
+    expect(button(HEALTH_CONSENT_COPY.agree)).toBeEnabled();
+    expect(button(HEALTH_CONSENT_COPY.decline)).toBeEnabled();
+  });
+
+  it("links the Privacy Policy, by its own words", () => {
+    show();
+    const policy = screen.getByRole("link", {
+      name: HEALTH_CONSENT_COPY.policy,
+    });
+    expect(policy).toHaveAttribute("href", "/privacy");
+    fireEvent.click(policy);
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      /^\/privacy$/
     );
   });
 

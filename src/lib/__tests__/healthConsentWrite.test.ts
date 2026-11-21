@@ -8,6 +8,7 @@ import {
   pendingWrites,
   readDoc,
   rejectWrite,
+  releaseWrite,
   resetFirestore,
   resumeWrites,
   seedFirestore,
@@ -15,6 +16,7 @@ import {
 } from "@/test/firestoreHarness";
 import { HEALTH_DATA_CONSENT_VERSION } from "@/lib/healthConsent";
 import {
+  AGREE_WRITE_WAIT_MS,
   agreeToHealthData,
   HEALTH_CONSENT_LATE_REFUSAL,
 } from "@/lib/healthConsentWrite";
@@ -39,6 +41,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   resumeWrites();
   if (online) Object.defineProperty(navigator, "onLine", online);
   else Reflect.deleteProperty(navigator, "onLine");
@@ -86,5 +89,59 @@ describe("agreeToHealthData", () => {
     await vi.waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(HEALTH_CONSENT_LATE_REFUSAL)
     );
+  });
+});
+
+/* A connection that says it is online but answers nothing: the SDK holds
+   the write on the device and its promise never settles. I agree must not
+   spin for ever with Not now held, so after a few seconds the agreement
+   counts as made on the device, as an offline one does. */
+describe("agreeToHealthData on a connection that answers nothing", () => {
+  it("counts the agreement as made on this device after a few seconds", async () => {
+    vi.useFakeTimers();
+    setOnline(true);
+    deferWrites();
+    let outcome: string | undefined;
+    void agreeToHealthData("u1").then((value) => {
+      outcome = value;
+    });
+    await vi.advanceTimersByTimeAsync(AGREE_WRITE_WAIT_MS - 1);
+    // Anchor: the write is out and unanswered, and it has not given up yet.
+    expect(pendingWrites()).toHaveLength(1);
+    expect(outcome).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(outcome).toBe("queued");
+    expect(toast.error).not.toHaveBeenCalled();
+    // The server answers at last: nothing more to say.
+    resumeWrites();
+    releaseWrite(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("says so if the server refuses it once it answers", async () => {
+    vi.useFakeTimers();
+    setOnline(true);
+    deferWrites();
+    const agreeing = agreeToHealthData("u1");
+    await vi.advanceTimersByTimeAsync(AGREE_WRITE_WAIT_MS);
+    await expect(agreeing).resolves.toBe("queued");
+    rejectWrite(0, "permission-denied");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(HEALTH_CONSENT_LATE_REFUSAL)
+    );
+  });
+
+  it("is saved as usual when the server answers in time", async () => {
+    vi.useFakeTimers();
+    setOnline(true);
+    deferWrites();
+    const agreeing = agreeToHealthData("u1");
+    await vi.advanceTimersByTimeAsync(AGREE_WRITE_WAIT_MS / 2);
+    resumeWrites();
+    releaseWrite(0);
+    await expect(agreeing).resolves.toBe("saved");
+    await vi.advanceTimersByTimeAsync(AGREE_WRITE_WAIT_MS);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

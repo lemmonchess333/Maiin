@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import BrandMark from "@/components/ui/BrandMark";
 import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
+import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
 import {
   DELETE_ACCOUNT_ANCHOR,
   HEALTH_CONSENT_COPY,
@@ -24,8 +25,11 @@ export type HealthConsentGateView = "asking" | "saving" | "declined";
  * next open, once. Setup asks a new account the same question on its own
  * step (`Onboarding`).
  *
- * I agree writes the agreement (`agreeToHealthData`) and reads the account
- * again (`onAgreed`); the app opens once the account carries it. Not now
+ * I agree writes the agreement (`agreeToHealthData`, which stops waiting
+ * on a connection that answers nothing) and reads the account again
+ * (`onAgreed`); the app opens once the account carries it, and if the
+ * read still shows none the screen says so rather than asking again
+ * without a word. Not now
  * says why Tropos cannot work without these details and offers every way
  * on: back to the agreement, deleting the account, or signing out.
  *
@@ -37,8 +41,9 @@ export default function HealthConsentGate({
   onSignOut,
 }: {
   uid: string;
-  /** Read the account again once the agreement is written. */
-  onAgreed: () => Promise<void>;
+  /** Read the account again once the agreement is written; true once a
+   *  read shows it. */
+  onAgreed: () => Promise<boolean>;
   onSignOut: () => Promise<void>;
 }) {
   const navigate = useNavigate();
@@ -70,7 +75,9 @@ export default function HealthConsentGate({
     setView("saving");
     try {
       await agreeToHealthData(uid);
-      await onAgreed();
+      // Shown, the app takes this screen's place in the same render.
+      if (!(await onAgreed()) && live.current)
+        setError(HEALTH_CONSENT_SAVE_FAILED);
     } catch (err) {
       logger.warn("[HealthConsentGate] couldn't save the agreement", err);
       if (live.current) setError(HEALTH_CONSENT_SAVE_FAILED);
@@ -118,6 +125,7 @@ export default function HealthConsentGate({
             </p>
             <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
             <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
+            <HealthConsentPolicyLink />
           </>
         )}
         {error && (

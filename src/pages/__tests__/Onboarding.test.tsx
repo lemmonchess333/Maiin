@@ -2233,6 +2233,10 @@ describe("the agreement to store health details", () => {
     expect(
       screen.queryByRole("heading", { name: "Anything to work around?" })
     ).not.toBeInTheDocument();
+    // The policy can be read before agreeing, from the step itself.
+    expect(
+      screen.getByRole("link", { name: HEALTH_CONSENT_COPY.policy })
+    ).toHaveAttribute("href", "/privacy");
     fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     expect(
       screen.getByRole("heading", { name: "Anything to work around?" })

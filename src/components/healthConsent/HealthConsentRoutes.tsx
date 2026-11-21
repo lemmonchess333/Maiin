@@ -11,6 +11,9 @@ import { logger } from "@/lib/logger";
 const SettingsAccount = lazyRetry(
   () => import("@/pages/settings/SettingsAccount")
 );
+const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
+const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
+const Support = lazyRetry(() => import("@/pages/Support"));
 
 /** Account's way back to the agreement. */
 const BACK_TO_AGREEMENT = { to: "/", label: "Health details" } as const;
@@ -26,8 +29,9 @@ function Checking() {
 /**
  * Everything an account set up before setup asked for the agreement to
  * store health details can reach until it agrees (Priv1 call 1): the
- * agreement (`HealthConsentGate`) wherever it opens, and Account, where
- * Delete account is.
+ * agreement (`HealthConsentGate`) wherever it opens, Account, where
+ * Delete account is, and the legal and support pages, as an unfinished
+ * setup has them, so the policy can be read before agreeing.
  *
  * App routes here on the profile it holds, which can be this device's copy
  * of the account from before the person agreed on another device. So the
@@ -59,6 +63,9 @@ export default function HealthConsentRoutes() {
   return (
     <Suspense fallback={<Checking />}>
       <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/support" element={<Support />} />
         <Route
           path="/settings/account"
           element={
@@ -80,12 +87,16 @@ export default function HealthConsentRoutes() {
           element={
             <HealthConsentGate
               uid={user.uid}
-              onAgreed={() =>
-                refreshProfile({
+              onAgreed={async () => {
+                // What the last read said: the gate says so if none showed
+                // the agreement.
+                let shown = false;
+                await refreshProfile({
                   until: (data) =>
-                    hasCurrentHealthConsent(data.healthDataConsent),
-                })
-              }
+                    (shown = hasCurrentHealthConsent(data.healthDataConsent)),
+                });
+                return shown;
+              }}
               onSignOut={signOut}
             />
           }
