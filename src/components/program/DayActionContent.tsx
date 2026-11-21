@@ -415,11 +415,14 @@ export default function DayActionContent({
             border: `1px solid ${THEME.running}30`,
           }}
         >
-          <div className="flex items-start gap-3">
+          {/* Wraps under the icon when the words would get less than
+              10rem beside it (320 px at 2x text), rather than squeeze a
+              word past its line. */}
+          <div className="flex flex-wrap items-start gap-3">
             <div className="size-11 rounded-2xl flex items-center justify-center shrink-0 bg-running/10">
               <Footprints className="size-5 text-running" />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-40">
               <SectionLabel>Run</SectionLabel>
               <p className="text-lg font-bold leading-tight text-foreground truncate">
                 {runSessionName(selectedRunTemplate, selectedRacePace, unit)}
