@@ -2846,8 +2846,12 @@ In this order:
       (it uses the app's own, `VITE_FIREBASE_STORAGE_BUCKET`). Passing:
       the run is green, deletes and writes nothing, and its "Count, or
       delete" step prints how many objects (and bytes) are under
-      `food-photos/` and how many meals hold `photoUrl` and `photoPath`.
-      Read those counts before going on. If it fails on a Storage
+      `food-photos/` and how many meals hold `photoUrl` and `photoPath`,
+      and its last line how many of their photo URLs name this bucket,
+      which should be every meal holding `photoUrl`. Read those counts
+      before going on. The run stops, writing nothing, if any meal's photo
+      URL names another bucket (it says which: run again with that one) or
+      cannot be read at all (it says how many). If it fails on a Storage
       permission (`storage.objects.list`), the service account behind
       `FIREBASE_SERVICE_ACCOUNT` needs Storage Object Admin on that bucket
       (Google Cloud console → Cloud Storage → the bucket → Permissions);

@@ -157,6 +157,7 @@ describe("purgeLegacyFoodPhotos", () => {
       foreign: 1,
       holding: 3,
       fields: { photoUrl: 3, photoPath: 2 },
+      urlsInBucket: 3,
       stripped: 0,
       dryRun: true,
     });
@@ -445,6 +446,54 @@ describe("the bucket the meals' photos are in", () => {
     expect(fs.operations).toEqual([]);
   });
 
+  /* A URL the script cannot read names no bucket it can check. Passing such
+     a meal unexamined would let a run whose every URL is in an unexpected
+     form (another host, gs://, a malformed value) strip them all with the
+     guard above never firing, so it stops the run the same way. */
+  it.each([
+    [
+      "another host",
+      `https://storage.googleapis.com/${BUCKET}/food-photos/ana/1.jpg`,
+    ],
+    ["a gs:// URL", `gs://${BUCKET}/food-photos/ana/1.jpg`],
+    ["a malformed value", "not a url"],
+    ["not a string", 42],
+  ])(
+    "refuses, dry run and apply alike, a meal whose photo URL is %s",
+    async (_label, photoUrl) => {
+      for (const apply of [false, true]) {
+        const fs = seededFirestore();
+        fs.data.set("users/cy/meals/m9", { ...scannedMeal("cy", 9), photoUrl });
+        const bucket = fakeBucket(seededObjects());
+        await expect(
+          purgeLegacyFoodPhotos({
+            firestore: fs,
+            bucket,
+            fieldDelete: DELETE,
+            apply,
+          })
+        ).rejects.toThrow(
+          "1 meal(s) hold a photo URL this script cannot read, so it cannot tell which bucket their photos are in. Nothing was deleted or written."
+        );
+        expect(bucket.deleteCalls).toEqual([]);
+        expect(fs.operations).toEqual([]);
+      }
+    }
+  );
+
+  it("passes a readable URL that names the bucket, and counts it", async () => {
+    const fs = memoryFirestore({
+      "users/ana/meals/m1": scannedMeal("ana", 1),
+    });
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket({ "food-photos/ana/1.jpg": 1 }),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ urlsInBucket: 1, stripped: 1 });
+  });
+
   /* Older builds wrote the URL and the path in one merge, so a meal with a
      path and no URL is not one they left. A path names no bucket, so it
      cannot refuse the run: the meal is stripped as before, like any other
@@ -522,6 +571,7 @@ describe("the line the workflow's recount reads", () => {
     foreign: 0,
     holding: 0,
     fields: { photoUrl: 0, photoPath: 0 },
+    urlsInBucket: 0,
     stripped: 0,
     pages: 3,
     cursor: null,
@@ -536,6 +586,24 @@ describe("the line the workflow's recount reads", () => {
   it("passes a dry run that found nothing left", () => {
     expect(summaryLine(report())).toMatch(recount);
     expect(summaryLine(report())).not.toContain("\n");
+  });
+
+  /* The check on each meal's bucket needs URLs to check: the dry run says
+     how many named the bucket, which should be every meal holding one. */
+  it("says how many photo URLs name the bucket", () => {
+    const line = summaryLine(
+      report({ objects: 3, holding: 3, urlsInBucket: 3 })
+    );
+    expect(line).toContain(
+      "3 object(s) under food-photos/ and 3 of 412 meal(s) hold a photo field; 3 of their photo URLs name this bucket."
+    );
+    expect(summaryLine(report())).toContain(
+      "0 of their photo URLs name this bucket."
+    );
+  });
+
+  it("passes a dry run with nothing left whatever its URL count reads", () => {
+    expect(summaryLine(report({ urlsInBucket: 0 }))).toMatch(recount);
   });
 
   it.each([

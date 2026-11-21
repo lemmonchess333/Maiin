@@ -35,8 +35,11 @@
  * which is where older builds uploaded). Each meal's `photoUrl` names the
  * bucket its photo is in, and the run reads every meal first: if any names
  * another bucket, it stops before deleting or writing anything, a dry run
- * included, and says which bucket to name instead. A bucket that does not
- * exist stops it too.
+ * included, and says which bucket to name instead. A URL it cannot read a
+ * bucket out of (another host, gs://, a malformed value) stops it the same
+ * way, and the dry run says how many URLs named the bucket, so the check is
+ * seen to have had something to check. A bucket that does not exist stops
+ * it too.
  *
  * The Actions tab runs it too, with the production credentials and no
  * terminal: .github/workflows/purge-legacy-food-photos.yml (a dry run
@@ -189,6 +192,16 @@ async function eachMealPage({ firestore, after, maxPages, visit }) {
   }
 }
 
+/** Whether a meal holds a photo URL at all: a stored null or empty string
+ *  is a field with nothing in it, and names no photo. */
+function holdsPhotoUrl(data) {
+  return (
+    Object.prototype.hasOwnProperty.call(data, "photoUrl") &&
+    data.photoUrl !== null &&
+    data.photoUrl !== ""
+  );
+}
+
 /** Why the run stops when a meal's photo is in another bucket. */
 function otherBucketError(buckets, bucketName) {
   const named = [...buckets].sort();
@@ -202,8 +215,9 @@ function otherBucketError(buckets, bucketName) {
  * passed in so the logic runs against fakes without the Admin SDK.
  *
  * Three steps. First every meal is read, counted and checked: a meal whose
- * download URL names a bucket other than `bucket` stops the run before
- * anything is deleted or written, a dry run included. A bucket that exists
+ * download URL names a bucket other than `bucket`, or whose URL names no
+ * bucket the script can read, stops the run before anything is deleted or
+ * written, a dry run included. A bucket that exists
  * but is the wrong one lists nothing under the prefix and answers no 404,
  * so without this an apply would strip every meal of the only record of
  * where its photo is, and its recount would pass. The check reads the
@@ -231,6 +245,7 @@ async function purgeLegacyFoodPhotos({
     foreign: 0,
     holding: 0,
     fields: Object.fromEntries(MEAL_PHOTO_FIELDS.map((field) => [field, 0])),
+    urlsInBucket: 0,
     stripped: 0,
     pages: 0,
     cursor: after,
@@ -243,6 +258,7 @@ async function purgeLegacyFoodPhotos({
   };
 
   const otherBuckets = new Set();
+  let unreadableUrls = 0;
   await eachMealPage({
     firestore,
     after,
@@ -256,14 +272,25 @@ async function purgeLegacyFoodPhotos({
         if (fields.length === 0) continue;
         report.holding += 1;
         for (const field of fields) report.fields[field] += 1;
+        if (!holdsPhotoUrl(data)) continue;
+        // Safe by default: a URL whose bucket cannot be read is not passed
+        // unexamined, or a run whose every URL is in an unexpected form
+        // would strip them all with the bucket check never firing.
         const named = photoUrlBucket(data.photoUrl);
-        if (named && named !== bucket.name) otherBuckets.add(named);
+        if (!named) unreadableUrls += 1;
+        else if (named === bucket.name) report.urlsInBucket += 1;
+        else otherBuckets.add(named);
       }
       // A dry run's checkpoints are this pass's; an apply's, the writes'.
       if (!apply) await checkpoint(cursor, pages);
     },
   });
   if (otherBuckets.size > 0) throw otherBucketError(otherBuckets, bucket.name);
+  if (unreadableUrls > 0) {
+    throw new Error(
+      `${unreadableUrls} meal(s) hold a photo URL this script cannot read, so it cannot tell which bucket their photos are in. Nothing was deleted or written.`
+    );
+  }
 
   // The photos before the fields: a run that stops part-way leaves fields
   // pointing at nothing, which no build shows.
@@ -304,7 +331,7 @@ async function purgeLegacyFoodPhotos({
  */
 function summaryLine(report) {
   return report.dryRun
-    ? `DRY RUN: ${report.objects} object(s) under ${FOOD_PHOTO_PREFIX} and ${report.holding} of ${report.scanned} meal(s) hold a photo field. Nothing was deleted; run again with --apply to delete them.`
+    ? `DRY RUN: ${report.objects} object(s) under ${FOOD_PHOTO_PREFIX} and ${report.holding} of ${report.scanned} meal(s) hold a photo field; ${report.urlsInBucket} of their photo URLs name this bucket. Nothing was deleted; run again with --apply to delete them.`
     : `Deleted ${report.objectsDeleted} object(s) under ${FOOD_PHOTO_PREFIX} and took the photo fields off ${report.stripped} of ${report.scanned} meal(s).`;
 }
 
