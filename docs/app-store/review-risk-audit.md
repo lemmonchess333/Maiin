@@ -213,6 +213,8 @@ TestFlight group (`scripts/ios/testflight-build.mjs`, `docs/ios-release.md`).
     (`src/lib/enoughPeople.ts:66-76`, App1 Q6). At launch a reviewer sees
     none of them unless the demo account is already in one.
     Fix: the submission pack rewrites each, and its test pins the claims.
+    STATUS 2026-11-21: Q6 (#3447, owner 18 Nov) shows all three from the
+    first day, with "Filling up" below their floors; that gate is deleted.
 - **2.3.3 Screenshots** show the app in use, from the capture rig
   (`e2e/screenshots/app-store.capture.spec.ts`). Pass once taken from the
   final build; see the pack.
@@ -279,6 +281,8 @@ TestFlight group (`scripts/ios/testflight-build.mjs`, `docs/ios-release.md`).
     takes a new build, which App Review sees.
   - Spaces, challenges and leagues open once 10 people are training
     (`src/lib/enoughPeople.ts`), from server counts.
+    STATUS 2026-11-21: since Q6 (#3447) all three are shown from the first
+    day, with "Filling up" below their floors.
     All three are named in the review notes, which is what 2.5.19 asks
     ("your app's functionality should be clear to end users and App Review").
 
