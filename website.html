@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0e0e11" />
+
+    <!-- troposfit.com's page (App1 Q52), the Firebase Hosting build's
+         index.html (scripts/website/websiteEntry.ts). The GitHub Pages
+         build keeps index.html, the whole app.
+
+         Its policy is the app's, less what only a signed-in app needs (no
+         Firebase SDK, analytics, App Check or sign-in frames):
+         - img-src: the three hosts a public post's author photo may come
+           from (functions/lib/publicPhotoUrl.js) and the basemap's
+           sprites for a run's map (src/lib/basemap.ts).
+         - connect-src: the basemap; troposfit.com, which a post's page on
+           Hosting's other addresses (web.app, firebaseapp.com) asks for
+           the post's figures; and *.cloudfunctions.net for the invite
+           line's lookupInvite (src/website/inviterName.ts).
+         - worker-src blob: for MapLibre's workers.
+         frame-ancestors is a Hosting header (firebase.json); browsers
+         ignore it here. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      font-src 'self';
+      img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://appleid.cdn-apple.com https://tiles.openfreemap.org;
+      connect-src 'self' https://troposfit.com https://tiles.openfreemap.org https://*.cloudfunctions.net;
+      worker-src 'self' blob:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    "
+    />
+    <meta
+      name="description"
+      content="Tropos plans your lifting and running week with a daily calorie target that fits it. Get it on the App Store for iPhone."
+    />
+    <meta property="og:site_name" content="Tropos" />
+    <meta property="og:title" content="Tropos" />
+    <meta
+      property="og:description"
+      content="Your training and food, planned together. Get Tropos on the App Store for iPhone."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://troposfit.com/icons/icon-512x512.png"
+    />
+    <meta property="og:url" content="https://troposfit.com/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Tropos" />
+    <meta
+      name="twitter:description"
+      content="Your training and food, planned together. Get Tropos on the App Store for iPhone."
+    />
+    <meta
+      name="twitter:image"
+      content="https://troposfit.com/icons/icon-512x512.png"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+    <title>Tropos: your training and food, planned together</title>
+  </head>
+  <body>
+    <noscript
+      ><div style="padding: 2rem; text-align: center">
+        Tropos is an iPhone app. Get it on the App Store:
+        <a href="https://apps.apple.com/app/id6762416918"
+          >apps.apple.com/app/id6762416918</a
+        >
+      </div></noscript
+    >
+    <div id="root"></div>
+    <script type="module" src="/src/website/main.tsx"></script>
+  </body>
+</html>

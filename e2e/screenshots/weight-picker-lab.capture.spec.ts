@@ -71,7 +71,7 @@ test("weight sheet offers stone and a bounded date without saving", async ({
     await page.mouse.click(8, 8);
     await page.waitForTimeout(400);
   }
-  await page.getByRole("button", { name: /^Weight / }).click();
+  await page.getByRole("button", { name: /^Weight\b/ }).click();
   await page.getByLabel("Weight unit").selectOption("kg");
   await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
   // The centered readout must stay readable beside the unit picker.
@@ -131,14 +131,14 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
   await page.getByRole("button", { name: "Log", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Weight / })).toContainText(
+  await expect(page.getByRole("button", { name: /^Weight\b/ })).toContainText(
     /81\.6|179\.9/
   );
   await page.reload();
   await page.addStyleTag({
     content: ".firebase-emulator-warning { display: none !important; }",
   });
-  await page.getByRole("button", { name: /^Weight / }).click();
+  await page.getByRole("button", { name: /^Weight\b/ }).click();
   await expect(page.getByRole("dialog", { name: "Edit weight" })).toBeVisible();
   const correction = page.getByRole("button", {
     name: "Undo",
