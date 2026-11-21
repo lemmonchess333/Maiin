@@ -85,7 +85,9 @@ describe("a circuit's post (Circ1 (11))", () => {
     expect(screen.getByRole("link", { name: "+2 more moves" })).toBeVisible();
     // Nothing a lift's rows offer: no volume, no compare, no routine.
     expect(screen.queryByText(/volume/)).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Compare your/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /, compare with yours$/ })
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: /routine/i })).toBeNull();
     // The hero is the first move's drawing.
     const lead = circuit.moves.find((move) =>
@@ -179,7 +181,9 @@ describe("a lift's post beside it", () => {
     expect(screen.getByText("3×8×60 kg")).toBeInTheDocument();
     expect(screen.getByText("kg volume")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Compare your Bench Press" })
+      screen.getByRole("button", {
+        name: /^Bench Press .*, compare with yours$/,
+      })
     ).toBeInTheDocument();
     expect(screen.queryByText("rounds")).toBeNull();
     expect(card.textContent).not.toContain("s on,");
