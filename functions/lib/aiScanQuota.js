@@ -185,8 +185,9 @@ const OUR_OWN_MODEL_REFUSALS = [401, 403, 404];
  * failure after the charge, and one the person can bring about counts too:
  * a typed list of a hundred and fifty foods runs the answer past its token
  * limit, so it comes back cut short and unreadable, at the most a scan can
- * cost. Without a bound the 100-a-day cap became the rate limit, about
- * 2,000 full-cost calls a day for one Pro or trial account. Five a day is
+ * cost. Without a bound the daily cap became the rate limit: at the
+ * 100 a day it was then, about 2,000 full-cost calls a day for one Pro or
+ * trial account. Five a day is
  * a Tropos heuristic: more than an honest bad day of the service, far
  * fewer than a loop. The count is kept beside the action's own, with its
  * own day, so the charge's shape is unchanged.

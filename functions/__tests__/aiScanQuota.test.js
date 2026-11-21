@@ -372,6 +372,7 @@ describe("refundDailyAiQuota", () => {
     refundDailyAiQuota,
     failedScanResponse,
     MAX_REFUNDS_PER_DAY,
+    DAILY_LIMITS,
   } = require("../lib/aiScanQuota");
   const NOON = new Date("2026-05-25T12:00:00Z");
 
@@ -428,7 +429,7 @@ describe("refundDailyAiQuota", () => {
       expect(calls).toBeLessThan(1000);
     }
     expect(refunded).toBe(MAX_REFUNDS_PER_DAY);
-    expect(calls).toBe(100 + MAX_REFUNDS_PER_DAY);
+    expect(calls).toBe(DAILY_LIMITS.pro.text_ai + MAX_REFUNDS_PER_DAY);
   });
 
   it("starts the day's refunds again with the day, and counts each action alone", async () => {
