@@ -278,19 +278,23 @@ describe("App Store listing: claims the code can contradict", () => {
     expect(everything).not.toMatch(/shows it on Home/i);
   });
 
-  it("says when Spaces, challenges and leagues open, at the code's number", () => {
-    // They stay hidden until GROUP_MIN people are training (App1 Q6,
-    // src/lib/enoughPeople.ts), so a reviewer at launch sees none of them
-    // unless the notes say why (Guideline 2.5.19, 2.3.1).
+  it("says when the league starts, at the code's number", () => {
+    // Spaces and challenges show from the first day and say "Filling up"
+    // while small (App1 Q6, 18 November); the league alone waits, for
+    // GROUP_MIN people to join (lockedLine, features/league/league.ts), so
+    // the listing and the notes say when (Guideline 2.3.1).
     const groupMin = read("../../features/league/leagueRules.ts").match(
       /export const GROUP_MIN = (\d+);/
     );
     expect(groupMin).not.toBeNull();
-    expect(field("review-notes")).toContain(
-      `once at least ${groupMin![1]} people are training`
+    expect(read("../../features/league/league.ts")).toContain(
+      "The league starts once ${needed} people have joined."
     );
-    expect(field("description")).toMatch(
-      /once enough people are training on Tropos/
+    for (const text of [field("review-notes"), field("description")])
+      expect(text).toContain(`starts once ${groupMin![1]} people have joined`);
+    expect(field("review-notes")).toContain('"Filling up"');
+    expect(read("../fillingUp.ts")).toContain(
+      'export const FILLING_UP = "Filling up";'
     );
   });
 

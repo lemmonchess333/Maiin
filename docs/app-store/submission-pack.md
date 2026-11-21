@@ -105,7 +105,8 @@ Progress
 With other people
 • Share sessions with the people who follow you, give props and comment.
 • Start a Circle of up to 8 people and plan runs and lifts together.
-• Spaces for races and interests, weekly, monthly and seasonal challenges, and a weekly league, once enough people are training on Tropos.
+• Spaces for races and interests, and weekly, monthly and seasonal challenges.
+• A weekly league scored against your own plan, which starts once 10 people have joined.
 • Choose who sees each session, and report or block anyone.
 
 Tropos Pro
@@ -213,24 +214,24 @@ Google Signals is off in the Firebase console.
 
 ### Data linked to you
 
-| Category         | Data type             | Purposes                     | What it is                                                                                                                                                                                         |
-| ---------------- | --------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Contact info     | Name                  | App functionality            | The display name, shown to other people on posts and the profile                                                                                                                                   |
-| Contact info     | Email address         | App functionality            | Sign-in, and the verification and password-reset emails (sent through Resend)                                                                                                                      |
-| Health & fitness | Health                | App functionality, analytics | Weight, height, sex, year of birth, goal weight, injury limits, max heart rate, the activity level, the food diary and calorie targets. Some figures, such as macro shares, reach Google Analytics |
-| Health & fitness | Fitness               | App functionality, analytics | Workouts, runs, the training plan, segments, records, streaks and badges. Weekly totals and the performance score reach Google Analytics                                                           |
-| Location         | Precise location      | App functionality            | Run routes, privacy zones, saved routes and segments                                                                                                                                               |
-| Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                                                                |
-| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos. Meal photos are analysed by Google and not kept on any server                                                                                       |
-| User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, meet-ups, segment and Circle names, reports and meal descriptions                                                                                     |
-| Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                                                     |
-| Identifiers      | Device ID             | App functionality, analytics | The push token the phone registers so notifications reach it (Firebase Cloud Messaging), and Google Analytics' app-instance ID                                                                     |
-| Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                                                            |
-| Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                                                         |
-| Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                                                         |
-| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)                                      |
-| Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                                                         |
-| Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                                                             |
+| Category         | Data type             | Purposes                     | What it is                                                                                                                                                                  |
+| ---------------- | --------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contact info     | Name                  | App functionality            | The display name, shown to other people on posts and the profile                                                                                                            |
+| Contact info     | Email address         | App functionality            | Sign-in, and the verification and password-reset emails (sent through Resend)                                                                                               |
+| Health & fitness | Health                | App functionality            | Weight, height, sex, year of birth, goal weight, injury limits, max heart rate, the activity level, the food diary and calorie targets. None of it reaches Google Analytics |
+| Health & fitness | Fitness               | App functionality            | Workouts, runs, the training plan, segments, records, streaks and badges. No figure from them reaches Google Analytics; that a session was finished is Product interaction  |
+| Location         | Precise location      | App functionality            | Run routes, privacy zones, saved routes and segments                                                                                                                        |
+| Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                                         |
+| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos. Meal photos are analysed by Google and not kept on any server                                                                |
+| User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, meet-ups, segment and Circle names, reports and meal descriptions                                                              |
+| Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                              |
+| Identifiers      | Device ID             | App functionality, analytics | The push token the phone registers so notifications reach it (Firebase Cloud Messaging), and Google Analytics' app-instance ID                                              |
+| Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                                     |
+| Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                                  |
+| Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                                  |
+| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)               |
+| Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                                  |
+| Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                                      |
 
 Google Analytics data carries no account ID (the code never calls
 `setUserId`), so "not linked" is defensible for the coarse location and
@@ -272,9 +273,7 @@ password and doesn't expire. Before submitting, the account should:
 - have a few weeks of workouts, runs, meals and weigh-ins, entered by hand,
   so Progress and the weekly review have something in them (the seed
   scripts only work against the emulator);
-- follow someone, and be a member of one Space with a post, joined from the
-  Space's link (Spaces stay hidden until 10 people are training, but a
-  member keeps theirs, `src/lib/enoughPeople.ts`);
+- follow someone, and be a member of one Space with a post;
 - be free, not Pro, so the reviewer can buy;
 - have its uid in `REVENUECAT_SANDBOX_UIDS`, or its sandbox purchase won't
   turn Pro on (`docs/iap/revenuecat-setup.md`, Part C), and in
@@ -322,7 +321,7 @@ Live Activities and widgets
 A run or a lift shows on the Lock Screen and in the Dynamic Island while under way (switch in Settings > Notifications). The Today, Streak and Today's food widgets show the session, the streak and calories left.
 
 Shared spaces
-The feed, follows and Circles work from the first account. Spaces, challenges and the weekly league appear once at least 10 people are training on Tropos; the demo account is in one Space, so it shows. Two operator pages, /diagnostics and /admin/moderation, are linked from nowhere; the second is for our moderators only.
+The feed, follows, Circles, Spaces and challenges work from the first account; a small Space or challenge says "Filling up". The weekly league says the league starts once 10 people have joined, and runs from the Monday after. Two operator pages, /diagnostics and /admin/moderation, are linked from nowhere; the second is for our moderators only.
 
 Moderation
 Signing up or in means agreeing to the Terms, which allow no objectionable content or abusive users. Posts, comments, names and photos are filtered, photos by Google Cloud Vision SafeSearch. Each report emails us and joins a review queue, and we act within 24 hours by removing the content and, where needed, restricting the account so it can't post, comment or follow anyone.
@@ -411,8 +410,8 @@ They come from the capture rig (`e2e/screenshots/app-store.capture.spec.ts`,
 the season athlete's sixteen weeks, dark theme), run by `app-screenshots.yml`
 against the emulator. The status bar band is left as the app paints it, and
 no frame shows a price (2.3.14 rules prices out of creative assets; keep
-them out of these too). Spaces, challenges and leagues are in no frame,
-since a new account at launch won't see them.
+them out of these too). No frame shows a Space, a challenge or the
+league, which say "Filling up" at launch.
 
 To get them: run App Screenshots (Actions → App Screenshots → Run
 workflow, on the branch to capture), which commits the frames to the
