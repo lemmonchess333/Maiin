@@ -13,6 +13,7 @@
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* TroposBridgeViewController.swift */; };
+		B2D0E0000000000000000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D0E0000000000000000001 /* SceneDelegate.swift */; };
 		B10000000000000000000002 /* WatchRunPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* WatchRunPlugin.swift */; };
 		B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WatchRunCoordinator.swift */; };
 		B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* HealthWorkoutStore.swift */; };
@@ -95,6 +96,7 @@
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000000000000000000001 /* TroposBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposBridgeViewController.swift; sourceTree = "<group>"; };
+		A2D0E0000000000000000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* WatchRunPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* WatchRunCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunCoordinator.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* HealthWorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutStore.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				A2D0E0000000000000000001 /* SceneDelegate.swift */,
 				A10000000000000000000001 /* TroposBridgeViewController.swift */,
 				A10000000000000000000002 /* WatchRunPlugin.swift */,
 				A10000000000000000000003 /* WatchRunCoordinator.swift */,
@@ -401,6 +404,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				B2D0E0000000000000000001 /* SceneDelegate.swift in Sources */,
 				B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */,
 				B10000000000000000000002 /* WatchRunPlugin.swift in Sources */,
 				B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */,
