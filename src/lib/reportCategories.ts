@@ -1,6 +1,11 @@
 /**
- * The reasons the report form offers (S4b: five categories, each with up to
- * four sub-reasons, one screen).
+ * The reasons the report form offers (S4b: five categories on one screen,
+ * each but Other with its sub-reasons).
+ *
+ * Child safety, Promotes eating disorders and Illegal content sit under
+ * Inappropriate content, and Copyright under Impersonation beside Brand or
+ * organisation: the kinds of harm the Online Safety Act names, which the
+ * legal audit found the list lacked.
  *
  * The values are the server's REPORT_CATEGORIES
  * (functions/lib/reportTargets.js), and the report alert email names them
@@ -13,8 +18,9 @@ export interface ReportCategoryOption {
   value: ReportCategory;
   label: string;
   /** Concrete sub-reasons. Closed set per category — keeps the picker
-   *  consistent. The server accepts any string so adding new ones is
-   *  client-only. */
+   *  consistent. The server records any one as it is written (160
+   *  characters at most), so adding one is client-only;
+   *  reportTargets.cross.test.ts holds every one to that. */
   subReasons: string[];
 }
 
@@ -43,14 +49,21 @@ export const REPORT_CATEGORY_OPTIONS: ReportCategoryOption[] = [
     label: "Inappropriate content",
     subReasons: [
       "Sexual or explicit",
+      "Child safety",
       "Hateful symbols or slurs",
       "Violent or graphic",
+      "Promotes eating disorders",
+      "Illegal content",
     ],
   },
   {
     value: "impersonation",
     label: "Impersonation",
-    subReasons: ["Pretending to be someone else", "Brand or organisation"],
+    subReasons: [
+      "Pretending to be someone else",
+      "Brand or organisation",
+      "Copyright",
+    ],
   },
   {
     value: "other",
