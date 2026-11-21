@@ -8,7 +8,7 @@ import { haptic } from "@/lib/haptic";
  * review while one exists — same eligibility gate as the Home entry
  * (F5: never a dead row leading a brand-new user to an empty review),
  * but NOT retired by the viewed state; the review stays reachable here
- * all week. Sits below the Hist6 PI-detail hero.
+ * all week. Sits at the foot of Progress's Score details.
  */
 export default function WeeklyReviewRow() {
   const navigate = useNavigate();
@@ -23,16 +23,21 @@ export default function WeeklyReviewRow() {
         haptic("light");
         navigate("/review");
       }}
-      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition active:scale-[0.98] min-h-[44px]"
+      className="w-full flex items-center gap-[12px] p-[12px] rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition active:scale-[0.98] min-h-[44px]"
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-        <CalendarCheck className="size-4 text-primary" aria-hidden="true" />
+      {/* The icon, the chevron and the gaps in px, so at larger text the
+          words get the room ("Weekly review" overflowed at 320 px, 2x). */}
+      <div className="flex size-[36px] shrink-0 items-center justify-center rounded-xl bg-primary/10">
+        <CalendarCheck
+          className="size-[16px] text-primary"
+          aria-hidden="true"
+        />
       </div>
       <p className="min-w-0 flex-1 text-sm font-semibold text-foreground">
-        Weekly Review
+        Weekly review
       </p>
       <ChevronRight
-        className="size-4 shrink-0 text-muted-foreground"
+        className="size-[16px] shrink-0 text-muted-foreground"
         aria-hidden="true"
       />
     </button>
