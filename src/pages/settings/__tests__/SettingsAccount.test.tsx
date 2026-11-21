@@ -80,11 +80,18 @@ function renderPage(duringSetup = false) {
   );
 }
 
-const EXPORTS = [/^export workouts/i, /^export meals/i, /^export bodyweight/i];
+const EXPORTS = [
+  /^export workouts/i,
+  /^export meals/i,
+  /^export bodyweight/i,
+  // The answers to the two emails a person can choose (App1 Q55).
+  /^export email choices/i,
+];
 
 describe("SettingsAccount composition", () => {
   it("renders each export exactly ONCE", () => {
-    // The regression. Six rows shipped; three is correct.
+    // The regression. Six rows shipped; three was correct, and the email
+    // choices (App1 Q55) make four.
     renderPage();
     for (const label of EXPORTS) {
       expect(screen.getAllByRole("button", { name: label })).toHaveLength(1);
@@ -97,7 +104,7 @@ describe("SettingsAccount composition", () => {
     // and the one that silently removes a user right.
     renderPage();
     expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
-      3
+      4
     );
     expect(
       screen.getByRole("button", { name: /recently deleted meals/i })
