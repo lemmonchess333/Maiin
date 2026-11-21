@@ -14,10 +14,10 @@ describe("EmptyWorkoutEntry", () => {
         <EmptyWorkoutEntry />
       </MemoryRouter>
     );
-    const entry = screen.getByRole("link", { name: TRAIN.emptyWorkout });
+    // Named by its words as drawn, the title first (WCAG 2.5.3).
+    const entry = screen.getByRole("link", {
+      name: `${TRAIN.emptyWorkout} Add exercises as you go. Your plan stays as it is.`,
+    });
     expect(entry).toHaveAttribute("href", "/empty-workout");
-    expect(entry).toHaveAccessibleDescription(
-      "Add exercises as you go. Your plan stays as it is."
-    );
   });
 });
