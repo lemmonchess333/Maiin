@@ -38,6 +38,8 @@ import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import type { DatedRun } from "@/features/program/layoffDetection";
 import { buildPlan } from "@/features/program/planBuilder";
+import { localDateString } from "@/lib/dateHelpers";
+import { SPORT_CHANGE } from "@/test/journeyScreens";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -947,5 +949,131 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
       screen.queryByRole("button", { name: /save and update sessions/i })
     ).toBeNull();
     expect(screen.getByRole("button", { name: /^save$/i })).toBeInTheDocument();
+  });
+});
+
+/* TrainWk1 step 6 (the Train grill's Q33): lifting taken off the plan.
+   One confirmation says what stays; the save sends a plan with no lift
+   days, and nothing logged. Refused, with the reason, when lifting is the
+   plan's one sport or a training block runs. */
+describe("ProgrammeSettings — Stop lifting", () => {
+  /** Someone who lifts three days and runs on a plan with no race date. */
+  function hybrid(): { profile: UserProfile; programState: ProgramState } {
+    const plan = buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "intermediate",
+      liftDays: 3,
+      preferredSplit: "full_body",
+      runMode: "freeform",
+      rollingGoal: "keep_fit",
+      weeklyRunDays: 3,
+      equipment: "full_gym",
+      injuries: [],
+      currentDate: localDateString(new Date()),
+      preserveHistory: false,
+    });
+    vi.mocked(buildPlan).mockClear();
+    return {
+      profile: makeProfile({
+        ...plan.profileUpdates,
+        runFrequency: "regular",
+      } as Partial<UserProfile>),
+      programState: plan.programState,
+    };
+  }
+
+  it("asks once, says what stays, and saves a plan with no lift days", async () => {
+    const { profile, programState: plan } = hybrid();
+    const { refreshProfile } = setup(profile, plan);
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopLifting })
+    );
+    const dialog = screen.getByRole("alertdialog", {
+      name: SPORT_CHANGE.stopLiftingAsked,
+    });
+    expect(
+      within(dialog).getByText(
+        "Your saved workouts and best lifts stay in Progress."
+      )
+    ).toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Stop lifting" })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+      programState: ProgramState;
+      weekSchedule: { type: string }[];
+    };
+    expect(payload.profileUpdates.weeklyWorkoutsTarget).toBe(0);
+    expect(payload.profileUpdates).not.toHaveProperty("athleteType");
+    expect(payload.programState.workouts).toEqual([]);
+    // The runs and their plan stay.
+    expect(payload.programState.runPlan).toMatchObject({ mode: "rolling" });
+    expect(
+      payload.weekSchedule.filter((d) => d.type === "lift" || d.type === "both")
+    ).toHaveLength(0);
+    await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalled());
+  });
+
+  it("Cancel sends nothing", async () => {
+    const { profile, programState: plan } = hybrid();
+    setup(profile, plan);
+    fireEvent.click(screen.getByRole("button", { name: "Stop lifting" }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Cancel",
+      })
+    );
+    // The dialog was open (Cancel was pressed inside it), so its going is
+    // the close, not the first poll.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    );
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("says why lifting stays when it is the plan's one sport, once Stop lifting is tried", () => {
+    const { profile, programState: plan } = hybrid();
+    setup(
+      {
+        ...profile,
+        runFrequency: "none",
+        runMode: "freeform",
+        weeklyRunDaysTarget: 0,
+        weekSchedule: profile.weekSchedule?.map((d) => ({
+          ...d,
+          type: d.type === "run" ? "rest" : d.type === "both" ? "lift" : d.type,
+        })),
+      },
+      { ...plan, runPlan: undefined, runDays: [] }
+    );
+    const sentence =
+      "Your plan is lifting only. To stop lifting, add running first.";
+    // Not said before it is asked: the foot shows Stop lifting as anyone's.
+    expect(screen.queryByText(sentence)).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopLifting })
+    );
+    // Tried: the sentence, said where the screen reader hears it, and no
+    // confirmation for a change that can't be made.
+    expect(screen.getByText(sentence).closest("[role=status]")).not.toBeNull();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("says why lifting stays while a training block runs", () => {
+    const { profile, programState: plan } = hybrid();
+    setup(profile, {
+      ...plan,
+      trainingBlock: { id: "b", owned: true, focus: "strength" },
+    } as ProgramState);
+    expect(
+      screen.getByText(
+        "Your training block is still on. To stop lifting, end it on Train first."
+      )
+    ).toBeInTheDocument();
   });
 });
