@@ -5017,6 +5017,11 @@ journey run them on the web; a phone has not drawn them.
       week and every saved run stays in Progress. Then Lift plan's foot
       reads "Your plan is lifting only. To stop lifting, add running
       first." with no Stop lifting.
+- [ ] **Train the morning after a lift.** Finish a lift on Train, tap
+      Done, and leave the app on Train in the background overnight.
+      Passing: the next day, bringing the app back lands Train on the next
+      lift with Start workout; the same day, it still shows the lift just
+      finished as Completed.
 
 ## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
 

@@ -715,16 +715,21 @@ function ProgramInner() {
     programState?.workouts[expressChooserDay ?? todayIndex]
   );
 
-  // Auto-select on week change (not on individual completion). Skips the reset
-  // on the FIRST run when the URL pinned a day (back-navigation restore) — only
-  // a fresh open or a genuine week change snaps back to today.
+  // Auto-select on a new week or a new day (not on individual completion).
+  // Skips the reset on the FIRST run when the URL pinned a day
+  // (back-navigation restore) — only a fresh open, a new week or a new day
+  // snaps back to the session up next. A session finished stays in view for
+  // the rest of its day (Done comes back to it); the next day, with Train
+  // still open (an app brought back in the morning, the tab bar's Train
+  // being this page already), it lands on the next session as opening Train
+  // would (TrainWk1 step 6). A past week being looked at stays put.
   const prevWeekKeyRef = useRef("");
   useEffect(() => {
     if (!programState) return;
     const weekKey =
       viewingHistoryIndex !== null
         ? `h${viewingHistoryIndex}`
-        : `w${programState.weekNumber}`;
+        : `w${programState.weekNumber}|${todayKey}`;
     if (prevWeekKeyRef.current !== weekKey) {
       const isFirstRun = prevWeekKeyRef.current === "";
       prevWeekKeyRef.current = weekKey;
@@ -734,7 +739,14 @@ function ProgramInner() {
       // Reset the selection on week navigation.
       selectDay(target);
     }
-  }, [programState, viewingHistoryIndex, todayIndex, urlDay, selectDay]);
+  }, [
+    programState,
+    viewingHistoryIndex,
+    todayIndex,
+    todayKey,
+    urlDay,
+    selectDay,
+  ]);
 
   // Scroll reset on day change
   useEffect(() => {
