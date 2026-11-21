@@ -7,6 +7,10 @@
  *
  * mulberry32: a 32-bit state, fast, and good enough for picking test
  * inputs. Not for anything that needs to be unpredictable.
+ *
+ * A property suite that needs its failures shrunk to the smallest
+ * counterexample uses fast-check instead, through `property.ts`, seeded the
+ * same fixed way (`*.property.test.ts`).
  */
 export function mulberry32(seed: number): () => number {
   let a = seed;

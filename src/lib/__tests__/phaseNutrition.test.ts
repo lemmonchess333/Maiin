@@ -186,6 +186,26 @@ describe("getAdjustedTargets — guards", () => {
     expect(reconcilesTo(hard, 1800)).toBeLessThanOrEqual(2);
   });
 
+  it("a target under the essential fat's cost reads 0 g carbs, never -0", () => {
+    // 35 kg, 187 kcal: fat is floored at 21 g (189 kcal), and the carbs'
+    // remainder rounds from -0.5 to -0, which a number formatter prints
+    // as "-0". splitMacrosForTarget, the same arithmetic, gives 0.
+    // Found by nutrition.property.test.ts.
+    const r = getAdjustedTargets(
+      makeProfile({
+        weightKg: 35,
+        targetCalories: 187,
+        program: { goal: "cut", currentPhase: "base" },
+      }),
+      "rest",
+      undefined,
+      "REST"
+    );
+    expect(r.infeasible).toBe(true);
+    expect(Object.is(r.carbs, 0)).toBe(true);
+    expect((r.carbs as number).toLocaleString("en-GB")).toBe("0");
+  });
+
   it("a normal user never trips the aggressive flag", () => {
     const r = getAdjustedTargets(makeProfile(), "lift", undefined, "HARD");
     expect(r.aggressive).toBe(false);
