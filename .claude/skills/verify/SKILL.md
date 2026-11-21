@@ -18,8 +18,13 @@ place of Claude Code's built-in `/verify` inside this repo.
   tests (`npx vitest run <files>`), eslint on the changed files. They take
   seconds and catch most mistakes; this takes a minute.
 - Not for a change that cannot reach the running app (tests, docs, CI,
-  `functions/`, scripts). `npm run verify:app` says so and exits 0; write
-  that in the commit's `Verified:` line.
+  `functions/`, most scripts). `npm run verify:app` says so and exits 0;
+  write that in the commit's `Verified:` line. Three kinds of file outside
+  `src/` do select features: the seeds and `firestore.rules` (the whole
+  map: every signed-in anchor is seeded data read through the rules),
+  `package.json` and the other shared build inputs (the smoke set), and
+  the skill's own files with the names it borrows from
+  `src/test/journeyScreens.ts` (the whole map).
 
 ## Run it
 
@@ -47,12 +52,16 @@ motion, for a change to an animation.
 The last line names the report: `.verify/runs/<time>/report.md`, beside
 `trace.json` and `screenshots/`.
 
-- **PASS** (exit 0): every chosen feature's steps passed. Now look: open
+- **PASS** (exit 0): every chosen feature's steps passed, no error card
+  showed on any of its screens (a section's "This section couldn’t load.",
+  any screen's load failure, the route's "Something went wrong"), and
+  nothing threw (no page error outside environment noise). Now look: open
   each feature's last screenshot and hold it against its `Expected:` line
   in the report. A step passing means the anchor was there, not that the
   screen is right.
-- **FAIL** (exit 1): a step did not happen, or a feature was flaky. The
-  report names the step, its error and its `-FAIL` screenshot.
+- **FAIL** (exit 1): a step did not happen, an error card showed, the page
+  threw, or a feature was flaky. The report says which, with the step and
+  its `-FAIL` screenshot.
 - **INCOMPLETE** (exit 2): some features could not run here. Incomplete
   is not a pass. The usual cause is a cloud sandbox that cannot download
   the Firestore emulator's jar (its host, storage.googleapis.com, is
@@ -64,8 +73,12 @@ The last line names the report: `.verify/runs/<time>/report.md`, beside
   port taken by another emulator, a seed or build that failed).
 
 Errors in the report are page errors and `console.error`s, less the
-environment's noise (Google hosts the sandbox cannot reach, the favicon).
-An error on the app's own server is never noise.
+environment's noise (Google hosts the sandbox cannot reach, the favicon)
+and the rig's limits (the Functions and Storage emulators, which it does
+not run, as the capture job does not). An error on the app's own server
+or the Auth and Firestore emulators is never noise. Page errors fail the
+feature; console errors are listed for you to read, because the Firebase
+SDK logs failures it has handled there.
 
 ## When it fails
 
@@ -100,10 +113,18 @@ any order against one seeded emulator, each in a fresh browser context.
 
 ## How it works
 
-`scripts/verify/`: `rig.ts` (emulators, seeds, build, preview; state in the
-git-ignored `.verify/`), `drive.ts` (the steps, screenshots, errors),
-`select.ts` (files to features), `report.ts` (the verdict), `cli.ts`. The
-seed chain and build environment are the capture job's, pinned to
-`emulator-tests.yml` by `captureSeedChain.test.ts` and `rigConfig.test.ts`.
-The lower-level drivers in `.claude/skills/verifier-tropos-web/` remain for
-one-off sweeps.
+`scripts/verify/`: `rig.ts` (emulators, seeds, build, preview), `drive.ts`
+(the steps, screenshots, errors, and `judge`, a feature's verdict),
+`select.ts` (files to features), `report.ts` (the run's verdict),
+`cli.ts`. The emulators are one per machine, so their state (and the
+signed-in sessions) lives in the git common dir, `verify-rig/`, shared by
+every worktree; the build, the preview and the runs are per worktree, in
+the git-ignored `.verify/`. The seeds run once per emulator lifetime and
+seed key (the seed scripts and the local date); a new key restarts the
+emulators empty and seeds them again. Emulators the rig did not start are
+never seeded unless you pass `--seed`. The seed chain and build
+environment are the capture job's, pinned to `emulator-tests.yml` by
+`captureSeedChain.test.ts` and `rigConfig.test.ts`. A feature signs in as
+the capture specs' account, or as `season` (sixteen weeks of training)
+where the e2e account has no data for the screen. The lower-level drivers
+in `.claude/skills/verifier-tropos-web/` remain for one-off sweeps.

@@ -8,6 +8,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  DATA_SOURCES,
   FEATURES,
   NOT_DRIVEN,
   SHARED_SOURCES,
@@ -15,6 +16,7 @@ import {
   type Feature,
   type Step,
 } from "./featureMap";
+import { ACCOUNTS } from "./rigConfig";
 import { globToRegExp } from "./select";
 
 const ROOT = process.cwd();
@@ -34,12 +36,15 @@ function filesUnder(dir: string): string[] {
 }
 
 const SRC = filesUnder("src");
+const ROOT_FILES = readdirSync(ROOT).filter((f) =>
+  statSync(join(ROOT, f)).isFile()
+);
 const ALL = [
   ...SRC,
   ...filesUnder("public"),
-  "index.html",
-  "vite.config.ts",
-  "package-lock.json",
+  ...filesUnder("scripts"),
+  ...filesUnder("functions/lib"),
+  ...ROOT_FILES,
 ];
 
 /** Every `path="..."` the router declares. */
@@ -89,23 +94,35 @@ describe("the verify feature map", () => {
     }
   );
 
-  it("never asserts an absence before something on the screen is seen", () => {
+  /* `absent` and `dismiss` look once and do not wait, so each must come
+     after a `see` on the same screen that proves it has loaded: before
+     that, an absence passes on a blank page and a dialog still on its way
+     is not there to close. */
+  it("never looks once (absent, dismiss) before something on the screen is seen", () => {
     for (const f of FEATURES) {
       f.steps.forEach((s, i) => {
-        if (!("absent" in s)) return;
+        if (!("absent" in s) && !("dismiss" in s)) return;
         const since = f.steps.slice(0, i);
         const lastGoto = since.map((x) => "goto" in x).lastIndexOf(true);
         expect(
           since.slice(lastGoto + 1).some((x) => "see" in x),
-          `${f.id} step ${i + 1} asserts an absence with nothing seen first`
+          `${f.id} step ${i + 1} looks once with nothing seen first`
         ).toBe(true);
       });
     }
   });
 
-  it("the smoke set names real features, and shared globs match files", () => {
+  it("signs in as an account the rig has, and only for a signed-in feature", () => {
+    for (const f of FEATURES) {
+      if (f.account === undefined) continue;
+      expect(f.needs, f.id).toBe("signed-in");
+      expect(Object.keys(ACCOUNTS), f.id).toContain(f.account);
+    }
+  });
+
+  it("the smoke set names real features, and shared and data globs match files", () => {
     for (const id of SMOKE) expect(FEATURES.map((f) => f.id)).toContain(id);
-    for (const glob of SHARED_SOURCES)
+    for (const glob of [...SHARED_SOURCES, ...DATA_SOURCES])
       expect(
         ALL.some((file) => globToRegExp(glob).test(file)),
         glob

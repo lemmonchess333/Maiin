@@ -7,11 +7,20 @@
  * - Any other app file (under `src/`, not a test) selects the smoke set too,
  *   and is reported as unmapped: the change reaches the app, so something
  *   has to run, and the report says the map has a gap there.
- * - Tests, docs, e2e specs, scripts and CI files select nothing: they do
- *   not reach the running app. The verify skill's own files are the
- *   exception, and select everything (its CI job runs the whole map).
+ * - The seeded data and the rules it is read through (`DATA_SOURCES`)
+ *   select the whole map: every signed-in anchor is seeded data.
+ * - Tests, docs, e2e specs, other scripts and CI files select nothing:
+ *   they do not reach the running app. The verify skill's own files, and
+ *   the names the map borrows from `journeyScreens.ts`, select the whole
+ *   map (its CI job runs it).
  */
-import { FEATURES, SHARED_SOURCES, SMOKE, type Feature } from "./featureMap";
+import {
+  DATA_SOURCES,
+  FEATURES,
+  SHARED_SOURCES,
+  SMOKE,
+  type Feature,
+} from "./featureMap";
 
 /** A glob as the feature map writes it: `**` crosses folders, `*` and `?`
  *  stay inside one, `{a,b}` is either. Matched against the whole path. */
@@ -54,13 +63,15 @@ export function reachesApp(file: string): boolean {
   if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(file)) return false;
   if (file.startsWith("src/test/")) return false;
   if (file.startsWith("src/")) return true;
-  return matchesAny(file, SHARED_SOURCES);
+  return matchesAny(file, SHARED_SOURCES) || matchesAny(file, DATA_SOURCES);
 }
 
+/** Files that change how every feature is driven or judged. */
 const VERIFY_SELF = [
   "scripts/verify/**",
   ".claude/skills/verify/**",
   ".github/workflows/verify-app.yml",
+  "src/test/journeyScreens.ts",
 ];
 
 export interface Selection {
@@ -90,7 +101,7 @@ export function selectFeatures(
   };
 
   for (const file of changed) {
-    if (matchesAny(file, VERIFY_SELF)) {
+    if (matchesAny(file, VERIFY_SELF) || matchesAny(file, DATA_SOURCES)) {
       for (const f of features) choose(f.id, file);
       continue;
     }

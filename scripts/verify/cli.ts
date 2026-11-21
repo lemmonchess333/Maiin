@@ -10,14 +10,15 @@
  *   npm run verify:app -- --down             # stop the emulators and server
  *
  * Other flags: --smoke (the smoke set), --out <dir>, --rebuild (ignore the
- * build cache), --motion (do not ask for reduced motion).
+ * build cache), --motion (do not ask for reduced motion), --seed (seed
+ * emulators this rig did not start).
  *
  * Exit codes: 0 pass, 1 fail or flaky, 2 incomplete (a feature could not
  * run here), 3 the rig could not start.
  */
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 import { driveFeature, launch, notRun, signIn, stillSignedIn } from "./drive";
 import type { FeatureResult } from "./drive";
 import { FEATURES, SMOKE, type Feature } from "./featureMap";
@@ -26,15 +27,17 @@ import {
   build,
   emulatorsDown,
   emulatorsUp,
+  ensureSeeded,
   preflight,
   preview,
   previewDown,
   rememberAuthState,
   RigError,
+  rigLogs,
   ROOT,
-  seed,
   STATE_DIR,
 } from "./rig";
+import { ACCOUNTS, type Account } from "./rigConfig";
 import { renderReport, summarise, type RunMeta } from "./report";
 import { selectFeatures, type Selection } from "./select";
 
@@ -46,6 +49,7 @@ export interface Args {
   out?: string;
   rebuild: boolean;
   motion: boolean;
+  seedExternal: boolean;
 }
 
 export function parseArgs(argv: readonly string[]): Args {
@@ -56,6 +60,7 @@ export function parseArgs(argv: readonly string[]): Args {
     repeat: 1,
     rebuild: false,
     motion: false,
+    seedExternal: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -74,6 +79,9 @@ export function parseArgs(argv: readonly string[]): Args {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
+      /* An empty list would drive nothing and exit 0: a pass for no work. */
+      if (!args.ids.length)
+        throw new Error("--features needs at least one feature id (--list)");
     } else if (a === "--all") args.mode = "all";
     else if (a === "--smoke") args.mode = "smoke";
     else if (a === "--list") args.mode = "list";
@@ -85,6 +93,7 @@ export function parseArgs(argv: readonly string[]): Args {
     } else if (a === "--out") args.out = value();
     else if (a === "--rebuild") args.rebuild = true;
     else if (a === "--motion") args.motion = true;
+    else if (a === "--seed") args.seedExternal = true;
     else throw new Error(`Unknown flag ${a}. See scripts/verify/cli.ts.`);
   }
   return args;
@@ -97,14 +106,26 @@ function git(args: string[]): string[] {
   return out.stdout.split("\n").filter(Boolean);
 }
 
-/** This branch's changes against `base`, plus what is not committed yet. */
+/**
+ * This branch's changes against `base`, plus what is not committed yet.
+ * `--no-renames`: a renamed file is its old path deleted and its new one
+ * added, so both select their features (git would otherwise list the new
+ * path only, and a feature claiming the old one would not run).
+ */
 export function changedFiles(base: string): string[] {
   const files = new Set([
-    ...git(["diff", "--name-only", `${base}...HEAD`]),
-    ...git(["diff", "--name-only", "HEAD"]),
+    ...git(["diff", "--name-only", "--no-renames", `${base}...HEAD`]),
+    ...git(["diff", "--name-only", "--no-renames", "HEAD"]),
     ...git(["ls-files", "--others", "--exclude-standard"]),
   ]);
   return [...files].sort();
+}
+
+/** True when HEAD is `base` itself (or behind it) and nothing is uncommitted. */
+function sameAsBase(base: string): boolean {
+  const head = git(["rev-parse", "HEAD"])[0];
+  const mergeBase = git(["merge-base", base, "HEAD"])[0];
+  return head === mergeBase;
 }
 
 function choose(args: Args): Selection {
@@ -143,17 +164,27 @@ async function main(): Promise<number> {
     return 0;
   }
   if (args.mode === "down") {
-    previewDown(log);
+    await previewDown(log);
     await emulatorsDown(log);
     return 0;
   }
 
   const selection = choose(args);
   if (!selection.features.length) {
-    log(
-      "nothing to drive: the change reaches no screen (tests, docs, CI or " +
-        "scripts only). Say so in the commit's Verified line."
-    );
+    if (
+      args.mode === "diff" &&
+      sameAsBase(args.base) &&
+      !changedFiles(args.base).length
+    )
+      log(
+        `nothing to drive: this branch has no changes against ${args.base} ` +
+          "(HEAD is the base). Pass --features or --smoke to drive anyway."
+      );
+    else
+      log(
+        "nothing to drive: the change reaches no screen (tests, docs, CI or " +
+          "scripts only). Say so in the commit's Verified line."
+      );
     return 0;
   }
   log(
@@ -172,7 +203,31 @@ async function main(): Promise<number> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const outDir = args.out ?? join(STATE_DIR, "runs", stamp);
   mkdirSync(outDir, { recursive: true });
+  /* The rig's logs travel with the report, so a failure read in CI (or by
+     someone else) has them beside it, whatever happened below. */
+  const keepLogs = () => {
+    for (const p of rigLogs())
+      try {
+        copyFileSync(p, join(outDir, basename(p)));
+      } catch {
+        /* a log that cannot be copied is not the run's failure */
+      }
+  };
+  try {
+    return await drive(args, selection, outDir, timings, timed, log);
+  } finally {
+    keepLogs();
+  }
+}
 
+async function drive(
+  args: Args,
+  selection: Selection,
+  outDir: string,
+  timings: Record<string, number>,
+  timed: <T>(name: string, fn: () => T | Promise<T>) => Promise<T>,
+  log: (line: string) => void
+): Promise<number> {
   const pre = await timed("preflight", preflight);
   if (!pre.chromium)
     throw new RigError(
@@ -181,37 +236,53 @@ async function main(): Promise<number> {
         "`npx playwright install chromium` where the network allows it."
     );
   const signedIn = selection.features.some((f) => f.needs === "signed-in");
-  const emu = await timed("emulators", () => emulatorsUp(pre, signedIn, log));
-  await timed("seed", () => seed(emu, log));
+  const up = await timed("emulators", () => emulatorsUp(pre, signedIn, log));
+  const seeded = await timed("seed", () =>
+    ensureSeeded(
+      pre,
+      up,
+      { firestore: signedIn, seedExternal: args.seedExternal },
+      log
+    )
+  );
+  const emu = seeded.emu;
   const built = await timed("build", () => build(log, args.rebuild));
   const base = await timed("preview", () => preview(built.hash, log));
 
   const browser = await launch(pre.chromium);
   const results: FeatureResult[] = [];
   try {
-    let state: string | undefined;
-    let signInError: string | undefined;
-    if (signedIn && emu.firestore) {
-      const auth = authStatePath(emu.lifetime);
-      await timed("sign-in", async () => {
-        if (auth.valid && (await stillSignedIn(browser, base, auth.path))) {
-          log("sign-in: reusing the saved session");
-        } else {
-          try {
-            const ms = await signIn(browser, base, auth.path);
-            rememberAuthState(emu.lifetime);
-            log(`sign-in: ${ms} ms`);
-          } catch (e) {
-            signInError = (e as Error).message.split("\n")[0];
-          }
+    /* Each account the chosen features use signs in once, and its saved
+       session is reused for as long as the emulators and seeds last. */
+    const sessions = new Map<Account, { state?: string; error?: string }>();
+    const session = async (account: Account) => {
+      const known = sessions.get(account);
+      if (known) return known;
+      const auth = authStatePath(account, emu.lifetime, seeded.key);
+      let got: { state?: string; error?: string };
+      const t = Date.now();
+      if (auth.valid && (await stillSignedIn(browser, base, auth.path))) {
+        log(`sign-in (${account}): reusing the saved session`);
+        got = { state: auth.path };
+      } else {
+        try {
+          const ms = await signIn(browser, base, auth.path, ACCOUNTS[account]);
+          rememberAuthState(account, emu.lifetime, seeded.key);
+          log(`sign-in (${account}): ${ms} ms`);
+          got = { state: auth.path };
+        } catch (e) {
+          got = { error: (e as Error).message.split("\n")[0] };
         }
-      });
-      state = signInError ? undefined : auth.path;
-    }
+      }
+      timings[`sign-in ${account}`] = Date.now() - t;
+      sessions.set(account, got);
+      return got;
+    };
 
     const t = Date.now();
     for (let round = 1; round <= args.repeat; round++) {
       for (const feature of selection.features as Feature[]) {
+        const account = feature.account ?? "e2e";
         let r: FeatureResult;
         if (feature.needs === "signed-in" && !emu.firestore)
           r = notRun(
@@ -219,19 +290,23 @@ async function main(): Promise<number> {
             round,
             emu.diagnosis ?? "The Firestore emulator is not running."
           );
-        else if (feature.needs === "signed-in" && signInError)
-          r = {
-            ...notRun(feature, round, ""),
-            verdict: "fail",
-            reason: `signing in as the seeded account failed: ${signInError}`,
-          };
-        else
-          r = await driveFeature(browser, base, feature, {
-            outDir,
-            round,
-            storageState: feature.needs === "signed-in" ? state : undefined,
-            motion: args.motion,
-          });
+        else {
+          const s =
+            feature.needs === "signed-in" ? await session(account) : undefined;
+          if (s?.error)
+            r = {
+              ...notRun(feature, round, ""),
+              verdict: "fail",
+              reason: `signing in as the seeded ${account} account failed: ${s.error}`,
+            };
+          else
+            r = await driveFeature(browser, base, feature, {
+              outDir,
+              round,
+              storageState: s?.state,
+              motion: args.motion,
+            });
+        }
         results.push(r);
         log(
           `${round > 1 ? `round ${round} ` : ""}${feature.id}: ${r.verdict}` +
@@ -249,7 +324,7 @@ async function main(): Promise<number> {
     base,
     build: built.hash,
     firestore: emu.firestore,
-    diagnosis: emu.diagnosis,
+    diagnosis: [emu.diagnosis, seeded.note].filter(Boolean).join("\n\n"),
     timings,
     because: selection.because,
     unmapped: selection.unmapped,

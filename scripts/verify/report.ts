@@ -129,14 +129,8 @@ export function renderReport(
   }
   out.push("");
 
-  const firstRound = results.filter((r) => r.round === 1);
-  out.push("## Rubric", "");
-  out.push(
-    "Hold each feature's last screenshot against what it should show.",
-    ""
-  );
-  for (const r of firstRound) {
-    out.push(`### ${r.id}: ${r.title}`, "");
+  const section = (r: FeatureResult, heading: string) => {
+    out.push(`### ${heading}`, "");
     out.push(`Expected: ${r.expected}`, "");
     if (meta.because?.[r.id])
       out.push(
@@ -158,6 +152,21 @@ export function renderReport(
         );
     }
     out.push("");
+  };
+
+  out.push("## Rubric", "");
+  out.push(
+    "Hold each feature's last screenshot against what it should show.",
+    ""
+  );
+  for (const r of results.filter((x) => x.round === 1))
+    section(r, `${r.id}: ${r.title}`);
+  /* A later round matters when it went differently: a flaky feature's
+     failing round is the evidence. */
+  const later = results.filter((x) => x.round > 1 && x.verdict !== "pass");
+  if (later.length) {
+    out.push("## Later rounds that did not pass", "");
+    for (const r of later) section(r, `${r.id}, round ${r.round}: ${r.title}`);
   }
   return out.join("\n");
 }

@@ -67,11 +67,11 @@ describe("selectFeatures", () => {
       ids([
         "src/lib/__tests__/trainingWeek.test.ts",
         "src/components/home/WeekStrip.test.tsx",
-        "src/test/journeyScreens.ts",
+        "src/test/setup.ts",
         "docs/agents/capture-rig.md",
         "e2e/screenshots/home.screens.capture.spec.ts",
         ".github/workflows/ci.yml",
-        "scripts/seed-rich-user.ts",
+        "scripts/check-dist-size.mjs",
         "functions/index.js",
         "CLAUDE.md",
       ])
@@ -83,6 +83,29 @@ describe("selectFeatures", () => {
     expect(ids([".github/workflows/verify-app.yml"])).toHaveLength(
       FEATURES.length
     );
+    // The names the map borrows.
+    expect(ids(["src/test/journeyScreens.ts"])).toHaveLength(FEATURES.length);
+  });
+
+  it("chooses the whole map for the seeded data and the rules it is read through", () => {
+    for (const file of [
+      "scripts/seed-rich-user.ts",
+      "scripts/seed-season-athlete.ts",
+      "firestore.rules",
+      "functions/lib/challengeDefs.js",
+    ])
+      expect(ids([file]), file).toHaveLength(FEATURES.length);
+  });
+
+  it("runs the smoke set for package.json and the index config", () => {
+    for (const file of ["package.json", "firestore.indexes.json"]) {
+      const s = selectFeatures([file]);
+      expect(s.smoke, file).toBe(true);
+      expect(s.unmapped, file).toEqual([]);
+      expect(s.features.map((f) => f.id)).toEqual(
+        FEATURES.filter((f) => SMOKE.includes(f.id)).map((f) => f.id)
+      );
+    }
   });
 
   it("keeps the map's order and lists each feature once", () => {

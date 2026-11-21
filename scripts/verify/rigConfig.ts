@@ -60,8 +60,36 @@ export const BUILD_ENV = {
 export const TEST_EMAIL = "e2e-test@tropos.test";
 export const TEST_PASSWORD = "test-password-123";
 
+/**
+ * The seeded accounts a feature can sign in as. `e2e` is the capture
+ * specs' account (seed:e2e and seed:rich); `season` is sixteen weeks of
+ * training (seed:season, `SEASON_USER`), the only account whose Progress
+ * pages all have the data their charts need
+ * (`analytics.season.capture.spec.ts` films them as it).
+ */
+export const ACCOUNTS = {
+  e2e: { email: TEST_EMAIL, password: TEST_PASSWORD },
+  season: {
+    email: "season-athlete@tropos.test",
+    password: "test-password-123",
+  },
+} as const;
+
+export type Account = keyof typeof ACCOUNTS;
+
+/**
+ * Files besides `scripts/seed-*.ts` that the seed chain reads, so a
+ * change to them reseeds the rig (`seed:rich` builds this week's
+ * challenges with the server's own definitions).
+ */
+export const SEED_EXTRA_INPUTS = ["functions/lib/challengeDefs.js"] as const;
+
 /** The app's base path (`vite.config.ts`). */
 export const BASE_PATH = "/Maiin/";
+
+/** The `vite.config.ts` plugin that re-saves the output's form frames in
+ *  place, which the verify build leaves out (`vite.verify.config.ts`). */
+export const REWRITES_OUTPUT = "tropos-shrink-form-frames";
 
 /** iPhone 14 portrait, the audits' and the capture specs' viewport. */
 export const VIEWPORT = { width: 393, height: 852 } as const;

@@ -1,18 +1,29 @@
 /**
- * The verify rig: the Firebase emulators, the seeded account, an emulator
+ * The verify rig: the Firebase emulators, the seeded accounts, an emulator
  * build of the app and a preview server, each started once and reused.
  *
  * Every piece is idempotent and keyed, so the second run of the skill
  * costs only the driving:
- * - the emulators are reused when their ports answer;
- * - the seed chain runs once per emulator lifetime (`seeded.json` holds
- *   the lifetime it seeded);
+ * - the emulators are reused while the process this rig started still
+ *   answers on their ports;
+ * - the seed chain runs once per emulator lifetime and seed key (the seed
+ *   scripts' contents and the local date: the seeds write "today" and
+ *   "last week"); on a new key the emulators restart empty and are seeded
+ *   again;
  * - the build runs only when its inputs changed (`build.json` holds a
- *   hash of every file under src/ and public/ and the config around them);
+ *   hash of the files under src/ and public/, the config and .env files
+ *   around them, and the VITE_ values the build sees);
  * - the preview server is reused while it serves that build.
  *
- * State lives in `.verify/` at the repo root (git-ignored). `--down`
- * stops what the rig started.
+ * Where state lives: the emulators are one per machine (their ports are),
+ * so their state (`emulators.json`, its log, `seeded.json`, the signed-in
+ * sessions) is kept in the git common dir, `<common>/verify-rig/`, which
+ * every worktree of the clone shares; a second worktree reuses the first's
+ * emulators as the rig's own rather than as strangers. The build, the
+ * preview and the runs are per worktree, in `.verify/` (git-ignored).
+ * `--down` stops what the rig started, and only that: a pid is killed only
+ * when its command line is still the emulators' or the preview's, so a
+ * pid recycled after a container restore is never touched.
  *
  * Every wait polls for the thing it waits on; nothing sleeps a fixed time.
  */
@@ -34,7 +45,7 @@ import {
 } from "node:fs";
 import { createServer, request } from "node:http";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import {
   AUTH_HOST,
   BASE_PATH,
@@ -44,11 +55,25 @@ import {
   PROJECT,
   SEED_CHAIN,
   SEED_ENV,
+  SEED_EXTRA_INPUTS,
+  type Account,
 } from "./rigConfig";
 
 export const ROOT = resolve(import.meta.dirname, "..", "..");
 export const STATE_DIR = join(ROOT, ".verify");
 export const DIST_DIR = join(STATE_DIR, "dist");
+
+/** The emulators' state, shared by every worktree of this clone. */
+function sharedDir(): string {
+  const out = spawnSync("git", ["rev-parse", "--git-common-dir"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  const dir = out.status === 0 ? out.stdout.trim() : "";
+  if (!dir) return STATE_DIR;
+  return join(isAbsolute(dir) ? dir : join(ROOT, dir), "verify-rig");
+}
+export const SHARED_DIR = sharedDir();
 
 export type Log = (line: string) => void;
 
@@ -61,17 +86,17 @@ export class RigError extends Error {
   }
 }
 
-function readState<T>(name: string): T | undefined {
+function readState<T>(name: string, dir = STATE_DIR): T | undefined {
   try {
-    return JSON.parse(readFileSync(join(STATE_DIR, name), "utf8")) as T;
+    return JSON.parse(readFileSync(join(dir, name), "utf8")) as T;
   } catch {
     return undefined;
   }
 }
 
-function writeState(name: string, value: unknown): void {
-  mkdirSync(STATE_DIR, { recursive: true });
-  writeFileSync(join(STATE_DIR, name), JSON.stringify(value, null, 2));
+function writeState(name: string, value: unknown, dir = STATE_DIR): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, name), JSON.stringify(value, null, 2));
 }
 
 function alive(pid: number | undefined): boolean {
@@ -84,10 +109,72 @@ function alive(pid: number | undefined): boolean {
   }
 }
 
-/** Status code of a GET to a loopback URL, or 0 when nothing answers. */
-export function probe(url: string, timeoutMs = 1500): Promise<number> {
+/** The command line of a running process, or undefined. */
+function commandOf(pid: number): string | undefined {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").replace(/\0/g, " ");
+  } catch {
+    const out = spawnSync("ps", ["-o", "command=", "-p", String(pid)], {
+      encoding: "utf8",
+    });
+    return out.status === 0 ? out.stdout.trim() || undefined : undefined;
+  }
+}
+
+export const EMULATOR_COMMAND = /emulators:start/;
+export const PREVIEW_COMMAND = /\bvite\b.*\bpreview\b/;
+
+/**
+ * True when `pid` is alive AND still runs the command the rig started
+ * there. A stored pid can outlive its process (a container restored from
+ * a snapshot, a reboot) and be handed to something else.
+ */
+export function ours(pid: number | undefined, command: RegExp): boolean {
+  if (!pid || !alive(pid)) return false;
+  return command.test(commandOf(pid) ?? "");
+}
+
+/** Signals the process group the rig started at `pid` (and the process
+ *  itself, if it leads no group). */
+function signalGroup(pid: number, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    try {
+      process.kill(pid, signal);
+    } catch {
+      /* already gone */
+    }
+  }
+}
+
+/**
+ * Stops what the rig started at `pid`: SIGTERM, then SIGKILL if it is
+ * still there after `graceMs`. Refuses a pid whose command line is no
+ * longer `command`. Returns whether it stopped anything.
+ */
+async function stopOurs(
+  pid: number,
+  command: RegExp,
+  graceMs: number,
+  gone: () => Promise<boolean> = async () => !alive(pid)
+): Promise<boolean> {
+  if (!ours(pid, command)) return false;
+  signalGroup(pid, "SIGTERM");
+  if (await until(gone, graceMs)) return true;
+  signalGroup(pid, "SIGKILL");
+  await until(gone, 10_000);
+  return true;
+}
+
+/** Status code of a request to a loopback URL, or 0 when nothing answers. */
+export function probe(
+  url: string,
+  timeoutMs = 1500,
+  method = "GET"
+): Promise<number> {
   return new Promise((done) => {
-    const req = request(url, { method: "GET", timeout: timeoutMs }, (res) => {
+    const req = request(url, { method, timeout: timeoutMs }, (res) => {
       res.resume();
       done(res.statusCode ?? 0);
     });
@@ -194,7 +281,8 @@ export async function preflight(): Promise<Preflight> {
 export interface Emulators {
   /** False when only Auth runs: signed-in features cannot. */
   firestore: boolean;
-  /** Identifies this emulator lifetime, for the seed and sign-in caches. */
+  /** Identifies this emulator lifetime, for the seed and sign-in caches;
+   *  "external" when the rig did not start them. */
   lifetime: string;
   /** Why Firestore is missing, when it is. */
   diagnosis?: string;
@@ -204,6 +292,8 @@ interface EmulatorState {
   pid: number;
   startedAt: string;
   firestore: boolean;
+  /** The worktree whose firebase.json and rules the emulators loaded. */
+  root: string;
   diagnosis?: string;
 }
 
@@ -211,13 +301,19 @@ const authUp = async () => (await probe(`http://${AUTH_HOST}/`)) === 200;
 const firestoreUp = async () =>
   (await probe(`http://${FIRESTORE_HOST}/`)) === 200;
 
+/** The rig's emulators, if the recorded process is still them. */
+function ourEmulators(): EmulatorState | undefined {
+  const state = readState<EmulatorState>("emulators.json", SHARED_DIR);
+  return state && ours(state.pid, EMULATOR_COMMAND) ? state : undefined;
+}
+
 function startEmulators(
   only: string,
   firebase: string[],
   log: Log
 ): { pid: number; logPath: string; exited: () => boolean } {
-  mkdirSync(STATE_DIR, { recursive: true });
-  const logPath = join(STATE_DIR, "emulators.log");
+  mkdirSync(SHARED_DIR, { recursive: true });
+  const logPath = join(SHARED_DIR, "emulators.log");
   const fd = openSync(logPath, "w");
   const [cmd, ...args] = firebase;
   const child = spawn(
@@ -250,38 +346,38 @@ export function diagnoseFirestore(logText: string): string {
 }
 
 /**
- * Brings the emulators up, or reuses the ones already answering. Wants
- * Firestore when `firestore` is true; falls back to Auth alone, with a
- * diagnosis, when Firestore cannot start.
+ * Brings the emulators up, or reuses the rig's own that already answer.
+ * Wants Firestore when `firestore` is true; falls back to Auth alone,
+ * with a diagnosis, when Firestore cannot start.
  */
 export async function emulatorsUp(
   pre: Preflight,
   firestore: boolean,
   log: Log
 ): Promise<Emulators> {
-  const state = readState<EmulatorState>("emulators.json");
+  const state = ourEmulators();
   const [a, f] = await Promise.all([authUp(), firestoreUp()]);
   /* Firestore already failed to start in this rig's lifetime, and nothing
      has changed since (no jar has appeared): asking again costs seconds
      and gets the same answer, so reuse the Auth-only rig. */
-  const knownMissing =
-    a &&
-    !f &&
-    !!state?.diagnosis &&
-    alive(state.pid) &&
-    !pre.firestoreJarCached;
+  const knownMissing = a && !f && !!state?.diagnosis && !pre.firestoreJarCached;
   if (a && (f || !firestore || knownMissing)) {
-    const lifetime = state && alive(state.pid) ? state.startedAt : "external";
-    log(`emulators: reusing (auth ${a}, firestore ${f})`);
+    log(
+      `emulators: reusing (auth ${a}, firestore ${f}` +
+        (state ? "" : ", not started by this rig") +
+        ")"
+    );
+    if (state && state.root !== ROOT)
+      log(`emulators: started from ${state.root}; its firestore.rules apply`);
     return {
       firestore: f,
-      lifetime,
+      lifetime: state?.startedAt ?? "external",
       diagnosis: f ? undefined : state?.diagnosis,
     };
   }
   if (a || f) {
     /* Half a rig someone else started: don't fight it for the ports. */
-    if (!(state && alive(state.pid)))
+    if (!state)
       throw new RigError(
         "EMULATORS",
         `Only ${a ? "Auth" : "Firestore"} answers on its port, and this ` +
@@ -306,15 +402,20 @@ export async function emulatorsUp(
     );
     if (up) {
       const startedAt = new Date().toISOString();
-      writeState("emulators.json", {
-        pid: run.pid,
-        startedAt,
-        firestore: true,
-      } satisfies EmulatorState);
+      writeState(
+        "emulators.json",
+        {
+          pid: run.pid,
+          startedAt,
+          firestore: true,
+          root: ROOT,
+        } satisfies EmulatorState,
+        SHARED_DIR
+      );
       return { firestore: true, lifetime: startedAt };
     }
     const diagnosis = diagnoseFirestore(readFileSync(run.logPath, "utf8"));
-    if (alive(run.pid)) killGroup(run.pid);
+    await stopOurs(run.pid, EMULATOR_COMMAND, 15_000);
     log(`emulators: Firestore unavailable. ${diagnosis}`);
     return startAuthOnly(pre, log, diagnosis);
   }
@@ -334,55 +435,126 @@ async function startAuthOnly(
       `The Auth emulator did not start. See ${run.logPath}.`
     );
   const startedAt = new Date().toISOString();
-  writeState("emulators.json", {
-    pid: run.pid,
-    startedAt,
-    firestore: false,
-    diagnosis,
-  } satisfies EmulatorState);
+  writeState(
+    "emulators.json",
+    {
+      pid: run.pid,
+      startedAt,
+      firestore: false,
+      root: ROOT,
+      diagnosis,
+    } satisfies EmulatorState,
+    SHARED_DIR
+  );
   return { firestore: false, lifetime: startedAt, diagnosis };
 }
 
-function killGroup(pid: number): void {
-  try {
-    process.kill(-pid, "SIGTERM");
-  } catch {
-    try {
-      process.kill(pid, "SIGTERM");
-    } catch {
-      /* already gone */
-    }
+export async function emulatorsDown(log: Log): Promise<void> {
+  const state = readState<EmulatorState>("emulators.json", SHARED_DIR);
+  if (state) {
+    const portsClosed = async () => !(await authUp()) && !(await firestoreUp());
+    if (await stopOurs(state.pid, EMULATOR_COMMAND, 30_000, portsClosed))
+      log(`emulators: stopped (pid ${state.pid})`);
+    else if (alive(state.pid))
+      log(`emulators: pid ${state.pid} is no longer the emulators; left alone`);
   }
+  for (const f of ["emulators.json", "seeded.json"])
+    rmSync(join(SHARED_DIR, f), { force: true });
+  for (const f of readdirSafe(SHARED_DIR))
+    if (/^auth-/.test(f)) rmSync(join(SHARED_DIR, f), { force: true });
 }
 
-export async function emulatorsDown(log: Log): Promise<void> {
-  const state = readState<EmulatorState>("emulators.json");
-  if (state && alive(state.pid)) {
-    killGroup(state.pid);
-    await until(
-      async () => !(await authUp()) && !(await firestoreUp()),
-      30_000
-    );
-    log(`emulators: stopped (pid ${state.pid})`);
+function readdirSafe(dir: string): string[] {
+  try {
+    return readdirSync(dir);
+  } catch {
+    return [];
   }
-  for (const f of [
-    "emulators.json",
-    "seeded.json",
-    "auth-state.json",
-    "auth-state.key.json",
-  ])
-    rmSync(join(STATE_DIR, f), { force: true });
 }
 
 /* ── Seeds ─────────────────────────────────────────────────────── */
 
-/** Runs the capture job's seed chain once per emulator lifetime. */
-export function seed(emu: Emulators, log: Log): number {
-  if (!emu.firestore) return 0;
-  const done = readState<{ lifetime: string }>("seeded.json");
-  if (done && done.lifetime === emu.lifetime && emu.lifetime !== "external") {
-    log("seed: already seeded for this emulator lifetime");
-    return 0;
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** Today on the machine's clock, as the seeds count days. */
+export function localDate(now = new Date()): string {
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
+ * What the seeded data depends on: the seed scripts, the files they read
+ * and the local date (they write "today", "this week" and "eight weeks
+ * ago"). A run on a new key reseeds an emptied emulator.
+ */
+export function seedKey(now = new Date()): string {
+  const h = createHash("sha256");
+  h.update(localDate(now));
+  const scripts = join(ROOT, "scripts");
+  const files = [
+    ...readdirSafe(scripts)
+      .filter((f) => /^seed-.*\.ts$/.test(f))
+      .sort()
+      .map((f) => join("scripts", f)),
+    ...SEED_EXTRA_INPUTS,
+  ];
+  for (const rel of files) {
+    const abs = join(ROOT, rel);
+    h.update(`${rel}\0`);
+    if (existsSync(abs)) h.update(readFileSync(abs));
+  }
+  const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+  for (const s of SEED_CHAIN) h.update(`${s}\0${pkg.scripts[s] ?? ""}\n`);
+  return h.digest("hex").slice(0, 16);
+}
+
+export interface SeedResult {
+  emu: Emulators;
+  ms: number;
+  /** The key the signed-in sessions are valid for. */
+  key: string;
+  /** Said in the report when the data was not seeded by this run's rig. */
+  note?: string;
+}
+
+/**
+ * Runs the capture job's seed chain once per emulator lifetime and seed
+ * key. A lifetime seeded under another key (the seeds changed, or the
+ * day did) restarts the emulators empty first: the seeds add documents
+ * dated from today, and running them over yesterday's would mix the two.
+ * Emulators the rig did not start are never seeded unless `seedExternal`.
+ */
+export async function ensureSeeded(
+  pre: Preflight,
+  emu: Emulators,
+  opts: { firestore: boolean; seedExternal: boolean },
+  log: Log
+): Promise<SeedResult> {
+  const key = seedKey();
+  if (!emu.firestore) return { emu, ms: 0, key };
+  if (emu.lifetime === "external" && !opts.seedExternal) {
+    const note =
+      "The emulators were running already and this rig did not start " +
+      "them, so it did not seed them; the signed-in features read whatever " +
+      "they hold. Stop them, or pass --seed to seed them anyway.";
+    log(`seed: skipped. ${note}`);
+    return { emu, ms: 0, key: `external-${key}`, note };
+  }
+  const done = readState<{ lifetime: string; key: string }>(
+    "seeded.json",
+    SHARED_DIR
+  );
+  if (done && done.lifetime === emu.lifetime && done.key === key) {
+    log("seed: already seeded for this emulator lifetime and seed key");
+    return { emu, ms: 0, key };
+  }
+  let current = emu;
+  if (done && done.lifetime === emu.lifetime) {
+    log("seed: the seeds or the day changed; restarting the emulators empty");
+    await emulatorsDown(log);
+    current = await emulatorsUp(pre, opts.firestore, log);
+    if (!current.firestore) return { emu: current, ms: 0, key };
   }
   const started = Date.now();
   for (const script of SEED_CHAIN) {
@@ -399,8 +571,8 @@ export function seed(emu: Emulators, log: Log): number {
       );
     log(`seed: ${script} ${Date.now() - t} ms`);
   }
-  writeState("seeded.json", { lifetime: emu.lifetime });
-  return Date.now() - started;
+  writeState("seeded.json", { lifetime: current.lifetime, key }, SHARED_DIR);
+  return { emu: current, ms: Date.now() - started, key };
 }
 
 /* ── Build ─────────────────────────────────────────────────────── */
@@ -414,20 +586,52 @@ const BUILD_INPUTS = [
   "scripts/verify/vite.verify.config.ts",
   "index.html",
   "vite.config.ts",
+  "package.json",
   "package-lock.json",
   "tsconfig.json",
   "tsconfig.app.json",
+  /* `vite build --mode=test` reads these. */
+  ".env",
+  ".env.local",
+  ".env.test",
+  ".env.test.local",
 ];
 
 /**
- * A hash of the build's inputs by path, size and modification time:
- * public/ holds hundreds of megabytes of art, too much to read on every
- * run, and an edit moves the time. A checkout that moves times without
- * changing content costs one rebuild, never a stale one.
+ * Variables that change what `vite.config.ts` builds (a Capacitor bundle,
+ * the Hosting base path) or that it refuses to build with (the App Check
+ * debug token). The verify build is the emulator web build, whatever the
+ * shell that started it has set.
  */
-export function buildHash(): string {
+export const BUILD_ENV_REMOVED = [
+  "HOSTING_TARGET",
+  "CAPACITOR_BUILD",
+  "VITE_APP_CHECK_DEBUG_TOKEN",
+] as const;
+
+/** The build's environment: the shell's, less the variables above, with
+ *  the emulator values on top. */
+export function buildEnv(
+  base: NodeJS.ProcessEnv = process.env
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...base, ...BUILD_ENV };
+  for (const k of BUILD_ENV_REMOVED) delete env[k];
+  return env;
+}
+
+/**
+ * A hash of the build's inputs: the files by path, size and modification
+ * time (public/ holds hundreds of megabytes of art, too much to read on
+ * every run, and an edit moves the time; a checkout that moves times
+ * without changing content costs one rebuild, never a stale one), and
+ * every VITE_ value the build will see.
+ */
+export function buildHash(env: NodeJS.ProcessEnv = buildEnv()): string {
   const h = createHash("sha256");
-  h.update(JSON.stringify(BUILD_ENV));
+  for (const [k, v] of Object.entries(env)
+    .filter(([k]) => k.startsWith("VITE_"))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+    h.update(`${k}=${v ?? ""}\n`);
   const visit = (rel: string) => {
     const abs = join(ROOT, rel);
     if (!existsSync(abs)) return;
@@ -445,7 +649,8 @@ export function buildHash(): string {
 /** Builds the app against the emulators into `.verify/dist`, unless the
  *  last build had the same inputs. Returns the build's hash. */
 export function build(log: Log, force = false): { hash: string; ms: number } {
-  const hash = buildHash();
+  const env = buildEnv();
+  const hash = buildHash(env);
   const last = readState<{ hash: string }>("build.json");
   if (
     !force &&
@@ -479,11 +684,7 @@ export function build(log: Log, force = false): { hash: string; ms: number } {
       DIST_DIR,
       "--emptyOutDir",
     ],
-    {
-      cwd: ROOT,
-      env: { ...process.env, ...BUILD_ENV },
-      encoding: "utf8",
-    }
+    { cwd: ROOT, env, encoding: "utf8" }
   );
   if (out.status !== 0)
     throw new RigError(
@@ -498,8 +699,9 @@ export function build(log: Log, force = false): { hash: string; ms: number } {
 /**
  * Links each entry of public/ into the build output, which the verify
  * build does not copy (`vite.verify.config.ts`). The links point at the
- * reviewed files; nothing writes through them, because the build's
- * frame-shrinking step runs before they exist and finds no frames.
+ * reviewed files; nothing writes through them, because the verify build
+ * leaves out the one step that rewrites files in the output (the form
+ * frames' shrinking).
  */
 export function linkPublic(): void {
   const pub = join(ROOT, "public");
@@ -539,14 +741,15 @@ export async function preview(hash: string, log: Log): Promise<string> {
   if (
     state &&
     state.hash === hash &&
-    alive(state.pid) &&
+    ours(state.pid, PREVIEW_COMMAND) &&
     (await probe(baseUrl(state.port))) === 200
   ) {
     log(`preview: reusing port ${state.port}`);
     return baseUrl(state.port);
   }
-  if (state && alive(state.pid)) killGroup(state.pid);
+  if (state) await stopOurs(state.pid, PREVIEW_COMMAND, 5_000);
   const port = await freePort(4173);
+  mkdirSync(STATE_DIR, { recursive: true });
   const fd = openSync(join(STATE_DIR, "preview.log"), "w");
   const child = spawn(
     "npx",
@@ -587,29 +790,53 @@ export async function preview(hash: string, log: Log): Promise<string> {
   return baseUrl(port);
 }
 
-export function previewDown(log: Log): void {
+export async function previewDown(log: Log): Promise<void> {
   const state = readState<PreviewState>("preview.json");
-  if (state && alive(state.pid)) {
-    killGroup(state.pid);
-    log(`preview: stopped (pid ${state.pid})`);
+  if (state) {
+    if (await stopOurs(state.pid, PREVIEW_COMMAND, 5_000))
+      log(`preview: stopped (pid ${state.pid})`);
+    else if (alive(state.pid))
+      log(`preview: pid ${state.pid} is no longer the preview; left alone`);
   }
   rmSync(join(STATE_DIR, "preview.json"), { force: true });
 }
 
-/** The signed-in browser state's file, valid for one emulator lifetime. */
-export function authStatePath(lifetime: string): {
-  path: string;
-  valid: boolean;
-} {
-  const path = join(STATE_DIR, "auth-state.json");
-  const key = readState<{ lifetime: string }>("auth-state.key.json");
+/** The logs a run's report should carry, where they exist. */
+export function rigLogs(): string[] {
+  return [
+    join(SHARED_DIR, "emulators.log"),
+    join(STATE_DIR, "preview.log"),
+  ].filter((p) => existsSync(p));
+}
+
+/* ── Signed-in sessions ────────────────────────────────────────── */
+
+/** An account's signed-in browser state, valid for one emulator lifetime
+ *  and seed key (a reseed recreates the accounts). */
+export function authStatePath(
+  account: Account,
+  lifetime: string,
+  key: string
+): { path: string; valid: boolean } {
+  const path = join(SHARED_DIR, `auth-${account}.json`);
+  const stamp = readState<{ lifetime: string; key: string }>(
+    `auth-${account}.key.json`,
+    SHARED_DIR
+  );
   return {
     path,
     valid:
-      existsSync(path) && key?.lifetime === lifetime && lifetime !== "external",
+      existsSync(path) &&
+      lifetime !== "external" &&
+      stamp?.lifetime === lifetime &&
+      stamp?.key === key,
   };
 }
 
-export function rememberAuthState(lifetime: string): void {
-  writeState("auth-state.key.json", { lifetime });
+export function rememberAuthState(
+  account: Account,
+  lifetime: string,
+  key: string
+): void {
+  writeState(`auth-${account}.key.json`, { lifetime, key }, SHARED_DIR);
 }

@@ -18,7 +18,12 @@ name: Verify app
 #   whose verdict moves between rounds fails the job as flaky. A flaky
 #   harness teaches retrying instead of fixing.
 #
-# Not a required check: it runs only when the skill changes or on demand.
+# - Nightly, one round of the whole map against main, so a change that
+#   broke an anchor without touching the skill (a renamed button, a moved
+#   route, a seed) is found the next morning rather than by the next agent.
+#
+# Not a required check: it runs when the skill, the names it borrows or
+# the seeded data change, nightly, and on demand.
 
 on:
   pull_request:
@@ -27,6 +32,11 @@ on:
       - "scripts/verify/**"
       - ".claude/skills/verify/**"
       - ".github/workflows/verify-app.yml"
+      - "src/test/journeyScreens.ts"
+      - "scripts/seed-*"
+  schedule:
+    # 03:17 UTC: off the hour, and outside the morning's busy runners.
+    - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       features:
@@ -107,11 +117,14 @@ jobs:
           fi
           npm run verify:app -- "$@" --out verify-out
 
+      # Into the summary for a reader, and into the log for an agent, who
+      # reads job logs and cannot download artifacts from every sandbox.
       - name: Report
         if: always()
         run: |
           if [ -f verify-out/report.md ]; then
             cat verify-out/report.md >> "$GITHUB_STEP_SUMMARY"
+            cat verify-out/report.md
           else
             echo "The rig did not start; read the step log above." >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -124,11 +137,8 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verify-report
-          path: |
-            verify-out/
-            .verify/emulators.log
-            .verify/preview.log
+          # The report, the trace, the screenshots and the rig's logs
+          # (the CLI copies the emulators' and the preview's logs in).
+          path: verify-out/
           retention-days: 7
           if-no-files-found: ignore
-          # The rig's logs live in the git-ignored .verify/.
-          include-hidden-files: true

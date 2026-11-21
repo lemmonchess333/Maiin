@@ -24,7 +24,7 @@ import {
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Feature, Step, Target } from "./featureMap";
-import { TEST_EMAIL, TEST_PASSWORD, VIEWPORT } from "./rigConfig";
+import { VIEWPORT } from "./rigConfig";
 
 export type Verdict = "pass" | "fail" | "not-run";
 
@@ -88,14 +88,90 @@ const NOISE_TEXT = [
   /analytics\/.*(fetch|config)/i,
 ];
 
+/* Emulators the app connects to and the rig does not start: Functions
+   (callables) and Storage (`src/lib/firebase.ts`). A refused request to
+   one is the rig's limit, not the change's; the rig runs Auth and
+   Firestore only, as the capture job does. */
+const RIG_LIMIT_PORTS = new Set(["5001", "9199"]);
+const LOOPBACK = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::(\d+))?\//;
+
 export function isNoise(text: string, source: string | undefined): boolean {
-  if (source && /^https?:\/\/127\.0\.0\.1(:\d+)?\//.test(source)) {
+  const loop = source ? LOOPBACK.exec(source) : null;
+  if (loop) {
     /* The app's own server and the emulators: a failure here is real,
-       except the favicon the preview server does not have. */
-    return /\/favicon\.ico$/.test(source);
+       except the favicon the preview server does not have and the
+       emulators the rig does not run. */
+    return (
+      /\/favicon\.ico$/.test(source ?? "") || RIG_LIMIT_PORTS.has(loop[1] ?? "")
+    );
   }
+  if (/(?:127\.0\.0\.1|localhost):(?:5001|9199)\b/.test(text)) return true;
   if (source && NOISE_SOURCES.some((re) => re.test(source))) return true;
   return NOISE_TEXT.some((re) => re.test(text));
+}
+
+/**
+ * A feature's verdict from what happened on its screens. Pure, so the
+ * rules are tested without a browser (`report.test.ts`):
+ * - a step that did not happen fails it, and names the step;
+ * - an error card on screen fails it, though every step passed: a card
+ *   that throws inside `SectionErrorBoundary` leaves the page's other
+ *   anchors standing, and only its fallback says so;
+ * - an uncaught exception (`pageerror`) that is not environment noise
+ *   fails it.
+ * Console errors are reported, not judged: the Firebase SDK logs handled
+ * failures there, and a rule that failed on them would fail every run.
+ */
+export function judge(input: {
+  failedStep?: { n: number; action: string; target?: string; error?: string };
+  errorCard?: string;
+  problems: readonly PageProblem[];
+}): { verdict: "pass" | "fail"; reason?: string } {
+  const s = input.failedStep;
+  if (s)
+    return {
+      verdict: "fail",
+      reason: `step ${s.n} (${s.action} ${s.target ?? ""}): ${s.error ?? ""}`,
+    };
+  if (input.errorCard)
+    return {
+      verdict: "fail",
+      reason: `an error card is on the screen: “${input.errorCard}”`,
+    };
+  const thrown = input.problems.find((p) => p.kind === "pageerror" && !p.noise);
+  if (thrown)
+    return {
+      verdict: "fail",
+      reason: `the page threw: ${thrown.text.split("\n")[0]} (at ${thrown.url})`,
+    };
+  return { verdict: "pass" };
+}
+
+/**
+ * The text of an error card on screen, if one is: the shared `ErrorState`
+ * (the only `role="alert"` with `aria-live="assertive"`, drawn by
+ * `SectionErrorBoundary` and by every screen's own load failure), or
+ * `RouteErrorBoundary`'s page.
+ */
+export async function errorCardOnScreen(
+  page: Page
+): Promise<string | undefined> {
+  const cards = [
+    page
+      .getByRole("alert")
+      .filter({ hasText: /restart Tropos|Something went wrong/ }),
+    page.locator('[role="alert"][aria-live="assertive"]'),
+  ];
+  for (const card of cards) {
+    const shown = card.filter({ visible: true });
+    if ((await shown.count()) === 0) continue;
+    const text = await shown
+      .first()
+      .innerText({ timeout: 2_000 })
+      .catch(() => "");
+    return text.replace(/\s+/g, " ").trim().slice(0, 160) || "(no text)";
+  }
+  return undefined;
 }
 
 export function describeTarget(t: Target): string {
@@ -104,6 +180,7 @@ export function describeTarget(t: Target): string {
       `role=${t.role}`,
       t.name !== undefined ? `name=${String(t.name)}` : "",
       t.level ? `level=${t.level}` : "",
+      t.checked !== undefined ? `checked=${t.checked}` : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -119,6 +196,7 @@ function all(page: Page, t: Target): Locator {
       name: t.name,
       exact: t.exact,
       level: t.level,
+      checked: t.checked,
     });
   if ("label" in t) return page.getByLabel(t.label, { exact: t.exact });
   if ("text" in t) return page.getByText(t.text, { exact: t.exact });
@@ -251,14 +329,15 @@ export async function launch(executablePath: string): Promise<Browser> {
 }
 
 /**
- * Signs in as the seeded account through the real form (the flow
+ * Signs in as a seeded account through the real form (the flow
  * `e2e/helpers/auth.ts` uses) and saves the browser's state, IndexedDB
  * included, to `statePath`. Returns the milliseconds it took.
  */
 export async function signIn(
   browser: Browser,
   base: string,
-  statePath: string
+  statePath: string,
+  creds: { email: string; password: string }
 ): Promise<number> {
   const started = Date.now();
   const ctx = await newContext(browser);
@@ -279,8 +358,8 @@ export async function signIn(
       .waitFor({ state: "visible", timeout: DEFAULT_TIMEOUT });
     if (!(await email.isVisible())) await welcomeSignIn.first().click();
     await email.waitFor({ state: "visible", timeout: DEFAULT_TIMEOUT });
-    await email.fill(TEST_EMAIL);
-    await page.locator("#login-password").fill(TEST_PASSWORD);
+    await email.fill(creds.email);
+    await page.locator("#login-password").fill(creds.password);
     await page.locator('button[type="submit"]').click();
     await page
       .getByRole("navigation", { name: "Main navigation" })
@@ -375,6 +454,8 @@ export async function driveFeature(
     });
   });
 
+  let failedStep: StepResult | undefined;
+  let errorCard: string | undefined;
   try {
     for (const [i, step] of feature.steps.entries()) {
       const n = i + 1;
@@ -389,9 +470,15 @@ export async function driveFeature(
       }
       rec.ms = Date.now() - t;
       rec.url = page.url().replace(base, "/");
+      /* After every step that waited on the screen, look for an error
+         card: a multi-page feature can pass its last anchor after an
+         earlier page showed one. A goto lands before the page renders. */
+      if (rec.ok && !("goto" in step) && !errorCard)
+        errorCard = await errorCardOnScreen(page);
+      const bad = !rec.ok || !!errorCard;
       const file = `${prefix}-${String(n).padStart(2, "0")}-${slug(
         `${action} ${target ?? ""}`
-      )}${rec.ok ? "" : "-FAIL"}.png`;
+      )}${bad ? "-FAIL" : ""}.png`;
       try {
         await page.screenshot({
           path: join(shots, file),
@@ -404,15 +491,22 @@ export async function driveFeature(
       }
       result.steps.push(rec);
       if (!rec.ok) {
-        result.verdict = "fail";
-        result.reason = `step ${n} (${action} ${target ?? ""}): ${rec.error}`;
+        failedStep = rec;
         break;
       }
+      if (errorCard) break;
     }
   } finally {
     result.ms = Date.now() - started;
     await ctx.close();
   }
+  const judged = judge({
+    failedStep,
+    errorCard,
+    problems: result.problems,
+  });
+  result.verdict = judged.verdict;
+  result.reason = judged.reason;
   return result;
 }
 

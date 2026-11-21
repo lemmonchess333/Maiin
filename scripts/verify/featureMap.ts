@@ -26,6 +26,7 @@
  * every source glob to at least one file.
  */
 import { HOME, TABS, TRAIN, WORKOUT } from "@/test/journeyScreens";
+import type { Account } from "./rigConfig";
 
 /** What a feature needs from the rig before it can run. */
 export type Needs =
@@ -52,6 +53,8 @@ export type Target =
       name?: Name;
       exact?: boolean;
       level?: number;
+      /** A radio, checkbox or switch in this state (`aria-checked`). */
+      checked?: boolean;
     }
   | { label: Name; exact?: boolean }
   | { text: Name; exact?: boolean }
@@ -65,17 +68,29 @@ export type Step =
   | { fill: Target; value: string }
   /** Wait until the target is visible. */
   | { see: Target; timeoutMs?: number }
-  /** The target is not on the page. Only after a `see` on the same screen. */
+  /**
+   * The target is not on the page, checked once, at once: it does not
+   * wait. So it must follow a `see` on the same screen that proves the
+   * screen has loaded, or it passes on a blank page
+   * (`featureMap.test.ts` holds this).
+   */
   | { absent: Target }
   /** Wait until the URL's path matches. */
   | { url: RegExp }
-  /** Close whatever opened over the screen (a badge seal, a sheet). */
+  /**
+   * Close whatever opened over the screen (a badge seal, a sheet). Checks
+   * once whether a dialog is open, so it must follow a `see` on something
+   * only the loaded screen draws: before that, a dialog still on its way
+   * is not there to close.
+   */
   | { dismiss: true };
 
 export interface Feature {
   id: string;
   title: string;
   needs: Needs;
+  /** The seeded account a signed-in feature uses; `e2e` when unset. */
+  account?: Account;
   /** Globs, from the repo root, of the code that draws this feature. */
   sources: string[];
   /** The route the feature starts on, as `App.tsx` writes it. */
@@ -210,11 +225,17 @@ export const FEATURES: Feature[] = [
       "src/components/WeekPulse*.tsx",
     ],
     route: "/",
+    /* seed-e2e-user.ts makes every day but tomorrow a lift day, and no
+       seeded workout is dated today (seed-rich-user.ts: two and five days
+       back each week), so today's hero is always an unstarted lift:
+       Start workout inside "Today’s training" (Home.tsx, LiftCTACard). */
     steps: [
       { goto: "" },
       { see: mainNav },
-      { dismiss: true },
       { see: { role: "button", name: /add water/i } },
+      { dismiss: true },
+      { see: { role: "group", name: "Today’s training", exact: true } },
+      { see: { role: "button", name: WORKOUT.start, exact: true } },
       { see: { role: "heading", name: HOME.heading, level: 1 } },
     ],
     expected:
@@ -238,8 +259,8 @@ export const FEATURES: Feature[] = [
     steps: [
       { goto: "" },
       { see: mainNav },
-      { dismiss: true },
       { see: { role: "group", name: /^Week of / } },
+      { dismiss: true },
       { click: { role: "button", name: /\(today\)$/ } },
       { see: { role: "group", name: /^Week of / } },
     ],
@@ -284,6 +305,7 @@ export const FEATURES: Feature[] = [
       { goto: "food" },
       { click: { role: "button", name: "Enter manually" } },
       { see: { role: "dialog" } },
+      { see: { label: "Meal name" } },
     ],
     expected:
       "The manual entry sheet over Food with its name and calorie fields " +
@@ -321,10 +343,17 @@ export const FEATURES: Feature[] = [
       "src/lib/runProgrammeViewModel.ts",
     ],
     route: "/program",
+    /* The Run radio is drawn on both halves, so it is the CHECKED one that
+       proves ?tab=run was honoured, and "Run training" (the run half's
+       own section, ProgrammeRunSection) that it drew: a freeform hero for
+       the seeded lifter, the run week for a plan. */
     steps: [
       { goto: "program?tab=run" },
       { see: { role: "heading", name: "Train", level: 1 } },
-      { see: { role: "radio", name: TRAIN.run, exact: true } },
+      {
+        see: { role: "radio", name: TRAIN.run, exact: true, checked: true },
+      },
+      { see: { role: "region", name: "Run training", exact: true } },
     ],
     expected:
       "Train on its Run half: the run week's days, today's run (or rest) " +
@@ -359,6 +388,8 @@ export const FEATURES: Feature[] = [
     steps: [
       { goto: "program/plan" },
       { see: { role: "heading", name: "Your plan", level: 1 } },
+      /* Drawn once the programme has loaded (TrainingPlan.tsx). */
+      { see: { role: "region", name: "This week’s plan", exact: true } },
     ],
     expected:
       "The week's lifts and runs laid out by day, with the next lift named.",
@@ -430,6 +461,12 @@ export const FEATURES: Feature[] = [
     id: "progress-pages",
     title: "Progress: the Lifting, Running, Body and Food pages",
     needs: "signed-in",
+    /* The season athlete: the e2e account has no weigh-ins, no daily
+       targets and no run with splits, so three of these pages would show
+       their empty states. Each anchor is the one
+       analytics.season.capture.spec.ts waits on, for the same reason:
+       it draws only when the page's data is there. */
+    account: "season",
     sources: [
       "src/pages/History.tsx",
       "src/components/analytics/**",
@@ -439,21 +476,32 @@ export const FEATURES: Feature[] = [
     ],
     route: "/history",
     steps: [
-      ...(["lifting", "running", "body", "food"] as const).flatMap(
-        (view): Step[] => [
-          { goto: `history?view=${view}` },
-          { see: { role: "heading", name: "Progress", level: 1 } },
-          { see: mainNav },
-        ]
-      ),
-      /* Lifting's exercise rows, which only loaded sessions draw (the
-         link largeText.capture follows into an exercise's history). */
       { goto: "history?view=lifting" },
-      { see: { css: 'a[href*="/history/exercise/"]' }, timeoutMs: 30_000 },
+      { see: { role: "heading", name: "Progress", level: 1 } },
+      /* MuscleVolumeCard's summary line, in each of its forms. */
+      {
+        see: {
+          text: /^\d+ of \d+ muscles? below their range|muscles in their range$|^Your 1 muscle is in its range$/,
+        },
+        timeoutMs: 30_000,
+      },
+      { goto: "history?view=running" },
+      {
+        see: { role: "heading", name: "Fastest kilometres" },
+        timeoutMs: 30_000,
+      },
+      { goto: "history?view=body" },
+      { see: { role: "heading", name: "Your rate" }, timeoutMs: 30_000 },
+      { goto: "history?view=food" },
+      {
+        see: { role: "heading", name: "How the days went" },
+        timeoutMs: 30_000,
+      },
     ],
     expected:
-      "Each page's charts drawn from the seeded sessions, meals and " +
-      "weigh-ins, none past the screen's edge.",
+      "Sixteen weeks drawn on each page: sets per muscle against their " +
+      "ranges, the fastest kilometres, the rate of weight change, and the " +
+      "days against their targets; no chart past the screen's edge.",
   },
   {
     id: "training-history",
@@ -480,11 +528,22 @@ export const FEATURES: Feature[] = [
     needs: "signed-in",
     sources: ["src/pages/ExerciseHistory.tsx", "src/lib/prTracking.ts"],
     route: "/history/exercise/:name",
+    /* The h1 is the URL's own name, so it draws on any name; the two
+       cards below draw only from saved sessions (ExerciseHistory.tsx:
+       "No sessions logged yet" otherwise). seed-rich-user.ts saves Bench
+       Press twice a week for nine weeks, 4×8 climbing 2.5 kg a week. */
     steps: [
       { goto: "history/exercise/Bench%20Press" },
       { see: { role: "heading", name: /Bench Press/, level: 1 } },
+      {
+        see: { role: "heading", name: "Recent sessions", exact: true },
+        timeoutMs: 30_000,
+      },
+      { see: { role: "heading", name: "Bests by reps", exact: true } },
     ],
-    expected: "Bench Press's progression chart and its personal bests by reps.",
+    expected:
+      "Bench Press's progression chart, its bests by reps (8 reps, the " +
+      "seeded sets) and its recent sessions.",
   },
   {
     id: "workout-detail",
@@ -551,13 +610,25 @@ export const FEATURES: Feature[] = [
       "src/hooks/useDiscoverFeed.ts",
     ],
     route: "/social",
+    /* Every seeded public post is Maya Chen's (seed-rich-user.ts), and
+       she is also the one person the account follows, so her name alone
+       would pass on Following. The CHECKED Explore source is what proves
+       the feed=explore link was honoured (the radio is drawn on both
+       sources; feed-activity-cards.screens.capture checks the same
+       aria-checked), and her "Morning run" that Explore read the public
+       posts: the account has no fan-out feed docs for Following to show. */
     steps: [
       { goto: "social?tab=feed&feed=explore" },
-      { see: { text: "Maya Chen" }, timeoutMs: 30_000 },
+      {
+        see: { role: "radio", name: /^Explore/, checked: true },
+        timeoutMs: 30_000,
+      },
+      { see: { text: "Morning run" }, timeoutMs: 30_000 },
     ],
     expected:
-      "Explore's posts from the seeded athletes (Maya Chen first among " +
-      "them), each card with its picture or map and its props.",
+      "Explore's posts from the seeded athletes (Maya Chen's morning run " +
+      "and push day among them), each card with its map or lifts and its " +
+      "props.",
   },
   {
     id: "profile",
@@ -843,4 +914,25 @@ export const SHARED_SOURCES: readonly string[] = [
   "vite.config.ts",
   "public/**",
   "package-lock.json",
+  /* A dependency or an npm script: the same reach as the lockfile. */
+  "package.json",
+  /* The emulator does not enforce composite indexes, so the rig cannot
+     catch a missing one; the smoke set runs so the change is at least
+     seen against the app. */
+  "firestore.indexes.json",
+];
+
+/**
+ * What every signed-in feature reads through: the seeded data and the
+ * rules the Firestore emulator enforces on it (`firebase.json` points the
+ * emulator at `firestore.rules`). Every signed-in anchor in the map is
+ * seeded data read through those rules, so a change here can break any
+ * feature, and the whole map runs (under a minute a round once the rig is
+ * warm). Changing the rules themselves is not this skill's business; it
+ * only shows what a change does to the screens.
+ */
+export const DATA_SOURCES: readonly string[] = [
+  "firestore.rules",
+  "scripts/seed-*.ts",
+  "functions/lib/challengeDefs.js",
 ];
