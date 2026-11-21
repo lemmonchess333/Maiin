@@ -10,6 +10,10 @@ import type { SitePage } from "../../src/website/sitePages";
  *  nothing from the app. `pageHtml.test.ts` holds the two together. */
 export const SITE_ORIGIN = "https://troposfit.com";
 
+/** Tropos's App Store id (`APP_STORE_URL`), for Safari's Smart App
+ *  Banner. `pageHtml.test.ts` holds the two together. */
+export const APP_STORE_ID = "6762416918";
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -29,8 +33,12 @@ const ROOT = '<div id="root"></div>';
 /**
  * `template` (the built index.html) as the page `page`: its title, its
  * description and preview tags, its canonical address unless it is Home,
- * and `body`, the page drawn, in `#root`, marked with the page's key so
- * the browser knows it may take the HTML over (`main.tsx`).
+ * Safari's Smart App Banner (Install, or Open where Tropos is on the
+ * iPhone) unless it is Home, and `body`, the page drawn, in `#root`,
+ * marked with the page's key so the browser knows it may take the HTML
+ * over (`main.tsx`). Home's HTML is also the page a shared post arrives on,
+ * and `publicPostPage` adds a banner of its own there that opens the post
+ * (functions/lib/publicPost.js), so Home carries none to double it.
  */
 export function fillPage(
   template: string,
@@ -59,7 +67,12 @@ export function fillPage(
     `<meta name="twitter:title" content="${title}" />`,
     `<meta name="twitter:description" content="${description}" />`,
     `<meta name="twitter:image" content="${image}" />`,
-    ...(page.path === "/" ? [] : [`<link rel="canonical" href="${url}" />`]),
+    ...(page.path === "/"
+      ? []
+      : [
+          `<link rel="canonical" href="${url}" />`,
+          `<meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}" />`,
+        ]),
   ].join("\n    ");
   return template
     .replace(PREVIEW_META, "")
