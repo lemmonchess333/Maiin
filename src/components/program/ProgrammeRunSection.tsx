@@ -789,19 +789,8 @@ export default function ProgrammeRunSection({
   useEffect(() => {
     if (!easeNudgeVisible) return;
     setLastShownAt(profile.uid, todayKeyDerivation);
-    trackProgram("ease_week_nudge_shown", {
-      trigger: easeNudgeTrigger,
-      count: easeNudgeCount,
-      total: easeNudgeTotal,
-    });
-  }, [
-    easeNudgeVisible,
-    profile.uid,
-    todayKeyDerivation,
-    easeNudgeTrigger,
-    easeNudgeCount,
-    easeNudgeTotal,
-  ]);
+    trackProgram("ease_week_nudge_shown", { trigger: easeNudgeTrigger });
+  }, [easeNudgeVisible, profile.uid, todayKeyDerivation, easeNudgeTrigger]);
 
   // A6: the post-ease bounce read — the week AFTER an applied easier
   // week, one factual line on whether the quality came back. Pure,

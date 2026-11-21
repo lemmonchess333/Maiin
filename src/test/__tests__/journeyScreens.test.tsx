@@ -268,15 +268,15 @@ describe("Train's two halves and the run week", () => {
     const week = screen.getByRole("tablist", { name: TRAIN.runWeek });
     // A day still to run shows its day of the month; a done one, a check.
     for (const [name, day] of [
-      [runWeekTabName("Tempo", "today"), "1"],
-      [runWeekTabName("20K"), "3"],
+      [runWeekTabName(1, "Tempo", "today"), "1"],
+      [runWeekTabName(3, "20K"), "3"],
     ])
       expect(within(week).getByRole("tab", { name })).toHaveTextContent(
         new RegExp(`^${day}$`)
       );
     expect(
       within(week).getByRole("tab", {
-        name: runWeekTabName("15K", "completed"),
+        name: runWeekTabName(2, "15K", "completed"),
       })
     ).toBeInTheDocument();
   });
