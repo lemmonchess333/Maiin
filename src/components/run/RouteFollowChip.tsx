@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Navigation, AlertTriangle } from "lucide-react";
 import { routeProgress } from "../../lib/gps";
 import type { GPSPoint } from "../../lib/gps";
@@ -46,18 +46,23 @@ export default function RouteFollowChip({
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-white backdrop-blur"
-      style={{
-        /* Off-route: near-black ink on the amber chip — white on the
-           warning identity is ~3.2:1 at 12px, and this is the one label
-           that exists to be read at a glance mid-run. Dark-on-amber is
-           the road-sign register and measures ~5.9:1. Theme-INDEPENDENT
-           by design (the map, not the theme, is the surface — same rule
-           as THEME.scrim), so a fixed ink, not a token. On-route keeps
-           the class's white-on-scrim (inline undefined defers to it). */
-        background: off ? `${THEME.warning}e6` : "rgba(0,0,0,0.55)",
-        color: off ? THEME.bg : undefined,
-      }}
+      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-white bg-(--chip) backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-(--chip-solid)"
+      style={
+        {
+          /* Off-route: near-black ink on the amber chip — white on the
+             warning identity is ~3.2:1 at 12px, and this is the one label
+             that exists to be read at a glance mid-run. Dark-on-amber is
+             the road-sign register and measures ~5.9:1. Theme-INDEPENDENT
+             by design (the map, not the theme, is the surface — same rule
+             as THEME.scrim), so a fixed ink, not a token. On-route keeps
+             the class's white-on-scrim (color undefined defers to it).
+             Each fill has a solid twin for Reduce Transparency, which
+             the class switches to (DS6, §14o). */
+          "--chip": off ? `${THEME.warning}e6` : "rgba(0,0,0,0.55)",
+          "--chip-solid": off ? THEME.warning : "rgb(0,0,0)",
+          color: off ? THEME.bg : undefined,
+        } as CSSProperties
+      }
       role="status"
       aria-label={
         off

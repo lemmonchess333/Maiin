@@ -290,9 +290,11 @@ function RaceEventHeader({
 }
 
 /* The two round chips on the hero (Back, Joined): scrim glass over a
-   cover photo, the page colour over the plain tinted band. */
+   cover photo, the page colour over the plain tinted band. The scrim is
+   the inline style, so a tap's sticky hover never greys it; under Reduce
+   Transparency an important black outranks the inline style. */
 const PHOTO_CHIP =
-  "rounded-full text-white backdrop-blur-md border border-white/20";
+  "rounded-full text-white backdrop-blur-md border border-white/20 transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!";
 const PLAIN_CHIP = "rounded-full bg-background/80 border border-border/60";
 
 type PostItem = SpacePostDoc & { id: string };

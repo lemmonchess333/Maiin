@@ -387,7 +387,7 @@ export default function RunDetail() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Back"
-            className="absolute top-4 left-4 size-11 rounded-full flex items-center justify-center backdrop-blur-md z-10"
+            className="absolute top-4 left-4 size-11 rounded-full flex items-center justify-center backdrop-blur-md z-10 transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -411,7 +411,7 @@ export default function RunDetail() {
             type="button"
             onClick={startReplay}
             disabled={replaying}
-            className="absolute bottom-3 right-3 inline-flex items-center px-3 min-h-[44px] rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
+            className="absolute bottom-3 right-3 inline-flex items-center px-3 min-h-[44px] rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50 transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
             style={{
               background: "rgba(0,0,0,0.55)",
               color: "white",
