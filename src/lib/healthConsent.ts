@@ -1,6 +1,5 @@
 /**
- * Agreement before Tropos stores health details (Priv1 call 1, owner
- * 2026-11-21).
+ * Agreement before Tropos stores health details (Priv1 call 1).
  *
  * UK GDPR Art 9 makes weight, food, injuries and heart rate special
  * category data, which Tropos stores on the person's explicit consent:

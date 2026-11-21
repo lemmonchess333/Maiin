@@ -1,6 +1,6 @@
 /**
- * Agreement before Tropos stores health details (Priv1 call 1, owner
- * 2026-11-21): the server's half.
+ * Agreement before Tropos stores health details (Priv1 call 1): the
+ * server's half.
  *
  * `users/{uid}.healthDataConsent` = `{ at, version }`. Setup asks before
  * its first body question, and `completeOnboarding` refuses to finish
