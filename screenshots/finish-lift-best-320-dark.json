@@ -1,0 +1,38 @@
+{
+  "viewport": {
+    "width": 320,
+    "height": 852
+  },
+  "object": {
+    "widthShare": 0.613,
+    "top": 177,
+    "heightShare": 0.21
+  },
+  "textSizes": [
+    {
+      "size": 77,
+      "sample": "2,295"
+    },
+    {
+      "size": 20,
+      "sample": "Pull A done"
+    },
+    {
+      "size": 18,
+      "sample": "35 kg"
+    },
+    {
+      "size": 16,
+      "sample": "kg lifted in"
+    },
+    {
+      "size": 14,
+      "sample": "Sat"
+    },
+    {
+      "size": 12,
+      "sample": "Was"
+    }
+  ],
+  "largestToNext": 3.85
+}
