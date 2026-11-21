@@ -24,9 +24,9 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Charts:** Recharts 3
 - **Maps:** MapLibre GL 6, with OpenFreeMap's tiles (`src/lib/basemap.ts`; the credit must stay on every map)
 - **Animation:** Framer Motion 12
-- **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
+- **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts` (Pages and the iPhone app; troposfit.com serves `scripts/website/retired-sw.js` at its address, which clears the caches and unregisters)
 - **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
-- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
+- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). Since App1 Q52 troposfit.com serves no app to start that checkout from, so the website sells nothing until the owner chooses how (the backlog's Part W rows). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
@@ -62,6 +62,7 @@ src/
 ├── styles/             # CSS tokens, component styles, animations
 ├── utils/              # Helpers (calorie balance, formatters, weight trend)
 │   └── __tests__/      # Unit tests for utils/
+├── website/            # troposfit.com: the App Store page, a post's page, legal (App1 Q52)
 └── App.tsx             # Router + error boundary + lazy loading
 functions/              # Firebase Cloud Functions (plain JS, CommonJS)
 e2e/                    # Playwright specs; screenshot capture specs in e2e/screenshots/
@@ -483,8 +484,8 @@ already made for this repo.
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
 - **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 row in `docs/qa/pre-launch-backlog.md` has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
-- **deploy.yml:** Builds and deploys to GitHub Pages.
-- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
+- **deploy.yml:** Builds the whole app and deploys it to GitHub Pages (`/Maiin/`), the development and preview surface.
+- **deploy-hosting.yml:** Builds troposfit.com with `base: "/"` and deploys to Firebase Hosting. Since App1 Q52 (owner, 15 Nov 2026) that is the website, not the app: `npm run build:hosting` builds `website.html` (`src/website/`) alone and writes it out as `index.html` (`scripts/website/websiteEntry.ts`). It is the page that points to the App Store, a shared post's page (`publicPostPage` fetches this `index.html`), and the legal and support pages; every address already handed out keeps answering (`src/website/__tests__/websiteAddresses.test.tsx` follows each through firebase.json). It ships only `public/icons` and `public/legal` of the app's public folder, the worker that retires the app's at `sw.js` and `firebase-messaging-sw.js`, and the universal-links file, without whose `IOS_APP_ID_PREFIX` the build fails. The browser app is on Pages only. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
 - **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold. Without the `IOS_DIST_CERT_*` secrets it makes each run's certificate and profile from the App Store Connect API key (`scripts/ios/asc-signing.mjs`, revoking the previous run's), so the owner needs no Mac (`docs/ios-release.md`).
 - **Required checks:** `unit` (the repository ruleset) and `emulator-tests` (main's branch protection). A check skipped by a job-level `if:` reports as passed, so `unit` never depends on what changed, and every job that does reads ci.yml's `changes` output through one fail-open condition. `ios-native-compile.yml` runs on a pull request only when a file the native compile reads changed, and daily on main. `ciChangeGating.test.ts` holds these shapes.
 - **Firebase project:** `adaptive-fitness-af8bb`
