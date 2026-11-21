@@ -36,6 +36,13 @@ export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
     acquiringRef.current = true;
     try {
       const sentinel = await navigator.wakeLock.request("screen");
+      // Released (or unmounted) while the system was granting it: a pause
+      // tapped in the gap must still let the screen sleep, so the lock
+      // that arrives late goes straight back.
+      if (!wantedRef.current) {
+        sentinel.release().catch(() => {});
+        return false;
+      }
       wakeLockRef.current = sentinel;
       sentinel.addEventListener("release", () => {
         wakeLockRef.current = null;
@@ -71,7 +78,9 @@ export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
       // Release the lock on unmount so the screen doesn't stay
       // awake after the consumer (e.g. Run page) tears down. Without
       // this the OS only reclaims the lock when the tab closes —
-      // a route error / nav-away mid-run silently drains battery.
+      // a route error / nav-away mid-run silently drains battery. A lock
+      // still being granted is let go as it arrives.
+      wantedRef.current = false;
       const lock = wakeLockRef.current;
       if (lock) {
         wakeLockRef.current = null;

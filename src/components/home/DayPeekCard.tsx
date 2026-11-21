@@ -2,7 +2,11 @@ import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
-import { formatDuration, formatShortWeekdayDayMonth } from "@/utils/formatters";
+import {
+  formatDuration,
+  formatShortWeekdayDayMonth,
+  formatWeekday,
+} from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
@@ -32,7 +36,13 @@ import type { ProgramState } from "@/features/program/programTypes";
 import { runModeWithPlan } from "@/features/program/programMaintenance";
 import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
-import { liftOnDate } from "@/lib/homeLift";
+import {
+  manageLiftOn,
+  planLiftOn,
+  type LayoutDay,
+  type LayoutLift,
+  type SlidOut,
+} from "@/lib/layOutWeek";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   getCompletionKind,
@@ -182,6 +192,7 @@ function DiaryRowShell({
 export default function DayPeekCard({
   dateKey,
   todayKey,
+  day = null,
   profile,
   programState,
   claimMap,
@@ -197,6 +208,10 @@ export default function DayPeekCard({
   /** Today, "yyyy-MM-dd": Home's day key, so the card and the strip agree
    *  on which day is today. */
   todayKey: string;
+  /** The day as the week lays it out (`layOutWeek`), the layout the strip
+   *  and today's card read: the lift it holds, and where a passed lift
+   *  day's lift went. Absent reads as a day with no lift. */
+  day?: LayoutDay | null;
   /** P1-4 / PR-0c: profile + programState replace the previous
    *  `schedule` + `runDays` props. The peek calls the shared
    *  training resolver which enforces date/weekKey-aware runDay
@@ -286,41 +301,46 @@ export default function DayPeekCard({
           deviceTemperatureUnit()
         )
       : null;
-  /* Today's lift is the one the today card offers (the programme's next),
-     not the weekday's slot, so the peek and the card name one session. */
-  const dayLift = liftOnDate({
-    dateKey,
-    todayKey,
-    scheduled: resolved.lift,
-    programme: programState,
-    sessionsOnDate: new Set(workouts.flatMap((w) => (w.id ? [w.id] : []))),
-  });
+  /* The lift is the one the week lays on the day (`layOutWeek`): today's
+     is the one the today card offers, and a later day's the one the
+     plan's order reaches there, so the strip, the peek and the card name
+     one session. A passed lift day whose lift moved on says where it went
+     (`slidOut`), and a lift day before a race says it rests. */
+  const planLift = day ? planLiftOn(day) : null;
+  const dayLift = {
+    workout: planLift?.workout ?? null,
+    index: planLift?.index ?? null,
+    status: !planLift
+      ? ("none" as const)
+      : planLift.state === "done"
+        ? ("completed" as const)
+        : ("planned" as const),
+    movedFrom: planLift?.movedFrom ?? null,
+  };
+  const slidOut = day && !planLift ? day.slidOut : [];
+  const skippedHere = day?.skippedHere ?? [];
+  const restsForRace = !!day && day.rest === "race";
   const dayLabel = formatShortWeekdayDayMonth(parseLocalDate(dateKey));
-  /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
-     while the rows below it come from the resolved plan — the actual
-     `runDays` for this date and the rotation's lift slot. Those are
-     different sources and they disagree: a deload week can drop the run
-     while Tuesday is still typed "both", and the card then promises
-     "Lift + Run day" above a card containing only a lift.
-     Naming what is actually there keeps the badge honest. It deliberately
-     reads DOWN (both → lift) and never up: the pattern is the plan's
-     intent, so a run that exists but the pattern didn't predict still
-     deserves saying. */
-  const st = resolved.scheduleType;
-  /* RUNS come from the resolved plan, LIFTS from the weekday pattern —
-     which is the split each source is actually authoritative for
-     (ADR-0002). Runs are date-pinned, so `runDays` is the only thing that
-     knows whether this date has one. Lifts are split-ordered, so the
-     pattern is the right source for "is this a lift day"; keying it on the
-     loaded `workouts[liftIndex]` instead would collapse every day to
-     "Rest day" for as long as programState is still loading. */
+  /* The badge names what is actually on the day, not its weekday's type
+     in the usual layout (`profile.weekSchedule`): a deload week can drop
+     the run while Tuesday is still typed "both", and a lift moves to the
+     next lift day when its own passes, so the type alone would promise
+     sessions the card does not hold.
+     RUNS come from the resolved plan, LIFTS from the week laid out:
+     runs are date-pinned, so `runDays` is the only thing that knows
+     whether this date has one, and a lift is on the day the week puts it
+     (TrainWk1 call 1), or was, when it moved on from a lift day. */
   const scheduledRun = resolved.run.runDay !== null;
-  const patternLift = st === "lift" || st === "both";
+  const liftOnDay =
+    !!day &&
+    (day.sessions.some((s) => s.sport === "lift") ||
+      skippedHere.length > 0 ||
+      (day.liftDay && slidOut.length > 0));
   const shownType: "lift" | "run" | "both" | "rest" = scheduledRun
-    ? patternLift
+    ? liftOnDay
       ? "both"
       : "run"
-    : patternLift
+    : liftOnDay
       ? "lift"
       : "rest";
   const typeLabel =
@@ -499,7 +519,14 @@ export default function DayPeekCard({
               icon={<X />}
             />
           </div>
-          {hasW || hasM || hasRun || hasExtras || plannedLiftName ? (
+          {hasW ||
+          hasM ||
+          hasRun ||
+          hasExtras ||
+          plannedLiftName ||
+          slidOut.length > 0 ||
+          skippedHere.length > 0 ||
+          restsForRace ? (
             <div className="space-y-1 text-xs">
               {/* Several sessions on one day get one row EACH, mirroring how
                   the run extras below render per-run rather than collapsing.
@@ -556,8 +583,11 @@ export default function DayPeekCard({
                         style={{ color: THEME.success }}
                       />
                     )}
-                    {dayLift.status === "skipped" && (
-                      <span className="text-muted-foreground"> · skipped</span>
+                    {dayLift.status === "planned" && dayLift.movedFrom && (
+                      <span className="text-muted-foreground">
+                        {" · moved from "}
+                        {formatWeekday(parseLocalDate(dayLift.movedFrom))}
+                      </span>
                     )}
                     {hasW && (totalMinutes > 0 || tonnage > 0) && (
                       <span className="text-muted-foreground font-mono tabular-nums">
@@ -579,6 +609,25 @@ export default function DayPeekCard({
                   </span>
                 </LiftRowShell>
               )}
+              {/* A passed lift day's lift that moved on: where it went,
+                  so the day is never read as a lift missed (TrainWk1). */}
+              {slidOut.map((gone) => (
+                <LiftNoteRow
+                  key={`gone-${gone.lift.index ?? gone.to}`}
+                  name={liftName(programState, gone.lift)}
+                  note={whereItWent(gone, todayKey)}
+                />
+              ))}
+              {/* A lift skipped from this day, today or later: it stays
+                  here, skipped, and the Manage sheet restores it. */}
+              {skippedHere.map((lift) => (
+                <LiftNoteRow
+                  key={`skipped-${lift.index}`}
+                  name={liftName(programState, lift)}
+                  note="skipped"
+                />
+              ))}
+              {restsForRace && <LiftNoteRow note="Rest before your race" />}
               {/* The planned lift's reason, as the run row below carries
                   "Why this run". Outside the row: it can be a button, and
                   a disclosure cannot sit inside one. */}
@@ -743,7 +792,8 @@ export default function DayPeekCard({
               is both the conventional card order and the one that stops
               a 44px touch target reading as an accident. */}
           {onManage &&
-            (resolved.run.runDay !== null || dayLift.workout !== null) && (
+            (resolved.run.runDay !== null ||
+              manageLiftOn(day).workout !== null) && (
               <div className="pt-1 border-t border-border/40">
                 <button
                   type="button"
@@ -766,6 +816,45 @@ export default function DayPeekCard({
         />
       </Suspense>
     </motion.div>
+  );
+}
+
+/** A lift's name as Train names it in its week ("Pull B"). */
+function liftName(programState: ProgramState | null, lift: LayoutLift): string {
+  return lift.workout
+    ? liftDayNameIn(
+        (programState?.workouts ?? []).map((w) => w.dayName),
+        lift.index ?? -1,
+        lift.workout.dayName
+      )
+    : "Lift";
+}
+
+/** Where a passed lift day's lift went: to a later day, still to do this
+ *  week, or skipped. */
+function whereItWent(gone: SlidOut, todayKey: string): string {
+  return gone.to === "skipped"
+    ? "skipped"
+    : gone.to === "still-to-do"
+      ? "still to do"
+      : gone.to === todayKey
+        ? "moved to today"
+        : `moved to ${formatWeekday(parseLocalDate(gone.to))}`;
+}
+
+/** A line about a lift the day does not hold to do: one that moved on,
+ *  one skipped from it, or a day that rests before a race. */
+function LiftNoteRow({ name, note }: { name?: string; note: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Dumbbell className="size-3.5 shrink-0 text-lifting opacity-50" />
+      <span className="text-foreground">
+        {name}
+        <span className="text-muted-foreground">
+          {name ? ` · ${note}` : note}
+        </span>
+      </span>
+    </div>
   );
 }
 

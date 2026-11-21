@@ -21,8 +21,9 @@ import { cn } from "@/lib/utils";
  * name, the minutes as the one display figure, and the rounds and moves
  * under them. A first circuit is the reward register, in lifting's colour
  * with confetti (DS4 call 3); any other is the calm summary. Then the one
- * tap for how it felt, which steers the ladder (Circ1 (7)), and Save, with
- * Discard once a save has failed. Saved, it shows the post as a lift's
+ * tap for how it felt, which steers the ladder (Circ1 (7)), Save, and
+ * Discard, which asks first: iOS has no Back, so the way out without
+ * saving is always on the screen. Saved, it shows the post as a lift's
  * finish does (`CompletionExtras`), then Done. A circuit under 7 minutes
  * says so and saves nothing.
  */
@@ -39,6 +40,7 @@ export default function CircuitFinish({
   error,
   onRate,
   onSave,
+  onDiscard,
   onClose,
   onDone,
 }: {
@@ -57,6 +59,9 @@ export default function CircuitFinish({
   error?: string;
   onRate: (effort: CircuitEffort | undefined) => void;
   onSave: () => void;
+  /** Asks before a circuit that would save is dropped. */
+  onDiscard: () => void;
+  /** Leaves a finish that saves nothing. */
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -161,19 +166,15 @@ export default function CircuitFinish({
             >
               Save circuit
             </Button>
-            {/* After a failed save, a way out that keeps nothing: a save
-                that keeps failing otherwise holds the screen. */}
-            {error && (
-              <Button
-                variant="ghost"
-                size="lg"
-                fullWidth
-                disabled={saving}
-                onClick={onClose}
-              >
-                Discard
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="lg"
+              fullWidth
+              disabled={saving}
+              onClick={onDiscard}
+            >
+              Discard
+            </Button>
           </>
         ) : (
           <>

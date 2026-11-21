@@ -69,13 +69,21 @@ export function savedCircuits(
   return circuits;
 }
 
-/** One circuit's sessions, oldest first, as the ladder reads them. */
+/**
+ * One circuit's sessions, oldest first, as the ladder reads them. A
+ * circuit chosen while the history could not be read is left out: it was
+ * offered at its first rung whatever the ladder had reached, so reading
+ * its rung as the last word would put someone at Level 5 back at the
+ * bottom after one slow read.
+ */
 function ladderRecords(
   circuitId: string,
   newestFirst: readonly DatedCircuit[]
 ): CircuitSessionRecord[] {
   return newestFirst
-    .filter(({ saved }) => saved.circuitId === circuitId)
+    .filter(
+      ({ saved }) => saved.circuitId === circuitId && !saved.historyUnknown
+    )
     .reverse()
     .map(({ saved: { level, effort, finished } }) => ({
       level,
@@ -84,12 +92,19 @@ function ladderRecords(
     }));
 }
 
-/** A built-in circuit at the rung its history steers it to (Circ1 (7)). */
+/**
+ * A built-in circuit at the rung its history steers it to (Circ1 (7)).
+ * With no history to read (`null`: the read failed or outlasted its wait)
+ * it is offered at its first rung and marked so, and the ladder leaves it
+ * out once it is saved.
+ */
 export function circuitForToday(
   base: Circuit,
-  newestFirst: readonly DatedCircuit[],
+  newestFirst: readonly DatedCircuit[] | null,
   injuries?: readonly string[]
 ): Circuit {
+  if (newestFirst === null)
+    return { ...doseAt(base, 0, injuries), historyUnknown: true };
   return doseAt(base, nextLevel(ladderRecords(base.id, newestFirst)), injuries);
 }
 

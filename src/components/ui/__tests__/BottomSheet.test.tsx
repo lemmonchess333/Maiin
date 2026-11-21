@@ -33,26 +33,14 @@ describe("BottomSheet — editor Back handling", () => {
     const onBack = vi.fn();
     const onOpenChange = vi.fn();
     render(
-      <BackDismissContext.Provider
-        value={{ register, dispatchBack: () => false }}
-      >
-        <BottomSheet
-          open
-          onOpenChange={onOpenChange}
-          onBack={onBack}
-          title="Move a run"
-        >
+      <BackDismissContext.Provider value={{ register, dispatchBack: () => false }}>
+        <BottomSheet open onOpenChange={onOpenChange} onBack={onBack} title="Move a run">
           <p>Editor</p>
         </BottomSheet>
       </BackDismissContext.Provider>
     );
-    expect(register).toHaveBeenCalledWith(expect.any(Function), {
-      sticky: true,
-    });
-    act(() => {
-      back();
-      back();
-    });
+    expect(register).toHaveBeenCalledWith(expect.any(Function), { sticky: true });
+    act(() => { back(); back(); });
     expect(onBack).toHaveBeenCalledTimes(2);
     expect(onOpenChange).not.toHaveBeenCalled();
   });
@@ -65,17 +53,11 @@ describe("BottomSheet — editor Back handling", () => {
     });
     const onOpenChange = vi.fn();
     render(
-      <BackDismissContext.Provider
-        value={{ register, dispatchBack: () => false }}
-      >
-        <BottomSheet open onOpenChange={onOpenChange} title="Comments">
-          <p>Body</p>
-        </BottomSheet>
+      <BackDismissContext.Provider value={{ register, dispatchBack: () => false }}>
+        <BottomSheet open onOpenChange={onOpenChange} title="Comments"><p>Body</p></BottomSheet>
       </BackDismissContext.Provider>
     );
-    expect(register).toHaveBeenCalledWith(expect.any(Function), {
-      sticky: false,
-    });
+    expect(register).toHaveBeenCalledWith(expect.any(Function), { sticky: false });
     act(() => back());
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });

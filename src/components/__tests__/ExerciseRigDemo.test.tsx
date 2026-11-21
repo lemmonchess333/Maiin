@@ -215,21 +215,18 @@ describe("ExerciseRigDemo", () => {
       "Press knees apart",
       "Bring knees together slowly",
     ],
-  ])(
-    "%s names its actual drive and return directions",
-    async (id, name, drive, eccentric) => {
-      reduceRef.current = false;
-      demoRef.current = { concentricTo: 1, startsAt: "stretch" };
-      await render(<ExerciseRigDemo exerciseId={id} name={name} />);
-      step(40);
-      step(900);
-      expect(screen.getByText(drive)).toBeInTheDocument();
-      step(2400);
-      expect(screen.getByText(eccentric)).toBeInTheDocument();
-      expect(screen.queryByText("Drive up")).toBeNull();
-      expect(screen.queryByText("Lower under control")).toBeNull();
-    }
-  );
+  ])("%s names its actual drive and return directions", async (id, name, drive, eccentric) => {
+    reduceRef.current = false;
+    demoRef.current = { concentricTo: 1, startsAt: "stretch" };
+    await render(<ExerciseRigDemo exerciseId={id} name={name} />);
+    step(40);
+    step(900);
+    expect(screen.getByText(drive)).toBeInTheDocument();
+    step(2400);
+    expect(screen.getByText(eccentric)).toBeInTheDocument();
+    expect(screen.queryByText("Drive up")).toBeNull();
+    expect(screen.queryByText("Lower under control")).toBeNull();
+  });
 
   it("cues the burpee's plank brace and soft landing in its forward cycle", async () => {
     reduceRef.current = false;

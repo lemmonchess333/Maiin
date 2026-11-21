@@ -90,6 +90,41 @@ describe("the circuit page's states (Circ1 (10), (11), (A))", () => {
     );
   });
 
+  it("asks before a finish is dropped, and keeps it on Keep", () => {
+    const finish = walk(
+      { type: "choose", circuit },
+      { type: "complete" },
+      { type: "rate", effort: "hard" }
+    );
+    const asked = stepCircuitSession(finish, { type: "askDiscard" });
+    expect(asked.phase).toBe("discarding");
+    // Nothing is rated or saved behind the question.
+    expect(stepCircuitSession(asked, { type: "save" })).toBe(asked);
+    expect(stepCircuitSession(asked, { type: "rate", effort: "easy" })).toBe(
+      asked
+    );
+    expect(stepCircuitSession(asked, { type: "keep" })).toMatchObject({
+      phase: "finish",
+      effort: "hard",
+    });
+    expect(stepCircuitSession(asked, { type: "discard" }).phase).toBe(
+      "discarded"
+    );
+  });
+
+  it("never asks to discard a circuit being saved or saved", () => {
+    const saving = walk(
+      { type: "choose", circuit },
+      { type: "complete" },
+      { type: "save" }
+    );
+    expect(stepCircuitSession(saving, { type: "askDiscard" })).toBe(saving);
+    expect(stepCircuitSession(saving, { type: "discard" })).toBe(saving);
+    const running = walk({ type: "choose", circuit });
+    expect(stepCircuitSession(running, { type: "askDiscard" })).toBe(running);
+    expect(stepCircuitSession(running, { type: "keep" })).toBe(running);
+  });
+
   it("runs the clock only while running", () => {
     expect(circuitClockRuns("running")).toBe(true);
     for (const phase of [
@@ -97,6 +132,7 @@ describe("the circuit page's states (Circ1 (10), (11), (A))", () => {
       "paused",
       "ending",
       "finish",
+      "discarding",
       "saving",
       "saved",
       "discarded",

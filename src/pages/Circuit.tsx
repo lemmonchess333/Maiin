@@ -62,8 +62,8 @@ const HISTORY_WAIT_MS = 4000;
 
 /** The person's recent circuits: still being read, read (newest first),
  *  or unknown, when the read failed or outlasted the wait. Unknown is not
- *  none: it offers each circuit at its first rung and never a first
- *  circuit's reward. */
+ *  none: it offers each circuit at its first rung, marked so that the
+ *  ladder leaves it out once saved, and never a first circuit's reward. */
 type CircuitHistory =
   | { status: "reading" }
   | { status: "unknown" }
@@ -134,10 +134,10 @@ export default function Circuit() {
       history.status === "reading"
         ? null
         : builtInCircuits({ kit, injuries }).map((base) => {
-            const known = history.status === "read" ? history.circuits : [];
+            const known = history.status === "read" ? history.circuits : null;
             return {
               circuit: circuitForToday(base, known, injuries),
-              last: lastTimeOf(base.id, known),
+              last: known ? lastTimeOf(base.id, known) : null,
             };
           }),
     [history, kit, injuries]
@@ -314,12 +314,21 @@ export default function Circuit() {
     void wakeLock.request();
     dispatch({ type: "keepGoing" });
   };
-  // Back (the browser's, or a phone's) during a circuit asks before it
-  // leaves, as the end button does; sticky, so a second back after Keep
-  // going asks again.
-  useBackDismiss(phase === "running" || phase === "paused", askEnd, {
-    sticky: true,
-  });
+  const askDiscard = () => dispatch({ type: "askDiscard" });
+  // Back (the browser's, or a phone's) asks before it leaves anything
+  // unsaved, as the buttons do: during a circuit, whether to end it; on a
+  // finish that saves, whether to discard it; and while it saves, it
+  // waits. Sticky, so a second back after Keep going or Cancel asks
+  // again. A finish under 7 minutes keeps nothing, so Back just leaves.
+  const unsaved = saves && (phase === "finish" || phase === "saving");
+  useBackDismiss(
+    phase === "running" || phase === "paused" || unsaved,
+    () => {
+      if (phase === "running" || phase === "paused") askEnd();
+      else if (phase === "finish") askDiscard();
+    },
+    { sticky: true }
+  );
   const leave = () => {
     void wakeLock.release();
     dispatch({ type: "discard" });
@@ -378,26 +387,43 @@ export default function Circuit() {
       />
     );
 
-  if (phase === "finish" || phase === "saving" || phase === "saved")
+  if (
+    phase === "finish" ||
+    phase === "discarding" ||
+    phase === "saving" ||
+    phase === "saved"
+  )
     return (
-      <CircuitFinish
-        circuit={circuit}
-        finished={progress?.complete ?? false}
-        roundsDone={progress?.roundsDone ?? 0}
-        activeSeconds={activeSeconds}
-        saves={saves}
-        reward={
-          history.status === "read" ? circuitReward(history.circuits) : null
-        }
-        effort={session.effort}
-        saving={phase !== "finish"}
-        share={phase === "saved" ? share : null}
-        error={session.error}
-        onRate={(effort) => dispatch({ type: "rate", effort })}
-        onSave={() => void save()}
-        onClose={leave}
-        onDone={() => navigate("/program", { replace: true })}
-      />
+      <>
+        <CircuitFinish
+          circuit={circuit}
+          finished={progress?.complete ?? false}
+          roundsDone={progress?.roundsDone ?? 0}
+          activeSeconds={activeSeconds}
+          saves={saves}
+          reward={
+            history.status === "read" ? circuitReward(history.circuits) : null
+          }
+          effort={session.effort}
+          saving={phase === "saving" || phase === "saved"}
+          share={phase === "saved" ? share : null}
+          error={session.error}
+          onRate={(effort) => dispatch({ type: "rate", effort })}
+          onSave={() => void save()}
+          onDiscard={askDiscard}
+          onClose={leave}
+          onDone={() => navigate("/program", { replace: true })}
+        />
+        <ConfirmDialog
+          open={phase === "discarding"}
+          title="Discard this circuit?"
+          description="This can’t be undone."
+          confirmLabel="Discard"
+          destructive
+          onConfirm={leave}
+          onCancel={() => dispatch({ type: "keep" })}
+        />
+      </>
     );
 
   const index = Math.max(0, Math.min(steps.length - 1, player.state.index));

@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  act,
-} from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 
 vi.mock("@/lib/haptic", function () {
   return { haptic: vi.fn() };
@@ -1010,14 +1004,10 @@ describe("EditServingsSheet — an entry of several foods", function () {
   });
 });
 
+
 it("accepts one same-frame Save and allows another attempt after it settles", async () => {
   let finish!: () => void;
-  const onSave = vi.fn(
-    () =>
-      new Promise<void>((resolve) => {
-        finish = resolve;
-      })
-  );
+  const onSave = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
   renderSheet({ onSave });
   fireEvent.click(screen.getByLabelText("Increase servings"));
   const save = screen.getByRole("button", { name: "Save" });
@@ -1026,12 +1016,8 @@ it("accepts one same-frame Save and allows another attempt after it settles", as
     save.click();
   });
   expect(onSave).toHaveBeenCalledTimes(1);
-  await act(async () => {
-    finish();
-  });
+  await act(async () => { finish(); });
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   expect(onSave).toHaveBeenCalledTimes(2);
-  await act(async () => {
-    finish();
-  });
+  await act(async () => { finish(); });
 });
