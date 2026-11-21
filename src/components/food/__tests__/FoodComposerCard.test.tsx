@@ -377,7 +377,7 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
     // Pro's own daily cap, not "unlimited": the server stops Pro at
     // DAILY_AI_LIMITS too.
     const cta = screen.getByRole("button", {
-      name: "Out of scans · upgrade for 100 a day · resets at 00:00",
+      name: "Out of scans · upgrade for 15 a day · resets at 00:00",
     });
     expect(cta.textContent).not.toMatch(/unlimited/i);
     fireEvent.click(cta);
