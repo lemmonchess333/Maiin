@@ -875,7 +875,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Full Body — Posterior Focus",
     ],
     "prescription": [
-      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0",
+      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0",
       "Full Body — Deadlift Focus: db-rdl 4×6@27.5 | db-shoulder-press 3×6@12.5 | db-row~ 3×6-10@22.5 | bulgarian-split~ 3×6-10@22.5",
       "Full Body — Posterior Focus: db-rdl 4×6@27.5 | db-bench~ 3×6-10@20 | pull-ups~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0",
     ],
@@ -991,7 +991,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Full Body — Posterior Focus",
     ],
     "prescription": [
-      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0",
+      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0",
       "Full Body — Deadlift Focus: db-rdl 4×6@27.5 | db-shoulder-press 3×6@12.5 | db-row~ 3×6-10@22.5 | bulgarian-split~ 3×6-10@22.5",
       "Full Body — Posterior Focus: db-rdl 4×6@27.5 | db-bench~ 3×6-10@20 | pull-ups~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0",
     ],
@@ -1020,7 +1020,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Full Body — Posterior Focus",
     ],
     "prescription": [
-      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0",
+      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0",
       "Full Body — Deadlift Focus: db-rdl 4×6@27.5 | db-shoulder-press 3×6@12.5 | db-row~ 3×6-10@22.5 | bulgarian-split~ 3×6-10@22.5",
       "Full Body — Posterior Focus: db-rdl 4×6@27.5 | db-bench~ 3×6-10@20 | pull-ups~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0",
     ],
@@ -1136,7 +1136,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Full Body — Posterior Focus",
     ],
     "prescription": [
-      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0",
+      "Full Body — Squat Focus: bulgarian-split 4×6@22.5 | db-bench 3×6@20 | pull-ups~ 3×6-10@0 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0",
       "Full Body — Deadlift Focus: db-rdl 4×6@27.5 | db-shoulder-press 3×6@12.5 | db-row~ 3×6-10@22.5 | bulgarian-split~ 3×6-10@22.5",
       "Full Body — Posterior Focus: db-rdl 4×6@27.5 | db-bench~ 3×6-10@20 | pull-ups~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0",
     ],
@@ -1327,9 +1327,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
-      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Shoulders & Arms: db-shoulder-press 4×6@12.5 | pull-ups~ 4×6-10@0 | db-bench~ 3×6-10@20 | db-curl~ 3×8-12@7 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "upper_lower",
     "volume": {
@@ -1455,9 +1455,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
-      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Shoulders & Arms: db-shoulder-press 4×6@12.5 | pull-ups~ 4×6-10@0 | db-bench~ 3×6-10@20 | db-curl~ 3×8-12@7 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "upper_lower",
     "volume": {
@@ -1487,9 +1487,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
-      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Shoulders & Arms: db-shoulder-press 4×6@12.5 | pull-ups~ 4×6-10@0 | db-bench~ 3×6-10@20 | db-curl~ 3×8-12@7 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "upper_lower",
     "volume": {
@@ -1615,9 +1615,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
-      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Lower — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Shoulders & Arms: db-shoulder-press 4×6@12.5 | pull-ups~ 4×6-10@0 | db-bench~ 3×6-10@20 | db-curl~ 3×8-12@7 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "upper_lower",
     "volume": {
@@ -1818,10 +1818,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_ul",
     "volume": {
@@ -1954,10 +1954,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_ul",
     "volume": {
@@ -1988,10 +1988,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_ul",
     "volume": {
@@ -2124,10 +2124,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     ],
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 4×6@20 | db-row~ 4×6-10@22.5 | db-shoulder-press~ 4×6-10@12.5 | pull-ups~ 3×6-10@0",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×6-10@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
+      "Lower — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 4×6-10@22.5 | glute-bridge~ 3×8-12@0 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_ul",
     "volume": {
@@ -2340,10 +2340,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Pull — Row Focus: db-row 4×6@22.5 | pull-ups~ 4×6-10@0 | chest-supported-db-row~ 3×6-10@20 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Shoulder Focus: arnold-press 4×6@12.5 | db-bench~ 3×6-10@20 | db-shoulder-press~ 3×6-10@12.5 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
+      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×8-12@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_x2",
     "volume": {
@@ -2484,10 +2484,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Pull — Row Focus: db-row 4×6@22.5 | pull-ups~ 4×6-10@0 | chest-supported-db-row~ 3×6-10@20 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Shoulder Focus: arnold-press 4×6@12.5 | db-bench~ 3×6-10@20 | db-shoulder-press~ 3×6-10@12.5 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
+      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×8-12@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_x2",
     "volume": {
@@ -2520,10 +2520,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Pull — Row Focus: db-row 4×6@22.5 | pull-ups~ 4×6-10@0 | chest-supported-db-row~ 3×6-10@20 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Shoulder Focus: arnold-press 4×6@12.5 | db-bench~ 3×6-10@20 | db-shoulder-press~ 3×6-10@12.5 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
+      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×8-12@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_x2",
     "volume": {
@@ -2664,10 +2664,10 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
     "prescription": [
       "Pull — Lat Focus: pull-ups 4×5@0 | db-row~ 4×6-10@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Chest Focus: incline-db-press 4×6@17.5 | db-shoulder-press~ 3×6-10@12.5 | db-bench~ 3×6-10@20 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×6-10@0",
+      "Legs — Squat Focus: bulgarian-split 4×6@22.5 | db-rdl~ 3×6-10@27.5 | goblet-squat~ 3×6-10@27.5 | single-leg-calf-raise~ 3×8-12@0 | glute-bridge~ 3×8-12@0",
       "Pull — Row Focus: db-row 4×6@22.5 | pull-ups~ 4×6-10@0 | chest-supported-db-row~ 3×6-10@20 | db-curl~ 3×8-12@7 | reverse-flyes~ 3×8-12@5",
       "Push — Shoulder Focus: arnold-press 4×6@12.5 | db-bench~ 3×6-10@20 | db-shoulder-press~ 3×6-10@12.5 | overhead-extension~ 4×8-12@10 | lateral-raise~ 3×8-12@12.5",
-      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×6-10@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
+      "Legs — Deadlift Focus: db-rdl 4×6@27.5 | bulgarian-split~ 3×6-10@22.5 | glute-bridge~ 3×8-12@0 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0",
     ],
     "splitType": "ppl_x2",
     "volume": {

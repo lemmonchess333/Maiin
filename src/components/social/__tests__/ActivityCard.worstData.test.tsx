@@ -108,7 +108,8 @@ describe("ActivityCard with worst-case data", () => {
         .textContent
     ).toBe(group(1284));
     expect(
-      screen.getByRole("button", { name: "View comments" }).textContent
+      screen.getByRole("button", { name: `${group(2568)} comments` })
+        .textContent
     ).toBe(group(2568));
   });
 

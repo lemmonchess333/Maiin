@@ -173,6 +173,23 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
  */
 const OUR_OWN_MODEL_REFUSALS = [401, 403, 404];
 
+/**
+ * Scans given back per action in a UTC day. A refund was given for every
+ * failure after the charge, and one the person can bring about counts too:
+ * a typed list of a hundred and fifty foods runs the answer past its token
+ * limit, so it comes back cut short and unreadable, at the most a scan can
+ * cost. Without a bound the 100-a-day cap became the rate limit, about
+ * 2,000 full-cost calls a day for one Pro or trial account. Five a day is
+ * a Tropos heuristic: more than an honest bad day of the service, far
+ * fewer than a loop. The count is kept beside the action's own, with its
+ * own day, so the charge's shape is unchanged.
+ */
+const MAX_REFUNDS_PER_DAY = 5;
+
+function refundsKey(action) {
+  return `${action}_refunds`;
+}
+
 function isServiceFailure(modelStatus) {
   return (
     modelStatus === undefined ||
@@ -188,7 +205,8 @@ async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
   try {
     return await db.runTransaction(async (tx) => {
       const usage = await tx.get(usageRef);
-      const state = usage.exists ? usage.data()[action] : null;
+      const data = usage.exists ? usage.data() || {} : {};
+      const state = data[action];
       if (
         !state ||
         state.day !== dayKey ||
@@ -196,9 +214,18 @@ async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
         state.count <= 0
       )
         return false;
+      const given = data[refundsKey(action)];
+      const refunds =
+        given && given.day === dayKey && typeof given.count === "number"
+          ? given.count
+          : 0;
+      if (refunds >= MAX_REFUNDS_PER_DAY) return false;
       tx.set(
         usageRef,
-        { [action]: { day: dayKey, count: state.count - 1 } },
+        {
+          [action]: { day: dayKey, count: state.count - 1 },
+          [refundsKey(action)]: { day: dayKey, count: refunds + 1 },
+        },
         { merge: true }
       );
       return true;
@@ -217,23 +244,27 @@ async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
  * model's own status rides along as `modelStatus` when there is one, so the
  * app's step list can show it: a status code, nothing from the request or
  * the answer. Without it, a refused scan reads only "server answered 500".
+ * "This one didn't use a scan" is said only when it was given back
+ * (`refunded`), which the day's bound on refunds can refuse.
  */
-function failedScanResponse(modelStatus) {
+function failedScanResponse(modelStatus, { refunded = true } = {}) {
   const status = typeof modelStatus === "number" ? { modelStatus } : {};
   if (modelStatus === 429) {
     return {
       status: 503,
       body: {
         error: "ai-busy",
-        message:
-          "Food analysis is busy right now. Try again in a minute. This one didn't use a scan.",
+        message: refunded
+          ? "Food analysis is busy right now. Try again in a minute. This one didn't use a scan."
+          : "Food analysis is busy right now. Try again in a minute.",
         ...status,
       },
     };
   }
+  const givenBack = isServiceFailure(modelStatus) && refunded;
   return {
     status: 500,
-    body: isServiceFailure(modelStatus)
+    body: givenBack
       ? {
           error: "ai-failed",
           message:
@@ -249,6 +280,7 @@ function failedScanResponse(modelStatus) {
 }
 
 module.exports = {
+  MAX_REFUNDS_PER_DAY,
   isServiceFailure,
   refundDailyAiQuota,
   failedScanResponse,

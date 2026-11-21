@@ -22,6 +22,15 @@ const run = strip(
     "utf8"
   )
 );
+/* The day's session, which the Lift tab draws under its strip, with the
+   week's notices handed in between its card and its exercises
+   (`LiftSessionView`, TrainWk1 step 3). */
+const view = strip(
+  readFileSync(
+    resolve(repoRoot, "src/components/program/LiftSessionView.tsx"),
+    "utf8"
+  )
+);
 
 const at = (code: string, needle: string) => {
   const i = code.indexOf(needle);
@@ -44,18 +53,28 @@ describe("Train's Lift tab", () => {
   });
 
   it("orders the strip, the session card, then the week's notices", () => {
+    // Train: the strip, then the day's session, which takes the week's
+    // notices to draw between its card and its exercises.
     const stripAt = at(program, 'section="day_stepper"');
-    const cardAt = at(program, "<SessionCommandCard");
+    const sessionAt = at(program, "<LiftSessionView");
+    const betweenAt = at(program, "between={");
     // The Lift tab's, the last in the file: the Run tab's offer is handed
     // to its section above (whole-app grill Q11).
     const deloadAt = program.lastIndexOf("<DeloadBanner");
     const levelAt = at(program, "<ExperienceSuggestionCard");
-    // The exercise list follows the notices.
-    const listAt = at(program, "<SortableExerciseRow");
-    expect(stripAt).toBeLessThan(cardAt);
-    expect(cardAt).toBeLessThan(deloadAt);
-    expect(cardAt).toBeLessThan(levelAt);
-    expect(deloadAt).toBeLessThan(listAt);
+    const afterAt = at(program, "after={");
+    expect(stripAt).toBeLessThan(sessionAt);
+    expect(sessionAt).toBeLessThan(betweenAt);
+    expect(betweenAt).toBeLessThan(deloadAt);
+    expect(betweenAt).toBeLessThan(levelAt);
+    expect(deloadAt).toBeLessThan(afterAt);
+    expect(levelAt).toBeLessThan(afterAt);
+    // The day: its card, then the notices, then its exercise list.
+    const cardAt = at(view, "<SessionCommandCard");
+    const noticesAt = at(view, "{between}");
+    const listAt = at(view, "<SortableExerciseRow");
+    expect(cardAt).toBeLessThan(noticesAt);
+    expect(noticesAt).toBeLessThan(listAt);
   });
 });
 
@@ -119,8 +138,8 @@ describe("a session's minutes", () => {
       )
     );
     expect(home).toMatch(/aboutMinutes\(minutes\)/);
-    expect(program).toMatch(/aboutMinutes\(estimatedMinutes\)/);
-    expect(home + program).not.toMatch(/`about \$\{/);
-    expect(program).not.toMatch(/`~\$\{estimatedMinutes\} min`/);
+    expect(view).toMatch(/aboutMinutes\(estimatedMinutes\)/);
+    expect(home + program + view).not.toMatch(/`about \$\{/);
+    expect(view).not.toMatch(/`~\$\{estimatedMinutes\} min`/);
   });
 });

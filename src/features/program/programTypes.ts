@@ -14,7 +14,14 @@ import type { MovementCategory } from "@/lib/exerciseMovementCategory";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
-  "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2" | "ppl_x2_fb";
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "ppl_ul"
+  | "ppl_x2"
+  | "ppl_x2_fb"
+  // No equipment, five or six days: no Pull day to build (`chooseSplit`).
+  | "upper_lower_fb";
 
 /**
  * User-facing split *preference* vocabulary — distinct from the engine's
@@ -1288,7 +1295,13 @@ export const VALID_EXPERIENCE = [
 ] as const;
 export type Experience = (typeof VALID_EXPERIENCE)[number];
 
-export const VALID_EQUIPMENT = ["full_gym", "home_gym", "minimal"] as const;
+export const VALID_EQUIPMENT = [
+  "full_gym",
+  "home_gym",
+  "minimal",
+  // Bodyweight only: the floor, a wall and a sturdy table (`noEquipment.ts`).
+  "no_equipment",
+] as const;
 export type Equipment = (typeof VALID_EQUIPMENT)[number];
 
 /** The road races a plan prepares for, 5K to marathon. */

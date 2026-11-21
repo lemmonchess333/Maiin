@@ -42,6 +42,15 @@ describe("the week", () => {
     expect(board.currentWeek(null, now).weekKey).toBe("2026-10-19");
   });
 
+  it("says the day it is where they are, which the league reads race week on", () => {
+    // Sunday 25 Oct 2026, 20:00 UTC = Monday 26 Oct, 09:00 in Auckland.
+    const now = Date.UTC(2026, 9, 25, 20);
+    expect(board.currentWeek("Pacific/Auckland", now).today).toBe("2026-10-26");
+    expect(board.currentWeek(null, now).today).toBe("2026-10-25");
+    // An unknown zone reads as UTC.
+    expect(board.currentWeek("Not/AZone", now).today).toBe("2026-10-25");
+  });
+
   it("ends at midnight where they are, across a clock change", () => {
     // London's clocks go back on Sunday 25 October 2026, so the week
     // ending Monday 26 October ends at 00:00 GMT, not BST.

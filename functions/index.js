@@ -1526,9 +1526,15 @@ exports.analyzeFood = functions
       // on the service's side after that gives it back (aiScanQuota).
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -1799,9 +1805,15 @@ exports.analyzeFoodText = functions
       // gives it back.
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -4344,8 +4356,17 @@ async function sendPropsBundle(ref, now) {
     parts.length !== 4 ||
     parts[0] !== "users" ||
     parts[3] !== socialPush.PROPS_BUNDLE_DOC
-  )
+  ) {
+    // A due time on a document that is not a bundle was written by a
+    // client before the rules refused it. Left there it is read first by
+    // every hourly sweep, and a thousand of them kept every real bundle
+    // out of the sweep's read for good. Take the field off; the rest of
+    // the document is its owner's.
+    await ref.update({
+      propsBundleDueAt: admin.firestore.FieldValue.delete(),
+    });
     return false;
+  }
   const uid = parts[1];
   const bundle = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -7606,6 +7627,11 @@ function queueReason(value) {
     ? value
     : "other";
 }
+/** A stored report's category, when it is one the report form offers;
+ *  the queue names it as the alert email does. */
+function queueCategory(value) {
+  return reportTargets.REPORT_CATEGORIES.includes(value) ? value : null;
+}
 
 /**
  * Screens a photo the caller just uploaded for other people to see, a
@@ -7613,7 +7639,10 @@ function queueReason(value) {
  * uses it
  * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
  * refused as nudity, its file already deleted, and "unavailable" when it
- * could not be checked, so the app posts nothing it couldn't check.
+ * could not be checked, so the app posts nothing it couldn't check. A
+ * photo it passes is recorded against its generation, so the upload
+ * trigger neither screens that file again nor deletes it on the owner's
+ * day of screens.
  */
 exports.screenPhoto = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -7640,22 +7669,41 @@ exports.screenPhoto = functions
         "Too many photos checked at once. Wait a few minutes and try again."
       );
     }
+    const dayOfChecksSpent = () =>
+      new functions.https.HttpsError(
+        "resource-exhausted",
+        "That's as many photos as can be checked in a day. Try again later."
+      );
+    // And a day's worth (photoScreen.js says why the number).
+    if (
+      await isRateLimited(
+        context.auth.uid,
+        "screenPhotoDay",
+        photoScreen.CALLABLE_SCREENS_PER_DAY,
+        photoScreen.SCREEN_BUDGET_WINDOW_MS
+      )
+    ) {
+      throw dayOfChecksSpent();
+    }
+    let screened;
     try {
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
-      const { refused, adult } = await photoScreen.screenStoredPhoto({
+      screened = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(),
         path,
         accessToken: accessToken.access_token,
       });
-      if (refused)
-        functions.logger.warn("screenPhoto.refused", {
-          uid: context.auth.uid,
-          path,
-          adult,
-        });
-      return { ok: !refused };
+      if (!screened.refused)
+        screened.recorded = await photoScreen.recordCallablePass(
+          admin.firestore(),
+          {
+            owner: context.auth.uid,
+            path,
+            generation: screened.generation,
+          }
+        );
     } catch (error) {
       functions.logger.error("screenPhoto.failed", {
         path,
@@ -7666,40 +7714,104 @@ exports.screenPhoto = functions
         "Couldn't check this photo. Try again."
       );
     }
+    if (screened.refused) {
+      functions.logger.warn("screenPhoto.refused", {
+        uid: context.auth.uid,
+        path,
+        adult: screened.adult,
+      });
+      return { ok: false };
+    }
+    // The upload trigger got there first and dropped this file on the
+    // owner's day of upload screens: it is gone, so the app must not post it.
+    if (!screened.recorded) throw dayOfChecksSpent();
+    return { ok: true };
   });
 
 /**
  * The same check on every upload to a screened path, for a client that
  * skips `screenPhoto`: a refused photo's file is deleted, so a post or
  * profile that names it shows nothing.
+ *
+ * The photo itself is the only ground for deleting it, never the service:
+ *   - the callable passed this very file: nothing to do;
+ *   - past its owner's day of screens (photoScreen.UPLOAD_SCREENS_PER_DAY)
+ *     it is deleted without one, since every screen is a paid Vision
+ *     request and Storage limits no account's number of uploads;
+ *   - an image Vision cannot read, or too large to send it, is deleted at
+ *     once and never retried: it can never be screened;
+ *   - refused as nudity, it is deleted.
+ * A screen that fails for any other reason (Vision down, switched off,
+ * rate limited or refusing our credentials; Storage or the count
+ * unreadable) throws, so the event is delivered again. An upload still
+ * unscreened after a day of that is kept, marked unscreened in its
+ * metadata and logged as `screenUploadedPhoto.keptUnscreened`. It cannot
+ * be hidden from other people meanwhile: a post names a photo by its
+ * download URL, which Storage serves to anyone holding it whatever the
+ * rules say. The app posts no photo its own check couldn't screen, so
+ * such a file is only ever shown by a client that skipped the callable.
  */
 exports.screenUploadedPhoto = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .storage.object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
     const path = object.name;
-    if (photoScreen.screenedOwner(path) === null) return;
+    const owner = photoScreen.screenedOwner(path);
+    if (owner === null) return;
+    const bucket = admin.storage().bucket(object.bucket);
+    const { generation } = object;
+    const deleteUnscreened = async (reason) => {
+      await photoScreen.deleteUnscreenedPhoto({ bucket, path, generation });
+      functions.logger.warn("screenUploadedPhoto.deletedUnscreened", {
+        path,
+        reason,
+      });
+    };
     try {
+      const claim = await photoScreen.claimUploadScreen(admin.firestore(), {
+        owner,
+        path,
+        generation,
+        eventId: context && context.eventId,
+      });
+      if (claim === "passed") return;
+      if (claim === "over") {
+        await deleteUnscreened("daily-budget");
+        return;
+      }
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
       const { refused, adult } = await photoScreen.screenStoredPhoto({
-        bucket: admin.storage().bucket(object.bucket),
+        bucket,
         path,
-        generation: object.generation,
+        generation,
         accessToken: accessToken.access_token,
       });
       if (refused)
         functions.logger.warn("screenUploadedPhoto.refused", { path, adult });
     } catch (error) {
-      // Gone already: the callable refused it first.
+      // Gone already: the callable refused it first, or it was replaced.
       if (error && error.code === 404) return;
-      // Vision unavailable: the callable is the gate the app waits on,
-      // and this is the backstop.
+      if (photoScreen.isUnscreenable(error)) {
+        await deleteUnscreened("unscreenable");
+        return;
+      }
       functions.logger.error("screenUploadedPhoto.failed", {
         path,
         message: String(error && error.message),
       });
+      if (!pastRetryWindow(context)) throw error;
+      try {
+        await photoScreen.markUnscreenedPhoto({ bucket, path, generation });
+      } catch (markError) {
+        // Gone, replaced, or Storage failing too: the log line is the record.
+        functions.logger.error("screenUploadedPhoto.markFailed", {
+          path,
+          message: String(markError && markError.message),
+        });
+      }
+      functions.logger.warn("screenUploadedPhoto.keptUnscreened", { path });
     }
   });
 
@@ -7791,22 +7903,37 @@ exports.createReport = functions
     // Tell the owner a report is waiting. After the commit, so an alert
     // never announces a report that failed to store. sendReportAlert never
     // throws and gives up on a slow provider: a reporter told their report
-    // failed would file it again.
-    await reportAlert.sendReportAlert({
-      sendEmail: sendViaResend,
-      to: reportAlert.alertRecipient(),
-      queueUrl: reportAlert.moderationQueueUrl(
-        helpers.getStripeReturnBaseUrl()
-      ),
-      report: {
-        reportId: reportRef.id,
-        targetType: target.targetType,
-        category: input.category,
-        subReason: input.subReason,
-        freeformNote: input.freeformNote,
-      },
-      logger: functions.logger,
+    // failed would file it again. At most a few a day from one reporter and
+    // fifty from everyone (reportAlert.alertAllowance); past that the
+    // report waits in the queue without an email.
+    const allowance = await reportAlert.alertAllowance({
+      firestore,
+      reporterUid: context.auth.uid,
+      isLimited: isRateLimited,
     });
+    if (allowance.send) {
+      await reportAlert.sendReportAlert({
+        sendEmail: sendViaResend,
+        to: reportAlert.alertRecipient(),
+        queueUrl: reportAlert.moderationQueueUrl(
+          helpers.getStripeReturnBaseUrl()
+        ),
+        report: {
+          reportId: reportRef.id,
+          targetType: target.targetType,
+          category: input.category,
+          subReason: input.subReason,
+          freeformNote: input.freeformNote,
+          lastForNow: allowance.last,
+        },
+        logger: functions.logger,
+      });
+    } else {
+      functions.logger.warn("createReport.alert_held", {
+        reportId: reportRef.id,
+        held: allowance.held,
+      });
+    }
 
     return { reportId: reportRef.id };
   });
@@ -7882,6 +8009,11 @@ exports.listPendingReports = functions
           reportedTargetType: nullableString(report.targetType),
           reportedTargetId: nullableString(report.targetId),
           reason: queueReason(report.reason),
+          // What the reporter picked, as the alert email names it: a
+          // sub-reason such as "Child safety" is the triage signal, and
+          // `reason` alone folds it into one of four legacy words.
+          category: queueCategory(report.category),
+          subReason: nullableString(report.subReason),
           details:
             nullableString(report.freeformNote) ||
             nullableString(report.details),
@@ -7901,7 +8033,8 @@ exports.listPendingReports = functions
  * flag takes the reported content out of the app in the same call so
  * a moderator can dismiss + hide in one click: an activity becomes
  * `flagged: true, visibility: 'private'`; a comment (activity or space
- * post) or a space post is deleted. See reportTargets.queueContentHide.
+ * post), a space post or a segment is deleted. See
+ * reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -7944,9 +8077,12 @@ exports.resolveReport = functions
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
     // A hidden space post's likes and comments, swept after the commit.
     let removedSpacePostRef = null;
+    // A removed segment's efforts, board and owner record, swept after it.
+    let removedSegmentId = null;
 
     await firestore.runTransaction(async (transaction) => {
       removedSpacePostRef = null; // a retried attempt starts clean
+      removedSegmentId = null;
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -8029,6 +8165,9 @@ exports.resolveReport = functions
       if (hideActivity && target.targetType === "space_post") {
         removedSpacePostRef = target.targetRef;
       }
+      if (hideActivity && target.targetType === "segment") {
+        removedSegmentId = target.targetId;
+      }
 
       transaction.update(reportRef, {
         status: "resolved",
@@ -8067,6 +8206,24 @@ exports.resolveReport = functions
         await firestore.recursiveDelete(removedSpacePostRef);
       } catch (err) {
         functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
+
+    if (removedSegmentId) {
+      // The segment is gone, so no page opens it, no run is timed on it
+      // and no board is read. The rest of its maker's Delete follows:
+      // everyone's efforts on it, its board and its owner record
+      // (lib/segments.js removeSegment, whose queries cannot run in a
+      // transaction). Best effort, as for a space post: the app leaves out
+      // an effort whose segment is gone, and the maker's account deletion
+      // sweeps an owner record left behind.
+      try {
+        await segments.removeSegment(firestore, removedSegmentId);
+      } catch (err) {
+        functions.logger.warn("resolveReport.segment_cleanup_failed", {
           reportId,
           error: err && err.message,
         });
@@ -9890,6 +10047,15 @@ exports.onGoalSpaceEventCreated = functions
  * createNotification holds the block check and each recipient's switch,
  * and skips an account that is being deleted.
  */
+/** A follow request, or a direct follow, made again within a day of the
+ *  last one the person was told about tells them nothing new
+ *  (createNotification's `quietForMs`): no second push, and the row is not
+ *  made unread again. A request can be cancelled and made again, and a
+ *  follow undone and made again, as often as a client can write; each
+ *  request was pushed until the person blocked. Tropos heuristic: a day,
+ *  the same window as the props bundle's once a day. */
+const FOLLOW_NOTICE_QUIET_MS = 24 * 60 * 60 * 1000;
+
 async function sendFollowNotice({
   toUid,
   fromUid,
@@ -9916,6 +10082,13 @@ async function sendFollowNotice({
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
+      // A request made by joining from an invite is told whatever came
+      // before it: it is the one notice of the join, and its words differ.
+      // A direct follow too: unfollowing and following again made the
+      // row unread each time (it is not pushed, and is off by default).
+      ...((type === "follow_request" || type === "follow") && !fromInvite
+        ? { quietForMs: FOLLOW_NOTICE_QUIET_MS }
+        : {}),
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {
