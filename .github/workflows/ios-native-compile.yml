@@ -27,6 +27,7 @@ on:
       - "tsconfig*.json"
       - "scripts/verify_ios_watch.py"
       - "scripts/verify_ios_push.py"
+      - "scripts/verify_ios_launch.py"
       - ".github/workflows/ios-native-compile.yml"
   schedule:
     - cron: "23 5 * * *"
