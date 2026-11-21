@@ -60,6 +60,9 @@ logos, and each race page says it is not affiliated with the event
 
 ### 1.2 User-generated content: Pass for the main surfaces, Risk for segments
 
+STATUS 2026-11-21: Pass for segments too since #3453 (the segment risk
+below).
+
 Apple asks for a filter, a way to report with timely responses, blocking,
 and published contact details. Since 16 October 2026 the guideline also
 names nonconsensual intimate imagery, including AI-made.
@@ -104,6 +107,11 @@ Risks:
   moderator action that deletes the segment. It changes `functions/`, so it
   runs the backend deploy chain; not built in this pass. Until then the
   "Report objectionable content" email row is the way to report one.
+  STATUS 2026-11-21: built in #3453. Anyone but its maker can report a
+  segment from "More options" beside its name (Report segment, the
+  `segment` report target, `src/pages/Segment.tsx`, `functions/lib/reportTargets.js`),
+  and the moderation page's Remove segment deletes it as its maker's
+  Delete does (`src/pages/AdminModeration.tsx`).
 - **Circle names, meet-up text and Circle notes cannot be reported** either.
   They reach only the Circle's members, at most 8, invited by code, and pass
   the filter (`functions/lib/goalSpaceMembership.js:180`,
@@ -415,6 +423,11 @@ are recognised (`src/lib/appleRelay.ts:8-9`).
     `claude/launch-privacy-policy-gaps` fixes the push token, the screened
     run maps and the age wording only. The rest of the policy text waits on
     the owner.
+    STATUS 2026-11-21: #3408 now covers each gap listed above, checked
+    against `main`, with a legal-basis table, the transfers and their
+    safeguards, and complaints to Tropos and the ICO. One correction: the
+    report alert carries the reason, the kind of thing reported and the
+    reporter's note, not the reported content (`functions/lib/reportAlert.js`).
 - **(ii) Permission and purpose strings: Pass.** Each string says what the
   data is for (`ios/App/App/Info.plist:43-67`). The Health write string
   says Tropos writes nothing, which is true of the App Store build

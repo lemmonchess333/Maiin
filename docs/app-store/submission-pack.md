@@ -9,9 +9,11 @@ first is the backlog section "App Review submission checks (launch audit,
 2026-11-18)" in `docs/qa/pre-launch-backlog.md`.
 
 Every claim here was checked against the code on `main` at `6f1d1b6` on
-18 November 2026. When a feature, an SDK or a flow of data changes, change
-the matching section in the same PR: Apple holds the label, the privacy
-policy and the app to each other. `src/lib/__tests__/appStoreListing.test.ts`
+18 November 2026; the App Privacy section, the URLs and the review notes'
+Report entries were checked again at `79f567d` on 21 November. When a
+feature, an SDK or a flow of data changes, change the matching section in
+the same PR: Apple holds the label, the privacy policy and the app to each
+other. `src/lib/__tests__/appStoreListing.test.ts`
 checks each pasteable field against Apple's limit, the privacy label
 against the app's privacy manifest, and a few claims against the code.
 
@@ -163,9 +165,9 @@ Tropos is on the App Store. Plan your lifting and running week, log your food, a
 
 | Field              | Entry                                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Support URL        | `https://troposfit.com/support` (public; `src/pages/Support.tsx`, which the website serves since PR #3375). Open it once in a private window after the release that carries #3375                                                                                                                                                                                                             |
+| Support URL        | `https://troposfit.com/support` (public, signed out; `src/pages/Support.tsx`, which the website serves since PR #3375). Open it once in a private window after the release that carries #3375                                                                                                                                                                                                 |
 | Marketing URL      | Optional. `https://troposfit.com`, the App Store page since PR #3375, whose badge opens the listing (`APP_STORE_URL`, Apple ID 6762416918; Apple says the app is not available until it is released)                                                                                                                                                                                          |
-| Privacy Policy URL | `https://troposfit.com/privacy` (public). The static copy, `public/legal/privacy.html`, is generated from the app's own page (`npm run legal:sync`)                                                                                                                                                                                                                                           |
+| Privacy Policy URL | `https://troposfit.com/privacy` (public, signed out): the website draws the app's own page, `src/pages/PrivacyPolicy.tsx` (`src/website/WebsiteRoutes.tsx`, since PR #3375). The static copy at `/legal/privacy.html` is generated from the same page (`npm run legal:sync`)                                                                                                                  |
 | Category           | Health & Fitness. No secondary category                                                                                                                                                                                                                                                                                                                                                       |
 | Copyright          | `2026 Myles Kennedy`, the owner named in the Terms (`src/pages/TermsOfService.tsx`)                                                                                                                                                                                                                                                                                                           |
 | Content rights     | "Yes, it contains third-party content": maps from OpenStreetMap through OpenFreeMap, weather from MET Norway, food data from Open Food Facts (each credited where it appears), photographs on Space and challenge cards (Unsplash and Pexels licences, source records in `src/assets/editorial/`; two covers have no traced source and you chose to keep them), and real race names in Spaces |
@@ -222,7 +224,7 @@ Google Signals is off in the Firebase console.
 | Health & fitness | Fitness               | App functionality            | Workouts, runs, the training plan, segments, records, streaks and badges. No figure from them reaches Google Analytics; that a session was finished is Product interaction  |
 | Location         | Precise location      | App functionality            | Run routes, privacy zones, saved routes and segments                                                                                                                        |
 | Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                                         |
-| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos. Meal photos are analysed by Google and not kept on any server                                                                |
+| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos, and the map image of a shared run. Meal photos are analysed by Google and not kept on any server                             |
 | User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, meet-ups, segment and Circle names, reports and meal descriptions                                                              |
 | Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                              |
 | Identifiers      | Device ID             | App functionality, analytics | The push token the phone registers so notifications reach it (Firebase Cloud Messaging), and Google Analytics' app-instance ID                                              |
