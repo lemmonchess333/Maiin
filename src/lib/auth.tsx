@@ -53,6 +53,7 @@ import {
 } from "@/lib/pushNotifications";
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { useAccountUsageAnalytics } from "@/hooks/useAccountUsageAnalytics";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { clampDisplayName } from "@/lib/displayNameLimit";
 import {
@@ -450,6 +451,11 @@ export interface UserProfileSocial {
    *  Privacy → Approve followers. Absent means yes, the default the rules
    *  apply too (`approvesFollowers` in firestore.rules). */
   approveFollowers?: boolean;
+  /** Share usage analytics (Priv1 call 2): Settings → Social & privacy.
+   *  false when the person turned Google Analytics off; absent means on.
+   *  The account's answer wins on each device it signs in on, and the
+   *  device keeps a copy for its next launch (src/lib/usageAnalytics.ts). */
+  usageAnalytics?: boolean;
   /** Whether this person is in the weekly leagues (Soc15 call 3): absent
    *  = never joined, false = left. Server-written by setLeagueSharing,
    *  never by the client. */
@@ -1237,6 +1243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     syncDarkMode(profile?.darkMode ?? true);
   }, [profile?.darkMode]);
+
+  // Share usage analytics (Priv1): the account's answer wins on this device.
+  useAccountUsageAnalytics(profile);
 
   useEffect(() => {
     let isMounted = true;

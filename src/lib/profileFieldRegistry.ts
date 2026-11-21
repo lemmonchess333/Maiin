@@ -364,6 +364,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     retired: "a write time only the RevenueCat sync stamped, never read",
   },
+  // Priv1 call 2: Settings → Social & privacy → Share usage analytics,
+  // false when off. Value-gated in firestore.rules (`usageAnalyticsValid`).
+  { field: "usageAnalytics", sanitized: false },
   { field: "weekSchedule", sanitized: true },
   { field: "weekScheduleVersion", sanitized: true },
   { field: "weeklyMealsTarget", sanitized: true },

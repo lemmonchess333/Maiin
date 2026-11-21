@@ -45,6 +45,34 @@ server's date.
       storing your health details to finish setting up. If setup didn’t
       ask you, update Tropos and try again." and nothing is saved.
 
+## Share usage analytics turns Google Analytics off (Priv1 call 2, 2026-11-21)
+
+Settings → Social & privacy → Share usage analytics, on by default, is the
+way to object that PECR's analytics exemption asks for. Off drops every
+event in the app at once, switches the native SDK's collection off
+(`setEnabled`, which it keeps across launches), and on the web never loads
+analytics on a device whose last answer was off (`analyticsProvider.ts`,
+`usageAnalytics.ts`). The unit tests mock the plugin and the web SDK; only
+DebugView shows what reaches Google, including the native SDK's own
+automatic events (sessions, screen views), which no unit test can see.
+
+- [ ] **Off on a TestFlight build, nothing in DebugView.** On a debug
+      device (the app launched with `-FIRAnalyticsDebugEnabled`), open
+      GA4 DebugView and use the app until events arrive. Turn Share usage
+      analytics off, then use the app for a few minutes, force-quit it and
+      open it again, signed in and signed out. Passing: DebugView shows
+      nothing more from that device, not even `session_start` or
+      `screen_view` after the relaunch.
+- [ ] **On again, events return.** On the same device, turn it back on and
+      use the app. Passing: events arrive in DebugView again within a
+      minute or two (after a relaunch at the latest: the plugin's notes say
+      the native setting may apply only from the next run).
+- [ ] **It follows the account.** Turn it off on the phone, then sign in
+      to the same account on the web preview with GA configured. Passing:
+      the browser's network panel shows no request to
+      `google-analytics.com` or `googletagmanager.com` once the profile has
+      loaded, and a reload makes none at all.
+
 ## Deleted meals go for good after 30 days (F5c, STATUS 2026-11-21)
 
 `purgeSoftDeletedMeals` runs each hour at 45 minutes past (UTC). It deletes
@@ -3124,7 +3152,7 @@ In this order:
       listed or written again.
 - [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
       `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
-      photo field`; Firebase console → Storage has no `food-photos`
+    photo field`; Firebase console → Storage has no `food-photos`
       folder; and in Firestore console a meal scanned before 18 August
       2026 has neither `photoUrl` nor `photoPath`. Then write into
       CLAUDE.md's "Meal photos are device-local" section, where it says
@@ -3133,8 +3161,7 @@ In this order:
       same script runs from a terminal with Admin credentials; its header
       has the command.)
 - [ ] **An older build.** After the purge, a TestFlight build from before
-      this change, on an account with a meal scanned before 18 August
-      2026. Passing: that meal's row shows our drawing of the food, not a
+      this change, on an account with a meal scanned before 18 August 2026. Passing: that meal's row shows our drawing of the food, not a
       broken picture (the row falls back when its photo fails to load).
 - [ ] **Then the account-deletion sweep can go.** Once the purge has run,
       `food-photos/__UID__/` in `STORAGE_PREFIX_TEMPLATES`
