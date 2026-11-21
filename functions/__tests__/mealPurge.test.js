@@ -22,6 +22,7 @@ const { withStoredTimestamps } = require("./helpers/storedTimestamps.cjs");
 const { Timestamp } = require("firebase-admin/firestore");
 const purge = require("../lib/mealPurge");
 const badgeAwards = require("../lib/badgeAwards");
+const { recordJobRun } = require("../lib/jobRuns");
 
 const DAY = 86_400_000;
 const MINUTE = 60_000;
@@ -118,6 +119,46 @@ describe("which meals go", () => {
     expect(summary).toMatchObject({ purged: 1, notDue: 1 });
   });
 
+  it("keeps a meal whose last write the server cannot date", async () => {
+    /* The Admin SDK always gives a snapshot its updateTime. Without one
+       there is no telling when the delete reached the server, so the meal
+       stays rather than going on the phone's clock alone. */
+    const db = world(
+      { "users/u1/meals/m1": meal(ago(40 * DAY)) },
+      { updateTimes: { "users/u1/meals/m1": undefined } }
+    );
+    const summary = await run(db);
+    expect(db.data.has("users/u1/meals/m1")).toBe(true);
+    expect(summary).toMatchObject({ purged: 0, notDue: 1 });
+  });
+
+  it("keeps a meal whose deletedAt is not a timestamp by the time it is read", async () => {
+    /* The query matches Timestamps only, but the document can be written
+       between the query and the transaction. A string or a number in
+       `deletedAt` is not a deletion time the job reads, so the meal stays,
+       even with a last write long past. */
+    const db = memoryFirestore({
+      "users/u1/meals/text": meal(ago(40 * DAY)),
+      "users/u1/meals/number": meal(ago(40 * DAY)),
+    });
+    withStoredTimestamps(db, {
+      updateTimes: {
+        "users/u1/meals/text": ago(40 * DAY),
+        "users/u1/meals/number": ago(40 * DAY),
+      },
+      beforeTransaction: () => {
+        db.data.set(
+          "users/u1/meals/text",
+          meal("2026-09-01T00:00:00Z")
+        );
+        db.data.set("users/u1/meals/number", meal(NOW - 40 * DAY));
+      },
+    });
+    const summary = await run(db);
+    expect(paths(db)).toEqual(["users/u1/meals/number", "users/u1/meals/text"]);
+    expect(summary).toMatchObject({ purged: 0, notDue: 2 });
+  });
+
   it("touches only meals in a person's diary", async () => {
     const db = world({
       "users/u1/meals/m1": meal(ago(40 * DAY)),
@@ -153,8 +194,10 @@ describe("an account being deleted (F5c pin (b))", () => {
 
   it("reads the deletion freeze inside the transaction that deletes", async () => {
     /* The executor starting between the query and the delete is seen: the
-       freeze is read in the same transaction as the meals, so a request
-       written after those reads makes Firestore run it again. */
+       freeze is read in the same transaction as the meals. A server
+       transaction locks what it reads, so a request written after those
+       reads waits for the commit, and the executor then finds the meals
+       already gone. */
     const db = memoryFirestore({
       "users/u1/meals/m1": meal(ago(40 * DAY)),
     });
@@ -247,15 +290,46 @@ describe("how much one run does", () => {
     expect(paths(db).length + summary.purged).toBe(4);
   });
 
-  it("counts one account's failure and goes on with the others", async () => {
+  it("goes on with the other accounts when one fails, then fails the run with its counts", async () => {
     const db = world({ ...due(1, "u1"), ...due(1, "u2") });
     db.failures.set("delete:users/u1/meals/m000", new Error("unavailable"));
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const summary = await run(db);
+    const failure = await run(db).catch((err) => err);
     log.mockRestore();
+    // The other account's meal still went.
     expect(db.data.has("users/u2/meals/m000")).toBe(false);
     expect(db.data.has("users/u1/meals/m000")).toBe(true);
-    expect(summary).toMatchObject({ purged: 1, failed: 1 });
+    expect(failure).toBeInstanceOf(Error);
+    expect(failure.summary).toMatchObject({ purged: 1, failed: 1, read: 2 });
+    expect(failure.message).toMatch(/1 of 2 meals failed/);
+  });
+
+  it("a run with a failed transaction is recorded as failed in jobRuns, with its counts", async () => {
+    /* A Firestore outage fails every transaction. Recorded as "ok" with
+       `failed: N` in the summary, it would read as a quiet hour. */
+    const db = world({ ...due(2, "u1") });
+    db.failures.set("delete:users/u1/meals/m000", new Error("unavailable"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(
+      recordJobRun(db, "purgeSoftDeletedMeals", () => run(db))
+    ).rejects.toThrow(/2 of 2 meals failed/);
+    log.mockRestore();
+    expect(db.data.get("jobRuns/purgeSoftDeletedMeals")).toMatchObject({
+      lastOutcome: "failed",
+      running: false,
+      lastError: expect.stringMatching(/2 of 2 meals failed.*purged 0/),
+    });
+  });
+
+  it("a run with nothing failed is recorded as ok", async () => {
+    const db = world(due(2));
+    await expect(
+      recordJobRun(db, "purgeSoftDeletedMeals", () => run(db))
+    ).resolves.toMatchObject({ purged: 2, failed: 0 });
+    expect(db.data.get("jobRuns/purgeSoftDeletedMeals")).toMatchObject({
+      lastOutcome: "ok",
+      lastSummary: expect.objectContaining({ purged: 2, failed: 0 }),
+    });
   });
 
   it("fails the run when it cannot find the meals, so the run record says so", async () => {

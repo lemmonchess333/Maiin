@@ -29,14 +29,28 @@
  * runs behind stamps a `deletedAt` in the past; either way the meal still
  * gets its 30 days. A phone whose clock runs ahead stamps one in the
  * future, and the query below finds the meal only 30 days after that
- * stamp: it is kept longer, never removed early.
+ * stamp: it is kept longer, never removed early. A meal whose snapshot has
+ * no `updateTime` is kept: the Admin SDK always gives one, and without it
+ * there is no telling when the delete reached the server.
  *
  * Each meal is checked again, and deleted, in a transaction that also reads
- * the account's deletion freeze (lib/deletionTransactionGuard.js): a meal
- * restored after the query found it is kept, and an account being deleted
- * is left to the deletion executor, which removes every meal itself (F5c
- * pin (b)). A restore or a deletion request that lands after those reads
- * makes Firestore run the transaction again.
+ * the account's deletion freeze (lib/deletionTransactionGuard.js). A server
+ * transaction locks what it reads, so a write is either before those reads
+ * and seen, or after them and made to wait for the commit:
+ *   - A restore written before the reads is seen, and the meal is kept.
+ *   - A deletion request written before the reads is seen, and the account
+ *     is left to the deletion executor, which removes every meal itself
+ *     (F5c pin (b)). One written after them waits, and the executor then
+ *     finds those meals already gone.
+ *   - A restore written after the reads waits, and lands after the delete.
+ *     The app's restore is a merge write of `deletedAt: null`
+ *     (`restoreMealEntries`), so on the deleted document it makes a stub
+ *     holding only that and `_offlineCreatedAt`. The stub has no `date` or
+ *     `createdAt`, so no diary, total or export reads it. This is the
+ *     same-instant edge the purge's pull request (#3467) discloses: a
+ *     restore tapped as the job runs, or one queued offline across the 30
+ *     days. Delete permanently on one phone with a restore queued on
+ *     another makes the same stub.
  *
  * The 30 days are mirrored by src/lib/mealPurge.ts, which tells the person
  * how long each deleted meal has left, and pinned to it by
@@ -76,10 +90,9 @@ function millisOf(value) {
 /** Whether a stored meal's 30 days are up (see the header for the clock). */
 function isPurgeDue(data, updateTime, nowMs) {
   const deletedAtMs = millisOf(data && data.deletedAt);
-  if (deletedAtMs === null) return false;
   const tookMs = millisOf(updateTime);
-  const from = tookMs === null ? deletedAtMs : Math.max(deletedAtMs, tookMs);
-  return nowMs >= from + DELETED_MEAL_RETENTION_MS;
+  if (deletedAtMs === null || tookMs === null) return false;
+  return nowMs >= Math.max(deletedAtMs, tookMs) + DELETED_MEAL_RETENTION_MS;
 }
 
 /** The account a `meals` document belongs to, or null for any `meals`
@@ -114,8 +127,11 @@ async function purgeAccountMeals({ firestore, uid, refs, nowMs }) {
  * a meal restored meanwhile) are paged past, so they never hold up the
  * rest. It stops at PURGE_RUN_CAP meals or the time limit and says so in
  * `more`; the next run starts again from the oldest, and finds only what is
- * left. A failed query throws, so the run is recorded as failed; one
- * account's failed transaction is counted and the run goes on.
+ * left. A failed query throws, so the run is recorded as failed. One
+ * account's failed transaction is counted and the run goes on with the
+ * others; then, if any failed, the run throws with the counts in its
+ * message (and on the error's `summary`), so `jobRuns` records a failed run
+ * rather than an "ok" one carrying `failed: N` that reads like a quiet hour.
  *
  * Resolves to counts only, which `jobRuns/purgeSoftDeletedMeals` keeps:
  * `read` meals found, `purged`, `deleting` (left for an account being
@@ -200,7 +216,19 @@ async function purgeSoftDeletedMeals({
     cursor = page.docs[page.docs.length - 1];
   }
 
-  return { ...counts, stoppedAtTimeLimit, more };
+  const summary = { ...counts, stoppedAtTimeLimit, more };
+  if (counts.failed > 0) {
+    const tried = counts.failed + counts.purged + counts.notDue;
+    console.error("purgeSoftDeletedMeals: meals failed", summary);
+    const err = new Error(
+      `purgeSoftDeletedMeals: ${counts.failed} of ${tried} meals failed; ` +
+        `purged ${counts.purged}, not due ${counts.notDue}, ` +
+        `left for a deletion ${counts.deleting}, read ${counts.read}`
+    );
+    err.summary = summary;
+    throw err;
+  }
+  return summary;
 }
 
 module.exports = {

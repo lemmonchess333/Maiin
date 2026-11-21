@@ -12,15 +12,25 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 
 ## Deleted meals go for good after 30 days (F5c, STATUS 2026-11-21)
 
-`purgeSoftDeletedMeals` runs each hour at 45 minutes past (UTC) and deletes
-every meal whose `deletedAt` is 30 days or more ago (and whose last write
-reached the server 30 days or more ago), through a
-collection-group query on `meals.deletedAt` (`functions/lib/mealPurge.js`,
-the index in `firestore.indexes.json`). It skips an account being deleted.
-Recently deleted meals says each meal is removed for good 30 days after it
-was deleted and shows the days each one has left. The unit suites run the
-job on the in-memory Firestore, which does not enforce indexes, so only
+`purgeSoftDeletedMeals` runs each hour at 45 minutes past (UTC). It deletes
+every meal whose `deletedAt` is 30 days or more ago and whose last write
+reached the server 30 days or more ago, through a collection-group query on
+`meals.deletedAt` (`functions/lib/mealPurge.js`, the index in
+`firestore.indexes.json`). It skips an account being deleted. Recently
+deleted meals says each meal is removed for good 30 days after it was
+deleted and shows the days each one has left. The unit suites run the job
+on the in-memory Firestore, which does not enforce indexes, so only
 production shows the index serving and the job running.
+
+The page counts from `deletedAt` alone; the job counts from the later of
+`deletedAt` and the server's last write to the meal (so a phone clock
+running behind cannot cut the 30 days short). A meal written after it was
+deleted therefore sits at "goes soon" on the page for up to 30 days before
+the job removes it. The one writer that does this at scale is #3465's
+`functions/scripts/purgeLegacyFoodPhotos.js`, which takes `photoUrl` and
+`photoPath` off every meal, soft-deleted ones included: run its `apply`
+after this job's first run (the row below), so the meals already past
+their 30 days go first and the others do not get their 30 days again.
 
 - [ ] **The index is built before the job runs.** Passing: the Deploy
       production run's Firestore readiness gate
@@ -32,20 +42,28 @@ production shows the index serving and the job running.
       its counts and no `FAILED_PRECONDITION` (a missing index), and
       Firestore console → `jobRuns/purgeSoftDeletedMeals` has
       `lastOutcome: "ok"`, `running: false` and a `lastSummary` with
-      `failed: 0`. `more: true` or `stoppedAtTimeLimit: true` on a run after
-      the first means the job is falling behind, not that it failed.
+      `failed: 0`. A run in which any transaction failed is recorded as
+      `lastOutcome: "failed"`, with its counts in `lastError` ("N of M
+      meals failed; purged …"). `more: true` or `stoppedAtTimeLimit: true`
+      on a run after the first means the job is falling behind, not that it
+      failed.
 - [ ] **A meal deleted 31 days ago is gone.** Before the release, open
       Settings → Account → Recently deleted meals on an account that has a
       meal deleted more than 30 days ago (nothing purged before this, so an
       account used since the summer has some), and note one. After the
       release its row says "goes soon". Passing: after the first run at 45
-      minutes past, that
-      meal's document is gone from `users/{uid}/meals` in Firestore console
-      and the page no longer lists it, while a meal deleted today is still
-      listed with "30 days left". Setting a newer meal's `deletedAt` back
-      in the console does not test this: the job also counts the 30 days
-      from the server's last write to the meal (a phone clock running
-      behind cannot cut them short), and that edit is a write.
+      minutes past, that meal's document is gone from `users/{uid}/meals`
+      in Firestore console and the page no longer lists it, while a meal
+      deleted today is still listed with "30 days left". Setting a newer
+      meal's `deletedAt` back in the console does not test this: the job
+      also counts the 30 days from the server's last write to the meal, and
+      that edit is a write. For the same reason, a meal still at "goes
+      soon" an hour after a run was written after it was deleted (the
+      photo-field purge, an edit); it goes 30 days after that write.
+- [ ] **The photo-field purge runs after this job's first run.** Passing:
+      `jobRuns/purgeSoftDeletedMeals` shows a finished run before the
+      `apply` run of "Purge legacy meal photos" (#3465's rows under "Legacy
+      meal photos in Storage"), if both are still to do.
 
 ## A purchase the store has, before Pro is on (2026-11-10)
 
