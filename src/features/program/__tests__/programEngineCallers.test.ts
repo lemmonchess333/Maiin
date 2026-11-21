@@ -23,7 +23,9 @@ const repoRoot = resolve(
 
 const ENGINE_OWNERS = [
   "src/features/program/HomeProgramController.tsx",
-  "src/pages/Program.tsx",
+  // Train and the session pages under it read this one through the outlet
+  // (`useProgramEngine`, TrainWk1 step 3).
+  "src/features/program/ProgramEngineRoute.tsx",
   "src/pages/Run.tsx",
   "src/pages/RunSummary.tsx",
   "src/pages/TrainingPlan.tsx",

@@ -204,11 +204,12 @@ Phase 1 exports.
     2023), or lognormal medians τ₁ 42 days (log-SD 0.35), τ₂ 10 (0.6), k₂/k₁
     2 (0.7). Individual fits are ill-conditioned: a smoother, not a
     predictor (running-evidence §6.2).
-  - the app's own form curve (trainingLoad.ts, gains 1 − e^(−1/τ)) implies
-    k₂/k₁ ≈ 5.7, so a session reads net-negative for about 15 days. That is
-    the 42/7 fitness-and-freshness convention (the file names Strava's as
-    its model), display-only, and it stays (owner-answers A2): simulate the
-    athlete on the published prior, never on trainingLoad.ts.
+  - the app's own form curve is gone: `src/lib/trainingLoad.ts` (gains
+    1 − e^(−1/τ), k₂/k₁ ≈ 5.7, the 42/7 fitness-and-freshness convention)
+    was deleted with the training load chart when App1 Q16 kept one load
+    model on Progress, the score's own (owner-answers A2, STATUS
+    2026-11-15). Nothing in the app now models form, so simulate the athlete
+    on the published prior above.
   - lifting fatigue: §4.4's 2–4-day time constant is an ASSUMPTION;
     strength-sport fits put it at 13–22 days [U]. Sweep it.
   - reps achieved: Nuzzo 2024's mean + z × SD at each load, z drawn once per
@@ -435,10 +436,11 @@ PHASE 5 — RUNNING
     block, heavy legs placed by the person's stated priority). Also: judge
     the year-out marathon's +34–59% weeks by the single-run guard, not the
     weekly percentage (Frandsen found week-to-week change unrelated to
-    injury; Buist found no effect of the 10% rule); trainingLoad.ts's
-    ACWR-above-1.4 line, which Frandsen's null ACWR bands and Impellizzeri
-    2021 (c-statistic 0.574) do not support as a risk signal — it stays as
-    written, advisory and never a risk score (owner-answers A10); heavy
+    injury; Buist found no effect of the 10% rule); the training load
+    card's ACWR-above-1.4 line, which Frandsen's null ACWR bands and
+    Impellizzeri 2021 (c-statistic 0.574) do not support as a risk signal,
+    was deleted with `src/lib/trainingLoad.ts` (App1 Q16; owner-answers
+    A10, STATUS 2026-11-21), so the app draws no ACWR line at all; heavy
     lifting improved running economy only above 12 km/h and in highly
     trained runners, and most
     Tropos runners are slower than 5:00 /km (plyometrics helped at 12 km/h

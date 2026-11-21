@@ -23,7 +23,7 @@ function validPayload() {
   return {
     profileData: {
       weekScheduleVersion: 1,
-      runMode: "structured",
+      runMode: "starter",
     },
     programState: {
       programSchemaVersion: 2,
@@ -36,7 +36,7 @@ function validPayload() {
           status: "planned",
         },
       ],
-      runPlan: { mode: "structured" },
+      runPlan: { mode: "starter", stage: 1, stageWeekKey: "2026-05-11" },
     },
     weekSchedule: [
       { day: 0, type: "rest" },
@@ -51,7 +51,7 @@ function validPayload() {
 }
 
 describe("validatePlanPayload — happy path", () => {
-  it("returns empty array for a well-formed structured payload", () => {
+  it("returns empty array for a well-formed starter payload", () => {
     expect(validatePlanPayload(validPayload())).toEqual([]);
   });
 
@@ -350,6 +350,40 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
     expect(validatePlanPayload(p)).toContain(
       `profileData.runMode = "cardio" is invalid`
     );
+  });
+
+  it("refuses the retired structured run mode, and its plan (App1 Q25)", () => {
+    const p = validPayload();
+    p.profileData.runMode = "structured";
+    p.programState.runPlan = { mode: "structured" };
+    const errors = validatePlanPayload(p);
+    expect(errors).toContain(`profileData.runMode = "structured" is invalid`);
+    expect(errors).toContain(
+      `programState.runPlan.mode = "structured" is invalid`
+    );
+  });
+
+  it("accepts a plan with no race date on free running (Run24 (3))", () => {
+    const p = validPayload();
+    p.profileData.runMode = "freeform";
+    p.programState.runPlan = {
+      mode: "rolling",
+      rollingGoal: "keep_fit",
+      currentWeek: 0,
+      rollingWeekKey: "2026-05-11",
+    };
+    expect(validatePlanPayload(p)).toEqual([]);
+  });
+
+  it("refuses a plan of a kind it does not know, and one that is not an object", () => {
+    for (const runPlan of [{ mode: "base" }, {}, "race_prep"]) {
+      const p = validPayload();
+      p.profileData.runMode = "freeform";
+      p.programState.runPlan = runPlan;
+      expect(validatePlanPayload(p)).toContain(
+        `programState.runPlan.mode = "${runPlan.mode}" is invalid`
+      );
+    }
   });
 
   it("rejects race_prep without profileData.raceGoal", () => {

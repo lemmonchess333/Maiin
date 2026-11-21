@@ -100,6 +100,21 @@ import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { trainingKind } from "@/lib/trainingKind";
+import {
+  layoutWithSport,
+  runLevelStart,
+  runningAdded,
+  sportChange,
+  sportChangeRefusal,
+  starterOfferedTo,
+  type RunLevel,
+} from "@/lib/sportChange";
+import { weekScheduleFor } from "@/lib/trainingResolver";
+import { configureLiftPlan } from "@/features/program/liftPlanRebuild";
+import RunLevelQuestion from "@/components/onboarding/RunLevelQuestion";
+import SectionLabel from "@/components/ui/SectionLabel";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
+import StopSportDialog from "./StopSportDialog";
 import { buildPlan, freshLiftWeek } from "@/features/program/planBuilder";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -271,17 +286,27 @@ function raceOrNotOptions(
  * The goal a Train or Done card asks for (Run9): `?goal=starter` opens on the
  * 30-minute goal, `?goal=5k` on a 5K, with its date and the race-or-own
  * question still to answer, and a goal of a plan with no race date
- * (`?goal=keep_fit`, Run24 (3)) on that plan. Read once on mount, as the
- * race deep link is.
+ * (`?goal=keep_fit`, Run24 (3)) on that plan. `?goal=weekly` opens on No
+ * race with a weekly running goal counting runs, three a week, when none is
+ * set (TrainWk1, 18 November call 9: a free runner's weekly goal is this
+ * control, counting runs unless they choose time). Read once on mount, as
+ * the race deep link is.
  */
 function parseGoalDeepLink(
   params: URLSearchParams
-): "starter" | "5k" | RollingGoal | null {
+): "starter" | "5k" | "weekly" | RollingGoal | null {
   const goal = params.get("goal");
-  return goal === "starter" || goal === "5k" || isRollingGoal(goal)
+  return goal === "starter" ||
+    goal === "5k" ||
+    goal === "weekly" ||
+    isRollingGoal(goal)
     ? goal
     : null;
 }
+
+/** A weekly running goal as `?goal=weekly` first offers it: runs, three a
+ *  week, the control's own first count for runs. */
+const WEEKLY_RUNS_GOAL: NonRaceGoal = { kind: "runs", target: 3 };
 
 export default function RunPlanSettings({
   recentLayoff = "none",
@@ -337,16 +362,20 @@ export default function RunPlanSettings({
     parseRaceDeepLink(searchParams)
   );
   const [goalLink] = useState(() => parseGoalDeepLink(searchParams));
-  /* Run9's starter goal is offered to someone who runs only, to anyone
-     who said they are new to running, and to anyone already on it. Who
-     runs only is the plan's to say (`trainingKind`, App1 Q23): a runner
-     who has added lift days lifts too. */
+  /* Run9's starter goal is offered to anyone adding running, to someone
+     who runs only, to anyone who said they are new to running, and to
+     anyone already on it (`starterOfferedTo`). What the plan has is the
+     plan's to say (`trainingKind`, App1 Q23). */
   const planKind = trainingKind(profile, programState);
-  const starterOffered =
-    (planKind.runs && !planKind.lifts) ||
-    profile.runFrequency === "new" ||
-    profile.runMode === "starter" ||
-    goalLink === "starter";
+  /* Add running (TrainWk1 step 6): no running on the plan. Setup's running
+     question comes first, then these same cards. */
+  const addingRunning = !planKind.runs;
+  const [runLevel, setRunLevel] = useState<RunLevel | null>(null);
+  const starterOffered = starterOfferedTo(
+    profile,
+    programState,
+    goalLink === "starter"
+  );
 
   /* Unsaved edits from a previous visit, read ONCE for the same reason as
      the deep link — a draft that reseeded on re-render would fight the
@@ -364,9 +393,11 @@ export default function RunPlanSettings({
       ? "race_prep"
       : goalLink === "starter"
         ? "starter"
-        : isRollingGoal(goalLink)
-          ? "rolling"
-          : (storedDraft?.runMode ?? saved.runMode)
+        : goalLink === "weekly"
+          ? "freeform"
+          : isRollingGoal(goalLink)
+            ? "rolling"
+            : (storedDraft?.runMode ?? saved.runMode)
   );
   const [rollingGoal, setRollingGoal] = useState<RollingGoal>(
     isRollingGoal(goalLink)
@@ -460,9 +491,11 @@ export default function RunPlanSettings({
      for anyone, and none is filled in again. */
   const [baselineRemoved, setBaselineRemoved] = useState(false);
   const [nonRaceGoal, setNonRaceGoal] = useState<NonRaceGoal | null>(
-    storedDraft?.nonRaceGoal !== undefined
-      ? storedDraft.nonRaceGoal
-      : saved.nonRaceGoal
+    goalLink === "weekly"
+      ? (saved.nonRaceGoal ?? WEEKLY_RUNS_GOAL)
+      : storedDraft?.nonRaceGoal !== undefined
+        ? storedDraft.nonRaceGoal
+        : saved.nonRaceGoal
   );
   const [raceLegTrim, setRaceLegTrim] = useState<boolean>(
     storedDraft?.raceLegTrim ?? saved.raceLegTrim
@@ -595,6 +628,8 @@ export default function RunPlanSettings({
   const savedRunMode = runMode === "rolling" ? "freeform" : runMode;
   const newRunnerUntil = profileNewRunnerUntil({
     ...profile,
+    // Adding running: the level the save writes is the one it builds on.
+    ...(addingRunning && runLevel ? { runFrequency: runLevel } : {}),
     starterGoal: starterGoalAfterSave(
       profile.starterGoal,
       savedRunMode,
@@ -602,6 +637,22 @@ export default function RunPlanSettings({
       today
     ),
   });
+
+  /* The week the preview and the save build on. Adding running puts its
+     days around the lift days, which keep theirs (`layoutWithSport`);
+     without it a new count gave a new default week, moving every lift day.
+     A plan that has running keeps its own layout. */
+  const planLayout = useMemo(
+    () =>
+      addingRunning
+        ? layoutWithSport(
+            weekScheduleFor(profile),
+            "running",
+            runMode === "freeform" ? 0 : weeklyRunDays
+          )
+        : profile.weekSchedule,
+    [addingRunning, profile, runMode, weeklyRunDays]
+  );
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
@@ -621,7 +672,7 @@ export default function RunPlanSettings({
         existingState: programState,
         recentLayoff,
         newRunnerUntil,
-        weekSchedule: profile.weekSchedule,
+        weekSchedule: planLayout,
         distanceUnit: resolveDistanceUnit(profile.preferredDistanceUnit),
         recentRuns: recentRunsDone,
       }),
@@ -640,7 +691,7 @@ export default function RunPlanSettings({
       programState,
       recentLayoff,
       newRunnerUntil,
-      profile.weekSchedule,
+      planLayout,
       profile.preferredDistanceUnit,
       recentRunsDone,
     ]
@@ -649,13 +700,17 @@ export default function RunPlanSettings({
   const raceDateInvalid =
     runMode === "race_prep" && (!raceTargetDate || raceTargetDate < today);
 
-  const dirty =
-    (runMode === "race_prep" &&
-      JSON.stringify(draftBaseline) !==
-        JSON.stringify(saved.runningBaseline)) ||
-    (runMode === "freeform" &&
-      JSON.stringify(nonRaceGoal) !== JSON.stringify(saved.nonRaceGoal)) ||
-    planChanged;
+  /* Adding running is a change once the level is answered, whichever card
+     is chosen: No race with no weekly goal still adds running. Until then
+     there is nothing to save. */
+  const dirty = addingRunning
+    ? runLevel !== null
+    : (runMode === "race_prep" &&
+        JSON.stringify(draftBaseline) !==
+          JSON.stringify(saved.runningBaseline)) ||
+      (runMode === "freeform" &&
+        JSON.stringify(nonRaceGoal) !== JSON.stringify(saved.nonRaceGoal)) ||
+      planChanged;
 
   /* Persist the draft on every change, so leaving the page keeps it.
      Keyed off `dirty` in BOTH directions: a draft that matches the saved
@@ -753,9 +808,20 @@ export default function RunPlanSettings({
       raceTimeInvalid ||
       raceClimbInvalid ||
       baselineInvalid ||
-      goalInvalid
+      goalInvalid ||
+      (addingRunning && !runLevel)
     )
       return;
+    // Adding running writes the running level beside the plan
+    // (`runningAdded`); the cards choose the plan.
+    const added =
+      addingRunning && runLevel
+        ? runningAdded(profile, programState, runLevel)
+        : null;
+    if (added && !added.ok) {
+      toast.error(added.sentence, { id: "run-plan" });
+      return;
+    }
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
@@ -784,7 +850,7 @@ export default function RunPlanSettings({
         recentLayoff,
         recentRuns: recentRunsDone,
         newRunnerUntil,
-        weekSchedule: profile.weekSchedule,
+        weekSchedule: planLayout,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits,
@@ -822,6 +888,11 @@ export default function RunPlanSettings({
 
       plan.profileUpdates.nonRaceGoal =
         runMode === "freeform" ? nonRaceGoal : saved.nonRaceGoal;
+      // The level, never the athlete type (TrainWk1, 18 November call 5).
+      if (added?.ok)
+        Object.assign(plan.profileUpdates, {
+          runFrequency: added.patch.runFrequency,
+        });
 
       /* Run9's starter goal, one goal at a time. Chosen here, it begins
          today, and setting it clears a race goal (below). Leaving it for a
@@ -898,13 +969,15 @@ export default function RunPlanSettings({
       clearRunPlanDraft(profile.uid);
       await refreshProfile();
       toast.success(
-        runMode === "race_prep"
-          ? "Race plan saved"
-          : runMode === "starter"
-            ? "30-minute goal saved"
-            : runMode === "rolling"
-              ? `${ROLLING_GOAL_NAMES[rollingGoal]} plan saved`
-              : "Running goal and settings saved",
+        addingRunning
+          ? "Running added"
+          : runMode === "race_prep"
+            ? "Race plan saved"
+            : runMode === "starter"
+              ? "30-minute goal saved"
+              : runMode === "rolling"
+                ? `${ROLLING_GOAL_NAMES[rollingGoal]} plan saved`
+                : "Running goal and settings saved",
         { id: "run-plan" }
       );
     } catch (e) {
@@ -930,6 +1003,92 @@ export default function RunPlanSettings({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* Stop running (TrainWk1 step 6): running off the plan, as Lift plan's
+     Stop lifting takes lifting off. Refused with the reason while a race
+     goal is set, or when running is the plan's one sport. */
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopRefused = addingRunning
+    ? null
+    : sportChangeRefusal(profile, programState, "remove_running");
+  /* Running as the plan's one sport is said when Stop running is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A race goal is said up front, where the goal is chosen. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
+  /** The goals that end with the running, as the confirmation says them. */
+  const stopEnds = [
+    starterGoalIsActive(profile.starterGoal)
+      ? "Your 30-minute goal ends."
+      : null,
+    savedRollingGoal
+      ? `Your ${ROLLING_GOAL_NAMES[savedRollingGoal]} plan ends.`
+      : null,
+    saved.nonRaceGoal ? "Your weekly running goal ends." : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  async function stopRunning(): Promise<void> {
+    if (stopping || readiness !== "ready") return;
+    const change = sportChange(
+      {
+        profile,
+        programState,
+        today: localDateString(new Date()),
+        recentLayoff,
+        recentRuns: recentRunsDone,
+      },
+      { kind: "remove_running" }
+    );
+    if (!change.ok) {
+      setConfirmStop(false);
+      toast.error(change.sentence, { id: "run-plan" });
+      return;
+    }
+    setStopping(true);
+    try {
+      const plan = buildPlan(change.input);
+      Object.assign(plan.profileUpdates, change.patch);
+      await configureLiftPlan(plan, profile, programState);
+      clearRunPlanDraft(profile.uid);
+      setConfirmStop(false);
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Stop lifting).
+        logger.warn(
+          "[RunPlanSettings] running stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Running stopped", { id: "run-plan" });
+        window.location.reload();
+        return;
+      }
+      toast.success("Running stopped", { id: "run-plan" });
+    } catch (e) {
+      logger.error("[RunPlanSettings] stop running failed", e);
+      const conflict = (e as { code?: string })?.code?.endsWith(
+        "failed-precondition"
+      );
+      if (conflict)
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      toast.error(
+        conflict
+          ? (describeRejection(e) ??
+              "Your programme changed. Reopen settings to review the latest plan before saving.")
+          : isRateLimitedRejection(e)
+            ? PLAN_SAVES_TOO_OFTEN
+            : "Couldn’t save your run plan. Try again.",
+        { id: "run-plan" }
+      );
+    } finally {
+      setStopping(false);
     }
   }
 
@@ -998,316 +1157,395 @@ export default function RunPlanSettings({
             ? "Check running details"
             : runMode === "race_prep" && plannerState.ctaLabel
               ? plannerState.ctaLabel
-              : "Save run plan";
+              : addingRunning
+                ? "Add running"
+                : "Save run plan";
 
+  const showPlan = !addingRunning || runLevel !== null;
   return (
     <div className="space-y-4 pb-6">
-      {/* ── Race or not ───────────────────────────────────────────────
+      {/* ── Add running (TrainWk1 step 6): setup's running question, then
+          the cards below with the starter goal offered. ── */}
+      {addingRunning && (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <SectionLabel>Add running</SectionLabel>
+            <h2 className="text-h2 leading-tight tracking-tight font-extrabold">
+              How much do you run now?
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Your runs go into your week from today. Your lifts keep their
+              days.
+            </p>
+          </div>
+          <RunLevelQuestion
+            value={runLevel}
+            onChange={(level) => {
+              haptic();
+              setRunLevel(level);
+              const start = runLevelStart(level);
+              // As setup: New to running starts on the 30-minute goal, and
+              // the other cards stay a tap away.
+              if (start.runMode === "starter") setRunMode("starter");
+              setWeeklyRunDays(start.weeklyRunDays);
+            }}
+          />
+        </div>
+      )}
+      {showPlan && (
+        <>
+          {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
           whether there is a race. Photograph cards, as the race's
           Distance below (DESIGN_GUIDE §14m rule 26). */}
-      <div className="space-y-2">
-        <SectionHeading size="compact">Running goal</SectionHeading>
-        <PhotoChoiceCards<RunMode>
-          ariaLabel="Running goal"
-          tall
-          options={raceOrNotOptions(starterOffered, {
-            spaceId: raceEventSpaceId,
-            name: raceEventName.trim(),
-          })}
-          value={runMode}
-          onChange={(next) => {
-            haptic();
-            setRunMode(next);
-            if (next === "race_prep")
-              setWeeklyRunDays((n) => Math.max(minRunDays, n));
-            // Two or three runs a week on the starter goal.
-            if (next === "starter")
-              setWeeklyRunDays((n) =>
-                Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, n))
-              );
-          }}
-        />
-      </div>
-
-      {/* ── Run9's starter goal: what it is, and two or three runs ────── */}
-      {runMode === "starter" && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Run {STARTER_GOAL_NAME} in about nine weeks. It starts with short
-            runs and walks between them, and a week repeats until you’ve done
-            it.
-          </p>
           <div className="space-y-2">
-            <SectionHeading size="compact">Runs per week</SectionHeading>
-            <SegmentedControl<"2" | "3">
-              ariaLabel="Runs per week"
-              tone="running"
-              value={weeklyRunDays <= 2 ? "2" : "3"}
+            <SectionHeading size="compact">Running goal</SectionHeading>
+            <PhotoChoiceCards<RunMode>
+              ariaLabel="Running goal"
+              tall
+              options={raceOrNotOptions(starterOffered, {
+                spaceId: raceEventSpaceId,
+                name: raceEventName.trim(),
+              })}
+              value={runMode}
               onChange={(next) => {
                 haptic();
-                setWeeklyRunDays(Number(next));
+                setRunMode(next);
+                if (next === "race_prep")
+                  setWeeklyRunDays((n) => Math.max(minRunDays, n));
+                // Two or three runs a week on the starter goal.
+                if (next === "starter")
+                  setWeeklyRunDays((n) =>
+                    Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, n))
+                  );
               }}
-              options={[
-                { value: "2", label: "2" },
-                { value: "3", label: "3" },
-              ]}
             />
           </div>
-        </div>
-      )}
 
-      {/* ── Run24 (3): a plan with no race date, and its goal ─────────── */}
-      {runMode === "rolling" && (
-        <div className="space-y-2">
-          <SectionHeading size="compact">Plan goal</SectionHeading>
-          <p className="text-sm text-muted-foreground">
-            A plan that keeps going, a lighter week every fourth. Add a race any
-            time.
-          </p>
-          <RollingGoalPicker
-            value={rollingGoal}
-            onChange={(next) => {
-              haptic();
-              setRollingGoal(next);
-            }}
-          />
-        </div>
-      )}
-
-      {/* ── Race goal + runway (race prep only) ──────────────────────── */}
-      {runMode === "race_prep" && (
-        <div ref={raceGoalRef} className="space-y-2">
-          <RacePlanProNote
-            distance={raceDistance}
-            isPro={isPro}
-            freeWeekUsed={profile.racePlanFreeWeekUsed === true}
-          />
-          <RaceGoalPlanner
-            distance={raceDistance}
-            targetDate={raceTargetDate}
-            eventName={raceEventName}
-            minDate={today}
-            state={plannerState}
-            onDistanceChange={handleDistanceChange}
-            onTargetDateChange={handleTargetDateChange}
-            onEventNameChange={setRaceEventName}
-            upcomingRaces={upcomingRaces}
-            selectedEventSpaceId={raceEventSpaceId}
-            onPickRace={handlePickRace}
-            entry={raceEntry}
-            onEntryChange={handleEntryChange}
-            climbText={raceClimbText}
-            onClimbTextChange={setRaceClimbText}
-            unit={unit}
-          />
-        </div>
-      )}
-
-      {/* ── A2: goal time (optional) + feasibility verdict. An ultra or a
-          trail race runs by effort and asks for none (Run26 (2)). ── */}
-      {runMode === "race_prep" && !timePlan && (
-        <div className="space-y-2">
-          <SectionHeading size="compact">
-            <label htmlFor="ps-race-time">Goal time (optional)</label>
-          </SectionHeading>
-          <input
-            id="ps-race-time"
-            type="text"
-            inputMode="decimal"
-            value={raceTimeStr}
-            onChange={(e) => setRaceTimeStr(e.target.value)}
-            placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
-            className="ds-input text-sm font-mono tabular-nums"
-          />
-          {raceTimeInvalid && (
-            <p className="text-xs text-destructive-strong">
-              Enter a time like {goalTimeExample(raceDistance)}.
-            </p>
+          {/* ── Run9's starter goal: what it is, and two or three runs ────── */}
+          {runMode === "starter" && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Run {STARTER_GOAL_NAME} in about nine weeks. It starts with
+                short runs and walks between them, and a week repeats until
+                you’ve done it.
+              </p>
+              <div className="space-y-2">
+                <SectionHeading size="compact">Runs per week</SectionHeading>
+                <SegmentedControl<"2" | "3">
+                  ariaLabel="Runs per week"
+                  tone="running"
+                  value={weeklyRunDays <= 2 ? "2" : "3"}
+                  onChange={(next) => {
+                    haptic();
+                    setWeeklyRunDays(Number(next));
+                  }}
+                  options={[
+                    { value: "2", label: "2" },
+                    { value: "3", label: "3" },
+                  ]}
+                />
+              </div>
+            </div>
           )}
-          {(() => {
-            const verdict = raceTargetVerdict({
-              distance: raceDistance,
-              targetTimeS: raceTimeParsed ?? undefined,
-              runFitness: profile.runFitness ?? null,
-              /* From the profile PROP rather than the auth hook: this
+
+          {/* ── Run24 (3): a plan with no race date, and its goal ─────────── */}
+          {runMode === "rolling" && (
+            <div className="space-y-2">
+              <SectionHeading size="compact">Plan goal</SectionHeading>
+              <p className="text-sm text-muted-foreground">
+                A plan that keeps going, a lighter week every fourth. Add a race
+                any time.
+              </p>
+              <RollingGoalPicker
+                value={rollingGoal}
+                onChange={(next) => {
+                  haptic();
+                  setRollingGoal(next);
+                }}
+              />
+            </div>
+          )}
+
+          {/* ── Race goal + runway (race prep only) ──────────────────────── */}
+          {runMode === "race_prep" && (
+            <div ref={raceGoalRef} className="space-y-2">
+              <RacePlanProNote
+                distance={raceDistance}
+                isPro={isPro}
+                freeWeekUsed={profile.racePlanFreeWeekUsed === true}
+              />
+              <RaceGoalPlanner
+                distance={raceDistance}
+                targetDate={raceTargetDate}
+                eventName={raceEventName}
+                minDate={today}
+                state={plannerState}
+                onDistanceChange={handleDistanceChange}
+                onTargetDateChange={handleTargetDateChange}
+                onEventNameChange={setRaceEventName}
+                upcomingRaces={upcomingRaces}
+                selectedEventSpaceId={raceEventSpaceId}
+                onPickRace={handlePickRace}
+                entry={raceEntry}
+                onEntryChange={handleEntryChange}
+                climbText={raceClimbText}
+                onClimbTextChange={setRaceClimbText}
+                unit={unit}
+              />
+            </div>
+          )}
+
+          {/* ── A2: goal time (optional) + feasibility verdict. An ultra or a
+          trail race runs by effort and asks for none (Run26 (2)). ── */}
+          {runMode === "race_prep" && !timePlan && (
+            <div className="space-y-2">
+              <SectionHeading size="compact">
+                <label htmlFor="ps-race-time">Goal time (optional)</label>
+              </SectionHeading>
+              <input
+                id="ps-race-time"
+                type="text"
+                inputMode="decimal"
+                value={raceTimeStr}
+                onChange={(e) => setRaceTimeStr(e.target.value)}
+                placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
+                className="ds-input text-sm font-mono tabular-nums"
+              />
+              {raceTimeInvalid && (
+                <p className="text-xs text-destructive-strong">
+                  Enter a time like {goalTimeExample(raceDistance)}.
+                </p>
+              )}
+              {(() => {
+                const verdict = raceTargetVerdict({
+                  distance: raceDistance,
+                  targetTimeS: raceTimeParsed ?? undefined,
+                  runFitness: profile.runFitness ?? null,
+                  /* From the profile PROP rather than the auth hook: this
                  component is handed the authoritative profile it saves
                  against, and reading the unit from anywhere else could
                  disagree with the one being edited. */
-              unit: resolveDistanceUnit(profile.preferredDistanceUnit),
-            });
-            if (!verdict) {
-              return raceTimeParsed && !profile.runFitness ? (
-                <p className="text-xs text-muted-foreground leading-snug">
-                  Set your running fitness in Settings to see how this goal
-                  compares with your recent running.
-                </p>
-              ) : null;
-            }
-            return (
-              <p className="text-xs text-muted-foreground leading-snug">
-                {verdict.line}
-              </p>
-            );
-          })()}
-        </div>
-      )}
+                  unit: resolveDistanceUnit(profile.preferredDistanceUnit),
+                });
+                if (!verdict) {
+                  return raceTimeParsed && !profile.runFitness ? (
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      Set your running fitness in Settings to see how this goal
+                      compares with your recent running.
+                    </p>
+                  ) : null;
+                }
+                return (
+                  <p className="text-xs text-muted-foreground leading-snug">
+                    {verdict.line}
+                  </p>
+                );
+              })()}
+            </div>
+          )}
 
-      {/* ── Run days / week (race prep and a plan with no race date;
+          {/* ── Run days / week (race prep and a plan with no race date;
           freeform has no schedule) ── */}
-      {(runMode === "race_prep" || runMode === "rolling") && (
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <SectionHeading size="compact">Run days / week</SectionHeading>
-            {liftDays + weeklyRunDays > 7 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                <span className="font-mono tabular-nums">{liftDays}</span> lift
-                and{" "}
-                <span className="font-mono tabular-nums">{weeklyRunDays}</span>{" "}
-                run days, so some days hold both.
-              </p>
-            )}
-            {runMode === "race_prep" &&
-              raceRunDaysNote(raceDistance, weeklyRunDays) && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {raceRunDaysNote(raceDistance, weeklyRunDays)}
-                </p>
-              )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              aria-label="Decrease run days"
-              onClick={() => {
-                haptic();
-                setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
-              }}
-              disabled={weeklyRunDays <= minRunDays}
-              /* px, not rem: a control keeps its size with larger text,
+          {(runMode === "race_prep" || runMode === "rolling") && (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <SectionHeading size="compact">Run days / week</SectionHeading>
+                {liftDays + weeklyRunDays > 7 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <span className="font-mono tabular-nums">{liftDays}</span>{" "}
+                    lift and{" "}
+                    <span className="font-mono tabular-nums">
+                      {weeklyRunDays}
+                    </span>{" "}
+                    run days, so some days hold both.
+                  </p>
+                )}
+                {runMode === "race_prep" &&
+                  raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                    </p>
+                  )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  aria-label="Decrease run days"
+                  onClick={() => {
+                    haptic();
+                    setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
+                  }}
+                  disabled={weeklyRunDays <= minRunDays}
+                  /* px, not rem: a control keeps its size with larger text,
                  so the heading beside it keeps the row (largeText). */
-              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
-            >
-              <Minus className="size-4" />
-            </button>
-            <span className="font-mono tabular-nums text-sm font-semibold min-w-[1.5rem] text-center">
-              {weeklyRunDays}
-            </span>
-            <button
-              type="button"
-              aria-label="Increase run days"
-              onClick={() => {
-                haptic();
-                setWeeklyRunDays((n) => Math.min(7, n + 1));
-              }}
-              disabled={weeklyRunDays >= 7}
-              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
-            >
-              <Plus className="size-4" />
-            </button>
-          </div>
-        </div>
-      )}
+                  className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+                >
+                  <Minus className="size-4" />
+                </button>
+                <span className="font-mono tabular-nums text-sm font-semibold min-w-[1.5rem] text-center">
+                  {weeklyRunDays}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Increase run days"
+                  onClick={() => {
+                    haptic();
+                    setWeeklyRunDays((n) => Math.min(7, n + 1));
+                  }}
+                  disabled={weeklyRunDays >= 7}
+                  className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+                >
+                  <Plus className="size-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
-      {runMode === "race_prep" && (
-        <RunAvailabilitySettings
-          value={runTimeLimits}
-          onChange={setRunTimeLimits}
-          preview={plannerState}
-          hasConfirmedPace={planningEasyPaceSPerKm(profile.runFitness) !== null}
-        />
-      )}
+          {runMode === "race_prep" && (
+            <RunAvailabilitySettings
+              value={runTimeLimits}
+              onChange={setRunTimeLimits}
+              preview={plannerState}
+              hasConfirmedPace={
+                planningEasyPaceSPerKm(profile.runFitness) !== null
+              }
+            />
+          )}
 
-      {runMode === "race_prep" && (
-        <div id="running-starting-point">
-          <RunningBaselineSettings
-            value={shownBaseline}
-            onChange={(next) => {
-              setBaselineRemoved(next === null);
-              setRunningBaseline(next);
-            }}
-            preview={plannerState}
-            fromRecent={
-              runningBaseline === null &&
-              recentStart !== null &&
-              shownBaseline === recentStart
-            }
-            recentStart={recentStart}
-            defaultExperience={startExperience}
-          />
-        </div>
-      )}
-      {runMode === "freeform" && (
-        <div id="weekly-running-goal">
-          <NonRaceGoalSettings value={nonRaceGoal} onChange={setNonRaceGoal} />
-        </div>
-      )}
+          {runMode === "race_prep" && (
+            <div id="running-starting-point">
+              <RunningBaselineSettings
+                value={shownBaseline}
+                onChange={(next) => {
+                  setBaselineRemoved(next === null);
+                  setRunningBaseline(next);
+                }}
+                preview={plannerState}
+                fromRecent={
+                  runningBaseline === null &&
+                  recentStart !== null &&
+                  shownBaseline === recentStart
+                }
+                recentStart={recentStart}
+                defaultExperience={startExperience}
+              />
+            </div>
+          )}
+          {runMode === "freeform" && (
+            <div id="weekly-running-goal">
+              <NonRaceGoalSettings
+                value={nonRaceGoal}
+                onChange={setNonRaceGoal}
+              />
+            </div>
+          )}
 
-      {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised
+          {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised
           generator; freeform has no scheduled sessions to tune). Moved here
           from ProgrammeSettings' full variant (D14 dedupe): the focused
           run editor is the ONE place run-plan fields are edited. Bounded
           presets; `standard` is byte-identical to the untuned plan. */}
-      {(runMode === "race_prep" || runMode === "rolling") && (
-        <>
-          <div className="space-y-2">
-            <div>
-              <SectionHeading size="compact">Long-run volume</SectionHeading>
-              <p className="mt-1 text-xs text-muted-foreground">
-                How long your longest runs get.
-              </p>
-            </div>
-            <SegmentedControl
-              options={[
-                { value: "lighter", label: "Lighter" },
-                { value: "standard", label: "Standard" },
-                { value: "bigger", label: "Bigger" },
-              ]}
-              value={runVolume}
-              onChange={(v) => setRunVolume(v as RunVolumePreset)}
-              ariaLabel="Long-run volume"
-              tone="running"
-            />
-          </div>
-          <div className="space-y-2">
-            <div>
-              <SectionHeading size="compact">Intensity</SectionHeading>
-              <p className="mt-1 text-xs text-muted-foreground">
-                How much tempo and interval work each week has.
-              </p>
-            </div>
-            <SegmentedControl
-              options={[
-                { value: "gentler", label: "Gentler" },
-                { value: "standard", label: "Standard" },
-                { value: "harder", label: "Harder" },
-              ]}
-              value={runDifficulty}
-              onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
-              ariaLabel="Plan intensity"
-              tone="running"
-            />
-          </div>
-          {/* Lift4 (10): the race-setup answer on the leg trim, changeable
-              here for as long as the race runs. */}
-          {runMode === "race_prep" && lifts && legTrimCut > 0 && (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <SectionHeading size="compact">
-                  Lighten leg sessions while your runs build
-                </SectionHeading>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {`${legTrimEffect(legTrimCut)}.`}
-                </p>
+          {(runMode === "race_prep" || runMode === "rolling") && (
+            <>
+              <div className="space-y-2">
+                <div>
+                  <SectionHeading size="compact">
+                    Long-run volume
+                  </SectionHeading>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    How long your longest runs get.
+                  </p>
+                </div>
+                <SegmentedControl
+                  options={[
+                    { value: "lighter", label: "Lighter" },
+                    { value: "standard", label: "Standard" },
+                    { value: "bigger", label: "Bigger" },
+                  ]}
+                  value={runVolume}
+                  onChange={(v) => setRunVolume(v as RunVolumePreset)}
+                  ariaLabel="Long-run volume"
+                  tone="running"
+                />
               </div>
-              <Toggle
-                checked={raceLegTrim}
-                label="Lighten leg sessions while your runs build"
-                onChange={() => setRaceLegTrim((v) => !v)}
-              />
-            </div>
+              <div className="space-y-2">
+                <div>
+                  <SectionHeading size="compact">Intensity</SectionHeading>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    How much tempo and interval work each week has.
+                  </p>
+                </div>
+                <SegmentedControl
+                  options={[
+                    { value: "gentler", label: "Gentler" },
+                    { value: "standard", label: "Standard" },
+                    { value: "harder", label: "Harder" },
+                  ]}
+                  value={runDifficulty}
+                  onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
+                  ariaLabel="Plan intensity"
+                  tone="running"
+                />
+              </div>
+              {/* Lift4 (10): the race-setup answer on the leg trim, changeable
+              here for as long as the race runs. */}
+              {runMode === "race_prep" && lifts && legTrimCut > 0 && (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <SectionHeading size="compact">
+                      Lighten leg sessions while your runs build
+                    </SectionHeading>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {`${legTrimEffect(legTrimCut)}.`}
+                    </p>
+                  </div>
+                  <Toggle
+                    checked={raceLegTrim}
+                    label="Lighten leg sessions while your runs build"
+                    onChange={() => setRaceLegTrim((v) => !v)}
+                  />
+                </div>
+              )}
+            </>
           )}
         </>
       )}
+
+      {/* ── Stop running (TrainWk1 step 6; Q33's pair) ── */}
+      {!addingRunning &&
+        (stopHeld ? (
+          <p className="px-1 text-xs text-muted-foreground">
+            {stopHeld.sentence}
+          </p>
+        ) : (
+          <SettingsGroup
+            footer={
+              <span role="status">
+                {stopTried && stopRefused
+                  ? stopRefused.sentence
+                  : "Your saved runs stay. Your plan’s run days go."}
+              </span>
+            }
+          >
+            <SettingsRow
+              tone="destructive"
+              label="Stop running"
+              onClick={() =>
+                stopRefused ? setStopTried(true) : setConfirmStop(true)
+              }
+            />
+          </SettingsGroup>
+        ))}
+      <StopSportDialog
+        sport="running"
+        open={confirmStop}
+        ends={stopEnds || null}
+        busy={stopping}
+        ready={readiness === "ready"}
+        onCancel={() => setConfirmStop(false)}
+        onConfirm={() => void stopRunning()}
+      />
 
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (
@@ -1338,7 +1576,7 @@ export default function RunPlanSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || invalid || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saveLabel}

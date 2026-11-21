@@ -1,8 +1,9 @@
 import { useId, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Spline } from "lucide-react";
+import { ChevronLeft, Flag, MoreHorizontal, Spline } from "lucide-react";
 import { useAuth, useUid } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Card } from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,7 +13,9 @@ import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import RunMap from "@/components/run/RunMapLazy";
+import ReportModal from "@/components/social/ReportModal";
 import { useSegment, useSegmentBoard } from "@/hooks/useSegment";
+import { useMenuButton } from "@/hooks/useMenuButton";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
@@ -53,7 +56,9 @@ function asTrace(points: readonly { lat: number; lon: number }[]): GPSPoint[] {
  * it, every effort of yours fastest first, and a board of the people you
  * follow who have run it, with you placed among them. There is no board of
  * everyone and no crown. Its maker can delete it, which takes every time
- * on it with it.
+ * on it with it. Anyone else can report it from the menu beside its name,
+ * as a profile is reported (App Review 1.2: its name is the maker's words,
+ * read by everyone who runs it).
  */
 export default function Segment() {
   const { segmentId } = useParams<{ segmentId: string }>();
@@ -67,6 +72,8 @@ export default function Segment() {
   const board = useSegmentBoard(segmentId, page.status === "ready");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const menu = useMenuButton();
+  const [showReport, setShowReport] = useState(false);
   const yoursId = useId();
   const boardId = useId();
 
@@ -121,19 +128,56 @@ export default function Segment() {
         Back
       </Button>
 
-      <div>
-        <h1
-          dir="auto"
-          className="break-words text-h1 font-extrabold tracking-tight"
-        >
-          {segment.name}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Segment ·{" "}
-          <span className="font-mono tabular-nums">
-            {nearDistanceLabel(segment.lengthMeters, unit)}
-          </span>
-        </p>
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <h1
+            dir="auto"
+            className="break-words text-h1 font-extrabold tracking-tight"
+          >
+            {segment.name}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Segment ·{" "}
+            <span className="font-mono tabular-nums">
+              {nearDistanceLabel(segment.lengthMeters, unit)}
+            </span>
+          </p>
+        </div>
+        {/* Someone else's segment: Report, behind the menu button a
+            profile uses (`useMenuButton`). Its maker has Delete instead. */}
+        {!page.mine && (
+          <div className="relative shrink-0">
+            <IconButton
+              aria-label="More options"
+              {...menu.buttonProps}
+              icon={<MoreHorizontal />}
+              className="bg-muted hover:bg-muted/80 text-muted-foreground"
+            />
+            {menu.open && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  aria-hidden="true"
+                  onClick={menu.close}
+                />
+                <div
+                  {...menu.menuProps}
+                  className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    {...menu.itemProps}
+                    onClick={menu.choose(() => setShowReport(true))}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted focus-visible:bg-muted focus-visible:outline-none transition-colors"
+                  >
+                    <Flag className="size-4" aria-hidden="true" />
+                    Report segment
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="relative h-56 overflow-hidden rounded-xl">
@@ -205,7 +249,7 @@ export default function Segment() {
             {[0, 1, 2].map((i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-xl bg-card p-3"
+                className="flex items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
               >
                 <Skeleton className="size-6 rounded-full" />
                 <Skeleton className="size-9 rounded-full" />
@@ -253,6 +297,14 @@ export default function Segment() {
         >
           Delete segment
         </Button>
+      )}
+
+      {showReport && (
+        <ReportModal
+          targetType="segment"
+          targetId={segment.id}
+          onClose={() => setShowReport(false)}
+        />
       )}
 
       <ConfirmDialog
@@ -320,7 +372,9 @@ function BoardRowItem({
   );
   const classes = cn(
     "flex min-h-[44px] flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-    row.self ? "border border-primary/25 bg-primary/10" : "bg-card"
+    row.self
+      ? "border border-primary/25 bg-primary/10"
+      : "bg-card dark:card-shadow"
   );
   return (
     <li aria-current={row.self ? "true" : undefined}>

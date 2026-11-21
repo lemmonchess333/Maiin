@@ -713,7 +713,7 @@ export default function SessionCompleteScreen({
             </summary>
             {/* Exercise Breakdown. No entrance: it sits in a closed
                 <details>, so its rows played their stagger unseen. */}
-            <div className="rounded-2xl bg-card overflow-hidden">
+            <div className="rounded-2xl bg-card overflow-hidden dark:card-shadow">
               <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-2">
                 <SectionHeading size="compact">Exercises</SectionHeading>
                 {/* Working sets only, as every set count here. */}

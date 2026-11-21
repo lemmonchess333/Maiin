@@ -43,6 +43,34 @@ describe("exportWorkoutsCSV", () => {
       '2026-09-07,"\'=1+1",1,80,8,"\'+1+1"'
     );
   });
+  it("keeps a circuit (Circ1) as one row: its name, rounds done and seconds", async () => {
+    const { circuitWorkoutFields } = await import("@/lib/circuitCompletion");
+    const { builtInCircuit } =
+      await import("@/features/circuit/builtInCircuits");
+    const circuit = builtInCircuit({ kit: "minimal", minutes: 10 });
+    seedIn(WORKOUTS, [
+      circuitWorkoutFields({
+        uid: UID,
+        completionId: "c1",
+        startedAt: new Date(2026, 8, 7, 7).getTime(),
+        circuit,
+        outcome: {
+          intervalsDone: 10,
+          roundsDone: 2,
+          workSecondsDone: 400,
+          activeSeconds: 580,
+          finished: true,
+        },
+        bodyweightKg: 70,
+      }),
+    ]);
+    const lines = (await exportWorkoutsCSV(UID)).split("\n");
+    expect(lines).toEqual([
+      "Date,Exercise,Set,Weight (kg),Reps,Type",
+      `2026-09-07,"${circuit.name}",2,0,580,circuit`,
+    ]);
+  });
+
   it("returns header row when no workouts", async () => {
     const csv = await exportWorkoutsCSV("user1");
     expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type");

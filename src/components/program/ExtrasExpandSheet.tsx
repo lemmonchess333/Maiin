@@ -68,7 +68,7 @@ export default function ExtrasExpandSheet({
     >
       <div className="px-5 pb-6 pt-4 space-y-3">
         {/* Drag handle (BottomSheet hides its own when hideHeader). */}
-        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        <div className="w-9 h-1 rounded-full sheet-handle mx-auto" />
         <div>
           <SectionLabel>Extra runs</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
@@ -153,7 +153,7 @@ function ExtraRunListItem({
       aria-label={`Extra run: ${detailParts.join(", ")}. Tap to open.`}
       className={cn(
         "w-full text-left rounded-xl p-3",
-        "bg-card border border-border/60",
+        "bg-card border border-border/60 dark:card-shadow dark:border-transparent",
         "flex items-center gap-3",
         "min-h-[44px]",
         "motion-safe:transition motion-safe:active:scale-[0.98]",

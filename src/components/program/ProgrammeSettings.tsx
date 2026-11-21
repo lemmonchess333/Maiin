@@ -108,6 +108,9 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import { smallPlatesHint } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
+import { sportChange, sportChangeRefusal } from "@/lib/sportChange";
+import { localDateString } from "@/lib/dateHelpers";
+import StopSportDialog from "./StopSportDialog";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
@@ -213,8 +216,10 @@ function SettingsOptionCard({
         transition={{ duration: 0.18, delay: index * 0.025 }}
         className={cn(
           "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-          selected ? "border-transparent" : "border-border/70",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98] dark:card-shadow",
+          selected
+            ? "border-transparent"
+            : "border-border/70 dark:border-transparent",
           disabled && "opacity-35 pointer-events-none",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
@@ -404,7 +409,6 @@ const INJURY_OPTIONS: {
   },
 ];
 
-// Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
   recentLayoff = "none",
   recentRuns,
@@ -455,6 +459,20 @@ export default function ProgrammeSettings({
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Stop lifting (TrainWk1 step 6): its own confirmation, and why it can't
+  // be done when it can't (the last sport, a training block running).
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopRefused = sportChangeRefusal(
+    profile,
+    programState,
+    "remove_lifting"
+  );
+  /* Lifting as the plan's one sport is said when Stop lifting is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A training block is said up front: it is the plan's own state. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
 
   const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
@@ -640,6 +658,62 @@ export default function ProgrammeSettings({
     }
   }
 
+  /** Takes lifting off the plan: its lift days go, and everything logged
+   *  stays (`sportChange`'s `remove_lifting`). */
+  async function stopLifting() {
+    if (stopping || readiness !== "ready") return;
+    const change = sportChange(
+      {
+        profile,
+        programState,
+        today: localDateString(new Date()),
+        recentLayoff,
+        recentRuns,
+      },
+      { kind: "remove_lifting" }
+    );
+    if (!change.ok) {
+      setConfirmStop(false);
+      toast.error(change.sentence);
+      return;
+    }
+    setStopping(true);
+    try {
+      const plan = buildPlan(change.input);
+      Object.assign(plan.profileUpdates, change.patch);
+      await configureLiftPlan(plan, profile, programState);
+      setConfirmStop(false);
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Save changes).
+        logger.warn(
+          "[ProgrammeSettings] lifting stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Lifting stopped");
+        window.location.reload();
+        return;
+      }
+      toast.success("Lifting stopped");
+      onSaved?.();
+    } catch (err) {
+      logger.error("[ProgrammeSettings] stop lifting failed:", err);
+      const rejection = planSaveRejection(
+        err,
+        "Your programme changed. Reopen settings to review the latest plan before saving."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setStopping(false);
+    }
+  }
+
   async function applyReset() {
     // As applyRebuild: a reset made while the programme loads was built
     // from no programme at all.
@@ -820,7 +894,7 @@ export default function ProgrammeSettings({
                engine took ownership. Days, experience, equipment and
                injuries stay editable below, so an injury or an equipment
                change never costs the user their block. */
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm dark:card-shadow dark:border-transparent">
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-bold leading-tight">
                   {focusLabel(activeBlockFocus)}
@@ -904,7 +978,7 @@ export default function ProgrammeSettings({
             the exercise editor, not a split toggle. */}
         <div>
           <GroupHeading>Split</GroupHeading>
-          <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
             <p className="text-sm font-medium text-foreground">
               {currentSplitLabel}
             </p>
@@ -932,7 +1006,7 @@ export default function ProgrammeSettings({
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
-        <div className="rounded-xl bg-muted px-3 py-2.5">
+        <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
           {/* "Edit days" drops under the counts when the two no longer
               fit side by side (larger text), rather than squeezing them. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -1111,6 +1185,34 @@ export default function ProgrammeSettings({
 
       {afterForm}
 
+      {/* Stop lifting (TrainWk1 step 6; the Train grill's Q33): lifting off
+          the plan, as Run plan's Stop running takes running off. Refused
+          with the reason when it would leave no sport, or while a training
+          block runs. */}
+      {stopHeld ? (
+        <p className="px-1 text-xs text-muted-foreground">
+          {stopHeld.sentence}
+        </p>
+      ) : (
+        <SettingsGroup
+          footer={
+            <span role="status">
+              {stopTried && stopRefused
+                ? stopRefused.sentence
+                : "Your saved workouts and best lifts stay. Your plan’s lift days go."}
+            </span>
+          }
+        >
+          <SettingsRow
+            tone="destructive"
+            label="Stop lifting"
+            onClick={() =>
+              stopRefused ? setStopTried(true) : setConfirmStop(true)
+            }
+          />
+        </SettingsGroup>
+      )}
+
       {/* Reset programme. It was the foot of Settings → Programme, a page
           that edited nothing; this editor is where the programme is set
           now (Trim1 call 2). */}
@@ -1150,7 +1252,7 @@ export default function ProgrammeSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}
@@ -1159,6 +1261,14 @@ export default function ProgrammeSettings({
       )}
 
       {confirmModal}
+      <StopSportDialog
+        sport="lifting"
+        open={confirmStop}
+        busy={stopping}
+        ready={programReady}
+        onCancel={() => setConfirmStop(false)}
+        onConfirm={() => void stopLifting()}
+      />
     </div>
   );
 }

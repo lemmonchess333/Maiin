@@ -7,7 +7,8 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food, its meal menu and its manual entry and edit
+ * on a Monday, and the overview's Score details open for a Pro account),
+ * Food, its meal menu and its manual entry and edit
  * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
@@ -26,6 +27,8 @@
  * in both sheets that show it; and the In progress strip on Home and on
  * Train, for a programme workout and for a saved routine's; and an empty
  * workout's review, with the sheets that say when it started and name it.
+ * And circuit mode: its picker, a circuit at work and at rest, its end
+ * question and its finish.
  *
  * And the training plan's week and all sessions: the plan page, its week
  * reset (as opened, and after a week that felt like a bit much) with the
@@ -54,6 +57,12 @@ import { emulatorActive } from "../helpers/emulator";
 import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 
 const WIDTHS = [393, 320] as const;
@@ -245,6 +254,14 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading", { name: "Train" }));
       await measure(page, "train", width, found);
 
+      // A lift's own page (TrainWk1 call 2): the week's first lift.
+      await page.goto("program/lift/0");
+      await ready(
+        page,
+        page.getByRole("button", { name: "Reorder exercises", exact: true })
+      );
+      await measure(page, "lift-session", width, found);
+
       for (const view of ["", "lifting", "running", "body", "food"]) {
         await page.goto(view ? `history?view=${view}` : "history");
         await ready(page, nav);
@@ -357,6 +374,28 @@ test.describe("large text", () => {
             );
           }
         }
+      } finally {
+        await setTestUserTier("free");
+      }
+
+      expect(found).toEqual([]);
+    });
+
+    /* Progress's Score details, open (App1 Q10): the score in its ring,
+       its window and its change, the 12-week chart, the breakdown with
+       the food logged and the 12-week average. They are Pro (Q84), so
+       the account is Pro for the pass, and the lead above them, whose
+       verdict steps down to the card's width, is measured with them. */
+    test(`Progress's Score details at ${width}px`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await setTestUserTier("pro");
+      const found: string[] = [];
+      try {
+        await signInAsTestUser(page);
+        await page.goto("history?score=details");
+        await ready(page, page.getByRole("region", { name: "Your score" }));
+        await measure(page, "history-score-details", width, found);
       } finally {
         await setTestUserTier("free");
       }
@@ -1004,6 +1043,30 @@ test.describe("large text", () => {
         });
       }
 
+      // A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's
+      // card: the day's run, or the week's next one. A week with none
+      // left to start has no ⋯; the plan page above still measured.
+      await page.goto("program?tab=run");
+      const manage = page.getByRole("button", {
+        name: "Manage session",
+        exact: true,
+      });
+      if (
+        await manage.waitFor({ state: "visible", timeout: 20_000 }).then(
+          () => true,
+          () => false
+        )
+      ) {
+        await manage.click();
+        await ready(page, page.getByText("Manage run", { exact: true }));
+        await measure(page, "run-session", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "run-session: no run left to start this week",
+        });
+      }
+
       expect(found).toEqual([]);
     });
 
@@ -1192,6 +1255,44 @@ test.describe("large text", () => {
         .waitFor({ timeout: 10_000 });
       await page.waitForTimeout(600);
       await measure(page, "rename-sheet", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* Circuit mode (Circ1), on a clock the spec moves on
+       (helpers/circuit.ts). Nothing is saved. */
+    test(`a circuit at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await openCircuit(page);
+      await ready(page, page.getByRole("heading", { name: "Circuit" }));
+      await measure(page, "circuit-picker", width, found);
+
+      await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+      await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+      await measure(page, "circuit-work", width, found);
+      await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+      await measure(page, "circuit-rest", width, found);
+
+      await page.getByRole("button", { name: "End circuit" }).click();
+      const ask = page.getByRole("alertdialog");
+      const keepGoing = ask.getByRole("button", { name: "Keep going" });
+      await keepGoing.waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-end-question", width, found);
+      await keepGoing.click();
+      await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+      // On past the circuit's 10 minutes: it finishes by itself.
+      await runCircuitClock(page, 600);
+      await page
+        .getByText("How did it feel?")
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-finish", width, found);
 
       expect(found).toEqual([]);
     });
