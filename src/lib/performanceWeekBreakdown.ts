@@ -61,6 +61,14 @@ function num(value: unknown): number {
 }
 
 /**
+ * How far over the usual week a sport has to be to count as more: the
+ * engine's own margin. `computeSignals` (functions/performanceEngine.js)
+ * calls a sport ahead of its usual week only above 1.05, and the lines'
+ * "18% above your usual week" are read from those signals.
+ */
+export const MORE_THAN_USUAL_RATIO = 1.05;
+
+/**
  * Whether these 7 days hold more training than the usual week: more
  * kilos lifted or kilometres run than usual in at least one, and less in
  * neither, of the sports you usually do. The figures are the engine's own
@@ -68,6 +76,12 @@ function num(value: unknown): number {
  * baseline's), read from `aggregates` and `baseline` rather than those
  * ratios because the app reads a stored 0, a sport dropped for the week,
  * as 1 (`normalisePerformanceDoc`).
+ *
+ * More is more by the engine's margin (`MORE_THAN_USUAL_RATIO`), not by
+ * any amount. The stored kilometres are rounded to 0.1 and the usual
+ * week's are not, so 20.0 km against a usual 19.975 drew "20.0 km" beside
+ * "20.0 km" on the bars and still read as more. Less is any amount: a
+ * claim of more is the one this can get wrong, so it stays strict there.
  *
  * The band is no evidence of it: it bands the whole score, and a week at
  * the usual one with recovery and food on track scores in the high band
@@ -88,9 +102,63 @@ export function trainedMoreThanUsual(doc: {
     [num(agg.runKm), num(base.runKm)],
   ].filter(([, usual]) => usual > 0);
   return (
-    pairs.some(([done, usual]) => done > usual) &&
+    pairs.some(([done, usual]) => done / usual > MORE_THAN_USUAL_RATIO) &&
     pairs.every(([done, usual]) => done >= usual)
   );
+}
+
+/** The 7 days' sessions against the plan's week. */
+export interface WindowSessions {
+  /** Lifts, runs and circuits saved in the 7 days, as adherence counts
+   *  them (`computeAdherenceScore`). */
+  done: number;
+  /** The sessions the plan holds a week (`plannedSessionCount`). */
+  planned: number;
+}
+
+/**
+ * The sessions done in the score's 7 days against the sessions planned a
+ * week, the two figures the score's adherence divides.
+ *
+ * The done count is the document's own, for exactly its window. Not the
+ * training week (`trainingWeek.ts`): that is Monday to Sunday, and the
+ * score's window is the 7 days ending on its compute date, so midweek the
+ * week's count is always short of its plan. Seven days in a row hold each
+ * weekday once, so a week's plan is the window's.
+ *
+ * Null when the plan is not known (nothing planned, so the score used the
+ * goal's default) or the document carries no session counts.
+ */
+export function sessionsAgainstPlan(
+  doc: { aggregates?: Partial<WeeklyAggregates> | null },
+  planned: number | null | undefined
+): WindowSessions | null {
+  const agg = doc.aggregates;
+  if (!agg || !planned || planned <= 0) return null;
+  if (
+    typeof agg.liftSessions !== "number" &&
+    typeof agg.runSessions !== "number"
+  )
+    return null;
+  return {
+    done:
+      num(agg.liftSessions) + num(agg.runSessions) + num(agg.circuitSessions),
+    planned,
+  };
+}
+
+/** What the lead's line is told beside the engine's signals (`getLine`). */
+export function leadEvidence(
+  doc: {
+    aggregates?: Partial<WeeklyAggregates> | null;
+    baseline?: Partial<Baseline> | null;
+  },
+  plannedSessions: number | null | undefined
+): { trainedMore: boolean; sessions: WindowSessions | null } {
+  return {
+    trainedMore: trainedMoreThanUsual(doc),
+    sessions: sessionsAgainstPlan(doc, plannedSessions),
+  };
 }
 
 function plural(n: number, one: string, many: string): string {

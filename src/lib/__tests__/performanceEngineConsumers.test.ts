@@ -88,7 +88,7 @@ function importsAcross(roots: string[]): Map<string, string[]> {
 }
 
 describe("client PI engine — production consumers", () => {
-  it("the app imports only the three non-scoring helpers", () => {
+  it("the app imports only the four non-scoring helpers", () => {
     /* Asserted as the whole map, not as "does not include scorePerformance":
        a new scoring import under a name nobody thought to ban would pass the
        negative form.
@@ -98,19 +98,28 @@ describe("client PI engine — production consumers", () => {
        sub-scores the server stored, to say which of its three reasons
        fired. It decides nothing (the stored `deloadRecommended` does) and
        puts no number on screen; reusing the pinned copy keeps the
-       thresholds in one place rather than a third. */
+       thresholds in one place rather than a third.
+
+       `plannedSessionCount` joined on 21 November 2026: the lead says
+       "3 of 5 planned sessions" against the count the score's adherence
+       divided by, the profile's lift and run days. It adds two profile
+       fields; the session count beside it is the stored document's. Taking
+       it from the copy `weeklySessionTarget` uses keeps the plan's count
+       in one place on the client (performanceLeadLines.cross.test.ts pins
+       it to the server's). */
     expect(Object.fromEntries(importsAcross(["src"]))).toEqual({
       "src/hooks/useWeeklyReview.ts": ["weekKeyMinusN"],
       "src/lib/lighterWeekOffer.ts": ["shouldRecommendDeload"],
       "src/lib/performanceDocFields.ts": ["computeLoadBand"],
+      "src/pages/History.tsx": ["plannedSessionCount"],
     });
   });
 
   it("none of the helpers scores anything", () => {
-    /* The point of the three above is that they are a date function, a
-       band classifier and a recommendation predicate over already-computed
-       scores — so no surface in the app derives a Performance Index of its
-       own. */
+    /* The point of the four above is that they are a date function, a
+       band classifier, a recommendation predicate over already-computed
+       scores and a count of planned days — so no surface in the app
+       derives a Performance Index of its own. */
     const engine = readFileSync(
       resolve(repoRoot, "src/lib/performanceEngine.ts"),
       "utf8"
@@ -135,6 +144,10 @@ describe("client PI engine — production consumers", () => {
     // A predicate over scores already computed, never a score of its own.
     expect(body("shouldRecommendDeload")).not.toMatch(
       /PI_WEIGHTS|compute\w*Score|computeBaseline|scorePerformance/
+    );
+    // Profile fields added up, nothing scored.
+    expect(body("plannedSessionCount")).not.toMatch(
+      /Score|PI_WEIGHTS|performanceIndex|computeBaseline|agg\b/
     );
   });
 

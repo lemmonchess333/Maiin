@@ -104,10 +104,62 @@ describe("getLine — backing-off state", () => {
     ).toBe("Your recovery reads low from food, weight and sessions");
   });
 
-  it("no recoveryWeak: you, against your usual week", () => {
-    expect(getLine("backing-off", ZERO_SIGNALS)).toBe(
+  /* The flag also comes from adherence and from a score held at the top,
+     so "more than your usual week" is said only on the week's own figures
+     (`trainedMoreThanUsual`); performanceLeadLines.cross.test.ts drives
+     each case through the server's scorer. */
+  it("trained more than the usual week: says so", () => {
+    expect(getLine("backing-off", ZERO_SIGNALS, { trainedMore: true })).toBe(
       "You trained more than your usual week"
     );
+  });
+
+  it("recovery takes precedence over more", () => {
+    expect(
+      getLine(
+        "backing-off",
+        { ...ZERO_SIGNALS, recoveryWeak: true },
+        { trainedMore: true }
+      )
+    ).toBe("Your recovery reads low from food, weight and sessions");
+  });
+
+  it("adherenceWeak and not more: what was off the plan", () => {
+    const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
+    expect(
+      getLine("backing-off", weak, { sessions: { done: 5, planned: 5 } })
+    ).toBe("You did 5 of 5 planned sessions, with food well off your targets");
+    expect(getLine("backing-off", weak)).toBe(
+      "Your sessions or food were well off your plan"
+    );
+  });
+
+  it("not more, adherence fine: the sport line Sharpening uses", () => {
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.5 })
+    ).toBe("Lifting volume 50% above your usual week");
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.3 })
+    ).toBe("Running distance 30% above your usual week");
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, bothLoadsStrong: true })
+    ).toBe("Lifting and running both strong");
+    expect(getLine("backing-off", ZERO_SIGNALS)).toBe("A strong 7 days");
+  });
+
+  it("never says to ease off: the line under the bars does", () => {
+    const lines = [
+      getLine("backing-off", ZERO_SIGNALS),
+      getLine("backing-off", ZERO_SIGNALS, { trainedMore: true }),
+      getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true }),
+      getLine("backing-off", { ...ZERO_SIGNALS, adherenceWeak: true }),
+      getLine(
+        "backing-off",
+        { ...ZERO_SIGNALS, adherenceWeak: true },
+        { sessions: { done: 2, planned: 5 } }
+      ),
+    ];
+    for (const line of lines) expect(line).not.toMatch(/ease off/i);
   });
 });
 
@@ -152,10 +204,12 @@ describe("getLine — sharpening state", () => {
      comparison is said only on the week's own figures
      (`trainedMoreThanUsual`, trainedMoreThanUsual.test.ts). */
   it("no signals: says you trained more only when you did", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS, true)).toBe(
+    expect(getLine("sharpening", ZERO_SIGNALS, { trainedMore: true })).toBe(
       "You trained more than your usual week"
     );
-    expect(getLine("sharpening", ZERO_SIGNALS, false)).toBe("A strong 7 days");
+    expect(getLine("sharpening", ZERO_SIGNALS, { trainedMore: false })).toBe(
+      "A strong 7 days"
+    );
     expect(getLine("sharpening", ZERO_SIGNALS)).toBe("A strong 7 days");
   });
 
@@ -164,27 +218,94 @@ describe("getLine — sharpening state", () => {
       getLine(
         "sharpening",
         { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 },
-        true
+        { trainedMore: true }
       )
     ).toBe("You trained more than your usual week");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
-      getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 }, true)
+      getLine(
+        "sharpening",
+        { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 },
+        { trainedMore: true }
+      )
     ).toBe("You trained more than your usual week");
   });
 });
 
+/* Adherence is the sessions against the plan and the food against its
+   targets, averaged (`computeAdherenceScore`). The usual week's session
+   count is in neither, so no Steady line compares sessions with usual. */
 describe("getLine — cruising state", () => {
-  it("adherenceWeak: 'Fewer sessions than usual'", () => {
-    expect(getLine("cruising", { ...ZERO_SIGNALS, adherenceWeak: true })).toBe(
-      "Fewer sessions than usual"
+  const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
+  const sessions = (done: number, planned: number) => ({
+    sessions: { done, planned },
+  });
+
+  it("adherenceWeak, every planned session done: the food was off", () => {
+    expect(getLine("cruising", weak, sessions(5, 5))).toBe(
+      "You did 5 of 5 planned sessions, with food well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(6, 5))).toBe(
+      "You did 6 sessions against 5 planned, with food well off your targets"
     );
   });
 
-  it("no signals: 'Holding a steady rhythm'", () => {
+  /* With half the plan or more done, the sessions' factor is 50 or more,
+     so adherence under 50 needs the food's under 50 too. Under half, the
+     sessions alone can make it weak, and the food is not known. */
+  it("adherenceWeak, sessions short: the count, and the food only when it must have been off", () => {
+    expect(getLine("cruising", weak, sessions(3, 5))).toBe(
+      "You did 3 of 5 planned sessions, with food well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(2, 4))).toBe(
+      "You did 2 of 4 planned sessions, with food well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(2, 5))).toBe(
+      "You did 2 of 5 planned sessions"
+    );
+    expect(getLine("cruising", weak, sessions(0, 1))).toBe(
+      "You did 0 of 1 planned session"
+    );
+  });
+
+  it("adherenceWeak with no plan to count against: sessions or food, honestly", () => {
+    expect(getLine("cruising", weak)).toBe(
+      "Your sessions or food were well off your plan"
+    );
+    expect(getLine("cruising", weak, { sessions: null })).toBe(
+      "Your sessions or food were well off your plan"
+    );
+  });
+
+  it("adherence fine, sessions short: the count", () => {
+    expect(getLine("cruising", ZERO_SIGNALS, sessions(3, 5))).toBe(
+      "You did 3 of 5 planned sessions"
+    );
+  });
+
+  it("a sport well above its usual week still leads (LIFT-EV-10)", () => {
+    expect(
+      getLine(
+        "cruising",
+        { ...ZERO_SIGNALS, runAheadOfBaseline: 0.5 },
+        sessions(3, 5)
+      )
+    ).toBe("Running distance 50% above your usual week");
+  });
+
+  it("no signals, the plan's sessions done or no plan: 'Holding a steady rhythm'", () => {
     expect(getLine("cruising", ZERO_SIGNALS)).toBe("Holding a steady rhythm");
+    expect(getLine("cruising", ZERO_SIGNALS, sessions(5, 5))).toBe(
+      "Holding a steady rhythm"
+    );
+  });
+
+  it("never compares sessions with the usual week", () => {
+    for (const evidence of [{}, sessions(5, 5), sessions(2, 5)]) {
+      expect(getLine("cruising", weak, evidence)).not.toMatch(/usual/);
+    }
   });
 });
 

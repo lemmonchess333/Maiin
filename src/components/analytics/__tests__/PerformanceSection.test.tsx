@@ -335,6 +335,69 @@ describe("the lead names its window (App1 Q13)", () => {
   });
 });
 
+/* Backing off and Steady say what happened (#3460's "listed, not
+   changed"): the deload flag also fires on adherence, and adherence is the
+   sessions against the plan and the food against its targets, not the
+   usual week. The weeks are the server's (performanceLeadLines.cross.test.ts
+   scores them); here the card draws what they say. */
+describe("the lead says what happened under Backing off and Steady", () => {
+  /** The usual week exactly, 3 lifts and 2 runs, food far off target. */
+  function offPlan(pi: number, band: string, deload: boolean) {
+    const weeks = history(pi, band, deload);
+    const last = weeks[weeks.length - 1];
+    weeks[weeks.length - 1] = {
+      ...last,
+      adherenceScore: 43,
+      aggregates: {
+        liftSessions: 3,
+        liftTonnage: 13700,
+        runSessions: 2,
+        runKm: 28,
+        runLongKm: 14.2,
+      },
+      signals: {
+        ...last.signals,
+        adherenceWeak: true,
+      } as typeof last.signals,
+    };
+    return weeks;
+  }
+
+  it("a week at the usual one, flagged by adherence, is not told it trained more", () => {
+    serve(offPlan(73, "high", true));
+    renderSection({ plannedSessions: 5 });
+    expect(within(lead()).getByText(/^Backing off$/)).toBeInTheDocument();
+    expect(
+      within(lead()).getByText(
+        "You did 5 of 5 planned sessions, with food well off your targets"
+      )
+    ).toBeInTheDocument();
+    expect(lead().textContent).not.toMatch(/more than your usual week/);
+    // Ease off is said once, under the bars.
+    expect(screen.getAllByText(/ease off/i)).toHaveLength(1);
+  });
+
+  it("Steady with every planned session done reads the food, not fewer sessions", () => {
+    serve(offPlan(64, "moderate", false));
+    renderSection({ plannedSessions: 5 });
+    expect(within(lead()).getByText(/^Steady$/)).toBeInTheDocument();
+    expect(
+      within(lead()).getByText(
+        "You did 5 of 5 planned sessions, with food well off your targets"
+      )
+    ).toBeInTheDocument();
+    expect(lead().textContent).not.toMatch(/fewer sessions/i);
+  });
+
+  it("with no plan to count against, says sessions or food", () => {
+    serve(offPlan(64, "moderate", false));
+    renderSection();
+    expect(
+      within(lead()).getByText("Your sessions or food were well off your plan")
+    ).toBeInTheDocument();
+  });
+});
+
 describe("the lead while the baseline forms", () => {
   const COLD = [week(daysAgo(0), 81, "high", false, 1)];
 

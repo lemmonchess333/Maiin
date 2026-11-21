@@ -23,6 +23,7 @@
    ───────────────────────────────────────────── */
 
 import type { LoadBand, PerformanceSignals } from "./performanceTypes";
+import type { WindowSessions } from "./performanceWeekBreakdown";
 import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import {
@@ -90,6 +91,60 @@ const liftingAbove = (s: PerformanceSignals) =>
 const runningAbove = (s: PerformanceSignals) =>
   `Running distance ${Math.round(s.runAheadOfBaseline * 100)}% above your usual week`;
 
+const TRAINED_MORE = "You trained more than your usual week";
+const STRONG_7_DAYS = "A strong 7 days";
+
+/** Sharpening's sport line: both sports strong, or one well above its
+ *  usual week. Null when neither is. */
+function sportLine(s: PerformanceSignals): string | null {
+  if (s.bothLoadsStrong) return "Lifting and running both strong";
+  if (s.liftAheadOfBaseline > 0.15) return liftingAbove(s);
+  if (s.runAheadOfBaseline > 0.2) return runningAbove(s);
+  return null;
+}
+
+/** "You did 3 of 5 planned sessions", "You did 6 sessions against 5
+ *  planned". A count of sessions, as adherence counts them. */
+function sessionCount({ done, planned }: WindowSessions): string {
+  if (done > planned)
+    return `You did ${done} sessions against ${planned} planned`;
+  return `You did ${done} of ${planned} planned ${planned === 1 ? "session" : "sessions"}`;
+}
+
+/**
+ * What was off the plan when adherence is weak (`adherenceWeak`, under 50).
+ *
+ * Adherence is the sessions against the plan and the food against its
+ * targets (calories and protein, once food is logged on 3 days), averaged
+ * (`computeAdherenceScore`). The usual week is in neither. The signals
+ * carry only the average, so the sessions are counted here and the food
+ * is read from what is left:
+ *
+ *   - half the plan or more done: the sessions score 50 or more, so an
+ *     average under 50 needs the food under 50 too. Say both.
+ *   - under half: the sessions alone can make it weak, and nothing here
+ *     tells whether the food was off as well. Say the count only.
+ *   - no plan to count against: say both, as one or the other.
+ */
+function offPlanLine(sessions: WindowSessions | null): string {
+  if (!sessions) return "Your sessions or food were well off your plan";
+  const count = sessionCount(sessions);
+  return sessions.done * 2 >= sessions.planned
+    ? `${count}, with food well off your targets`
+    : count;
+}
+
+/** What the lead's line is told beside the signals. */
+export interface LineEvidence {
+  /** The 7 days' own figures held more training than the usual week
+   *  (`trainedMoreThanUsual`). The band is the whole score, so it is no
+   *  proof: 100% of the usual week scores high. Absent reads as not. */
+  trainedMore?: boolean;
+  /** The 7 days' sessions against the plan (`sessionsAgainstPlan`).
+   *  Absent or null when the plan's count is not known. */
+  sessions?: WindowSessions | null;
+}
+
 /**
  * The supporting line while the baseline is still forming
  * (`isEstablishingBaseline`): PI1's low-confidence state, "full ring + PI +
@@ -119,29 +174,29 @@ export function getEstablishingLine(signals: PerformanceSignals): string {
 export function getLine(
   state: VerbState,
   signals: PerformanceSignals,
-  /** The 7 days' own figures held more training than the usual week
-   *  (`trainedMoreThanUsual`). The band is the whole score, so it is no
-   *  proof: 100% of the usual week scores high. Absent reads as not. */
-  trainedMore = false
+  { trainedMore = false, sessions = null }: LineEvidence = {}
 ): string {
   switch (state) {
+    /* The engine backs off for four reasons (`shouldRecommendDeload` and
+       the overreach band): recovery under 45 at 80 or more, adherence
+       under 50 at 70 or more, 85 or more two weeks running, or 85 or
+       more this week. "More than your usual week" is none of them, so it
+       is said only on the week's own figures; otherwise the line says
+       the reason the signals show. */
     case "backing-off":
       // The recovery factor is built from food logged, the weight trend
       // and the number of sessions (`computeRecoveryScore`).
       if (signals.recoveryWeak)
         return "Your recovery reads low from food, weight and sessions";
-      return "You trained more than your usual week";
+      if (trainedMore) return TRAINED_MORE;
+      if (signals.adherenceWeak) return offPlanLine(sessions);
+      return sportLine(signals) ?? STRONG_7_DAYS;
 
     case "sharpening":
-      if (signals.bothLoadsStrong) return "Lifting and running both strong";
-      if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
-      if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
-      return trainedMore
-        ? "You trained more than your usual week"
-        : "A strong 7 days";
+      return sportLine(signals) ?? (trainedMore ? TRAINED_MORE : STRONG_7_DAYS);
 
     case "cruising":
-      if (signals.adherenceWeak) return "Fewer sessions than usual";
+      if (signals.adherenceWeak) return offPlanLine(sessions);
       /* LIFT-EV-10, copy half. A week containing only ONE discipline caps the
          composite load score at 68 (recomp) — `computeLiftLoadScore` returns 0
          for zero sessions and the halves are weighted 0.5/0.5 — so a marathon
@@ -159,6 +214,11 @@ export function getLine(
          this file. This makes the words honest, not the number different. */
       if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
       if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
+      /* Sessions missed with food on target keep adherence over 50 (the
+         food's two factors hold it up), and Steady said "Holding a steady
+         rhythm" over 3 of 5 planned sessions. The count is the true line. */
+      if (sessions && sessions.done < sessions.planned)
+        return sessionCount(sessions);
       return "Holding a steady rhythm";
 
     case "building":

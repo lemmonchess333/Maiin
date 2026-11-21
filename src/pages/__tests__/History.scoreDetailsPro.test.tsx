@@ -277,3 +277,38 @@ describe("Score details are Pro on Progress", () => {
     expect(ring()).toBeNull();
   });
 });
+
+/* The lead counts the 7 days' sessions against the plan the score was
+   scored against, the profile's lift and run days (`plannedSessionCount`),
+   and History is the page that has the profile. */
+describe("the lead counts sessions against the profile's plan", () => {
+  it("says the count from the plan, not sessions or food", async () => {
+    h.isPro = false;
+    const offPlan = {
+      ...week(daysAgo(0), 64),
+      loadBand: "moderate",
+      adherenceScore: 43,
+      aggregates: {
+        liftSessions: 4,
+        liftTonnage: 13700,
+        runSessions: 0,
+        runKm: 0,
+        runLongKm: 0,
+      },
+      signals: {
+        lifetimeWeeks: 8,
+        daysSinceLastTraining: 1,
+        adherenceWeak: true,
+      },
+    };
+    h.weeks = [...WEEKS.slice(0, 3), offPlan];
+    open("/history");
+    expect(await screen.findByText("Steady")).toBeInTheDocument();
+    // The profile plans 4 lift days and no runs.
+    expect(
+      screen.getByText(
+        "You did 4 of 4 planned sessions, with food well off your targets"
+      )
+    ).toBeInTheDocument();
+  });
+});
