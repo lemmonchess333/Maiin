@@ -19,6 +19,8 @@ import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import type { LastSet } from "@/features/program/lastSets";
+import { toast } from "@/lib/toast";
 import { SETUP, SPORT_CHANGE } from "@/test/journeyScreens";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
@@ -64,9 +66,19 @@ function runner(): { profile: UserProfile; programState: ProgramState } {
   };
 }
 
-function setup(readiness: ProgramReadiness = "ready") {
+function setup(
+  readiness: ProgramReadiness = "ready",
+  {
+    lastSets = null,
+    historyPending = false,
+    refreshProfile = vi.fn().mockResolvedValue(undefined),
+  }: {
+    lastSets?: ReadonlyMap<string, readonly LastSet[]> | null;
+    historyPending?: boolean;
+    refreshProfile?: () => Promise<void>;
+  } = {}
+) {
   const who = runner();
-  const refreshProfile = vi.fn().mockResolvedValue(undefined);
   render(
     <MemoryRouter>
       <AddLiftingFlow
@@ -74,6 +86,8 @@ function setup(readiness: ProgramReadiness = "ready") {
         programState={who.programState}
         readiness={readiness}
         recentRuns={null}
+        lastSets={lastSets}
+        historyPending={historyPending}
         refreshProfile={refreshProfile}
       />
     </MemoryRouter>
@@ -82,6 +96,22 @@ function setup(readiness: ProgramReadiness = "ready") {
 }
 
 const button = (name: string | RegExp) => screen.getByRole("button", { name });
+
+/** Through the three questions to Add lifting: four full-gym days for
+ *  someone with some experience and nothing to work around. */
+function answerAll() {
+  fireEvent.click(screen.getByRole("radio", { name: "4" }));
+  fireEvent.click(button("Continue"));
+  fireEvent.click(button(/^Full gym/));
+  fireEvent.click(button(/^Some experience/));
+  fireEvent.click(button("Continue"));
+  fireEvent.click(button(SETUP.noInjuries));
+}
+
+type Payload = {
+  profileUpdates: Record<string, unknown>;
+  programState: ProgramState;
+};
 
 beforeEach(() => configureSpy.mockClear());
 
@@ -167,5 +197,76 @@ describe("AddLiftingFlow", () => {
     expect(add).toBeDisabled();
     fireEvent.click(add);
     expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("starts each lift done before from its last session (Stop lifting, then Add lifting)", async () => {
+    // Every lift the plan could pick, last done at 100 kg for 5.
+    const ids = buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "intermediate",
+      liftDays: 4,
+      preferredSplit: "auto",
+      runMode: "starter",
+      weeklyRunDays: 3,
+      equipment: "full_gym",
+      injuries: [],
+      currentDate: localDateString(new Date()),
+      preserveHistory: false,
+    }).programState.workouts.flatMap((d) =>
+      d.exercises.map((e) => e.exerciseId)
+    );
+    const lastSets = new Map(
+      ids.map((id) => [id, [{ weightKg: 100, reps: 5 }]] as const)
+    );
+    setup("ready", { lastSets });
+    answerAll();
+    fireEvent.click(button(SPORT_CHANGE.addLifting));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as Payload;
+    const loaded = payload.programState.workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.weight > 0);
+    expect(loaded.length).toBeGreaterThan(0);
+    // None above last time's 100 kg, and the main lifts at it or just
+    // under it for their reps: not the plan's first guesses.
+    for (const e of loaded) expect(e.weight).toBeLessThanOrEqual(100);
+    expect(loaded.some((e) => e.weight >= 85)).toBe(true);
+  });
+
+  it("waits for the saved workouts before it saves", () => {
+    setup("ready", { historyPending: true });
+    answerAll();
+    const add = button("Add lifting");
+    expect(add).toBeDisabled();
+    fireEvent.click(add);
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("says lifting was added when only the refresh after the save failed", async () => {
+    vi.mocked(toast.error).mockClear();
+    vi.mocked(toast.success).mockClear();
+    const reload = vi.fn();
+    const location = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...location, reload },
+    });
+    try {
+      setup("ready", {
+        refreshProfile: vi.fn().mockRejectedValue(new Error("offline")),
+      });
+      answerAll();
+      fireEvent.click(button(SPORT_CHANGE.addLifting));
+      await waitFor(() => expect(reload).toHaveBeenCalled());
+      expect(configureSpy).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith("Lifting added");
+      expect(toast.error).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: location,
+      });
+    }
   });
 });

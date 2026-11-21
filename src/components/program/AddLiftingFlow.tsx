@@ -41,6 +41,8 @@ import {
 import { injuryChanges } from "@/features/program/injuryChanges";
 import { sessionLengthOption } from "@/features/program/sessionFit";
 import { pullUpBarWhenChosen } from "@/features/program/programLabels";
+import { withLastLoads } from "@/features/program/carriedLoads";
+import type { LastSet } from "@/features/program/lastSets";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
@@ -73,6 +75,8 @@ export default function AddLiftingFlow({
   readiness,
   recentLayoff = "none",
   recentRuns,
+  lastSets = null,
+  historyPending = false,
   refreshProfile,
 }: {
   profile: UserProfile;
@@ -82,6 +86,14 @@ export default function AddLiftingFlow({
   readiness: ProgramReadiness;
   recentLayoff?: LayoffClass;
   recentRuns: readonly DatedRun[] | null;
+  /** Each exercise's sets in its last saved session
+   *  (`lastSetsByExercise`): a lift done before, before Stop lifting,
+   *  starts from there (`withLastLoads`). Null when there are none to read
+   *  or they could not be read, and the plan starts from its first
+   *  weights. */
+  lastSets?: ReadonlyMap<string, readonly LastSet[]> | null;
+  /** The saved workouts are still being read: the save waits for them. */
+  historyPending?: boolean;
   refreshProfile: () => Promise<void>;
 }) {
   const today = useLocalDateKey();
@@ -150,10 +162,24 @@ export default function AddLiftingFlow({
       injuries,
     ]
   );
-  const plan = useMemo(
-    () => (change.ok ? buildPlan(change.input) : null),
-    [change]
-  );
+  const liftUnit = resolveLiftUnit(programState?.settings?.loadUnit);
+  const plan = useMemo(() => {
+    if (!change.ok) return null;
+    const built = buildPlan(change.input);
+    return lastSets
+      ? {
+          ...built,
+          programState: {
+            ...built.programState,
+            workouts: withLastLoads(
+              built.programState.workouts,
+              lastSets,
+              liftUnit
+            ),
+          },
+        }
+      : built;
+  }, [change, lastSets, liftUnit]);
 
   const index = STEPS.indexOf(step);
   const ready =
@@ -163,7 +189,7 @@ export default function AddLiftingFlow({
         ? injuries.length > 0
         : true;
   const last = step === "limits";
-  const programReady = readiness === "ready";
+  const programReady = readiness === "ready" && !historyPending;
 
   function go(next: AddLiftingStep) {
     setStep(next);
@@ -181,7 +207,18 @@ export default function AddLiftingFlow({
     try {
       Object.assign(plan.profileUpdates, change.patch);
       await configureLiftPlan(plan, profile, programState);
-      await refreshProfile();
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Stop lifting).
+        logger.warn(
+          "[AddLiftingFlow] lifting added but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Lifting added");
+        window.location.reload();
+        return;
+      }
       toast.success("Lifting added");
     } catch (err) {
       logger.error("[AddLiftingFlow] save failed:", err);
@@ -253,7 +290,7 @@ export default function AddLiftingFlow({
             onPullUpBarChange={setPullUpBar}
             smallPlates={smallPlates}
             onSmallPlatesChange={setSmallPlates}
-            liftUnit={resolveLiftUnit(programState?.settings?.loadUnit)}
+            liftUnit={liftUnit}
             experience={experience}
             experienceConfirmed={experienceConfirmed}
             onExperienceChange={(next) => {
@@ -308,7 +345,9 @@ export default function AddLiftingFlow({
             variant="neutral"
             className="flex-1"
             disabled={!ready || (last && !programReady) || saving}
-            loading={saving || (last && readiness === "pending")}
+            loading={
+              saving || (last && (readiness === "pending" || historyPending))
+            }
             aria-describedby={
               last && readiness === "failed"
                 ? "add-lifting-load-failed"

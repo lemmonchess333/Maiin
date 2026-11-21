@@ -467,6 +467,11 @@ export default function ProgrammeSettings({
     programState,
     "remove_lifting"
   );
+  /* Lifting as the plan's one sport is said when Stop lifting is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A training block is said up front: it is the plan's own state. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
 
   const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
@@ -1183,16 +1188,26 @@ export default function ProgrammeSettings({
           the plan, as Run plan's Stop running takes running off. Refused
           with the reason when it would leave no sport, or while a training
           block runs. */}
-      {stopRefused ? (
+      {stopHeld ? (
         <p className="px-1 text-xs text-muted-foreground">
-          {stopRefused.sentence}
+          {stopHeld.sentence}
         </p>
       ) : (
-        <SettingsGroup footer="Your saved workouts and best lifts stay. Your plan’s lift days go.">
+        <SettingsGroup
+          footer={
+            <span role="status">
+              {stopTried && stopRefused
+                ? stopRefused.sentence
+                : "Your saved workouts and best lifts stay. Your plan’s lift days go."}
+            </span>
+          }
+        >
           <SettingsRow
             tone="destructive"
             label="Stop lifting"
-            onClick={() => setConfirmStop(true)}
+            onClick={() =>
+              stopRefused ? setStopTried(true) : setConfirmStop(true)
+            }
           />
         </SettingsGroup>
       )}

@@ -1035,7 +1035,7 @@ describe("ProgrammeSettings — Stop lifting", () => {
     expect(configureSpy).not.toHaveBeenCalled();
   });
 
-  it("says why lifting stays when it is the plan's one sport", () => {
+  it("says why lifting stays when it is the plan's one sport, once Stop lifting is tried", () => {
     const { profile, programState: plan } = hybrid();
     setup(
       {
@@ -1050,14 +1050,18 @@ describe("ProgrammeSettings — Stop lifting", () => {
       },
       { ...plan, runPlan: undefined, runDays: [] }
     );
-    expect(
-      screen.getByText(
-        "Your plan is lifting only. To stop lifting, add running first."
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Stop lifting" })
-    ).not.toBeInTheDocument();
+    const sentence =
+      "Your plan is lifting only. To stop lifting, add running first.";
+    // Not said before it is asked: the foot shows Stop lifting as anyone's.
+    expect(screen.queryByText(sentence)).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopLifting })
+    );
+    // Tried: the sentence, said where the screen reader hears it, and no
+    // confirmation for a change that can't be made.
+    expect(screen.getByText(sentence).closest("[role=status]")).not.toBeNull();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
   });
 
   it("says why lifting stays while a training block runs", () => {

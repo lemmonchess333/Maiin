@@ -1852,19 +1852,22 @@ describe("RunPlanSettings — adding and stopping running", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("holds Stop running when running is the plan's one sport", () => {
+  it("says why running stays when it is the plan's one sport, once Stop running is tried", () => {
     renderPage({
       ...baseProfile,
       weeklyWorkoutsTarget: 0,
     } as unknown as UserProfile);
-    expect(
-      screen.getByText(
-        "Your plan is running only. To stop running, add lifting first."
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Stop running" })
-    ).not.toBeInTheDocument();
+    const sentence =
+      "Your plan is running only. To stop running, add lifting first.";
+    // Not said before it is asked.
+    expect(screen.queryByText(sentence)).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopRunning })
+    );
+    expect(screen.getByText(sentence)).toBeInTheDocument();
+    expect(screen.getByText(sentence).closest("[role=status]")).not.toBeNull();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
   });
 
   it("?goal=weekly opens on No race with a weekly goal counting runs", () => {

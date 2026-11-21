@@ -31,13 +31,15 @@ import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
  * lift days selected and no way to add any. The rest timer, the week's
  * volume and Reset programme are lifting's, so they wait until it is on.
  */
-import { useState } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import ProgrammeSettings from "@/components/program/ProgrammeSettings";
 import AddLiftingFlow from "@/components/program/AddLiftingFlow";
+import { useWorkouts } from "@/hooks/useWorkouts";
+import { lastSetsByExercise } from "@/features/program/lastSets";
 import { trainingKind } from "@/lib/trainingKind";
 import RestTimerPrefs from "@/components/settings/RestTimerPrefs";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
@@ -72,6 +74,32 @@ function readBlockHandoff(state: unknown): {
   };
 }
 
+/**
+ * Add lifting with the person's saved workouts read, so a lift done before
+ * Stop lifting starts from its last session (`withLastLoads`). Read here,
+ * on the one branch that needs it, not for every Lift plan.
+ */
+function AddLiftingWithHistory(
+  props: Omit<
+    ComponentProps<typeof AddLiftingFlow>,
+    "lastSets" | "historyPending"
+  >
+) {
+  const { workouts, loading, failed } = useWorkouts();
+  const lastSets = useMemo(
+    () =>
+      failed || workouts.length === 0 ? null : lastSetsByExercise(workouts),
+    [workouts, failed]
+  );
+  return (
+    <AddLiftingFlow
+      {...props}
+      lastSets={lastSets}
+      historyPending={loading && !failed}
+    />
+  );
+}
+
 export default function SettingsLiftPlan() {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const {
@@ -99,7 +127,7 @@ export default function SettingsLiftPlan() {
         subtitle="Focus, experience, lift days, equipment, injuries"
         section="training"
       >
-        <AddLiftingFlow
+        <AddLiftingWithHistory
           key={profile.uid}
           profile={profile}
           programState={programState}

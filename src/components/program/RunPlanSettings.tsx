@@ -103,6 +103,7 @@ import { trainingKind } from "@/lib/trainingKind";
 import {
   layoutWithSport,
   runLevelStart,
+  runningAdded,
   sportChange,
   sportChangeRefusal,
   starterOfferedTo,
@@ -812,19 +813,10 @@ export default function RunPlanSettings({
     )
       return;
     // Adding running writes the running level beside the plan
-    // (`sportChange`'s `add_running`); the cards choose the plan.
+    // (`runningAdded`); the cards choose the plan.
     const added =
       addingRunning && runLevel
-        ? sportChange(
-            {
-              profile,
-              programState,
-              today: localDateString(new Date()),
-              recentLayoff,
-              recentRuns: recentRunsDone,
-            },
-            { kind: "add_running", level: runLevel }
-          )
+        ? runningAdded(profile, programState, runLevel)
         : null;
     if (added && !added.ok) {
       toast.error(added.sentence, { id: "run-plan" });
@@ -1022,6 +1014,11 @@ export default function RunPlanSettings({
   const stopRefused = addingRunning
     ? null
     : sportChangeRefusal(profile, programState, "remove_running");
+  /* Running as the plan's one sport is said when Stop running is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A race goal is said up front, where the goal is chosen. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
   /** The goals that end with the running, as the confirmation says them. */
   const stopEnds = [
     starterGoalIsActive(profile.starterGoal)
@@ -1059,7 +1056,18 @@ export default function RunPlanSettings({
       await configureLiftPlan(plan, profile, programState);
       clearRunPlanDraft(profile.uid);
       setConfirmStop(false);
-      await refreshProfile();
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Stop lifting).
+        logger.warn(
+          "[RunPlanSettings] running stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Running stopped", { id: "run-plan" });
+        window.location.reload();
+        return;
+      }
       toast.success("Running stopped", { id: "run-plan" });
     } catch (e) {
       logger.error("[RunPlanSettings] stop running failed", e);
@@ -1506,16 +1514,26 @@ export default function RunPlanSettings({
 
       {/* ── Stop running (TrainWk1 step 6; Q33's pair) ── */}
       {!addingRunning &&
-        (stopRefused ? (
+        (stopHeld ? (
           <p className="px-1 text-xs text-muted-foreground">
-            {stopRefused.sentence}
+            {stopHeld.sentence}
           </p>
         ) : (
-          <SettingsGroup footer="Your saved runs stay. Your plan’s run days go.">
+          <SettingsGroup
+            footer={
+              <span role="status">
+                {stopTried && stopRefused
+                  ? stopRefused.sentence
+                  : "Your saved runs stay. Your plan’s run days go."}
+              </span>
+            }
+          >
             <SettingsRow
               tone="destructive"
               label="Stop running"
-              onClick={() => setConfirmStop(true)}
+              onClick={() =>
+                stopRefused ? setStopTried(true) : setConfirmStop(true)
+              }
             />
           </SettingsGroup>
         ))}

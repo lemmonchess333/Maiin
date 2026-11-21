@@ -4,10 +4,13 @@
  * plan and Run plan editors, and Train's rows that open them, can never
  * differ.
  *
- * Four intents: add lifting with setup's three lifting answers, remove
- * lifting, add running at a running level, remove running. Each gives the
- * plan builder's input and the profile fields saved beside its output, or
- * a refusal with the sentence that says why.
+ * Three changes are built here: add lifting with setup's three lifting
+ * answers, remove lifting, remove running. Each gives the plan builder's
+ * input and the profile fields saved beside its output, or a refusal with
+ * the sentence that says why. Adding running is Run plan's own save, since
+ * the goal card the person chooses decides that plan; this module gives it
+ * the refusal and the level it writes (`runningAdded`), and the layout its
+ * run days go around (`layoutWithSport`).
  *
  * What a change writes (TrainWk1 STATUS of 18 November 2026, calls 4 to 7):
  *   - the plan, through `buildPlan` and `configurePlan`, and the running
@@ -15,8 +18,10 @@
  *     for the first-week numbers (App1 Q23); what a person trains is read
  *     from the plan (`trainingKind`).
  *   - Removing a sport takes its days off the plan and nothing a person
- *     logged: saved workouts and runs, best lifts and the weights in them
- *     stay where they are, outside the plan.
+ *     logged: saved workouts and runs, and best lifts, stay where they are,
+ *     outside the plan. Lifting added again starts each lift done before
+ *     from its last session (`withLastLoads`, which Lift plan applies to
+ *     the built plan).
  *   - A person always keeps one sport: removing the last is refused. So is
  *     removing running while a race goal is set (choose No race first), and
  *     removing lifting while a training block runs (end the block first).
@@ -28,18 +33,23 @@
  * `layoutWithSport`), with the counts the builder will match.
  */
 import type { UserProfile } from "./auth";
-import type { ScheduleDay } from "./scheduleUtils";
+import { SLOT_ORDER, type ScheduleDay } from "./scheduleUtils";
 import { weekScheduleFor } from "./trainingResolver";
 import { trainingKind } from "./trainingKind";
 import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
+import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
+import { isVolumeEligible } from "./runStatsEligibility";
 import type { PlanBuilderInput } from "@/features/program/planBuilder";
 import { liftPlanInput, savedLiftPlan } from "@/features/program/liftPlanInput";
-import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
-import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import {
-  setStarterGoalPatch,
-  type StarterGoal,
-} from "@/features/program/runModeResolution";
+  RECENT_RUN_DAYS,
+  type DatedRun,
+  type LayoffClass,
+} from "@/features/program/layoffDetection";
+import {
+  takesBarbellAtHome,
+  takesSmallPlates,
+} from "@/features/program/programLabels";
 import {
   DEFAULT_PROGRAM_SETTINGS,
   type Equipment,
@@ -69,11 +79,15 @@ export interface LiftingAnswers {
   injuries: string[];
 }
 
+/** The changes this module builds. */
 export type SportIntent =
   | { kind: "add_lifting"; answers: LiftingAnswers }
   | { kind: "remove_lifting" }
-  | { kind: "add_running"; level: RunLevel }
   | { kind: "remove_running" };
+
+/** Every change a person can ask for: adding running too, which Run plan's
+ *  save builds (`runningAdded`). */
+export type SportChangeKind = SportIntent["kind"] | "add_running";
 
 export type SportRefusal =
   /** The change would leave the plan with no sport. */
@@ -92,11 +106,17 @@ export interface SportProfilePatch {
   runFrequency?: RunLevel | "none";
   nonRaceGoal?: null;
   raceGoal?: null;
-  starterGoal?: StarterGoal | null;
+  starterGoal?: null;
 }
 
 export type SportChange =
   | { ok: true; input: PlanBuilderInput; patch: SportProfilePatch }
+  | { ok: false; refusal: SportRefusal; sentence: string };
+
+/** Running added: the level Run plan's save writes beside its plan, or the
+ *  refusal. */
+export type RunningAdded =
+  | { ok: true; patch: { runFrequency: RunLevel } }
   | { ok: false; refusal: SportRefusal; sentence: string };
 
 export interface SportChangeContext {
@@ -129,7 +149,7 @@ function refusalSentence(refusal: SportRefusal, sport: Sport): string {
 }
 
 /** Which sport an intent changes. */
-export function sportOf(kind: SportIntent["kind"]): Sport {
+export function sportOf(kind: SportChangeKind): Sport {
   return kind === "add_lifting" || kind === "remove_lifting"
     ? "lifting"
     : "running";
@@ -142,7 +162,7 @@ export function sportOf(kind: SportIntent["kind"]): Sport {
 export function sportChangeRefusal(
   profile: UserProfile,
   programState: ProgramState | null,
-  kind: SportIntent["kind"]
+  kind: SportChangeKind
 ): { refusal: SportRefusal; sentence: string } | null {
   const plan = trainingKind(profile, programState);
   const sport = sportOf(kind);
@@ -222,8 +242,10 @@ function choose<T>(items: readonly T[], n: number): T[][] {
  * would then hold both; for running, a weekend day when one is free (a
  * week's long run is a weekend's, as `defaultWeekSchedule` puts it); the
  * widest spacing between the sport's days, round the week; the fewest of
- * them back to back; then the earliest days. A layout already holding the
- * sport is returned as it is.
+ * them back to back; then the days setup fills first (`SLOT_ORDER`: Monday,
+ * Wednesday, Friday, then Tuesday, Thursday, Saturday, Sunday), so three
+ * lift days into an empty week are setup's Monday, Wednesday and Friday. A
+ * layout already holding the sport is returned as it is.
  */
 export function layoutWithSport(
   layout: readonly ScheduleDay[],
@@ -243,11 +265,16 @@ export function layoutWithSport(
     const weekendFree = [0, 6].some((d) => week[d].type === "rest");
     const onWeekend = days.some((d) => d === 0 || d === 6);
     const gaps = gapsRoundTheWeek(days);
+    const fillOrder = days
+      .map((d) => SLOT_ORDER.indexOf(d))
+      .sort((a, b) => a - b);
     const score = [
       -doubles,
       sport === "running" && weekendFree && onWeekend ? 1 : 0,
       n > 1 ? Math.min(...gaps) : 0,
       -gaps.filter((gap) => gap === 1).length,
+      // Setup's order last: the earlier a day is filled there, the better.
+      ...fillOrder.map((rank) => -rank),
     ];
     if (!best || ranksAbove(score, best.score)) best = { days, score };
   }
@@ -295,6 +322,61 @@ export function runLevelStart(level: RunLevel): {
 }
 
 /**
+ * The running level a plan that runs already shows, for a profile that
+ * keeps none: one set up before the level was kept (11 October 2026), or
+ * one that says "none" beside its running. `trainingKind` reads such a
+ * person as running only while the plan has no lifts, so adding lifting
+ * writes the level their running matches, or the running would leave the
+ * plan with it.
+ *
+ * Read from their run days a week: the plan's own (its week's layout)
+ * where it has any, and otherwise the runs saved in the last four weeks
+ * (`RECENT_RUN_DAYS`). Three or more a week is "regular", setup's Regular
+ * runner ("three or more runs a week"); fewer is "occasional", and so is
+ * a week that can't be read. Never "new": that is someone starting out,
+ * whose first weeks of a race plan are counted from the day setup
+ * finished, and a person whose plan runs already is not starting. Tropos
+ * heuristic.
+ */
+export function runLevelOfRunning(
+  profile: UserProfile,
+  recentRuns: readonly DatedRun[] | null,
+  today: string
+): Exclude<RunLevel, "new"> {
+  const planDays = weekScheduleFor(profile).filter((day) =>
+    holds(day, "running")
+  ).length;
+  if (planDays > 0) return planDays >= 3 ? "regular" : "occasional";
+  if (!recentRuns) return "occasional";
+  const weeks = RECENT_RUN_DAYS / 7;
+  const from = localDateString(
+    addLocalDays(parseLocalDate(today), 1 - RECENT_RUN_DAYS)
+  );
+  const saved = recentRuns.filter(
+    (run) =>
+      !!run.date &&
+      run.date >= from &&
+      run.date <= today &&
+      isVolumeEligible(run)
+  ).length;
+  return saved >= 3 * weeks ? "regular" : "occasional";
+}
+
+/**
+ * Running added from Run plan: the level its save writes beside the plan
+ * the chosen goal card builds, or why it can't be added.
+ */
+export function runningAdded(
+  profile: UserProfile,
+  programState: ProgramState | null,
+  level: RunLevel
+): RunningAdded {
+  const refused = sportChangeRefusal(profile, programState, "add_running");
+  if (refused) return { ok: false, ...refused };
+  return { ok: true, patch: { runFrequency: level } };
+}
+
+/**
  * The plan builder's input and the profile fields for a sport added or
  * removed, or the refusal. The lifting stays as it is when running changes,
  * and the running when lifting does: both build from the saved setup over
@@ -334,6 +416,10 @@ export function sportChange(
         answers.liftDays > 6
       )
         throw new RangeError(`lift days ${answers.liftDays} is not 2 to 6`);
+      // Only what the kit takes, as setup saves it: no barbell beside a
+      // full gym, no small plates with no equipment.
+      const smallPlates =
+        takesSmallPlates(answers.equipment) && answers.smallPlates;
       // "I have small plates" is the programme's setting, which a plan the
       // person has keeps through a build, so the answer goes on it here.
       const plan = programState
@@ -341,7 +427,7 @@ export function sportChange(
             ...programState,
             settings: {
               ...(programState.settings ?? DEFAULT_PROGRAM_SETTINGS),
-              smallPlates: answers.smallPlates,
+              smallPlates,
             },
           }
         : null;
@@ -349,19 +435,26 @@ export function sportChange(
         liftDays: answers.liftDays,
         sessionMinutes: answers.sessionMinutes,
         equipment: answers.equipment,
-        barbellAtHome: answers.barbellAtHome,
+        barbellAtHome:
+          takesBarbellAtHome(answers.equipment) && answers.barbellAtHome,
         pullUpBar: answers.pullUpBar,
         experience: answers.experience,
         injuries: answers.injuries,
       });
+      // Running that only `!lifts` said is on the plan keeps its place once
+      // there are lifts: the level goes with it (`runLevelOfRunning`).
+      const level = profile.runFrequency;
       return {
         ok: true,
         input: {
           ...input,
-          smallPlates: answers.smallPlates,
+          smallPlates,
           weekSchedule: layoutWithSport(layout, "lifting", answers.liftDays),
         },
-        patch: {},
+        patch:
+          !level || level === "none"
+            ? { runFrequency: runLevelOfRunning(profile, recentRuns, today) }
+            : {},
       };
     }
     case "remove_lifting":
@@ -373,35 +466,6 @@ export function sportChange(
         },
         patch: {},
       };
-    case "add_running": {
-      const start = runLevelStart(intent.level);
-      // The starter goal begins today, as choosing it in Run plan begins it.
-      // No race goal is set: a plan with one already has running.
-      const patch: SportProfilePatch = {
-        runFrequency: intent.level,
-        ...(start.runMode === "starter"
-          ? { starterGoal: setStarterGoalPatch(today).starterGoal }
-          : {}),
-      };
-      const runDays = start.runMode === "starter" ? start.weeklyRunDays : 0;
-      const { raceGoal: _race, ...input } = base(programState);
-      return {
-        ok: true,
-        input: {
-          ...input,
-          runMode: start.runMode,
-          rollingGoal: null,
-          weeklyRunDays: start.weeklyRunDays,
-          newRunnerUntil: profileNewRunnerUntil({
-            ...profile,
-            runFrequency: intent.level,
-            starterGoal: patch.starterGoal ?? profile.starterGoal,
-          }),
-          weekSchedule: layoutWithSport(layout, "running", runDays),
-        },
-        patch,
-      };
-    }
     case "remove_running": {
       const { raceGoal: _race, ...input } = base(programState);
       return {

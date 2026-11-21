@@ -3,17 +3,20 @@ import { createRequire } from "node:module";
 import {
   layoutWithSport,
   layoutWithoutSport,
+  runLevelOfRunning,
   runLevelStart,
+  runningAdded,
   sportChange,
   sportChangeRefusal,
   starterOfferedTo,
   type LiftingAnswers,
   type SportChange,
+  type SportChangeKind,
   type SportIntent,
 } from "../sportChange";
 import { trainingKind } from "../trainingKind";
 import { layOutWeek } from "../layOutWeek";
-import type { ScheduleDay } from "../scheduleUtils";
+import { generateSchedule, type ScheduleDay } from "../scheduleUtils";
 import type { UserProfile } from "../auth";
 import {
   addLocalDays,
@@ -23,6 +26,9 @@ import {
 } from "../dateHelpers";
 import { weekDays } from "../trainingWeek";
 import { buildPlan } from "@/features/program/planBuilder";
+import { withLastLoads } from "@/features/program/carriedLoads";
+import { scaleLoadForReps } from "@/features/program/represcribe";
+import type { DatedRun } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
 
 /**
@@ -126,6 +132,16 @@ function person(
 const PEOPLE = {
   "lifts only": () => person(4, { mode: "none" }),
   "runs only, no plan": () => person(0, { mode: "free", level: "occasional" }),
+  // Set up before the running level was kept (11 October 2026), or with
+  // "none" beside the running: only `!lifts` says they run.
+  "runs only, no level kept": () =>
+    person(
+      0,
+      { mode: "free", level: "occasional" },
+      { runFrequency: undefined }
+    ),
+  "runs only, level none": () =>
+    person(0, { mode: "free", level: "occasional" }, { runFrequency: "none" }),
   "runs only, starter": () => person(0, { mode: "starter" }),
   "runs only, race": () => person(0, { mode: "race" }),
   "both, free running": () => person(3, { mode: "free", level: "regular" }),
@@ -149,21 +165,39 @@ const ANSWERS: LiftingAnswers = {
 const INTENTS: Record<SportIntent["kind"], SportIntent> = {
   add_lifting: { kind: "add_lifting", answers: ANSWERS },
   remove_lifting: { kind: "remove_lifting" },
-  add_running: { kind: "add_running", level: "new" },
   remove_running: { kind: "remove_running" },
 };
+const KINDS: SportChangeKind[] = [
+  "add_lifting",
+  "remove_lifting",
+  "add_running",
+  "remove_running",
+];
 
-function change(who: Person, intent: SportIntent): SportChange {
+function change(
+  who: Person,
+  intent: SportIntent,
+  recentRuns: readonly DatedRun[] = []
+): SportChange {
   return sportChange(
     {
       profile: who.profile,
       programState: who.programState,
       today: TODAY,
       recentLayoff: "none",
-      recentRuns: [],
+      recentRuns,
     },
     intent
   );
+}
+
+/** `count` saved runs, one a day back from `TODAY`. */
+function runsBack(count: number): DatedRun[] {
+  return Array.from({ length: count }, (_, i) => ({
+    date: shift(TODAY, -i),
+    distance: 5000,
+    duration: 1800,
+  })) as unknown as DatedRun[];
 }
 
 /** What the person is left with: the built plan, with the profile as the
@@ -185,7 +219,7 @@ const typesOf = (layout: readonly ScheduleDay[]) =>
 /** Each change from each kind of person: done, or refused with this. */
 const EXPECTED: Record<
   Who,
-  Record<SportIntent["kind"], "ok" | `refused:${string}`>
+  Record<SportChangeKind, "ok" | `refused:${string}`>
 > = {
   "lifts only": {
     add_lifting: "refused:on_plan",
@@ -194,6 +228,18 @@ const EXPECTED: Record<
     remove_running: "refused:not_on_plan",
   },
   "runs only, no plan": {
+    add_lifting: "ok",
+    remove_lifting: "refused:not_on_plan",
+    add_running: "refused:on_plan",
+    remove_running: "refused:last_sport",
+  },
+  "runs only, no level kept": {
+    add_lifting: "ok",
+    remove_lifting: "refused:not_on_plan",
+    add_running: "refused:on_plan",
+    remove_running: "refused:last_sport",
+  },
+  "runs only, level none": {
     add_lifting: "ok",
     remove_lifting: "refused:not_on_plan",
     add_running: "refused:on_plan",
@@ -239,10 +285,28 @@ const EXPECTED: Record<
 
 describe("sportChange, every change from every kind of person", () => {
   for (const who of Object.keys(PEOPLE) as Who[]) {
-    for (const kind of Object.keys(INTENTS) as SportIntent["kind"][]) {
+    for (const kind of KINDS) {
       const expected = EXPECTED[who][kind];
       it(`${who}: ${kind} is ${expected}`, () => {
         const p = PEOPLE[who]();
+        if (kind === "add_running") {
+          // Run plan's save builds the plan from the card chosen; this
+          // module gives the level it writes, or the refusal.
+          const added = runningAdded(p.profile, p.programState, "new");
+          if (expected === "ok") {
+            expect(added).toEqual({ ok: true, patch: { runFrequency: "new" } });
+            if (added.ok)
+              expect(
+                profileSanitizer.findUnexpectedProfileFields(added.patch)
+              ).toEqual([]);
+          } else {
+            expect(added).toMatchObject({
+              ok: false,
+              refusal: expected.slice("refused:".length),
+            });
+          }
+          return;
+        }
         const result = change(p, INTENTS[kind]);
         if (expected === "ok") {
           expect(result.ok).toBe(true);
@@ -402,44 +466,129 @@ describe("what each change leaves", () => {
     );
   });
 
-  it("adding running at New to running begins the starter goal, offered and on the plan", () => {
+  it("adding running gives the level Run plan writes; the goal card builds the plan", () => {
     const lifter = PEOPLE["lifts only"]();
     // Before: running isn't on the plan, and the starter is offered.
     expect(trainingKind(lifter.profile, lifter.programState).runs).toBe(false);
     expect(starterOfferedTo(lifter.profile, lifter.programState)).toBe(true);
-    const result = change(lifter, { kind: "add_running", level: "new" });
-    expect(result.ok && result.patch).toEqual({
-      runFrequency: "new",
-      starterGoal: { startedOn: TODAY },
-    });
-    const { plan, profile, kind } = after(lifter, result);
-    expect(kind).toEqual({ lifts: true, runs: true });
-    expect(starterOfferedTo(profile, plan.programState)).toBe(true);
-    expect(profile.runMode).toBe("starter");
-    expect(plan.programState.runPlan).toMatchObject({
-      mode: "starter",
-      stage: 1,
-    });
-    // The lift days stay where they were.
-    lifter.profile.weekSchedule!.forEach((day, i) => {
-      if (day.type === "lift")
-        expect(["lift", "both"]).toContain(plan.weekSchedule[i].type);
-    });
-    expect(plan.programState.workouts).toEqual(lifter.programState.workouts);
+    for (const level of ["new", "occasional", "regular"] as const) {
+      const added = runningAdded(lifter.profile, lifter.programState, level);
+      expect(added).toEqual({ ok: true, patch: { runFrequency: level } });
+      // The level alone says the person runs, whatever card is chosen.
+      expect(
+        trainingKind(
+          { ...lifter.profile, runFrequency: level },
+          lifter.programState
+        )
+      ).toEqual({ lifts: true, runs: true });
+    }
   });
 
-  it("adding running at another level runs freely, with no run days, and says the person runs", () => {
-    const lifter = PEOPLE["lifts only"]();
-    for (const level of ["occasional", "regular"] as const) {
-      const result = change(lifter, { kind: "add_running", level });
-      expect(result.ok && result.patch).toEqual({ runFrequency: level });
-      const { plan, profile, kind } = after(lifter, result);
-      expect(kind).toEqual({ lifts: true, runs: true });
-      expect(profile.runMode).toBe("freeform");
-      expect(plan.programState.runDays).toEqual([]);
-      expect(typesOf(plan.weekSchedule)).toBe(
-        typesOf(lifter.profile.weekSchedule!)
-      );
+  describe("adding lifting to running only the plan's lack of lifts says", () => {
+    for (const who of [
+      "runs only, no level kept",
+      "runs only, level none",
+    ] as const) {
+      it(`${who}: running stays on the plan, and Stop lifting is allowed`, () => {
+        const runner = PEOPLE[who]();
+        // Before: running, through `!lifts` alone.
+        expect(trainingKind(runner.profile, runner.programState)).toEqual({
+          lifts: false,
+          runs: true,
+        });
+        const result = change(runner, INTENTS.add_lifting);
+        expect(result.ok && result.patch).toEqual({
+          runFrequency: "occasional",
+        });
+        const { plan, profile, kind } = after(runner, result);
+        // After: both, so Run plan doesn't offer Add running, and lifting
+        // can come off again.
+        expect(kind).toEqual({ lifts: true, runs: true });
+        const back = { profile, programState: plan.programState };
+        expect(
+          sportChangeRefusal(back.profile, back.programState, "add_running")
+        ).toMatchObject({ refusal: "on_plan" });
+        expect(
+          sportChangeRefusal(back.profile, back.programState, "remove_lifting")
+        ).toBeNull();
+      });
+    }
+
+    it("writes the level their running matches", () => {
+      const runner = PEOPLE["runs only, no level kept"]();
+      // Three runs a week for the last four weeks: a regular runner.
+      const regular = change(runner, INTENTS.add_lifting, runsBack(12));
+      expect(regular.ok && regular.patch).toEqual({ runFrequency: "regular" });
+      // Two a week: occasional.
+      const occasional = change(runner, INTENTS.add_lifting, runsBack(8));
+      expect(occasional.ok && occasional.patch).toEqual({
+        runFrequency: "occasional",
+      });
+      // Runs older than four weeks don't count.
+      const old = runsBack(40).filter((r) => r.date! < shift(TODAY, -27));
+      expect(runLevelOfRunning(runner.profile, old, TODAY)).toBe("occasional");
+      // Run days in the plan's week say it where there are any.
+      const threeRunDays = {
+        ...runner.profile,
+        weekSchedule: layoutWithSport(
+          runner.profile.weekSchedule!,
+          "running",
+          3
+        ),
+      } as UserProfile;
+      expect(runLevelOfRunning(threeRunDays, [], TODAY)).toBe("regular");
+    });
+
+    it("leaves a level already kept alone", () => {
+      for (const who of [
+        "runs only, no plan",
+        "runs only, starter",
+        "runs only, race",
+      ] as const) {
+        const result = change(PEOPLE[who](), INTENTS.add_lifting);
+        expect(result.ok && result.patch).toEqual({});
+      }
+    });
+  });
+
+  it("lifting stopped and added again starts each lift from its last session", () => {
+    const hybrid = PEOPLE["both, free running"]();
+    // Stop lifting: the plan's lift days and their weights go.
+    const stopped = after(hybrid, change(hybrid, INTENTS.remove_lifting));
+    expect(stopped.plan.programState.workouts).toEqual([]);
+    const runner: Person = {
+      profile: stopped.profile,
+      programState: stopped.plan.programState,
+    };
+    const added = after(runner, change(runner, INTENTS.add_lifting));
+    const lifts = added.plan.programState.workouts.flatMap((d) => d.exercises);
+    const loaded = lifts.find(
+      (ex) => ex.weight > 0 && ex.repUnit !== "seconds"
+    );
+    expect(loaded).toBeDefined();
+    // Last time: 130 kg for 5, 5 and 4 at this lift.
+    const lastSets = new Map([
+      [
+        loaded!.exerciseId,
+        [
+          { weightKg: 130, reps: 5 },
+          { weightKg: 130, reps: 5 },
+          { weightKg: 130, reps: 4 },
+        ],
+      ],
+    ]);
+    const carried = withLastLoads(
+      added.plan.programState.workouts,
+      lastSets
+    ).flatMap((d) => d.exercises);
+    for (const ex of carried.filter(
+      (e) => e.exerciseId === loaded!.exerciseId
+    )) {
+      // Last time's weight, moved to the plan's reps from the fewest done
+      // at it, never above it; not the first guess the plan started with.
+      expect(ex.weight).toBe(scaleLoadForReps(130, 4, ex.baseReps ?? ex.reps));
+      expect(ex.weight).toBeLessThanOrEqual(130);
+      expect(ex.lastSuccessfulWeight).toBe(ex.weight);
     }
   });
 
@@ -562,7 +711,9 @@ describe("the layout", () => {
     // Runs Tuesday, Thursday, Saturday; four rest days.
     const week = layoutOf("rest", "rest", "run", "rest", "run", "rest", "run");
     const three = layoutWithSport(week, "lifting", 3);
-    expect(typesOf(three)).toBe("lift,rest,run,lift,run,lift,run");
+    // Sunday, Wednesday, Friday and Monday, Wednesday, Friday are spaced
+    // alike; setup's order (Monday first, Sunday last) takes Monday.
+    expect(typesOf(three)).toBe("rest,lift,run,lift,run,lift,run");
     // Runs keep their days whatever is added.
     for (const n of [2, 3, 4, 5, 6]) {
       const added = layoutWithSport(week, "lifting", n);
@@ -574,6 +725,30 @@ describe("the layout", () => {
           expect(["run", "both"]).toContain(added[i].type);
       });
     }
+  });
+
+  it("lays lift days into an empty week on setup's days", () => {
+    const empty = layoutOf(
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest"
+    );
+    // Monday, Wednesday, Friday, as setup lays three lift days.
+    expect(typesOf(layoutWithSport(empty, "lifting", 3))).toBe(
+      "rest,lift,rest,lift,rest,lift,rest"
+    );
+    expect(layoutWithSport(empty, "lifting", 3).map((d) => d.type)).toEqual(
+      generateSchedule(3, 0).map((d) => d.type)
+    );
+    // Two: as far apart as the week allows, then setup's order, so
+    // Monday and Friday (Monday and Thursday are as far apart).
+    expect(typesOf(layoutWithSport(empty, "lifting", 2))).toBe(
+      "rest,lift,rest,rest,rest,lift,rest"
+    );
   });
 
   it("puts a run on a free weekend day when running is added", () => {
