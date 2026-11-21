@@ -128,17 +128,30 @@ describe("the card's state", () => {
 });
 
 describe("the words", () => {
-  it("say how far the league is from opening, then when it opens", () => {
+  it("say what the league starts at and how many are in so far, then when it starts (App1 Q6)", () => {
+    expect(lockedLine(4, 10)).toBe(
+      "The league starts once 10 people have joined. 4 so far."
+    );
     expect(lockedLine(3, 10)).toBe(
-      "Leagues open when 10 people have joined. 3 so far."
+      "The league starts once 10 people have joined. 3 so far."
     );
     // Under three, the count only says the room is empty: none is given.
-    expect(lockedLine(1, 10)).toBe("Leagues open when 10 people have joined.");
-    expect(lockedLine(2, 10)).toBe("Leagues open when 10 people have joined.");
+    expect(lockedLine(0, 10)).toBe(
+      "The league starts once 10 people have joined."
+    );
+    expect(lockedLine(2, 10)).toBe(
+      "The league starts once 10 people have joined."
+    );
     expect(showsJoinedCount(2)).toBe(false);
     expect(showsJoinedCount(3)).toBe(true);
+    expect(lockedLine(9, 10)).toBe(
+      "The league starts once 10 people have joined. 9 so far."
+    );
+    expect(lockedLine(10, 10)).toBe(
+      "The league starts on Monday. 10 people have joined."
+    );
     expect(lockedLine(12, 10)).toBe(
-      "Leagues start on Monday. 12 people have joined."
+      "The league starts on Monday. 12 people have joined."
     );
   });
 

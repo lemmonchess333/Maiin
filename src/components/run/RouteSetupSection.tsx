@@ -181,7 +181,7 @@ export default function RouteSetupSection({
           }
         />
         <p className="mt-1 px-1 text-xs text-muted-foreground">
-          From Strava, Komoot, a friend…
+          A GPX file from another app or a friend
         </p>
       </div>
 

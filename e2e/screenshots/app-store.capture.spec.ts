@@ -780,10 +780,8 @@ for (const frameClass of FRAME_CLASSES) {
         timeout: 15_000,
       });
       await expect(
-        page.getByRole("button", {
-          name: /Add water — choose a container size/,
-        })
-      ).toHaveAccessibleName(/^Water 1 litres? logged/);
+        page.getByRole("button", { name: /Add water, choose a container size/ })
+      ).toHaveAccessibleName(/^Water 1 L\b/);
 
       // Last, so a badge the water earned is opened with the rest.
       await openWaitingBadges(page);

@@ -121,6 +121,13 @@ export default function MacroColumn({
   const displayLabel =
     isLeftMode && hasTarget ? (isOver ? "over" : "left") : "logged";
 
+  /* The tile's words as drawn, for the start of its name: the figure as
+     `AnimatedNumber` settles on it, with its "g". */
+  const figureWords = `${Math.round(displayValue).toLocaleString()}g`;
+  const shownWords = row
+    ? `${label} ${figureWords} ${displayLabel}`
+    : `${figureWords} ${displayLabel} ${label}`;
+
   // Food7 (audit #34 — calm the loudest screen): the macro hue now lives
   // ONLY on the icon + progress bar; the big number renders neutral
   // (text-foreground), mirroring the calorie ring's unified-colour story
@@ -356,23 +363,26 @@ export default function MacroColumn({
       type="button"
       data-macro={macroKey}
       onClick={onTap}
-      /* Names the ACTION, not the current state. The visible number
-         already says what the tile shows; what a screen-reader user
-         cannot see is what tapping would do — and since the tap flips a
-         mode shared with the calorie ring, "toggle" would be too vague
-         to predict. So the label reads as the destination mode.
+      /* Starts with the tile's words in the order they are drawn
+         ("78g left Protein", or "Protein 78g left" as a row): Voice
+         Control is spoken to with the words on the screen, so every one
+         of them is in the name, first (WCAG 2.5.3, Label in Name). The
+         figure is the one `AnimatedNumber` settles on. Then what a
+         screen-reader user cannot see: the goal-reached state, the grams
+         against the target, and what a tap does, named as the mode it
+         switches to, since the tap flips a mode shared with the calorie
+         ring and "toggle" would be too vague to predict.
 
-         The goal-reached state is APPENDED rather than left to the
+         The goal-reached state is IN the label rather than left to the
          sr-only span below, because an `aria-label` REPLACES the
-         content-derived name outright: adding this label silently
-         dropped "{label} goal reached" out of the button's accessible
-         name, which `surfaces.screens.capture.spec.ts` asserts as the
-         state-independent proof of the halo. Nothing in the unit suite
-         covered it, so it only surfaced in the screenshot CI run. */
+         content-derived name outright, and
+         `surfaces.screens.capture.spec.ts` asserts it in the name as the
+         state-independent proof of the halo. */
       aria-label={
-        `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}` +
-        (goalReached ? `. ${label} goal reached` : "") +
-        `. ${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
+        `${shownWords}. ` +
+        (goalReached ? `${label} goal reached. ` : "") +
+        `${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}. ` +
+        `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}`
       }
       className={cn(
         "min-w-0 flex-1 flex flex-col bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg",
@@ -398,11 +408,14 @@ export default function MacroColumn({
             {icon}
             <span className="min-w-0 truncate">{label}</span>
           </span>
+          {/* The spaces between the words are in the text, so it reads as
+              words, as the name does ("Protein 15g left"), not run
+              together; a flex box draws nothing for them. */}{" "}
           {/* The figure and its word on one line ("15g left"), wrapping
               the word under the figure when the column is too narrow
               for both ("logged" at larger text). */}
           <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1">
-            {figure}
+            {figure}{" "}
             <span className="text-sm text-muted-foreground lowercase">
               {displayLabel}
             </span>
@@ -413,12 +426,14 @@ export default function MacroColumn({
         <>
           {icon}
           {figure}
+          {/* Spaces in the text, as the row has, so the tile reads as
+              words ("78g left Protein"). */}{" "}
           {/* Mode-aware label sits below the big number. Always-rendered
               rather than conditionally suppressed so the line height stays
               stable across mode toggles. */}
           <p className="text-xs text-muted-foreground mt-0.5 lowercase">
             {displayLabel}
-          </p>
+          </p>{" "}
           {bar}
           {/* Macro label — intentionally muted (same tone as the
               `X / Yg` ratio line above) so the card's colour identity is

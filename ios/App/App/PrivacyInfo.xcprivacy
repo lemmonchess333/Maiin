@@ -44,7 +44,7 @@
 			</array>
 		</dict>
 		<!-- Health: body weight and measurements, sex, year of birth, injury limits,
-		     maximum heart rate, nutrition. Some figures reach Google Analytics.
+		     maximum heart rate, nutrition. None of it reaches Google Analytics.
 		     Apple Health's steps, sleep, resting heart rate and HRV are read on
 		     the phone and never collected; accepting the steps offer saves the
 		     new activity level, which is part of this type. -->
@@ -58,11 +58,10 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
-		<!-- Fitness: workouts, sets, runs, pace, training plan and goals. Some
-		     figures about sessions reach Google Analytics. -->
+		<!-- Fitness: workouts, sets, runs, pace, training plan and goals. No
+		     figure about a session reaches Google Analytics. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeFitness</string>
@@ -73,7 +72,6 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
 		<!-- Precise location: the GPS route while a run records, including in the
