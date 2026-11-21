@@ -86,6 +86,9 @@ jobs:
           if [ "$MODE" = "apply" ]; then flag=--apply; else flag=; fi
           node functions/scripts/purgeLegacyFoodPhotos.js --project adaptive-fitness-af8bb --bucket "$BUCKET" $flag
 
+      # The pattern below is held to the script's last line (summaryLine) by
+      # functions/__tests__/purgeLegacyFoodPhotos.test.js: change both or
+      # neither.
       - name: Count again and expect nothing left
         if: inputs.mode == 'apply'
         run: |

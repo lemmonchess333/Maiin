@@ -297,6 +297,17 @@ async function purgeLegacyFoodPhotos({
   return report;
 }
 
+/**
+ * The run's last line. The workflow's recount greps the dry run's form of
+ * it for 0 objects and 0 meals, so its wording is pinned to that pattern
+ * (purgeLegacyFoodPhotos.test.js reads it out of the workflow).
+ */
+function summaryLine(report) {
+  return report.dryRun
+    ? `DRY RUN: ${report.objects} object(s) under ${FOOD_PHOTO_PREFIX} and ${report.holding} of ${report.scanned} meal(s) hold a photo field. Nothing was deleted; run again with --apply to delete them.`
+    : `Deleted ${report.objectsDeleted} object(s) under ${FOOD_PHOTO_PREFIX} and took the photo fields off ${report.stripped} of ${report.scanned} meal(s).`;
+}
+
 function parseArgs(args) {
   const options = {
     apply: false,
@@ -345,6 +356,7 @@ module.exports = {
   storedPhotoFields,
   photoUrlBucket,
   purgeLegacyFoodPhotos,
+  summaryLine,
   parseArgs,
 };
 
@@ -375,11 +387,7 @@ if (require.main === module) {
           2
         )
       );
-      console.log(
-        report.dryRun
-          ? `DRY RUN: ${report.objects} object(s) under ${FOOD_PHOTO_PREFIX} and ${report.holding} of ${report.scanned} meal(s) hold a photo field. Nothing was deleted; run again with --apply to delete them.`
-          : `Deleted ${report.objectsDeleted} object(s) under ${FOOD_PHOTO_PREFIX} and took the photo fields off ${report.stripped} of ${report.scanned} meal(s).`
-      );
+      console.log(summaryLine(report));
     })
     .catch((error) => {
       console.error("Meal photo purge failed:", error.message);

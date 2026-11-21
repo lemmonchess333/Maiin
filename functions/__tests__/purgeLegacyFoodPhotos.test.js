@@ -8,6 +8,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const {
@@ -20,6 +22,7 @@ const {
   storedPhotoFields,
   photoUrlBucket,
   purgeLegacyFoodPhotos,
+  summaryLine,
   parseArgs,
 } = require("../scripts/purgeLegacyFoodPhotos");
 
@@ -489,6 +492,66 @@ describe("the bucket the meals' photos are in", () => {
       apply: true,
     });
     expect(again).toMatchObject({ objects: 0, holding: 3, stripped: 3 });
+  });
+});
+
+/* An apply run ends by running the script again as a dry run and grepping
+   its last line for 0 objects and 0 meals. The pattern lives in the
+   workflow and the sentence here, so the two are held together: a reworded
+   sentence would fail every apply after it had already deleted, and a
+   loosened pattern would pass one that left something. */
+describe("the line the workflow's recount reads", () => {
+  const workflow = readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../.github/workflows/purge-legacy-food-photos.yml",
+        import.meta.url
+      )
+    ),
+    "utf8"
+  );
+  // `grep -q '<pattern>' recount.txt`: a basic regular expression, whose
+  // brackets are literal characters.
+  const pattern = workflow.match(/grep -q '([^']+)' recount\.txt/)?.[1];
+  const recount = new RegExp((pattern ?? "").replace(/[()]/g, "\\$&"));
+  const report = (over = {}) => ({
+    objects: 0,
+    bytes: 0,
+    objectsDeleted: 0,
+    scanned: 412,
+    foreign: 0,
+    holding: 0,
+    fields: { photoUrl: 0, photoPath: 0 },
+    stripped: 0,
+    pages: 3,
+    cursor: null,
+    dryRun: true,
+    ...over,
+  });
+
+  it("finds the recount's pattern in the workflow", () => {
+    expect(pattern).toMatch(/^\^DRY RUN: 0 /);
+  });
+
+  it("passes a dry run that found nothing left", () => {
+    expect(summaryLine(report())).toMatch(recount);
+    expect(summaryLine(report())).not.toContain("\n");
+  });
+
+  it.each([
+    [{ objects: 3 }],
+    [{ holding: 10 }],
+    [{ objects: 1, holding: 1 }],
+    [{ objects: 10, holding: 0 }],
+    [{ objects: 0, holding: 20 }],
+  ])("fails a dry run that found %o", (over) => {
+    expect(summaryLine(report(over))).not.toMatch(recount);
+  });
+
+  it("never passes an apply's own line", () => {
+    expect(
+      summaryLine(report({ dryRun: false, objectsDeleted: 0, stripped: 0 }))
+    ).not.toMatch(recount);
   });
 });
 
