@@ -86,7 +86,7 @@ describe("isNoise", () => {
     expect(
       isNoise(
         "Failed to load resource: 404",
-        "http://127.0.0.1:4173/Maiin/assets/Home-abc.js"
+        "http://127.0.0.1:4173/Maiin/sw.js"
       )
     ).toBe(false);
   });

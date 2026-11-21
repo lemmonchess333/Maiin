@@ -9,8 +9,8 @@ describe("globToRegExp", () => {
   it("matches a double star at any depth, including none", () => {
     const re = globToRegExp("src/components/home/**");
     expect(re.test("src/components/home/WeekStrip.tsx")).toBe(true);
-    expect(re.test("src/components/home/deep/x.ts")).toBe(true);
-    expect(re.test("src/components/homework/x.ts")).toBe(false);
+    expect(re.test("src/components/home/deep/WeekStrip.tsx")).toBe(true);
+    expect(re.test("src/components/homework/WeekStrip.tsx")).toBe(false);
     expect(globToRegExp("src/**/x.ts").test("src/x.ts")).toBe(true);
   });
 
