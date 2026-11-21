@@ -40,6 +40,10 @@ import {
   equipmentLabel,
   experienceLabel,
   goalLabel,
+  takesBarbellAtHome,
+  takesSmallPlates,
+  takesPullUpBar,
+  pullUpBarWhenChosen,
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
@@ -310,7 +314,12 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
-  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  // "What do you have?" (Lift4 (11)): optional, beside the setups. The bar
+  // starts from the setup chosen: on for a home gym, off for Minimal and
+  // for no equipment.
+  const [pullUpBar, setPullUpBar] = useState(
+    draft?.pullUpBar ?? pullUpBarWhenChosen(draft?.equipment)
+  );
   const [barbellAtHome, setBarbellAtHome] = useState(
     draft?.barbellAtHome ?? false
   );
@@ -502,6 +511,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -548,6 +558,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -718,8 +729,9 @@ export default function Onboarding() {
           injuries,
           weightKg,
           sessionMinutes,
-          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
-          smallPlates,
+          barbellAtHome: takesBarbellAtHome(equipment) && barbellAtHome,
+          ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
+          smallPlates: takesSmallPlates(equipment) && smallPlates,
           raceLegTrim,
           weightDisplayUnit,
         },
@@ -749,6 +761,7 @@ export default function Onboarding() {
       weightKg,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       weightDisplayUnit,
@@ -962,7 +975,8 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
-        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
+        ...(takesBarbellAtHome(equipment) ? { barbellAtHome } : {}),
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         preferredSplit: "auto",
         runFrequency,
         ...(recentRaceBenchmark
@@ -1853,6 +1867,8 @@ export default function Onboarding() {
                 }}
                 barbellAtHome={barbellAtHome}
                 onBarbellAtHomeChange={setBarbellAtHome}
+                pullUpBar={pullUpBar}
+                onPullUpBarChange={setPullUpBar}
                 smallPlates={smallPlates}
                 onSmallPlatesChange={setSmallPlates}
                 liftUnit={liftUnit}

@@ -61,6 +61,9 @@ export interface LiftingAnswers {
   sessionMinutes: number;
   equipment: Equipment;
   barbellAtHome: boolean;
+  /** "A pull-up bar" (Lift4 (11)), the answer the plan follows where the
+   *  kit takes one (`takesPullUpBar`). */
+  pullUpBar: boolean;
   smallPlates: boolean;
   experience: Experience;
   injuries: string[];
@@ -347,6 +350,7 @@ export function sportChange(
         sessionMinutes: answers.sessionMinutes,
         equipment: answers.equipment,
         barbellAtHome: answers.barbellAtHome,
+        pullUpBar: answers.pullUpBar,
         experience: answers.experience,
         injuries: answers.injuries,
       });

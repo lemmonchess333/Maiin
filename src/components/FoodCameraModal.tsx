@@ -29,6 +29,7 @@ import { stripDataUrlPrefix } from "@/lib/base64Helpers";
 import { MAX_EDGE_PX } from "@/lib/foodPhotoStore";
 import { blobToDataUrl, encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
+import { isNativePlatform } from "@/lib/platform";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 
@@ -1261,10 +1262,14 @@ export default function FoodCameraModal({
             <p className="text-sm text-muted-foreground leading-relaxed">
               {deniedCopy}
             </p>
+            {/* The app is not a web page: it names Settings (an iPhone's,
+                an iPad's running the iPhone app, or later an Android
+                phone's), and only the web build names the browser's. */}
             {cameraState === "denied" && (
               <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                To re-enable, update camera permissions for Tropos in your
-                device or browser settings.
+                {isNativePlatform()
+                  ? "To turn it back on, allow the camera for Tropos in Settings."
+                  : "To turn it back on, allow the camera for Tropos in your browser’s settings."}
               </p>
             )}
           </div>

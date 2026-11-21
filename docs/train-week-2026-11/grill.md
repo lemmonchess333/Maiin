@@ -727,6 +727,28 @@ taste or appetite decides more than the evidence does:
   no lift lost, shown twice or called missed. Not built: steps 2 to 8.
   `trainingWeek.ts` and `functions/lib/leaguePlanned.js` still count race
   week's rested lift days as planned; step 2 moves them.
+- STATUS 2026-11-18: step 2 built. Home's session card, week strip, day
+  card, the day's Manage sheet and the "tomorrow" line read `layOutWeek`
+  (`todaySession.ts` takes the week; `weekStripDays.ts`, which the Home
+  Screen widget's week reads too, draws its days; `homeLift.ts` is gone).
+  A passed lift day's segment is bare and its words say where the lift
+  went; a lift day with no lift laid on it (the week's lifts done, or a
+  race's rest day) is a rest day on the card; past Sunday the line names
+  the lift the rollover opens next week with (`liftsOpeningNextWeek`).
+  Q56's test is in the season suite: over the 50 seasons, Home named a
+  next lift 14,588 times (5,234 on a later day's card, 4,563 in the line
+  for next week) and every one was Train's Up next; the old rules named
+  another lift 884 times, every one a later day's card (the slot rule).
+  Race week counts only what it asks for in `trainingWeek.ts` and its
+  server copy `leaguePlanned.js`, read on the member's own day
+  (`leagues.js`), pinned by `leaguePlanned.cross.test.ts`. Not built:
+  steps 3 to 8; a session under way is not passed to the layout yet
+  (Home keeps its own strip for it), and a free runner's run weekday
+  still gives today's card a run. Train's Lift tab and the plan page
+  (`/program/plan`) still draw the slot and "missed" until step 5. A lift
+  skipped from a day stays on that day, skipped, from today on
+  (`skippedHere`: the day it would be laid on were it not skipped), so
+  its Manage sheet restores it where the skip was made.
 - STATUS 2026-11-18: step 6a built, the Settings side of adding and
   removing a sport (Q27, Q28, Q31 to Q33), under the TrainWk1 calls of
   18 November. `src/lib/sportChange.ts` gives the plan builder's input

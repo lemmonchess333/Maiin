@@ -40,6 +40,7 @@ import {
 } from "@/features/program/liftPlanRebuild";
 import { injuryChanges } from "@/features/program/injuryChanges";
 import { sessionLengthOption } from "@/features/program/sessionFit";
+import { pullUpBarWhenChosen } from "@/features/program/programLabels";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
@@ -96,6 +97,10 @@ export default function AddLiftingFlow({
   const [barbellAtHome, setBarbellAtHome] = useState(
     profile.barbellAtHome === true
   );
+  // As setup: the answer given, or the one the kit starts from.
+  const [pullUpBar, setPullUpBar] = useState(
+    profile.pullUpBar ?? pullUpBarWhenChosen(profile.equipment)
+  );
   const [smallPlates, setSmallPlates] = useState(
     programState?.settings?.smallPlates === true
   );
@@ -122,6 +127,7 @@ export default function AddLiftingFlow({
             sessionMinutes: minutes,
             equipment,
             barbellAtHome,
+            pullUpBar,
             smallPlates,
             experience,
             injuries,
@@ -138,6 +144,7 @@ export default function AddLiftingFlow({
       minutes,
       equipment,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       experience,
       injuries,
@@ -242,6 +249,8 @@ export default function AddLiftingFlow({
             }}
             barbellAtHome={barbellAtHome}
             onBarbellAtHomeChange={setBarbellAtHome}
+            pullUpBar={pullUpBar}
+            onPullUpBarChange={setPullUpBar}
             smallPlates={smallPlates}
             onSmallPlatesChange={setSmallPlates}
             liftUnit={resolveLiftUnit(programState?.settings?.loadUnit)}

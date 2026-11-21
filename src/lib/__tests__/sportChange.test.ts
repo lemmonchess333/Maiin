@@ -140,6 +140,7 @@ const ANSWERS: LiftingAnswers = {
   sessionMinutes: 45,
   equipment: "home_gym",
   barbellAtHome: true,
+  pullUpBar: true,
   smallPlates: true,
   experience: "beginner",
   injuries: ["knee"],
