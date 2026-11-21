@@ -29,6 +29,7 @@ import { openSignUpForm } from "../helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -63,7 +64,7 @@ async function uidByEmail(email: string): Promise<string> {
 
 async function completeOnboardingDirect(uid: string): Promise<void> {
   const res = await fetch(
-    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName`,
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName&updateMask.fieldPaths=healthDataConsent`,
     {
       method: "PATCH",
       headers: {
@@ -74,6 +75,8 @@ async function completeOnboardingDirect(uid: string): Promise<void> {
         fields: {
           onboardingComplete: { booleanValue: true },
           displayName: { stringValue: "Feed Tester" },
+          // Agreed to the storing of health details (Priv1 call 1).
+          healthDataConsent: restHealthConsent(),
         },
       }),
     }

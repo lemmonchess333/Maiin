@@ -109,7 +109,9 @@ def source_targets():
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
-        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
+        # Priv1 call 1: setup is refused without the health-details agreement.
+        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js",
+                               "lib/healthConsent.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],

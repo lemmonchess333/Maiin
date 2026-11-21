@@ -21,6 +21,7 @@ import { openSignUpForm } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -76,9 +77,14 @@ function ymd(d: Date): string {
 /** Protein + fat over target, carbs far under — the reported screen. */
 async function seedLopsidedDay(uid: string): Promise<void> {
   const now = new Date();
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
   await patch(`users/${uid}/meals/macro-capture-m1`, {
     foodName: { stringValue: "Steak and avocado" },
     date: { stringValue: ymd(now) },

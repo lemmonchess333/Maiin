@@ -41,6 +41,8 @@ function request(age) {
       activityLevel: "moderate",
     },
     programState: {},
+    // Setup's agreement to store health details (Priv1 call 1).
+    healthDataConsent: { version: 1 },
   };
 }
 

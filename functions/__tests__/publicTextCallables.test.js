@@ -159,6 +159,7 @@ describe("completeOnboarding — the display name", () => {
         {
           profileData: { ...BODY, displayName: "shit head" },
           programState: {},
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: "u1" } }
       )
@@ -174,7 +175,11 @@ describe("completeOnboarding — the display name", () => {
     const db = useMemoryFirestore();
     await expect(
       completeOnboarding.run(
-        { profileData: { ...BODY, displayName: "Sam" }, programState: {} },
+        {
+          profileData: { ...BODY, displayName: "Sam" },
+          programState: {},
+          healthDataConsent: { version: 1 },
+        },
         { auth: { uid: "u1" } }
       )
     ).resolves.toEqual({ success: true, activationJourneyVersion: 2 });

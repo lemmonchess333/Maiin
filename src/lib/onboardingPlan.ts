@@ -3,7 +3,11 @@ import type { RunFitnessInput } from "./runPaces";
 import { buildPlan } from "@/features/program/planBuilder";
 import { newRunnerUntil } from "@/features/program/newRunner";
 import type { Goal } from "@/features/program/programTypes";
-import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
+import {
+  HEALTH_CONSENT_STEP,
+  type OnboardingDraft,
+  type OnboardingActivity,
+} from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
 import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
 import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
@@ -133,13 +137,18 @@ export function onboardingActivity(
   return "lifting";
 }
 
-/** Stored IDs stay stable even when irrelevant lifting/running chapters are omitted. */
+/** Stored IDs stay stable even when irrelevant lifting/running chapters are
+ *  omitted. The agreement to store health details (8, Priv1 call 1) comes
+ *  before the first body question: a lifter's limitations (4), or About
+ *  you's numbers (5). */
 export function onboardingFlow(activity: OnboardingActivity): number[] {
   return [
     0,
     1,
     ...(activity !== "lifting" ? [3] : []),
-    ...(activity !== "running" ? [2, 4] : []),
+    ...(activity !== "running" ? [2] : []),
+    HEALTH_CONSENT_STEP,
+    ...(activity !== "running" ? [4] : []),
     5,
     7,
   ];

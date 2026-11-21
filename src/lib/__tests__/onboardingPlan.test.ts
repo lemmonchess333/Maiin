@@ -15,7 +15,7 @@ import {
   onboardingActivity,
   onboardingFlow,
 } from "../onboardingPlan";
-import type { OnboardingDraft } from "../onboardingDraft";
+import { ONBOARDING_STEP_IDS, type OnboardingDraft } from "../onboardingDraft";
 import { getRaceGoalPlannerState } from "../raceGoalPlanner";
 
 const draft: OnboardingDraft = {
@@ -207,10 +207,28 @@ describe("supported running-only plans", () => {
       "lifting"
     );
     expect(onboardingActivity({ ...draft, daysPerWeek: 0 })).toBe("running");
-    expect(onboardingFlow("running")).toEqual([0, 1, 3, 5, 7]);
-    expect(onboardingFlow("lifting")).toEqual([0, 1, 2, 4, 5, 7]);
-    expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 4, 5, 7]);
+    expect(onboardingFlow("running")).toEqual([0, 1, 3, 8, 5, 7]);
+    expect(onboardingFlow("lifting")).toEqual([0, 1, 2, 8, 4, 5, 7]);
+    expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 8, 4, 5, 7]);
   });
+
+  /* Priv1 call 1: the agreement to store health details comes before the
+     first body question, which is the limitations a lifter is asked (4)
+     and, for a runner, About you's numbers (5). Setup stays within eight
+     screens (DESIGN_GUIDE §14n rule 49). */
+  it.each(["running", "lifting", "both"] as const)(
+    "asks a %s plan for the agreement before any body question",
+    (activity) => {
+      const flow = onboardingFlow(activity);
+      const consent = flow.indexOf(ONBOARDING_STEP_IDS.indexOf("health"));
+      expect(consent).toBeGreaterThan(-1);
+      for (const body of ["injuries", "about"] as const) {
+        const at = flow.indexOf(ONBOARDING_STEP_IDS.indexOf(body));
+        if (at !== -1) expect(at).toBeGreaterThan(consent);
+      }
+      expect(flow.length).toBeLessThanOrEqual(8);
+    }
+  );
 });
 
 /* Lift18: setup's lifting unit follows the body-weight unit picked there,

@@ -14,7 +14,9 @@
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
  * workout, a run before, during and after, the exercise, run and workout
- * detail pages, the Weekly review, sign-up, setup and the Pro page. The
+ * detail pages, the Weekly review, sign-up, setup (with the health-details
+ * agreement, and its Not now) and the Pro page, and the same agreement as
+ * an account set up before it meets it, before the app. The
  * sheets: the weight log,
  * the streak's days, Social's notifications and a run's share and
  * rename sheets,
@@ -64,6 +66,7 @@ import {
   TEN_MINUTE_CIRCUIT,
 } from "../helpers/circuit";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { finishSetupWithoutHealthConsent } from "../helpers/healthConsent";
 
 const WIDTHS = [393, 320] as const;
 const SCALES = [135, 200] as const;
@@ -534,6 +537,20 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /full gym/i }).click();
       await page.getByRole("button", { name: /some experience/i }).click();
       await next();
+      // Priv1 call 1: the agreement to store health details, as asked and
+      // as Not now leaves it.
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 8000 });
+      await measure(page, "setup-health", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "setup-health-declined", width, found);
+      await page.getByRole("button", { name: "Go back", exact: true }).click();
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
+      await page.waitForTimeout(500);
       await measure(page, "setup-limitations", width, found);
       await page.getByRole("button", { name: "None", exact: true }).click();
       await next();
@@ -545,6 +562,19 @@ test.describe("large text", () => {
         .fill("1995");
       await next();
       await measure(page, "setup-summary", width, found);
+
+      // The same agreement for an account set up before setup asked: one
+      // screen before the app, on its next open.
+      await finishSetupWithoutHealthConsent(email);
+      await page.goto("/");
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 30_000 });
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate-declined", width, found);
 
       expect(found).toEqual([]);
     });
