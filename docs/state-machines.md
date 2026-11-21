@@ -54,6 +54,7 @@ inside that type.
 | Making a segment         | `src/components/run/SegmentMaker.tsx` (`MakerState`)                                         | picking, saving, refused; closed is RunDetail's (`segmentRange` null)                                                                                    |
 | A segment's page         | `src/hooks/useSegment.ts` (`SegmentStatus`, `BoardStatus`)                                   | loading, ready, missing, failed; its board loading, ready, failed                                                                                        |
 | A sport added, removed   | `src/components/program/AddLiftingFlow.tsx` (`AddLiftingStep`), `src/lib/sportChange.ts`     | week, kit, limits, saving (after the saved workouts are read); a removal asked once, saved or refused (`SportRefusal`), the last sport's only once tried |
+| Usage analytics          | `src/lib/analyticsProvider.ts` (`AnalyticsStatus`), `src/lib/usageAnalytics.ts`              | uninitialised, pending, active, off, unconfigured, unsupported, error; off is the device's kept answer at launch, then the account's (Priv1)             |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.

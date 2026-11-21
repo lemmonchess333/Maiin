@@ -8,6 +8,7 @@ import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import SettingsSection from "@/components/settings/SettingsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import RestrictionExplainer from "@/components/settings/RestrictionExplainer";
+import UsageAnalyticsGroup from "@/components/settings/UsageAnalyticsGroup";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 
 export default function SettingsPrivacy() {
@@ -60,6 +61,8 @@ export default function SettingsPrivacy() {
           onClick={() => navigate("/settings/hidden-posts")}
         />
       </SettingsGroup>
+      {/* Google Analytics, on unless turned off (Priv1 call 2). */}
+      <UsageAnalyticsGroup profile={profile} updateProfile={updateProfile} />
     </SettingsSection>
   );
 }

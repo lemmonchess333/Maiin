@@ -210,6 +210,56 @@ suite("users/{uid} update — the year of birth", () => {
   });
 });
 
+/* Priv1 call 2: Settings → Social & privacy → Share usage analytics. The
+   account keeps false when Google Analytics is off, and takes only a
+   boolean, from its own account. */
+suite("users/{uid} update: Share usage analytics", () => {
+  async function write(uid: string, usageAnalytics: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return setDoc(doc(db, `users/${uid}`), { usageAnalytics }, { merge: true });
+  }
+
+  it.each([
+    ["off", false],
+    ["on", true],
+  ])("accepts %s", async (_case, usageAnalytics) => {
+    await assertSucceeds(
+      write(`ua-ok-${String(usageAnalytics)}`, usageAnalytics)
+    );
+  });
+
+  it.each([
+    ["a word", "off"],
+    ["a number", 0],
+    ["a map", { enabled: false }],
+  ])("refuses %s", async (_case, usageAnalytics) => {
+    await assertFails(write(`ua-no-${typeof usageAnalytics}`, usageAnalytics));
+  });
+
+  it("refuses another account's answer", async () => {
+    await seedProfile("ua-owner");
+    const db = env.authenticatedContext("ua-other").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "users/ua-owner"),
+        { usageAnalytics: false },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses a sign-up that carries anything but a boolean", async () => {
+    const db = env.authenticatedContext("ua-signup").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ua-signup"), {
+        ...signupProfile("ua-signup"),
+        usageAnalytics: "off",
+      })
+    );
+  });
+});
+
 suite("users/{uid} update — fields a client must never write", () => {
   const serverOnly = PROFILE_FIELD_REGISTRY.filter((e) => e.serverOnly);
 

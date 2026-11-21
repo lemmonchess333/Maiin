@@ -10,6 +10,34 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Share usage analytics turns Google Analytics off (Priv1 call 2, 2026-11-21)
+
+Settings → Social & privacy → Share usage analytics, on by default, is the
+way to object that PECR's analytics exemption asks for. Off drops every
+event in the app at once, switches the native SDK's collection off
+(`setEnabled`, which it keeps across launches), and on the web never loads
+analytics on a device whose last answer was off (`analyticsProvider.ts`,
+`usageAnalytics.ts`). The unit tests mock the plugin and the web SDK; only
+DebugView shows what reaches Google, including the native SDK's own
+automatic events (sessions, screen views), which no unit test can see.
+
+- [ ] **Off on a TestFlight build, nothing in DebugView.** On a debug
+      device (the app launched with `-FIRAnalyticsDebugEnabled`), open
+      GA4 DebugView and use the app until events arrive. Turn Share usage
+      analytics off, then use the app for a few minutes, force-quit it and
+      open it again, signed in and signed out. Passing: DebugView shows
+      nothing more from that device, not even `session_start` or
+      `screen_view` after the relaunch.
+- [ ] **On again, events return.** On the same device, turn it back on and
+      use the app. Passing: events arrive in DebugView again within a
+      minute or two (after a relaunch at the latest: the plugin's notes say
+      the native setting may apply only from the next run).
+- [ ] **It follows the account.** Turn it off on the phone, then sign in
+      to the same account on the web preview with GA configured. Passing:
+      the browser's network panel shows no request to
+      `google-analytics.com` or `googletagmanager.com` once the profile has
+      loaded, and a reload makes none at all.
+
 ## A purchase the store has, before Pro is on (2026-11-10)
 
 A purchase that Apple's sheet finished without RevenueCat granting Pro, and
