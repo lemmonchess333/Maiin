@@ -29,8 +29,17 @@ to send a capture loop to CI.** The chain is exactly
 around the seed chain and `npm run test:e2e -- capture.spec.ts
 --project=auth-emulator`. The ONE thing to know is the browser: the
 pre-installed Chromium is a different build from the one Playwright asks
-for, so pass `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`
-— the capture specs' `test.use` already reads it as `executablePath`.
+for, so pass `PW_CHROMIUM` set to it — the capture specs' `test.use` already
+reads it as `executablePath`. Its build number changes between images (1194,
+then 1243 with a `chrome-linux64` folder by 2026-11-18), so look it up with
+`ls -d /opt/pw-browsers/chromium-*/chrome-linux*/chrome`. The Firestore
+emulator's jar may not download in a sandbox either (storage.googleapis.com
+blocked by the egress proxy, 2026-11-18); then only signed-out screens can
+be driven there.
+
+To verify a change rather than capture frames, use the verify skill
+(`.claude/skills/verify/SKILL.md`, `npm run verify:app`): it boots this rig
+itself, keeps it up between runs, and drives the features a change touches.
 Full suite locally: 64 passed in 6.8 minutes.
 
 Two caveats worth carrying. **Seed the FULL chain or you will measure the

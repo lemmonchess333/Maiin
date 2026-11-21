@@ -10,6 +10,9 @@
  *      the emulator seed identity from scripts/seed-e2e-user.ts and is
  *      only reachable AFTER the loopback check has passed.
  */
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
 export const BASE = process.env.BASE_URL || "http://localhost:4173/Maiin/";
 
 const host = new URL(BASE).hostname;
@@ -22,3 +25,29 @@ if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host)) {
 
 export const PW = process.env.TEST_PASSWORD || "test-password-123";
 export const EMAIL = process.env.TEST_EMAIL || "e2e-test@tropos.test";
+
+/**
+ * The Chromium to launch: CHROMIUM_PATH or PW_CHROMIUM when set, else the
+ * newest pre-installed build under /opt/pw-browsers (cloud sandboxes ship
+ * one for a different Playwright than this repo's, and its build number
+ * changes between images), else undefined for Playwright's own.
+ */
+function preinstalledChromium() {
+  const root = process.env.PLAYWRIGHT_BROWSERS_PATH || "/opt/pw-browsers";
+  if (!existsSync(root)) return undefined;
+  const builds = readdirSync(root)
+    .map((d) => /^chromium-(\d+)$/.exec(d))
+    .filter(Boolean)
+    .sort((a, b) => Number(b[1]) - Number(a[1]));
+  for (const b of builds)
+    for (const sub of ["chrome-linux64", "chrome-linux"]) {
+      const exe = join(root, b[0], sub, "chrome");
+      if (existsSync(exe)) return exe;
+    }
+  return undefined;
+}
+
+export const CHROMIUM_PATH =
+  process.env.CHROMIUM_PATH ||
+  process.env.PW_CHROMIUM ||
+  preinstalledChromium();

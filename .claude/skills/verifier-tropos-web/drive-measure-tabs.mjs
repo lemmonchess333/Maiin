@@ -13,7 +13,7 @@ mkdirSync(OUT, { recursive: true });
 import { BASE } from "./env.mjs";
 const EMAIL = "e2e-test@tropos.test";
 import { PW } from "./env.mjs";
-const CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { CHROMIUM_PATH as CHROMIUM } from "./env.mjs";
 const log = (...a) => console.log("[measure]", ...a);
 
 const browser = await chromium.launch({ executablePath: CHROMIUM });
