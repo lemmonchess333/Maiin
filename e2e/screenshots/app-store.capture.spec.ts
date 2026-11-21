@@ -1,12 +1,19 @@
 /**
- * App Store screenshots, iPhone 6.9-inch display class. A DRAFT set for
- * the owner to review, not the shipped listing.
+ * App Store screenshots, in the two iPhone classes App Store Connect asks
+ * for (docs/app-store/submission-pack.md, "Screenshots"):
  *
- * Each frame is exactly 1320 x 2868: a 440 x 956 CSS viewport at device
- * scale 3, portrait, the size App Store Connect takes for the 6.9-inch
- * class. Frames are named in listing order, `app-store-01-home.png` on,
- * and land in `screenshots/` with every other capture, so
- * app-screenshots.yml commits them to the `app-screenshots` branch.
+ *   - 6.9-inch ("Dynamic Island, large display"): 1320 x 2868, a 440 x 956
+ *     CSS viewport at device scale 3, an iPhone 16 Pro Max's;
+ *   - 6.5-inch ("Face ID, large display"): 1242 x 2688, a 414 x 896
+ *     viewport at scale 3, an iPhone 11 Pro Max's. App Store Connect
+ *     scales this set down for the required "Dynamic Island, medium
+ *     display" class when that has none of its own.
+ *
+ * Portrait. Frames are named in listing order, `app-store-01-home.png` on
+ * for 6.9-inch and `app-store-6.5-01-home.png` on for 6.5-inch, and land in
+ * `screenshots/` with every other capture, so app-screenshots.yml commits
+ * them to the `app-screenshots` branch, where the listing's sets are
+ * uploaded from.
  *
  * A frame is real use of the web build on the repo's demo seeds, settled:
  * no loading state, no guide, no toast.
@@ -37,10 +44,11 @@
  * `profile.darkMode`, so toggling `.dark` would leave a light map under a
  * dark page.
  *
- * The layout is an iPhone 16 Pro Max's: the app pads for
+ * The layout is the class's phone's: the app pads for
  * `env(safe-area-inset-*)` (index.css `--safe-top` / `--safe-bottom`), and
  * CDP's `Emulation.setSafeAreaInsetsOverride` gives those the phone's
- * 62 px status bar and 34 px home indicator. The status bar itself is not
+ * status bar (62 px on the 16 Pro Max, 44 px on the 11 Pro Max) and its
+ * 34 px home indicator. The status bar itself is not
  * drawn: that band is left as the app paints it. Touch and a coarse
  * pointer (`isMobile`, `hasTouch`), as on the phone: the project's desktop
  * pointer would turn on index.css's desktop scrollbar. Reduce Motion, so
@@ -95,28 +103,63 @@ import {
 
 const require = createRequire(import.meta.url);
 
-const FRAME = { width: 440, height: 956, scale: 3 } as const;
-/** iPhone 16 Pro Max, portrait, in CSS px: the status bar above, the home
+/** One of App Store Connect's iPhone screenshot classes: the CSS viewport,
+ *  the device scale that makes it the class's pixel size, the phone's
+ *  status bar and home indicator in CSS px, and the prefix its frames'
+ *  names take. */
+interface FrameClass {
+  label: string;
+  prefix: string;
+  width: number;
+  height: number;
+  scale: number;
+  statusBar: number;
+  homeIndicator: number;
+}
+
+const FRAME_CLASSES: readonly FrameClass[] = [
+  {
+    label: "6.9-inch",
+    prefix: "",
+    width: 440,
+    height: 956,
+    scale: 3,
+    statusBar: 62,
+    homeIndicator: 34,
+  },
+  {
+    label: "6.5-inch",
+    prefix: "6.5-",
+    width: 414,
+    height: 896,
+    scale: 3,
+    statusBar: 44,
+    homeIndicator: 34,
+  },
+];
+
+/** The class the running test shoots, set by its describe's beforeEach. */
+let FRAME: FrameClass = FRAME_CLASSES[0];
+
+/** The phone's insets, portrait, in CSS px: the status bar above, the home
  *  indicator below. */
-const SAFE_AREA = {
-  top: 62,
-  topMax: 62,
-  bottom: 34,
-  bottomMax: 34,
+const safeArea = (frame: FrameClass) => ({
+  top: frame.statusBar,
+  topMax: frame.statusBar,
+  bottom: frame.homeIndicator,
+  bottomMax: frame.homeIndicator,
   left: 0,
   leftMax: 0,
   right: 0,
   rightMax: 0,
-} as const;
+});
 /** How far down the status bar's scrim is solid: `.ds-safe-top-occluder`
  *  (components.css) is the page colour for 58% of the inset, then fades
  *  out. Content scrolled above this line is hidden; below it, it shows
  *  through. */
-const SCRIM_SOLID = Math.floor(SAFE_AREA.top * 0.58);
+const scrimSolid = (frame: FrameClass) => Math.floor(frame.statusBar * 0.58);
 
 test.use({
-  viewport: { width: FRAME.width, height: FRAME.height },
-  deviceScaleFactor: FRAME.scale,
   isMobile: true,
   hasTouch: true,
   locale: "en-GB",
@@ -467,7 +510,7 @@ function calibratedLead(page: Page, programme: ProgramState): Locator {
 async function openAs(page: Page, account: Account) {
   const cdp = await page.context().newCDPSession(page);
   await cdp
-    .send("Emulation.setSafeAreaInsetsOverride", { insets: SAFE_AREA })
+    .send("Emulation.setSafeAreaInsetsOverride", { insets: safeArea(FRAME) })
     .catch((err: Error) =>
       console.log(
         `[capture] no safe-area override in this Chromium (${err.message}); frames are laid out without the iPhone insets`
@@ -603,7 +646,7 @@ async function scrollPast(page: Page, above: Locator) {
   expect(box, "nothing to scroll past").not.toBeNull();
   await page.evaluate(
     (by) => window.scrollBy({ top: by, behavior: "instant" }),
-    box!.y + box!.height - SCRIM_SOLID
+    box!.y + box!.height - scrimSolid(FRAME)
   );
 }
 
@@ -625,11 +668,11 @@ async function shoot(page: Page, name: string) {
       .getPropertyValue("--safe-top")
       .trim()
   );
-  if (safeTop !== `${SAFE_AREA.top}px`)
+  if (safeTop !== `${FRAME.statusBar}px`)
     console.log(`[capture] ${name}: --safe-top is "${safeTop}"`);
   await settleImages(page);
   const png = await page.screenshot({
-    path: `screenshots/app-store-${name}.png`,
+    path: `screenshots/app-store-${FRAME.prefix}${name}.png`,
     animations: "disabled",
   });
   // The PNG's IHDR chunk: width at byte 16, height at byte 20.
@@ -697,237 +740,264 @@ async function waitForRunMap(page: Page) {
     );
 }
 
-test.describe("App Store screenshots", () => {
-  test.skip(
-    !emulatorActive,
-    "needs the Firebase emulator (auth-emulator project)"
-  );
-  // A copy, a sign-in, a programme and a settled page: more than the
-  // default 30 s.
-  test.describe.configure({ timeout: 120_000 });
-
-  test.afterAll(async () => {
-    if (adminApp) await deleteApp(adminApp);
-    adminApp = undefined;
-  });
-
-  test("01 home: today's session and food", async ({ page }) => {
-    await openSeasonAthlete(page, "home");
-    await page.reload();
-
-    await expect(
-      page.getByRole("button", { name: "Start workout", exact: true })
-    ).toBeVisible({ timeout: 20_000 });
-    const food = page.getByRole("region", { name: "Today’s food" });
-    await expect(food).toContainText(/kcal (left|over)/, { timeout: 20_000 });
-    await expect(food.getByText("Protein")).toBeVisible();
-
-    // The day's water, logged the way it is: the tile's plus, a glass a tap.
-    const addGlass = page.getByRole("button", { name: /^Add \d+ ml$/ });
-    for (let glass = 0; glass < 4; glass++) await addGlass.click();
-    await expect(page.getByText(/^Tap \+ for/)).toBeVisible({
-      timeout: 15_000,
+for (const frameClass of FRAME_CLASSES) {
+  test.describe(`App Store screenshots, ${frameClass.label}`, () => {
+    test.use({
+      viewport: { width: frameClass.width, height: frameClass.height },
+      deviceScaleFactor: frameClass.scale,
     });
-    await expect(
-      page.getByRole("button", { name: /Add water, choose a container size/ })
-    ).toHaveAccessibleName(/^Water 1 L\b/);
-
-    // Last, so a badge the water earned is opened with the rest.
-    await openWaitingBadges(page);
-    await settled(page);
-    await expect(page.getByRole("button", { name: /^New badge/ })).toHaveCount(
-      0
+    test.beforeEach(() => {
+      FRAME = frameClass;
+    });
+    test.skip(
+      !emulatorActive,
+      "needs the Firebase emulator (auth-emulator project)"
     );
-    // The top of the page, whatever the taps above scrolled into view.
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await shoot(page, "01-home");
-  });
+    // A copy, a sign-in, a programme and a settled page: more than the
+    // default 30 s.
+    test.describe.configure({ timeout: 120_000 });
 
-  test("02 train: the week and a lift day", async ({ page }) => {
-    const { programme } = await openSeasonAthlete(page, "train");
-    await page.goto("program");
-
-    await expect(
-      page
-        .getByRole("tablist", { name: "Lift sessions" })
-        .getByRole("tab")
-        .first()
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(calibratedLead(page, programme)).toBeVisible({
-      timeout: 20_000,
+    test.afterAll(async () => {
+      if (adminApp) await deleteApp(adminApp);
+      adminApp = undefined;
     });
-    await expect(
-      page.getByRole("button", { name: "Start workout", exact: true })
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /^More options for / }).nth(2)
-    ).toBeAttached({ timeout: 15_000 });
-    await settled(page);
 
-    // The week, the day and its exercises, with the title and the
-    // Lift / Run switch scrolled under the status bar.
-    await scrollPast(page, pageHeader(page));
-    await shoot(page, "02-train");
-  });
+    test("01 home: today's session and food", async ({ page }) => {
+      await openSeasonAthlete(page, "home");
+      await page.reload();
 
-  test("03 workout: a lift in progress", async ({ page }) => {
-    const { programme } = await openSeasonAthlete(page, "workout");
-    await page.goto("program");
-    const start = page.getByRole("button", {
-      name: "Start workout",
-      exact: true,
+      await expect(
+        page.getByRole("button", { name: "Start workout", exact: true })
+      ).toBeVisible({ timeout: 20_000 });
+      const food = page.getByRole("region", { name: "Today’s food" });
+      await expect(food).toContainText(/kcal (left|over)/, { timeout: 20_000 });
+      await expect(food.getByText("Protein")).toBeVisible();
+
+      // The day's water, logged the way it is: the tile's plus, a glass a tap.
+      const addGlass = page.getByRole("button", { name: /^Add \d+ ml$/ });
+      for (let glass = 0; glass < 4; glass++) await addGlass.click();
+      await expect(page.getByText(/^Tap \+ for/)).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(
+        page.getByRole("button", { name: /Add water, choose a container size/ })
+      ).toHaveAccessibleName(/^Water 1 L\b/);
+
+      // Last, so a badge the water earned is opened with the rest.
+      await openWaitingBadges(page);
+      await settled(page);
+      await expect(
+        page.getByRole("button", { name: /^New badge/ })
+      ).toHaveCount(0);
+      // The top of the page, whatever the taps above scrolled into view.
+      await page.evaluate(() =>
+        window.scrollTo({ top: 0, behavior: "instant" })
+      );
+      await shoot(page, "01-home");
     });
-    await expect(start).toBeVisible({ timeout: 20_000 });
-    // The session takes its sets from the programme the page holds.
-    await expect(calibratedLead(page, programme)).toBeVisible({
-      timeout: 20_000,
+
+    test("02 train: the week and a lift day", async ({ page }) => {
+      const { programme } = await openSeasonAthlete(page, "train");
+      await page.goto("program");
+
+      await expect(
+        page
+          .getByRole("tablist", { name: "Lift sessions" })
+          .getByRole("tab")
+          .first()
+      ).toBeVisible({ timeout: 20_000 });
+      await expect(calibratedLead(page, programme)).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(
+        page.getByRole("button", { name: "Start workout", exact: true })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /^More options for / }).nth(2)
+      ).toBeAttached({ timeout: 15_000 });
+      await settled(page);
+
+      // The week, the day and its exercises, with the title and the
+      // Lift / Run switch scrolled under the status bar.
+      await scrollPast(page, pageHeader(page));
+      await shoot(page, "02-train");
     });
-    // The sets below take seconds here and a quarter of an hour in a gym.
-    // Hold the page's clock as the session starts, and move it on by that
-    // quarter before the shot, so the session's running time reads as one
-    // would. Only Date is held; timers run as normal.
-    const startedAt = Date.now();
-    await page.clock.setFixedTime(startedAt);
-    await start.click();
 
-    const complete = page.getByRole("button", {
-      name: "Mark set complete",
-      exact: true,
+    test("03 workout: a lift in progress", async ({ page }) => {
+      const { programme } = await openSeasonAthlete(page, "workout");
+      await page.goto("program");
+      const start = page.getByRole("button", {
+        name: "Start workout",
+        exact: true,
+      });
+      await expect(start).toBeVisible({ timeout: 20_000 });
+      // The session takes its sets from the programme the page holds.
+      await expect(calibratedLead(page, programme)).toBeVisible({
+        timeout: 20_000,
+      });
+      // The sets below take seconds here and a quarter of an hour in a gym.
+      // Hold the page's clock as the session starts, and move it on by that
+      // quarter before the shot, so the session's running time reads as one
+      // would. Only Date is held; timers run as normal.
+      const startedAt = Date.now();
+      await page.clock.setFixedTime(startedAt);
+      await start.click();
+
+      const complete = page.getByRole("button", {
+        name: "Mark set complete",
+        exact: true,
+      });
+      await expect(complete.first()).toBeVisible({ timeout: 15_000 });
+      // The warm-ups and two working sets, each rest ended as it starts.
+      const endRest = page.getByRole("button", {
+        name: "End rest",
+        exact: true,
+      });
+      const done = page.getByRole("button", { name: /^Edit completed / });
+      const warmups = await page
+        .getByRole("button", { name: /^Warm-up \d+\. Change set type$/ })
+        .count();
+      for (let set = 1; set <= warmups + 2; set++) {
+        await complete.first().click();
+        await expect(done).toHaveCount(set);
+        if (await endRest.isVisible()) await endRest.click();
+      }
+      await expect(page.getByText(/^Set \d+ of \d+ · 2 done$/)).toBeVisible();
+      // A set that beats last time's best is announced on the spot for a few
+      // seconds; the frame is the screen once that has gone.
+      await expect(page.getByTestId("new-best-moment")).toHaveCount(0, {
+        timeout: 15_000,
+      });
+      await page.clock.setFixedTime(startedAt + (14 * 60 + 20) * 1000);
+      // The header's time figure.
+      await expect(page.getByText(/^14:2\d$/)).toBeVisible();
+      await shoot(page, "03-workout");
     });
-    await expect(complete.first()).toBeVisible({ timeout: 15_000 });
-    // The warm-ups and two working sets, each rest ended as it starts.
-    const endRest = page.getByRole("button", { name: "End rest", exact: true });
-    const done = page.getByRole("button", { name: /^Edit completed / });
-    const warmups = await page
-      .getByRole("button", { name: /^Warm-up \d+\. Change set type$/ })
-      .count();
-    for (let set = 1; set <= warmups + 2; set++) {
-      await complete.first().click();
-      await expect(done).toHaveCount(set);
-      if (await endRest.isVisible()) await endRest.click();
-    }
-    await expect(page.getByText(/^Set \d+ of \d+ · 2 done$/)).toBeVisible();
-    // A set that beats last time's best is announced on the spot for a few
-    // seconds; the frame is the screen once that has gone.
-    await expect(page.getByTestId("new-best-moment")).toHaveCount(0, {
-      timeout: 15_000,
+
+    test("04 food: the ring, macros and the day's diary", async ({ page }) => {
+      await openSeasonAthlete(page, "food");
+      await page.goto("food");
+
+      // The diary once the day's meals have been read: its log or, when a
+      // run straddles midnight after seeding, its empty state.
+      await expect(
+        page
+          .getByText(/^Food log\s+·\s+\d+ items?$/)
+          .or(page.getByText("Meals you log today show here."))
+      ).toBeVisible({ timeout: 20_000 });
+      await expect(
+        page.getByRole("button", { name: /calories logged/ }).first()
+      ).toBeVisible();
+      // The free account's Pro line under the composer, closed as anyone
+      // can close it, for room for the diary.
+      await page
+        .getByRole("note")
+        .getByRole("button", { name: "Dismiss" })
+        .click({ timeout: 3_000 })
+        .catch(() => {});
+      // The personal target's trial offer, closed with its "Not now": no
+      // frame carries a trial or a price (Guideline 2.3.7), and the diary
+      // gets its room.
+      const targetOffer = page.getByRole("region", {
+        name: "Your personal target is ready",
+      });
+      await targetOffer
+        .getByRole("button", { name: "Not now" })
+        .click({ timeout: 10_000 })
+        .catch(() => {});
+      await expect(targetOffer).toHaveCount(0);
+      await settled(page);
+
+      // The week's rings, the day's ring and macros, and the diary, with
+      // the title scrolled under the status bar.
+      await scrollPast(page, pageHeader(page));
+      await shoot(page, "04-food");
     });
-    await page.clock.setFixedTime(startedAt + (14 * 60 + 20) * 1000);
-    // The header's time figure.
-    await expect(page.getByText(/^14:2\d$/)).toBeVisible();
-    await shoot(page, "03-workout");
-  });
 
-  test("04 food: the ring, macros and the day's diary", async ({ page }) => {
-    await openSeasonAthlete(page, "food");
-    await page.goto("food");
+    test("05 analytics: the overview", async ({ page }) => {
+      await openSeasonAthlete(page, "analytics");
+      await page.goto("history");
 
-    // The diary once the day's meals have been read: its log or, when a
-    // run straddles midnight after seeding, its empty state.
-    await expect(
-      page
-        .getByText(/^Food log\s+·\s+\d+ items?$/)
-        .or(page.getByText("Meals you log today show here."))
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(
-      page.getByRole("button", { name: /calories logged/ }).first()
-    ).toBeVisible();
-    // The free account's Pro line under the composer, closed as anyone
-    // can close it, for room for the diary.
-    await page
-      .getByRole("note")
-      .getByRole("button", { name: "Dismiss" })
-      .click({ timeout: 3_000 })
-      .catch(() => {});
-    await settled(page);
-
-    // The week's rings, the day's ring and macros, and the diary, with
-    // the title scrolled under the status bar.
-    await scrollPast(page, pageHeader(page));
-    await shoot(page, "04-food");
-  });
-
-  test("05 analytics: the overview", async ({ page }) => {
-    await openSeasonAthlete(page, "analytics");
-    await page.goto("history");
-
-    await expect(
-      page.getByRole("heading", { name: "Performance", exact: true })
-    ).toBeVisible({ timeout: 30_000 });
-    await expect(
-      page.getByRole("heading", { name: "Last 30 days" })
-    ).toBeVisible();
-    await expect(
-      page
-        .getByRole("region", { name: "Muscles trained" })
-        .getByRole("listitem")
-        .first()
-    ).toBeVisible({ timeout: 30_000 });
-    // No skeleton left anywhere, the Performance card's included.
-    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
-      timeout: 30_000,
+      await expect(
+        page.getByRole("heading", { name: "Performance", exact: true })
+      ).toBeVisible({ timeout: 30_000 });
+      await expect(
+        page.getByRole("heading", { name: "Last 30 days" })
+      ).toBeVisible();
+      await expect(
+        page
+          .getByRole("region", { name: "Muscles trained" })
+          .getByRole("listitem")
+          .first()
+      ).toBeVisible({ timeout: 30_000 });
+      // No skeleton left anywhere, the Performance card's included.
+      await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+        timeout: 30_000,
+      });
+      await settled(page);
+      await shoot(page, "05-analytics");
     });
-    await settled(page);
-    await shoot(page, "05-analytics");
-  });
 
-  test("06 race plan: the race cockpit", async ({ page }) => {
-    const account = await openSeasonAthlete(page, "race");
-    await setHalfMarathonGoal(account.uid, new Date());
-    await page.goto("program?tab=run");
+    test("06 race plan: the race cockpit", async ({ page }) => {
+      const account = await openSeasonAthlete(page, "race");
+      await setHalfMarathonGoal(account.uid, new Date());
+      await page.goto("program?tab=run");
 
-    const plan = page.getByRole("region", { name: "Race plan" });
-    await expect(plan).toBeVisible({ timeout: 20_000 });
-    await expect(plan).toContainText(/\d+ days? out/);
-    // The phase rail, the last of each word in the card.
-    for (const phase of ["Base", "Build", "Taper", "Race"])
-      await expect(plan.getByText(phase, { exact: true }).last()).toBeVisible();
-    // A whole block: no compressed-plan note under the card.
-    await expect(page.getByText(/^Compressed plan/)).toHaveCount(0);
-    await settled(page);
-    await shoot(page, "06-race-plan");
-  });
-
-  test("07 social: the feed", async ({ page }) => {
-    await openSeasonAthlete(page, "social");
-    await page.goto("social?tab=feed&feed=explore");
-
-    await expect(page.getByText("Morning run")).toBeVisible({
-      timeout: 20_000,
+      const plan = page.getByRole("region", { name: "Race plan" });
+      await expect(plan).toBeVisible({ timeout: 20_000 });
+      await expect(plan).toContainText(/\d+ days? out/);
+      // The phase rail, the last of each word in the card.
+      for (const phase of ["Base", "Build", "Taper", "Race"])
+        await expect(
+          plan.getByText(phase, { exact: true }).last()
+        ).toBeVisible();
+      // A whole block: no compressed-plan note under the card.
+      await expect(page.getByText(/^Compressed plan/)).toHaveCount(0);
+      await settled(page);
+      await shoot(page, "06-race-plan");
     });
-    await expect(page.getByText("Push day")).toBeVisible();
-    await settled(page);
-    await shoot(page, "07-social");
-  });
 
-  test("08 run: a saved run and its map", async ({ page }) => {
-    const account = await openSeasonAthlete(page, "run");
-    // The season's longest run of the last fortnight: an 18 km long run,
-    // whichever day this runs on.
-    const since = new Date();
-    since.setDate(since.getDate() - 13);
-    const runs = await getFirestore(admin())
-      .collection("users")
-      .doc(account.uid)
-      .collection("runs")
-      .where("date", ">=", localDateString(since))
-      .get();
-    const longest = runs.docs
-      .map((doc) => ({ id: doc.id, metres: doc.get("distance") as number }))
-      .sort((a, b) => b.metres - a.metres)[0];
-    expect(longest, "the season seed has no recent runs").toBeTruthy();
+    test("07 social: the feed", async ({ page }) => {
+      await openSeasonAthlete(page, "social");
+      await page.goto("social?tab=feed&feed=explore");
 
-    await page.goto(`run/${longest.id}`);
-    await expect(
-      page.getByRole("heading", {
-        name: `${(longest.metres / 1000).toFixed(2)} km`,
-      })
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(
-      page.getByRole("table", { name: "Splits" }).getByRole("row").nth(5)
-    ).toBeAttached();
-    await waitForRunMap(page);
-    await settled(page);
-    await shoot(page, "08-run");
+      await expect(page.getByText("Morning run")).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(page.getByText("Push day")).toBeVisible();
+      await settled(page);
+      await shoot(page, "07-social");
+    });
+
+    test("08 run: a saved run and its map", async ({ page }) => {
+      const account = await openSeasonAthlete(page, "run");
+      // The season's longest run of the last fortnight: an 18 km long run,
+      // whichever day this runs on.
+      const since = new Date();
+      since.setDate(since.getDate() - 13);
+      const runs = await getFirestore(admin())
+        .collection("users")
+        .doc(account.uid)
+        .collection("runs")
+        .where("date", ">=", localDateString(since))
+        .get();
+      const longest = runs.docs
+        .map((doc) => ({ id: doc.id, metres: doc.get("distance") as number }))
+        .sort((a, b) => b.metres - a.metres)[0];
+      expect(longest, "the season seed has no recent runs").toBeTruthy();
+
+      await page.goto(`run/${longest.id}`);
+      await expect(
+        page.getByRole("heading", {
+          name: `${(longest.metres / 1000).toFixed(2)} km`,
+        })
+      ).toBeVisible({ timeout: 20_000 });
+      await expect(
+        page.getByRole("table", { name: "Splits" }).getByRole("row").nth(5)
+      ).toBeAttached();
+      await waitForRunMap(page);
+      await settled(page);
+      await shoot(page, "08-run");
+    });
   });
-});
+}
