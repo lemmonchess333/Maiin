@@ -292,8 +292,10 @@ export function verdictFor(args: {
   if (loadBand === "overreach") {
     return "A big week. Keep an eye on recovery going into this one.";
   }
+  /* About you, never about load (App1 Q12): the lead's own Sharpening
+     line, "You trained more than your usual week". */
   if (loadBand === "high") {
-    return "A strong week, with training load running high.";
+    return "A strong week. You trained more than your usual week.";
   }
   if (delta !== null && delta >= 5) return "Momentum’s building.";
   if (delta !== null && delta <= -5) {

@@ -80,6 +80,14 @@ describe("the Performance Index explainer names the engine's windows", () => {
     );
   });
 
+  it("says what the score is made of in your training, never as load", () => {
+    /* "training load, recovery and consistency" named a metric where the
+       person's lifting and running are (house voice: say sessions, kilos
+       and kilometres; no load unless the screen explains it). */
+    expect(explainer()).not.toMatch(/\bload\b/i);
+    expect(explainer()).toContain("how much you lifted and ran");
+  });
+
   it("keeps the sentence that stops the score reading as a target", () => {
     // The half that was already right — a higher PI is not advice to
     // train harder, and removing that is how this becomes a leaderboard.
