@@ -99,7 +99,7 @@ Food
 
 Progress
 • Analytics for lifting, running, body and food over the last 3 months, with personal records and a map of the muscles you've trained.
-• A weekly performance score from 0 to 100, and a review of each week.
+• Your last 7 days of lifting and running against your usual week, a score from 0 to 100, and a review of each week.
 • Progress photos, streaks and badges.
 
 With other people
@@ -116,7 +116,7 @@ Tropos Pro
 • Protein, carbs and fat that shift with each day's training.
 • Running paces that move with your recent races and sessions.
 • Readiness from your sleep and heart rate in Apple Health.
-• Charts older than 3 months, your training load and your score's details.
+• Charts older than 3 months, and your score's 12-week chart, average and details.
 • Race plans for a half marathon or longer, after their first week.
 
 Pro is a monthly or yearly subscription, with a 7-day free trial for new subscribers. Payment is taken from your Apple Account when the trial ends, or when you subscribe if there is no trial. It renews automatically unless you cancel at least 24 hours before the end of the current period. Manage or cancel it in your Apple Account settings.
@@ -302,11 +302,11 @@ Where to find things
 - Apple Health: Settings > Apple Health > Connect, on any account. With Pro, "Add sleep and heart from Apple Health" on Home.
 - Settings: the photo or initials at the top right of Home.
 - Account deletion: Settings > Account > Delete account. An Apple account confirms with Apple, and its Sign in with Apple token is revoked.
-- Report and block: "More options" on a post, a comment or a profile, and "Post options" on a Space post. Blocked people are in Settings > Social & privacy.
+- Report and block: "More options" on a post, comment, profile or segment, and "Post options" on a Space post. Blocked people are in Settings > Social & privacy.
 - Privacy Policy, Terms and support: Settings > Support & legal.
 
 Pro and In-App Purchase
-Monthly and yearly auto-renewable subscriptions, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive running paces, readiness from Apple Health, charts older than 3 months, the training load, the score's details, and plans for a half marathon or longer after their first week. Everything else is free.
+Monthly and yearly auto-renewable subscriptions, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive running paces, readiness from Apple Health, charts older than 3 months, the score's 12-week chart and details, and plans for a half marathon or longer after their first week. Everything else is free.
 
 AI food analysis
 A meal or label photo, or a typed meal (Pro), goes to Google's Gemini on Vertex AI only after the user allows it on a sheet that names Google. Results are checked before they are logged. Photos are kept on the phone for 90 days for the diary, never on our servers. It can be switched off in Settings > Social & privacy.
@@ -400,7 +400,7 @@ here ready to upload in name order:
 | 2   | `02-train`     | Train: the next lift in the rotation and its exercises                     |
 | 3   | `03-workout`   | A lift in progress, two working sets done                                  |
 | 4   | `04-food`      | Food: the calorie wheel, the week, macros and the day's diary              |
-| 5   | `05-analytics` | Progress: the performance score and the last 30 days                       |
+| 5   | `05-analytics` | Progress: the last 7 days against the usual week, and the last 30 days     |
 | 6   | `06-race-plan` | Train's run week: the next run and a half-marathon plan (Pro after week 1) |
 | 7   | `07-social`    | The feed, with a run and a lift shared                                     |
 | 8   | `08-run`       | A saved run: its route coloured by pace, its figures and best efforts      |

@@ -248,12 +248,16 @@ describe("App Store listing: claims the code can contradict", () => {
       /shift with each day's training/,
       /paces that move with/,
       /Readiness from your sleep and heart rate/,
-      /older than 3 months, your training load and your score's details/,
+      /older than 3 months, and your score's 12-week chart, average and details/,
       /half marathon or longer, after their first week/,
       /Typed meals read by AI/,
     ])
       expect(pro).toMatch(gate);
     expect(read("../subscription.ts")).toMatch(/pro:\s*\{\s*text_ai:/);
+    // The charts line in the paywall's own words, so the two say one thing.
+    expect(copy).toContain(
+      "Charts older than 3 months, and your score’s 12-week chart, average and details"
+    );
   });
 
   it("does not sell a marathon plan as free, which is Pro after week 1", () => {
