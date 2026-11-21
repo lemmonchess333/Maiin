@@ -314,6 +314,41 @@ describe("App Store listing: claims the code can contradict", () => {
     );
   });
 
+  it("says reports email us, not that each one does, while alerts are capped", () => {
+    // reportAlert.js sends at most a few alerts per reporter a day and a
+    // set number a day overall; past either the report is stored and
+    // queued with no email (fact-check of #3418).
+    const ALERT = read("../../../functions/lib/reportAlert.js");
+    expect(ALERT).toMatch(/const REPORTER_ALERTS_PER_DAY = \d+;/);
+    expect(ALERT).toMatch(/const ALERTS_PER_DAY = \d+;/);
+    expect(field("review-notes")).toContain(
+      "Reports email us and join a review queue"
+    );
+    expect(field("review-notes")).not.toMatch(/each report emails/i);
+  });
+
+  it("names the strap's heart rate a saved run keeps in the Health row", () => {
+    // A run paired with a Bluetooth strap saves its heart rate summary
+    // (average, maximum, time in zones) with the run (runCompletion.ts,
+    // hrZones.ts), so the Health row says so, in the policy's words.
+    expect(read("../runCompletion.ts")).toMatch(
+      /\.\.\.\(run\.heartRate \? \{ heartRate: run\.heartRate \} : \{\}\)/
+    );
+    const HR = read("../hrZones.ts");
+    expect(HR).toMatch(
+      /export type HeartRateSourceKind = "apple-watch" \| "bluetooth";/
+    );
+    expect(HR).toMatch(
+      /averageBpm: number;[\s\S]*maxBpm: number;[\s\S]*zoneSeconds:/
+    );
+    const health = LISTING.split("\n").find((line) =>
+      line.startsWith("| Health & fitness | Health ")
+    );
+    expect(health).toMatch(
+      /the heart rate saved with a run from a paired strap \(average and maximum heart rate and time in heart rate zones\)/
+    );
+  });
+
   it("does not offer guided runs, which the run chooser no longer lists", () => {
     // Trim1 call 8 (November 2026) took the three fixed guided runs out
     // of the chooser: structured sessions come from the plan. The

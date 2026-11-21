@@ -44,7 +44,9 @@
 			</array>
 		</dict>
 		<!-- Health: body weight and measurements, sex, year of birth, injury limits,
-		     maximum heart rate, nutrition. None of it reaches Google Analytics.
+		     maximum heart rate, nutrition, and the heart rate saved with a run
+		     from a paired strap (average and maximum heart rate and time in
+		     heart rate zones). None of it reaches Google Analytics.
 		     Apple Health's steps, sleep, resting heart rate and HRV are read on
 		     the phone and never collected; accepting the steps offer saves the
 		     new activity level, which is part of this type. -->
