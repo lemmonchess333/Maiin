@@ -2822,7 +2822,8 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 ### Every one deleted (owner, 2026-11-21: "Delete them all")
 
-Affects: `functions/scripts/purgeLegacyFoodPhotos.js` (new, operator-run),
+Affects: `functions/scripts/purgeLegacyFoodPhotos.js` (new, operator-run,
+from the Actions tab through `.github/workflows/purge-legacy-food-photos.yml`),
 `storage.rules` (the `food-photos/` block is now read and write false, for
 the owner too), `useMeals.ts` (`parseMealDoc` no longer reads `photoUrl`),
 `FoodTimeline.tsx` and `FoodRow.tsx` (the device photo is the only one
@@ -2840,26 +2841,31 @@ In this order:
       finish. Passing: its Storage stage is green, and Firebase console →
       Storage → Rules shows the `food-photos` block as
       `allow read, write: if false`.
-- [ ] **Dry run.** From the repo root, with `npm ci` done in `functions/`
-      and gcloud application-default credentials for the project (access
-      to Firestore and Storage):
-      `node functions/scripts/purgeLegacyFoodPhotos.js --project adaptive-fitness-af8bb --bucket BUCKET`,
-      where BUCKET is the default bucket as Firebase console → Storage
-      shows it, without `gs://` (`adaptive-fitness-af8bb.firebasestorage.app`
-      or `adaptive-fitness-af8bb.appspot.com`; the script refuses a bucket
-      that does not exist). Passing: it deletes and writes nothing, and
-      prints how many objects (and bytes) are under `food-photos/` and how
-      many meals hold `photoUrl` and `photoPath`.
-- [ ] **Purge.** The same command with `--apply`. It deletes the objects,
-      then the fields a page of 200 meals at a time, printing a checkpoint
-      after each page; if it stops, run it again from the start, or with
-      `--after <the last checkpoint's cursor>`. Passing: a second dry run
-      prints `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s)
-      hold a photo field`; Firebase console → Storage has no
-      `food-photos` folder; and in Firestore console a meal scanned before
-      18 August 2026 has neither `photoUrl` nor `photoPath`. Then write the
-      date into CLAUDE.md's "Meal photos are device-local" section, where
-      it says "Run in production on: not yet".
+- [ ] **Dry run.** Actions tab → "Purge legacy meal photos" → Run
+      workflow, on main, mode `dry-run` (the default), bucket left empty
+      (it uses the app's own, `VITE_FIREBASE_STORAGE_BUCKET`). Passing:
+      the run is green, deletes and writes nothing, and its "Count, or
+      delete" step prints how many objects (and bytes) are under
+      `food-photos/` and how many meals hold `photoUrl` and `photoPath`.
+      Read those counts before going on. If it fails on a Storage
+      permission (`storage.objects.list`), the service account behind
+      `FIREBASE_SERVICE_ACCOUNT` needs Storage Object Admin on that bucket
+      (Google Cloud console → Cloud Storage → the bucket → Permissions);
+      no new secret. If it says the bucket does not exist, run it again
+      with the bucket Firebase console → Storage shows, without `gs://`.
+- [ ] **Apply.** Run it again with mode `apply`. It deletes the objects,
+      then takes the fields off the meals, then counts again in the same
+      run and fails unless both counts are 0. This cannot be undone. If a
+      run stops part-way, run `apply` again: what is already gone is not
+      listed or written again.
+- [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
+      `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
+      photo field`; Firebase console → Storage has no `food-photos`
+      folder; and in Firestore console a meal scanned before 18 August
+      2026 has neither `photoUrl` nor `photoPath`. Then write the date
+      into CLAUDE.md's "Meal photos are device-local" section, where it
+      says "Run in production on: not yet". (The same script runs from a
+      terminal with Admin credentials; its header has the command.)
 - [ ] **An older build.** After the purge, a TestFlight build from before
       this change, on an account with a meal scanned before 18 August
       2026. Passing: that meal's row shows our drawing of the food, not a

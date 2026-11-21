@@ -30,7 +30,7 @@ const BUCKET = "demo-tropos.firebasestorage.app";
  * a page at a time (`autoPaginate: false` hands back the next query), and
  * a file's delete with `ignoreNotFound` treats a missing object as done.
  */
-function fakeBucket(objects, { failDelete = null } = {}) {
+function fakeBucket(objects, { failDelete = null, missing = false } = {}) {
   const stored = new Map(Object.entries(objects));
   const deleteCalls = [];
   const file = (name) => ({
@@ -52,9 +52,13 @@ function fakeBucket(objects, { failDelete = null } = {}) {
     name: BUCKET,
     stored,
     deleteCalls,
-    exists: async () => [true],
     file,
     getFiles: async ({ prefix = "", maxResults = 1000, pageToken } = {}) => {
+      if (missing) {
+        throw Object.assign(new Error("The specified bucket does not exist."), {
+          code: 404,
+        });
+      }
       const names = [...stored.keys()]
         .filter((n) => n.startsWith(prefix))
         .sort()
@@ -323,15 +327,36 @@ describe("purgeLegacyFoodPhotos", () => {
     expect(fs.operations).toEqual([]);
   });
 
-  it("refuses a bucket that does not exist, before reading anything", async () => {
-    const bucket = {
-      ...fakeBucket(seededObjects()),
-      exists: async () => [false],
-    };
+  /* Listing the prefix is the check: it needs only the object permissions
+     the purge needs anyway, where asking for the bucket itself
+     (bucket.exists) needs storage.buckets.get, which the CI account that
+     runs this may not hold. */
+  it("refuses a bucket that does not exist, before reading any meal", async () => {
+    const bucket = fakeBucket(seededObjects(), { missing: true });
     const fs = seededFirestore();
     await expect(
       purgeLegacyFoodPhotos({ firestore: fs, bucket, fieldDelete: DELETE })
     ).rejects.toThrow(/--bucket/);
+    expect(fs.operations).toEqual([]);
+    expect(bucket.deleteCalls).toEqual([]);
+  });
+
+  it("passes any other listing failure through, a missing permission say", async () => {
+    const bucket = {
+      ...fakeBucket(seededObjects()),
+      getFiles: async () => {
+        throw Object.assign(new Error("no storage.objects.list access"), {
+          code: 403,
+        });
+      },
+    };
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: seededFirestore(),
+        bucket,
+        fieldDelete: DELETE,
+      })
+    ).rejects.toThrow("storage.objects.list");
   });
 });
 

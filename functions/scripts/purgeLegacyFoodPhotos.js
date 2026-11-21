@@ -31,11 +31,17 @@
  *
  * BUCKET is the project's default Storage bucket as Firebase console →
  * Storage shows it, without `gs://` (`PROJECT_ID.firebasestorage.app` or
- * `PROJECT_ID.appspot.com`). The script checks it exists before reading
- * anything.
+ * `PROJECT_ID.appspot.com`; the app's own `VITE_FIREBASE_STORAGE_BUCKET`,
+ * which is where older builds uploaded). A bucket that does not exist
+ * stops the run before any meal is read.
+ *
+ * The Actions tab runs it too, with the production credentials and no
+ * terminal: .github/workflows/purge-legacy-food-photos.yml (a dry run
+ * unless "apply" is chosen).
  *
  * Requirements: `npm ci` in functions/, and GOOGLE_APPLICATION_CREDENTIALS
- * pointing at a service account with Firestore and Storage access, or
+ * pointing at a service account with Firestore access and
+ * `storage.objects.list` and `storage.objects.delete` on the bucket, or
  * gcloud ADC (`gcloud auth application-default login`).
  *
  * Without `--apply` it is a dry run that deletes and writes nothing: it
@@ -87,6 +93,25 @@ function storedPhotoFields(data) {
   );
 }
 
+/**
+ * One page of the listing. A bucket that does not exist answers 404, which
+ * is the check that --bucket names the right one: listing needs only the
+ * object permissions the purge needs anyway, where `bucket.exists()` needs
+ * `storage.buckets.get` as well.
+ */
+async function listPage(bucket, query) {
+  try {
+    return await bucket.getFiles(query);
+  } catch (err) {
+    if (err && (err.code === 404 || err.code === "404")) {
+      throw new Error(
+        "That bucket does not exist. Name the bucket the app stores photos in with --bucket, as Firebase console → Storage shows it."
+      );
+    }
+    throw err;
+  }
+}
+
 /** Every object under the prefix, a page at a time; deleted with --apply. */
 async function purgeObjects({ bucket, apply, objectPageSize, report }) {
   let query = {
@@ -95,7 +120,7 @@ async function purgeObjects({ bucket, apply, objectPageSize, report }) {
     autoPaginate: false,
   };
   while (query) {
-    const [files, next] = await bucket.getFiles(query);
+    const [files, next] = await listPage(bucket, query);
     for (const file of files) {
       report.objects += 1;
       report.bytes += Number((file.metadata && file.metadata.size) || 0);
@@ -122,13 +147,6 @@ async function purgeLegacyFoodPhotos({
   objectPageSize = OBJECT_PAGE_SIZE,
   onPage = () => {},
 }) {
-  const [exists] = await bucket.exists();
-  if (!exists) {
-    throw new Error(
-      "That bucket does not exist. Name the project's default bucket with --bucket, as Firebase console → Storage shows it."
-    );
-  }
-
   const report = {
     objects: 0,
     bytes: 0,
