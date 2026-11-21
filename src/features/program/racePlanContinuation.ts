@@ -71,7 +71,7 @@ export function preserveEditedRunDays(
  * and the Settings preview both build the week here, so the preview shows
  * what is saved.
  */
-export function planWeekFromToday(
+function planWeekFromToday(
   generated: readonly ScheduledRunDay[],
   today: string,
   kept?: {

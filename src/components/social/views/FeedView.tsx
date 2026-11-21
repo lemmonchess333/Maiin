@@ -6,13 +6,7 @@ import {
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useUid } from "@/lib/auth";
-import {
-  Fragment,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import {
   MAX_SPACES_IN_FEED,
@@ -26,7 +20,6 @@ import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
 import PulseLine from "@/components/social/PulseLine";
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import TrajectoryCard from "@/components/social/TrajectoryCard";
 import { ActivityCardSkeleton } from "@/components/LoadingSkeleton";
 import { Users, Globe } from "lucide-react";
@@ -133,21 +126,6 @@ export default function FeedView({
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
   );
-  /* App1 Q6: the Spaces source is offered once Tropos has enough people
-     for Spaces, or to someone in one. It stays while either is still being
-     read, so the control does not lose a source under a thumb on a busy
-     Tropos; a quiet Tropos takes it away once both are known. */
-  const enough = useEnoughPeople();
-  const spacesSourceShown =
-    enough !== false || !spacesReady || joinedSpaceIds.length > 0;
-  const feedSources: FeedSubTab[] = spacesSourceShown
-    ? ["following", "communities", "explore"]
-    : ["following", "explore"];
-  /* A link to the Spaces source that is not offered opens Following. */
-  useEffect(() => {
-    if (!spacesSourceShown && feedSubTab === "communities")
-      selectFeedSubTab("following");
-  }, [spacesSourceShown, feedSubTab, selectFeedSubTab]);
   const communitiesFeed = useCommunitiesFeed(
     active && feedSubTab === "communities" && blockedReady && spacesReady,
     joinedSpaceIds
@@ -403,7 +381,6 @@ export default function FeedView({
 
   return (
     <>
-
       {active && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
@@ -426,7 +403,9 @@ export default function FeedView({
                   });
               }}
               onReselect={selectFeedSubTab}
-              options={feedSources.map((source) => ({
+              options={(
+                ["following", "communities", "explore"] as FeedSubTab[]
+              ).map((source) => ({
                 value: source,
                 label: (
                   <span className="relative inline-flex items-center justify-center gap-1">
@@ -491,7 +470,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCountFailed && (
               <div
                 role="alert"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 dark:card-shadow"
               >
                 <p className="text-small text-muted-foreground">
                   Couldn&rsquo;t load who you follow.

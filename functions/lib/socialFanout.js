@@ -46,6 +46,7 @@ const { categoryFor, wantsNotification } = require("./notificationPreferences");
  */
 
 const blockGuard = require("./blockGuard");
+const { millisOf } = require("./socialPush");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const {
   FEED_COPY_RETENTION_DAYS,
@@ -403,6 +404,13 @@ function laterThan(a, b) {
  *     already there as it is: the same notice again, such as props taken
  *     back and given again, is not news. Nothing is rewritten, so the row
  *     keeps its time and does not come back as unread.
+ *   - `quietForMs` (with a `notificationId`) does the same for a row
+ *     written less than that long ago, and refreshes an older one: the
+ *     same person asking again within the window is not news either. A
+ *     rewritten row is a new notice to onNotificationItemWritten, which
+ *     pushes it, so without this a follow request cancelled and made
+ *     again pushed the person asked every time, as often as a client
+ *     could write.
  *
  * Caller is responsible for rate limiting (kudos/comment CFs already
  * apply per-uid limits via `isRateLimited`).
@@ -417,6 +425,7 @@ async function createNotification({
   notificationId,
   sourceEvent,
   keepExisting = false,
+  quietForMs = 0,
 }) {
   if (!firestore || !fromUid || !toUid) {
     throw new Error("createNotification: firestore, fromUid, toUid required");
@@ -496,6 +505,20 @@ async function createNotification({
       const previous = await tx.get(itemRef);
       if (previous.exists) {
         return { notificationId: itemRef.id, skipped: true, duplicate: true };
+      }
+    }
+    if (quietForMs > 0 && typeof notificationId === "string" && notificationId) {
+      const previous = await tx.get(itemRef);
+      const writtenAt = previous.exists
+        ? millisOf((previous.data() || {}).createdAt)
+        : null;
+      if (writtenAt !== null && Date.now() - writtenAt < quietForMs) {
+        return {
+          notificationId: itemRef.id,
+          skipped: true,
+          duplicate: true,
+          quiet: true,
+        };
       }
     }
     if (receipt) {

@@ -129,7 +129,9 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onDelete={vi.fn()}
       />
     );
-    expect(screen.queryByLabelText("Edit Chicken salad")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Chicken salad\b/ })
+    ).toBeNull();
   });
 
   it("shows Edit button when onEdit is provided and invokes it on tap", function () {
@@ -143,7 +145,7 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.click(screen.getByLabelText("Edit Chicken salad"));
+    fireEvent.click(screen.getByRole("button", { name: /^Chicken salad\b/ }));
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
@@ -278,7 +280,7 @@ describe("FoodRow — swipe branch (motion path)", function () {
       />
     );
     expect(screen.getByLabelText("Delete Chicken salad")).toBeInTheDocument();
-    const editTarget = screen.getByLabelText("Edit Chicken salad");
+    const editTarget = screen.getByRole("button", { name: /^Chicken salad\b/ });
     expect(editTarget).toHaveAttribute("role", "button");
     expect(editTarget).toHaveAttribute("tabindex", "0");
   });
@@ -295,9 +297,12 @@ describe("FoodRow — swipe branch (motion path)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByLabelText("Edit Chicken salad"), {
-      key: "Enter",
-    });
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: /^Chicken salad\b/ }),
+      {
+        key: "Enter",
+      }
+    );
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 });

@@ -78,7 +78,7 @@ export default function CircleMeetupList({
             return (
               <li
                 key={m.id}
-                className="rounded-xl bg-muted p-3 space-y-2"
+                className="rounded-xl bg-muted p-3 space-y-2 chip-edge"
                 data-testid="circle-meetup"
               >
                 <div className="flex items-start gap-3">

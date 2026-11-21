@@ -38,7 +38,8 @@ export interface WeekMeasure {
   /** The usual week in the same units, or null when there is none yet. */
   usual: number | null;
   usualText: string | null;
-  /** "4 sessions", "3 runs · longest 14.2 km", "No runs in these 7 days". */
+  /** "4 sessions", "3 sessions · 1 circuit", "3 runs · longest 14.2 km",
+   *  "No runs in these 7 days". */
   detail: string;
 }
 
@@ -57,6 +58,39 @@ export interface WeekBreakdown {
 
 function num(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * Whether these 7 days hold more training than the usual week: more
+ * kilos lifted or kilometres run than usual in at least one, and less in
+ * neither, of the sports you usually do. The figures are the engine's own
+ * ratio inputs (`liftProgression`, `runVolume` are this week's over the
+ * baseline's), read from `aggregates` and `baseline` rather than those
+ * ratios because the app reads a stored 0, a sport dropped for the week,
+ * as 1 (`normalisePerformanceDoc`).
+ *
+ * The band is no evidence of it: it bands the whole score, and a week at
+ * the usual one with recovery and food on track scores in the high band
+ * (`trainedMoreThanUsual.test.ts`). So "You trained more than your usual
+ * week" is said on this alone. A sport you don't usually do weighs
+ * neither way, and with no usual week the bars would draw (under
+ * `USUAL_WEEK_MIN_WEEKS` of it) nothing is claimed.
+ */
+export function trainedMoreThanUsual(doc: {
+  aggregates?: Partial<WeeklyAggregates> | null;
+  baseline?: Partial<Baseline> | null;
+}): boolean {
+  const agg = doc.aggregates ?? {};
+  const base = doc.baseline ?? {};
+  if (num(base.weeksUsed) < USUAL_WEEK_MIN_WEEKS) return false;
+  const pairs = [
+    [num(agg.liftTonnage), num(base.liftTonnage)],
+    [num(agg.runKm), num(base.runKm)],
+  ].filter(([, usual]) => usual > 0);
+  return (
+    pairs.some(([done, usual]) => done > usual) &&
+    pairs.every(([done, usual]) => done >= usual)
+  );
 }
 
 function plural(n: number, one: string, many: string): string {
@@ -92,11 +126,23 @@ export function performanceWeekBreakdown(
   const measures: WeekMeasure[] = [];
 
   const liftSessions = num(agg.liftSessions);
+  // Circuits (Circ1) are a way of lifting that counts for adherence and
+  // never for the tonnage: said beside the sessions, so a score raised by
+  // a circuit has its reason on the page.
+  const circuits = num(agg.circuitSessions);
   const tonnage = num(agg.liftTonnage);
   const usualTonnage = comparable ? num(base.liftTonnage) : 0;
   // A discipline the user does not train says nothing; one they usually
   // train and skipped this week says so, against the usual week.
-  if (liftSessions > 0 || usualTonnage > 0) {
+  if (liftSessions > 0 || usualTonnage > 0 || circuits > 0) {
+    const sessionsText =
+      liftSessions > 0
+        ? plural(liftSessions, "session", "sessions")
+        : circuits > 0
+          ? null
+          : "No lifting in these 7 days";
+    const circuitsText =
+      circuits > 0 ? plural(circuits, "circuit", "circuits") : null;
     measures.push({
       key: "lifting",
       label: "Lifting",
@@ -105,10 +151,7 @@ export function performanceWeekBreakdown(
       usual: usualTonnage > 0 ? usualTonnage : null,
       usualText:
         usualTonnage > 0 ? tonnageText(usualTonnage, options.liftUnit) : null,
-      detail:
-        liftSessions > 0
-          ? plural(liftSessions, "session", "sessions")
-          : "No lifting in these 7 days",
+      detail: [sessionsText, circuitsText].filter(Boolean).join(" · "),
     });
   }
 

@@ -51,7 +51,7 @@
 			</array>
 		</dict>
 		<!-- Health: body weight and measurements, sex, age range, injury limits,
-		     maximum heart rate, nutrition. Some figures reach Google Analytics.
+		     maximum heart rate, nutrition. None of it reaches Google Analytics.
 		     The Apple Health step count is read and shown, never collected. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
@@ -63,11 +63,10 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
-		<!-- Fitness: workouts, sets, runs, pace, training plan and goals. Some
-		     figures about sessions reach Google Analytics. -->
+		<!-- Fitness: workouts, sets, runs, pace, training plan and goals. No
+		     figure about a session reaches Google Analytics. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeFitness</string>
@@ -78,7 +77,6 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
 		<!-- Precise location: the GPS route while a run records, including in the

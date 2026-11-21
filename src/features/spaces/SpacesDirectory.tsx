@@ -12,23 +12,21 @@
  * card anatomy), soonest first, then evergreen races awaiting their next
  * date, filtered by a row of chips.
  *
- * The line under a Space's name is its member count, and only a real one:
- * a count below SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing
- * stands in for it (Spc1c). How many posts a Space had this week is not
- * read here (the directory reads a member count and membership only), so
- * no card says it. No animation loops (WKWebView).
- *
- * Until Tropos has enough people to fill them (App1 Q6, `roomShown`), the
- * directory offers nothing: it draws only the Spaces the person joined,
- * under "Your spaces", and nothing at all when they joined none. No filter
- * chips then, as there is nothing to browse, and no search.
+ * The line under a Space's name is its member count, and only a real one
+ * (Spc1c): from SPACE_MEMBER_COUNT_MIN_VISIBLE it says how many, and under
+ * it the Space says it is filling up (App1 Q6, `src/lib/fillingUp.ts`),
+ * since every Space is offered from a person's first day however few
+ * people are on Tropos. While the count is unknown it says neither. How
+ * many posts a Space had this week is not read here (the directory reads
+ * a member count and membership only), so no card says it. No animation
+ * loops (WKWebView).
  *
  * Search (Run27 call 11): a field over the directory finds Spaces by name,
  * or a race by its city, among every Space and every race whatever the
  * chips say (`spaceSearch.ts`, on the device: Spaces are the app's own
  * config). While it holds a query, the results stand in for the rows.
  */
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import PhotoCaption from "@/components/ui/PhotoCaption";
@@ -66,8 +64,7 @@ import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
-import { roomShown } from "@/lib/enoughPeople";
+import { FILLING_UP, roomPeople } from "@/lib/fillingUp";
 import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
@@ -116,8 +113,7 @@ function SpaceCard({
   const photo = spaceEditorialImage(def.id);
   const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
-  const showCount =
-    memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;
+  const people = roomPeople(memberCount, SPACE_MEMBER_COUNT_MIN_VISIBLE);
   const event = def.kind === "race" ? def.event : undefined;
 
   return (
@@ -131,7 +127,6 @@ function SpaceCard({
               background: `linear-gradient(150deg, ${accent}26 0%, ${accent}0C 55%, ${accent}14 100%)`,
             }
       }
-      aria-label={`${def.name} space`}
     >
       {/* Every photo card on the one dark shade (PhotoCaption's scrim),
           with no tint of its own, so the white words read alike on each. */}
@@ -151,6 +146,65 @@ function SpaceCard({
         />
       )}
 
+      {/* The card is named by its words, so the caption comes first in
+          the page's order and the Space's name leads its name, "space"
+          unseen after it, then the tags drawn over the picture: Voice Control is spoken to with the
+          words on the screen (WCAG 2.5.3, Label in Name). The tags are
+          placed absolutely, so the order moves nothing on the card.
+          The name takes two lines before it gives way, on every card, so
+          a long name wraps at a word rather than being cut on its first
+          line. The tags below sit over the caption's scrim (z-10), which
+          reaches them at larger text. */}
+      <PhotoCaption onPhoto={!!photo} className="px-3.5">
+        <p
+          className={`${CARD_SIZE[size].name} font-bold leading-tight line-clamp-2 break-words ${
+            photo ? "text-white" : "text-foreground"
+          }`}
+        >
+          {def.name} <span className="sr-only">space</span>
+        </p>
+        {(event || people) && (
+          <p
+            className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
+              photo ? "text-white/85" : "text-muted-foreground"
+            }`}
+          >
+            {event ? (
+              /* Runna's race-card anatomy: race day + city, not a member
+               count (membership lives on the space page header). */
+              <span className="truncate">
+                <span
+                  className={
+                    event.dateKey < localDateString()
+                      ? undefined
+                      : "font-mono tabular-nums"
+                  }
+                >
+                  {event.dateKey < localDateString()
+                    ? "Next date TBA"
+                    : formatRaceEventDate(event)}
+                </span>
+                {" · "}
+                {event.city} {event.countryFlag}
+              </span>
+            ) : (
+              <>
+                <Users className="size-3" aria-hidden />
+                {people === "fillingUp" ? (
+                  <span>{FILLING_UP}</span>
+                ) : (
+                  <span>
+                    <span className="font-mono tabular-nums">
+                      {people?.count.toLocaleString()}
+                    </span>{" "}
+                    members
+                  </span>
+                )}
+              </>
+            )}
+          </p>
+        )}
+      </PhotoCaption>
       {event && (
         <span
           className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
@@ -190,57 +244,6 @@ function SpaceCard({
           Joined
         </span>
       )}
-
-      {/* The name takes two lines before it gives way, on every card, so
-          a long name wraps at a word rather than being cut on its first
-          line. The tags above sit over the caption's scrim (z-10), which
-          reaches them at larger text. */}
-      <PhotoCaption onPhoto={!!photo} className="px-3.5">
-        <p
-          className={`${CARD_SIZE[size].name} font-bold leading-tight line-clamp-2 break-words ${
-            photo ? "text-white" : "text-foreground"
-          }`}
-        >
-          {def.name}
-        </p>
-        {(event || showCount) && (
-          <p
-            className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
-              photo ? "text-white/85" : "text-muted-foreground"
-            }`}
-          >
-            {event ? (
-              /* Runna's race-card anatomy: race day + city, not a member
-               count (membership lives on the space page header). */
-              <span className="truncate">
-                <span
-                  className={
-                    event.dateKey < localDateString()
-                      ? undefined
-                      : "font-mono tabular-nums"
-                  }
-                >
-                  {event.dateKey < localDateString()
-                    ? "Next date TBA"
-                    : formatRaceEventDate(event)}
-                </span>
-                {" · "}
-                {event.city} {event.countryFlag}
-              </span>
-            ) : (
-              <>
-                <Users className="size-3" aria-hidden />
-                <span>
-                  <span className="font-mono tabular-nums">
-                    {memberCount?.toLocaleString()}
-                  </span>{" "}
-                  members
-                </span>
-              </>
-            )}
-          </p>
-        )}
-      </PhotoCaption>
     </Link>
   );
 }
@@ -380,8 +383,6 @@ function SpaceSearchField({
 export default function SpacesDirectory() {
   const [filters, setFilters] = useState(UK_RACE_FILTERS);
   const { entries, upcomingRaces } = useSpacesDirectory(true, filters);
-  const enough = useEnoughPeople();
-  const yoursId = useId();
   const [query, setQuery] = useState("");
   /* Every Space a search can find: every interest Space and every race,
      whatever the chips say, in the directory's own order. */
@@ -392,34 +393,6 @@ export default function SpacesDirectory() {
     ],
     [entries, upcomingRaces]
   );
-
-  if (!enough) {
-    const yours = entries.filter((e) => roomShown(e.joined, enough));
-    if (yours.length === 0) return null;
-    const yourRaces = yours.filter((e) => e.def.kind === "race");
-    const yourInterest = yours.filter((e) => e.def.kind !== "race");
-    return (
-      <section aria-labelledby={yoursId} className="space-y-3">
-        <SectionHeading id={yoursId}>Your spaces</SectionHeading>
-        {yourRaces.length > 0 && (
-          <CardRow
-            label="Your races"
-            entries={yourRaces}
-            size="regular"
-            hideLabel
-          />
-        )}
-        {yourInterest.length > 0 && (
-          <CardRow
-            label="Spaces"
-            entries={yourInterest}
-            size="small"
-            hideLabel
-          />
-        )}
-      </section>
-    );
-  }
 
   const interest = entries.filter((e) => e.def.kind !== "race");
   const races = entries.filter((e) => e.def.kind === "race");

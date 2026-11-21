@@ -180,6 +180,45 @@ describe("createTrialCheckoutSession", () => {
     expect(firestore._lastTxnSets).toHaveLength(0);
   });
 
+  it.each([
+    [
+      "a RevenueCat trial on record",
+      {
+        subscriptionTrial: { productId: "pro_monthly", cancelBy: "2026-11-25" },
+      },
+    ],
+    [
+      "a first trial counted from either store",
+      { activationBillingFirsts: { trial: { atMs: 1, source: "ios_iap" } } },
+    ],
+  ])(
+    "Cycle 2c: an account that took a trial on the App Store or the website (%s) gets NO second one here",
+    async (_label, record) => {
+      const { createTrialCheckoutSession } = require("../lib/checkoutTrial");
+      const { firestore } = makeFirestoreStub({
+        userData: { stripeCustomerId: "cus_existing", ...record },
+      });
+      const { stripe, sessionCreate } = makeStripeStub();
+
+      const result = await createTrialCheckoutSession({
+        stripe,
+        firestore,
+        uid: "uid_store_trial",
+        priceId: "price_pro_monthly",
+        mode: "subscription",
+        withTrial: true,
+        successUrl: "https://app.example/success",
+        cancelUrl: "https://app.example/cancel",
+        customerId: "cus_existing",
+        metadata: {},
+      });
+
+      expect(sessionCreate.mock.calls[0][0].subscription_data).toBeUndefined();
+      expect(result.trialGranted).toBe(false);
+      expect(firestore._lastTxnSets).toHaveLength(0);
+    }
+  );
+
   it("Cycle 3: withTrial=true + hasUsedTrial=false atomically sets hasUsedTrial=true on the user doc (race-safe)", async () => {
     const { createTrialCheckoutSession } = require("../lib/checkoutTrial");
     const { firestore } = makeFirestoreStub({

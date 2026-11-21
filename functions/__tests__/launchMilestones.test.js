@@ -130,6 +130,20 @@ describe("countsAsSession", () => {
     );
     expect(countsAsSession("swim", RUN)).toBe(false);
   });
+
+  it("counts a circuit that ran 7 minutes, as the streak does (Circ1 (6))", () => {
+    const circuit = (activeSeconds) => ({
+      format: "circuit",
+      exercises: [],
+      circuit: { activeSeconds },
+    });
+    expect(countsAsSession("lift", circuit(420))).toBe(true);
+    expect(countsAsSession("lift", circuit(1200))).toBe(true);
+    expect(countsAsSession("lift", circuit(419))).toBe(false);
+    expect(countsAsSession("lift", { format: "circuit", exercises: [] })).toBe(
+      false
+    );
+  });
 });
 
 /** The profile in a transaction, as the trigger's Admin SDK sees it. */

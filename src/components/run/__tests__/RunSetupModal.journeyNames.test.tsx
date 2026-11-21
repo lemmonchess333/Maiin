@@ -61,7 +61,7 @@ function plannedEasyRun(): Partial<RunConfig> {
   };
   const { metadata, prefill } = computePlanMetadata({
     displayUnit: "km",
-    profileRunMode: "structured",
+    profileRunMode: "starter",
     todayDayIndex: 3,
     todayDate: "2027-03-03",
     runPlan: undefined,

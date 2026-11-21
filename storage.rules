@@ -90,10 +90,15 @@ service firebase.storage {
     // The file goes with its post (onSpacePostWritten,
     // functions/lib/spacePostPhoto.js); the account-deletion executor
     // sweeps the whole prefix (spacePhotosStorage).
+    // Under 7 MB, because every photo here is screened
+    // (functions/lib/photoScreen.js) and Vision takes a request of at most
+    // 10 MB, base64 included: anything over about 7.86 MB could never be
+    // screened and would be deleted on arrival, so it is refused at upload
+    // instead. The app's own photos are 1280 px JPEGs, about 1 MB at most.
     match /space-photos/{uid}/{allPaths=**} {
       allow get: if request.auth != null;
       allow write: if isOwnerAndWritable(uid)
-        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.size < 7 * 1024 * 1024
         && isAllowedImageMime();
       allow delete: if isOwnerAndWritable(uid);
     }

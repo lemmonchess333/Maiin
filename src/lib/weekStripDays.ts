@@ -1,13 +1,4 @@
-import type { UserProfile } from "@/lib/auth";
-import type { ProgramState } from "@/features/program/programTypes";
-import {
-  dayTypeFor,
-  resolveTrainingWindow,
-  runsWrittenForWeek,
-} from "@/lib/trainingResolver";
-import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import { beforeStart } from "@/lib/startDay";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import type { LayoutDay, LayoutLift, WeekLayout } from "@/lib/layOutWeek";
 
 /**
  * What one day of Home's week strip shows (DS4: seven segments under the
@@ -18,7 +9,9 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
  *   lift-done / run-done  filled with the sport's colour
  *   both-done             split between the two
  *   planned               outlined in its sport's colour: still to do
- *   missed                a dashed outline: a planned day that has passed
+ *   missed                a dashed outline: a planned run whose day has
+ *                         passed. A lift is never missed: one whose day
+ *                         passes moves to the next lift day (TrainWk1)
  *   rest                  the bare track
  *   before                the bare track, for a day before the account
  *                         began: a plan made on Friday did not miss Monday
@@ -35,55 +28,51 @@ export type WeekDayState =
   | "rest"
   | "before";
 
-export interface StripDay {
+export interface WeekStripDay {
   key: string;
-  sType: string;
-  /** The planned lift slot's status. Lifts are split-ordered (ADR-0002),
-   *  so a slot can be completed by a session on another day. */
-  liftCompleted: boolean;
-  liftSkipped: boolean;
-  /** A lift session was logged ON this date. */
-  liftLogged: boolean;
-  /** A run was done on this date: the planned run's derived completion,
-   *  or a logged run that claimed no planned day. */
-  runDone: boolean;
-  runSkipped: boolean;
-}
-
-export interface WeekStripDay extends StripDay {
+  /** The sport a planned day's outline is drawn in: a day with both takes
+   *  the lift's, and its label names both sessions. */
+  sType: "lift" | "run" | "both";
   isToday: boolean;
   isPast: boolean;
   state: WeekDayState;
+  /** The day as the week lays it out, for its words. */
+  day: LayoutDay;
+  /** A passed lift day's own lift, done on another day: when. Its segment
+   *  is bare, and its words say the lift was done, not missed. */
+  liftDoneOn: string | null;
 }
 
 /**
- * The circle is a statement about the DATE. It fills for what was done
- * that day: a logged lift session (planned or not) and a completed or
- * extra run. A planned day with nothing done is planned while ahead and
- * missed once passed, unless its plan was settled some other way — the
- * lift slot completed by a session on another day, or either session
- * skipped — in which case the day is bare, like rest.
+ * The segment is a statement about the DATE, as the week lays it out
+ * (`layOutWeek`, the one answer Home's card and day card read too). It
+ * fills for what was done that day: a lift session saved on it, planned or
+ * not, and a run done for it or on it. A lift or run still to do is
+ * planned; a run whose day passed is missed; a day whose lift moved on, a
+ * day of rest before a race, and a skipped run are bare, like rest.
  */
-export function weekDayState(
-  day: StripDay,
-  todayKey: string,
-  startKey: string | null
-): WeekDayState {
-  const hasLift = day.sType === "lift" || day.sType === "both";
-  const hasRun = day.sType === "run" || day.sType === "both";
-  if (day.liftLogged && day.runDone) return "both-done";
-  if (day.liftLogged) return "lift-done";
-  if (day.runDone) return "run-done";
-  if (beforeStart(day.key, startKey)) return "before";
-  const liftOpen = hasLift && !day.liftSkipped && !day.liftCompleted;
-  const runOpen = hasRun && !day.runSkipped;
-  if (!liftOpen && !runOpen) return "rest";
-  return day.key < todayKey ? "missed" : "planned";
+export function weekDayState(day: LayoutDay): WeekDayState {
+  const { lift, run } = day.lanes;
+  if (lift === "done" && run === "done") return "both-done";
+  if (lift === "done") return "lift-done";
+  if (run === "done") return "run-done";
+  if (day.beforeStart) return "before";
+  if (lift === "planned" || lift === "active") return "planned";
+  if (run === "planned" || run === "active") return "planned";
+  if (run === "missed") return "missed";
+  return "rest";
+}
+
+/** The sport a planned day's outline is drawn in. */
+function plannedSport(day: LayoutDay): WeekStripDay["sType"] {
+  const lift = day.lanes.lift === "planned" || day.lanes.lift === "active";
+  const run = day.lanes.run === "planned" || day.lanes.run === "active";
+  return lift && run ? "both" : run ? "run" : "lift";
 }
 
 /**
  * The seven days of the calendar week holding today, each with what the
- * strip draws for it.
+ * strip draws for it, from the week laid out (`layOutWeek`).
  *
  * The CALENDAR week containing today, not a rolling window that starts at
  * today. Home labels this section "This week" while the strip once ran
@@ -91,67 +80,29 @@ export function weekDayState(
  * under a heading claiming one. The days already gone were simply absent,
  * which also put DayPeekCard's nutrition row out of reach: every date the
  * card could be given was in the future, and a future day has no meals to
- * summarise.
- *
- * Starting on the week's FIRST day is forced by the data model, not a
- * style choice — and note the argument never names a weekday.
- * `resolveTrainingWindow` derives `currentWeekKey` from `startDate`, the
- * anchor gating the resolver's legacy run-day fallback, which its
- * docstring says must be today's. Starting on `localWeekKey(today)` keeps
- * that true for free: all seven days share that one key, so no day can
- * inherit another week's status. Any strip starting mid-week would
- * straddle two keys and break exactly the guard PR-0c installed. The strip
- * follows `WEEK_STARTS_ON`, so the Monday flip cost it nothing.
+ * summarise. The layout is that week, Monday to Sunday (`WEEK_STARTS_ON`),
+ * resolved on one week key, so no day can inherit another week's status.
  */
-export function weekStripDays(input: {
+export function weekStripDays(
+  week: WeekLayout,
   /** Today, "yyyy-MM-dd": Home's day key (`useLocalDateKey`). */
-  todayKey: string;
-  profile: UserProfile | null;
-  programState: ProgramState | null;
-  /** Which planned runs are done (`useClaimMapForProgram`). */
-  claimMap: Map<string, ClaimState>;
-  /** Dates ("yyyy-MM-dd") with a logged lift session. */
-  loggedLiftDates?: ReadonlySet<string>;
-  /** Dates with a logged run that claimed no planned day. */
-  extraRunDates?: ReadonlySet<string>;
-  /** The day the account began (startDay.ts); earlier days plan nothing. */
-  startKey?: string | null;
-}): WeekStripDay[] {
-  const { todayKey, profile, programState, claimMap } = input;
-  const startKey = input.startKey ?? null;
-  const weekStart = parseLocalDate(localWeekKey(parseLocalDate(todayKey)));
-  const resolved = resolveTrainingWindow({
-    startDate: weekStart,
-    days: 7,
-    profile,
-    programState,
-    claimMap,
-    todayKey,
-  });
-  // One week, so one answer: are its runs written? A run then sits on
-  // the date the plan holds it, whatever the weekday (`dayTypeFor`).
-  const weekKey = localWeekKey(weekStart);
-  const runsWritten = runsWrittenForWeek(
-    programState?.runDays,
-    weekKey,
-    weekKey
+  todayKey: string
+): WeekStripDay[] {
+  const doneLifts = week.entries.filter(
+    (s): s is LayoutLift => s.sport === "lift" && s.plan && s.state === "done"
   );
-  return resolved.map((r) => {
-    const day: StripDay = {
-      key: r.dateKey,
-      sType: dayTypeFor(r, runsWritten),
-      liftCompleted: r.lift.status === "completed",
-      liftSkipped: r.lift.status === "skipped",
-      liftLogged: input.loggedLiftDates?.has(r.dateKey) ?? false,
-      runDone:
-        r.run.isCompleted || (input.extraRunDates?.has(r.dateKey) ?? false),
-      runSkipped: r.run.status === "skipped",
-    };
-    return {
-      ...day,
-      isToday: r.dateKey === todayKey,
-      isPast: r.dateKey < todayKey,
-      state: weekDayState(day, todayKey, startKey),
-    };
-  });
+  return week.days.map((day) => ({
+    key: day.date,
+    sType: plannedSport(day),
+    isToday: day.date === todayKey,
+    isPast: day.date < todayKey,
+    state: weekDayState(day),
+    day,
+    liftDoneOn:
+      day.date < todayKey
+        ? (doneLifts.find(
+            (l) => l.plannedOn === day.date && l.date && l.date !== day.date
+          )?.date ?? null)
+        : null,
+  }));
 }
