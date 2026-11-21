@@ -23,7 +23,7 @@
  * to read one number would test the mock.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
@@ -685,9 +685,15 @@ describe("what the policy says about the build, food searches, alerts and errors
       .map((f) => readFileSync(resolve(repoRoot, "functions/lib", f), "utf8"))
       .concat(readFileSync(resolve(repoRoot, "functions/index.js"), "utf8"));
     expect(server.some((s) => /openfoodfacts/i.test(s))).toBe(false);
-    expect(
-      read("../../../docs/app-store/listing.md").replace(/\s+/g, " ")
-    ).toMatch(
+    // The label's answers: in listing.md, or in the submission pack that
+    // replaces it (listing.md then points there).
+    const label = ["submission-pack.md", "listing.md"]
+      .map((f) => resolve(repoRoot, "docs/app-store", f))
+      .filter((path) => existsSync(path))
+      .map((path) => readFileSync(path, "utf8"))
+      .join(" ")
+      .replace(/\s+/g, " ");
+    expect(label).toMatch(
       /Food searches\*\* go from the phone straight to Open Food Facts and are not stored/
     );
     expect(PRIVACY_PROSE).toMatch(
