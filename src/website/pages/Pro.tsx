@@ -63,7 +63,7 @@ export default function Pro() {
           {note === "checkoutDone" && (
             <div
               role="status"
-              className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-card border border-success/30 text-sm font-medium"
+              className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-card card-shadow text-sm font-medium"
             >
               <CircleCheck
                 className="size-4 shrink-0 mt-0.5 text-success-strong"
