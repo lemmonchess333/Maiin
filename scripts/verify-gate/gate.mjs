@@ -418,6 +418,15 @@ export function classifySimple(words) {
   }
   if (!w.length) return [];
   const tool = basename(w[0]);
+  // Asking a tool about itself checks nothing: `eslint --version`,
+  // `tsc -b --dry`, `vitest list`.
+  if (
+    w.some((x) =>
+      ["--version", "--help", "-h", "--dry", "--listFiles"].includes(x)
+    )
+  )
+    return [];
+  if (tool === "vitest" && w[1] === "list") return [];
   const script = npmScript(w);
   if (script !== null) {
     if (script === "verify") return ["unit", "types", "lint", "build"];
@@ -470,6 +479,8 @@ const TREE_CHANGING_GIT = new Set([
   "am",
   "apply",
   "restore",
+  "rm",
+  "mv",
 ]);
 
 /** Commands that change files in the tree, as an Edit does. */
@@ -487,7 +498,9 @@ export function isTreeEdit(words) {
         ["-b", "-B", "-c", "-C", "--orphan"].includes(a)
       );
     if (sub === "reset") return args.includes("--hard");
-    if (sub === "stash") return args[0] === "pop" || args[0] === "apply";
+    // Every stash but a listing changes the tree: a push takes changes out,
+    // a pop or apply puts them back.
+    if (sub === "stash") return !["list", "show"].includes(args[0]);
     return false;
   }
   if (tool === "sed" || tool === "perl")
@@ -559,8 +572,19 @@ function resultText(content) {
 
 function resultFailed(block) {
   if (block?.is_error === true) return true;
-  return /^\s*Exit code \d+/.test(resultText(block?.content));
+  const text = resultText(block?.content);
+  return (
+    /^\s*Exit code [1-9]\d*/.test(text) || /^\s*Command timed out/i.test(text)
+  );
 }
+
+function isTruthy(value) {
+  return value === true || value === "true";
+}
+
+/** An Agent call is a review when its description says so as a word:
+ *  "Fable review of the diff", not "Preview the build output". */
+const REVIEW_WORD = /\breview(?:s|ed|ing|er)?\b/i;
 
 /**
  * Whether an Edit/Write tool call changes the repository at `root`. A
@@ -595,18 +619,10 @@ export function collectEvidence(transcriptText, { root = null } = {}) {
     } catch {
       continue;
     }
+    // A slash command the person typed (`<command-name>/verify</command-name>`)
+    // counts for nothing by itself: it is a request, not a run. The Skill
+    // result that follows it, when there is one, is what counts.
     const content = entry?.message?.content;
-    if (entry?.type === "user" && typeof content === "string") {
-      // A slash command the person typed: `<command-name>/verify</command-name>`.
-      const m = /<command-name>\/?([^<]+)<\/command-name>/.exec(content);
-      if (m)
-        events.push({
-          kind: "check",
-          methods: skillMethods(m[1]),
-          unverified: [],
-        });
-      continue;
-    }
     if (!Array.isArray(content)) continue;
     for (const block of content) {
       if (block?.type === "tool_use") {
@@ -618,18 +634,6 @@ export function collectEvidence(transcriptText, { root = null } = {}) {
           events.push({ kind: "edit" });
         continue;
       }
-      if (block?.type === "text" && entry.type === "user") {
-        const m = /<command-name>\/?([^<]+)<\/command-name>/.exec(
-          block.text ?? ""
-        );
-        if (m)
-          events.push({
-            kind: "check",
-            methods: skillMethods(m[1]),
-            unverified: [],
-          });
-        continue;
-      }
       if (block?.type !== "tool_result") continue;
       const use = uses.get(block.tool_use_id);
       if (!use) continue;
@@ -637,7 +641,9 @@ export function collectEvidence(transcriptText, { root = null } = {}) {
       if (use.name === "Bash") {
         const verdict = classifyBash(use.input?.command ?? "");
         if (verdict.edits) events.push({ kind: "edit" });
-        if (failed) continue;
+        // A call sent to the background returns at once: its result says it
+        // started, not that it passed.
+        if (failed || isTruthy(use.input?.run_in_background)) continue;
         events.push({
           kind: "check",
           methods: verdict.methods,
@@ -652,8 +658,9 @@ export function collectEvidence(transcriptText, { root = null } = {}) {
         });
       } else if (use.name === "Agent" || use.name === "Task") {
         if (failed) continue;
+        if (isTruthy(use.input?.run_in_background)) continue;
         const description = String(use.input?.description ?? "");
-        if (/review/i.test(description))
+        if (REVIEW_WORD.test(description))
           events.push({ kind: "check", methods: ["review"], unverified: [] });
       }
     }
@@ -707,6 +714,39 @@ export function resolveMode({ env, baseConfig, worktreeConfig } = {}) {
   return { mode: "off", source: "default" };
 }
 
+/**
+ * Read one `Verified:` value: `{ none, methods, unrecognised }`. Parenthesised
+ * detail (`verify(home, food)`, `none (docs only)`) is dropped before the
+ * value is split, and only names in METHODS count as methods.
+ */
+export function parseVerified(value) {
+  const text = String(value ?? "").trim();
+  if (/^none\b/i.test(text))
+    return { none: true, methods: [], unrecognised: [] };
+  let bare = text;
+  // Drop parenthesised groups, innermost first.
+  while (/\([^()]*\)/.test(bare)) bare = bare.replace(/\([^()]*\)/g, "");
+  const methods = new Set();
+  const unrecognised = [];
+  for (const part of bare.split(",")) {
+    const word = part.trim().toLowerCase();
+    if (!word) continue;
+    if (METHODS.includes(word)) methods.add(word);
+    else unrecognised.push(word);
+  }
+  return { none: false, methods: sortMethods(methods), unrecognised };
+}
+
+/** Every `Verified:` value in a message, wherever it sits. */
+export function verifiedLines(message) {
+  const out = [];
+  for (const line of String(message ?? "").split("\n")) {
+    const m = /^\s*(?:[-*]\s+)?Verified:\s*(.*?)\s*$/i.exec(line);
+    if (m) out.push(m[1]);
+  }
+  return out;
+}
+
 /** The reason in a message's `Verified: none (<reason>)`, or null. */
 export function explainedNone(message) {
   const m = /^\s*Verified:\s*none\s*\(([^)]*\S[^)]*)\)\s*$/im.exec(
@@ -751,7 +791,14 @@ export function verifiedTrailer(methods) {
   return sorted.length ? sorted.join(", ") : "none (unexplained)";
 }
 
-/** The `Verify-gate:` line: mode, its source, the verdict and what was seen. */
+/**
+ * The `Verify-gate:` line: mode, its source, the verdict and what was seen
+ * in the transcript, then whatever else a reader should know: checks
+ * chained before the commit in the same call (`same call:`), methods the
+ * message claims that nothing showed (`claimed, not seen:`), which copy of
+ * the rules judged it when not the base branch's (`rules:`), and a
+ * transcript it did not read (`transcript:`).
+ */
 export function gateTrailer({
   mode,
   source,
@@ -759,15 +806,59 @@ export function gateTrailer({
   methods,
   releasedAfterBlocks,
   rules = null,
+  sameCall = [],
+  claimedNotSeen = [],
+  unread = null,
 }) {
   const seen = sortMethods(methods);
   const outcome = releasedAfterBlocks
     ? `${verdict}, released after ${MAX_BLOCKS} blocks`
     : verdict;
-  // `rules` is said only when the session chose which copy of these rules
-  // judged it (TROPOS_VERIFY_GATE_RULES), as the mode's source is.
-  const note = rules ? `; rules: ${rules}` : "";
-  return `${mode}(${source}) ${outcome}; seen: ${seen.length ? seen.join(", ") : "nothing"}${note}`;
+  const parts = [
+    `${mode}(${source}) ${outcome}`,
+    `seen: ${seen.length ? seen.join(", ") : "nothing"}`,
+  ];
+  if (sameCall.length)
+    parts.push(`same call: ${sortMethods(sameCall).join(", ")}`);
+  if (claimedNotSeen.length)
+    parts.push(`claimed, not seen: ${sortMethods(claimedNotSeen).join(", ")}`);
+  if (rules) parts.push(`rules: ${rules}`);
+  if (unread) parts.push(`transcript: ${unread}`);
+  return parts.join("; ");
+}
+
+/**
+ * Checks chained to the commit in the same Bash call. PreToolUse runs
+ * before the call, so `npm run verify && git add -A && git commit -m x`
+ * has not run its checks yet when the hook reads the transcript; but the
+ * commit can only happen if every command joined to it by `&&` passed. A
+ * pipe joins the chain only under `pipefail`. A tree edit in the chain
+ * after a check makes it stale, as an Edit does.
+ */
+export function sameCallChecks(command, cwd = "") {
+  const commands = simpleCommands(command, cwd);
+  let commitAt = -1;
+  commands.forEach((cmd, i) => {
+    const git = parseGit(cmd);
+    if (git && git.subcommand === "commit") commitAt = i;
+  });
+  if (commitAt <= 0) return [];
+  const pipefail = /\bpipefail\b/.test(command);
+  let start = commitAt;
+  while (
+    start > 0 &&
+    (commands[start - 1].op === "&&" ||
+      (pipefail && commands[start - 1].op === "|"))
+  )
+    start--;
+  const methods = new Set();
+  for (let i = start; i < commitAt; i++) {
+    let words = commands[i].words;
+    if (PACKAGE_RUNNERS.has(words[0])) words = words.slice(1);
+    if (isTreeEdit(words)) methods.clear();
+    for (const m of classifySimple(commands[i].words)) methods.add(m);
+  }
+  return sortMethods(methods);
 }
 
 /** What the hook tells Claude Code when enforce mode denies a commit. */
@@ -780,30 +871,54 @@ export function denyReason({ why }) {
   );
 }
 
-/** How long a pending stamp waits for its commit. The pre-commit hook's
- *  lint-staged and `tsc -b` take minutes, not half an hour. */
-export const PENDING_MAX_AGE_MS = 30 * 60 * 1000;
+/** How long a pending stamp waits for its commit: long enough for the
+ *  pre-commit hook's lint-staged and a cold `tsc -b` on a slow machine,
+ *  short enough that a stamp whose commit failed does not wait long. */
+export const PENDING_MAX_AGE_MS = 10 * 60 * 1000;
+
+/** A session id as the hook stores it. */
+export function sessionKey(id) {
+  return String(id ?? "").replace(/[^A-Za-z0-9_-]/g, "");
+}
 
 /**
  * Whether husky's commit-msg should write a pending stamp onto the commit
  * being made. The stamp belongs to it only when it was left for the same
- * parent commit (`head`, which a root commit lacks) and recently; anything
- * else is a stamp whose commit never happened (a failed pre-commit, a
- * `--no-verify` commit) and is dropped.
+ * parent commit (`head`, which a root commit lacks), recently, by the
+ * session making this commit (`session`, from Claude Code's
+ * CLAUDE_CODE_SESSION_ID; when Claude Code gives no id, `claudeCode` says
+ * whether the commit comes from Claude Code at all), and when it is not a
+ * merge. Anything else is a stamp whose commit never happened (a failed
+ * pre-commit, a `--no-verify` commit), or a commit someone else is making on
+ * the same parent, and the stamp is dropped.
  */
 export function stampPlan(
   pending,
-  { head, now, maxAgeMs = PENDING_MAX_AGE_MS }
+  {
+    head,
+    now,
+    session = null,
+    claudeCode = false,
+    merging = false,
+    maxAgeMs = PENDING_MAX_AGE_MS,
+  }
 ) {
   if (!pending || typeof pending !== "object")
     return { stamp: false, reason: "none pending" };
+  if (merging) return { stamp: false, reason: "a merge" };
   if (!head || pending.head !== head)
     return { stamp: false, reason: "left for another parent commit" };
   if (!(now - Number(pending.at) <= maxAgeMs))
     return { stamp: false, reason: "too old" };
+  if (session) {
+    if (sessionKey(session) !== sessionKey(pending.session))
+      return { stamp: false, reason: "another session's commit" };
+  } else if (!claudeCode) {
+    return { stamp: false, reason: "not made from Claude Code" };
+  }
   if (!pending.trailers?.verified || !pending.trailers?.gate)
     return { stamp: false, reason: "malformed" };
-  return { stamp: true, reason: "same parent, recent" };
+  return { stamp: true, reason: "same parent, session and minutes" };
 }
 
 /**
@@ -821,22 +936,30 @@ export function evaluate({
   messageFromFile,
   root = null,
   rules = null,
+  unread = null,
 }) {
   const commits = findGitCommits(command, cwd);
   if (!commits.length) return null;
   const evidence = collectEvidence(transcript, { root });
+  const sameCall = sameCallChecks(command, cwd);
+  const methods = sortMethods([...evidence.methods, ...sameCall]);
   const { mode, source } = resolveMode(modeInputs);
   const commit = commits[commits.length - 1];
   const message = commit.message ?? messageFromFile ?? null;
-  const decision = decide({ mode, methods: evidence.methods, message, blocks });
+  const decision = decide({ mode, methods, message, blocks });
+  const claimed = new Set();
+  for (const value of verifiedLines(message))
+    for (const m of parseVerified(value).methods) claimed.add(m);
+  const claimedNotSeen = [...claimed].filter((m) => !methods.includes(m));
   return {
     commit,
     mode,
     source,
-    evidence,
+    evidence: { ...evidence, sameCall },
+    methods,
     decision,
     trailers: {
-      verified: verifiedTrailer(evidence.methods),
+      verified: verifiedTrailer(methods),
       gate: gateTrailer({
         mode,
         source,
@@ -844,6 +967,9 @@ export function evaluate({
         methods: evidence.methods,
         releasedAfterBlocks: decision.releasedAfterBlocks,
         rules,
+        sameCall: sameCall.filter((m) => !evidence.methods.includes(m)),
+        claimedNotSeen,
+        unread,
       }),
     },
   };

@@ -33,10 +33,17 @@ function cleanEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
     if (key.startsWith("GIT_")) delete env[key];
   }
   if (!("TROPOS_VERIFY_GATE" in extra)) delete env.TROPOS_VERIFY_GATE;
+  // Whoever runs these tests (a person, CI, a Claude Code session) must not
+  // decide whose commit the stamp thinks it is.
+  for (const key of ["CLAUDE_CODE_SESSION_ID", "CLAUDECODE"])
+    if (!(key in extra)) delete env[key];
   return env;
 }
 
-function git(args: string[], env: Record<string, string> = {}): string {
+/** The session the hook is told about, committing. */
+const SESSION = { CLAUDE_CODE_SESSION_ID: "session-1", CLAUDECODE: "1" };
+
+function git(args: string[], env: Record<string, string> = SESSION): string {
   return execFileSync("git", ["-C", repo, ...args], {
     encoding: "utf8",
     env: cleanEnv(env),
@@ -194,6 +201,61 @@ describe("the commit gate, end to end", () => {
   it("leaves a commit nobody stamped alone", () => {
     git(["commit", "-q", "--allow-empty", "-m", "a person's commit"]);
     expect(trailers()).toEqual({});
+  });
+
+  it("does not put a session's stamp on a person's commit on the same parent", () => {
+    writeTranscript("npx tsc -b");
+    runHook('git commit -m "x"');
+    // The session's commit failed; a person commits at a terminal.
+    git(["commit", "-q", "--allow-empty", "-m", "a person's commit"], {});
+    expect(trailers()).toEqual({});
+    expect(pendingFiles()).toHaveLength(0);
+  });
+
+  it("does not put one session's stamp on another session's commit", () => {
+    writeTranscript("npx tsc -b");
+    runHook('git commit -m "x"');
+    git(["commit", "-q", "--allow-empty", "-m", "elsewhere"], {
+      CLAUDE_CODE_SESSION_ID: "session-2",
+      CLAUDECODE: "1",
+    });
+    expect(trailers()).toEqual({});
+  });
+
+  it("does not add a second Verified line to one in its own paragraph", () => {
+    writeTranscript("npx tsc -b");
+    runHook('git commit -m "x"');
+    const message = [
+      "x",
+      "",
+      "Verified: unit",
+      "",
+      "A closing paragraph.",
+      "",
+      "Co-Authored-By: Someone <someone@example.com>",
+    ].join("\n");
+    git(["commit", "-q", "--allow-empty", "-m", message]);
+    const body = git(["log", "-1", "--format=%B"]);
+    expect(body.match(/^Verified:/gm)).toHaveLength(1);
+    expect(trailers()["Verify-gate"]).toMatch(/^observe\(worktree\)/);
+  });
+
+  it("keeps the trailers at the end when the body has a --- line", () => {
+    writeTranscript("npx tsc -b");
+    runHook('git commit -m "x"');
+    const message = ["x", "", "Before", "---", "After the rule.", ""].join(
+      "\n"
+    );
+    git(["commit", "-q", "--allow-empty", "-m", message]);
+    const body = git(["log", "-1", "--format=%B"]).trimEnd();
+    expect(
+      body.endsWith(
+        `Verify-gate: observe(worktree) would-block; seen: types${RULES}`
+      )
+    ).toBe(true);
+    expect(body.indexOf("After the rule.")).toBeLessThan(
+      body.indexOf("Verified:")
+    );
   });
 
   it("drops a stamp whose commit never happened", () => {

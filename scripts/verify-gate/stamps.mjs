@@ -14,42 +14,56 @@
 import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
+import { parseVerified, sortMethods, verifiedLines } from "./gate.mjs";
 
 const FIELD = "\u001f";
 const RECORD = "\u001e";
 
-/** One commit's stamps: `{ status, methods, nones, gates }`. */
+/**
+ * One commit's stamps: `{ status, methods, nones, unrecognised, gates }`.
+ * Only the method names the stamps define count (`verify(home, food)` is
+ * `verify`); other words are kept as `unrecognised`, and a stamp made only
+ * of them reads "unrecognised", not verified.
+ */
 export function readStamps(body) {
-  const verified = [];
+  const verified = verifiedLines(body);
   const gates = [];
   for (const line of String(body ?? "").split("\n")) {
-    const v = /^\s*(?:[-*]\s+)?Verified:\s*(.+?)\s*$/i.exec(line);
-    if (v) verified.push(v[1]);
     const g = /^\s*(?:[-*]\s+)?Verify-gate:\s*(.+?)\s*$/i.exec(line);
     if (g) gates.push(g[1]);
   }
   const methods = new Set();
+  const unrecognised = [];
   let nones = 0;
   for (const value of verified) {
-    if (/^none\b/i.test(value)) {
-      nones++;
-      continue;
-    }
-    for (const part of value.split(",")) {
-      const m = /^\s*([a-z0-9-]+)/i.exec(part);
-      if (m) methods.add(m[1].toLowerCase());
-    }
+    const parsed = parseVerified(value);
+    if (parsed.none) nones++;
+    for (const m of parsed.methods) methods.add(m);
+    unrecognised.push(...parsed.unrecognised);
   }
   let status;
   if (!verified.length) status = "unstamped";
   else if (methods.size) status = nones ? "partly verified" : "verified";
-  else status = "none";
-  return { status, methods: [...methods], nones, gates };
+  else if (nones) status = "none";
+  else status = "unrecognised";
+  return {
+    status,
+    methods: sortMethods(methods),
+    nones,
+    unrecognised,
+    gates,
+  };
 }
 
 /** Summary counts over many commits' stamps. */
 export function summarise(rows) {
-  const counts = { verified: 0, "partly verified": 0, none: 0, unstamped: 0 };
+  const counts = {
+    verified: 0,
+    "partly verified": 0,
+    none: 0,
+    unrecognised: 0,
+    unstamped: 0,
+  };
   let wouldBlock = 0;
   for (const row of rows) {
     counts[row.status] = (counts[row.status] ?? 0) + 1;
@@ -95,7 +109,8 @@ function main(argv) {
   }
   process.stdout.write(
     `\n${summary.total} commits: ${summary.verified} verified, ${summary["partly verified"]} partly verified, ` +
-      `${summary.none} none, ${summary.unstamped} unstamped; ${summary.wouldBlock} the gate would have blocked.\n`
+      `${summary.none} none, ${summary.unrecognised} unrecognised, ${summary.unstamped} unstamped; ` +
+      `${summary.wouldBlock} the gate would have blocked.\n`
   );
 }
 

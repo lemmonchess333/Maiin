@@ -1,7 +1,21 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // Local pure helpers: no session, transcript file or repository.
 // @ts-expect-error Standalone Node .mjs module is outside the TS app project.
 import * as gate from "./gate.mjs";
+
+describe("gate.mjs stands alone", () => {
+  it("imports nothing, so its cached copy in the git directory loads by itself", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "scripts/verify-gate/gate.mjs"),
+      "utf8"
+    );
+    expect(source).not.toMatch(/^\s*import\s/m);
+    expect(source).not.toMatch(/\brequire\(/);
+    expect(source).not.toMatch(/\bimport\(/);
+  });
+});
 
 /** A transcript line shaped as Claude Code writes them: the assistant's
  *  tool_use, then the user turn carrying its tool_result. */
@@ -251,7 +265,7 @@ describe("collectEvidence", () => {
     ).toEqual([]);
   });
 
-  it("reads a slash command the person typed", () => {
+  it("a slash command the person typed is a request, not a run", () => {
     const typed = JSON.stringify({
       type: "user",
       message: {
@@ -260,7 +274,46 @@ describe("collectEvidence", () => {
           "<command-name>/verify</command-name>\n<command-args></command-args>",
       },
     });
-    expect(gate.collectEvidence(typed).methods).toEqual(["verify"]);
+    expect(gate.collectEvidence(typed).methods).toEqual([]);
+    // The Skill result that follows it is what counts.
+    expect(
+      gate.collectEvidence(
+        [typed, ...call("Skill", { skill: "verify" })].join("\n")
+      ).methods
+    ).toEqual(["verify"]);
+  });
+
+  it("a Bash call sent to the background has not passed anything", () => {
+    const evidence = gate.collectEvidence(
+      transcript(
+        call("Bash", {
+          command: "npx vitest run a",
+          run_in_background: true,
+        })
+      )
+    );
+    expect(evidence.methods).toEqual([]);
+  });
+
+  it("an Agent call is a review only when its description says review as a word", () => {
+    const methods = (description: string) =>
+      gate.collectEvidence(transcript(call("Agent", { description }))).methods;
+    expect(methods("Preview the build output")).toEqual([]);
+    expect(methods("Fable review of PR 3449")).toEqual(["review"]);
+    expect(methods("Reviewer pass on the diff")).toEqual(["review"]);
+  });
+
+  it("reads exit code 0 as success and a timeout as a failure", () => {
+    const withText = (text: string) => {
+      const lines = bash("npx vitest run a");
+      const res = JSON.parse(lines[1]);
+      res.message.content[0].content = text;
+      delete res.message.content[0].is_error;
+      return gate.collectEvidence([lines[0], JSON.stringify(res)].join("\n"))
+        .methods;
+    };
+    expect(withText("Exit code 0\nall passed")).toEqual(["unit"]);
+    expect(withText("Command timed out after 2m 0s")).toEqual([]);
   });
 
   it("survives lines that are not JSON and results without a use", () => {
@@ -285,6 +338,74 @@ describe("collectEvidence", () => {
     expect(
       gate.collectEvidence([lines[0], JSON.stringify(res)].join("\n")).methods
     ).toEqual([]);
+  });
+});
+
+describe("sameCallChecks", () => {
+  it.each([
+    [
+      'npm run verify && git add -A && git commit -m "x"',
+      ["unit", "types", "lint", "build"],
+    ],
+    ['npx tsc -b && npx vitest run a && git commit -m "x"', ["unit", "types"]],
+    [
+      'set -o pipefail; npx vitest run a | tail -3 && git commit -m "x"',
+      ["unit"],
+    ],
+  ])("credits the checks %s chains to its commit", (command, methods) => {
+    expect(gate.sameCallChecks(command, "/w")).toEqual(methods);
+  });
+
+  it.each([
+    'npx vitest run a | tail -3 && git commit -m "x"',
+    'npx vitest run a; git commit -m "x"',
+    'npx vitest run a || true && git commit -m "x"',
+    'git commit -m "x" && npx vitest run a',
+    'npx vitest run a && sed -i s/a/b/ f.ts && git commit -m "x"',
+  ])("credits nothing in %s", (command) => {
+    expect(gate.sameCallChecks(command, "/w")).toEqual([]);
+  });
+});
+
+describe("parseVerified", () => {
+  it("reads only the methods the stamps define", () => {
+    expect(gate.parseVerified("verify(home, food), unit")).toEqual({
+      none: false,
+      methods: ["verify", "unit"],
+      unrecognised: [],
+    });
+    expect(gate.parseVerified("tested it locally")).toEqual({
+      none: false,
+      methods: [],
+      unrecognised: ["tested it locally"],
+    });
+    expect(gate.parseVerified("none (docs only, no runtime path)").none).toBe(
+      true
+    );
+  });
+});
+
+describe("what checks nothing", () => {
+  it.each([
+    "npx eslint --version",
+    "npx tsc -b --dry",
+    "npx vitest list",
+    "npx playwright --help",
+  ])("%s proves nothing", (command) => {
+    expect(gate.classifyBash(command).methods).toEqual([]);
+  });
+
+  it.each([
+    "git rm src/a.ts",
+    "git mv src/a.ts src/b.ts",
+    "git stash push -m wip",
+    "git stash",
+  ])("%s changes the tree", (command) => {
+    expect(gate.classifyBash(command).edits).toBe(true);
+  });
+
+  it("a stash listing does not", () => {
+    expect(gate.classifyBash("git stash list").edits).toBe(false);
   });
 });
 
@@ -421,27 +542,48 @@ describe("stampPlan", () => {
   const now = 1_000_000_000;
   const pending = {
     head: "abc",
+    session: "s-1",
     at: now - 60_000,
     trailers: {
       verified: "unit",
       gate: "observe(base) would-block; seen: unit",
     },
   };
+  const same = { head: "abc", now, session: "s-1" };
 
-  it("stamps the commit the stamp was left for", () => {
-    expect(gate.stampPlan(pending, { head: "abc", now }).stamp).toBe(true);
+  it("stamps the commit the stamp was left for, by the same session", () => {
+    expect(gate.stampPlan(pending, same).stamp).toBe(true);
+    // Claude Code without a session id: allowed, with nothing to compare.
+    expect(
+      gate.stampPlan(pending, { head: "abc", now, claudeCode: true }).stamp
+    ).toBe(true);
   });
 
   it("drops a stamp left for another parent, an old one, or for a root commit", () => {
-    expect(gate.stampPlan(pending, { head: "def", now }).stamp).toBe(false);
-    expect(gate.stampPlan(pending, { head: null, now }).stamp).toBe(false);
+    expect(gate.stampPlan(pending, { ...same, head: "def" }).stamp).toBe(false);
+    expect(gate.stampPlan(pending, { ...same, head: null }).stamp).toBe(false);
     expect(
-      gate.stampPlan(pending, {
-        head: "abc",
-        now: now + gate.PENDING_MAX_AGE_MS,
-      }).stamp
+      gate.stampPlan(pending, { ...same, now: now + gate.PENDING_MAX_AGE_MS })
+        .stamp
     ).toBe(false);
-    expect(gate.stampPlan(null, { head: "abc", now }).stamp).toBe(false);
+    expect(gate.stampPlan(null, same).stamp).toBe(false);
+  });
+
+  it("waits minutes, not half an hour", () => {
+    expect(gate.PENDING_MAX_AGE_MS).toBeLessThanOrEqual(10 * 60 * 1000);
+  });
+
+  it("drops a stamp when someone else makes the commit on that parent", () => {
+    expect(gate.stampPlan(pending, { ...same, session: "s-2" }).reason).toBe(
+      "another session's commit"
+    );
+    // A person at a terminal: no session id, not Claude Code.
+    expect(gate.stampPlan(pending, { head: "abc", now }).reason).toBe(
+      "not made from Claude Code"
+    );
+    expect(gate.stampPlan(pending, { ...same, merging: true }).reason).toBe(
+      "a merge"
+    );
   });
 });
 
@@ -468,11 +610,57 @@ describe("evaluate", () => {
     expect(result.mode).toBe("observe");
     expect(result.source).toBe("worktree");
     expect(result.evidence.methods).toEqual(["types"]);
+    expect(result.evidence.sameCall).toEqual(["unit"]);
+    expect(result.methods).toEqual(["unit", "types"]);
     expect(result.decision.verdict).toBe("would-block");
     expect(result.trailers).toEqual({
-      verified: "types",
-      gate: "observe(worktree) would-block; seen: types",
+      verified: "unit, types",
+      gate: "observe(worktree) would-block; seen: types; same call: unit",
     });
+  });
+
+  it("credits a verify run chained to the commit in the same call", () => {
+    const result = gate.evaluate({
+      command: 'npm run verify:app && git add -A && git commit -m "x"',
+      cwd: "/w",
+      transcript: transcript(edit()),
+      modeInputs: { env: "enforce" },
+      blocks: 0,
+    });
+    expect(result.decision.verdict).toBe("pass");
+    expect(result.decision.deny).toBe(false);
+    expect(result.trailers.gate).toBe(
+      "enforce(env) pass; seen: nothing; same call: verify"
+    );
+  });
+
+  it("says which methods the message claims that nothing showed", () => {
+    const result = gate.evaluate({
+      command: 'git commit -m "x" -m "Verified: verify(home), e2e, unit"',
+      cwd: "/w",
+      transcript: transcript(edit(), bash("npx vitest run a")),
+      modeInputs: { env: "observe" },
+      blocks: 0,
+      rules: "worktree",
+      unread: null,
+    });
+    expect(result.trailers.gate).toBe(
+      "observe(env) would-block; seen: unit; claimed, not seen: verify, e2e; rules: worktree"
+    );
+  });
+
+  it("says when it could not read the transcript", () => {
+    const result = gate.evaluate({
+      command: 'git commit -m "x"',
+      cwd: "/w",
+      transcript: "",
+      modeInputs: { env: "observe" },
+      blocks: 0,
+      unread: "not read, 240 MB",
+    });
+    expect(result.trailers.gate).toBe(
+      "observe(env) would-block; seen: nothing; transcript: not read, 240 MB"
+    );
   });
 
   it("reads a -F message the hook supplies", () => {

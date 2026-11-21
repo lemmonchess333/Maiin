@@ -17,6 +17,7 @@ describe("readStamps", () => {
       status: "verified",
       methods: ["unit", "types"],
       nones: 0,
+      unrecognised: [],
       gates: ["observe(base) would-block; seen: unit, types"],
     });
   });
@@ -27,7 +28,7 @@ describe("readStamps", () => {
       "",
       "* First commit",
       "",
-      "Verified: verify(home), unit",
+      "Verified: verify(home, food), unit",
       "",
       "* Docs",
       "",
@@ -35,8 +36,17 @@ describe("readStamps", () => {
     ].join("\n");
     const stamps = readStamps(body);
     expect(stamps.status).toBe("partly verified");
+    // verify(home, food) is verify, not "verify" and "food".
     expect(stamps.methods).toEqual(["verify", "unit"]);
+    expect(stamps.unrecognised).toEqual([]);
     expect(stamps.nones).toBe(1);
+  });
+
+  it("does not read free text as a method", () => {
+    const stamps = readStamps("x\n\nVerified: ran it on my phone");
+    expect(stamps.status).toBe("unrecognised");
+    expect(stamps.methods).toEqual([]);
+    expect(stamps.unrecognised).toEqual(["ran it on my phone"]);
   });
 
   it("tells none apart from unstamped", () => {
@@ -55,13 +65,15 @@ describe("summarise", () => {
         "b\n\nVerified: review\nVerify-gate: observe(base) pass; seen: review"
       ),
       readStamps("c\n\nVerified: none (copy)"),
-      readStamps("d"),
+      readStamps("d\n\nVerified: looked at it"),
+      readStamps("e"),
     ];
     expect(summarise(rows)).toEqual({
-      total: 4,
+      total: 5,
       verified: 2,
       "partly verified": 0,
       none: 1,
+      unrecognised: 1,
       unstamped: 1,
       wouldBlock: 1,
     });

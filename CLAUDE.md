@@ -706,10 +706,12 @@ from, its version and the local changes to carry into the next update are in
 
 ### Verification stamps
 
-Every commit says how it was verified: a `Verified:` line (`unit, types`,
-`verify(home)`, or `none (<reason>)`), and a `Verify-gate:` line a commit
-hook writes from what the session ran since its last edit. The gate is in
-observe mode and blocks nothing. `docs/agents/verification-stamps.md`.
+An agent's `git commit` says how it was verified: a `Verified:` line
+(`unit, types`, `verify(home)`, or `none (<reason>)`), and a `Verify-gate:`
+line a commit hook writes from what the session ran since its last edit.
+A person's commit, `--no-verify` and a push through the GitHub tools are
+unstamped. The gate is in observe mode and blocks nothing.
+`docs/agents/verification-stamps.md`.
 
 ### Reusable prompts
 

@@ -16,6 +16,8 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -24,6 +26,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const BASE_REF = "origin/main";
 const GATE_PATH = "scripts/verify-gate/gate.mjs";
 const CONFIG_PATH = ".claude/verify-gate.json";
+/** A transcript past this is not read; the stamp says so. */
+const TRANSCRIPT_MAX = 200 * 1024 * 1024;
+/** Past LOG_MAX bytes the decision log is cut to its last LOG_KEEP. */
+const LOG_MAX = 2 * 1024 * 1024;
+const LOG_KEEP = 1024 * 1024;
 const project = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 function git(cwd, args) {
@@ -46,6 +53,26 @@ function readText(path) {
   }
 }
 
+/** Write a file whole or not at all: the cached rules copy is imported,
+ *  and a half-written copy would be imported half-written. */
+function writeAtomic(path, text) {
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, text);
+  renameSync(tmp, path);
+}
+
+/** Append to the decision log, keeping it to about its last LOG_KEEP bytes. */
+function appendCapped(path, line) {
+  appendFileSync(path, line);
+  try {
+    if (statSync(path).size <= LOG_MAX) return;
+    const tail = readFileSync(path, "utf8").slice(-LOG_KEEP);
+    writeAtomic(path, tail.slice(tail.indexOf("\n") + 1));
+  } catch {
+    // A log that cannot be trimmed is still a log.
+  }
+}
+
 async function loadGate(stateDir) {
   // TROPOS_VERIFY_GATE_RULES=worktree judges by the working tree's rules,
   // for a branch that changes them (its tests run the hook). The stamp says
@@ -64,7 +91,7 @@ async function loadGate(stateDir) {
     const copy = join(stateDir, `gate-${blob}.mjs`);
     if (!existsSync(copy)) {
       const text = git(project, ["show", `${BASE_REF}:${GATE_PATH}`]);
-      if (text) writeFileSync(copy, `${text}\n`);
+      if (text) writeAtomic(copy, `${text}\n`);
     }
     try {
       const gate = await import(pathToFileURL(copy).href);
@@ -75,6 +102,19 @@ async function loadGate(stateDir) {
   }
   const gate = await import(pathToFileURL(join(project, GATE_PATH)).href);
   return { gate, logic: "worktree" };
+}
+
+/** The transcript's text, or why it was not read. */
+function readTranscript(path) {
+  if (!path) return { text: "", unread: "none given" };
+  try {
+    const size = statSync(path).size;
+    if (size > TRANSCRIPT_MAX)
+      return { text: "", unread: `not read, ${Math.round(size / 1e6)} MB` };
+    return { text: readFileSync(path, "utf8"), unread: null };
+  } catch {
+    return { text: "", unread: "unreadable" };
+  }
 }
 
 async function main() {
@@ -127,17 +167,20 @@ async function main() {
     blocks = 0;
   }
 
+  const transcript = readTranscript(input.transcript_path);
   const result = gate.evaluate({
     command,
     cwd,
-    transcript: input.transcript_path ? readText(input.transcript_path) : "",
+    transcript: transcript.text,
     modeInputs,
     blocks,
     messageFromFile: commit.messageFile
       ? readText(resolve(target, commit.messageFile))
       : null,
     root: top,
-    rules: logic === "worktree(env)" ? logic : null,
+    // On the stamp whenever the base branch's rules were not the judge.
+    rules: logic === "base" ? null : logic,
+    unread: transcript.unread,
   });
   if (!result) return;
 
@@ -155,7 +198,8 @@ async function main() {
     verdict: result.decision.verdict,
     why: result.decision.why,
     denied: result.decision.deny,
-    methods: result.evidence.methods,
+    methods: result.methods ?? result.evidence.methods,
+    sameCall: result.evidence.sameCall ?? [],
     stale: result.evidence.stale,
     unverifiedExit: result.evidence.unverifiedExit,
     trailers: result.trailers,
@@ -164,7 +208,7 @@ async function main() {
 
   mkdirSync(join(stateDir, "pending"), { recursive: true });
   mkdirSync(join(stateDir, "sessions"), { recursive: true });
-  appendFileSync(join(stateDir, "log.jsonl"), `${JSON.stringify(record)}\n`);
+  appendCapped(join(stateDir, "log.jsonl"), `${JSON.stringify(record)}\n`);
 
   if (result.decision.deny) {
     writeFileSync(sessionFile, JSON.stringify({ blocks: blocks + 1 }));
@@ -179,7 +223,7 @@ async function main() {
     );
     return;
   }
-  writeFileSync(
+  writeAtomic(
     join(stateDir, "pending", `${key}.json`),
     JSON.stringify({ ...record, at: Date.now() })
   );
