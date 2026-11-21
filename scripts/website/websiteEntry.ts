@@ -15,7 +15,8 @@ import type { Plugin } from "vite";
  * loads the app.
  *
  * Nor does the app's `public/` folder ship whole: only what the website
- * and its kept addresses use (`WEBSITE_PUBLIC_DIRS`), and the worker
+ * and its kept addresses use (`WEBSITE_PUBLIC_DIRS`, `WEBSITE_PUBLIC_ART`),
+ * and the worker
  * that retires the app's service worker at both of its addresses
  * (`RETIRED_WORKER_PATHS`, scripts/website/retired-sw.js). The exercise
  * pictures, badges, medals and the rest stay with the app.
@@ -41,6 +42,33 @@ export const RETIRED_WORKER_PATHS = [
 /** The retiring worker's source, beside this file. */
 export const RETIRED_WORKER_SOURCE = "scripts/website/retired-sw.js";
 
+/** Single files of `public/` the website's own pages draw: the app's
+ *  drawings of a lift, a runner and food, and one challenge's medals.
+ *  Their folders stay with the app (form-art alone is 20 MB);
+ *  prerender.test.tsx holds every picture a page names to this list. */
+export const WEBSITE_PUBLIC_ART = [
+  "form-art/overhead-press.webp",
+  "form-art/run-fast.webp",
+  "form-art/squat.webp",
+  "form-art/bench-press.webp",
+  "form-art/deadlift.webp",
+  "form-art/pull-ups.webp",
+  "form-art/romanian-deadlift.webp",
+  "form-art/lateral-raise.webp",
+  "food-art/bowl.webp",
+  "food-art/eggs.webp",
+  "food-art/salad.webp",
+  "food-art/protein.webp",
+  "food-art/fruit.webp",
+  "food-art/bread.webp",
+  "food-art/plate.webp",
+  "food-art/drink.webp",
+  "food-art/grains.webp",
+  "medals/active-days-bronze.webp",
+  "medals/active-days-silver.webp",
+  "medals/active-days-gold.webp",
+] as const;
+
 /** The files of `public/` the website ships, relative to it. */
 export function websitePublicFiles(publicDir: string): string[] {
   const files: string[] = [];
@@ -53,6 +81,10 @@ export function websitePublicFiles(publicDir: string): string[] {
     }
   };
   for (const dir of WEBSITE_PUBLIC_DIRS) walk(path.join(publicDir, dir), dir);
+  for (const file of WEBSITE_PUBLIC_ART) {
+    statSync(path.join(publicDir, file));
+    files.push(file);
+  }
   return files;
 }
 
@@ -60,13 +92,17 @@ export function websitePublicFiles(publicDir: string): string[] {
  *  Firebase Hosting build), with only the website's public files, and
  *  does nothing otherwise. */
 export function websiteEntryPlugin(root: string, enabled: boolean): Plugin {
+  let ssr = false;
   return {
     name: "tropos-website-entry",
     apply: "build",
     // After Vite's own HTML plugin, which adds the page to the bundle.
     enforce: "post",
-    config() {
-      if (!enabled) return;
+    config(_config, env) {
+      // The build that draws each page at build time (prerender.ts) is a
+      // server build of its own entry, not the page.
+      ssr = env?.isSsrBuild === true;
+      if (!enabled || ssr) return;
       return {
         build: {
           copyPublicDir: false,
@@ -77,7 +113,7 @@ export function websiteEntryPlugin(root: string, enabled: boolean): Plugin {
       };
     },
     generateBundle(_options, bundle) {
-      if (!enabled) return;
+      if (!enabled || ssr) return;
       const page = bundle[WEBSITE_HTML];
       if (!page || page.type !== "asset") {
         this.error(`the Hosting build made no ${WEBSITE_HTML}`);

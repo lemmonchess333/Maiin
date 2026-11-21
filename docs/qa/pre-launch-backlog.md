@@ -2858,6 +2858,19 @@ The owner said yes on 15 November to Q52 after the audit found troposfit.com ser
 - [ ] **A password reset.** After the deploy, Forgot password in the app, then open the real email's link. Passing: it reaches Firebase's own handler (`/__/auth/action`), which sets the password, as before, and never the website's page.
 - [ ] **The badge is Apple's file (owner).** Download the App Store badges from Apple's Marketing Resources (developer.apple.com/app-store/marketing/guidelines) and compare the black US-UK SVG's SHA-256 with `src/assets/app-store/download-on-the-app-store-black.svg`'s, `a26fc5b38380272c92e9019a2eb8b45542a66814b3e2b203772db8904b9fb99f` (git blob `072b425a`). Apple's hosts could not be reached from the agent's sandbox, so the file came from public repositories that carry the same bytes.
 
+## troposfit.com's pages (the website, 2026-11-18)
+
+The marketing site on top of Q52's page (`docs/website/design.md`): Home, Lifting, Running, Food, Social, Pro, About, Press kit and a 404, each written into its own HTML after the Hosting build (`scripts/website/prerender.ts`). Checked in Chromium against the Hosting build served with firebase.json's rules and on the Hosting emulator; only the live site, a phone and the owner's consoles can confirm the rest.
+
+- [ ] **Every page on a phone and a computer.** After Deploy production, open `https://troposfit.com`, `/lifting`, `/running`, `/food`, `/social`, `/pro`, `/about` and `/press` in Safari on an iPhone and in a desktop browser. Passing: each opens with its words already drawn (no blank page first), the header's pages move between them without a reload, Apple's badge opens the App Store listing, and on a computer the foot's QR code opens the listing on a phone.
+- [ ] **No trailing slash.** `https://troposfit.com/lifting/` and `/privacy/` redirect (301) to `/lifting` and `/privacy`; `/privacy`, the App Store listing's address, answers 200 with no redirect.
+- [ ] **A real 404.** `https://troposfit.com/no-such-page` answers 404 (DevTools, Network) with "There’s no page at this address"; `/settings/account`, `/upgrade` and `/space/<id>` still answer 200 with Home.
+- [ ] **Link previews.** Paste `https://troposfit.com`, `/lifting` and `/pro` into Messages and Slack. Passing: each shows its own title and its own picture (`/og/<page>.jpg`). A shared post's link still shows the post (`publicPostPage`, unchanged).
+- [ ] **Lighthouse on the live site.** Chrome DevTools, Lighthouse, mobile, on Home and Social. Passing: performance 90 or more, accessibility, best practices and SEO 100 (93 to 98 and 100 locally, with Hosting's compression emulated).
+- [ ] **Search Console (owner).** Add troposfit.com as a property, verify it through the domain's DNS, and submit `https://troposfit.com/sitemap.xml`.
+- [ ] **App Store Connect (owner).** Set the listing's Marketing URL to `https://troposfit.com` (docs/app-store/listing.md left it empty until the site had a home page).
+- [ ] **The app screens are current.** The site's screens are the newest rig captures on main from 11 to 13 November (`src/website/screens/README.md`); the rig could not run where the site was built. Once it can, capture Home, a lift day, Train's next run, Food and a weekly challenge again on the season athlete's account, add a run with its map for the Running page, and replace the files under the same names.
+
 ## App Review submission checks (launch audit, 2026-11-18)
 
 What `docs/app-store/review-risk-audit.md` found that only the owner, a
@@ -6601,6 +6614,7 @@ device.
       rounds and minutes, "40 s on, 20 s off", its first three moves and
       "+2 more", with the first move's drawing. On a build from before
       circuits, the same post reads as a workout of 5 exercises.
+
 ## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
 
 Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of
