@@ -1,11 +1,9 @@
 /**
  * The one vertical area-fill fade every analytics chart uses (top stop →
- * transparent bottom). Before extraction the same <defs><linearGradient>
- * block lived as a copy in StatCard, PerformanceIndexChart,
- * TrainingLoadCard and ElevationProfile — TrainingLoadCard's comment even
- * declared it "the PI-chart gradient family", an invariant held only by
- * copy-paste. Opacities are parametrised so each chart keeps its exact
- * current rendering (this extraction is a zero-visual-delta dedup).
+ * transparent bottom): StatCard, PerformanceIndexChart and ElevationProfile
+ * share this one <defs><linearGradient> rather than a copy each, so the
+ * gradient family is held by code, not by copy-paste. Opacities are
+ * parametrised so each chart keeps its own rendering.
  *
  * Rendered INSIDE a Recharts chart element — Recharts passes unrecognised
  * children through to the SVG, which is the documented way to ship defs.

@@ -14,9 +14,9 @@ import { join } from "node:path";
  * `style={{ color: THEME.running }}` on a word.
  *
  * Analytics had four such sites: the Performance section heading (three
- * render branches of it) and the Training-load legend's "Fitness N",
- * "runs" and "lifts". They are now `text-lifting-strong` /
- * `text-running-strong`.
+ * render branches of it) and the legend of the minutes-based training
+ * load chart (gone with that chart, App1 Q16). They became
+ * `text-lifting-strong` / `text-running-strong`.
  *
  * Icons are the legitimate use and stay — SC 1.4.11's floor for a
  * non-text graphic is 3:1, which the identities clear, and an icon is
@@ -25,10 +25,7 @@ import { join } from "node:path";
  * `src/components/analytics` must be named here with the reason it is
  * not text. A new one fails until someone classifies it.
  */
-const ALLOWED = new Map<string, string[]>([
-  ["PRsTab.tsx", ["Trophy"]],
-  ["TrainingLoadCard.tsx", ["Activity"]],
-]);
+const ALLOWED = new Map<string, string[]>([["PRsTab.tsx", ["Trophy"]]]);
 
 const DIR = join(process.cwd(), "src/components/analytics");
 

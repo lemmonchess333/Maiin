@@ -230,24 +230,10 @@ function YourWeek({
         )}
       </div>
       <div className="mt-auto space-y-3 pt-8">
+        {/* The week's verdict, in words alone (App1 Q12): the 0–100
+            score is shown in one place, Progress's Score details. */}
         {headline && (
-          <div className="space-y-1">
-            <p className="text-sm text-foreground">
-              <span className="font-mono tabular-nums font-bold">
-                {headline.pi}
-              </span>{" "}
-              performance
-              {headline.delta !== null && headline.delta !== 0 && (
-                <>
-                  , {headline.delta > 0 ? "up" : "down"}{" "}
-                  <span className="font-mono tabular-nums">
-                    {Math.abs(headline.delta)}
-                  </span>
-                </>
-              )}
-            </p>
-            <p className="text-sm text-muted-foreground">{headline.verdict}</p>
-          </div>
+          <p className="text-sm text-foreground">{headline.verdict}</p>
         )}
         <Button variant="secondary" fullWidth onClick={next}>
           {nextLabel}
