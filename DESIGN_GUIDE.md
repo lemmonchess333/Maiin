@@ -170,18 +170,18 @@ external contributors get wrong.
 Defined in `src/index.css` as HSL vars and bridged to Tailwind. Use them as
 normal Tailwind utilities. They automatically adapt to dark mode.
 
-| Class                                                       | Meaning                                                                                                                                   |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                                |
-| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                   |
-| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                   |
-| `bg-primary` / `text-primary`                               | The chrome: the text colour (DS10). Tints (`bg-primary/10`), a selected chip's border, a focus ring, a switch that is on, a chrome icon  |
-| `bg-primary-strong` + `text-primary-foreground`             | A neutral filled button: white on dark, ink on light (`Button` `primary` and `neutral` look the same since DS10)                         |
+| Class                                                       | Meaning                                                                                                                                 |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                              |
+| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                 |
+| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                 |
+| `bg-primary` / `text-primary`                               | The chrome: the text colour (DS10). Tints (`bg-primary/10`), a selected chip's border, a focus ring, a switch that is on, a chrome icon |
+| `bg-primary-strong` + `text-primary-foreground`             | A neutral filled button: white on dark, ink on light (`Button` `primary` and `neutral` look the same since DS10)                        |
 | `bg-lifting` / `text-lifting-strong`                        | Lifting purple: its data, and its small text at the AA step. Never a link, a selection or a generic button                              |
-| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                   |
-| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                           |
-| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                  |
-| `border-border`                                             | The standard hairline border                                                                                                              |
+| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                 |
+| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                         |
+| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                |
+| `border-border`                                             | The standard hairline border                                                                                                            |
 
 > ⚠️ **What sits on a filled `bg-primary`** is `text-primary-foreground`,
 > never `text-white`: the fill is near white in dark (`primaryNeutral.test.ts`
@@ -215,8 +215,8 @@ THEME.danger; // #EF4444 red  — an error or a destructive action, with its ico
 THEME.pace; // fast #F9D86A · average #D97706 · slow #2975E0 (DS10 call 2)
 THEME.hrZones; // Z1 to Z5 on the same blue-to-yellow line
 
-// Macros (dark-tuned; see 3d)
-THEME.macros.protein; // pink   THEME.macros.carbs // gold   THEME.macros.fat // sage
+// Macros (dark-tuned; see 3d). Protein orchid, carbs gold, fat jade (DS10)
+THEME.macros.protein; // #EC8AF5   THEME.macros.carbs // #EAB308   THEME.macros.fat // #0D907B
 ```
 
 ### 3c. Tints via hex-alpha suffix (the `${THEME.x}14` pattern)
@@ -248,26 +248,44 @@ is for a domain colour; the chrome's tints are `THEME.chrome.tint` or
 
 ### 3d. Macro colours need a light-mode swap
 
-The raw `THEME.macros.*` values are tuned for dark mode and **fail WCAG AA as
-text on white**. For macro _text on a light card_, use the `useMacroPalette()`
-hook (returns bright values in dark mode, the AA-safe `MACROS_TEXT_LIGHT`
-values in light mode). Use the raw values only for dots/tints/bars.
+The raw `THEME.macros.*` values are tuned for dark mode. Protein and fat are
+**under 3:1 on white even as fills**, so every macro colour comes through the
+`useMacroPalette()` hook: `accent` for fills (bars, the donut, icons, tints)
+and `text` for words, each the dark value in dark and `MACROS_LIGHT` /
+`MACROS_TEXT_LIGHT` in light. Carbs keeps its yellow fill in both themes.
+
+The macros were picked by measurement (DS10 call 3, owner 22 November 2026):
+fat left sage (6.6 from success green for everyone, 6 to 8 from the food
+ring for colour-blind people) and protein left pink (10 from the running
+coral on Home). On Food, Home and Progress › Food each is 20 or more
+(CIEDE2000) from the ring, carbs, the other macro, running coral, water teal
+and lifting purple in normal vision, and 15 or more at deutan and protan 100
+from the ring, carbs and the other macro, which colour alone separates in the
+meal's bar and the donut (`macroPalette.test.ts`).
+
+| Macro   | Dark      | Light     | Closest in normal vision | Closest at deutan/protan 100 (colour alone)  |
+| ------- | --------- | --------- | ------------------------ | -------------------------------------------- |
+| Protein | `#EC8AF5` | `#A21CAF` | purple 22 (both)         | fat 26; the ring 47 (dark), 52 (light)       |
+| Fat     | `#0D907B` | `#007058` | water 21 / 22            | the ring 16 (dark), the deep ring 17 (light) |
+
+Protein is one colour everywhere: Progress's protein trend took the food
+orange until DS10, and its Food page the pink.
 
 ### 3e. Semantic colour meanings are fixed
 
 | Colour              | Always means                                                                                                                                                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Purple `#7B72E9`    | Lifting, and the brand only in the mark, the lockup and the drawn art (DS10)                                                                                                                                                                                                  |
-| Text and muted grey | The chrome: selection (one selected state, `--segment-selected` under a white label, or a foreground border and tint), links and text buttons, switches, focus rings, chrome icons and callouts, Pro's buttons (DS10)                                                       |
-| Coral `#D4637A`     | Running, and nothing else (DS10 call 2): never "slow", "behind" or an error on a run screen. Slow and behind are neutral with their chevron or word                                                                                                                         |
-| Red `#EF4444`       | An error or a destructive action, always with its icon (`THEME.danger`, `--destructive`)                                                                                                                                                                                      |
-| Pace scale          | Fast light yellow `#F9D86A`, the run's average amber `#D97706`, slow blue `#2975E0` (`THEME.pace`): the route on a run's detail and finish, and the live run's pace bar. Light to dark, each step 15 or more apart in normal, deutan and protan vision (`paceScale.test.ts`) |
-| Heart-rate zones    | Z1 `#2975E0` to Z5 `#F9D86A` on the pace's blue-to-yellow line (`THEME.hrZones`), each zone 16 or more apart in any vision and drawn beside its name ("HR Z3")                                                                                                                |
+| Purple `#7B72E9`    | Lifting, and the brand only in the mark, the lockup and the drawn art (DS10)                                                                                                                                                                                                   |
+| Text and muted grey | The chrome: selection (one selected state, `--segment-selected` under a white label, or a foreground border and tint), links and text buttons, switches, focus rings, chrome icons and callouts, Pro's buttons (DS10)                                                          |
+| Coral `#D4637A`     | Running, and nothing else (DS10 call 2): never "slow", "behind" or an error on a run screen. Slow and behind are neutral with their chevron or word                                                                                                                            |
+| Red `#EF4444`       | An error or a destructive action, always with its icon (`THEME.danger`, `--destructive`)                                                                                                                                                                                       |
+| Pace scale          | Fast light yellow `#F9D86A`, the run's average amber `#D97706`, slow blue `#2975E0` (`THEME.pace`): the route on a run's detail and finish, and the live run's pace bar. Light to dark, each step 15 or more apart in normal, deutan and protan vision (`paceScale.test.ts`)   |
+| Heart-rate zones    | Z1 `#2975E0` to Z5 `#F9D86A` on the pace's blue-to-yellow line (`THEME.hrZones`), each zone 16 or more apart in any vision and drawn beside its name ("HR Z3")                                                                                                                 |
 | Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                                                                                  |
 | Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                                                                              |
 | Green `#4DB872`     | Positive (streak, PR, success)                                                                                                                                                                                                                                                 |
 | Coral-red `#FF6B4A` | Scanning, inside the scanner only — the shutter ring (`THEME.food.scan`) and the scan art in the Pro preview. The scanner's selected mode is a near-white chip (white on coral was 2.8:1). The Food page's camera button is food orange (owner call, CLAUDE.md Button mapping) |
-| Amber `#D97706`     | Warning _banners_ (`THEME.amber`), and the middle of a data scale: the pace scale's average (DS10). Distinct from nutrition orange                                                                                                                                            |
+| Amber `#D97706`     | Warning _banners_ (`THEME.amber`), and the middle of a data scale: the pace scale's average (DS10). Distinct from nutrition orange                                                                                                                                             |
 
 Never repurpose one of these for an unrelated feature.
 

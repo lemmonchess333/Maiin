@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMacroPalette } from "../useMacroPalette";
-import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
+import { THEME, MACROS_LIGHT, MACROS_TEXT_LIGHT } from "@/lib/theme";
 
 beforeEach(() => {
   document.documentElement.classList.remove("dark");
@@ -38,11 +38,12 @@ describe("useMacroPalette — light mode (default)", () => {
     expect(result.current.text.nutrition).toBe(MACROS_TEXT_LIGHT.nutrition);
   });
 
-  it("accent track uses THEME.macros + THEME.semantic.nutrition", () => {
+  it("accent track uses the light fills for protein and fat (DS10 call 3)", () => {
+    // The dark theme's protein and fat are under 3:1 on white.
     const { result } = renderHook(() => useMacroPalette());
-    expect(result.current.accent.protein).toBe(THEME.macros.protein);
+    expect(result.current.accent.protein).toBe(MACROS_LIGHT.protein);
     expect(result.current.accent.carbs).toBe(THEME.macros.carbs);
-    expect(result.current.accent.fat).toBe(THEME.macros.fat);
+    expect(result.current.accent.fat).toBe(MACROS_LIGHT.fat);
     expect(result.current.accent.nutrition).toBe(THEME.semantic.nutrition);
   });
 });

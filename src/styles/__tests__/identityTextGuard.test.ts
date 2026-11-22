@@ -279,9 +279,10 @@ const EXPECTED_INLINE_USES = {
   // `text-nutrition-strong` (the food orange was 2.35:1 on the light
   // field), and the pencil is no longer tinted while the field is
   // focused, since it gives its place to the text then.
-  // 2026-11-22: 9 → 10. DS10 call 1: Pro's adaptive-calorie row is food,
-  // so its icon is the food orange, not the brand purple.
-  "THEME.semantic.nutrition": 10,
+  // 2026-11-22: 9 → 10 → 9. DS10 call 1: Pro's adaptive-calorie row is
+  // food, so its icon is the food orange, not the brand purple. Call 3:
+  // Progress's protein trend is protein's colour, not the food orange.
+  "THEME.semantic.nutrition": 9,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;

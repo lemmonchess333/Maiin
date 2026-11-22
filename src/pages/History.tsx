@@ -75,6 +75,7 @@ import {
 } from "@/components/analytics/goDeeperLines";
 import { currentWeightRate } from "@/utils/weightTrend";
 import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import {
   nutritionRows,
   predictionRow,
@@ -1107,6 +1108,7 @@ export default function History() {
   );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
   const targetProtein = effectiveTargets.protein ?? 0;
+  const { accent: macroAccent } = useMacroPalette();
   const trendRows = useMemo(() => {
     const rows: TrendRow[] = [];
     const weight = weightRow({
@@ -1126,6 +1128,7 @@ export default function History() {
         showSeries: nutrition.showSparklines,
         targetCalories,
         targetProtein,
+        proteinColor: macroAccent.protein,
       })
     );
     const fitness = profile?.runFitness ?? null;
@@ -1137,6 +1140,7 @@ export default function History() {
     if (prediction) rows.push(prediction);
     return rows;
   }, [
+    macroAccent.protein,
     bodyweight.points,
     range,
     profile?.preferredWeightUnit,
@@ -1898,7 +1902,7 @@ export default function History() {
                             ? nutrition.proteinSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.protein}
+                        accentColor={macroAccent.protein}
                       />
                     </div>
                     <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
@@ -1924,7 +1928,7 @@ export default function History() {
                             ? nutrition.carbsSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.carbs}
+                        accentColor={macroAccent.carbs}
                       />
                       <StatCard
                         label="Fat"
@@ -1945,7 +1949,7 @@ export default function History() {
                             ? nutrition.fatSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.fat}
+                        accentColor={macroAccent.fat}
                       />
                     </div>
 

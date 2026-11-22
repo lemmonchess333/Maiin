@@ -330,13 +330,13 @@ describe("TodayEnergy — the tiles take the Food page's colours", function () {
     renderAt(A_DAY);
     const icon = tile("protein").querySelector("svg")!;
     expect(icon.getAttribute("style")).toMatch(
-      /color: (#EC4899|rgb\(236, 72, 153\))/i
+      /color: (#A21CAF|rgb\(162, 28, 175\))/i
     );
     const fill = tile("protein").querySelector(
       "[data-macro-bar] > div"
     ) as HTMLElement;
     expect(fill.getAttribute("style")).toMatch(
-      /background: (#EC4899|rgb\(236, 72, 153\))/i
+      /background: (#A21CAF|rgb\(162, 28, 175\))/i
     );
   });
 });

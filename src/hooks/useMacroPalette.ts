@@ -1,11 +1,12 @@
-import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
+import { THEME, MACROS_LIGHT, MACROS_TEXT_LIGHT } from "@/lib/theme";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 
 /**
  * Returns a macro colour palette split into two tracks:
- *   • `accent` — the bright brand values, safe for tile backgrounds
- *     (used at 10% alpha), dots, chart fills, and any other graphical
- *     usage. Identical in light and dark mode.
+ *   • `accent` — the fills: tile backgrounds (at 10% alpha), dots, bars,
+ *     chart fills and lines. Protein and fat follow the theme (DS10 call
+ *     3: the dark theme's are under 3:1 on white, so light takes
+ *     `MACROS_LIGHT`); carbs and the food orange are the same in both.
  *   • `text`   — contrast-safe values for text rendered on card surfaces.
  *     In dark mode this is the bright palette (high contrast on the dark card);
  *     in light mode this switches to the darker variants in
@@ -20,9 +21,9 @@ export function useMacroPalette() {
   const isDark = useIsDarkTheme();
 
   const accent = {
-    protein: THEME.macros.protein,
+    protein: isDark ? THEME.macros.protein : MACROS_LIGHT.protein,
     carbs: THEME.macros.carbs,
-    fat: THEME.macros.fat,
+    fat: isDark ? THEME.macros.fat : MACROS_LIGHT.fat,
     nutrition: THEME.semantic.nutrition,
   } as const;
 

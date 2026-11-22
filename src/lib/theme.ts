@@ -146,21 +146,31 @@ export const THEME = {
   // Unified icon background: the chrome's tint (DS10 call 1).
   iconBg: "hsl(var(--foreground) / 0.08)",
 
-  // Macro colours — iconic food per macro:
-  //   protein = meat-pink (Beef), carbs = wheat-gold (Wheat),
-  //   fat = avocado-sage (Avocado). Each tile pairs colour + silhouette
-  //   of the food it stands for. Sage fat is deliberately muted vs the
-  //   punchy success green (#4DB872) so the two never collide as signals.
-  //
-  //   These values are tuned for dark mode and for accents/tints/dots.
-  //   For text on a light card, pair with `MACROS_TEXT_LIGHT` (see below)
-  //   via the `useMacroPalette()` hook — the raw values fail WCAG AA
-  //   contrast on white (#EAB308 ≈ 1.95:1).
+  /* Macro colours, the dark theme's (DS10 call 3, owner 22 November
+     2026): protein orchid, carbs wheat-gold, fat jade, each beside its
+     Beef, Wheat or Avocado. Protein left pink, 10 from the running coral
+     on Home; fat left sage, 6.6 from success green for everyone and 6 to
+     8 from the food ring for colour-blind people. Picked by measurement
+     (CIEDE2000, Machado 2009 at severity 100):
+
+       protein #EC8AF5  20 or more from the ring, carbs, fat, coral,
+                        water and lifting purple in normal vision (22 the
+                        closest, purple); 47 from the ring, 53 from carbs
+                        and 26 from fat at deutan and protan 100; 8.1:1 on
+                        the dark card.
+       fat     #0D907B  21 or more from every one of them in normal
+                        vision (21, water); 16 from the ring, 28 from carbs
+                        and 26 from protein at deutan and protan 100;
+                        4.5:1 on the dark card.
+
+     `macroPalette.test.ts` measures every pair. The light theme fills and
+     writes them in `MACROS_LIGHT`, through `useMacroPalette()`: these
+     are under 3:1 on white. Carbs is unchanged (DS10 kept it). */
   macros: {
     calories: "#EF4444", // Tailwind red-500
-    protein: "#EC4899", // Tailwind pink-500
+    protein: "#EC8AF5", // orchid
     carbs: "#EAB308", // Tailwind yellow-500
-    fat: "#7CB46C", // sage avocado
+    fat: "#0D907B", // jade
   },
 
   // The Food calorie ring's shades around the food orange
@@ -238,6 +248,27 @@ export const RANK_COLORS = [
 ] as const;
 
 /**
+ * The light theme's protein and fat, as fills and as text (DS10 call 3):
+ * the dark theme's values are under 3:1 on white. Each keeps 20 or more
+ * from every colour it meets in light (the ring #D9884E and its deep
+ * step #A34B08, carbs and its text step, coral, both waters, purple) and
+ * 15 or more from the ring, carbs and the other macro at deutan and
+ * protan 100.
+ *
+ *   protein  #A21CAF  6.3:1 on white; 22 from purple, 27 from coral
+ *   fat      #007058  6.1:1 on white; 22 from the water token, 22 from
+ *                     success green; 17 from the ring's deep step at
+ *                     protan 100
+ *
+ * Carbs keeps its yellow as a fill (DS10 did not move it).
+ */
+export const MACROS_LIGHT = {
+  protein: "#A21CAF",
+  carbs: "#EAB308",
+  fat: "#007058",
+} as const;
+
+/**
  * Darker macro colours intended for text rendered on a light card surface.
  *
  * Paired with `THEME.macros.*` via `useMacroPalette()` — that hook returns
@@ -246,15 +277,15 @@ export const RANK_COLORS = [
  * contrast (4.5:1 for body text) on white. All values measured against
  * pure white are ≥ 4.85:1.
  *
- *   protein  #BE185D  pink-700   ~6.1:1
+ *   protein  #A21CAF  fuchsia     ~6.3:1 (MACROS_LIGHT, DS10)
  *   carbs    #A16207  yellow-700 ~4.95:1
- *   fat      #4F7D43  deep sage  ~4.86:1
+ *   fat      #007058  deep jade   ~6.1:1 (MACROS_LIGHT, DS10)
  *   nutrition #B45309 amber-700  ~4.95:1
  */
 export const MACROS_TEXT_LIGHT = {
-  protein: "#BE185D",
+  protein: MACROS_LIGHT.protein,
   carbs: "#A16207",
-  fat: "#4F7D43",
+  fat: MACROS_LIGHT.fat,
   nutrition: "#B45309",
 } as const;
 

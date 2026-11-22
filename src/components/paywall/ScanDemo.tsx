@@ -41,6 +41,7 @@ import {
   formatTimeOfDay,
 } from "@/utils/formatters";
 import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 /**
  * A meal logged from a photo, start to finish, on a phone: it slides in
@@ -909,6 +910,7 @@ function Wheel({ calories }: { calories: number }) {
 
 /** The macros as the Food page draws them: one row, no boxes. */
 function Macros({ totals }: { totals: typeof AFTER }) {
+  const { accent } = useMacroPalette();
   const macros = [
     { key: "protein", Icon: Beef, label: "Protein" },
     { key: "carbs", Icon: Wheat, label: "Carbs" },
@@ -925,7 +927,7 @@ function Macros({ totals }: { totals: typeof AFTER }) {
           consumed={totals[key]}
           target={DAY.targets[key]}
           label={label}
-          color={THEME.macros[key]}
+          color={accent[key]}
           mode="left"
           drawIn={false}
         />
