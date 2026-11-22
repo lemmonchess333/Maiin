@@ -81,7 +81,7 @@ export default function PRCard({
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                 <div className="text-right">
-                  <p className="text-sm font-bold font-mono tabular-nums text-foreground">
+                  <p className="text-sm font-bold font-mono tabular-nums text-achievement-strong">
                     {pr.value}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">

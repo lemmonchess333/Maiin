@@ -22,11 +22,14 @@ describe("gold is for bests", () => {
     expect(figure("Current streak")).toContain("text-foreground");
   });
 
-  it("the bests list's values are gold", () => {
-    const prs = read("src/components/analytics/PRsTab.tsx");
-    expect(prs).toContain(
-      "text-sm font-bold font-mono tabular-nums text-achievement-strong"
-    );
+  it("the bests list's values are gold, lifting and running alike", () => {
+    for (const f of [
+      "src/components/analytics/PRsTab.tsx",
+      "src/components/analytics/PRCard.tsx",
+    ])
+      expect(read(f), f).toContain(
+        "text-sm font-bold font-mono tabular-nums text-achievement-strong"
+      );
   });
 });
 
