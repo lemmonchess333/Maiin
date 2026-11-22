@@ -20,7 +20,11 @@ import {
 import { afterEach } from "vitest";
 import { useState } from "react";
 import ProfileInfoSection from "../ProfileInfoSection";
-import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type {
+  UserProfile,
+  UpdateProfileOptions,
+  UpdateProfileResult,
+} from "@/lib/auth";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { DISPLAY_NAME_LENGTH_MESSAGE } from "@/lib/displayName";
 import { localDateString } from "@/lib/dateHelpers";
@@ -63,7 +67,7 @@ function renderSection(
   refreshProfile?: () => Promise<void>
 ) {
   const updateProfile = vi.fn(
-    async (_patch: Partial<UserProfile>) =>
+    async (_patch: Partial<UserProfile>, _options?: UpdateProfileOptions) =>
       ({ ok: true }) as UpdateProfileResult
   );
   render(
@@ -108,26 +112,120 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
   /* With no `sex` the maths take the midpoint of the male and female
      figures (owner, 22 November 2026), so the control says Not set. It
      showed an older `gender` here while the maths read male. */
+  const NOT_SET_LINE =
+    "Not set. Your targets and first weights sit halfway between the two.";
+  const checked = (name: string) =>
+    screen.getByRole("radio", { name }).getAttribute("aria-checked");
+
   it("an account with no `sex` shows Not set, whatever its old `gender`", () => {
     for (const gender of ["female", "male", "unspecified"] as const) {
       const { updateProfile } = renderSection(
         makeProfile({ sex: undefined, gender })
       );
-      const group = screen.getByRole("radiogroup", {
-        name: "Sex for calorie calculation",
-      });
-      expect(
-        group.querySelectorAll('[role="radio"][aria-checked="true"]')
-      ).toHaveLength(0);
-      expect(screen.getByText(/^Not set\./)).toBeInTheDocument();
+      expect(checked("Male")).toBe("false");
+      expect(checked("Female")).toBe("false");
+      expect(checked("Not set")).toBe("true");
+      expect(screen.getByText(NOT_SET_LINE)).toBeInTheDocument();
       expect(updateProfile).not.toHaveBeenCalled();
       cleanup();
     }
   });
 
+  /* Not set is a choice, as in Apple Health (owner, 22 November 2026), so
+     an answer can be taken back: one write takes `sex` off and puts setup's
+     "Prefer not to say" in `gender`. */
+  function StatefulSection({ initial }: { initial: UserProfile }) {
+    const [profile, setProfile] = useState(initial);
+    return (
+      <ProfileInfoSection
+        profile={profile}
+        name={profile.displayName ?? ""}
+        setName={vi.fn()}
+        updateProfile={async (patch, options) => {
+          stateful.calls.push([patch, options]);
+          setProfile((prev) => {
+            const next = { ...prev, ...patch };
+            for (const key of options?.remove ?? []) delete next[key];
+            return next;
+          });
+          return { ok: true } as UpdateProfileResult;
+        }}
+        inline
+      />
+    );
+  }
+  const stateful = {
+    calls: [] as [Partial<UserProfile>, UpdateProfileOptions | undefined][],
+  };
+  beforeEach(() => {
+    stateful.calls = [];
+  });
+
+  it("choosing Not set takes `sex` off, stores Prefer not to say, and shows the line", async () => {
+    render(
+      <StatefulSection
+        initial={makeProfile({
+          sex: "female",
+          gender: "female",
+          goalWeightKg: undefined,
+        })}
+      />
+    );
+    expect(screen.queryByText(NOT_SET_LINE)).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Not set" }));
+    await waitFor(() =>
+      expect(screen.getByText(NOT_SET_LINE)).toBeInTheDocument()
+    );
+    expect(stateful.calls).toEqual([
+      [{ gender: "unspecified" }, { remove: ["sex"] }],
+    ]);
+    expect(checked("Not set")).toBe("true");
+    expect(checked("Female")).toBe("false");
+  });
+
+  it("choosing Not set works the targets out again at the midpoint", async () => {
+    const answered = makeProfile({
+      sex: "male",
+      gender: "male",
+      age: 30,
+      activityLevel: "moderate",
+      goalWeightKg: 75,
+      weeklyRateKg: 0,
+    });
+    render(<StatefulSection initial={answered} />);
+    fireEvent.click(screen.getByRole("radio", { name: "Not set" }));
+    await waitFor(() => expect(stateful.calls).toHaveLength(1));
+    const [patch, options] = stateful.calls[0];
+    expect(options).toEqual({ remove: ["sex"] });
+    expect(patch).not.toHaveProperty("sex");
+    expect(patch.gender).toBe("unspecified");
+    const midpoint = buildGoalWeightPersistPayload({
+      profile: { ...answered, sex: undefined },
+      currentKg: 75,
+      targetKg: 75,
+      rateKgPerWeek: 0.5,
+    }).payload.targetCalories;
+    const male = buildGoalWeightPersistPayload({
+      profile: answered,
+      currentKg: 75,
+      targetKg: 75,
+      rateKgPerWeek: 0.5,
+    }).payload.targetCalories;
+    expect(patch.targetCalories).toBe(midpoint);
+    expect(patch.targetCalories).toBeLessThan(male);
+  });
+
+  it("choosing Not set when none is stored writes nothing", () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ sex: undefined, gender: "unspecified" })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Not set" }));
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
   it("an account with a `sex` does not say Not set", () => {
     renderSection(makeProfile({ sex: "female", gender: "unspecified" }));
-    expect(screen.queryByText(/^Not set\./)).toBeNull();
+    expect(screen.queryByText(NOT_SET_LINE)).toBeNull();
     expect(
       screen.getByText(
         "Your calorie and protein targets are worked out from it."
@@ -210,15 +308,14 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
-  it("handles an unset sex (no radio checked) without crashing", () => {
+  it("handles an unset sex (Not set the one radio checked) without crashing", () => {
     renderSection(makeProfile({ sex: undefined, gender: "unspecified" }));
     const group = screen.getByRole("radiogroup", {
       name: "Sex for calorie calculation",
     });
-    const checked = group.querySelectorAll(
-      '[role="radio"][aria-checked="true"]'
-    );
-    expect(checked).toHaveLength(0);
+    const on = group.querySelectorAll('[role="radio"][aria-checked="true"]');
+    expect(on).toHaveLength(1);
+    expect(on[0].textContent).toBe("Not set");
   });
 });
 

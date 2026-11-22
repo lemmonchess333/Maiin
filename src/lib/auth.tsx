@@ -925,7 +925,7 @@ interface AuthContextType {
    */
   updateProfile: (
     data: Partial<UserProfile>,
-    options?: { allowProtected?: boolean; throwOnError?: boolean }
+    options?: UpdateProfileOptions
   ) => Promise<UpdateProfileResult>;
   /**
    * Save answers to "Share sessions automatically?" on the account
@@ -1057,6 +1057,15 @@ const PUBLIC_MIRRORED_FIELDS = [
   "photoURL",
   "athleteType",
 ] as const;
+
+export interface UpdateProfileOptions {
+  allowProtected?: boolean;
+  throwOnError?: boolean;
+  /** Fields taken off the profile in the same write (`deleteField()`), and
+   *  off the profile the app holds: Settings › Profile's Not set takes
+   *  `sex` off this way. A protected field is kept unless `allowProtected`. */
+  remove?: readonly (keyof UserProfile)[];
+}
 
 /**
  * The meal, workout and streak reminders are scheduled on the device for the
@@ -1836,7 +1845,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = useCallback(
     async (
       data: Partial<UserProfile>,
-      options?: { allowProtected?: boolean; throwOnError?: boolean }
+      options?: UpdateProfileOptions
     ): Promise<UpdateProfileResult> => {
       if (!user) return { ok: false, error: new Error("not-authenticated") };
       // Capture the identity this write belongs to; a render-captured callback
@@ -1856,6 +1865,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
         ) as Partial<UserProfile>;
       }
+      const remove = (options?.remove ?? []).filter(
+        (key) =>
+          options?.allowProtected ||
+          !(PROTECTED_FIELDS as readonly string[]).includes(key)
+      );
 
       // If any publicly-mirrored field is in the patch, commit both writes in a
       // single batch so the main user doc and the public projection never drift.
@@ -1864,6 +1878,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (key in writeData) {
           const value = (writeData as Record<string, unknown>)[key];
           publicPatch[key] = value ?? null;
+        } else if (remove.includes(key)) {
+          publicPatch[key] = null;
         }
       }
       /* When displayName is in the patch, also write displayNameLower —
@@ -1883,7 +1899,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // default (most callers want it) — opt-in `throwOnError` for
       // call sites that want to handle the error themselves.
       try {
-        const { doc, writeBatch, setDocGuarded, db } = await firestore();
+        const { doc, writeBatch, setDocGuarded, db, deleteField } =
+          await firestore();
+        const docData =
+          remove.length > 0
+            ? {
+                ...writeData,
+                ...Object.fromEntries(
+                  remove.map((key) => [key, deleteField()])
+                ),
+              }
+            : writeData;
         let write: Promise<void>;
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
@@ -1892,7 +1918,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // free; the batch path has no guarded equivalent, so apply the
           // same firestoreWrite sanitiser (stripUndefined) by hand here.
           const batch = writeBatch(db);
-          batch.set(doc(db, "users", writeUid), stripUndefined(writeData), {
+          batch.set(doc(db, "users", writeUid), stripUndefined(docData), {
             merge: true,
           });
           batch.set(
@@ -1902,7 +1928,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           write = batch.commit();
         } else {
-          write = setDocGuarded(doc(db, "users", writeUid), writeData, {
+          write = setDocGuarded(doc(db, "users", writeUid), docData, {
             merge: true,
           });
         }
@@ -1932,6 +1958,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile((prev) => {
           if (!prev || prev.uid !== writeUid) return prev;
           const updated = { ...prev, ...data };
+          for (const key of remove) delete updated[key];
           if ("darkMode" in data) syncDarkMode(updated.darkMode);
           return updated;
         });
