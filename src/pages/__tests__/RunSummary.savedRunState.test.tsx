@@ -108,7 +108,13 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
 }));
 vi.mock("@/hooks/usePrivacyZones", () => ({
-  usePrivacyZones: () => ({ zones: [], loading: false, error: null }),
+  usePrivacyZones: () => ({
+    zones: [],
+    loading: false,
+    error: null,
+    // The save confirms the zones before it cuts a trace (none here).
+    confirmZones: async () => [],
+  }),
 }));
 vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => ({ isOnline: true }),
@@ -1733,5 +1739,91 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
     expect(queued()[0].data).not.toHaveProperty("racePrediction");
     expect(screen.queryByText(/Tropos predicted/)).toBeNull();
     expect(readsAt(LOG)).toHaveLength(0);
+  });
+});
+
+/* Run29: your top three on the finish, under the reward, from the runs
+   saved before this one. Only a run that placed shows the list. */
+describe("RunSummary — your top three", () => {
+  function trace(n: number, dtSec: number) {
+    return Array.from({ length: n }, (_, i) => ({
+      lat: 51.5 + i * 0.001,
+      lon: 0,
+      rawLat: 51.5 + i * 0.001,
+      rawLon: 0,
+      altitude: null,
+      accuracy: 5,
+      speed: null,
+      timestamp: 1_700_000_000_000 + i * dtSec * 1000,
+    }));
+  }
+  /** Earlier outdoor runs, each with a 1K effort of the seconds given. */
+  function seedOneKs(times: number[]) {
+    seedFirestore(
+      Object.fromEntries(
+        times.map((time, i) => [
+          `${RUNS_PATH}/past-${i}`,
+          {
+            completedAt: Timestamp.fromMillis(
+              Date.now() - (i + 2) * 86_400_000
+            ),
+            distance: 3000,
+            duration: 900,
+            avgPace: 300,
+            activityType: "freerun",
+            isInvalid: false,
+            bestEfforts: [{ distance: 1000, time }],
+          },
+        ])
+      )
+    );
+  }
+  function renderAndSave() {
+    // A 1.3 km run at 4:30 /km: its 1K is 4:30.
+    const points = trace(13, 30);
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: {
+              points,
+              distance: 1334,
+              elapsed: 360,
+              splits: [],
+              elevationGain: 0,
+              runConfig: { activityType: "freerun" },
+            },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("lists a 3rd fastest with its sentence and your best", async () => {
+    seedOneKs([250, 260, 300]);
+    renderAndSave();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    const list = await screen.findByRole("region", { name: "Your top three" });
+    expect(list.textContent).toContain("Ran 1K in 4:30, your 3rd fastest.");
+    const row = within(list).getByRole("listitem");
+    expect(row.textContent).toContain("3rd fastest");
+    expect(row.textContent).toContain("1K");
+    expect(row.textContent).toContain("4:30");
+    expect(row.textContent).toContain("best 4:10");
+  });
+
+  it("shows nothing for a run that placed nowhere", async () => {
+    seedOneKs([200, 210, 220]);
+    renderAndSave();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Your top three" })).toBeNull();
   });
 });

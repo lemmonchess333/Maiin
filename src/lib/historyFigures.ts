@@ -45,6 +45,7 @@ import {
   type EffortRun,
   type FastestEffort,
 } from "./runEfforts";
+import { rankedEfforts } from "./runPlacings";
 import { FASTEST_EFFORT_METERS } from "./postMoments";
 import {
   isAllTimeRecord,
@@ -420,6 +421,19 @@ export interface RunRecordRow {
   isNew: boolean;
   /** The run that holds the record, which the row opens. */
   runId?: string;
+  /** A Fastest row's 2nd and 3rd fastest over every run (Run29), each
+   *  opening its run. Only on the all-time card. */
+  runnersUp?: RunnerUpRow[];
+}
+
+/** One of your 2nd and 3rd fastest at a distance, under its Fastest row. */
+export interface RunnerUpRow {
+  place: 2 | 3;
+  /** "5K". */
+  label: string;
+  value: string;
+  date: string;
+  runId: string;
 }
 
 export interface RunRecordRows {
@@ -443,10 +457,13 @@ function recordRows<R extends RecordRun>(
     efforts = [],
     allTime,
     allTimeEfforts = [],
+    topThreeFrom,
     newSinceKey,
     unit,
   }: {
     includeLongest: boolean;
+    /** The runs whose 2nd and 3rd fastest go under each Fastest row. */
+    topThreeFrom?: readonly R[];
     /** The pool's fastest 1K, 5K and 10K (`fastestEfforts`). */
     efforts?: readonly FastestEffort<R>[];
     /** The records over every run, for a narrower pool. */
@@ -508,6 +525,21 @@ function recordRows<R extends RecordRun>(
           )),
       runId: effort.run.id,
     });
+    const runnersUp = topThreeFrom
+      ? rankedEfforts(topThreeFrom, effort.meters)
+          .filter((ranked) => ranked.run !== effort.run)
+          .slice(0, 2)
+          .map(
+            (ranked, index): RunnerUpRow => ({
+              place: index === 0 ? 2 : 3,
+              label: EFFORT_NAMES[effort.meters] ?? "",
+              value: finishTimeLabel(ranked.seconds),
+              date: day(ranked.run),
+              runId: ranked.run.id,
+            })
+          )
+      : [];
+    if (runnersUp.length > 0) rows[rows.length - 1].runnersUp = runnersUp;
   }
   if (includeLongest) {
     rows.push({
@@ -562,6 +594,9 @@ export function runRecordRows<R extends RecordRun>(
       ...shared,
       includeLongest: true,
       efforts: allTimeEfforts,
+      /* Your top three (Run29): the 2nd and 3rd under each Fastest row,
+         ranked as the run finish places a run. */
+      topThreeFrom: outdoor,
     }),
     recent30d: recordRows(selectRunRecords(recent, { includeLongest: true }), {
       ...shared,
