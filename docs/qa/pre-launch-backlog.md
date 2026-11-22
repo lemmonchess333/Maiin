@@ -5168,6 +5168,13 @@ of thing a phone's screen and WebKit decide.
       challenge card, over the medal band too), none has both a grey
       outline and the line, a chosen option keeps its coloured outline,
       and in light mode they look as they did.
+- [ ] **A tinted card keeps its fill (2026-11-21).** Open Progress's
+      personal records, and the weekly layout from the lift plan editor.
+      Passing: the Running and Lifting bests cards are cards in both
+      themes (white on light, the card's grey on dark, with the line
+      along the top), the same radius and shadow as the records table
+      beside them, and each day in the weekly layout is a card with its
+      session's faint tint and coloured outline, not a grey wash.
 - [ ] **The tracks read as slots.** On Home, the week's rest days and the
       empty part of each This week bar are darker than the card, and a
       day's colour or a bar's fill stands out more than before. Tap a day:

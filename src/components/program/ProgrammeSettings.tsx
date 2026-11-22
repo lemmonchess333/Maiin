@@ -231,8 +231,10 @@ function SettingsOptionCard({
                    PAGE, so in light the description under it (muted, 12px)
                    was 4.23:1 on #e3e2ee, and in dark the selected card sat
                    darker than its neighbours. axe caught it once Settings
-                   listed this editor (Trim1 call 2). */
-                background: `linear-gradient(${accent}14, ${accent}14), hsl(var(--card))`,
+                   listed this editor (Trim1 call 2). An image over the
+                   class's fill, so no shorthand resets it
+                   (inlineBackgroundFill.test.ts). */
+                backgroundImage: `linear-gradient(${accent}14, ${accent}14)`,
                 borderColor: `${accent}45`,
               }
             : undefined
