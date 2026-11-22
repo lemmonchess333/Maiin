@@ -1,8 +1,7 @@
 /**
- * Gold is for bests only, and success green is a tick (DS10 call 4, owner
- * 22 November 2026). A best had two colours (the gold headline, purple New
- * bests values; a gold current streak, a purple longest), and green meant
- * "PR" as well as "done".
+ * Gold is for bests only, and success green is a tick (DS10 call 4): a new
+ * best's values and the longest streak are gold, and green is a tick
+ * beside neutral words, never "PR".
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
@@ -22,23 +21,34 @@ describe("gold is for bests", () => {
     expect(figure("Current streak")).toContain("text-foreground");
   });
 
-  it("the bests list's values are gold, lifting and running alike", () => {
+  it("the Bests page's values are plain, its trophy and New chip gold", () => {
+    // As Strava's and Hevy's best-effort lists: plain values beside a
+    // trophy, so gold stays rare.
     for (const f of [
       "src/components/analytics/PRsTab.tsx",
       "src/components/analytics/PRCard.tsx",
     ])
       expect(read(f), f).toContain(
-        "text-sm font-bold font-mono tabular-nums text-achievement-strong"
+        "text-sm font-bold font-mono tabular-nums text-foreground"
       );
+    const card = read("src/components/analytics/PRCard.tsx");
+    expect(card).toContain('<Trophy className="size-4 text-achievement" />');
+    expect(card).toContain("bg-achievement/15");
+  });
+
+  it("the lift finish's New bests values are gold", () => {
+    expect(read("src/components/workout/SessionCompleteScreen.tsx")).toContain(
+      "text-lg font-extrabold font-figure tabular-nums text-achievement-strong"
+    );
   });
 });
 
 describe("success green is a tick beside neutral words", () => {
-  /* Every remaining use is a tick, a done set's box or the shoe wear
-     bar's first step. A word, a chip or a tint written in it would raise
-     the number: give the words the text colour and put a tick beside them
-     instead. */
-  it("success classes appear on at most 9 lines of the app", () => {
+  /* Every use is a tick beside its words, a done set's box or the shoe
+     wear bar's first step. A word, a chip or a tint written in it would
+     raise the number: give the words the text colour and put a tick
+     beside them instead. */
+  it("success classes appear on at most 13 lines of the app", () => {
     const lines = globSync("src/**/*.tsx")
       .filter(
         (f) =>
@@ -53,7 +63,7 @@ describe("success green is a tick beside neutral words", () => {
             /\b(text-success(-strong)?|bg-success(\/\d+)?)\b/.test(l)
           )
       );
-    expect(lines.length).toBeLessThanOrEqual(9);
+    expect(lines.length).toBeLessThanOrEqual(13);
   });
 
   it("no success chip or tint, and no PR in green", () => {

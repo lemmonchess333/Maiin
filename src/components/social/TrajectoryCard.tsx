@@ -41,18 +41,13 @@ export default function TrajectoryCard({
   const distanceUnit = useDistanceUnit();
   const sessionsUnit = (n: number) => (n === 1 ? "session" : "sessions");
 
-  // Colour the delta: green = ahead, coral = behind, muted grey = level.
+  // The delta is neutral: its arrow and sign say which way (DS10: coral
+  // means running, green is a tick). Level is the muted grey.
   const deltaColor =
-    delta > 0
-      ? THEME.success
-      : delta < 0
-        ? THEME.running
-        : "hsl(var(--muted-foreground))";
+    delta === 0 ? "hsl(var(--muted-foreground))" : THEME.chrome.text;
 
   const deltaBg =
-    delta === 0
-      ? "hsl(var(--muted-foreground) / 0.08)"
-      : (delta > 0 ? THEME.success : THEME.running) + "14";
+    delta === 0 ? "hsl(var(--muted-foreground) / 0.08)" : THEME.chrome.tint;
 
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 

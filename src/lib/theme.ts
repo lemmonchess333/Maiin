@@ -44,7 +44,7 @@ export const THEME = {
 
   // Semantic — harmonised hues, calmer saturation
   semantic: {
-    activity: "#7B72E9", // purple — lifting (weight is neutral since DS10)
+    activity: "#7B72E9", // purple — lifting
     hydration: "#52A3BD", // teal — water
     vitals: "#D4637A", // coral — running (heart rate has its own scale, `hrZones`)
     nutrition: "#D9884E", // warm orange — food, calories, macros
@@ -70,11 +70,9 @@ export const THEME = {
      amber-500). Fill/icon use only; TEXT takes hsl(var(--warning-strong)).
      `success` is a value-alias of semantic.positive, pinned in
      colorCanonical.test.ts. `danger` is the error red, the dark theme's
-     `--destructive` to a channel, and `semantic.negative` with it:
-     both were the running coral until DS10 call 2 (owner, 22 November
-     2026), so on a run screen coral meant the run, "slow", "behind" and an
-     error at once. Coral means running only; slow and behind are neutral
-     with their chevron or word, and an error is red with its icon. */
+     `--destructive` to a channel, and `semantic.negative` with it. Coral
+     means running only (DS10 call 2): an error is red with its icon, and
+     slow and behind are neutral with their chevron or word. */
   success: "#4DB872",
   warning: "#D97706",
   danger: "#EF4444",
@@ -128,8 +126,8 @@ export const THEME = {
     runDay: "#D4637A", // coral dot = run day (matches running)
   },
 
-  /* The chrome's colours for inline styles (DS10 call 1, owner 22
-     November 2026): an icon, a tint or a line that is not the person's
+  /* The chrome's colours for inline styles (DS10 call 1): an icon, a
+     tint or a line that is not the person's
      data is neutral, so purple means lifting and the brand lives in the
      mark and the art. `text` and `tint` follow the theme through the
      tokens; `grey` is the one literal, for what cannot read a CSS
@@ -146,12 +144,9 @@ export const THEME = {
   // Unified icon background: the chrome's tint (DS10 call 1).
   iconBg: "hsl(var(--foreground) / 0.08)",
 
-  /* Macro colours, the dark theme's (DS10 call 3, owner 22 November
-     2026): protein orchid, carbs wheat-gold, fat jade, each beside its
-     Beef, Wheat or Avocado. Protein left pink, 10 from the running coral
-     on Home; fat left sage, 6.6 from success green for everyone and 6 to
-     8 from the food ring for colour-blind people. Picked by measurement
-     (CIEDE2000, Machado 2009 at severity 100):
+  /* Macro colours, the dark theme's (DS10 call 3): protein orchid, carbs
+     wheat-gold, fat jade, each beside its Beef, Wheat or Avocado. Picked
+     by measurement (CIEDE2000, Machado 2009 at severity 100):
 
        protein #EC8AF5  20 or more from the ring, carbs, fat, coral,
                         water and lifting purple in normal vision (22 the
@@ -165,7 +160,7 @@ export const THEME = {
 
      `macroPalette.test.ts` measures every pair. The light theme fills and
      writes them in `MACROS_LIGHT`, through `useMacroPalette()`: these
-     are under 3:1 on white. Carbs is unchanged (DS10 kept it). */
+     are under 3:1 on white. Carbs is the same in both themes. */
   macros: {
     calories: "#EF4444", // Tailwind red-500
     protein: "#EC8AF5", // orchid
@@ -202,9 +197,8 @@ export const THEME = {
 
   /* The run's pace, light to dark (DS10 call 2): a fast stretch light
      yellow, the run's own average the amber that data scales keep, a slow
-     stretch blue. Not green against coral: fast against slow measured 7
-     apart for deuteranopia there, by colour alone, and the slow step was
-     the running colour itself. Each neighbouring step is 15 or more apart
+     stretch blue, so no step is the running colour and none is red
+     against green. Each neighbouring step is 15 or more apart
      (CIEDE2000) in normal vision and at deuteranopia and protanopia
      severity 100 (Machado 2009); `paceScale.test.ts` measures it. Read by
      the route's colours (`routePace.ts`) and the live run's pace bar
@@ -214,19 +208,18 @@ export const THEME = {
     average: "#D97706",
     slow: "#2975E0",
   },
-  /* Heart-rate zones, Z1 to Z5, on the same blue-to-yellow line as the
-     pace (DS10 call 2): teal, green, two ambers and coral measured 6.5
-     apart between Z4 and Z5 for deuteranopia. Each neighbouring zone is
-     16 or more apart in every vision `paceScale.test.ts` measures, and
-     each clears 3:1 as a figure on the run's dark sheet. The figure also
-     carries its zone's name ("HR Z3"), so colour is never alone. */
-  hrZones: {
-    1: "#2975E0",
-    2: "#6EAEEB",
-    3: "#B7B2BA",
-    4: "#CFC9AB",
-    5: "#F9D86A",
-  },
+  /* Heart-rate zone 5, the hottest step of the zones' scale (teal, green,
+     two ambers, then this; RunBottomSheet). A raspberry, so it is
+     neither the running coral nor the error red: 17.0 from coral and 26.8
+     from #EF4444 in normal vision (CIEDE2000). Against zone 4's amber it
+     measures 49.4 normal, 40.7 deutan 100 and 52.4 protan 100 (amber
+     against coral measures 18.9 deutan); its nearest other zone is teal,
+     11.1 at deutan 100. It is the dot beside "HR Z5", 3.2:1 on the stats
+     pill: under 4.5:1, so the bpm keeps the stat colour. The steps that
+     clear 4.5:1 there are violet (lifting's purple), pale, under 15 from
+     coral, or under 9.6 from teal under colour blindness. `paceScale.test.ts` holds
+     the numbers. */
+  hrZoneMax: "#CD1D93",
   // Gradient helpers — subtler transitions
   gradient: {
     brand: "linear-gradient(135deg, #9590E0, #7B72E9)",
@@ -260,7 +253,7 @@ export const RANK_COLORS = [
  *                     success green; 17 from the ring's deep step at
  *                     protan 100
  *
- * Carbs keeps its yellow as a fill (DS10 did not move it).
+ * Carbs keeps its yellow as a fill.
  */
 export const MACROS_LIGHT = {
   protein: "#A21CAF",

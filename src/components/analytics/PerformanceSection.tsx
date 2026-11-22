@@ -193,7 +193,7 @@ export default function PerformanceSection({
      to the brand's: a first week is not told to back off in amber. */
   const label = establishing ? EARLY_READ : verb.label;
   const { textHue } = establishing
-    ? { textHue: "hsl(var(--primary-strong))" }
+    ? { textHue: "hsl(var(--lifting-strong))" }
     : getCardColour(pi, loadBand, deloadRecommended);
   const line = establishing
     ? getEstablishingLine(currentWeek.signals)

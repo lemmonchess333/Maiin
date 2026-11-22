@@ -123,7 +123,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
       </div>
       <div className="text-right flex-shrink-0 flex items-center gap-2">
         <div>
-          <p className="text-sm font-bold font-mono tabular-nums text-achievement-strong">
+          <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {isBW && pr.weight === 0 ? (
               "BW"
             ) : isBW && pr.weight > 0 ? (
