@@ -12,13 +12,21 @@
  * card anatomy), soonest first, then evergreen races awaiting their next
  * date, filtered by a row of chips.
  *
- * The line under a Space's name is its member count, and only a real one:
- * a count below SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing
- * stands in for it (Spc1c). How many posts a Space had this week is not
- * read here (the directory reads a member count and membership only), so
- * no card says it. No animation loops (WKWebView).
+ * The line under a Space's name is its member count, and only a real one
+ * (Spc1c): from SPACE_MEMBER_COUNT_MIN_VISIBLE it says how many, and under
+ * it the Space says it is filling up (App1 Q6, `src/lib/fillingUp.ts`),
+ * since every Space is offered from a person's first day however few
+ * people are on Tropos. While the count is unknown it says neither. How
+ * many posts a Space had this week is not read here (the directory reads
+ * a member count and membership only), so no card says it. No animation
+ * loops (WKWebView).
+ *
+ * Search (Run27 call 11): a field over the directory finds Spaces by name,
+ * or a race by its city, among every Space and every race whatever the
+ * chips say (`spaceSearch.ts`, on the device: Spaces are the app's own
+ * config). While it holds a query, the results stand in for the rows.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import PhotoCaption from "@/components/ui/PhotoCaption";
@@ -38,16 +46,25 @@ import {
   Medal,
   Mountain,
   Plane,
+  Search,
   Sprout,
   Users,
+  X,
   Zap,
   type LucideIcon,
 } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
+import { IconButton } from "@/components/ui/IconButton";
+import {
+  SPACE_SEARCH_MIN_LENGTH,
+  searchKey,
+  searchSpaces,
+} from "./spaceSearch";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
+import { FILLING_UP, roomPeople } from "@/lib/fillingUp";
 import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
@@ -96,8 +113,7 @@ function SpaceCard({
   const photo = spaceEditorialImage(def.id);
   const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
-  const showCount =
-    memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;
+  const people = roomPeople(memberCount, SPACE_MEMBER_COUNT_MIN_VISIBLE);
   const event = def.kind === "race" ? def.event : undefined;
 
   return (
@@ -111,7 +127,6 @@ function SpaceCard({
               background: `linear-gradient(150deg, ${accent}26 0%, ${accent}0C 55%, ${accent}14 100%)`,
             }
       }
-      aria-label={`${def.name} space`}
     >
       {/* Every photo card on the one dark shade (PhotoCaption's scrim),
           with no tint of its own, so the white words read alike on each. */}
@@ -131,49 +146,14 @@ function SpaceCard({
         />
       )}
 
-      {event && (
-        <span
-          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
-          }`}
-          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
-             register (photo-overlay text is white-over-dark-scrim in both
-             themes — THEME.scrim's rule): the previous white pill carried
-             the accent as ink, which measured 3.19:1 at this size on the
-             fixed white — in BOTH themes, since the pill never changed.
-             On the themed fallback card the tint stays and the ink takes
-             the accent's -strong step. */
-          style={
-            photo
-              ? undefined
-              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
-          }
-        >
-          <span>
-            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
-          </span>
-        </span>
-      )}
-
-      {joined && (
-        <span
-          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
-          }`}
-          style={
-            photo
-              ? undefined
-              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
-          }
-        >
-          <Check className="size-3" aria-hidden />
-          Joined
-        </span>
-      )}
-
-      {/* The name takes two lines before it gives way, on every card, so
+      {/* The card is named by its words, so the caption comes first in
+          the page's order and the Space's name leads its name, "space"
+          unseen after it, then the tags drawn over the picture: Voice Control is spoken to with the
+          words on the screen (WCAG 2.5.3, Label in Name). The tags are
+          placed absolutely, so the order moves nothing on the card.
+          The name takes two lines before it gives way, on every card, so
           a long name wraps at a word rather than being cut on its first
-          line. The tags above sit over the caption's scrim (z-10), which
+          line. The tags below sit over the caption's scrim (z-10), which
           reaches them at larger text. */}
       <PhotoCaption onPhoto={!!photo} className="px-3.5">
         <p
@@ -181,9 +161,9 @@ function SpaceCard({
             photo ? "text-white" : "text-foreground"
           }`}
         >
-          {def.name}
+          {def.name} <span className="sr-only">space</span>
         </p>
-        {(event || showCount) && (
+        {(event || people) && (
           <p
             className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
               photo ? "text-white/85" : "text-muted-foreground"
@@ -210,17 +190,64 @@ function SpaceCard({
             ) : (
               <>
                 <Users className="size-3" aria-hidden />
-                <span>
-                  <span className="font-mono tabular-nums">
-                    {memberCount?.toLocaleString()}
-                  </span>{" "}
-                  members
-                </span>
+                {people === "fillingUp" ? (
+                  <span>{FILLING_UP}</span>
+                ) : (
+                  <span>
+                    <span className="font-mono tabular-nums">
+                      {people?.count.toLocaleString()}
+                    </span>{" "}
+                    members
+                  </span>
+                )}
               </>
             )}
           </p>
         )}
       </PhotoCaption>
+      {event && (
+        <span
+          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
+            photo
+              ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
+              : ""
+          }`}
+          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
+             register (photo-overlay text is white-over-dark-scrim in both
+             themes — THEME.scrim's rule): the previous white pill carried
+             the accent as ink, which measured 3.19:1 at this size on the
+             fixed white — in BOTH themes, since the pill never changed.
+             On the themed fallback card the tint stays and the ink takes
+             the accent's -strong step. */
+          style={
+            photo
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
+          }
+        >
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
+        </span>
+      )}
+
+      {joined && (
+        <span
+          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
+            photo
+              ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
+              : ""
+          }`}
+          style={
+            photo
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
+          }
+        >
+          <Check className="size-3" aria-hidden />
+          Joined
+        </span>
+      )}
     </Link>
   );
 }
@@ -269,17 +296,150 @@ function CardRow({
   );
 }
 
+/** One Space found by a search: its picture, its name, and its race day
+ *  and city or its tagline. */
+function SpaceSearchRow({ def }: { def: SpaceDef }) {
+  const photo = spaceEditorialImage(def.id);
+  const accent = SPACE_ACCENT_HEX[def.accent];
+  const Icon = ICON_MAP[def.icon] ?? Users;
+  const event = def.kind === "race" ? def.event : undefined;
+  const past = event ? event.dateKey < localDateString() : false;
+  return (
+    <Link
+      to={`/space/${def.id}`}
+      className="flex items-center gap-3 min-h-14 rounded-xl bg-card card-shadow p-2.5 pr-3.5 active:scale-[0.98] transition-transform"
+    >
+      <span
+        className="relative size-11 shrink-0 overflow-hidden rounded-lg"
+        style={photo ? undefined : { background: `${accent}26` }}
+        aria-hidden
+      >
+        {photo ? (
+          <img src={photo} alt="" className="size-full object-cover" />
+        ) : (
+          <Icon
+            className="absolute inset-0 m-auto size-5"
+            style={{ color: accent }}
+          />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold leading-tight text-foreground line-clamp-2 break-words">
+          {def.name}
+        </span>
+        <span className="mt-0.5 block text-caption text-muted-foreground truncate">
+          {event ? (
+            <>
+              <span className={past ? undefined : "font-mono tabular-nums"}>
+                {past ? "Next date TBA" : formatRaceEventDate(event)}
+              </span>
+              {" · "}
+              {event.city} {event.countryFlag}
+            </>
+          ) : (
+            def.tagline
+          )}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/** The directory's search field: a query, and a way to clear it. */
+function SpaceSearchField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="relative" role="search">
+      <Search
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="Search spaces"
+        aria-label="Search spaces"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="ds-input pl-10 pr-11 text-base text-foreground placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+      />
+      {value.length > 0 && (
+        <IconButton
+          onClick={() => onChange("")}
+          aria-label="Clear search"
+          icon={<X />}
+          className="absolute right-0.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function SpacesDirectory() {
   const [filters, setFilters] = useState(UK_RACE_FILTERS);
   const { entries, upcomingRaces } = useSpacesDirectory(true, filters);
+  const [query, setQuery] = useState("");
+  /* Every Space a search can find: every interest Space and every race,
+     whatever the chips say, in the directory's own order. */
+  const searchable = useMemo(
+    () => [
+      ...entries.filter((e) => e.def.kind !== "race").map((e) => e.def),
+      ...upcomingRaces,
+    ],
+    [entries, upcomingRaces]
+  );
+
   const interest = entries.filter((e) => e.def.kind !== "race");
   const races = entries.filter((e) => e.def.kind === "race");
   const showRaces = upcomingRaces.length > 0;
   if (entries.length === 0 && !showRaces) return null;
+  const searching = searchKey(query).length >= SPACE_SEARCH_MIN_LENGTH;
+  const results = searching ? searchSpaces(searchable, query) : [];
 
   return (
     <div className="space-y-4">
-      {showRaces && (
+      <SpaceSearchField value={query} onChange={setQuery} />
+      {/* Always in the page, so a screen reader hears each new count. */}
+      <p className="sr-only" aria-live="polite">
+        {searching
+          ? results.length === 1
+            ? "1 space found"
+            : `${results.length} spaces found`
+          : ""}
+      </p>
+      {searching ? (
+        results.length > 0 ? (
+          <div className="space-y-2" role="list" aria-label="Spaces found">
+            {results.map((def) => (
+              <div role="listitem" key={def.id}>
+                <SpaceSearchRow def={def} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            compact
+            icon={Search}
+            headline="No matching spaces"
+            sub="Try a race’s name or its city."
+            action={{
+              label: "Clear search",
+              variant: "secondary",
+              onClick: () => setQuery(""),
+            }}
+          />
+        )
+      ) : null}
+      {!searching && showRaces && (
         <section className="space-y-2" aria-label="Races & events">
           <SectionHeading as="h3" size="compact">
             Races & events
@@ -308,7 +468,7 @@ export default function SpacesDirectory() {
           )}
         </section>
       )}
-      {interest.length > 0 && (
+      {!searching && interest.length > 0 && (
         <CardRow label="Spaces" entries={interest} size="small" />
       )}
     </div>

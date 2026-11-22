@@ -35,7 +35,8 @@ const UNDO_WINDOW_MS = 4000;
  * The reading, spoken. `formatWaterVolume` renders "2 L" / "250 ml",
  * whose units a screen reader pronounces as bare letters; Home's food
  * card spells "grams" in its macro names for the same reason. Visual copy
- * keeps the symbols — only the accessible name uses this.
+ * keeps the symbols, and so does a control's name, which carries the
+ * words drawn on it; only the announcement after a log uses this.
  */
 function spokenVolume(ml: number): string {
   const label = formatWaterVolume(ml);
@@ -177,6 +178,16 @@ export default function WaterCard({
      dropped, and a screen reader should not be told about a goal the
      screen no longer shows. */
   const reading = `Water ${spokenVolume(ml)} logged.`;
+  /* A body button's name is the words drawn on it, in order ("Water
+     500 ml, Tap + for 250 ml"), then what a tap does: Voice Control is
+     spoken to with what is on the screen (WCAG 2.5.3, Label in Name).
+     The meta line is drawn only on a day with water and while it is not
+     the way back. */
+  const shownReading = `Water ${formatWaterVolume(ml)}`;
+  const compactShown =
+    hasWater && !showUndo
+      ? `${shownReading}, Tap + for ${formatWaterVolume(servingMl)}`
+      : shownReading;
 
   useEffect(() => {
     const previous = wasMet.current;
@@ -309,7 +320,7 @@ export default function WaterCard({
   if (compact) {
     return (
       <div
-        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
+        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col dark:card-shadow"
         style={{ boxShadow: iconBoxShadow }}
       >
         {heading}
@@ -370,7 +381,7 @@ export default function WaterCard({
         <div className="relative z-10 flex flex-col flex-1">
           {/* Card body opens the size sheet (choose a container). */}
           {/* Focus ring + 0.97 press mirror the peer tile's button
-              (WeightStepsTiles.tsx:124). This button had NO
+              (WeightTile.tsx). This button had NO
               focus-visible styling at all, so keyboard focus on the
               water tile was invisible while focus on the weight tile
               beside it drew a ring. The ring sits 4px outside a 12px
@@ -378,7 +389,7 @@ export default function WaterCard({
           <button
             type="button"
             onClick={openSheet}
-            aria-label={`${reading} Add water — choose a container size.`}
+            aria-label={`${compactShown}. Add water, choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
@@ -402,6 +413,9 @@ export default function WaterCard({
                   numeral tier below, one line up. */}
               <SectionLabel>Water</SectionLabel>
             </div>
+            {/* Spaces in the text between the tile's words, so they read
+                as words, as the name does; between blocks they draw
+                nothing. */}{" "}
             {/* Matches the weight tile beside it, which is the canonical
                 compact-tile numeral treatment (text-2xl / 800, unit at
                 text-sm). This variant sat a full tier below it —
@@ -413,13 +427,16 @@ export default function WaterCard({
                 inside its own component too. */}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
+              {/* A space, not a margin: the figure and its unit read as
+                  two words, as the button's name has them. */}
               <span
-                className="ml-1 font-sans text-sm font-medium"
+                className="font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
+                {" "}
                 {splitWaterVolume(ml).unit}
               </span>
-            </p>
+            </p>{" "}
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
@@ -468,9 +485,10 @@ export default function WaterCard({
               It is under the 44px floor, deliberately — a transient
               affordance whose permanent, full-size equivalent is the
               sheet's log, one tap away on the same tile. */}
-          {/* An empty day's tile is as tall as Weight and Steps together,
-              and before the first drink its lower half was blank. It
-              offers the two everyday sizes there instead, one tap each.
+          {/* An empty day's tile was as tall as the Weight and Steps
+              tiles beside it (Steps left Home with Q31), and before the
+              first drink its lower half was blank. It offers the two
+              everyday sizes there instead, one tap each.
               The first drink fills the tile from the bottom, and the
               wave takes the space. */}
           {!hasWater && (
@@ -504,7 +522,7 @@ export default function WaterCard({
           )}
         </div>
         {/* Permanently mounted, sr-only when idle — the peer tile's shape
-            (WeightStepsTiles.tsx:182-189). A live region inserted with
+            (WeightTile.tsx). A live region inserted with
             its text already present is commonly not announced, so the
             old conditional mount meant NEITHER the sync line nor a
             quick log ever reached a screen reader. The retry control
@@ -532,7 +550,7 @@ export default function WaterCard({
 
   return (
     <div
-      className="relative overflow-hidden p-4 rounded-xl bg-card"
+      className="relative overflow-hidden p-4 rounded-xl bg-card dark:card-shadow"
       style={{ boxShadow: iconBoxShadow }}
     >
       {heading}
@@ -551,7 +569,7 @@ export default function WaterCard({
         <button
           type="button"
           onClick={openSheet}
-          aria-label="Add water — choose a container size"
+          aria-label={`${shownReading}. Add water, choose a container size.`}
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
@@ -564,13 +582,16 @@ export default function WaterCard({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <SectionLabel>Water</SectionLabel>
+            <SectionLabel>Water</SectionLabel>{" "}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
+              {/* A space, not a margin: the figure and its unit read as
+                  two words, as the button's name has them. */}
               <span
-                className="ml-1 font-sans text-sm font-medium"
+                className="font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
+                {" "}
                 {splitWaterVolume(ml).unit}
               </span>
             </p>

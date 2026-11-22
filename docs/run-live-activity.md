@@ -1,6 +1,7 @@
 # Run Live Activity (lock screen / Dynamic Island)
 
-**Status:** both halves built.
+**Status:** both halves built, for a run, a lift (Wid2 call 2) and the
+Home Screen widgets (Wid1).
 
 - **TypeScript:** `src/lib/runLiveActivity.ts` (the seam, tested) and the
   Run.tsx lifecycle wiring (start on active, throttled per-tick updates
@@ -19,12 +20,13 @@
 The steps below are what Xcode would have done; the target in the
 project matches them.
 
-The same extension also shows a lift's rest (`src/lib/restLiveActivity.ts`):
-a dark card with a purple dumbbell, "Rest", the system's own countdown to
-the rest's end, which stops at 0:00, and "Next:" with the exercise, and in
-the Dynamic Island the
-dumbbell and the countdown. It needs nothing more than the steps below; its
-device check is in `docs/qa/pre-launch-backlog.md`.
+The same extension also shows a lift, from its first set to its finish
+(`src/lib/liftLiveActivity.ts`, Wid2 call 2), and holds the Home Screen and
+Lock Screen widgets (Wid1; "The widgets" below). Both need nothing more
+than the steps below; their device checks are in
+`docs/qa/pre-launch-backlog.md`. Settings → Notifications → Lock Screen →
+Live Activities turns every card off on the phone (Wid2 call 6,
+`src/lib/liveActivitySetting.ts`).
 
 ## What ships on the lock screen
 
@@ -39,7 +41,9 @@ design C: the picture leads):
   the pace and the time ("5:12 /km · 23:41").
 - **The Dynamic Island.** Compact: the run glyph and the distance.
   Minimal: the distance alone, since Apple asks for something live in the
-  smallest size. Expanded: the glyph on the left of the camera, the time
+  smallest size. The distance is 12 pt in both (Run26 call 1), so it fits
+  the 28 pt Apple gives each side when the island is short of room, as
+  when music shares it. Expanded: the glyph on the left of the camera, the time
   on its right, and under them the drawing with the session's name, the
   distance and "Pace 5:12 /km".
 - **The name is the session's.** The one the run was started as, as the
@@ -73,6 +77,53 @@ start), throttled to one OS call per 2s and deduped — inside
 ActivityKit's update budget. Elapsed is the app's own label rather than
 a native self-ticking timer element, deliberately: ActivityKit's timer
 keeps counting through a pause.
+
+## What ships for a lift
+
+One card from the first set to the finish, in the same design (Wid2, design
+C), drawn by the plugin from the layout the app sends:
+
+- **On a set.** The session's lead lift (`sessionLeadArt`, the picture
+  Home's hero shows) drawn mid-rep on the left, in a soft purple light;
+  "SET 2 OF 4"; the set's weight and reps as the card's one figure
+  ("100 kg × 5", as the rest band names a set); the exercise under it; the
+  day's name in the top corner.
+- **Resting.** The lift drawn standing, "REST", the system's own countdown
+  to the rest's end (it stops at 0:00 and keeps time with the app asleep),
+  and "Next:" with the set that comes next.
+- **Rest over.** Once the app is awake past the rest's end, the lift drawn
+  set up, "REST OVER" and the next set's name. Asleep, the countdown holds
+  at 0:00, since only the app can change the card.
+- **The island.** Compact: the dumbbell and the set's number ("2/4"), the
+  countdown in a rest, "Go" once it is over. Minimal: the same figure
+  alone. Expanded: the drawing with the kicker, the figure and the line.
+- **The finish** takes the card away at once (Wid2 call 4), as does
+  leaving the workout.
+
+The drawings are three poses of each of the 24 lead lifts' flipbooks
+(`src/lib/liveActivityArt.ts`, cut by `npm run art:live-activity`), so a
+lead lift without a flipbook shows no drawing. A layout is fixed when its
+card starts, and a rest's countdown is part of it, so the card is started
+again at each change between a set and a rest; a set after a set, and a
+rest's end, change its data alone. Each start happens with the app open,
+as ActivityKit requires.
+
+## The widgets
+
+Wid1's three widgets, drawn as Wid2 call 5 decided, are SwiftUI views of
+ours in the same extension: `TodayWidget.swift`, `StreakWidget.swift` and
+`FoodWidget.swift`, over `WidgetChrome.swift`. They read the snapshot the
+app writes to the App Group (`HomeWidgetsPlugin.swift` in the app,
+`HomeWidgetStore.swift` in both targets), which Home writes whole and Food
+and today's water log write in part (`src/lib/homeWidgetSnapshot.ts`,
+`src/hooks/useHomeWidgetSections.ts`). The food widget's "+ Glass" is an
+iOS 17 App Intent (`LogDrinkIntent.swift`) that queues the drink in the App
+Group; the app saves it once on its next open (`src/lib/widgetDrinks.ts`).
+A widget's tap opens the app at `https://troposfit.com/<path>?from=widget`,
+which iOS hands to the app (`src/lib/widgetLinks.ts` lets through only the
+paths a widget writes). The Today widget draws the same pose images as the
+Live Activities. The extension's deployment target stays 16.2: the App
+Intent and iOS 17's widget background sit behind availability checks.
 
 ## Operator steps (Mac + Xcode, once)
 
@@ -135,9 +186,12 @@ before a launch's first card it ends any card an earlier launch left.
    ```
 
 8. **App Groups** capability on BOTH the app target and the extension
-   target: `group.com.tropos.app.liveactivities`. Xcode writes the
-   extension's entitlements file and adds the group to
-   `App/App.entitlements`.
+   target: `group.com.tropos.app`, the group both App IDs hold on Apple's
+   site. The plugin names its own group, `group.<bundle id>.liveactivities`,
+   but only for its `appGroup` images, which no Tropos layout uses
+   (`iosProjectWiring.test.ts` keeps it that way). A layout that needs an
+   app-group image first needs that group registered and assigned on
+   Apple's site, and both entitlements files changed to it.
 9. Build to a device (Live Activities need iOS 16.2+; Dynamic Island needs
    iPhone 14 Pro+). There is no `pod install` step.
 
@@ -169,6 +223,7 @@ and exported with no change to the workflow. Apple's side needs, once:
 | 8   | Treadmill/manual run → NO Live Activity (outdoor-GPS-only gate)                      | ⬜     |       |
 | 9   | The runner is drawn, not a grey photo icon, and changes pose about every 4 s         | ⬜     |       |
 | 10  | The card is dark to its corners, with a coral light behind the runner                | ⬜     |       |
+| 11  | Music playing (14 Pro+): the run's side of the island shows the distance, not "1…"   | ⬜     |       |
 
 Legend: ⬜ not yet run · ✅ pass · ❌ fail (add a note).
 

@@ -19,70 +19,93 @@ import {
   probeReviewEligibility,
   reviewViewedKey,
 } from "@/lib/reviewEligibility";
+import {
+  REMINDERS_SETTINGS_DOC,
+  reminderDelivery,
+  reviewReminderChoice,
+  type ReviewReminderChoice,
+} from "@/lib/reminderChoices";
 
-export interface ReviewReminderPrefs {
-  enabled: boolean;
-}
-
-/** On for everyone (Mob2 call 10): it reaches only someone who has
- *  allowed notifications, since scheduling asks the permission first. */
-const DEFAULT_PREFS: ReviewReminderPrefs = { enabled: true };
+type Stored = Record<string, unknown>;
 
 /**
  * The Monday review notification (`lib/reviewReminder.ts` has the rules),
- * run once a session by <RemindersProvider>, like the other reminders:
- * its switch at `users/{uid}/settings/reviewReminder`, and a
- * cancel-then-maybe-schedule pass whenever the answer could have moved.
+ * run once a session by <RemindersProvider>, like the other reminders.
  *
- * A pass runs on mount, when the switch or the push that owns the recap
+ * One switch (App1 Q26, `lib/reminderChoices.ts`), at
+ * `users/{uid}/settings/reminders` (`reviewEnabled`), with the old
+ * `settings/reviewReminder` and the recap push's switch read until it is
+ * written. On unless turned off (Mob2 call 10); it reaches only someone who
+ * has allowed notifications, since scheduling asks the permission first.
+ * When push carries it, the server's Monday recap is this reminder, at the
+ * same 09:00, and nothing is scheduled here; otherwise a
+ * cancel-then-maybe-schedule pass runs whenever the answer could have moved.
+ *
+ * A pass runs on mount, when the switch or whether push carries it
  * changes, when the app comes back to the front or the day turns
  * (`refreshKey`), and when today's logging changes (`activityKey`), since
  * a first log is what makes a new account's first review.
  */
 export function useReviewReminderInternal(
-  pushOwns: boolean | null,
+  /** `settings/push` as stored ({} for none), or null until it is read. */
+  push: Stored | null,
   refreshKey: string,
   activityKey: string
 ) {
   const uid = useUid();
   const storageUid = useUidForStorageKey();
-  const [prefs, setPrefs] = useState<ReviewReminderPrefs>(DEFAULT_PREFS);
-  const [loaded, setLoaded] = useState<string | null>(null);
+  const [stored, setStored] = useState<{
+    uid: string;
+    reminders: Stored;
+    old: Stored;
+  } | null>(null);
   const chain = useRef<Promise<void>>(Promise.resolve());
+  const loaded = stored?.uid ?? null;
+  const prefs: ReviewReminderChoice = reviewReminderChoice({
+    reminders: stored?.uid === uid ? stored.reminders : null,
+    reviewReminder: stored?.uid === uid ? stored.old : null,
+    push,
+  });
+  // Push carries it (the server's recap is this reminder), or not known yet.
+  const pushOwns =
+    push === null ? null : reminderDelivery("review", true, push) === "push";
 
   useEffect(() => {
     if (!uid) return;
     let cancelled = false;
-    getDoc(doc(db, "users", uid, "settings", "reviewReminder"))
-      .then((snap) => {
-        if (cancelled) return;
-        setPrefs({
-          ...DEFAULT_PREFS,
-          ...(snap.exists()
-            ? (snap.data() as Partial<ReviewReminderPrefs>)
-            : {}),
-        });
-        setLoaded(uid);
+    const settings = (name: string) =>
+      getDoc(doc(db, "users", uid, "settings", name)).then(
+        (snap) => (snap.exists() ? snap.data() : {}) as Stored
+      );
+    Promise.all([settings(REMINDERS_SETTINGS_DOC), settings("reviewReminder")])
+      .then(([reminders, old]) => {
+        if (!cancelled) setStored({ uid, reminders, old });
       })
       .catch((err) => {
         if (cancelled) return;
         logger.error("[ReviewReminder] load failed", err);
-        setLoaded(uid);
+        setStored({ uid, reminders: {}, old: {} });
       });
     return () => {
       cancelled = true;
     };
   }, [uid]);
 
+  /** The one switch, written in the new shape only. */
   const updatePrefs = useCallback(
-    async (updates: Partial<ReviewReminderPrefs>) => {
-      if (!uid) return;
-      const next = { ...prefs, ...updates };
-      setPrefs(next);
+    async (updates: Partial<ReviewReminderChoice>) => {
+      if (!uid || updates.enabled === undefined) return;
+      const patch = { reviewEnabled: updates.enabled };
       try {
         await setDocGuarded(
-          doc(db, "users", uid, "settings", "reviewReminder"),
-          next
+          doc(db, "users", uid, "settings", REMINDERS_SETTINGS_DOC),
+          patch,
+          { merge: true }
+        );
+        setStored((current) =>
+          current?.uid === uid
+            ? { ...current, reminders: { ...current.reminders, ...patch } }
+            : current
         );
       } catch (err) {
         logger.error("[ReviewReminder] save failed", err);
@@ -91,9 +114,10 @@ export function useReviewReminderInternal(
           "network",
           { surface: "reviewReminder.save" }
         );
+        throw err;
       }
     },
-    [uid, prefs]
+    [uid]
   );
 
   const ready = !!uid && loaded === uid;
@@ -131,6 +155,7 @@ export function useReviewReminderInternal(
         ...REVIEW_NOTIFICATION,
         scheduleAt: fireAt,
         route: REVIEW_ROUTE,
+        kind: "review",
       });
     };
     chain.current = chain.current.then(reschedule, reschedule);
@@ -147,7 +172,14 @@ export function useReviewReminderInternal(
     activityKey,
   ]);
 
-  return { prefs, loading: !ready, updatePrefs };
+  return {
+    prefs,
+    loading: !ready,
+    updatePrefs,
+    /** How it goes now: off, on the phone, or by push; null until known. */
+    delivery:
+      push === null ? null : reminderDelivery("review", prefs.enabled, push),
+  };
 }
 
 /**

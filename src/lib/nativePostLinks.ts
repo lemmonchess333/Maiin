@@ -1,0 +1,71 @@
+import { isNativePlatform } from "@/lib/platform";
+import { PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
+
+/**
+ * A shared post's address (`publicPostUrl`, App1 Q51), a shared Space's
+ * (`publicSpaceUrl`, Run27 call 11) or an email's button (App1 Q55: the
+ * review, or the app itself, marked `from=email`), as the iPhone app
+ * receives it through the universal-links file: the in-app route, or null.
+ * A native URL event is untrusted input, so nothing but these shapes on the
+ * production origin becomes a route. A Space id the app does not know opens
+ * the Space page's own "Space not found".
+ */
+export function nativePostRoute(input: unknown): string | null {
+  if (typeof input !== "string" || input.length > 2048) return null;
+  try {
+    const url = new URL(input);
+    if (url.origin !== PUBLIC_APP_ORIGIN || url.username || url.password) {
+      return null;
+    }
+    const post = /^\/activity\/([A-Za-z0-9_-]{1,64})\/?$/.exec(url.pathname);
+    if (post) return `/activity/${post[1]}`;
+    const space = /^\/space\/([a-z0-9-]{1,64})\/?$/.exec(url.pathname);
+    if (space) return `/space/${space[1]}`;
+    if (url.searchParams.get("from") === "email") {
+      if (url.pathname === "/review") return "/review";
+      if (url.pathname === "/") return "/";
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Capacitor keeps the launch URL. Reading it on every mount would open a
+// post already opened, over wherever the person has gone since.
+let launchConsumed = false;
+let launchQuery: Promise<{ url: string } | undefined> | undefined;
+
+/** Listen first, then check the cold launch; a link that arrives while
+ *  the app is open wins over the launch's. */
+export async function listenForNativePostLinks(
+  onRoute: (route: string) => void
+): Promise<() => void> {
+  if (!isNativePlatform()) return () => {};
+  const { App } = await import("@capacitor/app");
+  let live = true;
+  let receivedWarm = false;
+  const listener = await App.addListener("appUrlOpen", ({ url }) => {
+    const route = nativePostRoute(url);
+    if (!live || !route) return;
+    receivedWarm = true;
+    launchConsumed = true;
+    onRoute(route);
+  });
+  if (!launchConsumed) {
+    launchQuery ??= App.getLaunchUrl();
+    void launchQuery
+      .then((launch) => {
+        const route = nativePostRoute(launch?.url);
+        if (live && !launchConsumed && !receivedWarm && route) {
+          launchConsumed = true;
+          onRoute(route);
+        }
+      })
+      .catch(() => {});
+  }
+  return () => {
+    live = false;
+    void listener.remove().catch(() => {});
+  };
+}

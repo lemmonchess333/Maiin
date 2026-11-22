@@ -43,6 +43,7 @@ import {
 } from "@/lib/weather";
 import { paceMinSec, distanceValue, runTitle } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { deviceTemperatureUnit, temperatureLabel } from "@/lib/temperature";
 import {
   paceUnitLabel,
   distanceUnitLabel,
@@ -53,7 +54,15 @@ import {
   DISTANCE_TARGET_MAX_M,
 } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { heatLine } from "@/lib/heatAdjustment";
+import {
+  heatLine,
+  heatSwapLine,
+  HEAT_LONG_SWAP,
+  HEAT_LONG_SWAP_LINE,
+  HEAT_SWAP_SWITCH,
+  type HeatAdjustment,
+} from "@/lib/heatAdjustment";
+import HeatPanel from "./HeatPanel";
 import ShoeSelector from "./ShoeSelector";
 import SessionStructureView from "./SessionStructureView";
 import { segmentsFromIntervals } from "@/lib/runSegments";
@@ -81,6 +90,8 @@ import {
   ACTIVITY_TYPES,
   pacePatchForType as pacePatchForTypePure,
   chooserPaceFor as chooserPaceForPure,
+  heatLongSwapConfig,
+  heatSwapConfig,
   type RunConfig,
 } from "./runConfigDefaults";
 
@@ -149,6 +160,42 @@ interface RunSetupModalProps {
   /** The planned session's name, as its launch card and Home give it
    *  ("Easy 30"), when the setup opened on a planned run. */
   sessionName?: string;
+  /** A hot or extreme day's offer for the planned run (heatAdjustment.ts,
+   *  worked out by the run page): adjust it for heat, or swap it. Null on
+   *  any other day and for a run with no plan. */
+  heat?: RunSetupHeat | null;
+}
+
+/** What a hot day offers the planned run the setup opened on. */
+export interface RunSetupHeat {
+  level: "hot" | "extreme";
+  /** The heat line (`heatLine`). */
+  line: string;
+  /** Today's coolest hour still ahead (`coolestHourLine`), or none. */
+  coolest?: string | null;
+  /** The adjustment offered, or null where the run has nothing to adjust. */
+  adjustment: HeatAdjustment | null;
+  /** The planned run built from the eased paces: what accepting sets. */
+  prefill: Partial<RunConfig> | null;
+  /** What the adjustment sets, in one line (`heatAdjustedLine`). */
+  adjustedLine: string;
+  /** A tempo or interval session's minutes, offered as an easy run. */
+  swapMinutes: number | null;
+  /** A structured long run, offered as all easy running. */
+  longSwap: boolean;
+}
+
+/** The fields of a run config the plan's prefill sets, the session:
+ *  its type, target, intervals and steps. */
+function sessionFields(
+  source: Partial<RunConfig> | null | undefined
+): Pick<RunConfig, "activityType" | "target" | "intervals" | "segments"> {
+  return {
+    activityType: source?.activityType ?? DEFAULT_CONFIG.activityType,
+    target: source?.target ?? DEFAULT_CONFIG.target,
+    intervals: source?.intervals,
+    segments: source?.segments,
+  };
 }
 
 /**
@@ -167,7 +214,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
-    case "structured_today":
+    case "rolling_today":
       line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
       break;
     case "rest_day":
@@ -202,9 +249,13 @@ export default function RunSetupModal({
   programContext,
   routeSection,
   sessionName,
+  heat = null,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  /* Temperatures follow the device's region, not the distance unit
+     (temperature.ts). */
+  const temperatureUnit = deviceTemperatureUnit();
   const motionSafe = useMotionSafe();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
@@ -217,6 +268,13 @@ export default function RunSetupModal({
     ...DEFAULT_CONFIG,
     ...savedPreferences,
   });
+  /* A hot day's swap was taken: the offer has had its answer. */
+  const [heatSwapped, setHeatSwapped] = useState(false);
+  const heatAccepted = config.heatAdjustment !== undefined;
+  /* The run is still the planned session, as planned or adjusted for heat,
+     so the hot day's offer still applies to it. */
+  const stillPlannedSession =
+    !heatSwapped && config.activityType === savedPreferences?.activityType;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
   const [showCustomise, setShowCustomise] = useState(false);
@@ -240,6 +298,13 @@ export default function RunSetupModal({
      below the run type. It never touches `activityType`, so a planned run
      done on the treadmill is still the planned run. */
   const onTreadmill = isTreadmillRun(config);
+  /* Run24 (4): an interval-type session the plan gave its own shape and no
+     repeats, the time trial, runs as planned: its structure shows, and no
+     default repeats are stamped on it. */
+  const fixedSession =
+    config.activityType === "intervals" &&
+    !config.intervals &&
+    (config.segments?.length ?? 0) > 0;
   const intervalConfig = config.intervals ?? {
     reps: 5,
     workDistance: 1000,
@@ -336,10 +401,10 @@ export default function RunSetupModal({
         </div>
 
         {/* Programme context strip — Phase B1. Renders only when the
-            user is on a structured/race_prep plan AND today resolves
-            to one of the four documented states (today's plan, rest
-            day, completed day, elapsed race-prep). Freeform users get
-            no strip — the surface stays clean. */}
+            user is on a plan AND today resolves to one of the five
+            documented states (race prep's or a rolling plan's today,
+            rest day, completed day, elapsed race-prep). Freeform users
+            get no strip — the surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
 
         {routeSection}
@@ -357,7 +422,7 @@ export default function RunSetupModal({
             <button
               type="button"
               onClick={() => setShowChooser(true)}
-              className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
+              className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3 active:scale-[0.98] transition-transform text-left dark:card-shadow dark:border-transparent"
               aria-label={`Selected run type: ${selected.name}. Tap to change.`}
             >
               {/* Run7 Q4 — coral icon container (was purple 10%). The
@@ -399,7 +464,7 @@ export default function RunSetupModal({
             run type: the type above stays the session (a planned run's
             own), and this switch says it is run on a treadmill, with no
             GPS and the distance typed in at the end (TreadmillMode). */}
-        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card">
+        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
           <div className="min-w-0">
             <p className="text-sm text-foreground">On a treadmill</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -475,10 +540,14 @@ export default function RunSetupModal({
             })()}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                {weather.temperature}°C
+                {/* °C, or °F where the device's region reads it
+                    (temperature.ts, Run26 (5)), as the heat panel's
+                    coolest hour is. */}
+                {temperatureLabel(weather.temperature, temperatureUnit)}
                 {weather.feelsLike !== weather.temperature && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    (feels {weather.feelsLike}°)
+                    (feels{" "}
+                    {temperatureLabel(weather.feelsLike, temperatureUnit)})
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground ml-1.5">
@@ -503,11 +572,11 @@ export default function RunSetupModal({
                   </motion.p>
                 );
               })()}
-              {/* Pgm8 (E8): on a hot day, one line to run by feel, with no
-                  number in it; nothing below hot. It never touches the
-                  plan's paces, and the tip above leaves heat to it. */}
+              {/* On a hot day the heat line (heatAdjustment.ts); the tip above
+                  leaves heat to it. A planned run's offer, which says it
+                  too, sits under the strip in its place. */}
               {(() => {
-                const line = heatLine(weather);
+                const line = heat ? null : heatLine(weather);
                 if (!line) return null;
                 return (
                   <p className="text-xs text-muted-foreground mt-0.5">{line}</p>
@@ -522,6 +591,71 @@ export default function RunSetupModal({
           </motion.div>
         )}
 
+        {/* A hot day's offer for the planned run, while the run is still
+            that session: adjust it for heat (the eased session, this run
+            only, cleared back to the plan's), or swap it. The taps change
+            the run being set up; Start starts it. The plan keeps the
+            session. */}
+        {heat && (
+          <HeatPanel
+            level={heat.level}
+            line={heat.line}
+            coolest={heat.coolest}
+            adjust={
+              stillPlannedSession && heat.adjustment && heat.prefill
+                ? {
+                    accepted: heatAccepted,
+                    adjustedLine: heat.adjustedLine,
+                    onAccept: () =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        ...sessionFields(heat.prefill),
+                        heatAdjustment: heat.adjustment ?? undefined,
+                      })),
+                    onClear: () =>
+                      setConfig((prev) => {
+                        const { heatAdjustment: _cleared, ...rest } = prev;
+                        return { ...rest, ...sessionFields(savedPreferences) };
+                      }),
+                  }
+                : null
+            }
+            swap={
+              !stillPlannedSession
+                ? null
+                : heat.swapMinutes !== null
+                  ? {
+                      line: heatSwapLine(heat.swapMinutes),
+                      label: HEAT_SWAP_SWITCH,
+                      onSwap: () => {
+                        const minutes = heat.swapMinutes!;
+                        setHeatSwapped(true);
+                        setConfig((prev) => {
+                          const { heatAdjustment: _dropped, ...rest } = prev;
+                          return heatSwapConfig(rest, minutes);
+                        });
+                      },
+                    }
+                  : heat.longSwap
+                    ? {
+                        line: HEAT_LONG_SWAP_LINE,
+                        label: HEAT_LONG_SWAP,
+                        onSwap: () => {
+                          setHeatSwapped(true);
+                          setConfig((prev) => {
+                            const { heatAdjustment: _dropped, ...rest } = prev;
+                            return heatLongSwapConfig({
+                              ...rest,
+                              ...sessionFields(savedPreferences),
+                            });
+                          });
+                        },
+                      }
+                    : null
+            }
+          />
+        )}
+
         {/* Shoe selector */}
         <ShoeSelector
           selectedShoeId={config.shoeId ?? null}
@@ -531,29 +665,39 @@ export default function RunSetupModal({
         {/* STRUCT-SESS-01: prefilled structure for non-interval sessions
             (tempo warmup/blocks/cooldown, easy + strides). The interval
             branch below owns its own preview. */}
-        {config.activityType !== "intervals" &&
+        {(config.activityType !== "intervals" || fixedSession) &&
           (config.segments?.length ?? 0) > 0 && (
             <SessionStructureView segments={config.segments!} />
           )}
 
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
-          {config.activityType === "intervals" && (
+          {config.activityType === "intervals" && !fixedSession && (
             <motion.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
+              {/* The planned session's own steps while its repeats are
+                  as planned (Run24 (5): a hill or fartlek session's words,
+                  a time trial's one effort); built from the repeats once
+                  they are customised. */}
               <SessionStructureView
-                segments={segmentsFromIntervals(intervalConfig, unit)}
+                segments={
+                  config.segments?.length &&
+                  JSON.stringify(config.intervals) ===
+                    JSON.stringify(savedPreferences?.intervals)
+                    ? config.segments
+                    : segmentsFromIntervals(intervalConfig, unit)
+                }
               />
               <button
                 type="button"
                 onClick={() => setShowCustomise((v) => !v)}
                 aria-expanded={showCustomise}
                 aria-controls="interval-customise-panel"
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-medium active:scale-[0.98] transition-transform"
+                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-medium active:scale-[0.98] transition-transform dark:card-shadow dark:border-transparent"
               >
                 <span>Customise</span>
                 {showCustomise ? (
@@ -571,7 +715,7 @@ export default function RunSetupModal({
                     exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           {
@@ -710,7 +854,7 @@ export default function RunSetupModal({
         {config.target.type !== "none" &&
           config.activityType !== "intervals" &&
           !onTreadmill && (
-            <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+            <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
               {config.target.type === "distance" &&
                 (() => {
                   /* Preset chips — selecting a preset populates the
@@ -1120,7 +1264,7 @@ export default function RunSetupModal({
                 .map((setting) => (
                   <div
                     key={setting.key}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card"
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
                   >
                     <span className="text-sm">{setting.label}</span>
                     <Toggle
@@ -1148,7 +1292,7 @@ export default function RunSetupModal({
                       the user's choice. */}
                   {!requiresManualDistance(config) &&
                     config.target.type === "pace" && (
-                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
+                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                         <span className="text-sm">Pace alerts</span>
                         <Toggle
                           checked={config.paceAlerts}
@@ -1159,7 +1303,7 @@ export default function RunSetupModal({
                         />
                       </div>
                     )}
-                  <div className="p-3.5 rounded-xl border border-border/50 bg-card">
+                  <div className="p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
                       <span className="text-xs text-muted-foreground font-mono tabular-nums">
@@ -1212,20 +1356,24 @@ export default function RunSetupModal({
           /* The planned session keeps the name its card gave it ("Start
              Easy 30") until the run stops being it: another type, target
              or set of intervals starts as its type ("Start tempo run"). */
+          /* Adjusted for heat it is still the session, with the eased
+             targets the adjustment set. */
+          const planned =
+            heatAccepted && heat?.prefill ? heat.prefill : savedPreferences;
           const isPlannedSession =
             sessionName !== undefined &&
-            config.activityType === savedPreferences?.activityType &&
-            JSON.stringify(config.target) ===
-              JSON.stringify(savedPreferences?.target) &&
+            !heatSwapped &&
+            config.activityType === planned?.activityType &&
+            JSON.stringify(config.target) === JSON.stringify(planned?.target) &&
             JSON.stringify(config.intervals) ===
-              JSON.stringify(savedPreferences?.intervals);
+              JSON.stringify(planned?.intervals);
           return (
             <button
               type="button"
               onClick={() => {
                 if (!targetError)
                   onStart(
-                    config.activityType === "intervals"
+                    config.activityType === "intervals" && !fixedSession
                       ? { ...config, intervals: intervalConfig }
                       : config
                   );
@@ -1270,7 +1418,6 @@ export default function RunSetupModal({
         title="Choose run type"
         description="Pick how you want to record this run."
         hideHeader
-        className="border-t border-border"
       >
         {/* Header is shrink-0 with a faint bottom border so the
                 visual transition between fixed header and scrolling
@@ -1281,7 +1428,7 @@ export default function RunSetupModal({
                 the title on small viewports. */}
         <div className="px-5 pt-3 pb-3 shrink-0 border-b border-border/40">
           <div
-            className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3"
+            className="mx-auto w-10 h-1 rounded-full sheet-handle mb-3"
             aria-hidden="true"
           />
           <h2 className="text-lg font-bold text-foreground">Choose run type</h2>

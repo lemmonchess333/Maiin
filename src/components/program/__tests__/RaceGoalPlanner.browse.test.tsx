@@ -18,6 +18,8 @@ describe("race picker browsing", () => {
     onEventNameChange: vi.fn(),
     onPickRace: vi.fn(),
     onEntryChange: vi.fn(),
+    // Run26 (2): the race's climb, a field under every distance.
+    onClimbTextChange: vi.fn(),
   });
   const base = {
     distance: "marathon" as const,
@@ -26,6 +28,8 @@ describe("race picker browsing", () => {
     minDate: "2026-09-14",
     selectedEventSpaceId: "boston-marathon",
     entry: "race" as const,
+    climbText: "",
+    unit: "km" as const,
     upcomingRaces: upcomingRaceSpaceDefs("2026-09-14"),
     state: getRaceGoalPlannerState({
       distance: "marathon",
@@ -92,7 +96,9 @@ describe("race picker browsing", () => {
       })
     );
   });
-  it("keeps ultras out of the plan picker even after clearing all filters", () => {
+  // Run26 (2): ultras have plans now, so Clear filters lists them with the
+  // rest (was: kept out of the picker however the filters were set).
+  it("lists the ultras with every other race after clearing all filters", () => {
     // A 5K goal in a country with no 5K races leaves the list empty, and
     // its Clear filters opens every country and every distance.
     render(
@@ -111,28 +117,42 @@ describe("race picker browsing", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(
-      screen.queryByRole("option", { name: "Ultra" })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("option", { name: /Race to the|Chiltern 50/ })
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("option", { name: /Race to the|Chiltern 50/ }).length
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("option", { name: /City of Lincoln 10K/ })
     ).toBeInTheDocument();
   });
-  it("keeps the picker closed when the only upcoming event is an ultra", () => {
+  // Run26 (2): an ultra listed at 50 km trains a 50K plan, and is the one
+  // race a 50K goal lists (was: the picker stayed closed for an ultra).
+  it("lists a 50 km ultra under a 50K goal, and picks it", () => {
+    const handlers = callbacks();
     render(
       <RaceGoalPlanner
         {...base}
-        {...callbacks()}
-        upcomingRaces={[spaceDef("chiltern-50")!]}
+        {...handlers}
+        distance="50k"
+        upcomingRaces={[
+          spaceDef("chiltern-50")!,
+          spaceDef("race-to-the-king-100k")!,
+          spaceDef("london-marathon")!,
+        ]}
         selectedEventSpaceId=""
       />
     );
-    expect(
-      screen.queryByRole("button", { name: "Choose an upcoming race" })
-    ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Target date")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose an upcoming race" })
+    );
+    const races = within(
+      screen.getByRole("listbox", { name: "Upcoming races" })
+    ).getAllByRole("option");
+    expect(races.map((race) => race.getAttribute("aria-label"))).toEqual([
+      expect.stringMatching(/^Chiltern 50 Ultra Challenge /),
+    ]);
+    fireEvent.click(races[0]);
+    expect(handlers.onPickRace).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "chiltern-50" })
+    );
   });
   it("does not offer the elapsed day of a two-day race", () => {
     render(

@@ -44,9 +44,20 @@ interface RunMapProps {
    * Static for the run; populate once (e.g. re-running a past run's polyline).
    */
   targetRoute?: GPSPoint[];
-  /** A tap on the map, not a pan or a pinch (MapLibre's `click`). The live
-   *  run raises its panel with it, now that the map itself takes touches. */
-  onMapTap?: () => void;
+  /** A tap on the map, not a pan or a pinch (MapLibre's `click`), and where
+   *  it landed. The live run raises its panel with it, now that the map
+   *  itself takes touches; the segment maker moves a handle to it. */
+  onMapTap?: (at: { lat: number; lon: number }) => void;
+  /**
+   * A stretch of `points`, by index, both ends included, drawn over the
+   * route: the segment being made from this run (Run26 call 3). Null or
+   * absent draws nothing.
+   */
+  highlight?: { from: number; to: number } | null;
+  /** The start and finish dots on a finished route. Off for a route whose
+   *  ends were cut off (a public post's page), where the line's ends are
+   *  not where the run started or finished. On by default. */
+  endMarkers?: boolean;
 }
 
 export default function RunMap({
@@ -64,6 +75,8 @@ export default function RunMap({
   onMapTap,
   markerUnit = "km",
   targetRoute,
+  endMarkers = true,
+  highlight = null,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -236,6 +249,32 @@ export default function RunMap({
         });
         map.setLayoutProperty("route-line", "visibility", "none");
       }
+
+      // The stretch being made a segment, over everything else: a wide
+      // casing in the map's own ground colour, so it reads apart from the
+      // pace colours under it, and the brand colour on top.
+      map.addSource("segment-pick", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "segment-pick-casing",
+        type: "line",
+        source: "segment-pick",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": darkMode ? THEME.bg : THEME.purpleRamp[50],
+          "line-width": 11,
+          "line-opacity": 0.9,
+        },
+      });
+      map.addLayer({
+        id: "segment-pick-line",
+        type: "line",
+        source: "segment-pick",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": THEME.brand, "line-width": 6 },
+      });
     };
     map.on("load", onLoad);
 
@@ -255,7 +294,8 @@ export default function RunMap({
       followingRef.current = false;
       setShowRecenter(true);
     };
-    const onTap = () => onMapTapRef.current?.();
+    const onTap = (e: { lngLat: { lat: number; lng: number } }) =>
+      onMapTapRef.current?.({ lat: e.lngLat.lat, lon: e.lngLat.lng });
     map.on("click", onTap);
     if (liveControls) {
       map.on("dragstart", onUserGesture);
@@ -442,7 +482,7 @@ export default function RunMap({
       }
 
       // Start marker (green dot)
-      if (points.length > 0 && !startMarkerRef.current) {
+      if (endMarkers && points.length > 0 && !startMarkerRef.current) {
         const el = document.createElement("div");
         el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.success};border:2px solid white;`;
         startMarkerRef.current = new maplibregl.Marker({ element: el })
@@ -495,6 +535,7 @@ export default function RunMap({
         endMarkerRef.current = null;
       }
       if (
+        endMarkers &&
         !currentPoint &&
         points.length > 1 &&
         !endMarkerRef.current &&
@@ -533,6 +574,7 @@ export default function RunMap({
     interactive,
     darkMode,
     liveControls,
+    endMarkers,
   ]);
 
   // Target route (static) — drawn independently of the live track so it shows
@@ -563,6 +605,46 @@ export default function RunMap({
       map.off("load", apply);
     };
   }, [targetRoute]);
+
+  // The stretch being made a segment, redrawn as its ends move. A map
+  // that never had one is left alone: the line is drawn only once asked.
+  const highlightFrom = highlight?.from ?? -1;
+  const highlightTo = highlight?.to ?? -1;
+  const highlightDrawnRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    const wanted = highlightFrom >= 0 && highlightTo > highlightFrom;
+    if (!map || (!wanted && !highlightDrawnRef.current)) return;
+    highlightDrawnRef.current = wanted;
+    const apply = () => {
+      const src = map.getSource("segment-pick") as
+        maplibregl.GeoJSONSource | undefined;
+      const stretch = wanted
+        ? points.slice(highlightFrom, highlightTo + 1)
+        : [];
+      src?.setData({
+        type: "FeatureCollection",
+        features: splitRouteSegments(stretch)
+          .filter((segment) => segment.length > 1)
+          .map((segment) => ({
+            type: "Feature" as const,
+            geometry: {
+              type: "LineString" as const,
+              coordinates: segment.map((p) => [p.lon, p.lat]),
+            },
+            properties: {},
+          })),
+      });
+    };
+    if (map.loaded()) {
+      apply();
+      return;
+    }
+    map.on("load", apply);
+    return () => {
+      map.off("load", apply);
+    };
+  }, [points, highlightFrom, highlightTo, darkMode, paceColored]);
 
   const recenter = () => {
     followingRef.current = true;
@@ -608,13 +690,13 @@ export default function RunMap({
             aria-label="Zoom in"
             icon={<Plus />}
             onClick={() => mapRef.current?.zoomIn()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label="Zoom out"
             icon={<Minus />}
             onClick={() => mapRef.current?.zoomOut()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label={
@@ -625,7 +707,7 @@ export default function RunMap({
             className={
               headingUp
                 ? "bg-running-fill text-white shadow-sm"
-                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
             }
           />
           {showRecenter && (
@@ -658,7 +740,7 @@ export default function RunMap({
         // status the long copy points to. Wide-first. The query is in rem,
         // not em: a container query's em is the container's own 12px, so
         // 20em never matched.
-        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black">
           <span className="@max-[20rem]:hidden">
             Map tiles unavailable. Check your connection. GPS status is shown
             separately.

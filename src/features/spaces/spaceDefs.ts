@@ -37,9 +37,15 @@ export type RaceCountryCode = keyof typeof RACE_COUNTRIES;
 
 export type SpaceKind = "interest" | "race" | "location";
 
-/** The directory also covers ultras; the training engine ends at marathon. */
+/** The road distances an event is listed at, and its plan's. */
 export type TrainingRaceDistance = "5k" | "10k" | "half" | "marathon";
+/** An ultra is listed as one, with its organiser's kilometres
+ *  (`distanceKm`); its plan's distance comes from them
+ *  (`raceEventPlanDistance`). */
 export type RaceEventDistance = TrainingRaceDistance | "ultra";
+/** The distances a plan prepares for (programTypes' `RaceDistance`). */
+export type RaceEventPlanDistance =
+  TrainingRaceDistance | "50k" | "50mi" | "100k";
 
 /**
  * Event metadata for kind === "race" spaces (Races & Events plan,
@@ -97,10 +103,30 @@ export interface SpaceDef {
   event?: SpaceEventInfo;
 }
 
-export function isTrainableRaceEvent(
-  event: SpaceEventInfo
-): event is SpaceEventInfo & { distance: TrainingRaceDistance } {
-  return event.distance !== "ultra";
+/**
+ * Run26 (2): the plan an event trains for, or null for one no plan holds.
+ * A road event's own distance; an ultra's from its kilometres, to the
+ * nearest of the plan's ultras with the bands split halfway between them
+ * (above the marathon to 65 km a 50K, to 90 km 50 miles, to 130 km a
+ * 100K). A Tropos heuristic. Beyond 130 km, nearer 100 miles than 100K,
+ * and an ultra without its kilometres, no plan fits.
+ */
+export function raceEventPlanDistance(
+  event: Pick<SpaceEventInfo, "distance" | "distanceKm">
+): RaceEventPlanDistance | null {
+  if (event.distance !== "ultra") return event.distance;
+  const km = event.distanceKm;
+  if (typeof km !== "number" || !Number.isFinite(km) || km <= 42.195)
+    return null;
+  if (km < 65) return "50k";
+  if (km < 90) return "50mi";
+  if (km < 130) return "100k";
+  return null;
+}
+
+/** An event a plan can be built for (`raceEventPlanDistance`). */
+export function isTrainableRaceEvent(event: SpaceEventInfo): boolean {
+  return raceEventPlanDistance(event) !== null;
 }
 
 export const SPACE_DEFS: SpaceDef[] = [

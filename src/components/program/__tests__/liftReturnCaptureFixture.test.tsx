@@ -45,7 +45,10 @@ function seededDaysAway(): number {
 /** The line the capture spec blocks on before it shoots. */
 function specGapLine(): string {
   const src = read("e2e/screenshots/lift-return.screens.capture.spec.ts");
-  const match = /getByText\(\/(It’s been about \d+ weeks)\/i\)/.exec(src);
+  const match =
+    /getByText\(\/(It’s been about \d+ weeks since your last lift)\/i\)/.exec(
+      src
+    );
   if (!match) {
     throw new Error(
       "lift-return.screens.capture.spec.ts: gap-line locator not found"

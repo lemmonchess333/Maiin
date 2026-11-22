@@ -174,12 +174,28 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
       }
     });
   }
+  // Run27 call 11: the rows that put their public posts in a Space's
+  // list (lib/spaceFeed.js), in any Space, including ones they left. Each
+  // also goes when its post is deleted.
+  await scan("space_session_rows", group("sessions", "authorId"), async (doc) => {
+    if (is(doc, /^spaces\/[^/]+\/sessions\/[^/]+$/)) await doc.ref.delete();
+  });
   await scan("goal_events", group("events", "uid"), async (doc) => {
     if (is(doc, /^goalSpaces\/[^/]+\/events\/[^/]+$/)) await doc.ref.delete();
   });
   await scan("goal_support", group("events", "supporterIds", "array-contains"), async (doc) => {
     if (is(doc, /^goalSpaces\/[^/]+\/events\/[^/]+$/)) {
       await removeReaction({ firestore, ref: doc.ref, uid, field: "supporterIds" });
+    }
+  });
+  // Run26 call 4: meet-ups they planned go, and their uid comes off every
+  // other's `going`, in any Circle, including ones they left.
+  await scan("goal_meetups", group("meetups", "organiserUid"), async (doc) => {
+    if (is(doc, /^goalSpaces\/[^/]+\/meetups\/[^/]+$/)) await doc.ref.delete();
+  });
+  await scan("goal_meetups_going", group("meetups", "going", "array-contains"), async (doc) => {
+    if (is(doc, /^goalSpaces\/[^/]+\/meetups\/[^/]+$/)) {
+      await removeReaction({ firestore, ref: doc.ref, uid, field: "going" });
     }
   });
   await scan("goal_members", group("members", "uid"), async (doc) => {
@@ -191,6 +207,9 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
     const data = doc.data();
     if (data.inviteCode) await firestore.doc(`goalSpaceInvites/${data.inviteCode}`).delete();
     await doc.ref.update({ ownerId: null, title: "Closed circle", active: false, inviteCode: null });
+    // A closed Circle's meet-ups go with it (Run26 call 4).
+    const meetups = await doc.ref.collection("meetups").get();
+    for (const meetup of meetups.docs) await meetup.ref.delete();
   });
   // Reports have a separate bounded moderation purpose. Drop free-form text,
   // author snapshots, target IDs and authority records, retaining only the

@@ -15,8 +15,9 @@
  *  - per-field type / range validation
  *  - photoURL protocol gate (http/https only)
  *  - null-handling for fields where null is a meaningful state
- *  - nested-object sanitisation (raceGoal, macroTargets, program)
+ *  - nested-object sanitisation (raceGoal, program)
  *  - server-managed fields can't be passed through
+ *  - retired fields (App1 Q24) are dropped quietly
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -26,9 +27,49 @@ const {
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
+  cleanBirthYear,
   PROFILE_ALLOWED_FIELDS,
   SERVER_MANAGED_PROFILE_FIELDS,
+  RETIRED_PROFILE_FIELDS,
 } = require("../profileSanitizer");
+
+describe("raceGoal — the ultras and the climb (Run26 (2))", () => {
+  const goal = { distance: "50k", targetDate: "2027-05-15" };
+
+  it("keeps an ultra's distance and a climb in whole metres", () => {
+    for (const distance of ["50k", "50mi", "100k"])
+      expect(
+        sanitizeProfileData({ raceGoal: { ...goal, distance } }).raceGoal
+      ).toEqual({ ...goal, distance });
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, climbM: 1500 } }).raceGoal
+    ).toEqual({ ...goal, climbM: 1500 });
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, climbM: 0 } }).raceGoal
+    ).toEqual({ ...goal, climbM: 0 });
+  });
+
+  it("keeps a goal written by today's app unchanged", () => {
+    const today = {
+      distance: "marathon",
+      targetDate: "2027-04-25",
+      eventName: "London Marathon 2027",
+      targetTimeS: 14400,
+      entry: "race",
+    };
+    expect(sanitizeProfileData({ raceGoal: today }).raceGoal).toEqual(today);
+  });
+
+  it("drops a climb out of range or not whole, and an unknown distance", () => {
+    for (const climbM of [-1, 20001, 12.5, "800"])
+      expect(
+        sanitizeProfileData({ raceGoal: { ...goal, climbM } }).raceGoal
+      ).toEqual(goal);
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, distance: "100mi" } }).raceGoal
+    ).toEqual({ targetDate: goal.targetDate });
+  });
+});
 
 describe("recurring run availability", () => {
   it("retains only bounded numbers and explicit nulls", () => {
@@ -72,6 +113,18 @@ describe("barbellAtHome (Lift4 (11))", () => {
       barbellAtHome: false,
     });
     expect(sanitizeProfileData({ barbellAtHome: "yes" })).toEqual({});
+  });
+});
+
+describe("pullUpBar (Lift4 (11))", () => {
+  it("keeps a yes or a no, and drops anything else", () => {
+    expect(sanitizeProfileData({ pullUpBar: true })).toEqual({
+      pullUpBar: true,
+    });
+    expect(sanitizeProfileData({ pullUpBar: false })).toEqual({
+      pullUpBar: false,
+    });
+    expect(sanitizeProfileData({ pullUpBar: "yes" })).toEqual({});
   });
 });
 
@@ -160,6 +213,14 @@ describe("findUnexpectedProfileFields — loud-drop detection (ADR-0005)", () =>
   it("does NOT flag server-managed (deny-listed) fields — those are expected drops", () => {
     const input = {};
     for (const f of SERVER_MANAGED_PROFILE_FIELDS) input[f] = "x";
+    expect(findUnexpectedProfileFields(input)).toEqual([]);
+  });
+
+  it("does NOT flag a retired field an older build still sends", () => {
+    // App1 Q24: left out on purpose, so not the forgotten-field case the
+    // warning is for.
+    const input = {};
+    for (const f of RETIRED_PROFILE_FIELDS) input[f] = 0;
     expect(findUnexpectedProfileFields(input)).toEqual([]);
   });
 
@@ -310,6 +371,38 @@ describe("sanitizeProfileData — string fields", () => {
   });
 });
 
+/* App1 (grill Q57): the year of birth that replaced the age range. A whole
+   year from this year less 120 to this year less 16, with one year more at
+   the young end for a person whose own year is already the next one at New
+   Year (the server's year is UTC's). */
+describe("sanitizeProfileData — birthYear", () => {
+  const NOW = new Date("2026-11-13T12:00:00Z");
+  const kept = (value) => cleanBirthYear(value, NOW);
+
+  it("keeps a year from this year less 120 to this year less 18", () => {
+    expect(kept(1990)).toBe(1990);
+    expect(kept(2008)).toBe(2008);
+    expect(kept(1906)).toBe(1906);
+  });
+
+  it("keeps one year more at the young end, for a time zone already in 2027", () => {
+    expect(kept(2009)).toBe(2009);
+  });
+
+  it("drops a year past those, and anything not a whole year", () => {
+    for (const value of [2010, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
+      expect(kept(value)).toBeUndefined();
+  });
+
+  it("is on the allow-list, read against the real clock", () => {
+    expect(PROFILE_ALLOWED_FIELDS).toContain("birthYear");
+    expect(sanitizeProfileData({ birthYear: 1990 })).toEqual({
+      birthYear: 1990,
+    });
+    expect(sanitizeProfileData({ birthYear: "1990" })).toEqual({});
+  });
+});
+
 describe("sanitizeProfileData — numeric fields", () => {
   it("accepts numbers in the documented range", () => {
     const out = sanitizeProfileData({ weightKg: 70, heightCm: 170, age: 30 });
@@ -319,11 +412,11 @@ describe("sanitizeProfileData — numeric fields", () => {
   });
 
   it("drops out-of-range numbers (security: server-side enforcement)", () => {
-    // Client UI blocks <16 / >120 age; this path is for callers
+    // Client UI blocks <18 / >120 age; this path is for callers
     // that bypass the client (direct API calls). Pin that the
     // server gate is the actual enforcement.
     const out = sanitizeProfileData({
-      age: 15,
+      age: 17,
       weightKg: 5,
       heightCm: 50,
     });
@@ -477,37 +570,17 @@ describe("sanitizeProfileData — photoURL", () => {
 });
 
 describe("sanitizeProfileData — nested objects", () => {
-  it("sanitises macroTargets keys and drops unknowns", () => {
-    const out = sanitizeProfileData({
-      macroTargets: {
-        calories: 2200,
-        protein: 160,
-        carbs: 250,
-        fat: 60,
-        fiber: "nope", // dropped (unknown key)
-        stripeKey: "sk_test", // dropped (unknown key)
-      },
-    });
-    expect(out.macroTargets).toEqual({
-      calories: 2200,
-      protein: 160,
-      carbs: 250,
-      fat: 60,
-    });
-  });
-
-  it("sanitises program sub-object", () => {
+  it("sanitises program sub-object, dropping the retired startWeight", () => {
     const out = sanitizeProfileData({
       program: {
         goal: "recomp",
-        startWeight: 70,
+        startWeight: 70, // retired (App1 Q24): an older build still sends it
         currentPhase: "base",
         evilField: "x",
       },
     });
     expect(out.program).toEqual({
       goal: "recomp",
-      startWeight: 70,
       currentPhase: "base",
     });
   });
@@ -630,31 +703,26 @@ describe("sanitizeProfileData — nested objects", () => {
 
   it("drops the whole nested object when none of its keys validate", () => {
     const out = sanitizeProfileData({
-      macroTargets: { random: 1, garbage: 2 },
+      program: { random: 1, garbage: 2 },
     });
-    expect(out.macroTargets).toBeUndefined();
+    expect(out.program).toBeUndefined();
   });
 
   it("drops non-object nested values (arrays, primitives)", () => {
     const out = sanitizeProfileData({
-      macroTargets: [1, 2, 3],
+      adaptiveCapState: [1, 2, 3],
       program: "not an object",
     });
-    expect(out.macroTargets).toBeUndefined();
+    expect(out.adaptiveCapState).toBeUndefined();
     expect(out.program).toBeUndefined();
   });
 });
 
 describe("sanitizeProfileData — null handling on specific fields", () => {
-  it("preserves null on lastLogDate (clears the value)", () => {
-    const out = sanitizeProfileData({ lastLogDate: null });
-    expect(out.lastLogDate).toBeNull();
-  });
-
   it("drops null on other string fields (treated as absent)", () => {
     // For most fields, null === "I don't want to send this", not
-    // "clear it". `photoURL` and `lastLogDate` are the explicit
-    // null-supports-clear fields; everything else drops null.
+    // "clear it". `photoURL` and the goal and preference objects are the
+    // explicit null-supports-clear fields; everything else drops null.
     const out = sanitizeProfileData({
       displayName: null,
       athleteType: null,
@@ -673,10 +741,6 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
     // dropping fields the real client uses.
     const input = {
       displayName: "Alice",
-      email: "alice@example.com",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
       darkMode: false,
       weeklyWorkoutsTarget: 4,
       weeklyMealsTarget: 10,
@@ -701,14 +765,9 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
       age: 30,
       sex: "female",
       activityLevel: "moderate",
-      tdeeBase: 2200,
-      aiCalorieAdjustment: 0,
       targetCalories: 2200,
       targetProtein: 160,
-      targetCarbs: 250,
-      targetFat: 60,
-      macroTargets: { calories: 2200, protein: 160, carbs: 250, fat: 60 },
-      program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+      program: { goal: "recomp", currentPhase: "base" },
     };
     const out = sanitizeProfileData(input);
     // Every input key (that's on the allow-list) should be present
@@ -717,6 +776,35 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
       if (key === "onboardingComplete") continue; // not on allow-list — handler overwrites
       expect(out[key]).toEqual(value);
     }
+  });
+});
+
+describe("retired profile fields (App1 Q24)", () => {
+  it("drops every one an older build's onboarding payload still carries", () => {
+    // What a build from before App1 sent beside the live fields.
+    const out = sanitizeProfileData({
+      displayName: "Alice",
+      targetCalories: 2200,
+      email: "alice@example.com",
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLogDate: null,
+      tdeeBase: 2200,
+      aiCalorieAdjustment: 0,
+      targetCarbs: 250,
+      targetFat: 60,
+      program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+    });
+    expect(out).toEqual({
+      displayName: "Alice",
+      targetCalories: 2200,
+      program: { goal: "recomp", currentPhase: "base" },
+    });
+  });
+
+  it("has no validator for any of them", () => {
+    for (const field of RETIRED_PROFILE_FIELDS)
+      expect(PROFILE_ALLOWED_FIELDS).not.toContain(field);
   });
 });
 
@@ -963,5 +1051,32 @@ describe("gender", () => {
     expect(sanitizeProfileData({ gender: "robot" })).not.toHaveProperty(
       "gender"
     );
+  });
+});
+
+describe("emailConsent (App1 Q55)", () => {
+  // The consent record is the server's to write, with its own time:
+  // setup's yes comes to completeOnboarding as `emailOptIn`, outside
+  // profileData. One sent inside profileData would let a client write a
+  // backdated yes, so it is dropped, quietly, as a server field is.
+  it("is dropped from a profile, whatever it holds", () => {
+    expect(
+      sanitizeProfileData({
+        displayName: "Sam",
+        emailConsent: {
+          weeklyReview: { on: true, givenAt: "2020-01-01", givenVia: "setup" },
+        },
+      })
+    ).not.toHaveProperty("emailConsent");
+    expect(PROFILE_ALLOWED_FIELDS).not.toContain("emailConsent");
+  });
+
+  it("is a server field, so its drop is not reported as forgotten", () => {
+    expect(SERVER_MANAGED_PROFILE_FIELDS).toContain("emailConsent");
+    expect(
+      findUnexpectedProfileFields({
+        emailConsent: { weeklyReview: { on: true } },
+      })
+    ).toEqual([]);
   });
 });

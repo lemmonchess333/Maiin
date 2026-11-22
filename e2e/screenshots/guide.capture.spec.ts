@@ -7,10 +7,9 @@ import { settleImages } from "../helpers/settleImages";
 import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
 
 /**
- * The optional guide and first-use hints, on a version 2 account from
- * sign-up: setup lands on Today with no automatic walk, Food's hint works
- * before a walk is played, Settings replays the walk, and the Train,
- * first-set and first-run hints still work at their point of use.
+ * The first-use hints, on a new account from sign-up: setup lands on Today
+ * with no walk (Home has none since App1), and the Food, Train, first-set
+ * and first-run hints each turn up at their point of use.
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
@@ -78,25 +77,12 @@ async function realCompleteOnboarding(page: Page) {
   );
 }
 
-/** A walk stop's or a hint's title. The walk's dialog element is a frame
- *  with no box of its own (its shield, spotlight and card are fixed or
- *  floating children), so a check on the title is a check on the card. */
+/** A hint's title. */
 function guideTitle(page: Page, name: string) {
   return page.getByRole("dialog").getByRole("heading", { name, exact: true });
 }
 
-/** The walk's main button, once its card is on screen. The button keeps
- *  focus from stop to stop while the card is hidden between them, so the
- *  check is that the card takes taps again (a trial click), which it does
- *  once it is in place. */
-async function mainButton(page: Page, name: "Next" | "Done") {
-  const button = page.getByRole("button", { name, exact: true });
-  await expect(button).toBeFocused({ timeout: 10_000 });
-  await button.click({ trial: true, timeout: 10_000 });
-  return button;
-}
-
-test("a new account can start training before replaying the guide", async ({
+test("a new account meets each hint where it is used, and no walk", async ({
   page,
 }) => {
   test.skip(!emulatorActive, "emulator-only accounts");
@@ -130,6 +116,8 @@ test("a new account can start training before replaying the guide", async ({
   await page.getByRole("button", { name: /Full gym/ }).click();
   await page.getByRole("button", { name: /New to lifting/ }).click();
   await next();
+  // The agreement to store health details (Priv1 call 1).
+  await page.getByRole("button", { name: "I agree", exact: true }).click();
   await page.getByRole("button", { name: "None", exact: true }).click();
   await next();
   await page
@@ -138,7 +126,9 @@ test("a new account can start training before replaying the guide", async ({
   await page
     .getByRole("textbox", { name: "Height (cm)", exact: true })
     .fill("178");
-  await page.getByRole("radio", { name: /^25/ }).click();
+  await page
+    .getByRole("textbox", { name: "Year of birth", exact: true })
+    .fill("1995");
   await next();
   await page
     .getByRole("textbox", { name: "Your public display name" })
@@ -148,7 +138,7 @@ test("a new account can start training before replaying the guide", async ({
     .click();
 
   // The saved plan opens Today with the training task ready and no tour or
-  // offer in the way. Food remains available in the tab bar.
+  // offer in the way.
   await expect(
     page.getByRole("heading", { name: "Today", level: 1 })
   ).toBeVisible({ timeout: 30_000 });
@@ -167,7 +157,7 @@ test("a new account can start training before replaying the guide", async ({
   ).toBe(true);
   await shoot(page, "first-home");
 
-  // A contextual hint appears even though the automatic walk did not run.
+  // Food's first visit: the composer.
   await page
     .getByRole("navigation", { name: /main navigation/i })
     .getByRole("link", { name: "Food" })
@@ -186,29 +176,6 @@ test("a new account can start training before replaying the guide", async ({
   await page.getByRole("button", { name: "Got it", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(proLine).toBeVisible();
-
-  // Settings keeps the optional walk available for later replay.
-  await page.goto("settings/support-legal");
-  await page.getByRole("link", { name: /Show me around/ }).click();
-  await expect(page).toHaveURL(/\/Maiin\/$/);
-
-  // The replay still teaches today's session, the first week, and food.
-  await expect(page.getByRole("dialog")).toContainText(
-    /Today’s workout|Your first workout/,
-    { timeout: 20_000 }
-  );
-  await mainButton(page, "Next");
-  await shoot(page, "walk-today");
-  await (await mainButton(page, "Next")).click();
-  await expect(guideTitle(page, "Your first week")).toBeVisible();
-  await mainButton(page, "Next");
-  await shoot(page, "walk-first-week");
-  await (await mainButton(page, "Next")).click();
-  await expect(guideTitle(page, "Food")).toBeVisible();
-  await mainButton(page, "Done");
-  await shoot(page, "walk-food");
-  await (await mainButton(page, "Done")).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // Train's first visit: the order of the workouts.
   await page
@@ -232,8 +199,8 @@ test("a new account can start training before replaying the guide", async ({
   await shoot(page, "hint-first-set");
 
   // The run screen before a first run, pointing at what starts one. The
-  // position given is too rough to start on, so the run waits at "Acquiring
-  // GPS..." with its Cancel rather than starting to record.
+  // position given is too rough to start on, so the run waits at "Finding
+  // GPS" with its Cancel rather than starting to record (Run25 call 2).
   await page.context().grantPermissions(["geolocation"]);
   await page
     .context()
@@ -247,7 +214,7 @@ test("a new account can start training before replaying the guide", async ({
   const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
   await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
   await expect(firstRun).toHaveCount(0);
-  await expect(page.getByText("Acquiring GPS…")).toBeVisible({
+  await expect(page.getByText("Finding GPS", { exact: true })).toBeVisible({
     timeout: 10_000,
   });
   await expect(startsRun).toHaveCount(0);

@@ -2,8 +2,10 @@ import {
   isRunWalkTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
+  sameTimeOnFeetFamily,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
+import { shorteningRank } from "@/lib/planDeloadWeek";
 import type { ScheduledRunDay } from "./programTypes";
 
 /** Recurring availability, chosen by the runner. Null means no extra limit. */
@@ -74,19 +76,31 @@ export function fitRunToTimeLimit(
   if (limit === null || plannedRunMinutes(original, easyPaceSPerKm) <= limit)
     return run;
   // A run-walk session is a new runner's (Run20 (5)), never a shorter run.
+  // A tempo or interval session is cut to the same kind of work, its own
+  // ladder's rungs first (Run24 (5), `shorteningRank`).
   const candidates = RUN_TEMPLATES.filter(
     (template) =>
-      template.type === original.type &&
+      shorteningRank(original, template) !== null &&
       !isRunWalkTemplateId(template.id) &&
       !RETIRED_RUN_TEMPLATE_IDS.has(template.id) &&
+      // A time trial is fitted to a shorter trial, never to an interval
+      // session, nor an interval session to a trial (Run24 (4)).
+      Boolean(template.config.timeTrial) ===
+        Boolean(original.config.timeTrial) &&
+      // Run26 (2): time on feet stays time on feet, a back-to-back a
+      // back-to-back, and no other run becomes either.
+      sameTimeOnFeetFamily(original, template) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
+      // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+      Boolean(template.config?.pickUps) === Boolean(original.config?.pickUps) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <
         plannedRunMinutes(original, easyPaceSPerKm)
   ).sort(
     (a, b) =>
+      shorteningRank(original, b)! - shorteningRank(original, a)! ||
       plannedRunMinutes(b, easyPaceSPerKm) -
-      plannedRunMinutes(a, easyPaceSPerKm)
+        plannedRunMinutes(a, easyPaceSPerKm)
   );
   // The catalogue's shortest long tier can still exceed a slow runner's
   // availability. Keep the date and offer an easy timed session honestly.

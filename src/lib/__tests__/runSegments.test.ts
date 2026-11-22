@@ -18,6 +18,7 @@ import {
   segmentsFromGuided,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromLongWithRacePaceBlocks,
   segmentsFromRunWalk,
   segmentsFromTempo,
   segmentsDurationSeconds,
@@ -727,5 +728,73 @@ describe("judgesEasyNow — where the Run screen holds easy running to easy", ()
   it("never judges a tempo, intervals or a race", () => {
     for (const type of ["tempo", "intervals", "race", undefined])
       expect(judgesEasyNow(type, [], null)).toBe(false);
+  });
+});
+
+describe("Run24 (5): segmentsFromLongWithRacePaceBlocks", () => {
+  const twins = RUN_TEMPLATES.filter((t) => t.config.racePaceBlocks);
+  const metres = (
+    segs: ReturnType<typeof segmentsFromLongWithRacePaceBlocks>
+  ) =>
+    segs.reduce(
+      (sum, s) => sum + (s.target.kind === "distance" ? s.target.meters : 0),
+      0
+    );
+
+  it("sums to the long run's distance, every segment by distance", () => {
+    expect(twins.length).toBeGreaterThan(0);
+    for (const t of twins) {
+      const segs = segmentsFromLongWithRacePaceBlocks(
+        t.config.targetDistanceKm!,
+        t.config.racePaceBlocks!,
+        "km"
+      );
+      expect(metres(segs), t.id).toBe(t.config.targetDistanceKm! * 1000);
+      expect(segs.every((s) => s.target.kind === "distance")).toBe(true);
+      expect(segs[0].type).toBe("easy");
+      expect(segs.at(-1)!.type).toBe("easy");
+      expect(segs.filter((s) => s.type === "moderate")).toHaveLength(
+        t.config.racePaceBlocks!.reps
+      );
+    }
+  });
+
+  it("pins the goal pace on the blocks, and names a marathon band for what it is", () => {
+    const goal = segmentsFromLongWithRacePaceBlocks(
+      24,
+      { race: "marathon", reps: 3, blockKm: 3, floatKm: 1, finishKm: 2 },
+      "km",
+      { goalPaceS: 341 }
+    ).filter((s) => s.type === "moderate");
+    for (const block of goal) {
+      expect(block.paceTarget).toBe(341);
+      expect(block.pacePinned).toBe(true);
+      expect(block.eyebrow).toMatch(/^MARATHON PACE · BLOCK \d\/3$/);
+      expect(block.label).toBe("3 km @ 5:41 /km");
+    }
+    expect(goal[0].cue).toMatch(/your goal pace/);
+    const band = segmentsFromLongWithRacePaceBlocks(
+      24,
+      { race: "marathon", reps: 3, blockKm: 3, floatKm: 1, finishKm: 2 },
+      "km",
+      { goalPaceS: 341, marathonBand: true }
+    );
+    expect(band.find((s) => s.type === "moderate")!.cue).toMatch(
+      /marathon pace/
+    );
+  });
+
+  it("runs by effort, named for the race, with no pace", () => {
+    const segs = segmentsFromLongWithRacePaceBlocks(
+      18,
+      { race: "half", reps: 2, blockKm: 3, floatKm: 1, finishKm: 2 },
+      "mi"
+    );
+    for (const s of segs) expect(s.paceTarget).toBeUndefined();
+    const block = segs.find((s) => s.type === "moderate")!;
+    expect(block.eyebrow).toBe("HALF MARATHON EFFORT · BLOCK 1/2");
+    expect(block.label).toBe("1.9 mi at half marathon effort");
+    // Labels in miles, targets in metres.
+    expect(block.target).toEqual({ kind: "distance", meters: 3000 });
   });
 });

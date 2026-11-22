@@ -5,7 +5,7 @@ import fiveK from "@/assets/plan/plan-5k.webp";
 import tenK from "@/assets/plan/plan-10k.webp";
 import half from "@/assets/plan/plan-half.webp";
 import marathon from "@/assets/plan/plan-marathon.webp";
-import type { RaceDistance } from "./raceGoalPlanner";
+import type { RoadRaceDistance } from "@/features/program/programTypes";
 
 /**
  * The photographs on Run plan's goal and distance cards (DESIGN_GUIDE §14m
@@ -18,9 +18,12 @@ export const PLAN_GOAL_PHOTOS = {
   freeform: noRace,
   starter,
   race_prep: race,
+  // Run24 (3): a plan with no race date, built towards 5K and 10K.
+  rolling: tenK,
 } as const;
 
-export const PLAN_DISTANCE_PHOTOS: Record<RaceDistance, string> = {
+/** The road races' photographs; the ultras have none yet (Run26 (2)). */
+export const PLAN_DISTANCE_PHOTOS: Record<RoadRaceDistance, string> = {
   "5k": fiveK,
   "10k": tenK,
   half,

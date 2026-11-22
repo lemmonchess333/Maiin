@@ -57,6 +57,7 @@ import type {
   PerformanceSignals,
   WeeklyAggregates,
 } from "../src/lib/performanceTypes";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -774,10 +775,12 @@ async function main() {
     {
       uid,
       displayName: SEASON_USER.displayName,
-      email: SEASON_USER.email,
       photoURL: null,
       athleteType: "Hybrid",
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
       darkMode: false,
       preferredWeightUnit: "kg",
@@ -813,21 +816,15 @@ async function main() {
       // The user's own goal: 78 kg, losing 0.4 kg a week.
       goalWeightKg: 78,
       weeklyRateKg: -0.4,
-      program: { goal: "cut", startWeight: START_KG, currentPhase: "base" },
+      program: { goal: "cut", currentPhase: "base" },
       targetCalories: TARGET.calories,
       targetProtein: TARGET.protein,
-      targetCarbs: TARGET.carbs,
-      targetFat: TARGET.fat,
-      adjustCaloriesForTraining: false,
       runFitness: {
         benchmark: { distanceM: 10050, timeS: raceTime },
         vdot: Math.round(vdotFromRace(10050, raceTime) * 10) / 10,
         source: "race",
         updatedAt: new Date(race.date + "T12:00:00").toISOString(),
       },
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
     },
     { merge: true }
   );

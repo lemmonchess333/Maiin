@@ -21,7 +21,11 @@ import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
+import { useNativePostNavigation } from "@/hooks/useNativePostNavigation";
 import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
+import { useWidgetLinkNavigation } from "@/hooks/useWidgetLinkNavigation";
+import { useWidgetDrinkReplay } from "@/hooks/useWidgetDrinkReplay";
+import { isNativePlatform } from "@/lib/platform";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -32,6 +36,7 @@ import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import BootStallNotice from "@/components/BootStallNotice";
 import ProfileUnavailable from "@/components/ProfileUnavailable";
+import { hasCurrentHealthConsent } from "@/lib/healthConsent";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -123,13 +128,25 @@ const DailyNutritionSnapshot = lazyRetry(() =>
     default: m.DailyNutritionSnapshot,
   }))
 );
+/* The Home Screen widgets' water (Wid1), kept on today's water log above
+   the routes. On the phone only: there are no widgets on the web, and it
+   is one more water listener. It cannot miss a drink by arriving late:
+   it writes the day's total as it stands when it mounts. */
+const WidgetWaterSync = lazyRetry(() => import("@/components/WidgetWaterSync"));
 
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
+/* Priv1 call 1: an account set up before setup asked for the agreement to
+   store health details meets it once, before the app. Its own chunk: most
+   opens never load it. */
+const HealthConsentRoutes = lazyRetry(
+  () => import("@/components/healthConsent/HealthConsentRoutes")
+);
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
+const PublicPost = lazyRetry(() => import("@/pages/PublicPost"));
 const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
@@ -173,8 +190,18 @@ const SettingsRecentlyDeleted = lazyRetry(
 const SettingsPantry = lazyRetry(
   () => import("@/pages/settings/SettingsPantry")
 );
+const SettingsHiddenPosts = lazyRetry(
+  () => import("@/pages/settings/SettingsHiddenPosts")
+);
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
+// Train and the session pages under it share one programme engine, held
+// by this route (TrainWk1 call 2).
+const ProgramEngineRoute = lazyRetry(
+  () => import("@/features/program/ProgramEngineRoute")
+);
 const Program = lazyRetry(() => import("@/pages/Program"));
+const LiftSession = lazyRetry(() => import("@/pages/LiftSession"));
+const RunSession = lazyRetry(() => import("@/pages/RunSession"));
 const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
@@ -186,10 +213,13 @@ const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
+const Circuit = lazyRetry(() => import("@/pages/Circuit"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 // Soc15 call 3: the weekly league, opened from its card on Social.
 const League = lazyRetry(() => import("@/pages/League"));
+// Run26 call 3: a segment's page, your efforts and the board of who you follow.
+const Segment = lazyRetry(() => import("@/pages/Segment"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
 // like every other page; not wired into any nav. Reachable only by
@@ -431,6 +461,13 @@ function AppRoutes() {
     !loading && !!user && !!profile?.onboardingComplete,
     !loading && !!user && !profile?.onboardingComplete
   );
+  // A shared post's link opens the post in the app (App1 Q51).
+  useNativePostNavigation(!loading && !!user && !!profile?.onboardingComplete);
+  // The Home Screen widgets (Wid1): a tap opens the page it names, and a
+  // drink the food widget's "+" queued is saved once, against the
+  // person's own water target, so it waits for the profile.
+  useWidgetLinkNavigation(!loading && !!user && !!profile?.onboardingComplete);
+  useWidgetDrinkReplay(profile ? uid : null, profile?.targetWaterGlasses);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
@@ -438,6 +475,25 @@ function AppRoutes() {
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
+  /* App1 Q17: the launch numbers the server keeps (the first session, the
+     week-4 return, the first trial and payment) are sent once per account
+     by whichever of its devices is open (lib/launchEvents). Loaded once
+     setup is finished, with Firestore, which Login never reads. */
+  const setUp = !!profile?.onboardingComplete;
+  useEffect(() => {
+    if (!uid || !setUp) return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import("@/lib/launchEvents")
+      .then(({ startLaunchEvents }) => {
+        if (!cancelled) stop = startLaunchEvents(uid);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [uid, setUp]);
 
   useEffect(() => {
     if (!uid) return;
@@ -555,6 +611,9 @@ function AppRoutes() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/support" element={<Support />} />
+          {/* A shared post's public page (App1 Q51); signed in, the same
+              address is the post in the app. */}
+          <Route path="/activity/:activityId" element={<PublicPost />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
@@ -648,6 +707,18 @@ function SignedInRoutes({
     );
   }
 
+  /* Set up, but without the agreement to store health details: an account
+     from before setup asked (Priv1 call 1). It agrees once, on this open,
+     before the app; HealthConsentRoutes reads the account again first, so
+     an agreement given on another device never flashes the question. */
+  if (!hasCurrentHealthConsent(profile.healthDataConsent)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <HealthConsentRoutes key={user.uid} />
+      </Suspense>
+    );
+  }
+
   return (
     /* HOME-ACCOUNT-01: remount the entire authenticated subtree when the
        account changes, so no provider's cached Firestore state or page-local
@@ -666,15 +737,19 @@ function SignedInRoutes({
             <Suspense fallback={null}>
               <DailyNutritionSnapshot />
             </Suspense>
+            {isNativePlatform() && (
+              <Suspense fallback={null}>
+                <WidgetWaterSync />
+              </Suspense>
+            )}
             {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
             because useStreakReminderInternal reads useStreaks(). */}
             <RemindersProvider>
               {/* DailyLogsProvider owns the single `users/{uid}/logs` live
-            subscription — useDailyLogs / useWeeklyStats / useMonthlyStats
-            / useWeeklyDayMap all read from it, collapsing four listeners
-            into one. */}
+            subscription — useDailyLogs and useWeeklyDayMap both read from
+            it, one listener for the two. */}
               <DailyLogsProvider>
                 {/* #995: app-global tier-4 coordinator. Wraps the routes, so at
                 most one blocking surface shows per app-open. It was made
@@ -731,10 +806,8 @@ function SignedInRoutes({
                           }
                         />
                         {/* Set1.1: nested-page Settings IA. /settings is the index;
-              each section gets its own route. Every section has now
-              migrated (SettingsIndex marks all rows migrated), so the
-              legacy flat page is retired — /settings/legacy redirects
-              to the index for any stale bookmark/deep link. */}
+              each section gets its own route. The old flat page and its
+              /settings/legacy redirect are gone (App1, grill Q28). */}
                         <Route
                           path="/settings"
                           element={
@@ -742,10 +815,6 @@ function SignedInRoutes({
                               <SettingsIndex />
                             </RouteErrorBoundary>
                           }
-                        />
-                        <Route
-                          path="/settings/legacy"
-                          element={<Navigate to="/settings" replace />}
                         />
                         <Route
                           path="/settings/profile"
@@ -759,7 +828,9 @@ function SignedInRoutes({
                             land on the editor that took its reset. */}
                         <Route
                           path="/settings/training"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/run-plan"
@@ -788,7 +859,9 @@ function SignedInRoutes({
                         {/* Trim1 call 7: the rest timer is on Lift plan. */}
                         <Route
                           path="/settings/workout-prefs"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/units-appearance"
@@ -867,6 +940,14 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        <Route
+                          path="/settings/hidden-posts"
+                          element={
+                            <RouteErrorBoundary>
+                              <SettingsHiddenPosts />
+                            </RouteErrorBoundary>
+                          }
+                        />
                         {/* Trim1 call 7: the exports and deleted meals are on Account. */}
                         <Route
                           path="/settings/data"
@@ -880,14 +961,43 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Train, a lift's page and a run's page, under the
+                            one engine they share (TrainWk1 call 2). Layout
+                            keys the three alike (`layoutKey`), so the engine
+                            stays mounted between them. */}
                         <Route
                           path="/program"
                           element={
                             <RouteErrorBoundary>
-                              <Program />
+                              <ProgramEngineRoute />
                             </RouteErrorBoundary>
                           }
-                        />
+                        >
+                          <Route
+                            index
+                            element={
+                              <RouteErrorBoundary>
+                                <Program />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/lift/:day"
+                            element={
+                              <RouteErrorBoundary>
+                                <LiftSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/run/:date"
+                            element={
+                              <RouteErrorBoundary>
+                                <RunSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                        </Route>
                         <Route
                           path="/program/plan"
                           element={
@@ -925,6 +1035,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <League />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/segment/:segmentId"
+                          element={
+                            <RouteErrorBoundary>
+                              <Segment />
                             </RouteErrorBoundary>
                           }
                         />
@@ -1008,6 +1126,15 @@ function SignedInRoutes({
                           </RouteErrorBoundary>
                         }
                       />
+                      {/* Circuit mode (Circ1): full screen, as a run is. */}
+                      <Route
+                        path="/circuit"
+                        element={
+                          <RouteErrorBoundary>
+                            <Circuit />
+                          </RouteErrorBoundary>
+                        }
+                      />
                       <Route
                         path="/run-summary"
                         element={
@@ -1037,10 +1164,6 @@ function SignedInRoutes({
                             <AdminModeration />
                           </RouteErrorBoundary>
                         }
-                      />
-                      <Route
-                        path="/log"
-                        element={<Navigate to="/food" replace />}
                       />
                       {/* Dev/test-only brand bake-off — absent from production
                       builds (BrandBakeoff is null there). Standalone (no

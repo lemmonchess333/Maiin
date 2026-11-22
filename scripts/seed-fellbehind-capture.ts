@@ -25,6 +25,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { buildPlan } from "../src/features/program/planBuilder";
 import { localDateString, localWeekKey } from "../src/lib/dateHelpers";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -96,7 +97,6 @@ async function run() {
     {
       uid,
       displayName: FELLBEHIND_CAPTURE_USER.displayName,
-      email: FELLBEHIND_CAPTURE_USER.email,
       photoURL: null,
       athleteType: "Hybrid",
       weightKg: 72,
@@ -108,11 +108,10 @@ async function run() {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 130,
       ...plan.profileUpdates,

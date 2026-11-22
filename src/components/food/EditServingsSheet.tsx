@@ -525,7 +525,7 @@ function EditServingsSheet({
       hideHeader
     >
       <div className="flex justify-center pt-3 pb-1">
-        <div className="w-10 h-1 rounded-full bg-border" />
+        <div className="w-10 h-1 rounded-full sheet-handle" />
       </div>
       {/* The form scrolls inside the sheet's height cap, and Cancel and
           Save stay pinned under it. The cap is 85% of the screen, and the

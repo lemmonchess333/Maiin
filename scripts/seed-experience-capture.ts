@@ -15,6 +15,7 @@
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? "demo-tropos";
 
@@ -112,7 +113,6 @@ async function run() {
       {
         uid,
         displayName: EXPERIENCE_CAPTURE_USER.displayName,
-        email: EXPERIENCE_CAPTURE_USER.email,
         photoURL: null,
         athleteType: "Lifter",
         weightKg: 80,
@@ -123,16 +123,13 @@ async function run() {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1), so the
+        // account opens on the app rather than on the agreement.
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "free",
-        currentStreak: 6,
-        longestStreak: 6,
-        lastLogDate: null,
-        adjustCaloriesForTraining: true,
-        program: { goal: "recomp", startWeight: 80, currentPhase: "base" },
+        program: { goal: "recomp", currentPhase: "base" },
         targetCalories: 2400,
         targetProtein: 170,
-        targetCarbs: 270,
-        targetFat: 70,
         primaryGoal: "hypertrophy",
         // The stored level the evidence contradicts — the card's trigger.
         experience: "beginner",
@@ -154,7 +151,6 @@ async function run() {
       currentPhase: "progression",
       weekNumber: 7,
       splitType: "full_body",
-      fatigueScore: 10,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],

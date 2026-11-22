@@ -22,7 +22,6 @@
  *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
  *   withRoleNumbers                               → represcribe.ts
- *   BLOCK_AMNESTY_WEEKS                           → represcribe.ts
  *   makeBlockId                                   → trainingBlock.ts
  *
  * The reps themselves come from the role table (Lift4 (5)), whose server
@@ -61,8 +60,10 @@
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 const {
+  MIN_BODYWEIGHT_REPS,
   SIX_REP_FLOOR,
   hasSixRepFloor,
+  takesBodyweightFloor,
   roleRepsFor,
   toExperience,
 } = require("./roleTable");
@@ -191,8 +192,11 @@ function undulationDeltaFor(ex, role) {
   return delta;
 }
 
-/** Mirror of programEngine.ts repFloorFor. */
+/** Mirror of programEngine.ts repFloorFor: 8 for an easy bodyweight lift
+ *  with no load added (roleTable's MIN_BODYWEIGHT_REPS), 6 for a lift on
+ *  the six-rep floor. */
 function repFloorFor(ex) {
+  if (takesBodyweightFloor(ex)) return MIN_BODYWEIGHT_REPS;
   if (ex && ex.exerciseId !== undefined && hasSixRepFloor(ex.exerciseId))
     return SIX_REP_FLOOR;
   return ex && ex.isAccessory === true ? 6 : 3;
@@ -234,9 +238,6 @@ function scaleLoadForReps(weight, fromReps, toReps, unit = "kg") {
     return (Math.round((weight * ratio * LB_PER_KG) / 5 + 1e-9) * 5) / LB_PER_KG;
   return Math.round((weight * ratio) / 2.5) * 2.5;
 }
-
-/** Mirror of represcribe.ts BLOCK_AMNESTY_WEEKS. */
-const BLOCK_AMNESTY_WEEKS = 3;
 
 /** Mirror of trainingBlock.ts makeBlockId. */
 function makeBlockId(startDate, createdAt) {
@@ -345,7 +346,6 @@ function withRoleNumbers(workouts, dayIndex, instanceId, goal, experience, maxSe
 }
 
 module.exports = {
-  BLOCK_AMNESTY_WEEKS,
   GOAL_PROFILES,
   MAX_PRESCRIBED_BODYWEIGHT_REPS,
   MAX_PRESCRIBED_REPS,

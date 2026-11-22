@@ -215,13 +215,17 @@ afterEach(() => {
 });
 
 describe("Food — the breakdown's way to the week", () => {
-  it("This week closes the breakdown and opens Analytics on Food", async () => {
+  it("Last 7 days closes the breakdown and opens Analytics' Food on them", async () => {
     api.meals = [meal("m1", "Oats", 300)];
     renderFood();
     fireEvent.click(screen.getByRole("button", { name: "Open breakdown" }));
-    fireEvent.click(await screen.findByRole("button", { name: /^This week/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^Last 7 days/ })
+    );
     await waitFor(() =>
-      expect(screen.getByTestId("where").textContent).toBe("/history?view=food")
+      expect(screen.getByTestId("where").textContent).toBe(
+        "/history?view=food&range=1W"
+      )
     );
   });
 });
@@ -468,7 +472,7 @@ describe("Food — copy an entry to another day", () => {
         </Routes>
       </MemoryRouter>
     );
-    openRow(/^Edit Chicken & rice/);
+    openRow(/^Chicken & rice .*, edit$/);
     fireEvent.click(
       screen.getByRole("button", { name: "Copy to another day" })
     );
@@ -497,7 +501,7 @@ describe("Food — one food of an entry of several", () => {
   it("writes the edited foods, their sum and the name they make", async () => {
     api.meals = [dish()];
     renderFood();
-    openRow(/^Edit Chicken, Rice, Oil/);
+    openRow(/^Chicken, Rice, Oil .*, edit$/);
     fireEvent.change(screen.getByLabelText("Grams of Chicken"), {
       target: { value: "150" },
     });

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   selectRunRecords,
+  holdsPaceRecord,
   isAllTimeRecord,
   PACE_RECORD_MIN_METRES,
   SUSTAINED_RECORD_MIN_METRES,
@@ -182,5 +183,38 @@ describe("isAllTimeRecord", () => {
     expect(isAllTimeRecord(allTime, "bestSustainedPace", recentLong)).toBe(
       false
     );
+  });
+});
+
+describe("holdsPaceRecord (App1 Q15)", () => {
+  const at = (day: number) => new Date(2026, 8, day, 7);
+  const r = (distance: number, avgPace: number, day: number) => ({
+    distance,
+    avgPace,
+    completedAt: at(day),
+  });
+
+  it("holds Best pace when faster than every run of a kilometre or more", () => {
+    expect(holdsPaceRecord(r(3000, 290, 9), [r(5000, 300, 1)])).toBe(true);
+  });
+
+  it("holds Best pace · 5K+ when a shorter run is faster", () => {
+    expect(
+      holdsPaceRecord(r(6000, 295, 9), [r(1200, 270, 1), r(8000, 300, 2)])
+    ).toBe(true);
+  });
+
+  it("holds neither when slower, under 5 km, than a faster run", () => {
+    expect(
+      holdsPaceRecord(r(4000, 295, 9), [r(1200, 270, 1), r(8000, 300, 2)])
+    ).toBe(false);
+  });
+
+  it("leaves a tie with the earlier run", () => {
+    expect(holdsPaceRecord(r(5000, 300, 9), [r(5000, 300, 1)])).toBe(false);
+  });
+
+  it("is no pace record under a kilometre", () => {
+    expect(holdsPaceRecord(r(800, 200, 9), [])).toBe(false);
   });
 });

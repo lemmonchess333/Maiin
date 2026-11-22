@@ -121,8 +121,11 @@ describe("runSessionAbout", () => {
       }
     }
     // A long run that finishes at race pace has lines and a reason of its
-    // own (Run21 (2)), in the build.
-    for (const t of RUN_TEMPLATES.filter((x) => x.type === "long")) {
+    // own (Run21 (2)), in the build. One with race-pace blocks never
+    // finishes at it (Run24 (5)), and has its own below.
+    for (const t of RUN_TEMPLATES.filter(
+      (x) => x.type === "long" && !x.config.racePaceBlocks
+    )) {
       const lines = runSessionAbout(t, { racePace: FINISH });
       const why = runSessionExplainer({
         type: t.type,
@@ -138,8 +141,30 @@ describe("runSessionAbout", () => {
         expect(shared, `${t.id} with race pace`).toEqual([]);
       }
     }
-    // So has a tempo at the goal pace, in the build and in the taper.
-    for (const t of RUN_TEMPLATES.filter((x) => x.type === "tempo")) {
+    // So has a long run with blocks at race pace (Run24 (5)).
+    for (const t of RUN_TEMPLATES.filter((x) => x.config.racePaceBlocks)) {
+      const lines = runSessionAbout(t, {
+        racePace: { kind: "blocks", goalPaceS: 300 },
+      });
+      const why = runSessionExplainer({
+        type: t.type,
+        templateId: t.id,
+        currentWeek: 9,
+        totalWeeks: 16,
+        distance: "marathon",
+        racePace: "blocks",
+      });
+      expect(why, t.id).toMatch(/rehearses race pace/);
+      for (const line of [lines.what, lines.feel, lines.ifWrong]) {
+        const shared = [...phrases(why!)].filter((p) => phrases(line).has(p));
+        expect(shared, `${t.id} with race-pace blocks`).toEqual([]);
+      }
+    }
+    // So has a tempo at the goal pace, in the build and in the taper. A
+    // progression run never is (Run24 (5), `racePaceWork`).
+    for (const t of RUN_TEMPLATES.filter(
+      (x) => x.type === "tempo" && x.config.tempo
+    )) {
       const lines = runSessionAbout(t, { racePace: TEMPO });
       for (const currentWeek of [9, 13]) {
         const why = runSessionExplainer({

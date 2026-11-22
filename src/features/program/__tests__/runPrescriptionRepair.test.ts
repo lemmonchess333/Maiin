@@ -20,7 +20,6 @@ const base = {
   weekNumber: 1,
   splitType: "full_body",
   workouts: [],
-  fatigueScore: 0,
   updatedAt: 0,
   settings: {},
   weekHistory: [],
@@ -136,5 +135,32 @@ describe("beginner prescription repair", () => {
     expect(next.runDays).toContain(state.runDays![1]);
     expect(next.runDays).toContain(state.runDays![3]);
     expect(repairRunPrescriptions(base, novice, "2026-11-09")).toBe(base);
+  });
+  it("leaves a plan alone while the profile's layout has no run day (running just added)", () => {
+    // TrainWk1 step 6: Run plan's Add running writes the plan and the
+    // profile together, and the plan can reach the app first. Read against
+    // the lifter's layout, every run of the starter's week was pruned and
+    // the prune saved, so the person had the goal and no runs.
+    const lifts = Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: (day % 2 === 1 ? "lift" : "rest") as "lift" | "rest",
+    }));
+    const behind = {
+      ...profile,
+      runMode: "freeform",
+      weekSchedule: lifts,
+    } as UserProfile;
+    const state = {
+      ...base,
+      runPlan: { mode: "starter", stage: 1, stageWeekKey: "2026-11-09" },
+    } as ProgramState;
+    expect(repairRunPrescriptions(state, behind, "2026-11-09")).toBe(state);
+    expect(
+      repairRunPrescriptions(
+        state,
+        { ...behind, weekSchedule: undefined } as UserProfile,
+        "2026-11-09"
+      )
+    ).toBe(state);
   });
 });

@@ -125,6 +125,20 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                                 .issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
+    def test_circle_rename_and_meetups_read_back_their_rules(self):
+        targets = verifier.source_targets()
+        self.assertTrue({"lib/goalSpaceMembership.js", "lib/objectionableText.js",
+                         "profanityFilter.js", "lib/restriction.js"}
+                        .issubset(targets["renameGoalSpace"]))
+        self.assertIn("lib/circleMeetups.js", targets["circleMeetup"])
+        self.assertTrue({"lib/circleMeetups.js", "lib/socialFanout.js",
+                         "lib/notificationPreferences.js", "lib/blockGuard.js",
+                         "lib/deletionTransactionGuard.js", "lib/jobRuns.js"}
+                        .issubset(targets["hourlyMeetupSweep"]))
+        for name in ("renameGoalSpace", "circleMeetup", "hourlyMeetupSweep"):
+            with self.subTest(function=name):
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_invite_callables_read_back_the_checks_they_hold(self):
         targets = verifier.source_targets()
         for name in ("redeemInvite", "getInviteCode"):
@@ -172,6 +186,15 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertTrue({"lib/pulse.js", "lib/deletionTransactionGuard.js",
                                  "lib/accountDeletionStatus.js"}.issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_meal_purge_reads_back_its_rule_and_the_deletion_guard(self):
+        # F5c: the hourly job that deletes meals 30 days after they were
+        # deleted, reading the deletion freeze in each transaction.
+        paths = verifier.source_targets()["purgeSoftDeletedMeals"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/mealPurge.js",
+                         "lib/deletionTransactionGuard.js",
+                         "lib/accountDeletionStatus.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
 
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]

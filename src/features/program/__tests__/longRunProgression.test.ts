@@ -43,6 +43,8 @@ import {
 } from "../runScheduler";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import {
+  RACE_PACE_LONG_LADDERS,
+  racePaceLongTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
 } from "@/lib/workoutTemplates";
@@ -81,17 +83,17 @@ function plan(args: {
   });
 }
 
+/* The distance ladder's long runs. Run26 (2): an ultra's or a trail
+   race's long runs in time on feet are a ladder of their own, which these
+   road plans never reach (`ultraTrailPlans.test.ts`). */
+const DISTANCE_LONG = RUN_TEMPLATES.filter(
+  (t) => t.type === "long" && !t.config.timeOnFeet
+);
 const LONG_KM_BY_ID = new Map(
-  RUN_TEMPLATES.filter((t) => t.type === "long").map((t) => [
-    t.id,
-    t.config.targetDistanceKm ?? 0,
-  ])
+  DISTANCE_LONG.map((t) => [t.id, t.config.targetDistanceKm ?? 0])
 );
 const LONG_MIN_BY_ID = new Map(
-  RUN_TEMPLATES.filter((t) => t.type === "long").map((t) => [
-    t.id,
-    t.estimatedDuration,
-  ])
+  DISTANCE_LONG.map((t) => [t.id, t.estimatedDuration])
 );
 const MIN_BY_ID = new Map(
   RUN_TEMPLATES.map((t) => [t.id, t.estimatedDuration])
@@ -151,16 +153,42 @@ describe("LONG_RUN_TIERS ↔ RUN_TEMPLATES", () => {
     // dead data as the `peakLongKm: 32` this module was written to fix.
     // Run24 (6): `long_15k` and `long_25k` stay in the registry so a plan
     // that holds them still reads; the 2 km ladder climbs past them.
+    // Run24 (5): a long run with race-pace blocks is a plain rung's twin,
+    // held in place of it in a later build week; each twin's rung is one
+    // the plans reach, and every twin a plan holds is one of the ladders'.
     const retired = RETIRED_RUN_TEMPLATE_IDS;
+    const isTwin = (id: string) =>
+      Boolean(RUN_TEMPLATES.find((t) => t.id === id)?.config.racePaceBlocks);
     const reachable = new Set(
       [...LONG_MIN_BY_ID.entries()]
         .filter(
           ([id, min]) =>
-            min <= MARATHON_LONG_RUN_MAX_MINUTES && !retired.has(id)
+            min <= MARATHON_LONG_RUN_MAX_MINUTES &&
+            !retired.has(id) &&
+            !isTwin(id)
         )
         .map(([id]) => id)
     );
-    expect(emittedLongIds()).toEqual(reachable);
+    const emitted = emittedLongIds();
+    expect(new Set([...emitted].filter((id) => !isTwin(id)))).toEqual(
+      reachable
+    );
+    const twins = new Set([
+      ...RACE_PACE_LONG_LADDERS.marathon,
+      ...RACE_PACE_LONG_LADDERS.half,
+    ]);
+    for (const id of emitted) if (isTwin(id)) expect(twins).toContain(id);
+    for (const twin of twins) {
+      const km = LONG_KM_BY_ID.get(twin)!;
+      const plain = [...reachable].find((id) => LONG_KM_BY_ID.get(id) === km);
+      expect(plain, twin).toBeDefined();
+      expect(
+        racePaceLongTemplateId(
+          plain!,
+          RUN_TEMPLATES.find((t) => t.id === twin)!.config.racePaceBlocks!.race
+        )
+      ).toBe(twin);
+    }
   });
 
   it("a long run past 150 minutes is the marathon's alone (Run24 (1))", () => {
@@ -341,16 +369,18 @@ describe("Run17 — the ceiling measures the runner's own pace: 150 minutes, and
     expect(longTierForKm(32)).toBe("long_26k");
     // The marathon's 180 minutes take the nominal 32 km's 180.
     expect(maxSchedulableLongKm(null, marathonCeiling)).toBe(32);
-    // A 20-week block climbs a rung a week (Run23) and reaches 30 before
-    // its taper; the 32 km rung is there for a block that climbs to it.
-    expect(peakKm(marathon(null))).toBe(30);
+    // The race is on a Monday 20 weeks on, the plan's 21st week: a week of
+    // rolling base, then a 20-week block (Run24 (3)), which climbs a rung a
+    // week (Run23) to the 32 km rung before its taper.
+    expect(peakKm(marathon(null))).toBe(32);
   });
 
   it("5:00/km → 30 km fits in 150 minutes, and the marathon reaches its 32 km cap", () => {
     expect(maxSchedulableLongKm(300)).toBe(30);
     expect(longTierForKm(32, 300)).toBe("long_30k");
     expect(longTierForKm(40, 300, marathonCeiling)).toBe("long_32k");
-    expect(peakKm(marathon(300))).toBe(30);
+    // A week of base and a 20-week block (Run24 (3)), as above.
+    expect(peakKm(marathon(300))).toBe(32);
   });
 
   it("6:00/km → 24 km fits the 150 and 30 km sits on the marathon's 180", () => {
@@ -536,7 +566,10 @@ describe("the WEEK progresses, not just the long run", () => {
     // 75% of the build's longest, the others less.
     const [first, ...rest] = weekly.slice(weekly.length - 4, weekly.length - 1);
     expect(first).toBeLessThan(peak * 0.75);
-    for (const wk of rest) expect(wk).toBeLessThan(peak * 0.6);
+    // Run24 (3) and (5): a 20-week block's biggest week holds its 1 km
+    // repeats (46 minutes) where a longer block's held an hour's
+    // progression run, so the same taper weeks come to 60.4% of it.
+    for (const wk of rest) expect(wk).toBeLessThan(peak * 0.61);
   });
 });
 

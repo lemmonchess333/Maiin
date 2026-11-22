@@ -63,6 +63,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/bodyweightLogs/{doc}",
   "match /users/{uid}/programState/{doc}",
   "match /users/{uid}/streaks/{doc}",
+  "match /users/{uid}/hiddenPosts/{activityId}",
   "match /users/{uid}/shoes/{shoeId}",
   "match /users/{uid}/logs/{date}",
   "match /users/{uid}/stats/{doc}",
@@ -171,6 +172,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /comments/{commentId}",
   "match /goalSpaces/{spaceId}",
   "match /goalSpaces/{spaceId}/members/{memberUid}",
+  // Run26 call 4: a Circle's meet-ups. Member READ only; the circleMeetup
+  // callable writes them behind the deletion actor-lock, and the executor
+  // sweeps them (inventory goalSpaceMeetups).
+  "match /goalSpaces/{spaceId}/meetups/{meetupId}",
   // Short invite-code → spaceId lookup (bearer index). Admin SDK writes
   // only (createGoalSpace reserves the code, joinGoalSpace reads it);
   // `allow read, write: if false` for clients so codes can't be
@@ -213,6 +218,25 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // reading the deletion state in their transaction; the executor sweeps
   // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
   "match /pulse/{dateKey}",
+  // Run27 call 11: a Space's members' sessions and its week. No client
+  // writes either. The rows route a public post to the Spaces its author
+  // is in, and the week is a figure that names no one; the triggers that
+  // write them read the deletion state in their transaction, and the
+  // executor removes the account's rows (spaceSessionRows) and its week
+  // credits (USER_SUBCOLLECTIONS, userSpaceWeeks).
+  "match /sessions/{activityId}",
+  "match /weeks/{weekKey}",
+  // Run26 call 3: segments. No client writes any of these: the segment
+  // callables are actor-locked and read the deletion state in their
+  // transaction, as do the run triggers that write efforts and board
+  // entries. A segment names no one and is read by anyone signed in; its
+  // board is server only; its owner record and the efforts are read by
+  // their owner. The executor removes the account's segments, its board
+  // entries and its efforts (removeSegmentTracesForUser, USER_SUBCOLLECTIONS).
+  "match /users/{uid}/segmentEfforts/{effortId}",
+  "match /segments/{segmentId}",
+  "match /board/{runnerUid}",
+  "match /segmentOwners/{segmentId}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).
@@ -374,7 +398,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 38 (Polish2 added /followRequests)", () => {
+  it("authoritative count is 39 (App1 added /users/{uid}/hiddenPosts)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -417,6 +441,8 @@ describe("Blocker E — path-count reconciliation", () => {
     // Trim1 call 3(b) (2026-11-12) removed /partnerBonds/{bondId} with
     // partner streaks: its one client write, a member's delete, went
     // with the rule, → 38.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
+    // App1 Q38 (2026-11-13) added /users/{uid}/hiddenPosts/{activityId}
+    // (owner-only, freeze via isOwnerAndNotDeleting), → 39.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
   });
 });

@@ -13,9 +13,13 @@
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* TroposBridgeViewController.swift */; };
+		B2D0E0000000000000000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D0E0000000000000000001 /* SceneDelegate.swift */; };
 		B10000000000000000000002 /* WatchRunPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* WatchRunPlugin.swift */; };
 		B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WatchRunCoordinator.swift */; };
 		B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* HealthWorkoutStore.swift */; };
+		B1BE47000000000000000001 /* HeartRateSensorPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */; };
+		B1000000000000000000000A /* MotionActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000C /* MotionActivityPlugin.swift */; };
+		B15D60000000000000000001 /* AccessibilityPrefsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15D60000000000000000001 /* AccessibilityPrefsPlugin.swift */; };
 		B10000000000000000000005 /* TroposWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* TroposWatchApp.swift */; };
 		B10000000000000000000006 /* WatchRunModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* WatchRunModel.swift */; };
 		B10000000000000000000007 /* WatchRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* WatchRunView.swift */; };
@@ -30,6 +34,17 @@
 		E10000000000000000000002 /* LiveActivitiesKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1000000000000000000000A /* LiveActivitiesKit */; };
 		E10000000000000000000003 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* LiveActivitiesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E1000000000000000000001B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000001A /* Assets.xcassets */; };
+		D30000000000000000000065 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
+		D30000000000000000000066 /* HomeWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000002 /* HomeWidgetSnapshot.swift */; };
+		D30000000000000000000067 /* HomeWidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000003 /* HomeWidgetTimeline.swift */; };
+		D30000000000000000000068 /* WidgetChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000004 /* WidgetChrome.swift */; };
+		D30000000000000000000069 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000005 /* TodayWidget.swift */; };
+		D3000000000000000000006A /* StreakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000006 /* StreakWidget.swift */; };
+		D3000000000000000000006B /* FoodWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000007 /* FoodWidget.swift */; };
+		D3000000000000000000006C /* LogDrinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000008 /* LogDrinkIntent.swift */; };
+		D30000000000000000000109 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D3000000000000000000000B /* PrivacyInfo.xcprivacy */; };
+		D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3000000000000000000000A /* HomeWidgetsPlugin.swift */; };
+		D30000000000000000000022 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,9 +96,13 @@
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000000000000000000001 /* TroposBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposBridgeViewController.swift; sourceTree = "<group>"; };
+		A2D0E0000000000000000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* WatchRunPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* WatchRunCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunCoordinator.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* HealthWorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutStore.swift; sourceTree = "<group>"; };
+		A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateSensorPlugin.swift; sourceTree = "<group>"; };
+		A1000000000000000000000C /* MotionActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionActivityPlugin.swift; sourceTree = "<group>"; };
+		A15D60000000000000000001 /* AccessibilityPrefsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPrefsPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* TroposWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposWatchApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* WatchRunModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunModel.swift; sourceTree = "<group>"; };
 		A10000000000000000000007 /* WatchRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunView.swift; sourceTree = "<group>"; };
@@ -103,6 +122,16 @@
 		E10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E10000000000000000000009 /* LiveActivities.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveActivities.entitlements; sourceTree = "<group>"; };
 		E1000000000000000000001A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D30000000000000000000001 /* HomeWidgetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetStore.swift; sourceTree = "<group>"; };
+		D30000000000000000000002 /* HomeWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetSnapshot.swift; sourceTree = "<group>"; };
+		D30000000000000000000003 /* HomeWidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetTimeline.swift; sourceTree = "<group>"; };
+		D30000000000000000000004 /* WidgetChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetChrome.swift; sourceTree = "<group>"; };
+		D30000000000000000000005 /* TodayWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000006 /* StreakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000007 /* FoodWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000008 /* LogDrinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogDrinkIntent.swift; sourceTree = "<group>"; };
+		D3000000000000000000000B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		D3000000000000000000000A /* HomeWidgetsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetsPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,10 +187,15 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				A2D0E0000000000000000001 /* SceneDelegate.swift */,
 				A10000000000000000000001 /* TroposBridgeViewController.swift */,
 				A10000000000000000000002 /* WatchRunPlugin.swift */,
 				A10000000000000000000003 /* WatchRunCoordinator.swift */,
 				A10000000000000000000004 /* HealthWorkoutStore.swift */,
+				A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */,
+				A1000000000000000000000C /* MotionActivityPlugin.swift */,
+				A15D60000000000000000001 /* AccessibilityPrefsPlugin.swift */,
+				D3000000000000000000000A /* HomeWidgetsPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -191,7 +225,16 @@
 			isa = PBXGroup;
 			children = (
 				E10000000000000000000004 /* LiveActivitiesBundle.swift */,
+				D30000000000000000000001 /* HomeWidgetStore.swift */,
+				D30000000000000000000002 /* HomeWidgetSnapshot.swift */,
+				D30000000000000000000003 /* HomeWidgetTimeline.swift */,
+				D30000000000000000000004 /* WidgetChrome.swift */,
+				D30000000000000000000005 /* TodayWidget.swift */,
+				D30000000000000000000006 /* StreakWidget.swift */,
+				D30000000000000000000007 /* FoodWidget.swift */,
+				D30000000000000000000008 /* LogDrinkIntent.swift */,
 				E10000000000000000000008 /* Info.plist */,
+				D3000000000000000000000B /* PrivacyInfo.xcprivacy */,
 				E10000000000000000000009 /* LiveActivities.entitlements */,
 				E1000000000000000000001A /* Assets.xcassets */,
 			);
@@ -339,6 +382,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1000000000000000000001B /* Assets.xcassets in Resources */,
+				D30000000000000000000109 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,10 +404,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				B2D0E0000000000000000001 /* SceneDelegate.swift in Sources */,
 				B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */,
 				B10000000000000000000002 /* WatchRunPlugin.swift in Sources */,
 				B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */,
 				B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */,
+				B1BE47000000000000000001 /* HeartRateSensorPlugin.swift in Sources */,
+				B1000000000000000000000A /* MotionActivityPlugin.swift in Sources */,
+				B15D60000000000000000001 /* AccessibilityPrefsPlugin.swift in Sources */,
+				D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */,
+				D30000000000000000000022 /* HomeWidgetStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -372,6 +422,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				E10000000000000000000001 /* LiveActivitiesBundle.swift in Sources */,
+				D30000000000000000000065 /* HomeWidgetStore.swift in Sources */,
+				D30000000000000000000066 /* HomeWidgetSnapshot.swift in Sources */,
+				D30000000000000000000067 /* HomeWidgetTimeline.swift in Sources */,
+				D30000000000000000000068 /* WidgetChrome.swift in Sources */,
+				D30000000000000000000069 /* TodayWidget.swift in Sources */,
+				D3000000000000000000006A /* StreakWidget.swift in Sources */,
+				D3000000000000000000006B /* FoodWidget.swift in Sources */,
+				D3000000000000000000006C /* LogDrinkIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -596,8 +654,8 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
-				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
-				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your daily step count to check your activity level, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
 				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
 				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
 				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
@@ -628,8 +686,8 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
-				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
-				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your daily step count to check your activity level, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
 				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
 				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
 				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";

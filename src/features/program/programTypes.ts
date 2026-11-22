@@ -11,11 +11,17 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
    (2026-07-11 repo audit batch 3): this file imports the inference
    function, so the inference module must not import back from here. */
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
-import type { CanonicalMuscle } from "./muscleTaxonomy";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
-  "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2" | "ppl_x2_fb";
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "ppl_ul"
+  | "ppl_x2"
+  | "ppl_x2_fb"
+  // No equipment, five or six days: no Pull day to build (`chooseSplit`).
+  | "upper_lower_fb";
 
 /**
  * User-facing split *preference* vocabulary — distinct from the engine's
@@ -339,8 +345,8 @@ export interface ProgramSettings {
    * Lift4 (6): "I have small plates", so a barbell, and the belt on a
    * bodyweight lift (Pgm8 L6), step 1.25 kg instead of 2.5 kg
    * (`loadSteps.ts`). Off until the person turns it on. It replaced
-   * Microloading, whose `microloading` key older documents still carry and
-   * nothing reads.
+   * Microloading, whose retired `microloading` key the server deletes
+   * (`RETIRED_PROGRAM_STATE_SUBKEYS` in functions/lib/programStateSanitizer.js).
    */
   smallPlates: boolean;
   /**
@@ -397,7 +403,6 @@ export interface DeloadSnapshot {
    */
   runDays?: ScheduledRunDay[];
   currentPhase: string;
-  fatigueScore: number;
   appliedAt: number;
 }
 
@@ -620,10 +625,56 @@ export interface ScheduledRunDay {
   clashesWithLift?: boolean;
 }
 
+/**
+ * Run24 (1), (2) and (8): what a race block's sizes are read from, worked
+ * out when the block is made and kept on its plan, so every rebuild of a
+ * week reads the same whichever runs it was given, or none
+ * (`generateRacePlanV2`). Read again from each rollover's runs, a failed
+ * read or a few seconds' drift in the month's pace moved the long run a
+ * rung, and a race in the month lifted a marathon's ceiling until it left
+ * the window. The block's shorter base (`RunPlan.shortBase`) is decided
+ * and kept the same way, beside these, and carried by the same rebuilds.
+ */
+export interface RaceBlockInputs {
+  /** The starting point the pace was read with
+   *  (`raceBlockStartingPoint`), null with none: a new one, the runner
+   *  telling the plan how they run now, reads the pace again. */
+  startingPoint: string | null;
+  /** The pace of the recent runs when they were read, seconds a km: what
+   *  the block's distances are sized at without a confirmed benchmark.
+   *  Null while none has been read: the template minutes size the block,
+   *  and the first rebuild that reads a pace keeps it. */
+  runsPaceSPerKm: number | null;
+  /** The longest long run the block has held so far, km: a marathon's
+   *  ceiling never comes under it. */
+  heldLongKm: number;
+  /** Run26 (2): the longest long run in time on feet the block has held,
+   *  minutes, in a plan in time: its peak never comes under it when a pace
+   *  confirmed mid-block sizes the block shorter. Absent elsewhere. */
+  heldLongMinutes?: number;
+  /** A beginner's block: the first week that may hold quality, a week key,
+   *  once the runs have shown it (`beginnerQualityWeek`). */
+  qualityFrom?: string;
+}
+
+/** The goals a plan with no race date can have (Run24 (3)); its specs and
+ *  words are `rollingPlan.ts`'s. */
+export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
+
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
-   *  at each stage (`starterPlan.ts`). */
-  mode: "structured" | "race_prep" | "starter";
+   *  at each stage (`starterPlan.ts`). A stored "structured" plan (retired,
+   *  App1 Q25) is dropped as it is read (`migrateProgramState`). */
+  mode: "race_prep" | "starter" | "rolling";
+  /** `rolling` (Run24 (3), deep dive D7): a plan with no race date, on a
+   *  four-week cycle that climbs to its goal's horizon and holds there
+   *  (`generateRollingPlan`). Its goal, and its week, `currentWeek` from
+   *  0. The profile stays on free running (no race goal, no starter
+   *  goal); the plan is the programme's alone (`rollingGoalOf`). */
+  rollingGoal?: RollingGoal;
+  /** A rolling plan's week: the Monday key of the week `currentWeek` is
+   *  for, which the rollover moves on from when the week holds no run. */
+  rollingWeekKey?: string;
   /** A starter plan's stage, 1 to 9: the session every run in its week
    *  takes. It moves on only once its week was done. */
   stage?: number;
@@ -635,7 +686,13 @@ export interface RunPlan {
   stageStartedWeek?: string;
   /** Calendar anchor for an intentionally empty race-training week. */
   emptyRunWeekKey?: string;
-  raceGoal?: { distance: string; targetDate: string; eventName?: string };
+  raceGoal?: {
+    distance: string;
+    targetDate: string;
+    eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
+  };
   totalWeeks?: number;
   currentWeek?: number;
   /** P2-1: true when totalWeeks fell below the ideal for the race
@@ -654,6 +711,14 @@ export interface RunPlan {
    *  instead of silently shortening. `belowFloor` implies `compressed`.
    *  Source: generateRacePlanV2's `belowFloor` output. */
   belowFloor?: boolean;
+  /** Run24 (11): the longest long run the plan builds to from the week it
+   *  was built for, in km, by what the plan put on each long run's day
+   *  before fitting it to the running done (`plannedLongRunKm`). The weekly
+   *  race check holds the runner's reach to it where it is under half the
+   *  race, as a plan at the long run's time ceiling or a short block peaks.
+   *  Written whenever a race plan's week is built; absent on a record built
+   *  before the plan carried it, until its next build. */
+  peakLongRunKm?: number;
   /** PR-D / PR-E: post-race recovery phase. Entered automatically
    *  when the race-day runDay transitions to completed_* (per
    *  `completeRunDay`). All template generation during this phase
@@ -679,6 +744,19 @@ export interface RunPlan {
    *  rollover into the plan's first week drops it, and that week is
    *  `currentWeek` 0. */
   leadInWeek?: string;
+  /** A race plan's block inputs (`RaceBlockInputs`), carried with
+   *  `totalWeeks` into every rebuild of its weeks. Absent on a plan made
+   *  before they were kept: it reads them from the runs it is given, and
+   *  keeps them from the first rebuild that reads runs. */
+  blockInputs?: RaceBlockInputs;
+  /** Run24 (2), deep dive D3: the plan was made for a regular runner whose
+   *  own week was above the plan's base, so its base is a shorter share of
+   *  the weeks before the taper (`SHORT_BASE_SHARE`). Decided when the block
+   *  is made (`generateRacePlanV2`'s `shortBase`) and carried by every
+   *  rebuild of the same block, so its phases stay put as the runner's
+   *  starting point and runs change. Absent: the plan's base is
+   *  `BASE_SHARE`, as every plan without it reads. */
+  shortBase?: boolean;
 }
 
 /* ================================
@@ -795,12 +873,6 @@ export interface ActiveTrainingBlock {
    */
   goalBefore: PrimaryGoal;
   /**
-   * Weeks the programme-level response to a stall was held back after a
-   * block began. The block command still sets it, but nothing reads it: the
-   * response it held back, the adjustment rule, is retired (Lift4 (13)).
-   */
-  amnestyWeeksLeft: number;
-  /**
    * Lifts a week this block asks for. Display and the review denominator
    * only — NEVER mirrored to `profile.weeklyWorkoutsTarget`, which feeds
    * `expectedDayCount` and would silently send the user's next unrelated
@@ -826,11 +898,10 @@ export interface ProgramState {
   splitType: SplitType;
   workouts: WorkoutDay[];
   /**
-   * The score the retired fatigue shave read (Lift4 (13)). Nothing computes
-   * it now: new plans seed 0, and stored plans and the server's deload
-   * snapshot carry it.
+   * When the plan was last written. An operations timestamp: nothing
+   * decides anything from it, and it stays for saying when a plan last
+   * changed (App1 Q24).
    */
-  fatigueScore: number;
   updatedAt: number;
   settings?: ProgramSettings;
   weekHistory?: WeekSnapshot[];
@@ -887,20 +958,6 @@ export interface ProgramState {
    * fitted to time; for those, Start still trims to the person's usual time.
    */
   sessionMinutes?: number;
-  /**
-   * How many times the retired adjustment rule cut volume for a stall
-   * (Lift4 (13)). Nothing writes or reads it now; stored plans still carry
-   * it, and the server's allow-list admits it.
-   */
-  plateauResponses?: number;
-  /**
-   * ID of the handwritten template this program was assigned at
-   * onboarding, when a match existed. Absent when `matchTemplate`
-   * couldn't find a goal-matching template and the program came from
-   * the procedural engine — UI uses this to render or omit the
-   * "from the X template" clause.
-   */
-  templateId?: string;
 
   /**
    * Schema version for the `programState` doc shape. Read-side
@@ -922,7 +979,7 @@ export interface ProgramState {
   /**
    * Blk2: the training block that owns the lift prescription, or absent for
    * the overwhelmingly common no-block case. Optional with a defaulting
-   * reader → no schema bump, same pattern as `plateauResponses` above.
+   * reader → no schema bump, same pattern as `sessionMinutes` above.
    *
    * Client-written and never read by a function, but it is allow-listed in
    * `functions/lib/programStateSanitizer.js` — keep in lockstep, and note
@@ -995,14 +1052,6 @@ export interface ProgramState {
   raceWeek?: "build" | "taper" | "race" | "after";
 
   /**
-   * The muscles the retired per-muscle recovery session eased (Lift4 (13)).
-   * Nothing reads or writes it now, and the rollover drops a stored one; it
-   * stays declared because stored plans carry it and the server's
-   * allow-list admits it.
-   */
-  recoveringMuscles?: CanonicalMuscle[];
-
-  /**
    * The last exercise removed through the command boundary, stashed verbatim
    * so `restoreExercise` can undo it (P6).
    *
@@ -1028,6 +1077,38 @@ export interface ProgramState {
     /** Epoch ms — the server refuses a restore older than its window. */
     removedAt: number;
   };
+}
+
+/**
+ * Top-level keys a plan used to carry that nothing reads or writes now
+ * (App1 Q24): the retired fatigue shave's score, the retired adjustment
+ * rule's count, the handwritten template a plan was matched to (the plan's
+ * own `templateId`, never a run day's) and the retired recovery session's
+ * muscles. None is on `ProgramState`.
+ *
+ * A stored plan carries them until the strip script has run
+ * (`functions/scripts/stripRetiredProgramFields.js`), and an app from
+ * before the change can write one back. The server deletes them from every
+ * plan a programme command writes, and never refuses a write for one
+ * (`RETIRED_PROGRAM_STATE_KEYS` in functions/lib/programStateSanitizer.js,
+ * which this list is pinned to by `retiredProgramKeys.cross.test.ts`); the
+ * week's rollover drops them (`withoutRetiredProgramKeys`), so this app
+ * never writes one back.
+ */
+export const RETIRED_PROGRAM_STATE_KEYS = [
+  "fatigueScore",
+  "plateauResponses",
+  "templateId",
+  "recoveringMuscles",
+] as const;
+
+/** The plan without the retired top-level keys a stored copy may carry. */
+export function withoutRetiredProgramKeys(state: ProgramState): ProgramState {
+  const stored = state as ProgramState & Record<string, unknown>;
+  if (!RETIRED_PROGRAM_STATE_KEYS.some((key) => key in stored)) return state;
+  const kept: Record<string, unknown> = { ...stored };
+  for (const key of RETIRED_PROGRAM_STATE_KEYS) delete kept[key];
+  return kept as unknown as ProgramState;
 }
 
 /* ================================
@@ -1215,8 +1296,24 @@ export const VALID_EXPERIENCE = [
 ] as const;
 export type Experience = (typeof VALID_EXPERIENCE)[number];
 
-export const VALID_EQUIPMENT = ["full_gym", "home_gym", "minimal"] as const;
+export const VALID_EQUIPMENT = [
+  "full_gym",
+  "home_gym",
+  "minimal",
+  // Bodyweight only: the floor, a wall and a sturdy table (`noEquipment.ts`).
+  "no_equipment",
+] as const;
 export type Equipment = (typeof VALID_EQUIPMENT)[number];
 
-export const VALID_RACE_DISTANCE = ["5k", "10k", "half", "marathon"] as const;
+/** The road races a plan prepares for, 5K to marathon. */
+export const ROAD_RACE_DISTANCES = ["5k", "10k", "half", "marathon"] as const;
+export type RoadRaceDistance = (typeof ROAD_RACE_DISTANCES)[number];
+/** Run26 (2): the ultras a plan prepares for, 50K, 50 miles and 100K. 100
+ *  miles is left out until its own call. */
+export const ULTRA_RACE_DISTANCES = ["50k", "50mi", "100k"] as const;
+export type UltraRaceDistance = (typeof ULTRA_RACE_DISTANCES)[number];
+export const VALID_RACE_DISTANCE = [
+  ...ROAD_RACE_DISTANCES,
+  ...ULTRA_RACE_DISTANCES,
+] as const;
 export type RaceDistance = (typeof VALID_RACE_DISTANCE)[number];

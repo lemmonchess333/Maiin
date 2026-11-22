@@ -227,6 +227,18 @@ export function runTemplateName(text: string, unit: DistanceUnit): string {
 }
 
 /**
+ * A long run's distance in the reader's unit, as its name gives it: whole
+ * kilometres for a rung ("12 km"), a mile to one place ("7.5 mi"). For
+ * sentences about a plan's long run (Run24 (3)), where "Long 12K" is a
+ * session's name and not a distance.
+ */
+export function longRunDistanceLabel(km: number, unit: DistanceUnit): string {
+  if (unit !== "mi")
+    return `${Number.isInteger(km) ? km : km.toFixed(1)} ${distanceUnitLabel(unit)}`;
+  return `${distanceValue(km * 1000, unit)} ${distanceUnitLabel(unit)}`;
+}
+
+/**
  * A planned run's name (Run21 (2)): the template's, and a run with work at
  * the goal race pace says so. A long run that finishes at it is "Long 18K
  * with race pace", running-evidence Appendix B's "Long run with race pace";
@@ -322,7 +334,7 @@ export function noSplitsReason(
 
 /**
  * Format the raceGoal.distance enum (`'5k'` / `'10k'` / `'half'`
- * / `'marathon'`) as a presentable label for the race-prep
+ * / `'marathon'`, and the ultras) as a presentable label for the race-prep
  * context strip + race-progress card.
  *
  * Falls through to UPPERCASE for unknown values so a future
@@ -334,6 +346,10 @@ export function formatRaceDistance(distance: string | undefined): string {
   if (distance === "10k") return "10K";
   if (distance === "half") return "Half Marathon";
   if (distance === "marathon") return "Marathon";
+  // Run26 (2): the ultras, as `raceDistanceLabel` names them.
+  if (distance === "50k") return "50K";
+  if (distance === "50mi") return "50 Miles";
+  if (distance === "100k") return "100K";
   return distance.toUpperCase();
 }
 

@@ -24,15 +24,18 @@ import {
   parseAgeYears,
 } from "../bodyMetrics";
 import { DRAFT_GENDERS } from "../onboardingDraft";
+import { birthYearProblem } from "../age";
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
-const { sanitizeProfileData } = require(
+const { sanitizeProfileData, cleanBirthYear, ...server } = require(
   resolve(here, "../../../functions/profileSanitizer.js")
 ) as {
   sanitizeProfileData: (
     input: Record<string, unknown>
   ) => Record<string, unknown>;
+  cleanBirthYear: (value: unknown, now: Date) => number | undefined;
+  AGE_YEARS: { min: number; max: number };
 };
 
 const kept = (field: string, value: unknown) =>
@@ -60,7 +63,7 @@ describe("onboarding's body metrics are the server's", () => {
 });
 
 /* Settings' age field took any number and saved it; the sanitizer keeps
-   whole years from 16 to 120, so the field takes the same. */
+   whole years from 18 to 120, so the field takes the same. */
 describe("the age a profile keeps is the server's", () => {
   it("both bounds survive, a year past either and a fraction are dropped", () => {
     expect(kept("age", AGE_YEARS.min)).toBe(AGE_YEARS.min);
@@ -72,14 +75,14 @@ describe("the age a profile keeps is the server's", () => {
 
   it.each([
     ["30", 30],
-    [" 16 ", 16],
+    [" 18 ", 18],
     ["120", 120],
   ])("parses %j as %i", (text, years) => {
     expect(parseAgeYears(text)).toBe(years);
     expect(kept("age", years)).toBe(years);
   });
 
-  it.each(["", "15", "121", "0", "-5", "30.5", "3e1", "abc"])(
+  it.each(["", "17", "121", "0", "-5", "30.5", "3e1", "abc"])(
     "refuses %j",
     (text) => {
       expect(parseAgeYears(text)).toBeNull();
@@ -90,5 +93,47 @@ describe("the age a profile keeps is the server's", () => {
 describe("onboarding's gender answers are the server's", () => {
   it.each(DRAFT_GENDERS)("%s survives", (gender) => {
     expect(kept("gender", gender)).toBe(gender);
+  });
+});
+
+/* App1 (grill Q57): setup and Settings hold a year of birth to this year
+   less 120 up to this year less 18, on the person's own year
+   (src/lib/age.ts); the sanitizer checks it on the server's, in UTC, and
+   takes one year more at the young end for a person whose own year is
+   already the next one at New Year. So the server keeps every year the app
+   takes there, and keeps more only by that one year. */
+describe("a year of birth the app takes is one the server keeps", () => {
+  const years = Array.from({ length: 140 }, (_, i) => 1895 + i);
+
+  it("holds the same ages", () => {
+    expect(server.AGE_YEARS).toEqual(AGE_YEARS);
+  });
+
+  it.each([
+    // A person already in 2027 while UTC is still in 2026.
+    ["2027-01-01", new Date("2026-12-31T23:30:00Z")],
+    ["2026-12-31", new Date("2026-12-31T23:30:00Z")],
+    ["2026-11-13", new Date("2026-11-13T12:00:00Z")],
+  ] as const)("at the young end, on a person's %s", (today, now) => {
+    for (const year of years.filter((y) => y > 1950)) {
+      if (birthYearProblem(year, today) === null)
+        expect(cleanBirthYear(year, now), `${year}`).toBe(year);
+    }
+  });
+
+  it("differs from the app by the one year of young-end slack, and no more", () => {
+    const now = new Date("2026-11-13T12:00:00Z");
+    const serverOnly = years.filter(
+      (year) =>
+        cleanBirthYear(year, now) === year &&
+        birthYearProblem(year, "2026-11-13") !== null
+    );
+    const appOnly = years.filter(
+      (year) =>
+        cleanBirthYear(year, now) === undefined &&
+        birthYearProblem(year, "2026-11-13") === null
+    );
+    expect(serverOnly).toEqual([2009]);
+    expect(appOnly).toEqual([]);
   });
 });

@@ -22,7 +22,7 @@ import {
   type RunTuning,
 } from "../runScheduler";
 import { buildPlan } from "../planBuilder";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isTimeTrialTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import {
   localDateString,
@@ -193,7 +193,12 @@ describe("Pgm6 — difficulty knob", () => {
       daysAhead: 90,
       tuning: { volume: "standard", difficulty: "gentler" },
     });
-    expect(allDays(p).some((d) => d.type === "intervals")).toBe(false);
+    // Run24 (4): a time trial is the plan's benchmark, not interval work.
+    expect(
+      allDays(p).some(
+        (d) => d.type === "intervals" && !isTimeTrialTemplateId(d.templateId)
+      )
+    ).toBe(false);
     expect(allDays(p).some((d) => d.templateId === "8x400")).toBe(false);
     // Quality still exists (every other build week), just gentler.
     expect(allDays(p).some((d) => d.type === "tempo")).toBe(true);
@@ -230,11 +235,13 @@ describe("Pgm6 — difficulty knob", () => {
       );
     expect(maxQualityInAWeek(standard)).toBe(1);
     expect(maxQualityInAWeek(harder)).toBe(2);
-    // A harder build week carries BOTH flavours, not a duplicate.
+    // A harder build week carries BOTH flavours, not a duplicate (a week
+    // whose time trial took its tempo aside, Run24 (4)).
     const doubleWeek = harder.weeks.find(
       (w) =>
+        !w.some((d) => isTimeTrialTemplateId(d.templateId)) &&
         w.filter((d) => d.type === "tempo" || d.type === "intervals").length ===
-        2
+          2
     );
     const types = (doubleWeek ?? [])
       .filter((d) => d.type === "tempo" || d.type === "intervals")

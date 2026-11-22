@@ -56,6 +56,10 @@ import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { resolveAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 import {
+  datedRuns,
+  RECENT_RUN_SCAN_LIMIT,
+} from "@/features/program/fetchRecentLayoff";
+import {
   layoffFromRuns,
   type DatedRun,
   type LayoffClass,
@@ -65,6 +69,11 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import {
+  climbEffortFactor,
+  isRoadDistance,
+  isTrailRace,
+} from "@/features/program/runPlanTiming";
 import {
   BASE_RUNNER,
   VirtualRunner,
@@ -162,14 +171,27 @@ export interface RunRecord {
 }
 
 /** The race distances' lengths, metres. */
-const RACE_M = { "5k": 5000, "10k": 10000, half: 21097.5, marathon: 42195 };
+const RACE_M = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+  // Run26 (2): the ultras.
+  "50k": 50000,
+  "50mi": 80467,
+  "100k": 100000,
+};
 
-/** The intensity a race is run at, for the runner's bands. */
+/** The intensity a race is run at, for the runner's bands. An ultra is run
+ *  at an easy effort. */
 const RACE_INTENSITY: Record<keyof typeof RACE_M, RunIntensity> = {
   "5k": "interval",
   "10k": "interval",
   half: "threshold",
   marathon: "marathon",
+  "50k": "easy",
+  "50mi": "easy",
+  "100k": "easy",
 };
 
 const day = (date: string, n: number) =>
@@ -213,15 +235,18 @@ export function raceTimeS(
   return Math.max(equivalent, distanceM / speed);
 }
 
-/** A segment's intensity, from its type and the session's. */
+/** A segment's intensity, from its type and the session's. A long run's
+ *  race-pace blocks (Run24 (5)) are run at their race's. */
 function segmentIntensity(
   sessionType: string,
   segmentType: string,
-  race: keyof typeof RACE_M | null
+  race: keyof typeof RACE_M | null,
+  blocksRace: keyof typeof RACE_M | null = null
 ): RunIntensity {
   if (segmentType === "hard")
     return sessionType === "intervals" ? "interval" : "repetition";
   if (segmentType === "moderate") {
+    if (sessionType === "long" && blocksRace) return RACE_INTENSITY[blocksRace];
     if (sessionType === "long" && race) return RACE_INTENSITY[race];
     return "threshold";
   }
@@ -251,7 +276,12 @@ export function sessionSegments(
     ];
   if (prefill.segments?.length)
     return prefill.segments.map((seg) => ({
-      intensity: segmentIntensity(type, seg.type, race),
+      intensity: segmentIntensity(
+        type,
+        seg.type,
+        race,
+        template?.config.racePaceBlocks?.race ?? null
+      ),
       ...(seg.target.kind === "duration"
         ? { minutes: seg.target.seconds / 60 }
         : { km: seg.target.meters / 1000 }),
@@ -317,6 +347,7 @@ export function runnerStartingPoint(
     answers: {
       runFrequency?: string;
       runMode?: string;
+      rollingGoal?: string | null;
     };
     running?: RunHabits;
   },
@@ -324,9 +355,10 @@ export function runnerStartingPoint(
 ): RunningBaseline | null {
   const runner = persona.running?.runner;
   const frequency = persona.answers.runFrequency;
+  // Setup asks it with a race, and with a plan with no race date (Run24 (3)).
   if (
     !runner ||
-    persona.answers.runMode !== "race_prep" ||
+    (persona.answers.runMode !== "race_prep" && !persona.answers.rollingGoal) ||
     (frequency !== "occasional" && frequency !== "regular")
   )
     return null;
@@ -536,13 +568,7 @@ export class RunSide {
   /** The latest saved runs as `fetchRecentRunning` reads them, which the
    *  layoff comes from and a running starting point climbs from. */
   recentRuns(): DatedRun[] {
-    return this.saved.slice(0, 20).map((run) => ({
-      date: run.day,
-      distance: run.distance,
-      duration: run.duration,
-      isInvalid: run.isInvalid === true,
-      savedAnyway: run.savedAnyway === true,
-    }));
+    return datedRuns(this.saved.slice(0, RECENT_RUN_SCAN_LIMIT));
   }
 
   /** Home's claim map. */
@@ -635,14 +661,18 @@ export class RunSide {
       urlType: null,
       urlScheduledRunId: runDay?.id ?? null,
       paceTable: prescriptivePaceTableFromFitness(profile.runFitness ?? null),
-      raceTarget: raceGoal?.targetTimeS
-        ? {
-            distance: raceGoal.distance,
-            targetTimeS: raceGoal.targetTimeS,
-            currentVdot:
-              paceTableFromFitness(profile.runFitness ?? null)?.vdot ?? null,
-          }
-        : null,
+      // Run26 (2): an ultra or a race over hills has no race pace.
+      raceTarget:
+        raceGoal?.targetTimeS &&
+        isRoadDistance(raceGoal.distance) &&
+        !isTrailRace(raceGoal)
+          ? {
+              distance: raceGoal.distance,
+              targetTimeS: raceGoal.targetTimeS,
+              currentVdot:
+                paceTableFromFitness(profile.runFitness ?? null)?.vdot ?? null,
+            }
+          : null,
     });
     const template = templateId ? templateOf(templateId) : undefined;
     const race =
@@ -651,9 +681,12 @@ export class RunSide {
         : null;
     this.runner.startDay();
     const vdot = this.runner.dayVdot();
+    // Run26 (2): a race over hills takes longer by its km-effort, as the
+    // plan's own long runs are sized (`climbEffortFactor`).
     const racePace = race
-      ? raceTimeS(vdot, RACE_M[race], this.weeklyKm(date)) /
-        (RACE_M[race] / 1000)
+      ? (raceTimeS(vdot, RACE_M[race], this.weeklyKm(date)) /
+          (RACE_M[race] / 1000)) *
+        climbEffortFactor(raceGoal)
       : null;
     const segments =
       runDay === null

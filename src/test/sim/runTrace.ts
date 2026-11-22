@@ -32,6 +32,8 @@ const VERDICT: Record<NonNullable<RunRecord["verdict"]>, string> = {
   fast: "fast",
   "easy-too-fast": "easy too fast",
   slow: "slow",
+  // The simulator has no weather, so no run of its is read by feel.
+  heat: "by feel, hot day",
 };
 
 /** One run: "Mon long_10k 10.0 km/62 min 6:11 [on target]", with the run
@@ -52,7 +54,7 @@ export function runTrace(season: Season, persona: LiftPersona): string {
   const habits = persona.running!;
   const goal =
     persona.answers.raceDistance && persona.answers.runMode === "race_prep"
-      ? `race: ${persona.answers.raceDistance} on ${String(persona.answers.raceTargetDate)}`
+      ? `race: ${persona.answers.raceDistance}${persona.answers.raceClimbM ? ` with ${String(persona.answers.raceClimbM)} m of climb` : ""} on ${String(persona.answers.raceTargetDate)}`
       : "no race";
   const b = habits.benchmark;
   const lines = [
@@ -78,10 +80,10 @@ export function runTrace(season: Season, persona: LiftPersona): string {
     const plan = w.leadIn
       ? `lead-in to ${String(w.totalWeeks)} weeks`
       : w.phase
-        ? `${w.phase}, plan week ${String((w.planWeek ?? 0) + 1)} of ${String(w.totalWeeks)}`
+        ? `${w.phase}, plan week ${String((w.planWeek ?? 0) + 1)}${w.totalWeeks !== null ? ` of ${String(w.totalWeeks)}` : ""}`
         : "no plan";
     lines.push(
-      `w${String(w.week)} ${w.weekStart}  ${plan}  counted ${String(w.counted)}/${String(w.planned.length)}  plan ${String(Math.round(w.plannedMinutes))} min, long ${w.longKm.toFixed(1)} km, quality ${String(w.quality)}`
+      `w${String(w.week)} ${w.weekStart}  ${plan}  counted ${String(w.counted)}/${String(w.planned.length)}  plan ${String(Math.round(w.plannedMinutes))} min, long ${w.longKm === 0 && w.longMinutes > 0 ? `${String(Math.round(w.longMinutes))} min` : `${w.longKm.toFixed(1)} km`}, quality ${String(w.quality)}`
     );
     if (w.planned.length) lines.push(`  planned ${w.planned.join(" · ")}`);
     if (runs.length) lines.push(`  ran     ${runs.map(runText).join(" · ")}`);

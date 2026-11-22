@@ -15,17 +15,16 @@ const sameEffort = (a: Effort, b: Effort) =>
 
 /**
  * Fastest kilometres on the Running page (DS3): the quickest 1, 5 and
- * 10 km in a row inside the range's runs, each beside the fastest ever.
+ * 10 km inside the range's runs, each beside the fastest ever.
  *
- * Read from the kilometre splits a GPS run saves (`runInsights`), cut from
- * the full track when the run was saved, so each is a real stretch of
- * running: five whole kilometres in a row for the 5 km, inside one run,
- * whatever the run was called. Not "Best efforts": the run's finish
- * screen uses that name for a search of the live track from any starting
- * point, which can come out a few seconds quicker, and one name for two
- * numbers would read as a bug. The track a run keeps afterwards is a
- * 500-point sample, too coarse to repeat that search, so the splits are
- * the record.
+ * Each is a run's own time over the distance (`runEffortSeconds`): the
+ * best effort it saved at the finish, searched in the full track, else,
+ * for a run saved before those were kept, its fastest whole kilometres in
+ * a row from its splits. So each is a real stretch of one run, and the
+ * fastest ever here is the time the finish screen called the fastest yet
+ * and Bests lists as Fastest 5K (App1 Q15: one record book). Until
+ * November 2026 this card read the splits alone, and could name a 5 km a
+ * few seconds slower than the one Bests and the finish screen named.
  *
  * Gold only on a best set this week, as everywhere else. A range best that
  * is also the fastest ever, set earlier, says so in words.
@@ -51,7 +50,7 @@ export default function FastestKilometresCard({
           Fastest kilometres
         </h2>
         <p className="text-sm text-muted-foreground">
-          Whole kilometres in a row inside one run, from its splits. {subtitle}.
+          Your quickest 1, 5 and 10 km within a run. {subtitle}.
         </p>
       </div>
       <ul className="-mx-2">

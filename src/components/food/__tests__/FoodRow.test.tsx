@@ -129,7 +129,9 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onDelete={vi.fn()}
       />
     );
-    expect(screen.queryByLabelText("Edit Chicken salad")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Chicken salad\b/ })
+    ).toBeNull();
   });
 
   it("shows Edit button when onEdit is provided and invokes it on tap", function () {
@@ -143,7 +145,7 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.click(screen.getByLabelText("Edit Chicken salad"));
+    fireEvent.click(screen.getByRole("button", { name: /^Chicken salad\b/ }));
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
@@ -278,7 +280,7 @@ describe("FoodRow — swipe branch (motion path)", function () {
       />
     );
     expect(screen.getByLabelText("Delete Chicken salad")).toBeInTheDocument();
-    const editTarget = screen.getByLabelText("Edit Chicken salad");
+    const editTarget = screen.getByRole("button", { name: /^Chicken salad\b/ });
     expect(editTarget).toHaveAttribute("role", "button");
     expect(editTarget).toHaveAttribute("tabindex", "0");
   });
@@ -295,9 +297,12 @@ describe("FoodRow — swipe branch (motion path)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByLabelText("Edit Chicken salad"), {
-      key: "Enter",
-    });
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: /^Chicken salad\b/ }),
+      {
+        key: "Enter",
+      }
+    );
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 });
@@ -319,7 +324,7 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
   it("shows a photo meal's picture as a thumbnail at the start of its row", function () {
     // It was a 176 px photo card above the row.
     const { container } = row({
-      photoUrl: "data:image/jpeg;base64,AAAA",
+      photoSrc: "data:image/jpeg;base64,AAAA",
     });
     const img = container.querySelector("img[data-food-photo]")!;
     // 48 pt, the inner radius of a card (DS4, §14m rules 20 and 25).
@@ -346,10 +351,9 @@ describe("FoodRow — the thumbnail column (Pol1)", function () {
   });
 
   it("falls back to the drawing when the photo cannot be read", function () {
-    // Photos are device-local and age out at 90 days; a legacy Storage
-    // URL can 404.
+    // Photos are device-local, age out at 90 days and can be evicted.
     const { container } = row({
-      photoUrl: "data:image/jpeg;base64,AAAA",
+      photoSrc: "data:image/jpeg;base64,AAAA",
     });
     fireEvent.error(container.querySelector("img[data-food-photo]")!);
     expect(container.querySelector("[data-food-photo]")).toBeNull();

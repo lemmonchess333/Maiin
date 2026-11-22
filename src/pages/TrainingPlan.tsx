@@ -755,6 +755,7 @@ export default function TrainingPlan() {
           open
           guided={resetMode}
           profile={profile}
+          programState={programState}
           onClose={() => setLayout(false)}
           onSaved={() => {
             if (!resetMode || !user?.uid) return;

@@ -96,6 +96,68 @@ function setup(extra = {}) {
       sessionId: "r1",
       dateKey: pulseDay,
     },
+    // Run27 call 11: a Space's list rows for Alice's post and Bob's (one
+    // in a Space she left), each one's week credit, and the Space's week,
+    // which names no one.
+    "spaces/runners/sessions/own": { activityId: "own", authorId: "alice" },
+    "spaces/lifters/sessions/own": { activityId: "own", authorId: "alice" },
+    "spaces/runners/sessions/other": { activityId: "other", authorId: "bob" },
+    "users/alice/spaceWeeks/runners_2026-09-14": {
+      uid: "alice",
+      spaceId: "runners",
+      weekKey: "2026-09-14",
+      spaceWeek: "runners_2026-09-14",
+      sessions: 2,
+      meters: 9000,
+    },
+    "users/bob/spaceWeeks/runners_2026-09-14": {
+      uid: "bob",
+      spaceId: "runners",
+      weekKey: "2026-09-14",
+      spaceWeek: "runners_2026-09-14",
+      sessions: 1,
+      meters: 5000,
+    },
+    "spaces/runners/weeks/2026-09-14": {
+      weekKey: "2026-09-14",
+      members: 6,
+      sessions: 9,
+      meters: 40000,
+    },
+    // Run26 call 3: a segment Alice made, which Bob has run, and one Bob
+    // made, which both have run.
+    "segments/seg-alice": { name: "Alice's hill", lengthMeters: 800 },
+    "segmentOwners/seg-alice": { uid: "alice", sourceRunId: "r9" },
+    "segments/seg-alice/board/alice": { uid: "alice", elapsedSeconds: 200 },
+    "segments/seg-alice/board/bob": { uid: "bob", elapsedSeconds: 190 },
+    "users/alice/segmentEfforts/r9_seg-alice_1": {
+      uid: "alice",
+      segmentId: "seg-alice",
+      runId: "r9",
+      elapsedSeconds: 200,
+    },
+    "users/bob/segmentEfforts/b1_seg-alice_1": {
+      uid: "bob",
+      segmentId: "seg-alice",
+      runId: "b1",
+      elapsedSeconds: 190,
+    },
+    "segments/seg-bob": { name: "Bob's straight", lengthMeters: 1000 },
+    "segmentOwners/seg-bob": { uid: "bob", sourceRunId: "b1" },
+    "segments/seg-bob/board/alice": { uid: "alice", elapsedSeconds: 260 },
+    "segments/seg-bob/board/bob": { uid: "bob", elapsedSeconds: 250 },
+    "users/alice/segmentEfforts/r9_seg-bob_1": {
+      uid: "alice",
+      segmentId: "seg-bob",
+      runId: "r9",
+      elapsedSeconds: 260,
+    },
+    "users/bob/segmentEfforts/b1_seg-bob_1": {
+      uid: "bob",
+      segmentId: "seg-bob",
+      runId: "b1",
+      elapsedSeconds: 250,
+    },
     "friendsBoard/bob": { sessions: 1 },
     "followCounts/bob": { followers: 4, following: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
@@ -113,6 +175,17 @@ function setup(extra = {}) {
     "goalSpaces/old/events/backed": {
       uid: "bob",
       supporterIds: ["alice", "carol"],
+    },
+    // Run26 call 4: a meet-up Alice planned in a Circle she left, and one
+    // of Bob's she was in for.
+    "goalSpaces/old/meetups/hers": { organiserUid: "alice", going: ["alice"] },
+    "goalSpaces/old/meetups/bobs": {
+      organiserUid: "bob",
+      going: ["bob", "alice", "carol"],
+    },
+    "goalSpaces/owned/meetups/planned": {
+      organiserUid: "bob",
+      going: ["bob"],
     },
     "goalSpaces/owned": {
       ownerId: "alice",
@@ -241,6 +314,12 @@ function setup(extra = {}) {
 // smoke::leagueStandings
 // smoke::userSubcollections::leagueResults
 // smoke::userSubcollections::pulseCredits
+// smoke::userSubcollections::segmentEfforts
+// smoke::userSubcollections::spaceWeeks
+// unit::accountDeletion.spaceSessionRows
+// unit::segments.removeSegmentTracesForUser.owned
+// unit::segments.removeSegmentTracesForUser.owners
+// unit::segments.removeSegmentTracesForUser.entries
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -282,9 +361,27 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/alice",
       "users/alice/leagueResults/2026-09-07",
       "users/alice/pulseCredits/workout_w1",
+      // Run27 call 11: her posts' rows in every Space, a left one too, and
+      // her week credit.
+      "spaces/runners/sessions/own",
+      "spaces/lifters/sessions/own",
+      "users/alice/spaceWeeks/runners_2026-09-14",
+      // Run26 call 3: Alice's segment with everyone's efforts on it and its
+      // board, her efforts, and her entry on Bob's board.
+      "segments/seg-alice",
+      "segmentOwners/seg-alice",
+      "segments/seg-alice/board/alice",
+      "segments/seg-alice/board/bob",
+      "users/bob/segmentEfforts/b1_seg-alice_1",
+      "users/alice/segmentEfforts/r9_seg-alice_1",
+      "users/alice/segmentEfforts/r9_seg-bob_1",
+      "segments/seg-bob/board/alice",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
+      "goalSpaces/old/meetups/hers",
+      // A closed Circle's meet-ups go with it.
+      "goalSpaces/owned/meetups/planned",
       "goalSpaceInvites/join",
       "reportAuthority/report",
       "rateLimits/alice_scan",
@@ -317,11 +414,23 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/bob",
       "users/bob/leagueResults/2026-09-07",
       "users/bob/pulseCredits/run_r1",
+      // Bob's row and credit stay.
+      "spaces/runners/sessions/other",
+      "users/bob/spaceWeeks/runners_2026-09-14",
+      // Bob's segment, his entry on it and his own effort stay.
+      "segments/seg-bob",
+      "segmentOwners/seg-bob",
+      "segments/seg-bob/board/bob",
+      "users/bob/segmentEfforts/b1_seg-bob_1",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);
     // The day's count names no one and stands, as the community goal's.
     expect(data.get(`pulse/${pulseDay}`)).toEqual({ sessions: 2 });
+    // So does a Space's week: it is counted again on the next change.
+    expect(data.get("spaces/runners/weeks/2026-09-14")).toMatchObject({
+      members: 6,
+    });
     // The group stays for Bob, without Alice in it.
     expect(data.get("leagueGroups/wk-001")).toMatchObject({
       memberUids: ["bob"],
@@ -352,6 +461,10 @@ describe("complete account erasure", () => {
       data.get("comments/other/items/bobs-comment").reactions.fire
     ).toEqual(["carol"]);
     expect(data.get("goalSpaces/old/events/backed").supporterIds).toEqual([
+      "carol",
+    ]);
+    expect(data.get("goalSpaces/old/meetups/bobs").going).toEqual([
+      "bob",
       "carol",
     ]);
     expect(data.get("goalSpaces/owned")).toMatchObject({

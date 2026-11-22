@@ -13,6 +13,10 @@
  *              next step, ended ones folded; with none, the start-or-join
  *              card alone.
  *   Discover   races and Spaces, then the challenges not joined.
+ *
+ * All of it from the first day (App1 Q6): with no league counted and
+ * almost nobody in any challenge or Space, the page is the same page, and
+ * each room that is still small says it is filling up.
  */
 import {
   afterEach,
@@ -144,6 +148,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
   circlesHook.circles = [];
+  SPACE.memberCount = null;
   seedFirestore({
     "users/me": h.profile,
     "challenges/weekly-2026-09-07": {
@@ -176,15 +181,11 @@ afterEach(() => {
 async function openTogether() {
   render(
     <MemoryRouter>
-      <CommunityView
-        active
-        uid="me"
-        refreshRef={{ current: null }}
-      />
+      <CommunityView active uid="me" refreshRef={{ current: null }} />
     </MemoryRouter>
   );
   await flushSnapshots();
-  await screen.findByRole("button", { name: "Join weekly challenge" });
+  await screen.findByRole("button", { name: "Join challenge" });
   await flushSnapshots();
 }
 
@@ -225,7 +226,7 @@ describe("the Together page's order", () => {
 
     const week = screen.getByRole("region", { name: "This week" });
     const weekly = within(week).getByRole("button", {
-      name: "Join weekly challenge",
+      name: "Join challenge",
     });
     const joined = await within(week).findByRole("list", {
       name: "Your challenges",
@@ -390,9 +391,9 @@ describe("the page's one filled button", () => {
       circle("solo", "Hear", 1),
     ];
     await openTogether();
-    expect(filledButtons()).toEqual(["Join weekly challenge"]);
+    expect(filledButtons()).toEqual(["Join challenge"]);
     expect(
-      screen.getByRole("button", { name: "Join weekly challenge" }).className
+      screen.getByRole("button", { name: "Join challenge" }).className
     ).toMatch(NEUTRAL);
   });
 
@@ -402,5 +403,36 @@ describe("the page's one filled button", () => {
     expect(
       screen.getByRole("button", { name: "Start a circle" }).className
     ).toMatch(NEUTRAL);
+  });
+});
+
+describe("on a new Tropos (App1 Q6)", () => {
+  it("offers every room, and each that is still small says so", async () => {
+    SPACE.memberCount = 0;
+    await openTogether();
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((el) => el.textContent)
+    ).toEqual(["This week", "Circles", "Discover"]);
+    // The weekly challenge, no one in it yet: under its name.
+    const band = document.querySelector(
+      "[data-challenge-medal-band]"
+    ) as HTMLElement;
+    expect(within(band).getByText("Weekly Warrior")).toBeInTheDocument();
+    expect(within(band).getByText("Filling up")).toBeInTheDocument();
+    // The league, which the server has not counted anyone for.
+    expect(
+      await screen.findByText("The league starts once 10 people have joined.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Join the league" })
+    ).toBeInTheDocument();
+    // A Space with no members yet.
+    expect(
+      screen.getByRole("link", { name: /^Runners\b/ }).textContent
+    ).toContain("Filling up");
+    // The challenges not joined.
+    expect(
+      screen.getByRole("list", { name: "Challenges to join" })
+    ).toBeInTheDocument();
   });
 });

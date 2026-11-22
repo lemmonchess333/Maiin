@@ -20,11 +20,12 @@ save-offer to configure today (Apple), and a second to add when Android ships
 
 ## Recommended offer
 
-- **Monthly plan → 50% off for 2 months** (≈ £1.99/mo, then back to £3.99).
-- **Yearly plan → 25% off the next renewal** (≈ £26.24, then back to £34.99).
+- **Monthly plan → 50% off for 2 months** (≈ £3.49/mo, then back to £6.99).
+- **Yearly plan → 25% off the next renewal** (≈ £29.99, then back to £39.99).
 
 The operator's call — tune to taste. The pricing they anchor against is the
-single source of truth in `src/lib/proPlans.ts` (£3.99/mo, £34.99/yr). When
+single source of truth in `src/lib/proPlans.ts` (£6.99/mo, £39.99/yr since
+Biz1, 18 November 2026; £3.99 and £34.99 before). When
 Android ships, mirror the same values on Google Play so the deal doesn't diverge
 by platform.
 

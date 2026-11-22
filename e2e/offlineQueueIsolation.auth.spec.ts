@@ -1,5 +1,5 @@
 import { verifySignupEmail } from "./helpers/verifySignupEmail";
-import { openSignUpForm } from "./helpers/auth";
+import { openSignInForm, openSignUpForm } from "./helpers/auth";
 /**
  * PR #820 — offline-queue uid isolation, end-to-end on the real app
  * (the two-account "device test" row in the pre-launch QA backlog).
@@ -76,6 +76,7 @@ import { openSignUpForm } from "./helpers/auth";
  */
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { emulatorActive } from "./helpers/emulator";
+import { restHealthConsent } from "./helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -157,7 +158,7 @@ async function completeOnboardingDirect(
   displayName: string
 ): Promise<void> {
   const res = await fetch(
-    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName`,
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName&updateMask.fieldPaths=healthDataConsent`,
     {
       method: "PATCH",
       headers: {
@@ -168,6 +169,8 @@ async function completeOnboardingDirect(
         fields: {
           onboardingComplete: { booleanValue: true },
           displayName: { stringValue: displayName },
+          // Agreed to the storing of health details (Priv1 call 1).
+          healthDataConsent: restHealthConsent(),
         },
       }),
     }
@@ -337,7 +340,8 @@ async function clickPastCelebration(
 }
 
 /** Click the app's Sign Out (rendered on /settings/account) and wait
- *  for the Login screen. */
+ *  for the Login screen: the welcome, as every signed-out visit opens
+ *  there, a phone that has had an account too (DS9 STATUS). */
 async function signOutViaUI(page: Page): Promise<void> {
   const signOut = page.getByRole("button", { name: "Sign out" });
   await signOut.waitFor({ state: "visible", timeout: 20_000 });
@@ -345,15 +349,13 @@ async function signOutViaUI(page: Page): Promise<void> {
   // accounts log their first activity in this journey).
   await clickPastCelebration(page, signOut);
   await page
-    .locator("#login-email")
+    .getByRole("button", { name: "Get started", exact: true })
     .waitFor({ state: "visible", timeout: 20_000 });
 }
 
-/** Sign in from an already-rendered Login screen. */
+/** Sign in from an already-rendered Login screen, by its Sign in. */
 async function signInFromLoginScreen(page: Page, email: string): Promise<void> {
-  await page
-    .locator("#login-email")
-    .waitFor({ state: "visible", timeout: 20_000 });
+  await openSignInForm(page);
   await page.fill("#login-email", email);
   await page.fill("#login-password", PASSWORD);
   await page.locator('button[type="submit"]').first().click();

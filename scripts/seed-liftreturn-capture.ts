@@ -3,7 +3,7 @@
  * Seed for the LiftReturnSheet capture.
  *
  * Provisions a lifter whose last logged session is old enough for
- * `assessLiftReturn` to classify `detrained`, so the welcome-back sheet is
+ * the one return check (`trainingReturn.ts`) to classify `detrained`, so the welcome-back sheet is
  * reachable on Home:
  *
  *   1. A lift-only profile + programState built by the REAL planBuilder —
@@ -35,6 +35,7 @@ import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { localDateString } from "../src/lib/dateHelpers";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -129,7 +130,6 @@ async function run() {
     {
       uid,
       displayName: LIFTRETURN_CAPTURE_USER.displayName,
-      email: LIFTRETURN_CAPTURE_USER.email,
       photoURL: null,
       athleteType: "Lifter",
       weightKg: 78,
@@ -141,11 +141,10 @@ async function run() {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2400,
       targetProtein: 150,
       ...plan.profileUpdates,
@@ -231,7 +230,6 @@ async function seedRunner() {
     {
       uid,
       displayName: RUNRETURN_CAPTURE_USER.displayName,
-      email: RUNRETURN_CAPTURE_USER.email,
       photoURL: null,
       athleteType: "Runner",
       weightKg: 66,
@@ -243,11 +241,10 @@ async function seedRunner() {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 120,
       ...plan.profileUpdates,

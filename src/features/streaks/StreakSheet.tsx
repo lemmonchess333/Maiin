@@ -7,6 +7,8 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import { cn } from "@/lib/utils";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { STREAK_WINDOW_DAYS, useStreaks } from "./useStreaks";
+import { streakStanding } from "./streakStanding";
+import StreakStandingBand from "./StreakStandingBand";
 import {
   coveredDayLine,
   earliestStreakMonth,
@@ -35,6 +37,9 @@ const DAY_CLASSES: Record<StreakDayState, string> = {
  * covered, and the way to the badges. Streak1's register holds: no
  * freezes, shields or tokens, and nothing about a streak at risk. The
  * month goes back as far as the streak reads (`STREAK_WINDOW_DAYS`).
+ * Covered is a day grace forgave or one of the plan's rest days the
+ * streak counts (App1 Q32); the line of reassurance is for the first
+ * alone, since a rest day is the plan's and needs none.
  */
 export default function StreakSheet({
   open,
@@ -47,7 +52,24 @@ export default function StreakSheet({
    *  their profile (`badgeShelfPath`). The sheet's host knows whose. */
   badgesTo: string;
 }) {
-  const { currentStreak, activeDates, bridgedDates } = useStreaks();
+  const {
+    currentStreak,
+    longestStreak,
+    allBadges,
+    activeDates,
+    bridgedDates,
+    restDates,
+    coversRestDays,
+    loading,
+    loadFailed,
+  } = useStreaks();
+  const standing = streakStanding(
+    currentStreak,
+    longestStreak,
+    new Set(
+      (allBadges ?? []).filter((badge) => badge.earnedAt).map((b) => b.id)
+    )
+  );
   const todayKey = useLocalDateKey();
   const current = monthOf(todayKey);
   const earliest = earliestStreakMonth(todayKey, STREAK_WINDOW_DAYS);
@@ -60,7 +82,7 @@ export default function StreakSheet({
   const month = streakMonth(
     new Date(current.getFullYear(), current.getMonth() - shownBack, 1),
     activeDates,
-    bridgedDates,
+    [...bridgedDates, ...restDates],
     todayKey,
     streakReadFrom(todayKey, STREAK_WINDOW_DAYS)
   );
@@ -77,6 +99,13 @@ export default function StreakSheet({
       <div className="overflow-y-auto px-4 pt-3 pb-4 space-y-4">
         {reassurance && (
           <p className="text-sm text-foreground">{reassurance}</p>
+        )}
+
+        {/* Only once the record has loaded: before it, or after a failed
+            read, the stored longest is 0 and a held badge reads as locked,
+            which is not this person's record. */}
+        {!loading && !loadFailed && (
+          <StreakStandingBand standing={standing} current={currentStreak} />
         )}
 
         {/* A container for the days: under 13em of it (double text on a
@@ -168,8 +197,9 @@ export default function StreakSheet({
           </li>
         </ul>
         <p className="text-sm text-muted-foreground">
-          A workout, a run or a meal logged keeps the streak going. One rest day
-          in any seven is covered.
+          {coversRestDays
+            ? "A workout, a run or a meal logged keeps the streak going, and so do your plan’s rest days. One other day off in any seven is covered."
+            : "A workout, a run or a meal logged keeps the streak going. One rest day in any seven is covered."}
         </p>
 
         <Link

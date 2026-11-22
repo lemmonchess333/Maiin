@@ -4,7 +4,9 @@
  * move down, the time left in the week, and Leave the league behind a
  * confirmation. Someone blocked either way is left out of the list while
  * the places still count them. Firestore runs on the one fake (ADR-0009);
- * the callable is stubbed; dates come from the clock.
+ * the callable is stubbed; dates come from the clock. Before groups are
+ * made (App1 Q6) the page says what the league starts at and how many are
+ * in so far, and someone who has not joined can join here.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -195,6 +197,9 @@ describe("Leave the league", () => {
     fireEvent.click(screen.getByRole("button", { name: "Leave the league" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText("Leave the league?")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/You can join again from Social/)
+    ).toBeInTheDocument();
     expect(H.call).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "Leave" }));
     await waitFor(() =>
@@ -216,7 +221,7 @@ describe("Leave the league", () => {
 });
 
 describe("before a group", () => {
-  it("someone who has not joined is offered Join, with what it shows", async () => {
+  it("someone who has not joined is offered Join, with what it shows and what it starts at (App1 Q6)", async () => {
     H.profile = { uid: "me" };
     seedFirestore({
       "leagueStatus/current": { joined: 4, needed: 10, open: false },
@@ -224,6 +229,11 @@ describe("before a group", () => {
     renderPage();
     expect(
       await screen.findByRole("heading", { name: "Weekly leagues" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The league starts once 10 people have joined. 4 so far."
+      )
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Join the league" })
@@ -241,9 +251,12 @@ describe("before a group", () => {
     renderPage();
     expect(
       await screen.findByText(
-        "Leagues open when 10 people have joined. 4 so far."
+        "The league starts once 10 people have joined. 4 so far."
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "People who have joined" })
+    ).toHaveAttribute("aria-valuenow", "4");
     expect(
       screen.getByRole("button", { name: "Leave the league" })
     ).toBeInTheDocument();

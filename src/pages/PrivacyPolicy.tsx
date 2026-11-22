@@ -1,5 +1,4 @@
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import LegalBack from "@/components/legal/LegalBack";
 
 /* What this page says is what the App Store privacy label is filed from,
    so it describes what the code does, service by service and data type by
@@ -7,20 +6,10 @@ import { useNavigate } from "react-router-dom";
    src/lib/__tests__/legalCopyClaims.test.ts; change a claim and its pin
    together, and change the code and the claim together. */
 export default function PrivacyPolicy() {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
+    <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Back button */}
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </button>
+        <LegalBack />
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">
@@ -108,6 +97,15 @@ export default function PrivacyPolicy() {
                 it is saved or shared.
               </li>
               <li>
+                <strong className="text-foreground">
+                  Motion During Runs (iPhone):
+                </strong>{" "}
+                while a run with auto-pause on is recording, your phone’s motion
+                and step data, to pause the clock when you stop and start it
+                again as you set off. It is read on your phone and is not stored
+                or sent to Tropos.
+              </li>
+              <li>
                 <strong className="text-foreground">Nutrition Data:</strong>{" "}
                 food logs, barcode scans, food searches, and calorie and macro
                 tracking data.
@@ -116,12 +114,19 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Apple Health (optional):
                 </strong>{" "}
-                if you connect it, today’s step count for Home. With Pro, if you
-                add them, your sleep, resting heart rate and heart rate
-                variability for readiness. With Apple Watch runs enabled, Tropos
-                also reads heart rate during a run. Saving a completed Tropos
-                run as a workout in Apple Health is a separate choice. See
-                section 8.
+                if you connect it, your daily step count, which Pro compares
+                with your activity level. With Pro, if you add them, your sleep,
+                resting heart rate and heart rate variability for readiness.
+                With Apple Watch runs enabled, Tropos also reads heart rate
+                during a run. Saving a completed Tropos run as a workout in
+                Apple Health is a separate choice. See section 8.
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  Heart rate sensor (optional):
+                </strong>{" "}
+                if you pair a Bluetooth chest strap or armband, Tropos reads
+                your heart rate from it during a run. See section 8.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -214,6 +219,11 @@ export default function PrivacyPolicy() {
                 it (section 7)
               </li>
               <li>Send account emails, such as a password reset</li>
+              <li>
+                If you choose them, email you your weekly review on Mondays, and
+                one email at 2 weeks and one at a month if you stop logging (we
+                ask in setup, off until you turn it on)
+              </li>
               <li>
                 Understand how the app is used and fix what breaks (analytics,
                 and crash and error reports)
@@ -374,8 +384,12 @@ export default function PrivacyPolicy() {
                   Right to withdraw consent:
                 </strong>{" "}
                 You can withdraw consent at any time by deleting your account,
-                and withdraw it for AI food analysis by turning it off in
-                Settings &gt; Social &amp; privacy.
+                withdraw it for AI food analysis by turning it off in Settings
+                &gt; Social &amp; privacy, and for the weekly review and the
+                emails after a break by turning them off in Settings &gt;
+                Notifications or with the unsubscribe link in any of them. We
+                keep when you said yes or no to each, and to which words, with
+                your account.
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
@@ -492,9 +506,10 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Resend:</strong> sends
                 account emails, such as verifying your email address or
-                resetting your password, and the reminder before a free trial
-                turns into a paid subscription. It receives your email address
-                and the email.
+                resetting your password, the reminder before a free trial turns
+                into a paid subscription, and, if you choose them, your weekly
+                review and the emails after a break. It receives your email
+                address and the email.
               </li>
               <li>
                 <strong className="text-foreground">Open Food Facts:</strong>{" "}
@@ -557,30 +572,51 @@ export default function PrivacyPolicy() {
             <p>
               Tropos keeps the health and fitness data you log, including body
               weight, nutrition, workouts and GPS running data, to provide your
-              fitness tracking. It is never used for advertising or marketing,
-              and never sold. Some figures about sessions reach Google Analytics
-              as described in section 2.
+              fitness tracking. It is never used for advertising and never sold.
+              If you choose them, your weekly review email carries your week’s
+              sessions and food days, and the emails after a break go when you
+              have not logged anything for 2 weeks and for a month (section 2).
+              None of it is sent to Google Analytics, which receives no figure
+              about your body, food or training and never your name (section 2).
             </p>
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you
-              connect steps, Tropos reads today’s step count to show it on Home.
-              The step count is not stored or sent to Tropos. With Pro, if you
-              add sleep and heart, Tropos reads your sleep, resting heart rate
-              and heart rate variability for the last four weeks to say how
-              ready you are for today’s session. They are read on your phone
-              each time and are not stored or sent to Tropos. If you use Apple
-              Watch runs, Tropos reads heart rate during that run to show a live
-              reading and calculate a run summary. Raw heart rate samples are
-              held on your device until you save or discard the run; a saved run
-              can include average and maximum heart rate and time in heart rate
-              zones. Those values are not used to change calorie targets or sent
-              to product analytics. If you separately turn on workout export,
-              Tropos writes a completed run to Apple Health after it is saved to
-              your account. The exported workout contains its time, distance and
-              estimated energy, without a GPS route. Tropos does not import
-              Apple Health workouts into your training plan. You can change
-              either choice in Tropos settings and remove Apple Health access in
-              the Health app.
+              connect steps, Tropos reads your daily step count on your phone.
+              With Pro, it compares last week’s average with the activity level
+              your calorie target assumes, and offers to change the level when
+              they differ; nothing changes unless you accept. The step count is
+              not stored or sent to Tropos. With Pro, if you add sleep and
+              heart, Tropos reads your sleep, resting heart rate and heart rate
+              variability for the last four weeks to say how ready you are for
+              today’s session. They are read on your phone each time and are not
+              stored or sent to Tropos. If you use Apple Watch runs, Tropos
+              reads heart rate during that run to show a live reading and
+              calculate a run summary. The Watch reads it through a workout
+              session, and Apple asks an app that runs one for permission to
+              save workouts as well; the Watch saves none. Raw heart rate
+              samples are held on your device until you save or discard the run;
+              a saved run can include average and maximum heart rate and time in
+              heart rate zones. Those values are not used to change calorie
+              targets or sent to product analytics. If you separately turn on
+              workout export, Tropos writes a completed run to Apple Health
+              after it is saved to your account. The exported workout contains
+              its time, distance and estimated energy, without a GPS route.
+              Tropos does not import Apple Health workouts into your training
+              plan. You can change either choice in Tropos settings and remove
+              Apple Health access in the Health app.
+            </p>
+            <p>
+              <strong className="text-foreground">Heart rate sensor.</strong> If
+              you pair a Bluetooth heart rate sensor, such as a chest strap or
+              an armband, Tropos uses Bluetooth to read your heart rate from it
+              during a run, to show a live reading, to tell you when an easy run
+              goes above your easy zone, and to calculate a run summary. Raw
+              readings are held on your device until you save or discard the
+              run, and the sensor’s name is kept on this iPhone to reconnect to
+              it. A saved run can include average and maximum heart rate and
+              time in heart rate zones, as with Apple Watch runs, and those
+              values are not used to change calorie targets or sent to product
+              analytics. You can forget the sensor in Settings &gt; Run plan.
             </p>
             <p>
               <strong className="text-foreground">Disclaimer:</strong> Tropos is
@@ -597,8 +633,8 @@ export default function PrivacyPolicy() {
               9. Children’s Privacy
             </h2>
             <p>
-              Tropos is not intended for children under 16. We do not knowingly
-              collect data from children under 16.
+              Tropos is not intended for anyone under 18. We do not knowingly
+              collect data from anyone under 18.
             </p>
           </section>
 
@@ -623,6 +659,6 @@ export default function PrivacyPolicy() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

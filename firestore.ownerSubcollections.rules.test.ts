@@ -20,6 +20,8 @@
  *   - communityGoal: the community goal's credits, server-only in both
  *     directions, owner included. A client that could write its own
  *     credit, or delete one, could move the total everyone reads.
+ *   - hiddenPosts (App1 Q38): the owner reads, hides and unhides; the
+ *     record is an id and a time; nobody else reads or writes it.
  *   - spaces/{id}/posts/{id}/likes and comments: any signed-in user reads;
  *     no client writes — not the liker, not the post's author.
  *
@@ -34,7 +36,14 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -83,6 +92,44 @@ suite(
       env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), path), data);
       });
+
+    describe("settings/emailState — server writes only (App1 Q55)", () => {
+      // The unsubscribe token every chosen email links with, and what has
+      // been sent. A client that could write it could reset what was sent,
+      // or set its own token; its owner may still read it.
+      const path = `users/${OWNER}/settings/emailState`;
+
+      it("owner reads it, and cannot create, change or erase it", async () => {
+        const ref = doc(asOwner(), path);
+        await assertFails(setDoc(ref, { unsubscribeToken: "x".repeat(43) }));
+        await seed(path, {
+          unsubscribeToken: "T".repeat(43),
+          weeklyReview: { key: "2026-11-09", state: "sent" },
+        });
+        await assertSucceeds(getDoc(ref));
+        await assertFails(updateDoc(ref, { weeklyReview: null }));
+        await assertFails(
+          setDoc(ref, { unsubscribeToken: "y".repeat(43) }, { merge: true })
+        );
+        await assertFails(deleteDoc(ref));
+      });
+
+      it("nobody else reads or writes it", async () => {
+        await seed(path, { unsubscribeToken: "T".repeat(43) });
+        for (const db of [asOther(), asAnon()]) {
+          await assertFails(getDoc(doc(db, path)));
+          await assertFails(setDoc(doc(db, path), { unsubscribeToken: "z" }));
+        }
+      });
+
+      it("the owner's other settings stay theirs to write", async () => {
+        await assertSucceeds(
+          setDoc(doc(asOwner(), `users/${OWNER}/settings/reminders`), {
+            reviewEnabled: true,
+          })
+        );
+      });
+    });
 
     describe.each(["challengeAnnouncement", "challengeReminder"])(
       "%s ledger — server writes only",
@@ -135,6 +182,44 @@ suite(
         });
       }
     );
+
+    /* hourlyPropsBundle reads every settings document whose
+       `propsBundleDueAt` has passed, a thousand at a time, oldest first.
+       A thousand such documents under one account kept every real bundle
+       out of that read, so the field is the server's, and so are the
+       bundle and the push budget themselves. */
+    describe("the props bundle and the push budget: server writes only", () => {
+      it.each(["propsBundle", "pushBudget"])(
+        "the owner reads %s and cannot create, change or delete it",
+        async (name) => {
+          const path = `users/${OWNER}/settings/${name}`;
+          const ref = doc(asOwner(), path);
+          await assertFails(setDoc(ref, { entries: [] }));
+          await seed(path, { day: "2026-11-18", count: 1 });
+          await assertSucceeds(getDoc(ref));
+          await assertFails(updateDoc(ref, { count: 0 }));
+          await assertFails(deleteDoc(ref));
+          await assertFails(getDoc(doc(asOther(), path)));
+        }
+      );
+
+      it("no settings document of the owner's may carry a bundle's due time", async () => {
+        const due = new Date(0);
+        for (const name of ["push", "p0", "reminders"]) {
+          await assertFails(
+            setDoc(doc(asOwner(), `users/${OWNER}/settings/${name}`), {
+              propsBundleDueAt: due,
+            })
+          );
+        }
+        const ref = doc(asOwner(), `users/${OWNER}/settings/push`);
+        await assertSucceeds(setDoc(ref, { enabled: true }));
+        await assertFails(updateDoc(ref, { propsBundleDueAt: due }));
+        await assertSucceeds(updateDoc(ref, { enabled: false }));
+        // An ordinary settings document is still the owner's to delete.
+        await assertSucceeds(deleteDoc(ref));
+      });
+    });
 
     describe("owner-only subcollections — owner reads and writes, nobody else", () => {
       const OWNER_WRITABLE = [
@@ -315,6 +400,57 @@ suite(
         const ref = doc(asAnon(), path);
         await assertFails(getDoc(ref));
         await assertFails(setDoc(ref, { blockedAt: 2 }));
+        await assertFails(deleteDoc(ref));
+      });
+    });
+
+    describe("users/{uid}/hiddenPosts — the owner's own list, an id and a time (App1 Q38)", () => {
+      const path = `users/${OWNER}/hiddenPosts/act-1`;
+
+      it("the owner hides a post, reads the list and unhides it", async () => {
+        const ref = doc(asOwner(), path);
+        await assertSucceeds(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: OTHER })
+        );
+        await assertSucceeds(getDoc(ref));
+        // Hidden again (Undo after Unhide): the record is written again.
+        await assertSucceeds(setDoc(ref, { hiddenAt: serverTimestamp() }));
+        await assertSucceeds(deleteDoc(ref));
+      });
+
+      it("the record holds only the time it was hidden and the author's id", async () => {
+        const ref = doc(asOwner(), path);
+        await assertFails(
+          setDoc(ref, {
+            hiddenAt: serverTimestamp(),
+            authorId: OTHER,
+            authorName: "Maya",
+          })
+        );
+        await assertFails(setDoc(ref, { hiddenAt: 1 }));
+        await assertFails(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: "" })
+        );
+        await assertFails(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: 7 })
+        );
+      });
+
+      it("nobody else reads or writes it, the author of the post included", async () => {
+        await seed(path, { hiddenAt: 1, authorId: OTHER });
+        for (const db of [asOther(), asAnon()]) {
+          const ref = doc(db, path);
+          await assertFails(getDoc(ref));
+          await assertFails(setDoc(ref, { hiddenAt: serverTimestamp() }));
+          await assertFails(deleteDoc(ref));
+        }
+      });
+
+      it("the owner writes nothing once the account is being deleted", async () => {
+        await seed(`accountDeletionRequests/${OWNER}`, { status: "running" });
+        await seed(path, { hiddenAt: 1 });
+        const ref = doc(asOwner(), path);
+        await assertFails(setDoc(ref, { hiddenAt: serverTimestamp() }));
         await assertFails(deleteDoc(ref));
       });
     });

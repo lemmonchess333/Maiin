@@ -19,20 +19,18 @@ import proModalSource from "@/components/ProModal.tsx?raw";
 import upgradeSource from "@/pages/Upgrade.tsx?raw";
 
 describe("PaywallLegalLinks", () => {
-  it("links to the same in-app legal routes Settings uses", () => {
+  it("links to the same in-app legal routes Settings uses, by their full names", () => {
     render(
       <MemoryRouter>
         <PaywallLegalLinks />
       </MemoryRouter>
     );
-    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
-      "href",
-      "/terms"
-    );
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
-      "href",
-      "/privacy"
-    );
+    expect(
+      screen.getByRole("link", { name: "Terms of Service" })
+    ).toHaveAttribute("href", "/terms");
+    expect(
+      screen.getByRole("link", { name: "Privacy Policy" })
+    ).toHaveAttribute("href", "/privacy");
   });
 });
 

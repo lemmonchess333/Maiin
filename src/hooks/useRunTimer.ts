@@ -14,8 +14,17 @@ export function useRunTimer() {
      Both are refused here, so no caller has to check first. */
   const runningRef = useRef(false);
 
-  const start = useCallback(() => {
-    startTimeRef.current = Date.now();
+  /**
+   * Start the clock, from `at` (epoch ms) when the instant it starts on has
+   * already passed, as a GPS run's first good fix has by the time the page
+   * acts on it (Run25 call 2). Never from later than now. A no-op while
+   * running: starting again would drop the time not yet banked.
+   */
+  const start = useCallback((at?: number) => {
+    if (runningRef.current) return;
+    const now = Date.now();
+    startTimeRef.current =
+      typeof at === "number" && Number.isFinite(at) ? Math.min(at, now) : now;
     runningRef.current = true;
     setIsRunning(true);
   }, []);

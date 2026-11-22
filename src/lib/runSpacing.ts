@@ -3,7 +3,11 @@ import {
   type ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
-import { RUN_TEMPLATES, isScheduledRaceRunDay } from "./workoutTemplates";
+import {
+  RUN_TEMPLATES,
+  isLongRunTemplate,
+  isScheduledRaceRunDay,
+} from "./workoutTemplates";
 
 /** The effective session can be easier than its original template. Race
  * identity remains authoritative even on legacy overridden race rows. */
@@ -14,6 +18,17 @@ export function isDemandingScheduledRun(run: ScheduledRunDay): boolean {
     (template) => template.id === run.userOverride
   );
   return HARD_RUN_TYPES.has(effective?.type ?? run.type);
+}
+
+/** Run27 (19): whether a planned run is one of the week's long runs
+ *  (`isLongRunTemplate`): the long run, or an ultra's back-to-back run
+ *  beside it, as the person swapped it, and not skipped. */
+export function isLongScheduledRun(run: ScheduledRunDay): boolean {
+  if (run.status === "skipped" || run.status === "race_no_show") return false;
+  const effective = RUN_TEMPLATES.find(
+    (template) => template.id === (run.userOverride || run.templateId)
+  );
+  return effective ? isLongRunTemplate(effective) : run.type === "long";
 }
 
 /** Actual neighbouring dates, not cyclic weekday indices. This also works

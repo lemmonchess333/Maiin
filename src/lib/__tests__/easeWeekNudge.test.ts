@@ -213,7 +213,7 @@ describe("evaluateEaseWeekNudge — scope + suppression", () => {
 describe("A6 — pace-miss trigger", () => {
   const tempo = (
     date: string,
-    tone: "on" | "fast" | "slow" | null
+    tone: "on" | "fast" | "slow" | "heat" | null
   ): EaseWeekNudgeRun => ({
     date,
     relativeEffort: null,
@@ -277,6 +277,36 @@ describe("A6 — pace-miss trigger", () => {
         ])
       ).show
     ).toBe(false);
+  });
+
+  it("Pgm8 (E8): a tempo run on a hot day is no miss, and leaves the recent judged sessions as they were", () => {
+    // Two hot-day tempos read by feel: two "slow" verdicts would fire.
+    expect(
+      evaluateEaseWeekNudge(
+        base([
+          tempo("2026-07-10", "heat"),
+          tempo("2026-07-03", "heat"),
+          tempo("2026-06-26", "on"),
+        ])
+      ).show
+    ).toBe(false);
+    // Not judged, so it pushes no earlier verdict out of the last three.
+    expect(
+      evaluateEaseWeekNudge(
+        base([
+          tempo("2026-07-11", "heat"),
+          tempo("2026-07-10", "slow"),
+          tempo("2026-07-03", "slow"),
+          tempo("2026-06-26", "on"),
+        ])
+      )
+    ).toEqual({
+      show: true,
+      trigger: "pace_misses",
+      slowCount: 2,
+      judgedCount: 3,
+      windowDays: PACE_WINDOW_DAYS,
+    });
   });
 
   it("only the most recent 3 judged sessions are inspected", () => {

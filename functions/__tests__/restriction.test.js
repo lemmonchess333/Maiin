@@ -140,11 +140,12 @@ describe("the callables actually call it", () => {
     expect(body.indexOf(write)).toBeGreaterThan(guardAt);
   });
 
-  it("Circles refuse starting, joining, a new invite code, checking in and backing, not leaving", () => {
+  it("Circles refuse starting, joining, a new invite code, a new name, checking in and backing, not leaving", () => {
     for (const name of [
       "createGoalSpace",
       "joinGoalSpace",
       "renewGoalSpaceInviteCode",
+      "renameGoalSpace",
       "goalSpaceWeeklyCheckIn",
       "backGoalSpaceCheckIn",
     ]) {

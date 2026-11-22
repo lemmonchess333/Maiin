@@ -62,7 +62,7 @@ const draft: OnboardingDraft = {
   raceTargetDate: "",
   injuries: ["none"],
   gender: "male",
-  ageRange: "25-34",
+  birthYearText: "1995",
   heightCm: 175,
   weightKg: 81.5,
   heightUnit: "cm",
@@ -73,6 +73,8 @@ const draft: OnboardingDraft = {
   runConfirmed: true,
   trainingActivity: "lifting",
   displayName: "Test athlete",
+  // Agreed on its step (Priv1 call 1).
+  healthConsentVersion: 1,
 };
 
 const open = () =>

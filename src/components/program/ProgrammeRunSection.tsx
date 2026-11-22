@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { weekDone } from "@/lib/trainingWeek";
 import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
@@ -63,15 +64,23 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  * the form prefills from the preserved goal.
  *
  * What stays from PR-0d / PR-1 / PR-4:
- *   - DayActionSheet preserves manual-complete / skip-run /
- *     skip-lift / template swap.
+ *   - A run's own page (`/program/run/:date`, TrainWk1 call 2) keeps
+ *     manual-complete / skip-run / template swap / move; the card's ⋯
+ *     opens it.
  *   - Race-elapsed + compressed-plan banners + race progress
  *     card + this-week's-runs per-day list — unchanged.
  *   - Footer "Change plan ›" deep-links to /settings/run-plan
  *     (the focused run-plan editor).
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
@@ -133,7 +142,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
-import DayActionSheet from "./DayActionSheet";
+import { profileAge } from "@/lib/age";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
 import {
@@ -162,8 +171,12 @@ import {
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
+import RollingPlanCard from "./RollingPlanCard";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
-import type { RaceDistance } from "@/lib/raceDayPlan";
+import {
+  isRoadDistance,
+  sizesLongRunsInTime,
+} from "@/features/program/runPlanTiming";
 import {
   isRecoveryRunDay,
   runSessionPresentation,
@@ -190,6 +203,7 @@ import {
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { withStartOnArrival } from "@/features/run/startOnArrival";
+import { runSessionPath } from "@/lib/sessionPages";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
 import { IconButton } from "@/components/ui/IconButton";
@@ -202,12 +216,19 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
 import {
+  rollingGoalOf,
+  runModeWithPlan,
+} from "@/features/program/programMaintenance";
+import { ROLLING_GOAL_NAMES } from "@/features/program/rollingPlan";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
+import {
   goalDayName,
   goalDayQuestion,
   raceGoalEntry,
 } from "@/lib/raceGoalEntry";
 import type {
   ProgramState,
+  RaceDistance,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 
@@ -220,29 +241,12 @@ interface ProgrammeRunSectionProps {
    *  target is 0 (malformed plan). Freeform users see the hero
    *  regardless. */
   runsTarget: number;
-  /** Async and outcome-reporting — see AdjustWeekSheet's note on why the
-   *  old `=> void` shape is what let a missing await through. */
-  overrideRunDay: (
-    idOrDayIndex: string | number,
-    templateId: string
-  ) => Promise<boolean>;
   /** RUN-EASE-01: the whole easier week as one command (resolves to the
    *  number of runs the server actually changed), and its undo. */
   applyEaseWeek: (
     swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
   ) => Promise<number | null>;
   revertEaseWeek: () => Promise<{ ok: boolean; message?: string }>;
-  /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
-   *  manualCompletions map; derivation surfaces ✅. */
-  markManualComplete: (runDayId: string) => Promise<ProgramOutcome>;
-  skipRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
-  skipWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
-  restoreRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
-  restoreWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
-  moveRunDay: (
-    idOrDayIndex: string | number,
-    targetDayIndex: number
-  ) => Promise<ProgramOutcome>;
   /** PR-C + Run9 ENG(j): atomic writer to exit the recovery phase
    *  early. Resolves the exit via `resolveRecoveryExit` — the race is
    *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
@@ -267,6 +271,12 @@ interface ProgrammeRunSectionProps {
   /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
    *  pace the weeks ahead size a running starting point's climb at. */
   recentRuns?: readonly DatedRun[] | null;
+  /** Train's lighter-week offer while it shows (`DeloadBanner`, from the
+   *  one decision `lighterWeekOffer` makes for both sports, whole-app
+   *  grill Q11): first among the week's notices. While it shows, the
+   *  ease-week nudge waits, one advice notice at a time, since a lighter
+   *  week shortens the runs too. */
+  lighterWeekNotice?: ReactNode;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -274,29 +284,31 @@ interface ProgrammeRunSectionProps {
  *  larger text), rather than a label broken over two lines in a pill. */
 const ACTION_PAIR = "flex-auto";
 
+/** Run plan opened on a plan with no race date, Keep fit chosen (Run24
+ *  (3)): what follows a race, and what free running is offered. */
+const AFTER_RACE_PLAN_PATH = "/settings/run-plan?goal=keep_fit";
+
 export default function ProgrammeRunSection({
   profile,
   programState,
   runsTarget,
-  overrideRunDay,
   applyEaseWeek,
   revertEaseWeek,
-  markManualComplete,
-  skipRunDay,
-  skipWorkoutDay,
-  restoreRunDay,
-  restoreWorkoutDay,
-  moveRunDay,
   skipRecoveryEarly,
   realignRacePlan,
   dismissFellBehindPrompt,
   recentLayoff,
   recentRuns,
+  lighterWeekNotice = null,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
-  // PR-1: which row is opening DayActionSheet.
-  const [manageDate, setManageDate] = useState<string | null>(null);
+  // A run's own page (TrainWk1 call 2): the run, why it is in the week,
+  // change it for the day, move, skip, mark as done. Opened from the card's
+  // ⋯, where the day's sheet opened, and back to this tab and day.
+  const openRunPage = (dateKey: string | null | undefined) => {
+    if (dateKey) navigate(runSessionPath(dateKey));
+  };
   // The day the person picked on the run-week selector (date-pinned,
   // ADR-0002), or null until they pick one; the tab then opens on
   // `defaultRunDayKey` (today's run, else the week's next one). It drives
@@ -345,12 +357,11 @@ export default function ProgrammeRunSection({
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
   // programState.manualCompletions; forwarded to RunWeekStrip so
-  // the strip's ✅ tracks manual/saved-run/legacy completions.
-  // Q5 chunk B3e — also forwards unclaimedByDate for the extras
-  // pills (saved runs that don't claim any planned slot). Read from the
-  // plan Train already holds: the old wrapper called useProgram() again,
-  // which started a second engine, empty, beside Train's.
-  const { claimMap, unclaimedByDate } = useClaimMapForProgram(programState);
+  // the strip's ✅ tracks manual/saved-run/legacy completions. Read
+  // from the plan Train already holds: the old wrapper called
+  // useProgram() again, which started a second engine, empty, beside
+  // Train's. The extras a day's run did not claim are its page's.
+  const { claimMap } = useClaimMapForProgram(programState);
 
   // Run8 PR1a — mode pills + race-goal form removed from this
   // surface. Mode + race goal now live on `/settings/run-plan`
@@ -397,7 +408,18 @@ export default function ProgrammeRunSection({
     writeString(raceElapsedDismissKey, "1");
   }
 
-  const currentMode = profile.runMode ?? "freeform";
+  // Run24 (3): free running holding a plan with no race date draws as a
+  // plan, its week and its Start, as the retired structured week did.
+  const currentMode = runModeWithPlan(profile, programState);
+  const rollingGoal = rollingGoalOf(programState, profile);
+  // Its weeks' places in the plan, for each run's "Why this run" here.
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: todayKeyDerivation,
+  });
   /* R4 — read the run plan through the resolver, not the mirror.
    *
    * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
@@ -415,8 +437,9 @@ export default function ProgrammeRunSection({
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);
-  // Q85: a half or full marathon plan past its free first week. Today's
-  // planned session offers Pro; the race itself and free runs still start.
+  // Q85, Run27 (18): a half, marathon or ultra plan past its free first
+  // week. Today's planned session offers Pro; the race itself and free runs
+  // still start.
   const planLocked = useRacePlanLocked(programState?.runPlan);
   const proCtaLabel = useProCtaLabel();
   const raceCompressed = !!programState?.runPlan?.compressed;
@@ -609,6 +632,9 @@ export default function ProgrammeRunSection({
     profile.runFrequency === "new" &&
     !profile.starterGoal &&
     !starterOfferDismissed;
+  // Run24 (3): a plan with no race date, offered on free running.
+  const { dismissed: rollingOfferDismissed, dismiss: dismissRollingOffer } =
+    useDismissOnce("tropos-rolling-plan-offer");
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
@@ -639,6 +665,7 @@ export default function ProgrammeRunSection({
         raceGoal,
         currentWeek: programState?.runPlan?.currentWeek,
         totalWeeks: programState?.runPlan?.totalWeeks,
+        shortBase: programState?.runPlan?.shortBase,
         compressed: raceCompressed,
         belowFloor: raceBelowFloor,
         todayKey: todayKeyDerivation,
@@ -647,6 +674,7 @@ export default function ProgrammeRunSection({
       raceGoal,
       programState?.runPlan?.currentWeek,
       programState?.runPlan?.totalWeeks,
+      programState?.runPlan?.shortBase,
       raceCompressed,
       raceBelowFloor,
       todayKeyDerivation,
@@ -734,7 +762,10 @@ export default function ProgrammeRunSection({
   );
   const dismissalScope = `${profile.uid}:${localWeekKey(parseLocalDate(todayKeyDerivation))}`;
   const easeNudgeVisible =
-    easeNudge.show && easeNudgeDismissed !== dismissalScope;
+    easeNudge.show &&
+    easeNudgeDismissed !== dismissalScope &&
+    // One advice notice at a time: the lighter week shortens the runs too.
+    !lighterWeekNotice;
   // A6: trigger-aware counts — the card copy branches on which signal
   // fired (user-authored ratings vs measured pace misses).
   const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
@@ -758,19 +789,8 @@ export default function ProgrammeRunSection({
   useEffect(() => {
     if (!easeNudgeVisible) return;
     setLastShownAt(profile.uid, todayKeyDerivation);
-    trackProgram("ease_week_nudge_shown", {
-      trigger: easeNudgeTrigger,
-      count: easeNudgeCount,
-      total: easeNudgeTotal,
-    });
-  }, [
-    easeNudgeVisible,
-    profile.uid,
-    todayKeyDerivation,
-    easeNudgeTrigger,
-    easeNudgeCount,
-    easeNudgeTotal,
-  ]);
+    trackProgram("ease_week_nudge_shown", { trigger: easeNudgeTrigger });
+  }, [easeNudgeVisible, profile.uid, todayKeyDerivation, easeNudgeTrigger]);
 
   // A6: the post-ease bounce read — the week AFTER an applied easier
   // week, one factual line on whether the quality came back. Pure,
@@ -928,6 +948,7 @@ export default function ProgrammeRunSection({
           templateId: selectedTemplate.id,
           currentWeek: programState?.runPlan?.currentWeek,
           totalWeeks: programState?.runPlan?.totalWeeks,
+          shortBase: programState?.runPlan?.shortBase,
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
@@ -937,6 +958,9 @@ export default function ProgrammeRunSection({
             programState?.runPlan,
             selectedRun.runDay.date
           ),
+          rolling: selectedRun.runDay.weekKey
+            ? rollingContexts?.get(selectedRun.runDay.weekKey)
+            : null,
         })
       : { purpose: null, weekLabel: null };
   // Non-breaking spaces: on a narrow card the eyebrow breaks before the
@@ -978,7 +1002,8 @@ export default function ProgrammeRunSection({
   // neither, so the card just shows pace/type as before.
   const selectedHrItems: string[] = (() => {
     if (!selectedTemplate) return [];
-    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
+    const maxHr =
+      profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedTemplate.type,
       maxHr,
@@ -1042,6 +1067,13 @@ export default function ProgrammeRunSection({
   const lastRun = runs[0] ?? null;
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+  // The week's runs and distance as every week counts them (`weekDone`,
+  // trainingWeek.ts); the bin above keeps the week's pace.
+  const thisWeekDone = weekDone({
+    weekKey: thisWeekKey,
+    workouts: [],
+    runs,
+  });
 
   // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
   // target or progress bar (that's the structure the model deliberately
@@ -1061,10 +1093,10 @@ export default function ProgrammeRunSection({
   );
 
   const modeLabel =
-    currentMode === "race_prep"
-      ? "Race prep"
-      : currentMode === "structured"
-        ? "Structured"
+    currentMode === "rolling" && rollingGoal
+      ? ROLLING_GOAL_NAMES[rollingGoal]
+      : currentMode === "race_prep"
+        ? "Race prep"
         : currentMode === "starter"
           ? "30-minute goal"
           : "Freeform";
@@ -1099,7 +1131,7 @@ export default function ProgrammeRunSection({
         toast.success(
           realignResultMessage({
             timing: result.timing,
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             totalWeeks: result.totalWeeks,
           })
         );
@@ -1118,6 +1150,10 @@ export default function ProgrammeRunSection({
   // The week's notices, drawn under the session card in every mode (DS4).
   const weekNotices = (
     <>
+      {/* The lighter-week offer, the one decision for both sports (Q11):
+          a week-level warning, so first. */}
+      {lighterWeekNotice}
+
       {/* Run7 Q6 + Q10: the banners, in severity-urgency order (warnings
           before info), on the shared <Banner> primitive — info = coral 6%,
           warning = amber 8%, no error variant (errors are toasts).
@@ -1223,7 +1259,9 @@ export default function ProgrammeRunSection({
           description={
             currentMode === "starter"
               ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
-              : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+              : currentMode === "rolling"
+                ? "Your plan has no run days yet. Open Configure plan to add two or more."
+                : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
           }
           action={
             <Button
@@ -1247,15 +1285,28 @@ export default function ProgrammeRunSection({
           actually does post-Run9 — resolveRecoveryExit returns the
           user to freeform (the locked two-state model has no
           structured mode to switch to). */}
+      {/* Run24 (3), deep dive D7: the plan offers what comes next rather
+          than stopping: a plan with no race date (Run plan opens on it,
+          Keep fit chosen), the next race, or no plan for now. */}
       {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
           title="Recovery complete"
-          description="What’s next?"
+          description="Keep your running going with a plan, or set your next race."
           action={
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="sport"
+                className={ACTION_PAIR}
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+              >
+                Choose a plan
+              </Button>
+              <Button
+                variant="secondary"
                 className={ACTION_PAIR}
                 onClick={() => {
                   haptic();
@@ -1265,11 +1316,11 @@ export default function ProgrammeRunSection({
                 Set next race
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
                 className={ACTION_PAIR}
                 onClick={handleSkipRecoveryEarly}
               >
-                Back to freeform
+                No plan for now
               </Button>
             </div>
           }
@@ -1356,8 +1407,8 @@ export default function ProgrammeRunSection({
           /settings/training) was REMOVED here. It was fully redundant: the
           tab-aware page header (`programRunHeaderLine` in Program.tsx) now
           carries the same mode + week context ("Race prep · Marathon · Week
-          2/20" / "Structured · N runs/week"), and the RaceCockpitCard below
-          shows days-to-race. Worse, as a row directly above the day-selector it
+          2/20" / "30 minutes without stopping · Stage 3 of 9"), and the
+          RaceCockpitCard below shows days-to-race. Worse, as a row directly above the day-selector it
           forced the Run selector's day circles ~33px lower than the Lift tab's
           (the selector also has a weekday-letter row the Lift one lacks), so
           the stepper visibly jumped when toggling tabs. The way into the
@@ -1446,13 +1497,12 @@ export default function ProgrammeRunSection({
                 <div>
                   <SectionLabel>This week</SectionLabel>
                   <div className="mt-2 grid grid-cols-3 divide-x divide-border">
-                    {/* `totalDistance` is stored KILOMETRES, so it goes
-                        through `storedKmLabel` into the reader's unit. A
-                        bare `km` once showed a miles reader the metric
-                        figure beside a converted pace. */}
+                    {/* `storedKmLabel` takes KILOMETRES into the reader's
+                        unit. A bare `km` once showed a miles reader the
+                        metric figure beside a converted pace. */}
                     <StatFigure
                       value={storedKmLabel(
-                        thisWeek.totalDistance,
+                        thisWeekDone.metres / 1000,
                         unit,
                         false,
                         1
@@ -1460,8 +1510,8 @@ export default function ProgrammeRunSection({
                       unit={distanceUnitLabel(unit)}
                     />
                     <StatFigure
-                      value={String(thisWeek.runCount)}
-                      unit={thisWeek.runCount === 1 ? "run" : "runs"}
+                      value={String(thisWeekDone.runs)}
+                      unit={thisWeekDone.runs === 1 ? "run" : "runs"}
                     />
                     <StatFigure
                       value={
@@ -1548,6 +1598,49 @@ export default function ProgrammeRunSection({
             </Card>
           )}
 
+          {/* Run24 (3), deep dive D7: a plan with no race date, offered to a
+              free runner until dismissed (per account on this device). It
+              waits while the 30-minute goal is offered, and while the
+              starter goal's Done shows, which offer their own next goal. */}
+          {!rollingOfferDismissed && !starterOffered && !starterDoneShowing && (
+            <Card size="compact" className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-running-strong">
+                    Plan, no race
+                  </p>
+                  <p className="text-base font-bold text-foreground">
+                    Keep your running going
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Keep fit, build to 5K or 10K, or get faster at 5K. A lighter
+                    week every fourth.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissRollingOffer();
+                }}
+                aria-label="Dismiss the plan with no race date"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </Card>
+          )}
+
           {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
               Planner (/settings/run-plan). Dismissible; once a goal is set the
               mode flips to race_prep and this freeform block stops rendering.
@@ -1612,7 +1705,7 @@ export default function ProgrammeRunSection({
           (which is suppressed for this state below). A Trophy eyebrow + "Start
           race" CTA (logs against the race-day slot — onRunCreated writes the
           recovery entry server-side, exactly as the no-show / race-recent
-          paths do) + an overflow that opens DayActionSheet's race-day variant
+          paths do) + an overflow that opens the race day's own page
           for the DNF / DNS edge cases. */}
       {heroState === "race-today" && raceGoal && (
         <div className="w-full rounded-xl p-4 space-y-3 bg-running/8 border border-running/25">
@@ -1631,11 +1724,12 @@ export default function ProgrammeRunSection({
                 This is the one you’ve been training for. Good luck out there.
               </p>
             </div>
-            {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
+            {/* Overflow → the race day's own page, with its DNF / DNS
+                (PR1d). */}
             <IconButton
               onClick={() => {
                 haptic();
-                setManageDate(raceDayRunDay?.date ?? null);
+                openRunPage(raceDayRunDay?.date);
               }}
               aria-label={
                 ownGoal
@@ -1783,7 +1877,7 @@ export default function ProgrammeRunSection({
                      is "What it is", in "Why this run" below. */
                   description={
                     selectedLocked
-                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      ? "After your free week, your race plan is part of Pro. Runs you record stay free."
                       : selectedTemplate
                         ? runSessionAbout(selectedTemplate, {
                             racePace: selectedRacePace,
@@ -1825,7 +1919,7 @@ export default function ProgrammeRunSection({
                   }}
                   onManage={() => {
                     haptic();
-                    setManageDate(selectedDateKey);
+                    openRunPage(selectedDateKey);
                   }}
                 />
                 <RunPlanPurpose
@@ -1938,6 +2032,19 @@ export default function ProgrammeRunSection({
           {/* The starter goal's week, where a race plan has its card. */}
           {starterView && <StarterGoalCard progress={starterView} />}
 
+          {/* Run24 (3): a plan with no race date's card, where a race plan
+              has its own, with the weeks ahead. */}
+          {currentMode === "rolling" && rollingGoal && (
+            <RollingPlanCard
+              goal={rollingGoal}
+              profile={profile}
+              programState={programState}
+              recentLayoff={recentLayoff}
+              recentRuns={recentRuns}
+              today={todayKeyDerivation}
+            />
+          )}
+
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /
               race-recent heroes stay on top. */}
@@ -2009,12 +2116,16 @@ export default function ProgrammeRunSection({
               `targetTimeS` reads the PROFILE copy — the canonical store for
               the goal time (runPlan.raceGoal is the schedule's snapshot and
               doesn't carry it). */}
+          {/* Run26 (2): an ultra or a trail race is run by effort, so it
+              gets no pace table. */}
           {currentMode === "race_prep" &&
             raceGoal &&
+            isRoadDistance(raceGoal.distance) &&
+            !sizesLongRunsInTime(raceGoal) &&
             !raceElapsed &&
             raceCockpitVM && (
               <RaceDayPlanCard
-                distance={raceGoal.distance as RaceDistance}
+                distance={raceGoal.distance}
                 targetTimeS={profile.raceGoal?.targetTimeS ?? null}
                 runFitness={profile.runFitness ?? null}
                 currentWeek={programState?.runPlan?.currentWeek ?? null}
@@ -2101,28 +2212,6 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* PR-1: per-day action sheet. scope="run" — the Run tab is sport-
-          partitioned by the Lift|Run control, so this manager shows only the
-          run block. The full whole-day (run + lift) view lives on Home, where
-          there's no sport partition. */}
-      <DayActionSheet
-        open={manageDate !== null}
-        onClose={() => setManageDate(null)}
-        dateKey={manageDate}
-        scope="run"
-        profile={profile}
-        programState={programState}
-        claimMap={claimMap}
-        unclaimedByDate={unclaimedByDate}
-        overrideRunDay={overrideRunDay}
-        markManualComplete={markManualComplete}
-        skipRunDay={skipRunDay}
-        skipWorkoutDay={skipWorkoutDay}
-        restoreRunDay={restoreRunDay}
-        restoreWorkoutDay={restoreWorkoutDay}
-        moveRunDay={moveRunDay}
-      />
-
       {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
       {raceGoal && (
         <AdjustWeekSheet
@@ -2133,7 +2222,7 @@ export default function ProgrammeRunSection({
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             targetDate: raceGoal.targetDate,
           }}
           applyEaseWeek={applyEaseWeek}

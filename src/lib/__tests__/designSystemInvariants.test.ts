@@ -400,7 +400,9 @@ describe("DS ratchets — surface-level drift", () => {
   // 292 → 294: Food's meal chip and the rows of its menu (Food11 call 3).
   // 294 → 292: the chip and its menu went again (11 November 2026): the
   // field asks for no meal.
-  const RAW_BUTTON_BASELINE = 292;
+  // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
+  // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
+  const RAW_BUTTON_BASELINE = 293;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -485,9 +487,14 @@ describe("DS ratchets — surface-level drift", () => {
   // has no way off the token at all.
   const OFF_SCALE_H1_BASELINE = 22;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
+  // The website's own headline (troposfit.com, App1 Q52): a hero at the
+  // website's scale, 36 px on a phone and 56 px at 1440, where the app's
+  // 31 px page title reads as small print. Every website page draws its h1
+  // through it, so it is one sanctioned file, as PageShell is.
+  const WEBSITE_H1 = "src/website/blocks/SiteHeadline.tsx";
   it("<h1> elements off the H1 token do not increase", () => {
     const { total, byFile } = scan((src, rel) => {
-      if (rel === H1_PRIMITIVE) return 0;
+      if (rel === H1_PRIMITIVE || rel === WEBSITE_H1) return 0;
       let n = 0;
       for (const m of src.matchAll(/<h1\b([^>]*)>/g)) {
         const attrs = m[1];
@@ -1320,7 +1327,7 @@ describe("an action takes its domain's colour wherever it appears", () => {
       "src/components/ManualFoodLogger.tsx Log meal",
       "src/components/food/QuickMealPortionSheet.tsx Log this portion",
       "src/components/FoodAnalyzer.tsx Log to",
-      "src/pages/RunSummary.tsx Log recovery food",
+      "src/components/workout/RecoveryFoodButton.tsx Log recovery food",
       "src/pages/Food.tsx Log",
     ])
       expect(food, `the scan no longer finds ${known}`).toContain(known);

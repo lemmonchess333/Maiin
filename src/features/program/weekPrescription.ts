@@ -37,6 +37,10 @@ export const LIGHTER_WEEK_EVERY = 4;
  * A cycle ends on its lighter week: finishing that week finishes a 4-week
  * cycle (the `programme_complete` badge). Read from
  * `generateWeekPrescription`, so it can't drift from the schedule.
+ *
+ * @oracle — test-only by design: the server awards the badge (App1 Q33,
+ * functions/lib/badgeRules.js `isCycleEndWeek`), and
+ * `badgeRules.cross.test.ts` pins its copy to this one.
  */
 export function isCycleEndWeek(week: number): boolean {
   return week > 0 && generateWeekPrescription(week).deload;
@@ -96,6 +100,9 @@ export interface RaceBlockWeek {
   weekIndex: number;
   totalWeeks: number;
   distance: RaceDistance;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)): where its
+   *  build, and the lifting's race build weeks, start. */
+  shortBase?: boolean;
 }
 
 /**
@@ -123,7 +130,12 @@ export function raceBlockWeek(
   ) {
     return null;
   }
-  return { weekIndex: currentWeek, totalWeeks, distance };
+  return {
+    weekIndex: currentWeek,
+    totalWeeks,
+    distance,
+    ...(runPlan.shortBase ? { shortBase: true } : {}),
+  };
 }
 
 /**
@@ -166,7 +178,12 @@ export function isRaceBuildWeek(
   week: RaceBlockWeek | null | undefined
 ): boolean {
   if (!week) return false;
-  const phase = getPhaseForWeek(week.weekIndex, week.totalWeeks, week.distance);
+  const phase = getPhaseForWeek(
+    week.weekIndex,
+    week.totalWeeks,
+    week.distance,
+    week.shortBase
+  );
   return (
     (phase === "build" || phase === "taper") &&
     raceLiftWeek(week, undefined) === null

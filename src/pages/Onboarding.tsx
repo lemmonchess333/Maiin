@@ -24,6 +24,11 @@ import RacePlanProNote from "@/components/program/RacePlanProNote";
 import { IconButton } from "@/components/ui/IconButton";
 import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
+import RollingGoalPicker from "@/components/run/RollingGoalPicker";
+import {
+  ROLLING_GOAL_NAMES,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
 import BodyInputs from "@/components/onboarding/BodyInputs";
 import WeekPreview from "@/components/onboarding/WeekPreview";
 import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
@@ -35,9 +40,19 @@ import {
   equipmentLabel,
   experienceLabel,
   goalLabel,
+  takesBarbellAtHome,
+  takesSmallPlates,
+  takesPullUpBar,
+  pullUpBarWhenChosen,
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import {
+  ageFromBirthYear,
+  BIRTH_YEAR_MESSAGES,
+  birthYearProblem,
+  parseBirthYear,
+} from "@/lib/age";
 import {
   getRaceGoalPlannerState,
   MIN_RACE_RUN_DAYS,
@@ -47,16 +62,28 @@ import {
   loadOnboardingDraft,
   saveOnboardingDraft,
   clearOnboardingDraft,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
   ONBOARDING_STEP_IDS,
-  DRAFT_AGE_RANGES,
-  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
 import {
+  DELETE_ACCOUNT_ANCHOR,
+  HEALTH_CONSENT_COPY,
+  HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_DATA_CONSENT_VERSION,
+  SIGN_OUT_FAILED,
+  hasCurrentHealthConsent,
+  setupHealthConsent,
+} from "@/lib/healthConsent";
+import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
+import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import {
   buildOnboardingPlan,
   onboardingActivity,
   onboardingFlow,
+  savedPastStep,
 } from "@/lib/onboardingPlan";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -67,7 +94,14 @@ import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
-import SessionLengthLabel from "@/components/program/SessionLengthLabel";
+import LiftWeekQuestion from "@/components/onboarding/LiftWeekQuestion";
+import LiftKitQuestion from "@/components/onboarding/LiftKitQuestion";
+import LiftLimitsQuestion from "@/components/onboarding/LiftLimitsQuestion";
+import RunLevelQuestion from "@/components/onboarding/RunLevelQuestion";
+import {
+  LIFT_KIT_QUESTION,
+  LIFT_LIMITS_QUESTION,
+} from "@/lib/liftingQuestions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
@@ -80,12 +114,20 @@ import {
   lbToKg,
 } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
+import type {
+  RaceDistance,
+  RoadRaceDistance,
+} from "@/features/program/programTypes";
+import { isRoadDistance } from "@/features/program/runPlanTiming";
+import UltraDistanceChoice from "@/components/program/UltraDistanceChoice";
+import RaceClimbField from "@/components/program/RaceClimbField";
+import { climbFieldText, parseClimbField } from "@/lib/raceClimb";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import {
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
 import { runDoseLine } from "@/lib/runDose";
-import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
@@ -95,9 +137,14 @@ import {
   type RaceGoalEntry,
 } from "@/lib/raceGoalEntry";
 import { signInMethodOf } from "@/lib/signInMethod";
-import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
+import {
+  CURRENT_EMAIL_CONSENT_WORDING,
+  EMAIL_CONSENT_COPY,
+  EMAIL_UPDATES_LIVE,
+  emailConsentAnswered,
+} from "@/lib/emailConsent";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { raceLegTrimCut } from "@/features/program/programEngine";
@@ -120,15 +167,14 @@ const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
-const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
-const AGE_MIDPOINTS = {
-  "under-16": 14,
-  "16-24": 20,
-  "25-34": 30,
-  "35-44": 40,
-  "45-54": 50,
-  "55+": 60,
-};
+/* By stored step number. About you opens on the agreement to store health
+   details (8, Priv1 call 1), then a lifter's limitations (4), then the
+   numbers (5): every question about the person's body comes after it, so
+   the limitations moved here from Your setup. */
+const CHAPTER_FOR_STEP = [0, 1, 2, 1, 3, 3, 4, 4, 3];
+/* The age the calorie estimate shows before a year of birth is given; the
+   plan is never made with it, since the step waits for the year. */
+const AGE_BEFORE_ANSWER = 30;
 const STEP_META = [
   [
     "What would you like to work towards?",
@@ -138,15 +184,9 @@ const STEP_META = [
     "Find your starting rhythm",
     "Choose the training you want in your week. You can change this later.",
   ],
-  [
-    "Make the plan fit your setup",
-    "Equipment and experience shape the exercises in your plan.",
-  ],
+  [LIFT_KIT_QUESTION.title, LIFT_KIT_QUESTION.hint],
   ["How does running fit in?", "Keep runs flexible, or work towards a race."],
-  [
-    "Anything to work around?",
-    "Choose any relevant limitations, or select None.",
-  ],
+  [LIFT_LIMITS_QUESTION.title, LIFT_LIMITS_QUESTION.hint],
   [
     "Start with your numbers",
     "These set your nutrition targets and your initial loads.",
@@ -156,6 +196,7 @@ const STEP_META = [
     "Your plan",
     "Your first week, built from your answers. Change anything before you start.",
   ],
+  [HEALTH_CONSENT_COPY.title, HEALTH_CONSENT_COPY.stored],
 ];
 const GOALS = [
   {
@@ -192,25 +233,57 @@ const GOALS = [
 
 export default function Onboarding() {
   const { user, profile, refreshProfile, signOut } = useAuth();
-  // A half or full marathon plan is Pro after its first week (Q85): the
+  // A half, marathon or ultra plan is Pro after its first week (Q85): the
   // distance control says so to a free account.
   const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();
   const [draft] = useState(() =>
-    user ? loadOnboardingDraft(user.uid, 7) : null
+    user ? loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP) : null
   );
   const [trainingActivity, setTrainingActivity] = useState<OnboardingActivity>(
     () => onboardingActivity(draft)
   );
   const hasLifting = trainingActivity !== "running";
   const flow = onboardingFlow(trainingActivity);
+  /* A draft saved past About you before setup asked for a year of birth
+     (App1, Q57) holds an age range instead, which the plan no longer uses:
+     it opens on About you for the year, and goes back to the review. */
+  const [askBirthYearAgain] = useState(
+    () =>
+      !!draft &&
+      savedPastStep(draft.step, 5) &&
+      parseBirthYear(draft.birthYearText ?? "") === null
+  );
+  const storedStep =
+    draft?.step === 6
+      ? 7
+      : draft?.step === 2 && draft.runConfirmed === undefined
+        ? 3
+        : (draft?.step ?? 0);
+  /* Priv1 call 1: the agreement to store health details, as given on this
+     step of this setup (the version of the words agreed to). The account
+     carries it once the plan is saved. */
+  const [healthConsentVersion, setHealthConsentVersion] = useState(
+    draft?.healthConsentVersion
+  );
+  const healthConsentGiven = hasCurrentHealthConsent({
+    version: healthConsentVersion,
+  });
+  /* Not now: the step says why the plan needs these details, and every
+     way on. Not kept: setup opens on the agreement again. */
+  const [consentDeclined, setConsentDeclined] = useState(false);
+  /* A draft saved past the agreement without it (setup in progress when
+     the question arrived) opens on it, then goes on through the steps
+     after it, its answers kept. */
+  const [askConsentFirst] = useState(
+    () =>
+      !!draft &&
+      !hasCurrentHealthConsent({ version: draft.healthConsentVersion }) &&
+      flow.indexOf(storedStep) > flow.indexOf(HEALTH_CONSENT_STEP)
+  );
   const [step, setStep] = useState(() => {
-    const storedStep =
-      draft?.step === 6
-        ? 7
-        : draft?.step === 2 && draft.runConfirmed === undefined
-          ? 3
-          : (draft?.step ?? 0);
+    if (askConsentFirst) return HEALTH_CONSENT_STEP;
+    if (askBirthYearAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
   /* Which way the last step change went: forward on Continue, back on Back
@@ -222,7 +295,7 @@ export default function Onboarding() {
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
   const [returnToReview, setReturnToReview] = useState(
-    draft?.returnToReview ?? false
+    !askConsentFirst && (askBirthYearAgain || (draft?.returnToReview ?? false))
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -240,6 +313,14 @@ export default function Onboarding() {
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
   const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
+  /* App1 Q55: the email opt-in, off until the person turns it on (§14n
+     (55)), and asked only of an account that has never answered: running
+     setup again does not ask again; Settings → Notifications has the
+     switches. Not kept in the draft, so a setup picked up later asks
+     afresh rather than carry a yes forward. */
+  const askEmail =
+    EMAIL_UPDATES_LIVE && !emailConsentAnswered(profile?.emailConsent);
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -254,18 +335,17 @@ export default function Onboarding() {
   );
   /* The same shape as goalConfirmed above: the VALUE a control sits on and
      the fact that the user chose it are two different things, and only the
-     second may become a personal input. Equipment, experience and age range
-     all arrived on a value and were written to the profile unread —
+     second may become a personal input. Equipment, experience and the age
+     range all arrived on a value and were written to the profile unread —
      equipment shapes the generated plan, experience sets the starting
-     loads, and the age range's midpoint feeds the calorie estimate. */
+     loads, and the age feeds the calorie estimate. The year of birth that
+     replaced the age range (App1, Q57) starts empty, so it is always the
+     person's own answer. */
   const [equipmentConfirmed, setEquipmentConfirmed] = useState(
     draft?.equipmentConfirmed ?? Boolean(draft && draft.step > 2)
   );
   const [experienceConfirmed, setExperienceConfirmed] = useState(
     draft?.experienceConfirmed ?? Boolean(draft && draft.step > 2)
-  );
-  const [ageConfirmed, setAgeConfirmed] = useState(
-    draft?.ageConfirmed ?? Boolean(draft && draft.step > 5)
   );
   /* Height and weight keep their numbers — a spin dial has to point
      somewhere, and the plan preview on the steps BEFORE this one needs a
@@ -273,7 +353,7 @@ export default function Onboarding() {
      treated as the user's until they supply it: the fields render empty
      and `BodyInputs` reports unanswered as invalid. */
   const [bodyAnswered, setBodyAnswered] = useState(
-    draft?.bodyAnswered ?? Boolean(draft && draft.step > 5)
+    draft?.bodyAnswered ?? Boolean(draft && savedPastStep(draft.step, 5))
   );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
@@ -289,7 +369,12 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
-  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  // "What do you have?" (Lift4 (11)): optional, beside the setups. The bar
+  // starts from the setup chosen: on for a home gym, off for Minimal and
+  // for no equipment.
+  const [pullUpBar, setPullUpBar] = useState(
+    draft?.pullUpBar ?? pullUpBarWhenChosen(draft?.equipment)
+  );
   const [barbellAtHome, setBarbellAtHome] = useState(
     draft?.barbellAtHome ?? false
   );
@@ -311,11 +396,18 @@ export default function Onboarding() {
     trainingActivity === "lifting" ? "none" : chosenRunFrequency;
   const runConfirmed = trainingActivity === "lifting" || runningConfirmed;
   const [chosenRunMode, setRunMode] = useState<
-    "freeform" | "race_prep" | "starter"
+    "freeform" | "race_prep" | "starter" | "rolling"
   >(
     draft?.runMode === "race_prep" || draft?.runMode === "starter"
       ? draft.runMode
-      : "freeform"
+      : draft?.rollingGoal
+        ? "rolling"
+        : "freeform"
+  );
+  /* Run24 (3): free running's plan with no race date, and its goal. The
+     plan is free running's on the profile; the draft keeps the goal. */
+  const [rollingGoal, setRollingGoal] = useState<RollingGoal>(
+    draft?.rollingGoal ?? "keep_fit"
   );
   /* Run9's starter goal, 30 minutes without stopping, is offered to
      someone who runs only and to anyone new to running; a lifter who
@@ -324,6 +416,10 @@ export default function Onboarding() {
     trainingActivity === "running" || runFrequency === "new";
   const runMode =
     chosenRunMode === "starter" && !starterOffered ? "freeform" : chosenRunMode;
+  /** The run mode setup saves: a plan with no race date is free running's,
+   *  with its goal beside it. */
+  const draftRunMode = runMode === "rolling" ? "freeform" : runMode;
+  const draftRollingGoal = runMode === "rolling" ? rollingGoal : null;
   // The starter goal's runs a week, two or three, three unless asked for
   // two; apart from a race plan's, which starts at two (Pgm7 A7).
   const [starterRunDays, setStarterRunDays] = useState<number>(() =>
@@ -337,9 +433,16 @@ export default function Onboarding() {
   );
   // The runs a week the plan is built on: the starter goal's own count.
   const planRunDays = runMode === "starter" ? starterRunDays : weeklyRunDays;
-  const [raceDistance, setRaceDistance] = useState<
-    OnboardingDraft["raceDistance"]
-  >(draft?.raceDistance ?? "10k");
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
+    draft?.raceDistance ?? "10k"
+  );
+  /* Run26 (2): the race's total climb, typed in metres (feet for miles),
+     which makes a trail plan at any distance. */
+  const climbUnit = resolveDistanceUnit(profile?.preferredDistanceUnit);
+  const [raceClimbText, setRaceClimbText] = useState(() =>
+    climbFieldText(draft?.raceClimbM, climbUnit)
+  );
+  const raceClimbM = parseClimbField(raceClimbText, climbUnit);
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
@@ -389,8 +492,10 @@ export default function Onboarding() {
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
   );
-  const [ageRange, setAgeRange] = useState<OnboardingDraft["ageRange"]>(
-    draft?.ageRange ?? "25-34"
+  // App1 (Q57; the owner chose a year of birth, 13 November 2026): the
+  // year as typed.
+  const [birthYearText, setBirthYearText] = useState(
+    draft?.birthYearText ?? ""
   );
   const [heightCm, setHeightCm] = useState(draft?.heightCm ?? 175);
   const [weightKg, setWeightKg] = useState(draft?.weightKg ?? 75);
@@ -412,6 +517,19 @@ export default function Onboarding() {
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
   const trainingWhy = draft?.trainingWhy ?? "";
   const currentDate = useLocalDateKey();
+  /* The year of birth, checked in the year's terms (src/lib/age.ts): this
+     year less 18 or earlier passes, and a later year is refused with the
+     age gate's line. */
+  const birthYear = parseBirthYear(birthYearText);
+  const birthYearIssue =
+    birthYear === null ? null : birthYearProblem(birthYear, currentDate);
+  // The age the calorie estimate uses, worked out as profileAge will.
+  const age = useMemo(() => {
+    const year = parseBirthYear(birthYearText);
+    return year !== null && birthYearProblem(year, currentDate) === null
+      ? ageFromBirthYear(year, currentDate)
+      : null;
+  }, [birthYearText, currentDate]);
   const answers = useMemo<OnboardingDraft>(
     () => ({
       step,
@@ -419,15 +537,17 @@ export default function Onboarding() {
       daysPerWeek,
       equipment,
       runFrequency,
-      runMode,
+      runMode: draftRunMode,
+      rollingGoal: draftRollingGoal,
       weeklyRunDays: planRunDays,
       raceDistance,
       raceTargetDate,
       raceEntry,
       ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
+      ...(raceClimbM ? { raceClimbM } : {}),
       injuries,
       gender,
-      ageRange,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -438,7 +558,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -447,6 +566,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -456,6 +576,7 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     }),
     [
       step,
@@ -463,16 +584,18 @@ export default function Onboarding() {
       daysPerWeek,
       equipment,
       runFrequency,
-      runMode,
+      draftRunMode,
+      draftRollingGoal,
       planRunDays,
       raceDistance,
       raceTargetDate,
       raceEntry,
       raceEventSpaceId,
       raceEventName,
+      raceClimbM,
       injuries,
       gender,
-      ageRange,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -483,7 +606,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -492,6 +614,7 @@ export default function Onboarding() {
       liftDaysPreference,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       recentRaceDistance,
@@ -501,6 +624,7 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     ]
   );
   useEffect(() => {
@@ -517,6 +641,13 @@ export default function Onboarding() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
   }, [step, trainingActivity]);
+  /* Not now and Go back change the agreement's whole screen: it starts
+     from the top, and its heading takes focus. */
+  useEffect(() => {
+    if (step !== HEALTH_CONSENT_STEP) return;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [step, consentDeclined]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
   /* Goal weight (optional): the target weight owns the nutrition direction
@@ -577,13 +708,13 @@ export default function Onboarding() {
       calculateTDEE(
         weightKg,
         heightCm,
-        AGE_MIDPOINTS[ageRange],
+        age ?? AGE_BEFORE_ANSWER,
         activityLevel,
         goalPlan.fitnessGoal,
         gender === "female" ? "female" : "male",
         goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
+    [weightKg, heightCm, age, activityLevel, goalPlan, gender]
   );
   /* Asked of someone who runs already: a new runner has no recent race to
      give. Typed as minutes and seconds, because a phone's number pad has no
@@ -604,12 +735,12 @@ export default function Onboarding() {
   );
   const recentRaceBenchmark =
     recentRace && !("error" in recentRace) ? recentRace : null;
-  /* R5: someone who runs already, setting up a race plan, says how much
-     they run, and the plan starts there. Someone new to running starts
-     with the run-walk weeks instead. */
+  /* R5: someone who runs already, setting up a race plan or a plan with
+     no race date (Run24 (3)), says how much they run, and the plan starts
+     there. Someone new to running starts with the run-walk weeks instead. */
   const askRunningNow =
     runConfirmed &&
-    runMode === "race_prep" &&
+    (runMode === "race_prep" || runMode === "rolling") &&
     (runFrequency === "occasional" || runFrequency === "regular");
   const runningStart = useMemo<RunningBaseline | null>(
     () =>
@@ -633,6 +764,15 @@ export default function Onboarding() {
   );
   const runningStartValid =
     runningStart === null || isRunningBaseline(runningStart);
+  /* What the save builds the run plan from, which the race preview reads
+     too, so the longest run setup states is the plan's: the typed race over
+     the stored benchmark, and the starting point typed here over the stored
+     one. */
+  const planRunFitness = recentRaceBenchmark ?? profile?.runFitness;
+  const planRunningBaseline =
+    runningStart && runningStartValid
+      ? runningStart
+      : (profile?.runningBaseline ?? null);
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -643,28 +783,28 @@ export default function Onboarding() {
           gender,
           experience,
           runFrequency,
-          runMode,
+          runMode: draftRunMode,
+          rollingGoal: draftRollingGoal,
           weeklyRunDays: planRunDays,
           raceDistance,
           raceTargetDate,
           raceEventName: raceEventName || undefined,
+          ...(raceClimbM ? { raceClimbM } : {}),
           injuries,
           weightKg,
           sessionMinutes,
-          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
-          smallPlates,
+          barbellAtHome: takesBarbellAtHome(equipment) && barbellAtHome,
+          ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
+          smallPlates: takesSmallPlates(equipment) && smallPlates,
           raceLegTrim,
           weightDisplayUnit,
         },
         goalPlan.fitnessGoal,
         currentDate,
         {
-          runningBaseline:
-            runningStart && runningStartValid
-              ? runningStart
-              : (profile?.runningBaseline ?? null),
+          runningBaseline: planRunningBaseline,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: recentRaceBenchmark ?? profile?.runFitness,
+          runFitness: planRunFitness,
         }
       ),
     [
@@ -674,26 +814,26 @@ export default function Onboarding() {
       gender,
       experience,
       runFrequency,
-      runMode,
+      draftRunMode,
+      draftRollingGoal,
       planRunDays,
       raceDistance,
       raceTargetDate,
       raceEventName,
+      raceClimbM,
       injuries,
       weightKg,
       sessionMinutes,
       barbellAtHome,
+      pullUpBar,
       smallPlates,
       raceLegTrim,
       weightDisplayUnit,
       goalPlan.fitnessGoal,
       currentDate,
-      profile?.runningBaseline,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
       profile?.runTimeLimits,
-      recentRaceBenchmark,
-      profile?.runFitness,
+      planRunFitness,
     ]
   );
   const dailyTarget = {
@@ -717,29 +857,38 @@ export default function Onboarding() {
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
-  // plan itself uses.
-  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
-  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(profile?.runFitness);
+  // plan itself uses: a race typed here is the benchmark the save keeps.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(planRunFitness);
+  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(planRunFitness);
+  /* Deep dive D8, Run24 (1): the preview runs the plan the save builds,
+     with its easy pace, time limits and starting point; without the easy
+     pace a runner who typed a slow race was told the longest run of a plan
+     built at no pace at all (32 km for a marathon the plan takes to 20). */
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
         distance: raceDistance,
+        climbM: raceClimbM ?? 0,
         targetDate: raceTargetDate,
         currentDate,
         liftDays: daysPerWeek,
         weeklyRunDays,
         newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
-        runningBaseline: runningStartValid ? runningStart : null,
+        runningBaseline: planRunningBaseline,
+        runTimeLimits: profile?.runTimeLimits,
+        easyPaceSPerKm,
       }),
     [
       raceDistance,
+      raceClimbM,
       raceTargetDate,
       currentDate,
       daysPerWeek,
       weeklyRunDays,
       runFrequency,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
+      profile?.runTimeLimits,
+      easyPaceSPerKm,
     ]
   );
   /* The name step is the last; the word filter loads from the first, and
@@ -768,14 +917,15 @@ export default function Onboarding() {
       runMode === "race_prep" &&
       (racePreview.status === "invalid" ||
         racePreview.status === "empty" ||
-        raceEntry === undefined)
+        raceEntry === undefined ||
+        raceClimbM === null)
     ) &&
     !(recentRace && "error" in recentRace) &&
     runningStartValid;
   const validBody =
-    ageConfirmed &&
+    birthYear !== null &&
+    birthYearIssue === null &&
     bodyAnswered &&
-    ageRange !== "under-16" &&
     metricsValid &&
     !goalWeightInvalid &&
     !goalWeightMissing &&
@@ -787,6 +937,7 @@ export default function Onboarding() {
   const answersValid =
     goalConfirmed &&
     validRun &&
+    healthConsentGiven &&
     (!hasLifting || injuries.length > 0) &&
     validBody;
   const canAdvance = [
@@ -798,6 +949,8 @@ export default function Onboarding() {
     validBody,
     true,
     answersValid && displayNameValidation.valid,
+    // The agreement's own button is the answer: I agree always goes on.
+    true,
   ];
   /* The review's button stays live while only the name stands in the way:
      the name sits under the plan, below the fold on a phone, and a button
@@ -811,6 +964,16 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* Where this step sits in its chapter, for a chapter of more than one
+     step in this flow. */
+  const chapterSteps = flow.filter(
+    (id) => CHAPTER_FOR_STEP[id] === CHAPTER_FOR_STEP[step]
+  );
+  const chapterPosition =
+    chapterSteps.length > 1
+      ? `${chapterSteps.indexOf(step) + 1} of ${chapterSteps.length} in this chapter`
+      : null;
+  const declinedHere = step === HEALTH_CONSENT_STEP && consentDeclined;
   /* A step's heading and questions are new elements on each step (keyed
      below), so a step reached by Continue comes in from the right and one
      reached by Back from the left: CSS @starting-style, the browser
@@ -836,10 +999,16 @@ export default function Onboarding() {
       return;
     }
     if (!canAdvance[step] || pending.current) return;
-    trackLifecycle("onboarding_step_completed", {
-      step: STEP_IDS[step],
-      stepIndex: flow.indexOf(step),
-    });
+    if (step === HEALTH_CONSENT_STEP) {
+      // I agree. Nothing about the answer goes to analytics (Priv1 call
+      // 1): the step's view is the one event it has.
+      setHealthConsentVersion(HEALTH_DATA_CONSENT_VERSION);
+    } else {
+      trackLifecycle("onboarding_step_completed", {
+        step: STEP_IDS[step],
+        stepIndex: flow.indexOf(step),
+      });
+    }
     if (step === 7) {
       void handleFinish();
       return;
@@ -849,7 +1018,8 @@ export default function Onboarding() {
     setReturnToReview(false);
   };
   const handleFinish = async () => {
-    if (!user || pending.current || !canAdvance[7]) return;
+    if (!user || pending.current || !canAdvance[7] || !healthConsentGiven)
+      return;
     pending.current = true;
     const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
@@ -857,10 +1027,6 @@ export default function Onboarding() {
     try {
       const profileData: Record<string, unknown> = {
         displayName: displayNameValidation.trimmed,
-        email: user.email || "",
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLogDate: null,
         // Dark is the app default (see public/init.js + auth.tsx).
         darkMode: true,
         weeklyWorkoutsTarget: daysPerWeek,
@@ -874,7 +1040,9 @@ export default function Onboarding() {
               ? "Hybrid"
               : "Lifter",
         gender,
-        ageRange,
+        // App1 (Q57): the year of birth, the one stored copy of the age.
+        // Neither `age` nor `ageRange` is sent (Q21).
+        ...(birthYear !== null ? { birthYear } : {}),
         heightCm,
         weightKg,
         // Fast-start: the goal-weight step was deferred, so we persist the
@@ -891,7 +1059,8 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
-        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
+        ...(takesBarbellAtHome(equipment) ? { barbellAtHome } : {}),
+        ...(takesPullUpBar(equipment) ? { pullUpBar } : {}),
         preferredSplit: "auto",
         runFrequency,
         ...(recentRaceBenchmark
@@ -914,6 +1083,8 @@ export default function Onboarding() {
                 distance: raceDistance,
                 targetDate: raceTargetDate,
                 ...(raceEntry ? { entry: raceEntry } : {}),
+                // Run26 (2): whole metres; none leaves the key out.
+                ...(raceClimbM ? { climbM: raceClimbM } : {}),
                 ...(raceEventSpaceId
                   ? { eventName: raceEventName, eventSpaceId: raceEventSpaceId }
                   : {}),
@@ -935,20 +1106,16 @@ export default function Onboarding() {
           : {}),
         onboardingComplete: true,
         // TDEE targets
-        age: AGE_MIDPOINTS[ageRange],
         sex: gender === "female" ? "female" : "male",
         activityLevel,
-        tdeeBase: tdee.targetCalories,
-        aiCalorieAdjustment: 0,
+        // The day's carbs and fat are worked out from these two, never
+        // stored (App1 Q21).
         targetCalories: tdee.targetCalories,
         targetProtein: tdee.protein,
-        targetCarbs: tdee.carbs,
-        targetFat: tdee.fat,
         program: {
           // Nutrition phase comes from the goal-weight plan (target weight
           // owns direction), not goalToFitnessGoal(primaryGoal).
           goal: goalPlan.fitnessGoal,
-          startWeight: weightKg,
           currentPhase: "base",
         },
       };
@@ -964,7 +1131,7 @@ export default function Onboarding() {
       // counts above so the values match the actual generated plan.
       // planBuilder's `program` carries only the nutrition phase (`goal`),
       // so it is merged into the map above rather than assigned over it:
-      // a shallow assign dropped startWeight and currentPhase.
+      // a shallow assign dropped currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
       // buildPlan's race goal carries no race-or-own answer (Run9) and no
@@ -987,29 +1154,39 @@ export default function Onboarding() {
       // first invocation after idle spins up a cold instance that can exceed the
       // client SDK's default wait window and surface as functions/internal even
       // though the warm instance will handle the second call fine.
-      const completeOnboarding = httpsCallable<
-        unknown,
-        { success: boolean; activationJourneyVersion?: 1 | 2 | null }
-      >(functions, "completeOnboarding");
+      const completeOnboarding = httpsCallable<unknown, { success: boolean }>(
+        functions,
+        "completeOnboarding"
+      );
       // P0-5: payload now includes weekSchedule as an explicit
       // top-level field. validatePlanPayload reads either the
       // top-level field or profileData.weekSchedule; sending both
       // keeps the contract explicit on the wire.
+      // The server stamps every new account's journey as 2 whatever is
+      // sent (App1). `activationJourneyVersion: 2` stays on the wire for a
+      // server from before App1, which records the platform only beside
+      // it.
       const callCF = () =>
         completeOnboarding({
           profileData,
           programState,
           weekSchedule: plan.weekSchedule,
-          ...(ACTIVATION_JOURNEY_V2_ENABLED
+          activationJourneyVersion: 2,
+          onboardingPlatform: Capacitor.getPlatform(),
+          // Priv1 call 1: the agreement given on its step, which the
+          // server dates and stores, and without which it saves nothing.
+          healthDataConsent: setupHealthConsent(),
+          // A yes to both emails the toggle names, with the words it
+          // showed. Nothing is sent for a no: absent already means no.
+          ...(askEmail && emailOptIn
             ? {
-                activationJourneyVersion: 2,
-                onboardingPlatform: Capacitor.getPlatform(),
+                emailOptIn: true,
+                emailWording: CURRENT_EMAIL_CONSENT_WORDING,
               }
             : {}),
         });
-      let commitResult;
       try {
-        commitResult = await callCF();
+        await callCF();
       } catch (err) {
         const code = (err as { code?: string })?.code;
         const msg = (err as { message?: string })?.message || "";
@@ -1030,7 +1207,7 @@ export default function Onboarding() {
           msg.toUpperCase().includes("INTERNAL");
         if (!isTransient) throw err;
         await new Promise((r) => setTimeout(r, 1200));
-        commitResult = await callCF();
+        await callCF();
       }
 
       onboardingCompletedRef.current = true;
@@ -1124,20 +1301,9 @@ export default function Onboarding() {
         runMode: effectiveRunMode,
       });
 
-      // Route from the accepted, persisted server version, not the stale
-      // React profile captured before refreshProfile(). An older callable
-      // that returns no version keeps the established offer route.
-      if (
-        ACTIVATION_JOURNEY_V2_ENABLED &&
-        commitResult.data.activationJourneyVersion === 2
-      ) {
-        navigate("/", { replace: true });
-      } else {
-        navigate("/upgrade?from=onboarding", {
-          replace: true,
-          state: { next: "/" },
-        });
-      }
+      // Setup ends on Today, for every account (App1, whole-app grill
+      // Q27): the plan and what to do next, with no offer between.
+      navigate("/", { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -1175,20 +1341,78 @@ export default function Onboarding() {
       (template) =>
         template.id === (firstRun.userOverride || firstRun.templateId)
     );
+  /** The plan with no race date being saved, if any (Run24 (3)). */
+  const savedRollingGoal =
+    plan.programState.runPlan?.mode === "rolling"
+      ? (plan.programState.runPlan.rollingGoal ?? null)
+      : null;
   const freeRunning =
-    runConfirmed && runFrequency !== "none" && effectiveRunMode === "freeform";
+    runConfirmed &&
+    runFrequency !== "none" &&
+    effectiveRunMode === "freeform" &&
+    !savedRollingGoal;
   const runSummary = !runConfirmed
     ? "Choose your running setup"
     : runFrequency === "none"
       ? "No running selected"
-      : (effectiveRunMode === "freeform"
-          ? "Free running · no scheduled runs"
-          : effectiveRunMode === "starter"
-            ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
-            : `${raceEventName ? `${raceEventName} · ` : ""}${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+      : (savedRollingGoal
+          ? `${ROLLING_GOAL_NAMES[savedRollingGoal]} · ${effectiveRunDays} runs per week`
+          : effectiveRunMode === "freeform"
+            ? "Free running · no scheduled runs"
+            : effectiveRunMode === "starter"
+              ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
+              : `${raceEventName ? `${raceEventName} · ` : ""}${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
         (recentRaceBenchmark
           ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
           : "");
+  /* R5: the running a plan starts from, asked with a race and with a plan
+     with no race date (Run24 (3)). */
+  const runningNowFields =
+    askRunningNow && runningStart ? (
+      <div className="space-y-2">
+        <p className="text-sm">Your running now</p>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              {
+                key: "weeklyMinutes",
+                label: "Minutes a week",
+                value: runningWeekMinutes,
+                set: setRunningWeekMinutes,
+              },
+              {
+                key: "longestRunMinutes",
+                label: "Longest run, min",
+                value: runningLongestMinutes,
+                set: setRunningLongestMinutes,
+              },
+            ] as const
+          ).map((field) => (
+            <label key={field.key} className="block space-y-1 text-sm">
+              <span className="text-muted-foreground">{field.label}</span>
+              <input
+                inputMode="numeric"
+                className="ds-input min-h-11 w-full font-mono tabular-nums"
+                value={field.value}
+                aria-invalid={field.value !== "" && !runningStartValid}
+                onChange={(event) =>
+                  field.set(event.target.value.replace(/\D/g, "").slice(0, 4))
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {runningWeekMinutes !== "" &&
+          runningLongestMinutes !== "" &&
+          !runningStartValid
+            ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
+            : runMode === "rolling"
+              ? "The plan starts from here and builds a step at a time."
+              : "The plan starts from here and builds a step a week towards the race."}
+        </p>
+      </div>
+    ) : null;
   return (
     <div
       className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
@@ -1237,13 +1461,13 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
-          {((step === 1 && trainingActivity !== "lifting") ||
-            step === 3 ||
-            step === 2 ||
-            step === 4) && (
+        <div
+          key={`heading-${step}${declinedHere ? "-declined" : ""}`}
+          className={cn("space-y-3", stepEnters)}
+        >
+          {chapterPosition && (
             <p className="text-micro text-muted-foreground">
-              {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
+              {chapterPosition}
             </p>
           )}
           <h1
@@ -1251,12 +1475,16 @@ export default function Onboarding() {
             tabIndex={-1}
             className="text-h1 leading-tight tracking-tight font-extrabold focus:outline-none"
           >
-            {STEP_META[step][0]}
+            {declinedHere
+              ? HEALTH_CONSENT_DECLINED_COPY.title
+              : STEP_META[step][0]}
           </h1>
           <p className="text-base text-muted-foreground">
-            {step === 5 && !hasLifting
-              ? "Check these starting values. They help estimate your nutrition targets."
-              : STEP_META[step][1]}
+            {declinedHere
+              ? HEALTH_CONSENT_DECLINED_COPY.body
+              : step === 5 && !hasLifting
+                ? "Check these starting values. They help estimate your nutrition targets."
+                : STEP_META[step][1]}
           </p>
         </div>
         <fieldset
@@ -1328,35 +1556,11 @@ export default function Onboarding() {
                 tone={trainingActivity === "running" ? "running" : "lifting"}
               />
               {hasLifting && (
-                <SegmentedControl<Exclude<OnboardingDraft["daysPerWeek"], 0>>
-                  ariaLabel="Lift sessions per week"
-                  value={liftDaysPreference}
-                  options={([2, 3, 4, 5, 6] as const).map((n) => ({
-                    value: n,
-                    label: (
-                      <span className="font-figure tabular-nums text-xl">
-                        {n}
-                      </span>
-                    ),
-                  }))}
-                  onChange={setDaysPerWeek}
-                  tone="lifting"
-                  className="py-2"
-                />
-              )}
-              {hasLifting && (
-                <SegmentedControl<
-                  NonNullable<OnboardingDraft["sessionMinutes"]>
-                >
-                  ariaLabel="Minutes per lift session"
-                  value={sessionMinutes}
-                  options={DRAFT_SESSION_MINUTES.map((n) => ({
-                    value: n,
-                    label: <SessionLengthLabel minutes={n} />,
-                  }))}
-                  onChange={setSessionMinutes}
-                  tone="lifting"
-                  className="@container"
+                <LiftWeekQuestion
+                  days={liftDaysPreference}
+                  onDaysChange={setDaysPerWeek}
+                  minutes={sessionMinutes}
+                  onMinutesChange={setSessionMinutes}
                 />
               )}
               <p className="text-sm text-muted-foreground">
@@ -1380,71 +1584,43 @@ export default function Onboarding() {
           {step === 3 && (
             <div className="space-y-5">
               <div className="space-y-3">
-                {(
-                  [
-                    {
-                      id: "new",
-                      label: "New to running",
-                      desc: "Starting out, or coming back after a long gap.",
-                      distance: 1,
-                    },
-                    {
-                      id: "occasional",
-                      label: "Occasional runner",
-                      desc: "Usually one or two runs a week.",
-                      distance: 2,
-                    },
-                    {
-                      id: "regular",
-                      label: "Regular runner",
-                      desc: "Usually three or more runs a week.",
-                      distance: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={runConfirmed && runFrequency === option.id}
-                    tone="running"
-                    /* A route that grows with the running: one footprint
-                       icon three times over said nothing about which. */
-                    icon={
-                      <ChoiceArt
-                        art={{ kind: "route", distance: option.distance }}
-                      />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                    onSelect={() => {
-                      setRunConfirmed(true);
-                      setRunFrequency(option.id);
-                      // Run9: New to running starts on the 30-minute goal;
-                      // the other plans stay a tap away.
-                      if (option.id === "new") setRunMode("starter");
-                      /* This lands on the RACE-PREP plan only. Freeform
-                         is a substrate with no scheduled runs (Run9a), so
-                         its weekly target is 0 whichever tier is picked —
-                         pinned in Onboarding.test.tsx. The beginner tier
-                         earns its place on the default path by letting
-                         someone starting out say so, instead of filing
-                         themselves under "occasional runner"; it does not
-                         change a freeform plan, and reading it as a
-                         freeform scheduling lever is reading it wrong.
-                         Two a week when a race IS set: a race plan needs
-                         at least two run days (Pgm7 A7). */
-                      setWeeklyRunDays(
-                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
-                      );
-                    }}
-                  />
-                ))}
+                <RunLevelQuestion
+                  value={
+                    runConfirmed && runFrequency !== "none"
+                      ? runFrequency
+                      : null
+                  }
+                  onChange={(level) => {
+                    setRunConfirmed(true);
+                    setRunFrequency(level);
+                    // Run9: New to running starts on the 30-minute goal;
+                    // the other plans stay a tap away.
+                    if (level === "new") setRunMode("starter");
+                    /* This lands on the RACE-PREP plan only. Freeform is a
+                       substrate with no scheduled runs (Run9a), so its
+                       weekly target is 0 whichever tier is picked — pinned
+                       in Onboarding.test.tsx. The beginner tier earns its
+                       place on the default path by letting someone
+                       starting out say so, instead of filing themselves
+                       under "occasional runner"; it does not change a
+                       freeform plan, and reading it as a freeform
+                       scheduling lever is reading it wrong. Two a week
+                       when a race IS set: a race plan needs at least two
+                       run days (Pgm7 A7). */
+                    setWeeklyRunDays(
+                      level === "regular" ? 3 : MIN_RACE_RUN_DAYS
+                    );
+                  }}
+                />
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
-                  <SegmentedControl<"freeform" | "race_prep" | "starter">
+                  <SegmentedControl<
+                    "freeform" | "race_prep" | "starter" | "rolling"
+                  >
                     ariaLabel="Running plan"
                     tone="running"
-                    layout={starterOffered ? "wrap" : undefined}
+                    layout="wrap"
                     value={runMode}
                     onChange={setRunMode}
                     options={[
@@ -1452,6 +1628,8 @@ export default function Onboarding() {
                       ...(starterOffered
                         ? [{ value: "starter" as const, label: "30 minutes" }]
                         : []),
+                      // Run24 (3): a plan with no race date.
+                      { value: "rolling", label: "Plan, no race" },
                       { value: "race_prep", label: "Race prep" },
                     ]}
                   />
@@ -1477,6 +1655,36 @@ export default function Onboarding() {
                       </div>
                     </div>
                   )}
+                  {runMode === "rolling" && (
+                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                      <p className="text-sm">
+                        A plan that keeps going, with no race date. Change it or
+                        add a race any time.
+                      </p>
+                      <RollingGoalPicker
+                        value={rollingGoal}
+                        onChange={setRollingGoal}
+                      />
+                      <label className="block text-sm">
+                        Runs per week ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {weeklyRunDays}
+                        </span>
+                        <RangeInput
+                          className="min-h-11"
+                          aria-label="Runs per week"
+                          min={MIN_RACE_RUN_DAYS}
+                          max={7}
+                          step={1}
+                          value={weeklyRunDays}
+                          onChange={(event) =>
+                            setWeeklyRunDays(Number(event.target.value))
+                          }
+                        />
+                      </label>
+                      {runningNowFields}
+                    </div>
+                  )}
                   {runMode === "race_prep" && (
                     <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
                       <label className="block text-sm">
@@ -1496,10 +1704,12 @@ export default function Onboarding() {
                           }
                         />
                       </label>
-                      <SegmentedControl<OnboardingDraft["raceDistance"]>
+                      <SegmentedControl<RoadRaceDistance>
                         ariaLabel="Race distance"
                         tone="running"
-                        value={raceDistance}
+                        value={
+                          isRoadDistance(raceDistance) ? raceDistance : null
+                        }
                         onChange={(next) => {
                           setRaceDistance(next);
                           forgetPickedRace();
@@ -1511,9 +1721,17 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      <UltraDistanceChoice
+                        distance={raceDistance}
+                        onChange={(next) => {
+                          setRaceDistance(next);
+                          forgetPickedRace();
+                        }}
+                      />
                       <RacePlanProNote
                         distance={raceDistance}
                         isPro={onboardingIsPro}
+                        freeWeekUsed={profile?.racePlanFreeWeekUsed === true}
                       />
                       <div className="space-y-2">
                         <p className="text-sm">Race or on your own</p>
@@ -1553,6 +1771,13 @@ export default function Onboarding() {
                           {raceRunDaysNote(raceDistance, weeklyRunDays)}
                         </p>
                       )}
+                      <RaceClimbField
+                        id="setup-race-climb"
+                        distance={raceDistance}
+                        text={raceClimbText}
+                        onTextChange={setRaceClimbText}
+                        unit={climbUnit}
+                      />
                       <label className="block text-sm space-y-2">
                         <span>Race target date</span>
                         <input
@@ -1567,60 +1792,7 @@ export default function Onboarding() {
                           aria-invalid={racePreview.status === "invalid"}
                         />
                       </label>
-                      {askRunningNow && runningStart && (
-                        <div className="space-y-2">
-                          <p className="text-sm">Your running now</p>
-                          <div className="grid grid-cols-2 gap-3">
-                            {(
-                              [
-                                {
-                                  key: "weeklyMinutes",
-                                  label: "Minutes a week",
-                                  value: runningWeekMinutes,
-                                  set: setRunningWeekMinutes,
-                                },
-                                {
-                                  key: "longestRunMinutes",
-                                  label: "Longest run, min",
-                                  value: runningLongestMinutes,
-                                  set: setRunningLongestMinutes,
-                                },
-                              ] as const
-                            ).map((field) => (
-                              <label
-                                key={field.key}
-                                className="block space-y-1 text-sm"
-                              >
-                                <span className="text-muted-foreground">
-                                  {field.label}
-                                </span>
-                                <input
-                                  inputMode="numeric"
-                                  className="ds-input min-h-11 w-full font-mono tabular-nums"
-                                  value={field.value}
-                                  aria-invalid={
-                                    field.value !== "" && !runningStartValid
-                                  }
-                                  onChange={(event) =>
-                                    field.set(
-                                      event.target.value
-                                        .replace(/\D/g, "")
-                                        .slice(0, 4)
-                                    )
-                                  }
-                                />
-                              </label>
-                            ))}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {runningWeekMinutes !== "" &&
-                            runningLongestMinutes !== "" &&
-                            !runningStartValid
-                              ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
-                              : "The plan starts from here and builds a step a week towards the race."}
-                          </p>
-                        </div>
-                      )}
+                      {runningNowFields}
                       {racePreview.status === "empty" ? (
                         <p className="text-sm text-muted-foreground">
                           Pick your race date, or choose Free running to start
@@ -1785,128 +1957,27 @@ export default function Onboarding() {
           )}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Equipment access</h2>
-                {(
-                  [
-                    {
-                      id: "full_gym",
-                      label: "Full gym",
-                      desc: "Barbells, dumbbells, cables and machines.",
-                      art: "chest-press-machine",
-                    },
-                    {
-                      id: "home_gym",
-                      label: "Home gym",
-                      desc: "Dumbbells, a bench and a pull-up bar.",
-                      art: "incline-db-press",
-                    },
-                    {
-                      id: "minimal",
-                      label: "Minimal / bodyweight",
-                      desc: "Bodyweight and limited equipment.",
-                      art: "bodyweight-squat",
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={equipmentConfirmed && equipment === option.id}
-                    onSelect={() => {
-                      setEquipmentConfirmed(true);
-                      setEquipment(option.id);
-                    }}
-                    /* The kit each setup means, drawn: a machine, dumbbells
-                       on a bench, no equipment at all. */
-                    icon={
-                      <ChoiceArt art={{ kind: "exercise", id: option.art }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
-              {equipmentConfirmed && (
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">What do you have?</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Optional. The plan uses what you have.
-                    </p>
-                  </div>
-                  {equipment !== "full_gym" && (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-foreground">
-                          A barbell and a rack
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Squats, deadlifts and presses with the bar.
-                        </p>
-                      </div>
-                      <Toggle
-                        checked={barbellAtHome}
-                        label="A barbell and a rack"
-                        className="ml-3"
-                        onChange={() => setBarbellAtHome((v) => !v)}
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-foreground">Small plates</p>
-                      <p className="text-xs text-muted-foreground">
-                        {smallPlatesHint(liftUnit)}
-                      </p>
-                    </div>
-                    <Toggle
-                      checked={smallPlates}
-                      label="Small plates"
-                      className="ml-3"
-                      onChange={() => setSmallPlates((v) => !v)}
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Lifting experience</h2>
-                {(
-                  [
-                    {
-                      id: "beginner",
-                      label: "New to lifting",
-                      desc: "Up to six months of consistent training.",
-                      level: 1,
-                    },
-                    {
-                      id: "intermediate",
-                      label: "Some experience",
-                      desc: "Six months to two years.",
-                      level: 2,
-                    },
-                    {
-                      id: "advanced",
-                      label: "Experienced",
-                      desc: "More than two years of consistent training.",
-                      level: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={experienceConfirmed && experience === option.id}
-                    onSelect={() => {
-                      setExperienceConfirmed(true);
-                      setExperience(option.id);
-                    }}
-                    icon={
-                      <ChoiceArt art={{ kind: "level", level: option.level }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
+              <LiftKitQuestion
+                equipment={equipment}
+                equipmentConfirmed={equipmentConfirmed}
+                onEquipmentChange={(next) => {
+                  setEquipmentConfirmed(true);
+                  setEquipment(next);
+                }}
+                barbellAtHome={barbellAtHome}
+                onBarbellAtHomeChange={setBarbellAtHome}
+                pullUpBar={pullUpBar}
+                onPullUpBarChange={setPullUpBar}
+                smallPlates={smallPlates}
+                onSmallPlatesChange={setSmallPlates}
+                liftUnit={liftUnit}
+                experience={experience}
+                experienceConfirmed={experienceConfirmed}
+                onExperienceChange={(next) => {
+                  setExperienceConfirmed(true);
+                  setExperience(next);
+                }}
+              />
               {/* What the kit just chosen builds (FV3): the first lift and
                   its first exercises, which change as the kit does. */}
               {equipmentConfirmed && (
@@ -1941,34 +2012,42 @@ export default function Onboarding() {
               </details>
             </div>
           )}
+          {step === HEALTH_CONSENT_STEP &&
+            (consentDeclined ? (
+              <HealthConsentDeclineActions
+                onBack={() => setConsentDeclined(false)}
+                onDeleteAccount={() =>
+                  navigate(`/settings/account#${DELETE_ACCOUNT_ANCHOR}`)
+                }
+                onSignOut={() =>
+                  void signOut().catch((err: unknown) => {
+                    logger.warn("Onboarding: sign-out failed", err);
+                    toast.error(SIGN_OUT_FAILED);
+                  })
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
+                <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
+                <HealthConsentPolicyLink />
+                {/* No to a question already answered yes takes the yes
+                    back: the plan is saved only with an agreement. */}
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => {
+                    setHealthConsentVersion(undefined);
+                    setConsentDeclined(true);
+                  }}
+                >
+                  {HEALTH_CONSENT_COPY.decline}
+                </Button>
+              </div>
+            ))}
           {step === 4 && (
             <div className="space-y-3">
-              {[
-                { id: "none", label: "None" },
-                { id: "lower_back", label: "Lower back" },
-                { id: "shoulder", label: "Shoulder" },
-                { id: "knee", label: "Knee" },
-                { id: "elbow", label: "Elbow" },
-                { id: "wrist", label: "Wrist" },
-              ].map((option) => (
-                <OptionCard
-                  key={option.id}
-                  selected={injuries.includes(option.id)}
-                  label={option.label}
-                  onSelect={() =>
-                    setInjuries((previous) =>
-                      option.id === "none"
-                        ? ["none"]
-                        : previous.includes(option.id)
-                          ? previous.filter((id) => id !== option.id)
-                          : [
-                              ...previous.filter((id) => id !== "none"),
-                              option.id,
-                            ]
-                    )
-                  }
-                />
-              ))}
+              <LiftLimitsQuestion injuries={injuries} onChange={setInjuries} />
               {/* What the limitations just chosen changed (FV3), live.
                   Limitations stay editable in Settings. */}
               {injuries.some((id) => id !== "none") && (
@@ -2007,27 +2086,40 @@ export default function Onboarding() {
                 />
               </div>
               <div className="space-y-3">
-                <h2 className="text-base font-semibold">Age range</h2>
-                <SegmentedControl<OnboardingDraft["ageRange"] | "">
-                  ariaLabel="Age range"
-                  value={ageConfirmed ? ageRange : ""}
-                  onChange={(next) => {
-                    if (next === "") return;
-                    setAgeConfirmed(true);
-                    setAgeRange(next);
-                  }}
-                  layout="wrap"
-                  options={DRAFT_AGE_RANGES.map((value) => ({
-                    value,
-                    label:
-                      value === "under-16"
-                        ? "Under 16"
-                        : value.replace("-", "–"),
-                  }))}
+                <label
+                  htmlFor="onboarding-birth-year"
+                  className="block text-base font-semibold"
+                >
+                  Year of birth
+                </label>
+                {/* Four digits on the phone's number pad (App1, Q57). */}
+                <input
+                  id="onboarding-birth-year"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="bday-year"
+                  maxLength={4}
+                  className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
+                  value={birthYearText}
+                  aria-invalid={birthYearIssue !== null ? true : undefined}
+                  aria-describedby={
+                    birthYearIssue !== null
+                      ? "onboarding-birth-year-error"
+                      : undefined
+                  }
+                  onChange={(event) =>
+                    setBirthYearText(
+                      event.target.value.replace(/\D/g, "").slice(0, 4)
+                    )
+                  }
                 />
-                {ageRange === "under-16" && (
-                  <p role="alert" className="text-sm text-destructive-strong">
-                    You need to be at least 16 to use Tropos.
+                {birthYearIssue !== null && (
+                  <p
+                    id="onboarding-birth-year-error"
+                    role="alert"
+                    className="text-sm text-destructive-strong"
+                  >
+                    {BIRTH_YEAR_MESSAGES[birthYearIssue]}
                   </p>
                 )}
               </div>
@@ -2036,11 +2128,12 @@ export default function Onboarding() {
                   Why these details?
                 </summary>
                 <p>
-                  Height, weight and the midpoint of your age range estimate
-                  starting calories. The initial activity estimate uses planned
-                  lifting frequency; running is accounted for as you log it.
-                  “Prefer not to say” uses the male calculation. These are
-                  estimates you can adjust in Settings.
+                  Height, weight and your age estimate starting calories, and
+                  your age sets your heart-rate zones. Your year of birth is
+                  never shown on your profile. The initial activity estimate
+                  uses planned lifting frequency; running is accounted for as
+                  you log it. “Prefer not to say” uses the male calculation.
+                  These are estimates you can adjust in Settings.
                 </p>
               </details>
               <div className="space-y-3">
@@ -2164,13 +2257,15 @@ export default function Onboarding() {
                     {firstRunTemplate?.name ??
                       (effectiveRunMode === "race_prep"
                         ? `${racePreview.distanceLabel} plan`
-                        : "Free running")}
+                        : savedRollingGoal
+                          ? ROLLING_GOAL_NAMES[savedRollingGoal]
+                          : "Free running")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     <InlineNumerals>
                       {firstRunTemplate
                         ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm, intervalPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
-                        : effectiveRunMode === "race_prep"
+                        : effectiveRunMode === "race_prep" || savedRollingGoal
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."}
                     </InlineNumerals>
@@ -2248,7 +2343,7 @@ export default function Onboarding() {
                     },
                     {
                       label: "About you",
-                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · age ${ageRange}`,
+                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · ${birthYear !== null ? `born ${birthYear}` : "add your year of birth"}`,
                       target: 5,
                     },
                   ]
@@ -2331,6 +2426,27 @@ export default function Onboarding() {
                 deliveryRevision={inviteRevision}
                 disabled={saving}
               />
+              {askEmail && (
+                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                  <div className="min-w-0 flex-1 basis-40 space-y-1">
+                    {/* At 200% text on a 320 px screen the switch drops
+                        under the words rather than squeezing them until a
+                        word breaks mid-way. */}
+                    <p className="text-base font-semibold break-words">
+                      {EMAIL_CONSENT_COPY.setupLabel}
+                    </p>
+                    <p className="text-sm text-muted-foreground break-words">
+                      {EMAIL_CONSENT_COPY.setupDescription}
+                    </p>
+                  </div>
+                  <Toggle
+                    label={EMAIL_CONSENT_COPY.setupLabel}
+                    checked={emailOptIn}
+                    onChange={() => setEmailOptIn((on) => !on)}
+                    disabled={saving}
+                  />
+                </div>
+              )}
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.
@@ -2352,59 +2468,65 @@ export default function Onboarding() {
           button no longer fit side by side, and "Continue" is one word that
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
-      <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-        {step === 7 && ACTIVATION_JOURNEY_V2_ENABLED && (
-          <p className="text-sm text-muted-foreground">
-            Today shows your plan and what to do next. Start when you’re ready.
-          </p>
-        )}
-        <div className="flex gap-3 @max-[15em]:flex-col-reverse">
-          {step !== 0 && (
-            <Button
-              variant="secondary"
-              disabled={saving}
-              leftIcon={<ArrowLeft className="size-4" />}
-              onClick={() => {
-                setSaveError("");
-                setStepMove(-1);
-                setStep(
-                  returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
-                );
-                setReturnToReview(false);
-              }}
-            >
-              Back
-            </Button>
+      {/* Not now's three ways on stand in for the footer: its Back and
+          I agree would be a fourth and fifth. */}
+      {!declinedHere && (
+        <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+          {step === 7 && (
+            <p className="text-sm text-muted-foreground">
+              Today shows your plan and what to do next. Start when you’re
+              ready.
+            </p>
           )}
-          <Button
-            size="lg"
-            className="flex-1"
-            loading={saving}
-            disabled={buttonDisabled}
-            onClick={advance}
-            rightIcon={
-              step === 7 ? (
-                <Check className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )
-            }
-          >
-            {saving
-              ? "Creating your plan…"
-              : step === 7
-                ? saveError
-                  ? "Try again"
-                  : // One label for both journeys: where it goes is the
-                    // server's answer (the comparison group and a switched-off
-                    // v2 go to the Pro offer), which no label can know first.
-                    "Start my plan"
-                : returnToReview
-                  ? "Back to review"
-                  : "Continue"}
-          </Button>
-        </div>
-      </footer>
+          <div className="flex gap-3 @max-[15em]:flex-col-reverse">
+            {step !== 0 && (
+              <Button
+                variant="secondary"
+                disabled={saving}
+                leftIcon={<ArrowLeft className="size-4" />}
+                onClick={() => {
+                  setSaveError("");
+                  setStepMove(-1);
+                  setStep(
+                    returnToReview
+                      ? 7
+                      : flow[Math.max(0, flow.indexOf(step) - 1)]
+                  );
+                  setReturnToReview(false);
+                }}
+              >
+                Back
+              </Button>
+            )}
+            <Button
+              size="lg"
+              className="flex-1"
+              loading={saving}
+              disabled={buttonDisabled}
+              onClick={advance}
+              rightIcon={
+                step === 7 ? (
+                  <Check className="size-4" />
+                ) : (
+                  <ChevronRight className="size-4" />
+                )
+              }
+            >
+              {saving
+                ? "Creating your plan…"
+                : step === 7
+                  ? saveError
+                    ? "Try again"
+                    : "Start my plan"
+                  : step === HEALTH_CONSENT_STEP
+                    ? HEALTH_CONSENT_COPY.agree
+                    : returnToReview
+                      ? "Back to review"
+                      : "Continue"}
+            </Button>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

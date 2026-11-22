@@ -37,9 +37,10 @@ import {
   type WatchRunStatus,
 } from "@/lib/watchRunBridge";
 import { isNativePlatform } from "@/lib/platform";
+import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 
 const ROW =
-  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted chip-edge";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
 
 /** Apple Health choices remain independent: steps, Watch HR, and export.
@@ -196,6 +197,10 @@ export default function HealthSection({
         if (!(await setWatchRunEnabled(true))) {
           syncAttempted.current = `${uid}:true`;
           await update("useWatchForRuns", false);
+          trackSettingsEvent("settings_toggle_changed", {
+            toggle: "watch_runs",
+            value: "on:failed",
+          });
           toast.error("Couldn’t connect your Watch. Try again.");
           return;
         }
@@ -204,6 +209,10 @@ export default function HealthSection({
           toast.error("Couldn’t remember your Watch choice. Try again.");
           return;
         }
+        trackSettingsEvent("settings_toggle_changed", {
+          toggle: "watch_runs",
+          value: "on",
+        });
       } else {
         // Persist the device-level veto before changing native state. A
         // failed account write must never silently turn this Watch back on.
@@ -217,6 +226,10 @@ export default function HealthSection({
           toast.error("Couldn’t turn off Watch runs. Try again.");
           return;
         }
+        trackSettingsEvent("settings_toggle_changed", {
+          toggle: "watch_runs",
+          value: "off",
+        });
         if (!(await update("useWatchForRuns", false))) {
           toast.error(
             "Watch runs are off here, but the setting could not sync."
@@ -293,14 +306,14 @@ export default function HealthSection({
       subtitle={
         CONNECTED_TRAINING_RELEASED
           ? "Steps, Watch runs, workout export"
-          : "Daily step count on Home"
+          : "Steps for your activity level"
       }
     >
       <div className="space-y-3">
         <SectionHeading size="compact">Steps</SectionHeading>
         {pending && <Skeleton className="h-[4.5rem] w-full rounded-lg" />}
         {!pending && status === "unavailable" && (
-          <div className="p-4 rounded-lg bg-muted">
+          <div className="p-4 rounded-lg bg-muted chip-edge">
             <p className="text-sm text-foreground">Not available here</p>
             <p className="text-xs text-muted-foreground">
               Step tracking uses Apple Health, available in the Tropos iOS app.
@@ -312,7 +325,8 @@ export default function HealthSection({
             <div className={LABEL}>
               <p className="text-sm text-foreground">Connect Apple Health</p>
               <p className="text-xs text-muted-foreground">
-                Show your daily step count on Home.
+                With Pro, Food checks your activity level against a week of your
+                steps.
               </p>
             </div>
             <Button
@@ -369,8 +383,9 @@ export default function HealthSection({
             <div className={LABEL}>
               <p className="text-sm text-foreground">Use Watch for runs</p>
               <p className="text-xs text-muted-foreground">
-                The iPhone records your run. The Watch shows pace, distance and
-                heart rate, and can control a connected run.
+                The iPhone records your run. The Watch shows pace, distance,
+                heart rate and a session’s steps, and can control a connected
+                run.
               </p>
               <p className="text-xs font-medium text-foreground mt-1">
                 {watchStatusText}
@@ -494,7 +509,7 @@ export default function HealthSection({
             </>
           )}
           {showPendingExports && (
-            <div className="p-3 rounded-lg bg-muted space-y-2">
+            <div className="p-3 rounded-lg bg-muted space-y-2 chip-edge">
               <p className="text-sm font-medium text-foreground">
                 {pendingExports} Apple Health{" "}
                 {pendingExports === 1 ? "update" : "updates"} pending
@@ -524,7 +539,7 @@ export default function HealthSection({
       )}
 
       {CONNECTED_TRAINING_RELEASED && failed && (
-        <div className="p-3 rounded-lg bg-muted space-y-2">
+        <div className="p-3 rounded-lg bg-muted space-y-2 chip-edge">
           <p className="text-sm text-foreground">
             Couldn’t load your connected training choices.
           </p>

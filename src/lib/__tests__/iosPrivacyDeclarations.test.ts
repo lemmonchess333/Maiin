@@ -97,13 +97,21 @@ const manifest = parsePlist(read("ios/App/App/PrivacyInfo.xcprivacy")) as Dict;
 
 const APP = "NSPrivacyCollectedDataTypePurposeAppFunctionality";
 const ANALYTICS = "NSPrivacyCollectedDataTypePurposeAnalytics";
+/** Apple's "Developer's Advertising or Marketing": the weekly review and the
+ *  emails after a break a person can choose (App1 Q55) are marketing in the
+ *  ICO's reading, sent to the address, and the emails after a break are
+ *  timed by when the person last logged. The weekly review's figures are the
+ *  person's own, sent to them at their request: app functionality. */
+const MARKETING = "NSPrivacyCollectedDataTypePurposeDeveloperAdvertising";
 
 /** The agreed declaration: type → purposes. */
 const DECLARED: Record<string, string[]> = {
   Name: [APP],
-  EmailAddress: [APP],
-  Health: [APP, ANALYTICS],
-  Fitness: [APP, ANALYTICS],
+  EmailAddress: [APP, MARKETING],
+  // No health or fitness figure goes to analytics
+  // (`analyticsHealthFigures.test.ts`).
+  Health: [APP],
+  Fitness: [APP],
   PreciseLocation: [APP],
   CoarseLocation: [ANALYTICS],
   PhotosorVideos: [APP],
@@ -112,7 +120,7 @@ const DECLARED: Record<string, string[]> = {
   DeviceID: [ANALYTICS],
   PurchaseHistory: [APP],
   ProductInteraction: [APP, ANALYTICS],
-  OtherUsageData: [APP, ANALYTICS],
+  OtherUsageData: [APP, ANALYTICS, MARKETING],
   CrashData: [APP],
   PerformanceData: [ANALYTICS],
   OtherDiagnosticData: [APP],
@@ -270,6 +278,53 @@ describe("privacy manifest — required-reason APIs", () => {
   });
 });
 
+/* ── The Live Activity widget's own manifest ───────────────────────── */
+
+describe("the Live Activity widget's privacy manifest", () => {
+  // A manifest covers the bundle it sits in, and the widget extension is a
+  // bundle of its own inside the app.
+  const dir = "ios/App/LiveActivities";
+  const widget = parsePlist(read(`${dir}/PrivacyInfo.xcprivacy`)) as Dict;
+
+  it("collects nothing and tracks nothing: it draws what the app hands it", () => {
+    expect(widget.NSPrivacyTracking).toBe(false);
+    expect(widget.NSPrivacyTrackingDomains).toEqual([]);
+    expect(widget.NSPrivacyCollectedDataTypes).toEqual([]);
+  });
+
+  it("declares the App Group defaults it and LiveActivitiesKit share with the app, and no other API", () => {
+    expect(widget.NSPrivacyAccessedAPITypes).toEqual([
+      {
+        NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
+        NSPrivacyAccessedAPITypeReasons: ["1C8F.1"],
+      },
+    ]);
+    // The kit the widget links still holds that code...
+    expect(
+      read(
+        "node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Widget/DynamicActivityWidget.swift"
+      )
+    ).toContain("UserDefaults(suiteName:");
+    // ...and so does the widgets' own store (Wid1), the App Group's
+    // defaults and nothing else: 1C8F.1 is that reason, read and written
+    // only by the app and its extension.
+    const store = read(`${dir}/HomeWidgetStore.swift`);
+    expect(store).toContain("UserDefaults(suiteName: appGroup)");
+    expect(store).not.toMatch(/UserDefaults\.standard/);
+    // Every other file of the widget's reaches no required-reason API.
+    const swift = readdirSync(resolve(repoRoot, dir)).filter((name) =>
+      name.endsWith(".swift")
+    );
+    expect(swift.length).toBeGreaterThanOrEqual(4);
+    for (const name of swift)
+      expect(read(`${dir}/${name}`), name).not.toMatch(
+        name === "HomeWidgetStore.swift"
+          ? /FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+          : /UserDefaults|FileManager|systemUptime|attributesOfItem|volumeAvailableCapacity/
+      );
+  });
+});
+
 /* ── Info.plist purpose strings ────────────────────────────────────── */
 
 describe("Info.plist — purpose strings cover every use", () => {
@@ -323,6 +378,18 @@ describe("Info.plist — purpose strings cover every use", () => {
     const location = purpose("NSLocationWhenInUseUsageDescription");
     for (const use of [/runs/, /weather/, /route you plan/, /privacy zone/])
       expect(location).toMatch(use);
+  });
+
+  it("names auto-pause where iOS asks for motion, for as long as the app reads CoreMotion", () => {
+    // CoreMotion ends the app on its first call without this key
+    // (CMMotionActivityManager, CMPedometer).
+    const usesCoreMotion = readdirSync(resolve(repoRoot, "ios/App/App"))
+      .filter((f) => f.endsWith(".swift"))
+      .some((f) => /^import CoreMotion$/m.test(read(`ios/App/App/${f}`)));
+    expect(usesCoreMotion).toBe(true);
+    const motion = purpose("NSMotionUsageDescription");
+    expect(motion).toMatch(/auto-pause/);
+    expect(motion).toMatch(/not stored or sent/);
   });
 
   it("asks for no tracking permission: Tropos does not track", () => {

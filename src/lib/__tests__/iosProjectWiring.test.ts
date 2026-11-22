@@ -27,7 +27,7 @@
  * entitlements the Sign in with Apple and HealthKit plugins need.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
@@ -231,7 +231,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
         configuration
       );
       expect(standardShare).toBe(
-        "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
+        "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
       );
       expect(standardUpdate).toBe(
         "Tropos does not add workouts or any other data to Health."
@@ -412,11 +412,69 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("builds on a macOS image that is not deprecated", () => {
-    // macos-14 is deprecated (actions/runner-images#13518), and its default
-    // Xcode is older than App Store Connect accepts uploads from. macos-26
-    // carries the current Xcode as its default.
-    expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
+  it("builds with Xcode 27.1, before anything else touches the project", () => {
+    // Owner decision A (18 November 2026, the iPhone Duo notes, #3420): only
+    // an iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
+    // 27 SDK is required for every upload from April 2027. macos-26 tops
+    // out at Xcode 26.6 (macos-14, the first image, is deprecated:
+    // actions/runner-images#13518); the xcode-27 image carries several
+    // Xcodes, so both workflows select 27.1 by name, and the pull
+    // requests' compile builds what the release does.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    for (const [name, file] of [
+      ["deploy-ios.yml", workflow],
+      ["ios-native-compile.yml", compile],
+    ] as const) {
+      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe("xcode-27");
+      const select = file.indexOf("- name: Select Xcode 27.1");
+      expect(select, name).toBeGreaterThan(-1);
+      expect(file.slice(select, select + 1200), name).toContain(
+        "verify_ios_xcode.py --want 27.1"
+      );
+      // First after the checkout: no step runs Xcode or syncs the
+      // project with whatever the image's default is.
+      const steps = file.slice(file.indexOf("\n    steps:\n"));
+      const before = [...steps.matchAll(/^ {6}- (?:name|uses|run):.*$/gm)]
+        .map((m) => m[0].trim())
+        .slice(0, 2);
+      expect(before[0], name).toMatch(/^- uses: actions\/checkout@/);
+      expect(before[1], name).toBe("- name: Select Xcode 27.1");
+      expect(select, name).toBeLessThan(file.indexOf("xcodebuild -project"));
+      expect(select, name).toBeLessThan(file.indexOf("npm run build:ios"));
+    }
+  });
+
+  it("launches the pull requests' build on the iPhone Duo simulator, each display shot", () => {
+    // Objective 4 of the Duo track: where the runner's Xcode has an iPhone
+    // Duo simulator, a CI job builds and screenshots on it. Xcode 27.1 has
+    // one, with both displays in one device; the iPhone the other launch
+    // picks is never the Duo.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    const at = (name: string) => compile.indexOf(`- name: ${name}\n`);
+    const phone = at("Launch the standard build on a simulator");
+    const duo = at("Launch the standard build on the iPhone Duo simulator");
+    expect(phone).toBeGreaterThan(-1);
+    expect(duo).toBeGreaterThan(phone);
+    expect(compile.slice(phone, duo)).toContain(
+      'not d["name"].startswith("iPhone Duo")'
+    );
+    const step = compile.slice(duo, compile.indexOf("\n      - ", duo + 1));
+    expect(step).toContain('t["name"] == "iPhone Duo"');
+    expect(step).toContain('screenshot --display="$1"');
+    // The display showing the home screen before the launch has to show
+    // the app after it, so a black scene beside a lit system screen fails.
+    expect(step).toMatch(
+      /before the launch:[\s\S]*simctl launch[\s\S]*MISSING=/
+    );
+    expect(step).toContain("python3 scripts/verify_ios_launch.py");
+    expect(step).toContain('kill -0 "$PID"');
+    expect(compile).toMatch(
+      /name: ios-simulator-duo\n\s*path: \$\{\{ runner\.temp \}\}\/duo-\*\.png/
+    );
+    // Before the pilot's build replaces the standard one it installs.
+    expect(duo).toBeLessThan(
+      at("Compile the connected training pilot for simulator")
+    );
   });
 
   it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
@@ -653,17 +711,69 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /DynamicActivityWidget\(\)/
     );
 
-    // Both carry the group the plugin names from the app's bundle ID.
-    expect(
-      read(
-        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
-      )
-    ).toContain('"group.\\(bundleId).liveactivities"');
-    const group = "<string>group.com.tropos.app.liveactivities</string>";
+    // Both targets carry the one App Group the two App IDs hold on Apple's
+    // site, group.com.tropos.app, so the profiles the run makes from the API
+    // key match. The plugin's own group (group.<bundle id>.liveactivities)
+    // only serves its "appGroup" images, which no Tropos layout uses: the
+    // cards draw SF Symbols and the extension's own asset catalog.
+    const group = "<string>group.com.tropos.app</string>";
     expect(entitlements).toContain(group);
     expect(
       read("ios/App/LiveActivities/LiveActivities.entitlements")
     ).toContain(group);
+    for (const layout of [
+      "src/lib/runLiveActivity.ts",
+      "src/lib/liftLiveActivity.ts",
+    ]) {
+      expect(read(layout)).not.toMatch(/\bappGroup\b/);
+    }
+    // The Home Screen widgets keep their snapshot and queued drinks in the
+    // same group (Wid1), named once on each side.
+    expect(read("ios/App/LiveActivities/HomeWidgetStore.swift")).toContain(
+      'static let appGroup = "group.com.tropos.app"'
+    );
+    expect(read("src/lib/homeWidgetContract.ts")).toContain(
+      'HOME_WIDGET_APP_GROUP = "group.com.tropos.app"'
+    );
+  });
+
+  it("builds the Home Screen widgets into the Live Activity extension, with its privacy manifest", () => {
+    // Wid1 call 3: the widgets live in the extension the Live Activities
+    // already ship in, so no new App ID, capability or profile is needed.
+    const target = pbxproj.match(
+      /\/\* LiveActivitiesExtension \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    expect(target).not.toBeNull();
+    const phaseFiles = (name: string) => {
+      const id = target![1].match(
+        new RegExp(`(${OBJECT_ID.source}) /\\* ${name} \\*/`)
+      )![1];
+      const phase = pbxproj.match(
+        new RegExp(
+          `${id} /\\* ${name} \\*/ = \\{[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+        )
+      )![1];
+      return [...phase.matchAll(/\/\* (.+?) in \w+ \*\//g)].map((m) => m[1]);
+    };
+    const swift = readdirSync(resolve(repoRoot, "ios/App/LiveActivities"))
+      .filter((name) => name.endsWith(".swift"))
+      .sort();
+    expect(swift).toEqual(
+      expect.arrayContaining([
+        "FoodWidget.swift",
+        "LogDrinkIntent.swift",
+        "StreakWidget.swift",
+        "TodayWidget.swift",
+      ])
+    );
+    expect(phaseFiles("Sources").sort()).toEqual(swift);
+    expect(phaseFiles("Resources").sort()).toEqual([
+      "Assets.xcassets",
+      "PrivacyInfo.xcprivacy",
+    ]);
+    const bundle = read("ios/App/LiveActivities/LiveActivitiesBundle.swift");
+    for (const widget of ["TodayWidget()", "StreakWidget()", "FoodWidget()"])
+      expect(bundle).toContain(widget);
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
@@ -685,5 +795,303 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // to create a secret for it.
     expect(guide).not.toContain("KEYCHAIN_PASSWORD");
     expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
+  });
+});
+
+/* ── The app's own native plugins ─────────────────────────────────── */
+
+/** Paths the App target's Sources phase compiles. */
+function compiledSourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const sourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+  )?.[1];
+  if (!sourcesId) throw new Error("App target has no Sources phase");
+  const phase = pbxproj.match(
+    new RegExp(
+      `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
+  );
+  if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+  return [
+    ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+  ].map(([, id]) => {
+    const fileRefId = pbxproj.match(
+      new RegExp(
+        `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+        "m"
+      )
+    )?.[1];
+    const path = pbxproj.match(
+      new RegExp(
+        `^\\s*${fileRefId} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+        "m"
+      )
+    )?.[1];
+    if (!path) throw new Error(`build file ${id} has no source path`);
+    return path;
+  });
+}
+
+describe("iOS project wiring — the app's own plugins", () => {
+  const appSwift = readdirSync(resolve(repoRoot, "ios/App/App")).filter((f) =>
+    f.endsWith(".swift")
+  );
+
+  it("compiles every Swift file in the app's folder into the app", () => {
+    // A file left out builds green and ships nothing: its plugin is then
+    // missing at run time, which the web side reads as an older shell.
+    // The one file from elsewhere is the widgets' App Group store, which
+    // the app and the widget extension compile from the extension's folder
+    // so the two read and write the very same keys (Wid1).
+    expect(appSwift).toContain("MotionActivityPlugin.swift");
+    expect([...compiledSourcePaths()].sort()).toEqual(
+      [...appSwift, "HomeWidgetStore.swift"].sort()
+    );
+    const storeRefs = new Set(
+      [
+        ...pbxproj.matchAll(
+          /\/\* HomeWidgetStore\.swift in Sources \*\/ = \{isa = PBXBuildFile; fileRef = ([0-9A-F]{24})/g
+        ),
+      ].map((m) => m[1])
+    );
+    expect(storeRefs.size).toBe(1);
+    expect(
+      existsSync(
+        resolve(repoRoot, "ios/App/LiveActivities/HomeWidgetStore.swift")
+      )
+    ).toBe(true);
+  });
+
+  it("registers every app plugin with the bridge, under the name the web side asks for", () => {
+    // Capacitor's package scanner finds package plugins only; an app
+    // target's plugin exists only once TroposBridgeViewController adds it.
+    const bridge = read("ios/App/App/TroposBridgeViewController.swift");
+    const plugins = appSwift
+      .map((file) => read(`ios/App/App/${file}`))
+      .flatMap((source) => [
+        ...source.matchAll(
+          /final class (\w+): CAPPlugin, CAPBridgedPlugin[\s\S]*?let jsName = "(\w+)"/g
+        ),
+      ])
+      .map(([, cls, jsName]) => ({ cls, jsName }));
+    // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
+    // HomeWidgets: the Home Screen widgets' snapshot and queued drinks (Wid1).
+    // AccessibilityPrefs: Reduce Transparency, which WebKit cannot see (DS6).
+    expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "AccessibilityPrefs",
+      "HeartRateSensor",
+      "HomeWidgets",
+      "MotionActivity",
+      "WatchRun",
+    ]);
+    for (const { cls, jsName } of plugins) {
+      expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
+      const callers = [
+        "src/lib/heartRateSensorBridge.ts",
+        "src/lib/homeWidgets.ts",
+        "src/lib/reducedTransparency.ts",
+        "src/lib/runMotionSource.ts",
+        "src/lib/watchRunBridge.ts",
+      ].filter((file) =>
+        new RegExp(`registerPlugin<\\w+>\\("${jsName}"\\)`).test(read(file))
+      );
+      expect(callers).toHaveLength(1);
+    }
+  });
+});
+
+describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
+  const plugin = read("ios/App/App/HeartRateSensorPlugin.swift");
+  const bridge = read("src/lib/heartRateSensorBridge.ts");
+
+  it("compiles the plugin into the app", () => {
+    const sources = compiledSourcePaths();
+    // Anchor: the parse found the files that were already there.
+    expect(sources).toContain("WatchRunPlugin.swift");
+    expect(sources).toContain("HeartRateSensorPlugin.swift");
+  });
+
+  it("registers it before the web view loads, under the name the web asks for", () => {
+    // An app-target plugin is not found by Capacitor's package scan.
+    expect(read("ios/App/App/TroposBridgeViewController.swift")).toMatch(
+      /registerPluginInstance\(HeartRateSensorPlugin\(\)\)/
+    );
+    const jsName = plugin.match(/let jsName = "([^"]+)"/)?.[1];
+    expect(jsName).toBe("HeartRateSensor");
+    expect(bridge).toContain(
+      `registerPlugin<HeartRateSensorPlugin>("${jsName}")`
+    );
+  });
+
+  it("implements every method the web calls", () => {
+    const iface = bridge.match(
+      /interface HeartRateSensorPlugin \{([\s\S]*?)\n\}/
+    );
+    expect(iface).not.toBeNull();
+    const called = [...iface![1].matchAll(/^\s{2}(\w+)\(/gm)]
+      .map((m) => m[1])
+      .filter((name) => name !== "addListener");
+    expect(called.length).toBeGreaterThanOrEqual(10);
+    for (const name of called) {
+      expect(plugin).toContain(`CAPPluginMethod(name: "${name}"`);
+      expect(plugin).toMatch(
+        new RegExp(`@objc func ${name}\\(_ call: CAPPluginCall\\)`)
+      );
+    }
+  });
+
+  it("emits only the events the web listens for", () => {
+    const emitted = new Set(
+      [...plugin.matchAll(/notifyListeners\("(\w+)"/g)].map((m) => m[1])
+    );
+    expect([...emitted].sort()).toEqual([
+      "reading",
+      "sensorFound",
+      "statusChanged",
+    ]);
+    for (const event of emitted) expect(bridge).toContain(`"${event}"`);
+  });
+
+  it("asks for Bluetooth with a purpose string and keeps a run's sensor in the background", () => {
+    // Apple: the key "is required if your app uses the device's Bluetooth
+    // interface", and the bluetooth-central mode wakes the app for a
+    // connected peripheral's updated values.
+    expect(infoPlist).toMatch(
+      /<key>NSBluetoothAlwaysUsageDescription<\/key>\s*<string>[^<]*heart rate sensor[^<]*<\/string>/
+    );
+    expect(infoPlist).toMatch(
+      /<key>UIBackgroundModes<\/key>\s*<array>\s*<string>location<\/string>\s*<string>bluetooth-central<\/string>\s*<\/array>/
+    );
+  });
+});
+
+/**
+ * The UIScene life cycle (Duo track, 2026-11-18). "Apps built with the
+ * latest SDK must adopt the scene-based life cycle or they fail to launch"
+ * (iOS & iPadOS 27 Release Notes), and on the iPhone Duo a fold resizes
+ * the scene (the iPhone Duo notes under docs/ios, #3420). Nothing here can
+ * launch the app; a wrong class name or a delegate left out of the target
+ * is a black screen at launch that a compile does not see, so these read
+ * the wiring instead.
+ */
+describe("iOS project wiring — the scene life cycle", () => {
+  const sceneDelegate = read("ios/App/App/SceneDelegate.swift");
+  const appDelegate = read("ios/App/App/AppDelegate.swift");
+  const storyboard = read("ios/App/App/Base.lproj/Main.storyboard");
+
+  /** Paths the App target's Sources phase compiles. */
+  function compiledSourcePaths(): string[] {
+    const target = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+    const sourcesId = target[1].match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+    )?.[1];
+    if (!sourcesId) throw new Error("App target has no Sources phase");
+    const phase = pbxproj.match(
+      new RegExp(
+        `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+    return [
+      ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+    ].map(([, id]) => {
+      const ref = pbxproj.match(
+        new RegExp(
+          `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+          "m"
+        )
+      )?.[1];
+      const path = ref
+        ? pbxproj.match(
+            new RegExp(
+              `^\\s*${ref} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+              "m"
+            )
+          )?.[1]
+        : undefined;
+      if (!path) throw new Error(`build file ${id} has no path`);
+      return path;
+    });
+  }
+
+  it("declares one scene, its delegate and its storyboard", () => {
+    const manifest = infoPlist.match(
+      /<key>UIApplicationSceneManifest<\/key>\s*<dict>([\s\S]*?)<\/dict>\s*<key>UILaunchStoryboardName/
+    );
+    expect(manifest).not.toBeNull();
+    const body = manifest![1];
+    expect(body).toMatch(
+      /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/
+    );
+    expect(body).toMatch(
+      /<key>UIWindowSceneSessionRoleApplication<\/key>\s*<array>\s*<dict>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneConfigurationName<\/key>\s*<string>Default Configuration<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneDelegateClassName<\/key>\s*<string>\$\(PRODUCT_MODULE_NAME\)\.SceneDelegate<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneStoryboardFile<\/key>\s*<string>Main<\/string>/
+    );
+    // A launch screen is required of 27.0 SDK builds too.
+    expect(plistKeys(infoPlist)).toContain("UILaunchStoryboardName");
+  });
+
+  it("compiles the delegate it names into the app", () => {
+    expect(compiledSourcePaths()).toContain("SceneDelegate.swift");
+    expect(sceneDelegate).toMatch(
+      /^class SceneDelegate: UIResponder, UIWindowSceneDelegate \{/m
+    );
+    expect(sceneDelegate).toMatch(/^\s*var window: UIWindow\?$/m);
+  });
+
+  it("starts the window on the storyboard's bridge, as before scenes", () => {
+    // The storyboard makes the window; the delegate makes none of its own.
+    expect(storyboard).toMatch(
+      /initialViewController="(\S+)"[\s\S]*<viewController id="\1" customClass="TroposBridgeViewController"/
+    );
+    expect(sceneDelegate).not.toMatch(/UIWindow\(/);
+  });
+
+  it("hands the app delegate's configuration the same name and delegate", () => {
+    expect(appDelegate).toMatch(
+      /configurationForConnecting connectingSceneSession: UISceneSession[\s\S]*?UISceneConfiguration\(\s*name: "Default Configuration"[\s\S]*?config\.delegateClass = SceneDelegate\.self/
+    );
+  });
+
+  it("moves opened URLs and universal links to the scene, Firebase Auth's first", () => {
+    // Under scenes these app delegate methods are never called.
+    expect(appDelegate).not.toMatch(/open url: URL/);
+    expect(appDelegate).not.toMatch(/continue userActivity: NSUserActivity/);
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, willConnectTo: session, options: connectionOptions\)/
+    );
+    expect(sceneDelegate).toMatch(
+      /openURLContexts URLContexts[\s\S]*?Auth\.auth\(\)\.canHandle\(\$0\.url\)[\s\S]*?SceneDelegateProxy\.shared\.scene\(scene, openURLContexts:/
+    );
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, continue: userActivity\)/
+    );
+    // Push still reaches the app delegate under scenes.
+    expect(appDelegate).toMatch(
+      /didRegisterForRemoteNotificationsWithDeviceToken/
+    );
+  });
+
+  it("runs on a Capacitor with the scene proxy (8.5 and later)", () => {
+    const [major, minor] = (pkg.dependencies["@capacitor/ios"] ?? "")
+      .replace(/^[^\d]*/, "")
+      .split(".")
+      .map(Number);
+    expect(major > 8 || (major === 8 && minor >= 5)).toBe(true);
   });
 });

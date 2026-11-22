@@ -28,11 +28,12 @@ import {
 } from "../programEngine";
 import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
 import { loadsTheLegs } from "../easierToday";
-import { roleRepsFor } from "../roleTable";
+import { roleRepsFor, takesBodyweightFloor } from "../roleTable";
 import { exerciseRole } from "../exerciseRole";
 import { represcribeWorkouts } from "../represcribe";
 import { getExerciseById } from "@/lib/exercises";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { liftIndexForDayOfWeek, type ScheduleDay } from "@/lib/scheduleUtils";
+import { longRunDayOf } from "../runPlacement";
 
 /** Lifts Monday, Thursday and Friday; runs Tuesday, Wednesday and Saturday
  *  (day 0 is Sunday). */
@@ -75,7 +76,7 @@ describe("buildPlan · purity", () => {
   // identity, runPlan metadata, profileUpdates).
 
   it("weekSchedule + profileUpdates + runDays-without-workouts are byte-identical across calls", () => {
-    const input = makeInput({ runMode: "structured", weeklyRunDays: 3 });
+    const input = makeInput({ runMode: "starter", weeklyRunDays: 3 });
     const a = buildPlan(input);
     const b = buildPlan(input);
     expect(a.weekSchedule).toEqual(b.weekSchedule);
@@ -166,9 +167,7 @@ describe("buildPlan · output shape", () => {
   });
 
   it("profileUpdates writes BOTH weeklyRunDaysTarget and weeklyRunsTarget (legacy field sync)", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(out.profileUpdates.weeklyRunDaysTarget).toBe(3);
     expect(out.profileUpdates.weeklyRunsTarget).toBe(3);
   });
@@ -229,22 +228,18 @@ describe("buildPlan · freeform mode", () => {
   });
 });
 
-/* ─── Mode: structured ──────────────────────────────────────── */
+/* ─── A plan with run days and no race: the starter goal's ────── */
 
-describe("buildPlan · structured mode", () => {
+describe("buildPlan · starter mode", () => {
   it("produces runDays without raceGoal", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(out.programState.runDays?.length).toBeGreaterThan(0);
-    expect(out.programState.runPlan?.mode).toBe("structured");
+    expect(out.programState.runPlan?.mode).toBe("starter");
     expect(out.programState.runPlan?.raceGoal).toBeUndefined();
   });
 
   it("every runDay has id / date / weekKey / status", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.id).toBeTruthy();
       expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -254,9 +249,7 @@ describe("buildPlan · structured mode", () => {
   });
 
   it("initial runDays status is 'planned'", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.status).toBe("planned");
     });
@@ -265,7 +258,7 @@ describe("buildPlan · structured mode", () => {
   it("weekSchedule has correct run-day count", () => {
     const out = buildPlan(
       makeInput({
-        runMode: "structured",
+        runMode: "starter",
         liftDays: 3,
         weeklyRunDays: 2,
       })
@@ -279,7 +272,7 @@ describe("buildPlan · structured mode", () => {
   it("handles hybrid (overflow to Both days)", () => {
     const out = buildPlan(
       makeInput({
-        runMode: "structured",
+        runMode: "starter",
         liftDays: 6,
         weeklyRunDays: 2,
       })
@@ -456,17 +449,18 @@ describe("buildPlan · a plan made mid-week plans no run before that day (Run19)
     expect(made(sunday).programState.runPlan).toEqual(monday.runPlan);
   });
 
-  it("plans a structured week from that day too", () => {
+  it("plans a starter week from that day too", () => {
     const runs = runsOf(
       buildPlan(
         makeInput({
           currentDate: thursday,
-          runMode: "structured",
+          runMode: "starter",
           liftDays: 3,
           weeklyRunDays: 4,
         })
       )
     );
+    expect(runs.length).toBeGreaterThan(0);
     expect(runs.every((run) => run.date! >= thursday)).toBe(true);
   });
 });
@@ -491,13 +485,92 @@ describe("buildPlan · lift programme", () => {
   });
 });
 
+/* ─── Run27 (19): the day before an ultra's back-to-back ───── */
+
+describe("buildPlan · no heavy legs the day before an ultra's back-to-back", () => {
+  /** An ultra 20 weeks out: its default week runs both weekend days, the
+   *  long run Sunday and the back-to-back beside it Saturday. */
+  const ultra = (over: Partial<PlanBuilderInput> = {}) =>
+    makeInput({
+      runMode: "race_prep",
+      weeklyRunDays: 4,
+      raceGoal: { distance: "50k", targetDate: "2026-10-03" },
+      ...over,
+    });
+  const FRIDAY = 5;
+  const SATURDAY = 6;
+  const onDay = (out: ReturnType<typeof buildPlan>, day: number) => {
+    const at = liftIndexForDayOfWeek(out.weekSchedule, day);
+    return at >= 0 ? out.programState.workouts[at] : null;
+  };
+  const heavyLegs = (day: ReturnType<typeof onDay>) =>
+    !!day?.exercises.some((e) => !e.isAccessory && loadsTheLegs(e));
+
+  it("puts an upper session on Friday and nothing on Saturday", () => {
+    const out = buildPlan(ultra());
+    expect(longRunDayOf(out.weekSchedule)).toBe(0);
+    expect(out.weekSchedule[SATURDAY].type).toBe("run");
+    expect(onDay(out, SATURDAY)).toBeNull();
+    const friday = onDay(out, FRIDAY);
+    expect(friday).not.toBeNull();
+    expect(friday!.exercises.some(loadsTheLegs)).toBe(false);
+  });
+
+  it("holds for every goal, level and kit on four and five lift days", () => {
+    const clashes: string[] = [];
+    for (const primaryGoal of [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "general",
+      "running",
+    ] as const)
+      for (const experience of [
+        "beginner",
+        "intermediate",
+        "advanced",
+      ] as const)
+        for (const equipment of ["full_gym", "home_gym", "minimal"] as const)
+          for (const liftDays of [4, 5])
+            for (const weeklyRunDays of [4, 5, 6]) {
+              const out = buildPlan(
+                ultra({
+                  primaryGoal,
+                  experience,
+                  equipment,
+                  liftDays,
+                  weeklyRunDays,
+                  preferredSplit: "auto",
+                })
+              );
+              if (onDay(out, SATURDAY) || heavyLegs(onDay(out, FRIDAY)))
+                clashes.push(
+                  `${primaryGoal} ${experience} ${equipment} ${liftDays}+${weeklyRunDays}`
+                );
+            }
+    expect(clashes).toEqual([]);
+  });
+
+  it("leaves a marathon's Friday on the same week as it was", () => {
+    // The ultra's week, kept for a marathon: its long run is Sunday and
+    // Saturday's run an easy one, so Friday is no long run's eve.
+    const week = buildPlan(ultra()).weekSchedule;
+    const out = buildPlan(
+      ultra({
+        raceGoal: { distance: "marathon", targetDate: "2026-10-03" },
+        weekSchedule: week,
+      })
+    );
+    expect(out.weekSchedule).toEqual(week);
+    expect(heavyLegs(onDay(out, FRIDAY))).toBe(true);
+  });
+});
+
 /* ─── validatePlanOutput ─────────────────────────────────────── */
 
 describe("validatePlanOutput", () => {
   it("accepts a freshly built plan", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     expect(() => validatePlanOutput(out)).not.toThrow();
   });
 
@@ -508,9 +581,7 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when runDay missing id", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     const bad = {
       ...out,
       programState: {
@@ -524,9 +595,7 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when runDay date is UTC ISO format", () => {
-    const out = buildPlan(
-      makeInput({ runMode: "structured", weeklyRunDays: 3 })
-    );
+    const out = buildPlan(makeInput({ runMode: "starter", weeklyRunDays: 3 }));
     const bad = {
       ...out,
       programState: {
@@ -649,7 +718,6 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     durationWeeks: 8 as const,
     startDate: "2026-08-01",
     goalBefore: "hypertrophy" as const,
-    amnestyWeeksLeft: 3,
     weeklyLiftTarget: 4,
     anchorExerciseIds: ["squat"],
     why: "",
@@ -1197,7 +1265,6 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
         durationWeeks: 8,
         startDate: "2026-05-11",
         goalBefore: "hypertrophy",
-        amnestyWeeksLeft: 0,
       } as ProgramState["trainingBlock"],
     };
     const edited = buildPlan(
@@ -1209,9 +1276,9 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
       })
     ).programState;
     // A beginner's Get stronger main lifts: one target of 5, not Build
-    // muscle's 8.
+    // muscle's 8; a bodyweight one with no load added starts at 8.
     for (const lift of lifts(edited, true)) {
-      expect(lift.reps, lift.name).toBe(5);
+      expect(lift.reps, lift.name).toBe(takesBodyweightFloor(lift) ? 8 : 5);
       expect(lift.progressionType, lift.name).toBe("linear");
     }
   });

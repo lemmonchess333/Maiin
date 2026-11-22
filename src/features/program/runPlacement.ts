@@ -13,11 +13,15 @@ export function chooseQualityRunSlots({
   longDay,
   count,
   weekSchedule,
+  otherDemanding = [],
 }: {
   availableDays: readonly number[];
   longDay: number;
   count: 1 | 2;
   weekSchedule: readonly ScheduleDay[];
+  /** Run26 (2): other demanding days the week already holds (an ultra's
+   *  back-to-back run), kept apart from as the long run is. */
+  otherDemanding?: readonly number[];
 }): number[] {
   const days = [...new Set(availableDays)]
     .filter(
@@ -30,7 +34,7 @@ export function chooseQualityRunSlots({
       ? days.flatMap((day, i) => days.slice(i + 1).map((other) => [day, other]))
       : days.map((day) => [day]);
   const score = (choice: number[]) => {
-    const demanding = [longDay, ...choice];
+    const demanding = [longDay, ...otherDemanding, ...choice];
     const gaps = demanding.flatMap((day, i) =>
       demanding.slice(i + 1).map((other) => gap(day, other))
     );
@@ -108,14 +112,72 @@ export function pickLongRunSlot(
   return bothSlots[0] ?? runEligibleSlots[0];
 }
 
+/** The week's run days, lifting or not, in the schedule's order. */
+function runDaysOf(
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>
+): number[] {
+  return weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+}
+
 /** The weekday a plan's long run falls on, the race and structured plans'
  *  one picker, or null for a week with no run day. Lift13: a new plan's
  *  lift order keeps its heaviest leg session off the day before it. */
 export function longRunDayOf(
   weekSchedule: ReadonlyArray<{ day: number; type: string }>
 ): number | null {
-  const runDays = weekSchedule
-    .filter((d) => d.type === "run" || d.type === "both")
-    .map((d) => d.day);
+  const runDays = runDaysOf(weekSchedule);
   return runDays.length > 0 ? pickLongRunSlot(runDays, weekSchedule) : null;
+}
+
+/**
+ * Run26 (2): the day an ultra's back-to-back run takes, beside the long
+ * run: a weekend day where the one beside it is, else the day after, else
+ * the day before. A run day with no lifting only, as the long run's own
+ * pick prefers (`pickLongRunSlot`); null when neither neighbour is one.
+ */
+export function backToBackSlotOf(
+  longSlot: number,
+  slots: readonly number[],
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>
+): number | null {
+  const after = (longSlot + 1) % 7;
+  const before = (longSlot + 6) % 7;
+  const open = [after, before].filter(
+    (d) =>
+      slots.includes(d) &&
+      weekSchedule.find((day) => day.day === d)?.type === "run"
+  );
+  return open.find((d) => d === 0 || d === 6) ?? open[0] ?? null;
+}
+
+/** Run26 (2): the weekday an ultra plan's back-to-back run falls on, beside
+ *  the long run (`longRunDayOf`), or null: no run day, or no day beside
+ *  the long run to take it. The run plan's own pick. */
+export function backToBackDayOf(
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>
+): number | null {
+  const longDay = longRunDayOf(weekSchedule);
+  return longDay === null
+    ? null
+    : backToBackSlotOf(longDay, runDaysOf(weekSchedule), weekSchedule);
+}
+
+/**
+ * Run27 (19): the weekdays a plan's long runs fall on, as the lifting
+ * reads them: the long run's (`longRunDayOf`) and, in a plan whose weekend
+ * holds an ultra's back-to-back runs (`weekendHoldsBackToBacks`), the
+ * back-to-back's beside it (`backToBackDayOf`). A new plan's lift order
+ * keeps its heaviest leg session off the day before each (Lift13). Empty
+ * for a week with no run day.
+ */
+export function longRunDaysOf(
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>,
+  backToBacks: boolean
+): number[] {
+  const longDay = longRunDayOf(weekSchedule);
+  if (longDay === null) return [];
+  const pair = backToBacks ? backToBackDayOf(weekSchedule) : null;
+  return pair === null ? [longDay] : [longDay, pair];
 }

@@ -125,12 +125,12 @@ describe("the race plan in a new runner's first weeks", () => {
   });
 
   it("drops the taper's session too", () => {
-    // A 5K six weeks out: a tempo, 6 × 1K and the taper's 8 × 400, all in
-    // the first six weeks.
+    // A 5K six weeks out: light quality in the base, a time trial and the
+    // taper's sharpener at 5K pace (Run24 (5)), all in the first six weeks.
     const regular = plan("5k", 6, null);
     const fresh = plan("5k", 6, until);
     expect(regular.weeks.flatMap(quality).map((r) => r.templateId)).toContain(
-      "8x400"
+      "sharpener_5k"
     );
     expect(fresh.weeks.flatMap(quality)).toEqual([]);
   });
@@ -291,11 +291,12 @@ describe("a new runner's runs after the run-walk weeks", () => {
     const regular = plan("10k", 14, null, ranForty);
     const fresh = plan("10k", 14, until, ranForty);
     // Run24 (6): the regular week's easy run gives way to hold the week to
-    // 15% over the last full week.
+    // 15% over the last full week; Run24 (4): a time trial in week 7 took a
+    // tempo, so this one is the ladder's next.
     expect(regular.weeks[8].map((r) => r.templateId)).toEqual([
       "long_10k",
-      "easy_30",
-      "tempo_30",
+      "easy_40",
+      "tempo_20",
     ]);
     expect(fresh.weeks[8].map((r) => r.templateId)).toEqual([
       "long_6k",
@@ -354,6 +355,23 @@ describe("a new runner's runs after the run-walk weeks", () => {
             ).toBeLessThanOrEqual(minutes(own));
             return;
           }
+          // Run24 (5): a build's quality sessions take their families in
+          // turn from the runner's own first one, so a beginner's is the
+          // same kind of session as the plan's that week, its family their
+          // own, held to their minutes, or an easy run where nothing of its
+          // family is short enough.
+          if (
+            (own.type === "tempo" || own.type === "intervals") &&
+            i < weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance]
+          ) {
+            expect(
+              [own.type, "easy"],
+              `${distance} in ${weeks} weeks, week ${i + 1}`
+            ).toContain(run.type);
+            expect(run.date).toBe(own.date);
+            expect(minutes(run)).toBeLessThanOrEqual(Math.max(most, 30));
+            return;
+          }
           if (own.type === "race" || minutes(own) <= most)
             expect(run, `${distance} in ${weeks} weeks, week ${i + 1}`).toEqual(
               own
@@ -361,15 +379,19 @@ describe("a new runner's runs after the run-walk weeks", () => {
         });
       });
     }
-    // A 5K fourteen weeks out is the plan's own from week 11.
+    // A 5K fourteen weeks out is the plan's own from week 11, its quality
+    // sessions the same kinds in their own families' turns (Run24 (5)).
     const regular = plan("5k", 14, null, ranForty);
     plan("5k", 14, until, ranForty)
       .weeks.slice(10)
       .forEach((week, offset) => {
         for (const run of week) {
-          expect(run).toEqual(
-            regular.weeks[offset + 10].find((day) => day.date === run.date)
-          );
+          const own = regular.weeks[offset + 10].find(
+            (day) => day.date === run.date
+          )!;
+          if (run.type === "tempo" || run.type === "intervals")
+            expect(run.type).toBe(own.type);
+          else expect(run).toEqual(own);
         }
       });
   });
@@ -445,10 +467,11 @@ describe("a new runner's runs after the run-walk weeks", () => {
 
   it("are no one else's", () => {
     expect(newRunnerBuildMinutes("2026-10-26", null)).toBeNull();
+    // Week 7 holds a time trial in place of its tempo (Run24 (4)).
     expect(plan("half", 16, null).weeks[6].map((r) => r.templateId)).toEqual([
       "long_14k",
       "easy_50",
-      "tempo_20",
+      "time_trial_5k",
     ]);
   });
 });

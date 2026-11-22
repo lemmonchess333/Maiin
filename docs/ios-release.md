@@ -34,8 +34,15 @@ without a Watch.
 
 `.github/workflows/deploy-ios.yml` builds the web bundle, runs
 `cap sync ios`, archives a signed Release build, and uploads it to
-TestFlight, on one of GitHub's macOS runners (`macos-26`; free for a public
-repo). It is **manual-trigger only** (`workflow_dispatch`) so it never fires
+TestFlight, on one of GitHub's macOS runners (`xcode-27`, a preview image,
+with Xcode 27.1 selected by name, which may be its release candidate; the
+job summary names the one used. Standard runners are free for a public
+repo). The build links the iOS 27.1 SDK:
+the iPhone Duo shows an app on its whole display only from that SDK, and
+App Store Connect takes uploads only from the iOS 27 SDK from April 2027
+(`docs/ios/iphone-duo.md`, owner decision A, 18 November 2026). An app
+built with the 27.1 SDK also needs iPhone Duo screenshots for App Store
+submissions from April 2027; TestFlight builds do not. It is **manual-trigger only** (`workflow_dispatch`) so it never fires
 unexpectedly on a push — you run it from the **Actions** tab when you want a
 new TestFlight build, then install the build with Apple's TestFlight app.
 Nothing in this route needs a Mac: every value below comes from Apple's or
@@ -52,11 +59,12 @@ Firebase's website.
 
 A TestFlight archive needs one Apple Distribution certificate and an App
 Store provisioning profile for each app and extension target: today the
-iPhone app and the Watch app. The workflow reads that list from the project
-(`scripts/ios_signed_targets.py`, its first step), so a target added later,
-such as the Live Activity widget extension
-([run-live-activity.md](run-live-activity.md)), is signed, checked and
-exported with no change to the workflow. It gets the certificate and
+iPhone app, the Watch app and the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), which also holds the Home
+Screen and Lock Screen widgets (Wid1) and shares the App Group
+`group.com.tropos.app` with the app. The workflow reads that list from the
+project (`scripts/ios_signed_targets.py`, its first step), so a target added
+later is signed, checked and exported with no change to the workflow. It gets the certificate and
 profiles one of two ways:
 
 - **From the API key (the default).** With none of the four
@@ -285,9 +293,26 @@ compiles a standard Release build for Simulator, then the pilot, with
 signing disabled, and runs `scripts/verify_ios_watch.py --unsigned` on each:
 the standard build must carry no Watch app, the gate off and the short Health
 text; the pilot one embedded Watch app, both gates on and the expanded text.
-It uses a synthetic Firebase plist and does not install, sign, or exercise
-either app. A green compile is required before this gate is considered ready
-for the signed TestFlight and paired-device checks below.
+It uses a synthetic Firebase plist and placeholder web Firebase settings
+(without an API key the web app never mounts), and signs neither app. It
+launches the standard build once on a simulator (iPhone, the image's newest
+iOS) and fails if the app is not running and drawing 25 seconds later
+(`scripts/verify_ios_launch.py`): the app uses the UIScene life cycle
+(`ios/App/App/SceneDelegate.swift`, required of iOS 27 SDK builds, see
+`docs/ios/iphone-duo.md`), and a scene wired wrongly launches to a black
+screen that a compile cannot see. A dark launch is named by its colour (black
+is no window; the page's colour is a web app that did not mount) and the
+app's log is printed. The screenshot is kept as the run's
+`ios-simulator-launch` artifact. That phone is never the iPhone Duo, whose
+two displays make a screenshot name one. The Duo gets a launch of its own
+(Xcode 27.1 carries its simulator): each display is shot before the launch
+and 25 seconds after it, the app has to be running, and the display that
+showed the home screen has to show the app (a folded-away display stays
+dark). The job summary has the table, and the screenshots are the
+`ios-simulator-duo` artifact. The step fails by name if a later image's
+Xcode has no Duo. Nothing else is exercised. A green compile
+is required before this gate is considered ready for the signed TestFlight
+and paired-device checks below.
 
 The TestFlight workflow runs the same checks on the archive and on the
 exported IPA, and for a pilot also checks that the Watch app is signed
@@ -304,16 +329,26 @@ build for paired-device proof with internal TestFlight testers, then enable a
 regular release only after the matrix passes. A web deploy or an unsigned
 simulator build does not validate the TestFlight path.
 
-Before expanding beyond the pilot, complete the real-device checks in
+The pilot's Watch app carries its own two Health usage texts and the
+Workout Processing and Audio background modes, and the verifier refuses a
+pilot without them: Apple's "Running workout sessions" asks the app that runs
+a workout session to request sharing workouts as well as reading heart rate
+(the Watch saves no workout), and asks for the Audio mode of an app that
+plays haptics during one, as the Watch does at each step of a structured run.
+
+Before expanding beyond the pilot, run the device acceptance kit in
+[`docs/qa/pre-launch-backlog.md`](qa/pre-launch-backlog.md) ("Apple Watch
+companion: device acceptance kit"), which covers the native feasibility gate
+and the acceptance matrix of
 [`docs/proposals/connected-training.md`](proposals/connected-training.md):
-start and control an outdoor run with the iPhone locked; interrupt the Watch
-connection and recover without replaying stale controls; finish on Watch and
-review on iPhone after an app restart; save once through the offline queue;
-and verify Apple Health shows no workout when export is off and exactly one
-when it is on. Test an account switch as well as revoked Health permissions.
-Start with export off. Turn it on only on a test account for the duplicate,
-reinstall and cross-device deletion checks. Record the iPhone/Watch models and
-OS versions used for the check.
+the session's steps on the wrist; start and control an outdoor run with the
+iPhone locked; interrupt the Watch connection and recover without replaying
+stale controls; finish on Watch and review on iPhone after an app restart;
+save once through the offline queue; and Apple Health showing no workout when
+export is off and exactly one when it is on. It tests an account switch and
+revoked Health permissions too, starts with export off, and turns it on only
+on a test account for the duplicate, reinstall and cross-device deletion
+checks. Its first rows record the iPhone and Watch models and OS versions.
 
 This Linux checkout has no Xcode or paired Apple devices. The watchOS target,
 signing and live behavior remain unverified until the macOS workflow and this

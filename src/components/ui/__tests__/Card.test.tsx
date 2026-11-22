@@ -50,11 +50,15 @@ describe("Card surface", () => {
     expect(cls).not.toMatch(/\bshadow-card\b/);
   });
 
-  it("muted tone sits flush: bg-muted and no elevation", () => {
+  it("muted tone sits flush: bg-muted, no elevation, and on dark the tile's lit edge", () => {
+    // DS6 (DESIGN_GUIDE §14o): a compact tile takes a hairline of light
+    // along its top on dark, at a chip's size; `chip-edge` is transparent
+    // in the light theme, so there the tile still sits flush.
     const cls = cardClasses({ tone: "muted" });
     expect(cls).toMatch(/\bbg-muted\b/);
     expect(cls).not.toMatch(/\bbg-card\b/);
     expect(cls).not.toMatch(/card-shadow/);
+    expect(cls).toMatch(/\bchip-edge\b/);
   });
 
   it("tinted tone supplies no surface: the CTA card paints its own 8% wash", () => {

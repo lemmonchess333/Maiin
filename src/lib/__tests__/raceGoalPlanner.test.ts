@@ -121,6 +121,21 @@ describe("getRaceGoalPlannerState", () => {
     expect(tight.ctaLabel).toBe("Save mostly-easy plan");
   });
 
+  // A 5K is the shortest race there is: only a later one gives it time.
+  it("offers a 5K a later race, never a shorter one", () => {
+    const tight = getRaceGoalPlannerState({
+      ...base,
+      distance: "5k",
+      targetDate: "2026-06-05",
+      newRunnerUntil: newRunnerUntil("new", TODAY),
+    });
+    expect(tight.status).toBe("below-floor");
+    expect(tight.statusDescription).toMatch(
+      /^Too soon for a full 5K build\. A later race gives it time\. /
+    );
+    expect(tight.statusDescription).not.toMatch(/shorter/);
+  });
+
   // ── State E — below floor / finish safely ──────────────────────────
   it("State E: marathon 3 weeks out → below-floor, Save mostly-easy plan", () => {
     const s = getRaceGoalPlannerState({ ...base, targetDate: "2026-06-22" });
@@ -659,5 +674,74 @@ describe("getRaceGoalPlannerState — the words for a race too close", () => {
       newRunnerUntil: newRunnerUntil("new", monday),
     });
     expect(s.statusDescription).not.toMatch(/gives it time/);
+  });
+});
+
+/* Run26 (2): the ultras and a trail race in setup's preview. A plan sizing
+   its long runs in time states the longest in time, and is never weighed
+   against the race's distance. */
+describe("getRaceGoalPlannerState — ultras and trail (Run26 (2))", () => {
+  const ultra = (
+    distance: RaceDistance,
+    weeksOut: number,
+    extra: Partial<RaceGoalPlannerInput> = {}
+  ) =>
+    getRaceGoalPlannerState({
+      ...base,
+      distance,
+      weeklyRunDays: 4,
+      targetDate: localDateString(
+        addLocalDays(parseLocalDate(TODAY), weeksOut * 7 + 5)
+      ),
+      ...extra,
+    });
+
+  it.each([
+    ["50k", "50K", 16, 4],
+    ["50mi", "50-mile race", 18, 5],
+    ["100k", "100K", 18, 5],
+  ] as const)(
+    "a full %s build states its longest run in time",
+    (distance, words, idealWeeks, recoveryWeeks) => {
+      const s = ultra(distance, 22, { easyPaceSPerKm: 360 });
+      expect(s.status).toBe("healthy");
+      expect(s.idealWeeks).toBe(idealWeeks);
+      expect(s.recoveryWeeks).toBe(recoveryWeeks);
+      expect(s.statusDescription).toMatch(
+        new RegExp(
+          `^Full Base → Build → Taper → Race progression for your ${words}\\. Your longest run will be \\d+ h( \\d+ min)?\\.$`
+        )
+      );
+    }
+  );
+
+  it("names the distances in words", () => {
+    expect(ultra("50mi", 22).distanceLabel).toBe("50 Miles");
+    expect(ultra("100k", 22).distanceLabel).toBe("100K");
+  });
+
+  it("says a tight ultra's long run in time, never out of reach", () => {
+    const s = ultra("100k", 8);
+    expect(s.status).toBe("compressed");
+    expect(s.statusDescription).not.toMatch(/ km|a 100K is/);
+    expect(s.statusDescription).toMatch(/\d+ h/);
+  });
+
+  it("takes the climb: a hilly half is a trail plan, in time", () => {
+    const road = ultra("half", 14, { easyPaceSPerKm: 360 });
+    const trail = ultra("half", 14, { easyPaceSPerKm: 360, climbM: 600 });
+    expect(road.statusDescription).toMatch(/Your longest run will be \d+ km,/);
+    expect(trail.statusDescription).toMatch(
+      /Your longest run will be \d+ h( \d+ min)?\.$/
+    );
+  });
+
+  it("asks an ultra for four runs a week, the weekend free", () => {
+    expect(raceRunDaysNote("50k", 3)).toBe(
+      "An ultra plan works best on four runs a week, with both weekend days free for the long runs. Add a day, or choose a shorter race."
+    );
+    expect(raceRunDaysNote("100k", 4)).toBeNull();
+    // A road race's notes are unchanged.
+    expect(raceRunDaysNote("marathon", 3)).toBeNull();
   });
 });

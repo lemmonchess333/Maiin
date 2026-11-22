@@ -30,6 +30,7 @@ const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
 const leagues = require("./lib/leagues");
+const segments = require("./lib/segments");
 
 /**
  * Every subcollection under users/{uid}.
@@ -72,6 +73,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // here so a user's saved routes don't orphan when the account is deleted.
   "savedRoutes",
   "savedRoutines",
+  // The posts the person hid from their feed (users/{uid}/hiddenPosts,
+  // App1 Q38): owner-only, a post id, a time and its author's id each.
+  "hiddenPosts",
   "shoes",
   // GPS privacy zones — the circles a user draws around home and work so
   // routes are trimmed before sharing. The most sensitive thing in the
@@ -95,12 +99,21 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // The live pulse's per-session credits (lib/pulse.js, Soc15).
   // Server-owned, like `communityGoal`; each also expires by TTL.
   "pulseCredits",
+  // Each Space's week credit (lib/spaceWeeks.js, Run27 call 11): one
+  // member's sessions and metres in one Space in one week. Server-owned,
+  // like `pulseCredits`; the Space's figures carry no one's id.
+  "spaceWeeks",
   // A medal per challenge edition (lib/medals.js, Soc15). Server-owned,
   // owner-read; the public summary goes with `public` below.
   "medals",
   // How each league week went (lib/leagues.js, Soc15 call 3). Server-owned,
   // owner-read.
   "leagueResults",
+  // Every segment effort the account made (lib/segments.js, Run26 call 3):
+  // the time, the run it came from, and where it started and ended.
+  // Server-owned, owner-read. Its board entries and the segments it made
+  // go in the segments step below, which reads no subcollection of its own.
+  "segmentEfforts",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",
@@ -152,11 +165,12 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   "profile-photos/__UID__/",
   // Food diary photos — LEGACY ONLY as of Food9 (2026-08-18). Captures
   // are written to the DEVICE now (src/lib/foodPhotoStore.ts) and never
-  // reach Storage, so nothing new lands under this prefix. It stays
-  // because blobs uploaded before the swap are still there and still
-  // rendered by pre-Food9 meal docs; a deleting user must have them
-  // erased. Do not remove until that legacy sweep has run (tracked in
-  // the CLAUDE.md pre-launch backlog).
+  // reach Storage, so nothing new lands under this prefix, and the app no
+  // longer shows one. Every blob uploaded before the swap is deleted by
+  // functions/scripts/purgeLegacyFoodPhotos.js (owner, 2026-11-21); until
+  // that has run in production, a deleting user's are erased here. Once
+  // it has, the prefix is empty and this costs one list call. Remove it
+  // only after the purge's row in docs/qa/pre-launch-backlog.md is ticked.
   "food-photos/__UID__/",
   // Community Space post photos (Spc1 PR4, src/lib/spacePhotoUpload.ts).
   // The Firestore posts are deleted by the spaces cleanup step (3d);
@@ -441,6 +455,17 @@ async function deleteAccount({
       uid,
       logger,
     });
+
+    // 0f. Segments (Run26 call 3, inventory `segmentsOwned`,
+    // `segmentOwners` and `segmentBoardEntries`). Every segment the account
+    // made goes, with every effort anyone has on it (a collection-group
+    // sweep of segmentEfforts by segment), its board and its owner record;
+    // then the account's own entries on anyone's board. Order-independent:
+    // it finds its segments by `segmentOwners.uid`, not through the
+    // account's tree. The run sweep below fires onRunDeleted for each run,
+    // which the deletion guard turns into a no-op.
+    stage = "segments";
+    await segments.removeSegmentTracesForUser(firestore, uid);
 
     // 1. User's own subcollections
     stage = "user_subcollections";

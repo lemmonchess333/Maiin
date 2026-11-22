@@ -44,7 +44,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
 export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
     <div
-      className="bg-card rounded-2xl p-4 space-y-3"
+      className="bg-card rounded-2xl p-4 space-y-3 dark:card-shadow"
       style={{ animationDelay: `${stagger * 80}ms` }}
     >
       <Skeleton className="h-4 w-1/3" stagger={stagger} />
@@ -57,7 +57,7 @@ export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
 export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
     <div
-      className="bg-card rounded-2xl p-4 space-y-3"
+      className="bg-card rounded-2xl p-4 space-y-3 dark:card-shadow"
       style={{ animationDelay: `${stagger * 80}ms` }}
     >
       <Skeleton className="h-4 w-1/4" stagger={stagger} />
@@ -73,7 +73,7 @@ export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
  */
 export function ActivityCardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
-    <div className="bg-card rounded-2xl overflow-hidden">
+    <div className="bg-card rounded-2xl overflow-hidden dark:card-shadow">
       {/* Map / route preview area */}
       <Skeleton className="h-28 rounded-none" stagger={stagger} />
       <div className="p-4 space-y-3">
@@ -143,7 +143,12 @@ function SkelCard({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("bg-card rounded-2xl p-4 space-y-3", className)}>
+    <div
+      className={cn(
+        "bg-card rounded-2xl p-4 space-y-3 dark:card-shadow",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -186,13 +191,12 @@ function LineBar({
 }
 
 /**
- * The Performance card's shape while its week loads (Pol1): the ring the
- * score sits in, the change on last week, two lines of words, the
- * six-week line and its dates, each in the box it holds the place of. A
- * shorter placeholder drops the range pills and everything under them
- * when the score lands. The steady state is what it copies: a new
- * account's empty card is shorter, and a week without a change has no
- * chip.
+ * The Performance lead's shape while its week loads (Pol1): the window,
+ * the verdict and its line, then lifting and running against the usual
+ * week (App1 Q10), each in the box it holds the place of. A shorter
+ * placeholder drops the range pills and everything under them when the
+ * week lands. The steady state is what it copies: a new account's empty
+ * card is shorter, and someone who trains one sport has one row.
  */
 export function PerformanceCardSkeleton() {
   return (
@@ -200,38 +204,34 @@ export function PerformanceCardSkeleton() {
       role="status"
       aria-label="Loading"
       data-skeleton="performance-card"
-      className="bg-card card-shadow rounded-2xl p-4 space-y-3"
+      className="bg-card card-shadow rounded-2xl p-4 space-y-4"
     >
-      <div className="flex flex-wrap items-center gap-4">
-        {/* The ring is 6rem across: it grows with the text, as the
-            card's does. */}
-        <Bar className="size-24 shrink-0 rounded-full" />
-        <div className="min-w-[min(100%,9em)] flex-1 space-y-1">
-          {/* The change chip is inline in the real card, on a line of its
-              own above the words, so it is inline here too. */}
-          <span
-            aria-hidden
-            className={cn(
-              "inline-block w-12 px-2 py-0.5 text-xs align-top",
-              BAR_FILL,
-              "rounded-full"
-            )}
-          >
-            {"\u00a0"}
-          </span>
-          <div>
-            <LineBar text="text-sm" className="w-full" />
-            <LineBar text="text-sm" className="w-2/3" />
-          </div>
-        </div>
+      {/* The window, the verdict and its line, each in its own type. */}
+      <div className="space-y-1">
+        <LineBar text="text-xs font-semibold" className="w-20" />
+        <LineBar
+          text="text-hero font-extrabold leading-[1.05] tracking-tight"
+          className="w-48 max-w-full"
+        />
+        <LineBar text="text-sm" className="w-2/3" />
       </div>
-      <div>
-        {/* Sparkline draws 300 by 44 at the card's width. */}
-        <Bar className="w-full aspect-[300/44]" />
-        <div className="mt-1 flex justify-between text-xs">
-          <LineBar as="span" className="w-12" />
-          <LineBar as="span" className="w-14" />
-        </div>
+      {/* Lifting and running against the usual week: a name and figure,
+          the bar, and the line under it. */}
+      <div className="space-y-4">
+        {[0, 1].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <div className="flex items-baseline justify-between gap-x-3">
+              <LineBar
+                as="span"
+                text="text-sm font-semibold"
+                className="w-16"
+              />
+              <LineBar as="span" text="text-base font-bold" className="w-14" />
+            </div>
+            <Bar className="h-2 w-full rounded-full" />
+            <LineBar text="text-xs" className="w-1/2" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -252,7 +252,7 @@ export function CirclesCardSkeleton() {
       role="status"
       aria-label="Loading"
       data-skeleton="circles-card"
-      className="@container rounded-2xl bg-card p-4 space-y-3"
+      className="@container rounded-2xl bg-card p-4 space-y-3 dark:card-shadow"
     >
       <div className="flex items-start gap-3">
         <Bar className="size-9 shrink-0 rounded-xl" />
@@ -343,8 +343,8 @@ function PillRowSkeleton({ count }: { count: number }) {
 }
 
 /**
- * Analytics while its page loads, block for block in the overview's own
- * order and rhythm (Pol1): PageShell's title, the Analytics / Bests
+ * Progress while its page loads, block for block in the overview's own
+ * order and rhythm (Pol1): PageShell's title, the Overview / Bests
  * switch, Performance under its heading, the range, and the range
  * card. In any other order the whole page reshuffles as it arrives. `historySkeleton
  * .test.tsx` holds the order to History's.
@@ -429,7 +429,10 @@ export function SocialSkeleton() {
       <Bar className="h-7 w-28" />
       <PillRowSkeleton count={3} />
       {[0, 1].map((i) => (
-        <div key={i} className="bg-card rounded-2xl overflow-hidden">
+        <div
+          key={i}
+          className="bg-card rounded-2xl overflow-hidden dark:card-shadow"
+        >
           <Bar className="h-28 rounded-none" />
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">

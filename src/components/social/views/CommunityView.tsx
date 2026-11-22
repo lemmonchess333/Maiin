@@ -38,6 +38,10 @@ const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
  * ChallengeList reads the challenges once and lays the sections out
  * around the parts that read their own data: the race hero, the Circles
  * section and the races and Spaces directory.
+ *
+ * All of it from the person's first day, however few people are on Tropos
+ * (App1 Q6): a challenge, a Space or the league that is still small says
+ * it is filling up (`src/lib/fillingUp.ts`), and Join stays.
  */
 export interface CommunityViewProps {
   /** True when the Together tab is the active top-level tab. The view

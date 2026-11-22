@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/lib/auth";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
 import { plannedIntervalPaceSPerKm } from "./intervalRest";
 import type {
   ProgramState,
@@ -8,17 +9,20 @@ import type {
 import type { DayType } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
-  dayTypeFor,
   resolveTrainingDayForDate,
   runsWrittenForWeek,
   type LiftSlotStatus,
-  type ResolvedLift,
 } from "@/lib/trainingResolver";
-import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
-import { nextUpIndex } from "@/features/program/nextUpCursor";
+import {
+  liftsOpeningNextWeek,
+  planLiftOn,
+  type LayoutLift,
+  type LayoutRun,
+  type WeekLayout,
+} from "@/lib/layOutWeek";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
-import { isActivationJourneyV2 } from "@/lib/activationJourney";
+import { trainingKind } from "@/lib/trainingKind";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { runDoseLine } from "@/lib/runDose";
@@ -64,9 +68,11 @@ import type { StoredRunSummary } from "@/lib/runResumeStorage";
  * be tested by rendering the page. This takes one day and the data, and
  * decides:
  *
- *  - what kind of day the week's schedule makes it;
- *  - on a lifting day, the workout (the programme's next, `homeLift.ts`),
- *    where it opens and its muscle groups;
+ *  - what kind of day it is: a lifting day when the week laid out
+ *    (`layOutWeek`) holds a lift of the plan on it, and a run day when the
+ *    plan holds a run on its date;
+ *  - on a lifting day, the workout the week lays on it (to do, or done
+ *    today), where it opens and its muscle groups;
  *  - on a run day, the planned run, whether it is done, and whether it is a
  *    new person's first;
  *  - on a rest day, what the card offers instead: a new lifter's first
@@ -77,6 +83,13 @@ import type { StoredRunSummary } from "@/lib/runResumeStorage";
  *    on a strip of its own above the cards;
  *  - the next session in the days ahead, for the week's line under the
  *    hero ("Long run tomorrow").
+ *
+ * The lifts are the week's (TrainWk1 step 2): today's card, the rest day's
+ * "tomorrow" and the week's line name the lift `layOutWeek` lays on the
+ * day, the one Home's week strip and day card draw there, so no surface
+ * names a lift by its weekday's slot while another names the next in the
+ * plan's order. Past Sunday, the lifts the rollover will open next week
+ * with are named (`liftsOpeningNextWeek`).
  *
  * How the hero words it (the kicker, the line under its picture) is
  * `homeHero.ts`'s.
@@ -90,8 +103,8 @@ export interface TodaySessionInput {
   claimMap: Map<string, ClaimState>;
   /** The saved lift sessions: each one's id and day. */
   workouts: readonly { id: string; date: string }[];
-  /** Valid saved workouts for version 2 first-action framing. If omitted,
-   *  legacy framing continues to count every workout document. */
+  /** The saved workouts that count toward a first workout
+   *  (`isFirstWeekWorkoutEligible`). Absent counts every one in `workouts`. */
   validWorkoutCount?: number;
   /** When the account began, or null until the server has written it. */
   createdAtMs: number | null;
@@ -101,6 +114,10 @@ export interface TodaySessionInput {
   lifetimeRuns: number | null;
   /** Meals logged over the account's life. */
   lifetimeMeals: number;
+  /** The week holding `today`, laid out (`layOutWeek`) from the same plan
+   *  and sessions: which lift each day holds. Home's strip and day card
+   *  read the same one. */
+  week: WeekLayout;
   /** The sessions under way on this phone (`useSessionsInFlight`). Absent
    *  reads as none. */
   inFlight?: {
@@ -152,8 +169,8 @@ export function runStartTarget(runDay: ScheduledRunDay | null): string {
 }
 
 export interface TodayLift {
-  /** The workout the card offers, or null when the schedule names a lifting
-   *  day the programme has no workout for. */
+  /** The workout the card offers, or null on a lifting day of the usual
+   *  layout when the programme has no workouts at all. */
   workout: WorkoutDay | null;
   /** Its place in the programme, for `?day=N`. */
   index: number | null;
@@ -165,7 +182,9 @@ export interface TodayLift {
    *  workout. Absent reads as the day's name without its week. */
   name?: string | null;
   isStartable: boolean;
-  status: LiftSlotStatus;
+  /** To do, done, or "none" for a lifting day with no workout. Never
+   *  skipped: a skipped lift is not the day's (`layOutWeek`). */
+  status: Exclude<LiftSlotStatus, "skipped">;
   /** Up to three muscle groups, "Chest · Shoulders · Triceps". */
   muscleGroups: string;
   /** This workout is under way: the card offers Resume in Start's place.
@@ -206,7 +225,7 @@ export interface TodayRun {
 }
 
 /** Next session, as the rest-day card names it. `dateKey` appears only when
- *  a version 2 race plan looks beyond tomorrow. */
+ *  a race plan looks beyond tomorrow. */
 export interface TomorrowSession {
   label: string;
   /** Where it opens in Train. */
@@ -223,7 +242,13 @@ export interface NextSession {
   target: string;
   dateKey: string;
   daysAhead: number;
+  /** What the day holds, for a surface that colours it by sport (the Home
+   *  Screen widget's tomorrow). Absent reads as unknown. */
+  sport?: SessionSport;
 }
+
+/** What a day ahead holds: a lift, a run, or both. */
+export type SessionSport = "lift" | "run" | "both";
 
 export type RestDayOffer =
   /** A new lifter's first workout: lifts follow the rotation, not the
@@ -291,24 +316,36 @@ export function todaySession(input: TodaySessionInput): TodaySession {
     claimMap,
     todayKey: today,
   });
+  const day = input.week.days.find((d) => d.date === today) ?? null;
+  // The lift the week lays on today: the one to do (the cursor's next, the
+  // one Train starts), or one done today. A lift whose day passed sits on a
+  // later lift day, and once the week's lifts are done or rested the day
+  // holds none.
+  const liftToday = day ? planLiftOn(day) : null;
+  // A lifting day of the usual layout with no workout in the plan at all
+  // still says so ("Check your lifting plan").
+  const noWorkouts =
+    !liftToday &&
+    !programState?.workouts?.length &&
+    !!day?.liftDay &&
+    !day.beforeStart &&
+    !day.raceRest;
+  const lifting = !!liftToday || noWorkouts;
   // A run is today's when the plan holds one on today's date, whatever the
   // weekday (ADR-0002): a Sunday race, or a run moved to a lifting day.
-  const type = dayTypeFor(
-    resolved,
-    runsWrittenForWeek(programState?.runDays, currentWeekKey, currentWeekKey)
-  );
-  const lifting = type === "lift" || type === "both";
-  const running = type === "run" || type === "both";
-
-  // The workout today's card offers: the programme's next, the one Train
-  // starts, on a day the week schedules a lift (homeLift.ts, ADR-0002).
-  const homeLift = resolveHomeLift({
-    scheduled: resolved.lift,
-    programme: programState,
-    sessionsToday: new Set(
-      workouts.filter((w) => w.date === today).map((w) => w.id)
-    ),
-  });
+  // Before the week's runs are written (free running), the usual layout's
+  // run days are run days.
+  const pattern = resolved.scheduleType;
+  const running =
+    resolved.run.runDay !== null ||
+    (!runsWrittenForWeek(
+      programState?.runDays,
+      currentWeekKey,
+      currentWeekKey
+    ) &&
+      (pattern === "run" || pattern === "both"));
+  const type: DayType =
+    lifting && running ? "both" : lifting ? "lift" : running ? "run" : "rest";
 
   const framingInput = {
     createdAtMs: input.createdAtMs,
@@ -328,19 +365,19 @@ export function todaySession(input: TodaySessionInput): TodaySession {
       fixedRest: profile?.defaultRestSeconds,
       sessionMinutes: programState?.sessionMinutes,
     },
-    lift: lifting
-      ? {
-          workout: homeLift.workout,
-          index: homeLift.index,
-          ...liftTargets(homeLift.index),
-          name: homeLift.workout
-            ? weekDayName(programState, homeLift.index, homeLift.workout)
-            : null,
-          isStartable: homeLift.isStartable,
-          status: homeLift.status,
-          muscleGroups: muscleGroupsOf(homeLift.workout),
-        }
-      : null,
+    lift: liftToday
+      ? todayLift(programState, liftToday)
+      : noWorkouts
+        ? {
+            workout: null,
+            index: null,
+            ...liftTargets(null),
+            name: null,
+            isStartable: false,
+            status: "none",
+            muscleGroups: "",
+          }
+        : null,
     run: running
       ? {
           runDay: resolved.run.runDay,
@@ -356,8 +393,6 @@ export function todaySession(input: TodaySessionInput): TodaySession {
     rest:
       type === "rest"
         ? restDayOffer(input, {
-            currentWeekKey,
-            homeLift,
             // A new person's first workout is ready any day, so a rest day
             // asks the lifting day's question.
             firstWorkout: getActivationFraming({
@@ -368,8 +403,27 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           })
         : null,
     ...(profile?.primaryGoal === "running" && { runFirst: true }),
-    next: nextSessionAhead(input, currentWeekKey, homeLift, NEXT_SESSION_DAYS),
+    next: nextSessionAhead(input, NEXT_SESSION_DAYS),
   });
+}
+
+/** Today's card for the lift the week lays on today. */
+function todayLift(
+  programState: ProgramState | null,
+  lift: LayoutLift
+): TodayLift {
+  const done = lift.state === "done";
+  return {
+    workout: lift.workout,
+    index: lift.index,
+    ...liftTargets(lift.index),
+    name: lift.workout
+      ? weekDayName(programState, lift.index, lift.workout)
+      : null,
+    isStartable: !done,
+    status: done ? "completed" : "planned",
+    muscleGroups: muscleGroupsOf(lift.workout),
+  };
 }
 
 /** How far ahead the week's line looks for the next session: six days, so
@@ -377,20 +431,14 @@ export function todaySession(input: TodaySessionInput): TodaySession {
 const NEXT_SESSION_DAYS = 6;
 
 /** The first day after today, within `maxDaysAhead`, that holds a session,
- *  named as the rest day's card names tomorrow's (`sessionDaysAhead`). */
+ *  named as the rest day's card names tomorrow's (`sessionsAhead`). */
 function nextSessionAhead(
   input: TodaySessionInput,
-  currentWeekKey: string,
-  homeLift: ResolvedLift,
   maxDaysAhead: number
 ): NextSession | null {
+  const ahead = sessionsAhead(input);
   for (let daysAhead = 1; daysAhead <= maxDaysAhead; daysAhead += 1) {
-    const session = sessionDaysAhead(
-      input,
-      currentWeekKey,
-      homeLift,
-      daysAhead
-    );
+    const session = ahead(daysAhead);
     if (session)
       return {
         label: session.label,
@@ -399,6 +447,7 @@ function nextSessionAhead(
           addLocalDays(parseLocalDate(input.today), daysAhead)
         ),
         daysAhead,
+        sport: session.sport,
       };
   }
   return null;
@@ -474,8 +523,6 @@ function placeInProgress(
 function restDayOffer(
   input: TodaySessionInput,
   day: {
-    currentWeekKey: string;
-    homeLift: ResolvedLift;
     firstWorkout: boolean;
     firstMeal: boolean;
   }
@@ -484,8 +531,11 @@ function restDayOffer(
   // The first workout still leads for someone who also lifts; after it, a
   // free runner's day offers a run. Free running has no planned days, so
   // "Rest day" was wrong for anyone who runs freely, a lifter included.
+  // Whether they run is the plan's to say (`trainingKind`, App1 Q23), so a
+  // lifter who took up running is offered one too.
   if (day.firstWorkout) {
-    const index = nextUpIndex(programState);
+    // The week's next lift: the cursor's, laid on a later day.
+    const index = input.week.next?.index ?? -1;
     const workout = index >= 0 ? programState?.workouts?.[index] : undefined;
     if (workout)
       return {
@@ -497,113 +547,142 @@ function restDayOffer(
         muscleGroups: muscleGroupsOf(workout),
       };
   }
+  // A plan with no race date is a plan here, though the profile says free
+  // running (Run24 (3)).
+  const runMode = runModeWithPlan(profile, programState);
+  // Free running is the profile's own word (a missing run mode is not it),
+  // and a plan with no race date is not free running.
   if (
     profile?.runMode === "freeform" &&
-    (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
+    runMode === "freeform" &&
+    trainingKind(profile, programState).runs
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }
   // A race plan's rest day must stay rest, and so must the starter goal's
-  // (Run9). It cannot lead with a food prompt or offer an unscheduled run
-  // to satisfy activation.
-  const version2RaceRest =
-    isActivationJourneyV2(profile) &&
-    (profile?.runMode === "race_prep" || profile?.runMode === "starter");
-  if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
+  // (Run9) and a plan with no race date's. It cannot lead with a food
+  // prompt or offer an unscheduled run to satisfy activation.
+  const raceRest =
+    runMode === "race_prep" || runMode === "starter" || runMode === "rolling";
+  if (day.firstMeal && !raceRest) return { kind: "first-meal" };
   return {
     kind: "rest",
-    tomorrow: nextRestSession(
-      input,
-      day.currentWeekKey,
-      day.homeLift,
-      version2RaceRest ? 7 : 1
-    ),
+    tomorrow: nextRestSession(input, raceRest ? 7 : 1),
   };
 }
 
-/** Legacy cards inspect tomorrow. A version 2 race rest day can name the
- *  next planned session through the coming week without starting it. */
+/** A rest day's card names tomorrow's session. A race plan's rest day can
+ *  name the next planned session through the coming week without starting
+ *  it. */
 function nextRestSession(
   input: TodaySessionInput,
-  currentWeekKey: string,
-  homeLift: ResolvedLift,
   maxDaysAhead: number
 ): TomorrowSession | null {
+  const ahead = sessionsAhead(input);
   for (let daysAhead = 1; daysAhead <= maxDaysAhead; daysAhead += 1) {
-    const session = sessionDaysAhead(
-      input,
-      currentWeekKey,
-      homeLift,
-      daysAhead
-    );
-    if (session) return session;
+    const session = ahead(daysAhead);
+    if (session) {
+      const { label, target, dateKey } = session;
+      return dateKey ? { label, target, dateKey } : { label, target };
+    }
   }
   return null;
 }
 
-/** Resolved with TODAY's week key, so a legacy run day cannot borrow
- *  this week's status for next week. */
-function sessionDaysAhead(
-  input: TodaySessionInput,
-  currentWeekKey: string,
-  homeLift: ResolvedLift,
-  daysAhead: number
-): TomorrowSession | null {
-  const { today, profile, programState, claimMap } = input;
-  const date = addLocalDays(parseLocalDate(today), daysAhead);
-  const dateKey = localDateString(date);
-  const next = resolveTrainingDayForDate({
-    dateKey,
-    profile,
-    programState,
-    currentWeekKey,
-    claimMap,
-    todayKey: today,
-  });
-  // A lift day names the workout that will be next by then, in the
-  // programme's order, as today's card does.
-  const tomorrowLift = next.lift.workout
-    ? (nextLiftAfter(homeLift, programState) ?? {
-        index: next.lift.index,
-        workout: next.lift.workout,
-      })
-    : null;
-  // Named as Train names it in its week: "Pull B".
-  const liftName = tomorrowLift
-    ? weekDayName(programState, tomorrowLift.index, tomorrowLift.workout)
-    : null;
-  const runDay = next.run.runDay;
-  /* A run day whose week has no runs written yet is named by its type.
-     The plan holds the current week's runs, so on a Sunday, Monday's
-     run is written only when the week rolls over. Once a week's runs
-     are written, a run day with none on it has had its run moved to
-     another date (runs are pinned to dates, ADR-0002), and it names
-     nothing. A run with neither date nor week key belongs to the
-     current week, as the resolver reads it. */
-  const nextWeekWritten = runsWrittenForWeek(
-    programState?.runDays,
-    localWeekKey(date),
-    currentWeekKey
+/**
+ * The session a day ahead holds, named as the rest day's card names it,
+ * by how many days after today it is.
+ *
+ * In this week, the week laid out says: the lift laid on the day and the
+ * run the plan holds on its date, each still to do. A lift whose day
+ * passed sits on the next free lift day, and a day whose lift went to an
+ * earlier one names none; a run skipped names none.
+ *
+ * Past Sunday, the plan holds next week's lifts in no day yet, so the
+ * rollover's opening is named (`liftsOpeningNextWeek`), and a run the plan
+ * holds on the date; resolved with TODAY's week key, so a legacy run day
+ * cannot borrow this week's status for next week. Before next week's runs
+ * are written, a run day of the usual layout is named by its type, unless
+ * the person runs freely: free running plans no day.
+ */
+function sessionsAhead(
+  input: TodaySessionInput
+): (daysAhead: number) => (TomorrowSession & { sport: SessionSport }) | null {
+  const { today, profile, programState, claimMap, week } = input;
+  const currentWeekKey = localWeekKey(parseLocalDate(today));
+  const nextWeek = new Map(
+    liftsOpeningNextWeek(week, profile, programState).map((l) => [
+      l.date,
+      l.lift,
+    ])
   );
-  const runTemplate = templateOfRunDay(runDay);
-  const runName = runDay
-    ? runSessionName(
-        runTemplate,
-        racePaceWorkFor(runTemplate, profile, programState?.runPlan),
-        resolveDistanceUnit(profile?.preferredDistanceUnit)
-      )
-    : (next.scheduleType === "run" || next.scheduleType === "both") &&
-        !nextWeekWritten
-      ? "Run"
-      : null;
-  const label =
-    liftName && runName ? `${liftName} and ${runName}` : (liftName ?? runName);
-  if (!label) return null;
-  const target =
-    liftName && typeof tomorrowLift?.index === "number"
-      ? `/program?day=${tomorrowLift.index}`
-      : `/program?tab=run&rday=${dateKey}`;
-  return daysAhead === 1 ? { label, target } : { label, target, dateKey };
+  const unit = resolveDistanceUnit(profile?.preferredDistanceUnit);
+  const runName = (runDay: ScheduledRunDay) => {
+    const template = templateOfRunDay(runDay);
+    return runSessionName(
+      template,
+      racePaceWorkFor(template, profile, programState?.runPlan),
+      unit
+    );
+  };
+  return (daysAhead) => {
+    const date = addLocalDays(parseLocalDate(today), daysAhead);
+    const dateKey = localDateString(date);
+    const day = week.days.find((d) => d.date === dateKey);
+    let lift: LayoutLift | null;
+    let run: string | null;
+    if (day) {
+      lift =
+        day.sessions.find(
+          (s): s is LayoutLift =>
+            s.sport === "lift" && s.plan && s.state === "planned"
+        ) ?? null;
+      const planned = day.sessions.find(
+        (s): s is LayoutRun =>
+          s.sport === "run" && s.plan && s.state === "planned"
+      );
+      run = planned?.runDay ? runName(planned.runDay) : null;
+    } else {
+      lift = nextWeek.get(dateKey) ?? null;
+      const next = resolveTrainingDayForDate({
+        dateKey,
+        profile,
+        programState,
+        currentWeekKey,
+        claimMap,
+        todayKey: today,
+      });
+      const written = runsWrittenForWeek(
+        programState?.runDays,
+        localWeekKey(date),
+        currentWeekKey
+      );
+      run = next.run.runDay
+        ? runName(next.run.runDay)
+        : !written &&
+            !week.freeRunning &&
+            (next.scheduleType === "run" || next.scheduleType === "both")
+          ? "Run"
+          : null;
+    }
+    // Named as Train names it in its week: "Pull B".
+    const liftName =
+      lift?.workout && lift.index !== null
+        ? weekDayName(programState, lift.index, lift.workout)
+        : null;
+    const label =
+      liftName && run ? `${liftName} and ${run}` : (liftName ?? run);
+    if (!label) return null;
+    const target =
+      liftName && lift?.index !== null && lift?.index !== undefined
+        ? `/program?day=${lift.index}`
+        : `/program?tab=run&rday=${dateKey}`;
+    const sport: SessionSport =
+      liftName && run ? "both" : liftName ? "lift" : "run";
+    return daysAhead === 1
+      ? { label, target, sport }
+      : { label, target, dateKey, sport };
+  };
 }
 
 /** A planned run's dose at the person's confirmed easy pace (Run21 (5)). */

@@ -92,20 +92,35 @@ export default function PaceInsightCard({
     >
       <div>
         <p className="text-sm font-semibold text-foreground">
-          {insight.direction === "faster"
-            ? "A recent race or tempo supports faster targets"
-            : "Your saved targets may be too quick right now"}
+          {insight.direction === "first"
+            ? "Your training paces, from this run"
+            : insight.direction === "faster"
+              ? "A recent race or tempo supports faster targets"
+              : "Your saved targets may be too quick right now"}
         </p>
-        <p className="text-xs text-muted-foreground">
-          {locked ? "Pro moves" : "Update"} every upcoming training pace from
-          VDOT{" "}
-          <span className="font-mono tabular-nums">{insight.currentVdot}</span>{" "}
-          to{" "}
-          <span className="font-mono tabular-nums">
-            {insight.suggestedVdot}
-          </span>
-          {locked ? "." : "?"}
-        </p>
+        {insight.direction === "first" ? (
+          // Run24 (4): a runner with no confirmed paces, after an effort.
+          <p className="text-xs text-muted-foreground">
+            {locked ? "Pro sets" : "Set"} every upcoming training pace from VDOT{" "}
+            <span className="font-mono tabular-nums">
+              {insight.suggestedVdot}
+            </span>
+            {locked ? "." : "?"}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {locked ? "Pro moves" : "Update"} every upcoming training pace from
+            VDOT{" "}
+            <span className="font-mono tabular-nums">
+              {insight.currentVdot}
+            </span>{" "}
+            to{" "}
+            <span className="font-mono tabular-nums">
+              {insight.suggestedVdot}
+            </span>
+            {locked ? "." : "?"}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">

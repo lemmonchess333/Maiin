@@ -50,7 +50,12 @@ const racePlan: RunPlan = {
   currentWeek: 2,
 };
 
-const structuredPlan: RunPlan = { mode: "structured" };
+/** A plan with run days and no race: the starter goal's. */
+const starterPlan: RunPlan = {
+  mode: "starter",
+  stage: 1,
+  stageWeekKey: "2026-09-07",
+};
 
 function makeRunDay(
   dayIndex: number,
@@ -70,7 +75,7 @@ function makeRunDay(
 
 describe("freeformPlanMetadata", () => {
   it("returns sane defaults for every planMode", () => {
-    for (const mode of ["freeform", "structured", "race_prep"] as const) {
+    for (const mode of ["freeform", "starter", "race_prep"] as const) {
       const m = freeformPlanMetadata(mode);
       expect(m.planMode).toBe(mode);
       expect(m.planSource).toBe("manual");
@@ -100,10 +105,10 @@ describe("computePlanMetadata — programme today_plan", () => {
       };
       const inputs = {
         displayUnit: "km" as const,
-        profileRunMode: "structured" as const,
+        profileRunMode: "starter" as const,
         todayDayIndex: 0,
         todayDate: "2026-09-13",
-        runPlan: structuredPlan,
+        runPlan: starterPlan,
         runDays: [day],
         urlTemplateId: null,
         urlType: null,
@@ -122,8 +127,8 @@ describe("computePlanMetadata — programme today_plan", () => {
     }
   );
 
-  // Scenario 4: structured user on a scheduled day with an incomplete
-  // planned run → strip shows structured plan, prefill applies.
+  // Scenario 4: a planned day with an incomplete planned run → strip
+  // shows the plan, prefill applies.
   it("race-prep scheduled day prefills from the planned template", () => {
     // Mon: long_10k.
     const days = [makeRunDay(MONDAY, "long_10k", "long")];
@@ -269,18 +274,18 @@ describe("computePlanMetadata — programme today_plan", () => {
     expect(long.prefill.target).toEqual({ type: "distance", value: 12000 });
   });
 
-  it("structured user gets prefill with a structured-mode strip", () => {
+  it("a starter plan's user gets prefill from the planned day", () => {
     const days = [makeRunDay(TUESDAY, "tempo_20", "tempo")];
     const { metadata, prefill } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: TUESDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
     });
-    expect(metadata.planMode).toBe("structured");
+    expect(metadata.planMode).toBe("starter");
     expect(metadata.planSource).toBe("today_plan");
     expect(metadata.plannedTemplateId).toBe("tempo_20");
     expect(prefill.activityType).toBe("tempo");
@@ -697,9 +702,9 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: MONDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
@@ -756,9 +761,9 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: MONDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
@@ -783,9 +788,9 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: MONDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: "easy_30",
       urlType: null,
@@ -815,9 +820,9 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: WEDNESDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
@@ -858,9 +863,9 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: WEDNESDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
@@ -892,9 +897,9 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: MONDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: null,
       urlType: null,
@@ -923,9 +928,9 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     ];
     const { metadata } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: TUESDAY,
-      runPlan: structuredPlan,
+      runPlan: starterPlan,
       runDays: days,
       urlTemplateId: "easy_30",
       urlType: null,
@@ -1057,7 +1062,7 @@ describe("getAdherenceLabel", () => {
     overrides: Partial<RunPlanMetadata> = {}
   ): RunPlanMetadata {
     return {
-      planMode: "structured",
+      planMode: "starter",
       planSource: "today_plan",
       plannedRunDayIndex: 2,
       plannedTemplateId: "easy_30",
@@ -1571,7 +1576,11 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
   });
 
   it("agrees with the launch for every long run in every week", () => {
-    const longs = RUN_TEMPLATES.filter((t) => t.type === "long");
+    // The plain long runs: one with race-pace blocks (Run24 (5)) never
+    // finishes at race pace, and has its own case below.
+    const longs = RUN_TEMPLATES.filter(
+      (t) => t.type === "long" && !t.config.racePaceBlocks
+    );
     for (const t of longs) {
       for (let week = 0; week < 10; week++) {
         const block = launch(t.id, week, runner());
@@ -1586,6 +1595,40 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
             meters: finish.kind === "finish" ? finish.blockKm * 1000 : 0,
           });
         }
+      }
+    }
+  });
+
+  it("plays a long run's race-pace blocks at the goal pace, its own race's only (Run24 (5))", () => {
+    const blocksOf = (id: string, week: number) => {
+      const { prefill } = computePlanMetadata({
+        displayUnit: "km",
+        profileRunMode: "race_prep",
+        todayDayIndex: MONDAY,
+        runPlan: halfPlan(week),
+        runDays: [makeRunDay(MONDAY, id, "long")],
+        urlTemplateId: null,
+        urlType: null,
+        raceTarget: raceTargetFromProfile(runner()),
+      });
+      return (prefill.segments ?? []).filter((s) => s.type === "moderate");
+    };
+    for (const t of RUN_TEMPLATES.filter((x) => x.config.racePaceBlocks)) {
+      for (let week = 0; week < 10; week++) {
+        const work = racePaceWorkFor(t, runner(), halfPlan(week));
+        const blocks = blocksOf(t.id, week);
+        const own = t.config.racePaceBlocks!.race === "half";
+        // The half's at its goal pace in every week; never a finish.
+        expect(work?.kind ?? null, `${t.id}, week ${week + 1}`).toBe(
+          own ? "blocks" : null
+        );
+        expect(blocks).toHaveLength(t.config.racePaceBlocks!.reps);
+        for (const block of blocks) {
+          expect(block.pacePinned ?? false).toBe(own);
+          if (own) expect(block.paceTarget).toBeCloseTo(300.04, 1);
+        }
+        // A marathon's twin on a half's plan is run by effort.
+        if (!own) expect(blocks[0].eyebrow).toMatch(/^MARATHON EFFORT/);
       }
     }
   });

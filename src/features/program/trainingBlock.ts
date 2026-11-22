@@ -248,7 +248,6 @@ export function legacyToActiveBlock(
     pace: paceFromLegacyPreset(legacy.preset),
     durationWeeks: legacy.durationWeeks,
     startDate: legacy.startDate,
-    amnestyWeeksLeft: 0,
     weeklyLiftTarget: legacy.weeklyLiftTarget,
     anchorExerciseIds: legacy.anchorExerciseIds,
     why: legacy.why,

@@ -76,9 +76,20 @@ explicit date-choice behaviour as London. The Stones adapter selects the
 
 Ultras have their own filter and exact distance label (`distanceKm`). They
 remain browsable and joinable, with official preparation and entry links.
-Tropos's training engine supports 5K through marathon only: the training picker
-excludes ultras and their pages do not offer a training-plan CTA. Incoming
-remote metadata cannot change a race's bundled distance or training eligibility.
+Incoming remote metadata cannot change a race's bundled distance or training
+eligibility.
+
+STATUS 2026-11-15 (Run26 (2)): the engine plans 50K, 50 miles and 100K, so a
+listed ultra trains for the plan nearest its `distanceKm`
+(`raceEventPlanDistance` in `spaceDefs.ts`): above the marathon to 65 km a 50K,
+to 90 km 50 miles, to 130 km a 100K, a Tropos heuristic splitting the bands
+halfway. The three listed ultras (Chiltern 50 at 50 km, both 100Ks at 100 km)
+show "Train for this race" and appear in the training picker under their plan's
+distance. An ultra without `distanceKm`, or past 130 km (nearer 100 miles,
+which has no plan), stays directory-only and its page says Tropos has no plan
+for the distance. A new ultra must carry `distanceKm` to be trainable. The
+directory holds no climb, so a runner types the race's total climb in the plan
+editor; a climb of 10 m a km or more makes it a trail plan.
 
 Eight new licensed photos and existing destination images cover all 15 new
 race IDs. Provenance is in

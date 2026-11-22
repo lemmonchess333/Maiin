@@ -8,6 +8,7 @@ import { resetNodeClock } from "./helpers/nodeClock";
 import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { settleImages } from "./helpers/settleImages";
+import { seededHealthConsent } from "./helpers/healthConsent";
 
 test.skip(!emulatorActive, "Requires the local Auth and Firestore emulators");
 test.setTimeout(180_000);
@@ -150,6 +151,8 @@ test("browses lifts and runs, filters an older period and restores the expanded 
         email,
         displayName: "History review",
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1).
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "pro",
         weightKg: 74,
         heightCm: 170,
@@ -245,7 +248,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     );
     await page
       .locator("#main-content")
-      .getByRole("link", { name: "Analytics", exact: true })
+      .getByRole("link", { name: "Progress", exact: true })
       .click();
     await expect(page).toHaveURL(/\/history\?range=3M$/);
     await expect(page.getByRole("radio", { name: "3M" })).toBeChecked();

@@ -11,6 +11,10 @@ import { cn } from "@/lib/utils";
  * round when the screen opens, then it rests, and under Reduce Motion it
  * never moves. A drawing with no flipbook stands still. Decorative: the
  * heading beside it says where you are.
+ *
+ * Its box is a fixed size (`.signin-figure` in components.css) and the
+ * drawing fills it: on iPhone a box that took its width from the drawing
+ * measured 0px wide.
  */
 export default function SignInFigure({ className }: { className?: string }) {
   const still = authArtPath(SIGN_IN_EXERCISE);
@@ -30,7 +34,7 @@ export default function SignInFigure({ className }: { className?: string }) {
           alt=""
           draggable={false}
           decoding="async"
-          className="exercise-drawing relative h-full w-auto"
+          className="exercise-drawing relative size-full object-contain"
         />
       )}
     </div>

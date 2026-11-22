@@ -157,8 +157,7 @@ describe("the tab bar the journeys move by", () => {
         <BottomNavigation
           tabs={tabs.map((tab) => ({ ...tab, icon: HomeTabIcon }))}
           pathname="/"
-          unreadCount={0}
-          onSocialVisit={() => {}}
+          socialNewActivity={false}
         />
       </MemoryRouter>
     );
@@ -170,16 +169,17 @@ describe("the tab bar the journeys move by", () => {
 
 describe("Train's start, as the journeys press it", () => {
   it("the startable day's card is started by its name", () => {
-    // Train hands the card its label (`Program.tsx`), and the card makes it
-    // the button's name.
-    const program = readFileSync(
+    // The day's session hands the card its label (`LiftSessionView`, on
+    // Train's Lift tab and a lift's own page), and the card makes it the
+    // button's name.
+    const session = readFileSync(
       resolve(
         dirname(fileURLToPath(import.meta.url)),
-        "../../pages/Program.tsx"
+        "../../components/program/LiftSessionView.tsx"
       ),
       "utf8"
     );
-    expect(program).toContain(`? "${WORKOUT.start}"`);
+    expect(session).toContain(`? "${WORKOUT.start}"`);
     const start = vi.fn();
     render(
       <SessionCommandCard
@@ -268,15 +268,15 @@ describe("Train's two halves and the run week", () => {
     const week = screen.getByRole("tablist", { name: TRAIN.runWeek });
     // A day still to run shows its day of the month; a done one, a check.
     for (const [name, day] of [
-      [runWeekTabName("Tempo", "today"), "1"],
-      [runWeekTabName("20K"), "3"],
+      [runWeekTabName(1, "Tempo", "today"), "1"],
+      [runWeekTabName(3, "20K"), "3"],
     ])
       expect(within(week).getByRole("tab", { name })).toHaveTextContent(
         new RegExp(`^${day}$`)
       );
     expect(
       within(week).getByRole("tab", {
-        name: runWeekTabName("15K", "completed"),
+        name: runWeekTabName(2, "15K", "completed"),
       })
     ).toBeInTheDocument();
   });

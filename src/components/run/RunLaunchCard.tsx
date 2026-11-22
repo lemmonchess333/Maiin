@@ -3,6 +3,10 @@ import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import type { RacePaceWork } from "@/lib/racePace";
 import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
+import HeatPanel, {
+  type HeatPanelAdjust,
+  type HeatPanelSwap,
+} from "./HeatPanel";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
  * 2026-07).
@@ -55,6 +59,19 @@ interface RunLaunchCardProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
+  /** A hot or extreme day (heatAdjustment.ts): the heat line, today's
+   *  coolest hour still ahead, the offer to adjust this run for heat and
+   *  any swap. Null on any other day. */
+  heat?: {
+    level: "hot" | "extreme";
+    line: string;
+    coolest?: string | null;
+    adjust?: HeatPanelAdjust | null;
+    swap?: HeatPanelSwap | null;
+  } | null;
+  /** The work pace as a range, in place of the one pace, once the run is
+   *  adjusted for heat. */
+  paceRange?: string | null;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
@@ -85,6 +102,8 @@ export default function RunLaunchCard({
   onHelp,
   purpose,
   gpsSignal,
+  heat = null,
+  paceRange = null,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const name = runSessionName(workout, racePace, unit);
@@ -100,23 +119,33 @@ export default function RunLaunchCard({
     target?.type === "time" && target.value
       ? Math.round(target.value / 60)
       : null;
-  const paceLabel =
-    target?.type === "pace" && target.value
+  const paceLabel = paceRange
+    ? paceRange
+    : target?.type === "pace" && target.value
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
   /* Run21 (2): a long run's race-pace finish, which its name and lines
      only name, with its size and pace before the run starts. Labelled as
      the run's own segment is, in the reader's unit. */
+  const compactDistance = (km: number) =>
+    `${distanceIn(km * 1000, unit)
+      .toFixed(1)
+      .replace(/\.0$/, "")} ${distanceUnitLabel(unit)}`;
+  const blocks = workout.config.racePaceBlocks;
   const racePaceLine =
     racePace?.kind === "finish"
-      ? `Last ${distanceIn(racePace.blockKm * 1000, unit)
-          .toFixed(1)
-          .replace(/\.0$/, "")} ${distanceUnitLabel(unit)} at ${paceMinSec(
+      ? `Last ${compactDistance(racePace.blockKm)} at ${paceMinSec(
           Math.round(racePace.goalPaceS),
           unit
         )} ${paceUnitLabel(unit)}`
-      : null;
+      : racePace?.kind === "blocks" && blocks
+        ? /* Run24 (5): the long run's blocks at race pace. */
+          `${blocks.reps} \u00d7 ${compactDistance(blocks.blockKm)} at ${paceMinSec(
+            Math.round(racePace.goalPaceS),
+            unit
+          )} ${paceUnitLabel(unit)}`
+        : null;
 
   const eyebrow = isExtra
     ? "Extra run"
@@ -185,11 +214,26 @@ export default function RunLaunchCard({
             {about.feel}
             {workout.config.strides &&
               ` ${workout.estimatedDuration} min in all, strides included.`}
+            {workout.config.pickUps &&
+              ` ${workout.estimatedDuration} min in all, pick-ups included.`}
           </p>
           <RunPurpose>
             <RunAbout about={about} why={purpose} />
           </RunPurpose>
         </div>
+
+        {/* A hot or extreme day: the heat line, the offer to adjust this
+            run for heat (and to clear it), and a swap, which starts at
+            once. The plan keeps the session either way. */}
+        {heat && (
+          <HeatPanel
+            level={heat.level}
+            line={heat.line}
+            coolest={heat.coolest}
+            adjust={heat.adjust}
+            swap={heat.swap}
+          />
+        )}
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />
       </div>

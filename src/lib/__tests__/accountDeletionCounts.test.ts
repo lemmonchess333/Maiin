@@ -57,7 +57,12 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // leagueMembersOwn, leagueGroupMemberships and leagueStandingsOwn.
 // Soc15 live pulse bumped to 70 — userPulseCredits, its per-session credits.
 // Follow counts bumped to 71 — followCountsOwn, the server's two numbers.
-export const EXPECTED_INCLUDED_COUNT = 71;
+// Run26 call 4 bumped to 72 — goalSpaceMeetups, a Circle's meet-ups.
+// Run26 call 3 bumped to 76 — segments: userSegmentEfforts, segmentsOwned,
+// segmentOwnersOwn and segmentBoardEntries.
+// Run27 call 11 bumped to 78 — a Space's members' sessions and its week:
+// spaceSessionRows and userSpaceWeeks.
+export const EXPECTED_INCLUDED_COUNT = 78;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

@@ -26,6 +26,7 @@ import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
+import HeatPanel from "./HeatPanel";
 import { haptic } from "@/lib/haptic";
 import {
   ACTIVITY_TYPES,
@@ -60,6 +61,14 @@ interface RunTilePickerProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
+  /** A hot or extreme day (heatAdjustment.ts): the heat line and today's
+   *  coolest hour still ahead. A free run has no planned targets to adjust
+   *  and no session to swap. */
+  heat?: {
+    level: "hot" | "extreme";
+    line: string;
+    coolest?: string | null;
+  } | null;
 }
 
 export default function RunTilePicker({
@@ -72,6 +81,7 @@ export default function RunTilePicker({
   onHelp,
   repeatType = null,
   gpsSignal,
+  heat = null,
 }: RunTilePickerProps) {
   const unit = useDistanceUnit();
   const tiles = DIRECT_LAUNCH_TYPES.map((type) =>
@@ -167,6 +177,16 @@ export default function RunTilePicker({
             );
           })}
         </div>
+
+        {/* A hot or extreme day: the heat line, under the tiles so a note
+            arriving with the weather never moves them under a thumb. */}
+        {heat && (
+          <HeatPanel
+            level={heat.level}
+            line={heat.line}
+            coolest={heat.coolest}
+          />
+        )}
 
         <Button
           variant="outline"

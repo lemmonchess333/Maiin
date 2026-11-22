@@ -16,10 +16,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WeekStrip from "@/components/home/WeekStrip";
+import { stripWeek } from "@/test/stripWeek";
 import type { UserProfile } from "@/lib/auth";
 import type {
   ProgramState,
   ScheduledRunDay,
+  WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
@@ -76,19 +78,31 @@ function makeProfile(weekSchedule: ScheduleDay[]): UserProfile {
   return {
     uid: "u-1",
     displayName: "Test",
-    email: "t@example.com",
     weekSchedule,
   } as UserProfile;
 }
 
-function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
+/** A plan's lift, by its name: to do unless marked. */
+function makeLift(dayName: string, extra: Partial<WorkoutDay> = {}) {
+  return {
+    dayName,
+    dayType: "push",
+    exercises: [],
+    completed: false,
+    ...extra,
+  } as WorkoutDay;
+}
+
+function makeProgramState(
+  runDays: ScheduledRunDay[],
+  workouts: WorkoutDay[] = []
+): ProgramState {
   return {
     goal: "recomp",
     currentPhase: "base",
     weekNumber: 1,
     splitType: "ppl",
-    workouts: [],
-    fatigueScore: 0,
+    workouts,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -121,9 +135,12 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={programState}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: programState,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -166,9 +183,14 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={programState}
-        claimMap={claimMapWith([[legacyRunDay.id!, { legacyCompleted: true }]])}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: programState,
+          claimMap: claimMapWith([
+            [legacyRunDay.id!, { legacyCompleted: true }],
+          ]),
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -207,11 +229,14 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={programState}
-        claimMap={claimMapWith([
-          [plannedRunDay.id!, { manualCompleted: true }],
-        ])}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: programState,
+          claimMap: claimMapWith([
+            [plannedRunDay.id!, { manualCompleted: true }],
+          ]),
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -278,9 +303,12 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={makeProgramState(runDays)}
-        claimMap={claimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: makeProgramState(runDays),
+          claimMap: claimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -296,7 +324,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     ).toBe(6);
   });
 
-  it("still shows today's planned run when programState is omitted (back-compat)", () => {
+  it("draws no planned day without a plan, as the week's count plans none", () => {
     const schedule = makeSchedule([
       "run",
       "run",
@@ -312,16 +340,22 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: null,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
     );
 
-    // A run every day: today is planned, earlier days have passed.
-    expect(todayCircle(container).getAttribute("data-state")).toBe("planned");
+    /* A run every day of the usual layout, and no plan to date one: the
+       week plans only the runs the plan dates, as its count does
+       (`trainingWeek`), so no day is outlined or missed. Home draws the
+       strip only once a plan is read. */
+    expect(circleStates(container)).toEqual(Array(7).fill("rest"));
   });
 });
 
@@ -386,9 +420,12 @@ describe("WeekStrip — a run sits on its date, whatever the weekday", () => {
         <WeekStrip
           todayKey={localDateString()}
           dayMap={new Map()}
-          profile={profile}
-          programState={programState}
-          claimMap={emptyClaimMap}
+          week={stripWeek({
+            todayKey: localDateString(),
+            profile: profile,
+            programState: programState,
+            claimMap: emptyClaimMap,
+          })}
           selectedDate={null}
           onDayTap={vi.fn()}
         />
@@ -412,7 +449,9 @@ describe("WeekStrip — accessible name and selection state", () => {
   const DOW = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
   /** Render a strip whose EVERY day carries `type`, so whichever cell is
-   *  today is the one under test. */
+   *  today is the one under test. The week lays a lift of the plan on
+   *  today, and the plan holds a run on today's date, as `type` asks:
+   *  the strip names what the week holds, not the weekday's type. */
   function renderAllDays(
     type: ScheduleDay["type"],
     opts: {
@@ -426,13 +465,33 @@ describe("WeekStrip — accessible name and selection state", () => {
     } = {}
   ) {
     const profile = makeProfile(makeSchedule(DOW.map(() => type)));
+    const today = new Date();
+    const lifts = type === "lift" || type === "both";
+    const runs = type === "run" || type === "both";
+    const runDays =
+      opts.runDays ??
+      (runs
+        ? [
+            makeRunDay({
+              dayIndex: today.getDay(),
+              date: localDateString(today),
+              weekKey: localWeekKey(today),
+            }),
+          ]
+        : []);
     return render(
       <WeekStrip
         todayKey={localDateString()}
         dayMap={opts.dayMap ?? new Map()}
-        profile={profile}
-        programState={makeProgramState(opts.runDays ?? [])}
-        claimMap={opts.claimMap ?? emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: makeProgramState(
+            runDays,
+            lifts ? DOW.map((d) => makeLift(`Lift ${d}`)) : []
+          ),
+          claimMap: opts.claimMap ?? emptyClaimMap,
+        })}
         selectedDate={opts.selectedDate ?? null}
         onDayTap={vi.fn()}
       />
@@ -648,9 +707,12 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={makeProfile(makeSchedule(Array(7).fill("rest")))}
-        programState={makeProgramState([])}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: makeProfile(makeSchedule(Array(7).fill("rest"))),
+          programState: makeProgramState([]),
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -711,9 +773,12 @@ describe("WeekStrip — today is an outline, selection a ring outside it", () =>
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={null}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: null,
+          programState: null,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -731,9 +796,12 @@ describe("WeekStrip — today is an outline, selection a ring outside it", () =>
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={null}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: null,
+          programState: null,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={todayKey}
         onDayTap={vi.fn()}
       />
@@ -756,14 +824,25 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={makeProfile(
-          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
-        )}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: makeProfile(
+            makeSchedule([
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+            ])
+          ),
+          programState: null,
+          claimMap: emptyClaimMap,
+          loggedLiftDates: new Set([todayKey]),
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
-        loggedLiftDates={new Set([todayKey])}
       />
     );
     expect(todayCircle(container).getAttribute("data-state")).toBe("lift-done");
@@ -778,14 +857,25 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={makeProfile(
-          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
-        )}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: makeProfile(
+            makeSchedule([
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+            ])
+          ),
+          programState: null,
+          claimMap: emptyClaimMap,
+          extraRunDates: new Set([todayKey]),
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
-        extraRunDates={new Set([todayKey])}
       />
     );
     expect(todayCircle(container).getAttribute("data-state")).toBe("run-done");
@@ -797,32 +887,51 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={liftWeek()}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: liftWeek(),
+          programState: null,
+          claimMap: emptyClaimMap,
+          loggedLiftDates: new Set([todayKey]),
+          extraRunDates: new Set([todayKey]),
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
-        loggedLiftDates={new Set([todayKey])}
-        extraRunDates={new Set([todayKey])}
       />
     );
     expect(todayCircle(container).getAttribute("data-state")).toBe("both-done");
   });
 
-  it("says missed for a planned day that has passed, planned for today and later", () => {
+  it("never says a lift was missed: a passed lift day says where its lift went (TrainWk1)", () => {
     /* Pinned to a Wednesday so the week has days behind it. On a Monday
        the week has no past day, and a check on the past days would check
-       nothing at all. */
+       nothing at all. Seven lifts, a lift every day, nothing done: Monday's
+       lift moves to Wednesday and Tuesday's to Thursday, and the two lifts
+       the days left cannot hold wait. A run planned on Monday and not done
+       is missed: runs keep their dates. */
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 8, 30, 12, 0, 0));
     try {
+      const monday = localDateString(addLocalDays(new Date(), -2));
       const { container } = render(
         <WeekStrip
           todayKey={localDateString()}
           dayMap={new Map()}
-          profile={liftWeek()}
-          programState={null}
-          claimMap={emptyClaimMap}
+          week={stripWeek({
+            todayKey: localDateString(),
+            profile: liftWeek(),
+            programState: makeProgramState(
+              [
+                makeRunDay({
+                  dayIndex: 1,
+                  date: monday,
+                  weekKey: localWeekKey(new Date()),
+                }),
+              ],
+              ["A", "B", "C", "D", "E", "F", "G"].map((n) => makeLift(n))
+            ),
+            claimMap: emptyClaimMap,
+          })}
           selectedDate={null}
           onDayTap={vi.fn()}
         />
@@ -835,7 +944,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       expect(todayIdx).toBe(2);
       expect(states).toEqual([
         "missed",
-        "missed",
+        "rest",
         "planned",
         "planned",
         "planned",
@@ -845,10 +954,10 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       const labels = Array.from(container.querySelectorAll("button")).map(
         (b) => b.getAttribute("aria-label") ?? ""
       );
-      expect(labels[0]).toMatch(/missed lift/);
-      expect(labels[1]).toMatch(/missed lift/);
+      expect(labels[0]).toMatch(/lift moved to Wednesday and missed run/);
+      expect(labels[1]).toMatch(/lift moved to Thursday/);
       expect(labels[2]).toMatch(/lift day/);
-      expect(labels[2]).not.toMatch(/missed/);
+      expect(labels.join(" ")).not.toMatch(/missed lift/);
     } finally {
       vi.useRealTimers();
     }
@@ -864,41 +973,41 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     vi.setSystemTime(wednesday);
     try {
       const tuesday = localDateString(addLocalDays(wednesday, -1));
-      const workout = (dayName: string, completed: boolean) => ({
-        dayName,
-        dayType: "push",
-        exercises: [],
-        completed,
-      });
-      const programState = {
-        ...makeProgramState([]),
-        // Slots by weekday: Monday 0, Tuesday 1, Wednesday 2.
-        workouts: [
-          workout("Push — Chest Focus", true),
-          workout("Pull — Lat Focus", false),
-          workout("Legs — Squat Focus", false),
-        ],
-      } as ProgramState;
+      // Monday's lift, Push, done on Tuesday.
+      const programState = makeProgramState(
+        [],
+        [
+          makeLift("Push — Chest Focus", {
+            completed: true,
+            completedWorkoutId: "w-tue",
+          }),
+          makeLift("Pull — Lat Focus"),
+          makeLift("Legs — Squat Focus"),
+        ]
+      );
       const { container } = render(
         <WeekStrip
           todayKey={localDateString()}
           dayMap={new Map()}
-          profile={makeProfile(
-            makeSchedule([
-              "rest",
-              "lift",
-              "lift",
-              "lift",
-              "rest",
-              "rest",
-              "rest",
-            ])
-          )}
-          programState={programState}
-          claimMap={emptyClaimMap}
+          week={stripWeek({
+            todayKey: localDateString(),
+            profile: makeProfile(
+              makeSchedule([
+                "rest",
+                "lift",
+                "lift",
+                "lift",
+                "rest",
+                "rest",
+                "rest",
+              ])
+            ),
+            programState: programState,
+            claimMap: emptyClaimMap,
+            workouts: [{ id: "w-tue", date: tuesday }],
+          })}
           selectedDate={null}
           onDayTap={vi.fn()}
-          loggedLiftDates={new Set([tuesday])}
         />
       );
       const labels = Array.from(container.querySelectorAll("button")).map(
@@ -920,11 +1029,22 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={makeProfile(
-          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
-        )}
-        programState={null}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: makeProfile(
+            makeSchedule([
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+            ])
+          ),
+          programState: null,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
       />
@@ -946,12 +1066,15 @@ describe("WeekStrip — days before the account began", () => {
       <WeekStrip
         todayKey={localDateString()}
         dayMap={new Map()}
-        profile={profile}
-        programState={makeProgramState([])}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: localDateString(),
+          profile: profile,
+          programState: makeProgramState([]),
+          claimMap: emptyClaimMap,
+          startKey: startKey,
+        })}
         selectedDate={null}
         onDayTap={vi.fn()}
-        startKey={startKey}
       />
     );
   }
@@ -995,9 +1118,12 @@ describe("WeekStrip — the day it is given", () => {
       <WeekStrip
         todayKey={todayKey}
         dayMap={dayMap}
-        profile={profile}
-        programState={programState}
-        claimMap={emptyClaimMap}
+        week={stripWeek({
+          todayKey: todayKey,
+          profile: profile,
+          programState: programState,
+          claimMap: emptyClaimMap,
+        })}
         selectedDate={null}
         onDayTap={onDayTap}
       />
@@ -1022,10 +1148,10 @@ describe("WeekStrip — the day it is given", () => {
   });
 
   it("does not mark a lifting day done before it comes, whatever the clock says", () => {
-    /* A lift's completion belongs to its rotation slot (ADR-0002), so a
-       day that has not come shows its lift planned. Which days have come
-       is Home's day to say: here the clock is a week on, and Tuesday is
-       still tomorrow. */
+    /* A lift done is on the day its session was saved, never on a day
+       that has not come, and a day ahead holds the next lift to do. Which
+       days have come is Home's day to say: here the clock is a week on,
+       and Tuesday is still tomorrow. */
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 8, 12));
     try {
@@ -1033,31 +1159,28 @@ describe("WeekStrip — the day it is given", () => {
         <WeekStrip
           todayKey={MONDAY}
           dayMap={new Map()}
-          profile={makeProfile(
-            makeSchedule([
-              "rest",
-              "rest",
-              "lift",
-              "rest",
-              "rest",
-              "rest",
-              "rest",
-            ])
-          )}
-          programState={
-            {
-              ...makeProgramState([]),
-              workouts: [
-                {
-                  dayName: "Pull — Lat Focus",
-                  dayType: "pull",
-                  exercises: [],
-                  completed: true,
-                },
-              ],
-            } as unknown as ProgramState
-          }
-          claimMap={emptyClaimMap}
+          week={stripWeek({
+            todayKey: MONDAY,
+            profile: makeProfile(
+              makeSchedule([
+                "rest",
+                "rest",
+                "lift",
+                "rest",
+                "rest",
+                "rest",
+                "rest",
+              ])
+            ),
+            programState: makeProgramState(
+              [],
+              [
+                makeLift("Pull — Lat Focus", { completed: true }),
+                makeLift("Push — Chest Focus"),
+              ]
+            ),
+            claimMap: emptyClaimMap,
+          })}
           selectedDate={null}
           onDayTap={vi.fn()}
         />

@@ -137,7 +137,14 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // its Lift plan row's icon with it.
   // 2026-11-12: 16 → 15. The friends board's card went (Trim1 call
   // 3(a)), and its volume board's dumbbell icon with it.
-  lifting: 15, // Redesign consolidates onboarding option icons.
+  // 2026-11-18: 15 → 16. Home's day card's lift notes (TrainWk1 step 2):
+  // a lift moved on, one skipped from the day, a rest before a race. One
+  // dumbbell ICON for the three (3:1 non-text); their words are foreground
+  // and muted.
+  // 2026-11-21: 16 → 17. A circuit's feed post (Circ1): its rounds, a
+  // text-2xl extrabold numeral where a lift's volume numeral stands, at
+  // the large-text bar as that one is.
+  lifting: 17, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -236,7 +243,16 @@ const EXPECTED_INLINE_USES = {
   // medal icon, in the brand purple Social's rewards wear.
   // 2026-11-12: 33 → 32. The friends board's card went (Trim1 call
   // 3(a)), and its sessions board's bolt icon with it.
-  "THEME.brand": 32,
+  // 2026-11-14: 32 → 31. The steps tile left Home (App1 Q31), and its
+  // arrow to the steps sheet with it.
+  // 2026-11-15: 31 → 33. The notification tray's two Circle meet-up
+  // glyphs (Run26 call 4), CalendarClock and CalendarX: icons, in the
+  // brand purple the other Circle notices' glyphs wear. No text.
+  // 2026-11-15: 33 → 34. The tray's meet-up reminder (Run27 call 10),
+  // the same CalendarClock glyph in the same purple. An icon, no text.
+  // 2026-11-15: 34 → 33. The training load card's Activity glyph went
+  // with that chart (App1 Q16).
+  "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

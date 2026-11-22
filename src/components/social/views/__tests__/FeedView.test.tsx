@@ -557,6 +557,17 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     expect(screen.queryByText(/my communities/i)).toBeNull();
   });
 
+  it("is offered to someone in no Space, from their first day (App1 Q6)", () => {
+    directory.entries = [{ def: { id: "lifters" }, joined: false }];
+    const { selectFeedSubTab } = setup({ feedSubTab: "communities" });
+    expect(screen.getByRole("radio", { name: "Spaces" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    // A link to it stays on it rather than being sent to Following.
+    expect(selectFeedSubTab).not.toHaveBeenCalled();
+  });
+
   it("picking Spaces drives the URL-writing callback", () => {
     const { selectFeedSubTab } = setup();
     fireEvent.click(screen.getByRole("radio", { name: "Spaces" }));

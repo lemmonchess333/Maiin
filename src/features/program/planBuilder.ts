@@ -4,7 +4,6 @@ import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  planWeekFromToday,
   raceWeekFromToday,
 } from "./racePlanContinuation";
 /**
@@ -48,6 +47,7 @@ import {
 
 import { planningEasyPaceSPerKm, type RunFitnessInput } from "@/lib/runPaces";
 import type {
+  Equipment,
   Goal,
   PreferredSplit,
   PrimaryGoal,
@@ -55,6 +55,7 @@ import type {
   ProgramState,
   ProgramSettings,
   ScheduledRunDay,
+  RaceDistance,
   RunPlan,
   SplitType,
   WorkoutDay,
@@ -72,7 +73,8 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
-import { firstFullWeekKey } from "./runPlanTiming";
+import { firstFullWeekKey, weekendHoldsBackToBacks } from "./runPlanTiming";
+import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
   generateProgram,
@@ -91,6 +93,8 @@ import {
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
 import { starterWeekFrom } from "./starterWeek";
+import { isRollingGoal, type RollingGoal } from "./rollingPlan";
+import { regenerateRollingPlan } from "./rollingWeek";
 import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
@@ -104,18 +108,20 @@ import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
+  standInForMissingKit,
+  withoutKitSwapNotes,
 } from "./matchTemplate";
 import { heldForInjury } from "./injurySubstitutions";
+import { capSupermanVolume, withHoldRanges } from "./noEquipment";
 import {
   generateRacePlanV2,
-  scheduleStructuredWeekV2,
   DEFAULT_RUN_TUNING,
   type RunTuning,
 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
-export type RunMode = "freeform" | "structured" | "race_prep" | "starter";
+export type RunMode = "freeform" | "race_prep" | "starter";
 
 export interface PlanBuilderInput {
   /** Training-focus enum (hypertrophy / strength / etc.). Drives
@@ -176,7 +182,14 @@ export interface PlanBuilderInput {
 
   runMode: RunMode;
 
-  /** Run days per week. Ignored when runMode === "freeform". */
+  /** Run24 (3): a plan with no race date, on free running. Null takes it
+   *  away; absent keeps the one `existingState` holds, so a lifting change
+   *  never ends it (`rollingGoalFor`). Read only when runMode is
+   *  "freeform". */
+  rollingGoal?: RollingGoal | null;
+
+  /** Run days per week. Ignored when runMode === "freeform" with no plan
+   *  (`rollingGoalFor`). */
   weeklyRunDays: number;
 
   /** Required when runMode === "race_prep". */
@@ -196,10 +209,12 @@ export interface PlanBuilderInput {
   newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars. */
     eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
     /** A2: optional goal finish time, seconds. Passed through to the
      *  profile; the scheduler does not consume it yet (goal-pace
      *  sessions are the follow-up slice). */
@@ -213,11 +228,16 @@ export interface PlanBuilderInput {
    *  same knobs this build used. */
   runTuning?: RunTuning;
 
-  equipment: "full_gym" | "home_gym" | "minimal";
+  equipment: Equipment;
 
   /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
    *  setup's kit ("what do you have?"). */
   barbellAtHome?: boolean;
+
+  /** Lift4 (11): "A pull-up bar" beside a home gym's, a minimal or a
+   *  no-equipment setup's kit: pull-ups, chin-ups and the hanging leg raise
+   *  (`hasPullUpBar`). Undefined keeps an older plan's, which has them. */
+  pullUpBar?: boolean;
 
   /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
    *  your runs build?". Saved on the profile, and the week being saved in
@@ -306,6 +326,8 @@ export interface PlanBuilderOutput {
     liftTimeBudgetMinutes?: number;
     /** A barbell and a rack beside the equipment tier's kit (Lift4 (11)). */
     barbellAtHome?: boolean;
+    /** The pull-up bar answer beside it. */
+    pullUpBar?: boolean;
     /** The race-setup answer on the leg trim (Lift4 (10)). */
     raceLegTrim?: boolean;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
@@ -313,7 +335,7 @@ export interface PlanBuilderOutput {
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
     // the unified editor actually moves the user's targets. The CF write is
     // merge:true on a nested map, so this updates goal while preserving the
-    // existing startWeight / currentPhase. (The deleted ProgramSettingsPanel
+    // existing currentPhase. (The deleted ProgramSettingsPanel
     // synced this via regenerateProgram → updateProfile; the new path must
     // carry it explicitly.)
     program: { goal: Goal };
@@ -326,11 +348,51 @@ export interface PlanBuilderOutput {
 function buildWeekSchedule(
   input: Pick<
     PlanBuilderInput,
-    "liftDays" | "runMode" | "weeklyRunDays" | "weekSchedule"
+    | "liftDays"
+    | "runMode"
+    | "weeklyRunDays"
+    | "weekSchedule"
+    | "rollingGoal"
+    | "existingState"
+    | "raceGoal"
   >
 ): ScheduleDay[] {
-  const runDays = input.runMode === "freeform" ? 0 : input.weeklyRunDays;
-  return planWeekSchedule(input.liftDays, runDays, input.weekSchedule);
+  return planWeekSchedule(
+    input.liftDays,
+    plannedRunDays(input),
+    input.weekSchedule,
+    // Run26 (2): an ultra's long run and back-to-back run are a weekend's.
+    weekendHoldsBackToBacks(input.runMode, input.raceGoal)
+  );
+}
+
+/**
+ * Run24 (3): the goal of the plan with no race date this build makes, for
+ * free running: the one asked for, or, when the caller says nothing, the
+ * one the programme already holds, so a save from the lift plan or the
+ * weekly layout keeps it. Null for every other run mode.
+ */
+export function rollingGoalFor(
+  input: Pick<PlanBuilderInput, "runMode" | "rollingGoal" | "existingState">
+): RollingGoal | null {
+  if (input.runMode !== "freeform") return null;
+  if (input.rollingGoal !== undefined) return input.rollingGoal;
+  const kept = input.existingState?.runPlan;
+  return kept?.mode === "rolling" && isRollingGoal(kept.rollingGoal)
+    ? kept.rollingGoal
+    : null;
+}
+
+/** The week's run days: none on free running with no plan. */
+function plannedRunDays(
+  input: Pick<
+    PlanBuilderInput,
+    "runMode" | "weeklyRunDays" | "rollingGoal" | "existingState"
+  >
+): number {
+  return input.runMode === "freeform" && rollingGoalFor(input) === null
+    ? 0
+    : input.weeklyRunDays;
 }
 
 /**
@@ -383,8 +445,10 @@ type LiftProgramInput = Pick<
   | "runMode"
   | "weeklyRunDays"
   | "weekSchedule"
+  | "raceGoal"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
   | "existingState"
   | "preserveHistory"
@@ -442,7 +506,11 @@ function buildLiftProgram(input: LiftProgramInput): {
             equipment: input.equipment,
             injuries: input.injuries,
             barbellAtHome: input.barbellAtHome,
-          }
+            pullUpBar: input.pullUpBar,
+          },
+          // Run27 (19): the day before an ultra's back-to-back run is
+          // kept as the day before the long run is.
+          weekendHoldsBackToBacks(input.runMode, input.raceGoal)
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
@@ -501,30 +569,70 @@ function buildLiftProgram(input: LiftProgramInput): {
       input.injuries,
       input.equipment,
       loadCtx,
-      input.barbellAtHome
+      input.barbellAtHome,
+      input.pullUpBar
     ),
     input.injuries,
     input.equipment,
     loadCtx,
-    input.barbellAtHome
+    input.barbellAtHome,
+    input.pullUpBar
   );
   // A lift the swaps bring in takes its own role's numbers; a new plan's
-  // were swapped in the generator, before its role table.
-  const equipmentSafe = represcribeSwapped(
+  // were swapped in the generator, before its role table. With no
+  // equipment, a lift nothing in its movement can stand in for takes a hold
+  // or floor lift in its slot, and comes back with the kit
+  // (`standInForMissingKit`).
+  const swapped = represcribeSwapped(
     levelled,
-    applyEquipmentFilterToWorkouts(
-      injurySafe,
+    standInForMissingKit(
+      applyEquipmentFilterToWorkouts(
+        injurySafe,
+        input.equipment,
+        input.injuries,
+        toExperience(input.experience),
+        loadCtx,
+        input.barbellAtHome,
+        input.pullUpBar
+      ),
       input.equipment,
       input.injuries,
-      toExperience(input.experience),
       loadCtx,
-      input.barbellAtHome
+      input.pullUpBar
     ),
     input.primaryGoal,
     toExperience(input.experience),
     input.existingState?.settings?.loadUnit ?? input.loadUnit,
     input.injuries
   );
+  // A plan being built carries no kit swap's note: it names a lift the
+  // person was never given. A swap in the plan they have keeps its note.
+  // With no equipment, the superman hold keeps to 3 sets a session and about
+  // 6 a week, and a hold swapped in climbs to a minute (`noEquipment.ts`):
+  // in a new plan every hold, as the level gate above can swap one in after
+  // the builder capped them; in the plan the person has, only the holds
+  // this save swapped in, each kept in its slot, while their own keep
+  // theirs.
+  const swappedHere = (d: number, e: number) =>
+    levelled[d]?.exercises[e]?.exerciseId !==
+    swapped[d]?.exercises[e]?.exerciseId;
+  const equipmentSafe =
+    input.equipment !== "no_equipment"
+      ? preserve
+        ? swapped
+        : withoutKitSwapNotes(swapped)
+      : preserve
+        ? withHoldRanges(
+            capSupermanVolume(swapped, {
+              drop: false,
+              cap: (d, e) =>
+                levelled[d]?.exercises[e]?.exerciseId !== "superman-hold",
+            }),
+            swappedHere
+          )
+        : withHoldRanges(
+            capSupermanVolume(withoutKitSwapNotes(swapped), { drop: true })
+          );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
   // they are, and the length it was fitted to.
@@ -706,6 +814,7 @@ export type FreshLiftAnswers = Pick<
   | "liftDays"
   | "equipment"
   | "barbellAtHome"
+  | "pullUpBar"
   | "injuries"
 >;
 
@@ -832,9 +941,9 @@ function raceFinalWeekNow(
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
  *  injected currentDate, not wall clock). Uses the V2 scheduler API
- *  (P0-3) — both `scheduleStructuredWeekV2` and `generateRacePlanV2`
- *  drive from `weekSchedule` directly and emit native v2-shaped
- *  runDays. No post-processing bridge needed here anymore. */
+ *  (P0-3) — `generateRacePlanV2` drives from `weekSchedule` directly and
+ *  emits native v2-shaped runDays. Free running has a plan only with a
+ *  rolling goal (Run24 (3), `generateRollingPlan`). */
 function buildRunPlan(
   input: PlanBuilderInput,
   weekSchedule: ScheduleDay[]
@@ -844,7 +953,50 @@ function buildRunPlan(
   const weekStart = localWeekKey(parseLocalDate(input.currentDate));
 
   if (input.runMode === "freeform") {
-    return { runDays: [], runPlan: undefined };
+    // Run24 (3): a plan with no race date. One kept through a change of
+    // layout or lifts keeps its week, laid again from today on the new
+    // days; a new one, or a new goal, starts at its first week.
+    const goal = rollingGoalFor(input);
+    if (!goal) return { runDays: [], runPlan: undefined };
+    const existing = input.existingState?.runPlan;
+    const continuing =
+      input.preserveHistory &&
+      existing?.mode === "rolling" &&
+      existing.rollingGoal === goal;
+    const weekKey =
+      continuing && existing.rollingWeekKey
+        ? existing.rollingWeekKey
+        : weekStart;
+    const { runDays, runPlan } = regenerateRollingPlan({
+      runner: {
+        tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
+        easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+        runningBaseline: input.runningBaseline ?? null,
+        runTimeLimits: input.runTimeLimits ?? null,
+        newRunnerUntil: input.newRunnerUntil ?? null,
+      },
+      goal,
+      planWeek:
+        (continuing ? (existing.currentWeek ?? 0) : 0) +
+        Math.max(0, wholeWeeksBetween(weekKey, weekStart)),
+      weekSchedule,
+      weeklyRunDays: input.weeklyRunDays,
+      currentDate: input.currentDate,
+      weekStart,
+      recentLayoff: input.recentLayoff ?? "none",
+      recentRuns: input.recentRuns ?? null,
+      plannedFrom: input.currentDate,
+      fresh: !continuing,
+      ...(continuing
+        ? {
+            prior: {
+              runDays: input.existingState?.runDays ?? [],
+              manualCompletions: input.existingState?.manualCompletions,
+            },
+          }
+        : {}),
+    });
+    return { runDays, runPlan };
   }
 
   // Run9's starter goal: a change of layout or lifts keeps its stage, and
@@ -901,6 +1053,10 @@ function buildRunPlan(
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
           leadInWeek: continued?.leadInWeek,
+          // Run24 (1), (2), (8): an edit to the same race's plan keeps what
+          // its block is sized from.
+          blockInputs: continued?.blockInputs,
+          shortBase: continued?.shortBase,
           recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
@@ -913,7 +1069,12 @@ function buildRunPlan(
         : undefined
     );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
-    const { leadInWeek: _keptLeadIn, ...kept } = continued ?? {};
+    const {
+      leadInWeek: _keptLeadIn,
+      blockInputs: _keptInputs,
+      shortBase: _keptShortBase,
+      ...kept
+    } = continued ?? {};
     return {
       runDays,
       runPlan: {
@@ -931,22 +1092,18 @@ function buildRunPlan(
         // Run9 phase-3 (Slice B): an initial plan set inside the taper-safe
         // floor is finish-safely — carry the marker so the UI names the risk.
         belowFloor: racePlan.belowFloor,
+        ...(racePlan.blockInputs ? { blockInputs: racePlan.blockInputs } : {}),
+        // Run24 (11): what the plan builds to, for the weekly race check.
+        peakLongRunKm: peakPlannedLongRunKm(racePlan.weeks),
+        // Run24 (2): the block's shorter base, as the generator kept or
+        // decided it.
+        ...(racePlan.shortBase ? { shortBase: true } : {}),
       },
     };
   }
 
-  // structured
-  return {
-    runDays: planWeekFromToday(
-      scheduleStructuredWeekV2({
-        weekSchedule,
-        weekNumber: input.existingState?.weekNumber ?? 1,
-        weekStart,
-      }),
-      input.currentDate
-    ),
-    runPlan: { mode: "structured" },
-  };
+  // Every mode returns above. Defensively, no plan and no planned runs.
+  return { runDays: [], runPlan: undefined };
 }
 
 /** Collates the profile-side patch that callers must persist
@@ -960,8 +1117,8 @@ function buildProfileUpdates(
     weekSchedule,
     weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
     weeklyWorkoutsTarget: input.liftDays,
-    weeklyRunDaysTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
-    weeklyRunsTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
+    weeklyRunDaysTarget: plannedRunDays(input),
+    weeklyRunsTarget: plannedRunDays(input),
     runMode: input.runMode,
     runVolume: (input.runTuning ?? DEFAULT_RUN_TUNING).volume,
     runDifficulty: (input.runTuning ?? DEFAULT_RUN_TUNING).difficulty,
@@ -976,6 +1133,7 @@ function buildProfileUpdates(
     updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
   if (input.barbellAtHome !== undefined)
     updates.barbellAtHome = input.barbellAtHome;
+  if (input.pullUpBar !== undefined) updates.pullUpBar = input.pullUpBar;
   if (input.raceLegTrim !== undefined) updates.raceLegTrim = input.raceLegTrim;
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;
@@ -1150,10 +1308,6 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         : 1,
     splitType,
     workouts: weekWorkouts,
-    fatigueScore:
-      input.preserveHistory && input.existingState
-        ? input.existingState.fatigueScore
-        : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
     settings,
     weekHistory:

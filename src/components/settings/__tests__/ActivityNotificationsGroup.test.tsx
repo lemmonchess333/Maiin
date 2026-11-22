@@ -172,12 +172,16 @@ describe("ActivityNotificationsGroup", () => {
     expect(shown()).toMatchObject({ Props: false, Spaces: false });
   });
 
-  it("says where these appear, and that they are not phone notifications", () => {
+  it("says where these appear, and which also come to the phone (App1 Q18, Run27 call 10)", () => {
     render(<ActivityNotificationsGroup />);
     expect(
       screen.getByText(
-        "These show under the bell on Social, not as phone notifications."
+        "These show under the bell on Social. With notifications on, comments, follow requests, invites, league results and meet-up reminders also come to your phone, and props once a day at 19:00."
       )
+    ).toBeInTheDocument();
+    // The Circles switch names the meet-up notices it carries.
+    expect(
+      screen.getByText("Meet-ups, backing, milestones, new members")
     ).toBeInTheDocument();
   });
 });

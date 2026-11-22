@@ -16,6 +16,7 @@
  * the local date keys in so the output is deterministic and unit-testable.
  */
 
+import type { RaceDistance } from "@/features/program/programTypes";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { runTemplateName } from "@/lib/runLabels";
@@ -41,8 +42,6 @@ export {
   type RunPlanSurfaceState,
 } from "@/lib/runPlanResolver";
 
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
-
 /** Readable race distance — "Marathon", not "MARATHON" or "marathon". */
 export function raceDistanceLabel(distance: string): string {
   switch (distance) {
@@ -54,6 +53,12 @@ export function raceDistanceLabel(distance: string): string {
       return "Half Marathon";
     case "marathon":
       return "Marathon";
+    case "50k":
+      return "50K";
+    case "50mi":
+      return "50 Miles";
+    case "100k":
+      return "100K";
     default:
       return distance;
   }
@@ -66,6 +71,8 @@ export function raceDistanceInSentence(distance: string): string {
       return "half marathon";
     case "marathon":
       return "marathon";
+    case "50mi":
+      return "50-mile race";
     default:
       return raceDistanceLabel(distance);
   }
@@ -275,6 +282,9 @@ export function buildRaceCockpitViewModel(args: {
     | undefined;
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)), which the
+   *  phase rail's label reads. */
+  shortBase?: boolean | null;
   compressed: boolean;
   /** Optional so existing callers compile; absent reads as false, which is
    *  the correct degenerate answer — a caller that does not know cannot claim
@@ -286,6 +296,7 @@ export function buildRaceCockpitViewModel(args: {
     raceGoal,
     currentWeek,
     totalWeeks,
+    shortBase,
     compressed,
     belowFloor = false,
     todayKey,
@@ -307,7 +318,7 @@ export function buildRaceCockpitViewModel(args: {
 
   const hasProgress = currentWeek != null && totalWeeks != null;
   const phaseLabel = hasProgress
-    ? getRacePhaseLabel(currentWeek!, totalWeeks!, distance)
+    ? getRacePhaseLabel(currentWeek!, totalWeeks!, distance, shortBase)
     : null;
 
   return {

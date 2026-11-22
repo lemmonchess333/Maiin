@@ -1,3 +1,5 @@
+import type { RepeatsAt } from "./runPaces";
+
 export interface RunTemplate {
   id: string;
   name: string;
@@ -40,7 +42,72 @@ export interface RunTemplate {
       walkSecs: number[];
       cooldownWalkSec: number;
     };
+    /** Run24 (4), deep dive D4: a time trial, the plan's benchmark session.
+     *  An easy warm-up, the distance as hard as the runner can hold it
+     *  evenly, an easy cool-down; no pace, since it is how the pace is
+     *  found. Its work is read as a race (`benchmarkEffortOf`). */
+    timeTrial?: {
+      distanceKm: number;
+      warmupSec: number;
+      cooldownSec: number;
+    };
+    /** Run24 (5), deep dive D5: what the repeats are run at, where it is
+     *  not the interval band: repetition pace (short, quick repeats), a 5K's
+     *  or a 10K's race pace, or by feel with no pace at all (a fartlek's
+     *  pick-ups, hill repeats). Absent: the interval band. */
+    repeatsAt?: RepeatsAt;
+    /** Run24 (5): the repeats go up a hill, with a jog back down. Run by
+     *  feel (`repeatsAt: "feel"`): a pace on a slope means nothing. */
+    uphill?: boolean;
+    /** Run24 (5): a progression run, easy and then a comfortably hard
+     *  finish, at the threshold band where a benchmark gives one. Segment
+     *  sums equal estimatedDuration. */
+    progression?: { easySec: number; finishSec: number };
+    /** Run24 (5): the taper's sharpener for a race distance, never a build
+     *  session, and never cut to one. */
+    taper?: boolean;
+    /** Run24 (5), deep dive D5: a long run with blocks at its race's pace
+     *  (`RACE_PACE_LONG_RUNGS_KM`): easy running, then `reps` blocks of
+     *  `blockKm` with `floatKm` easy between, then `finishKm` easy to the
+     *  end. The distances sum to the run's `targetDistanceKm`. */
+    racePaceBlocks?: RacePaceBlocks;
+    /** Run24 (8), deep dive D6: an easy run with pick-ups by time, a new
+     *  runner's light quality before they run 40 minutes in one go:
+     *  `warmupSeconds` easy, `reps` pick-ups of `workSeconds` by feel with
+     *  `easySeconds` easy between, then easy to the run's minutes. No pace
+     *  anywhere in it. Segment sums equal estimatedDuration. */
+    pickUps?: PickUps;
+    /** Run26 (2): a run sized in time on feet, by effort: an ultra's or a
+     *  trail race's long run, and a back-to-back run. It has a time and no
+     *  distance, so no pace is asked of it, on ground of any steepness. */
+    timeOnFeet?: boolean;
+    /** Run26 (2): the second of an ultra's back-to-back long runs, the day
+     *  beside the long run. An easy run by type, as the medium-long is. */
+    backToBack?: boolean;
+    /** Run26 (2): climbs run comfortably hard, not hard (`uphill`): a
+     *  trail plan's longer climbs, its tempo by effort. */
+    steadyClimbs?: boolean;
+    /** Run26 (2): the repeats go down a hill at a controlled effort, with a
+     *  walk back up: a descent-heavy race's eccentric work. By feel. */
+    downhill?: boolean;
   };
+}
+
+/** A long run's race-pace blocks (`RunTemplate.config.racePaceBlocks`). */
+export interface RacePaceBlocks {
+  race: "marathon" | "half";
+  reps: number;
+  blockKm: number;
+  floatKm: number;
+  finishKm: number;
+}
+
+/** An easy run's pick-ups (`RunTemplate.config.pickUps`). */
+export interface PickUps {
+  reps: number;
+  workSeconds: number;
+  easySeconds: number;
+  warmupSeconds: number;
 }
 
 /**
@@ -93,6 +160,25 @@ export function isRunWalkTemplateId(id: string | null | undefined): boolean {
   );
 }
 
+/** Run24 (4): whether a template is a time trial, the plan's benchmark
+ *  session. */
+export function isTimeTrialTemplateId(id: string | null | undefined): boolean {
+  return !!RUN_TEMPLATES.find((t) => t.id === id)?.config.timeTrial;
+}
+
+/** Run24 (5): the base's light quality in turn, a fartlek and short hills,
+ *  half an hour each and by feel. A base week holds one; it is not the
+ *  build's quality. */
+export const BASE_LIGHT_TEMPLATE_IDS = ["fartlek_30", "hills_6x30s"] as const;
+
+/** Run26 (2): a base week's light quality in a plan for a race whose
+ *  descents are a large part of it (`isDescentHeavy`): a gentle first
+ *  exposure to downhill running in turn with short hills. */
+export const DESCENT_BASE_LIGHT_TEMPLATE_IDS = [
+  "downhill_4x60s",
+  "hills_6x30s",
+] as const;
+
 /** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
  *  A plan made then holds them, so they stay and read as before; nothing
  *  picks them for a new run. */
@@ -101,10 +187,95 @@ export const RETIRED_RUN_TEMPLATE_IDS: ReadonlySet<string> = new Set([
   "long_25k",
 ]);
 
+/**
+ * Run24 (5), deep dive D5: the long-run rungs that have a race-pace twin
+ * (`racePaceLongTemplateId`), by race. A marathon's from 16 km, so its
+ * easy running before the blocks is 8 km or more, and a half's from 14 km.
+ * The rungs past them have none, so a plan that holds one keeps it plain.
+ */
+export const RACE_PACE_LONG_RUNGS_KM: Readonly<
+  Record<RacePaceBlocks["race"], readonly number[]>
+> = {
+  marathon: [16, 18, 20, 22, 24, 26, 28, 30, 32],
+  half: [14, 16, 18, 20, 22, 24],
+};
+
+/** The id of a long-run rung's race-pace twin. */
+const racePaceLongId = (km: number, race: RacePaceBlocks["race"]) =>
+  `long_${km}k_${race === "marathon" ? "mp" : "hmp"}`;
+
+/**
+ * Run24 (5): a long run's blocks at race pace, by its distance. Blocks of
+ * 3 km, about 13 to 21 minutes from a 3-hour to a 5-hour marathon, inside
+ * the lock's 15 to 20; three of them in a marathon's long run from 22 km,
+ * two below it and in a half's, whose pace is harder to hold; 1 km easy
+ * between; and 2 km easy to finish from 18 km, 1 km under it. A Tropos
+ * heuristic, conservative beside Pfitzinger's (up to 16 km at marathon pace
+ * in a 29 km run).
+ */
+function racePaceBlocksFor(
+  km: number,
+  race: RacePaceBlocks["race"]
+): RacePaceBlocks {
+  return {
+    race,
+    reps: race === "marathon" && km >= 22 ? 3 : 2,
+    blockKm: 3,
+    floatKm: 1,
+    finishKm: km >= 18 ? 2 : 1,
+  };
+}
+
+/** A long-run rung's race-pace twin: the same distance and minutes, so a
+ *  week that holds it in place of the plain one runs as far. */
+function racePaceLong(
+  plain: RunTemplate,
+  race: RacePaceBlocks["race"]
+): RunTemplate {
+  const km = plain.config.targetDistanceKm!;
+  const blocks = racePaceBlocksFor(km, race);
+  const pace = race === "marathon" ? "marathon pace" : "half marathon pace";
+  return {
+    ...plain,
+    id: racePaceLongId(km, race),
+    name: `${plain.name} with ${pace}`,
+    description: `Easy effort, with ${blocks.reps} × ${blocks.blockKm} km at ${pace} in the second half`,
+    config: { targetDistanceKm: km, racePaceBlocks: blocks },
+  };
+}
+
+/**
+ * Run24 (5): the race-pace twin of a long run, for a race (`long_24k` and
+ * a marathon: `long_24k_mp`), or null where its rung has none.
+ */
+export function racePaceLongTemplateId(
+  longId: string,
+  race: RacePaceBlocks["race"]
+): string | null {
+  const config = RUN_TEMPLATES.find(
+    (t) => t.id === longId && t.type === "long"
+  )?.config;
+  const km = config?.targetDistanceKm;
+  if (!km || config.racePaceBlocks || RETIRED_RUN_TEMPLATE_IDS.has(longId))
+    return null;
+  return RACE_PACE_LONG_RUNGS_KM[race].includes(km)
+    ? racePaceLongId(km, race)
+    : null;
+}
+
 const repeat = (seconds: number, times: number) =>
   Array.from({ length: times }, () => seconds);
 
-export const RUN_TEMPLATES: RunTemplate[] = [
+/** An easy run's pick-ups: a 10-minute warm-up, then six 1-minute
+ *  pick-ups with a minute easy between (Run24 (8)). */
+const BEGINNER_PICK_UPS: PickUps = {
+  reps: 6,
+  workSeconds: 60,
+  easySeconds: 60,
+  warmupSeconds: 600,
+};
+
+const BASE_RUN_TEMPLATES: RunTemplate[] = [
   {
     id: "easy_30",
     name: "Easy 30",
@@ -187,6 +358,40 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     estimatedDuration: 50,
     config: { strides: { reps: 4, workSeconds: 20 } },
   },
+  // Run24 (8), deep dive D6: pick-ups by time, a new runner's light
+  // quality before they can run 40 minutes in one go, in turn with
+  // strides. By feel, with no pace. Duration equals the easy tier: the
+  // pick-ups replace minutes of easy running.
+  {
+    id: "easy_30_pickups",
+    name: "Easy 30 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 30,
+    config: { pickUps: BEGINNER_PICK_UPS },
+  },
+  {
+    id: "easy_40_pickups",
+    name: "Easy 40 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 40,
+    config: { pickUps: BEGINNER_PICK_UPS },
+  },
+  {
+    id: "easy_50_pickups",
+    name: "Easy 50 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 50,
+    config: { pickUps: BEGINNER_PICK_UPS },
+  },
   // Medium-long tiers (RUN-EV-11, 2026-08-09) — Pfitzinger's midweek
   // medium-long run, the mechanism that lets half/marathon weeks carry
   // enough volume for the long run to be a sane SHARE of the week
@@ -264,6 +469,107 @@ export const RUN_TEMPLATES: RunTemplate[] = [
       },
     },
   },
+  // Run24 (5), deep dive D5: cruise intervals, Daniels' threshold work in
+  // blocks of 8 to 10 minutes with a short float, which holds more minutes
+  // at threshold than one block does. Their rungs are the lock's 3 x 8 and
+  // 3 x 10.
+  {
+    id: "cruise_3x8",
+    name: "Cruise 3×8 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 3×8 min tempo, 1 min floats → 5 min cooldown",
+    estimatedDuration: 41,
+    config: {
+      tempo: {
+        warmupSec: 600,
+        workSecs: [480, 480, 480],
+        floatSec: 60,
+        cooldownSec: 300,
+      },
+    },
+  },
+  {
+    id: "cruise_3x10",
+    name: "Cruise 3×10 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 3×10 min tempo, 90s floats → 5 min cooldown",
+    estimatedDuration: 48,
+    config: {
+      tempo: {
+        warmupSec: 600,
+        workSecs: [600, 600, 600],
+        floatSec: 90,
+        cooldownSec: 300,
+      },
+    },
+  },
+  // Run24 (5): a progression run, easy and then a comfortably hard finish
+  // (the threshold band), its finish growing by rung.
+  {
+    id: "progression_40",
+    name: "Progression 40",
+    type: "tempo",
+    icon: "trending-up",
+    description: "30 min easy, then 10 min comfortably hard to finish",
+    estimatedDuration: 40,
+    config: { progression: { easySec: 1800, finishSec: 600 } },
+  },
+  {
+    id: "progression_50",
+    name: "Progression 50",
+    type: "tempo",
+    icon: "trending-up",
+    description: "35 min easy, then 15 min comfortably hard to finish",
+    estimatedDuration: 50,
+    config: { progression: { easySec: 2100, finishSec: 900 } },
+  },
+  {
+    id: "progression_60",
+    name: "Progression 60",
+    type: "tempo",
+    icon: "trending-up",
+    description: "40 min easy, then 20 min comfortably hard to finish",
+    estimatedDuration: 60,
+    config: { progression: { easySec: 2400, finishSec: 1200 } },
+  },
+  // Run24 (5): the taper sessions of a half and a marathon, run at race
+  // pace where the plan has one (`racePaceWork`), else at threshold.
+  {
+    id: "sharpener_half",
+    name: "Sharpener 2×10 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 2×10 min, 2 min float → 5 min cooldown",
+    estimatedDuration: 37,
+    config: {
+      taper: true,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [600, 600],
+        floatSec: 120,
+        cooldownSec: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_marathon",
+    name: "Sharpener 2×12 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 2×12 min, 2 min float → 5 min cooldown",
+    estimatedDuration: 41,
+    config: {
+      taper: true,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [720, 720],
+        floatSec: 120,
+        cooldownSec: 300,
+      },
+    },
+  },
   // Interval ladder. Same principle: reps grow, the rep pace does not.
   {
     id: "4x1k",
@@ -314,6 +620,373 @@ export const RUN_TEMPLATES: RunTemplate[] = [
         warmupDuration: 600,
         cooldownDuration: 300,
       },
+    },
+  },
+  // Run24 (5), deep dive D5: repeats by time, the lock's 6 x 2, 5 x 3 and
+  // 4 x 4 minutes at the interval band. A repeat by time is as long for a
+  // slow runner as a quick one, where a 1 km repeat takes one runner four
+  // minutes and another nearly seven. Each rest is what `intervalRest.ts`
+  // gives its repeat, so it is the same with a benchmark or without.
+  {
+    id: "6x2min",
+    name: "6×2 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "6 reps of 2 min hard with 90s rest",
+    estimatedDuration: 35,
+    config: {
+      intervals: {
+        reps: 6,
+        workDuration: 120,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5x3min",
+    name: "5×3 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "5 reps of 3 min hard with 2 min rest",
+    estimatedDuration: 38,
+    config: {
+      intervals: {
+        reps: 5,
+        workDuration: 180,
+        restDuration: 120,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "4x4min",
+    name: "4×4 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "4 reps of 4 min hard with 3 min rest",
+    estimatedDuration: 40,
+    config: {
+      intervals: {
+        reps: 4,
+        workDuration: 240,
+        restDuration: 180,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): short repeats at repetition pace, for a 5K and a 10K
+  // (Daniels' R pace: quick and relaxed, with a full recovery). Their
+  // minutes assume repeats at about 3:20 /km.
+  {
+    id: "8x200",
+    name: "8×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "8 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 31,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 8,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10x200",
+    name: "10×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "10 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 35,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 10,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "12x200",
+    name: "12×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "12 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 40,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 12,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): race-pace sessions for a 5K and a 10K, at the race's pace
+  // the runner's benchmark gives, with a short rest. Their minutes assume
+  // 5K pace about 3:50 /km and 10K pace about 4:00.
+  {
+    id: "5k_pace_4x800",
+    name: "4×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 4,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5k_pace_5x800",
+    name: "5×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "5 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 34,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 5,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5k_pace_6x800",
+    name: "6×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "6 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 38,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 6,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10k_pace_3x2k",
+    name: "3×2K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "3 reps of 2 km at 10K race pace with 2½ min rest",
+    estimatedDuration: 44,
+    config: {
+      repeatsAt: "10k",
+      intervals: {
+        reps: 3,
+        workDistance: 2000,
+        restDuration: 150,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10k_pace_4x2k",
+    name: "4×2K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 2 km at 10K race pace with 2½ min rest",
+    estimatedDuration: 55,
+    config: {
+      repeatsAt: "10k",
+      intervals: {
+        reps: 4,
+        workDistance: 2000,
+        restDuration: 150,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): hill repeats, hard up and a jog back down, by feel: a pace
+  // on a slope means nothing. A 15-minute warm-up leaves time to reach a
+  // hill.
+  {
+    id: "hills_6x60s",
+    name: "Hills 6×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 hard 60s climbs, jogging back down between",
+    estimatedDuration: 36,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "hills_8x60s",
+    name: "Hills 8×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "8 hard 60s climbs, jogging back down between",
+    estimatedDuration: 42,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 8,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "hills_10x60s",
+    name: "Hills 10×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "10 hard 60s climbs, jogging back down between",
+    estimatedDuration: 48,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 10,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): the base's light sessions, short hills and a fartlek, each
+  // half an hour, by feel.
+  {
+    id: "hills_6x30s",
+    name: "Short hills 6×30s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 strong 30s climbs, walking or jogging back down",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 30,
+        restDuration: 60,
+        warmupDuration: 900,
+        cooldownDuration: 420,
+      },
+    },
+  },
+  {
+    id: "fartlek_30",
+    name: "Fartlek 30",
+    type: "intervals",
+    icon: "wind",
+    description: "6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "feel",
+      intervals: {
+        reps: 6,
+        workDuration: 60,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 540,
+      },
+    },
+  },
+  // Run24 (5): the taper sessions of a 5K and a 10K, short repeats at the
+  // race's pace.
+  {
+    id: "sharpener_5k",
+    name: "6×400m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "6 reps of 400m at 5K race pace with 60s rest",
+    estimatedDuration: 29,
+    config: {
+      taper: true,
+      repeatsAt: "5k",
+      intervals: {
+        reps: 6,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_10k",
+    name: "4×1K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 1 km at 10K race pace with 60s rest",
+    estimatedDuration: 34,
+    config: {
+      taper: true,
+      repeatsAt: "10k",
+      intervals: {
+        reps: 4,
+        workDistance: 1000,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "time_trial_3k",
+    name: "3K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "3 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 35,
+    config: {
+      timeTrial: { distanceKm: 3, warmupSec: 900, cooldownSec: 600 },
+    },
+  },
+  {
+    id: "time_trial_5k",
+    name: "5K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "5 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 45,
+    config: {
+      timeTrial: { distanceKm: 5, warmupSec: 900, cooldownSec: 600 },
     },
   },
   {
@@ -673,7 +1346,373 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     estimatedDuration: 240,
     config: { targetDistanceKm: 42.2 },
   },
+  // Run26 (2): the ultras' race days. An ultra is paced by effort from the
+  // start, and the minutes are a nominal guess at a recreational finish.
+  {
+    id: "50k_race",
+    name: "50K Race",
+    type: "race",
+    icon: "flag",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
+    estimatedDuration: 360,
+    config: { targetDistanceKm: 50 },
+  },
+  {
+    id: "50mi_race",
+    name: "50 Mile Race",
+    type: "race",
+    icon: "flag",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
+    estimatedDuration: 660,
+    config: { targetDistanceKm: 80.5 },
+  },
+  {
+    id: "100k_race",
+    name: "100K Race",
+    type: "race",
+    icon: "flag",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
+    estimatedDuration: 840,
+    config: { targetDistanceKm: 100 },
+  },
 ];
+
+/** The plain long runs' race-pace twins (`RACE_PACE_LONG_RUNGS_KM`), after
+ *  every other template, so a fit that weighs two runs of the same minutes
+ *  meets the plain one first. */
+const RACE_PACE_LONG_TEMPLATES: RunTemplate[] = (
+  Object.keys(RACE_PACE_LONG_RUNGS_KM) as RacePaceBlocks["race"][]
+).flatMap((race) =>
+  RACE_PACE_LONG_RUNGS_KM[race].map((km) =>
+    racePaceLong(
+      BASE_RUN_TEMPLATES.find(
+        (t) => t.type === "long" && t.config.targetDistanceKm === km
+      )!,
+      race
+    )
+  )
+);
+
+/** "45 min", "1 h", "1 h 30": a time on feet in a session's name. */
+function timeOnFeetName(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${String(m)} min`;
+  return m === 0 ? `${String(h)} h` : `${String(h)} h ${String(m)}`;
+}
+
+/**
+ * Run26 (2): an ultra's and a trail race's long runs, in time on feet, a
+ * rung every 15 minutes. A rung is a step of 5 to 33% (from 45 minutes to
+ * 5 hours), the size of the kilometre ladder's 2 km steps at an easy pace
+ * (Run24 (6)), so Run23's one rung a week holds. 5 hours, the 100K's
+ * ceiling, is the top. A Tropos heuristic in the RUN-EV-06 register.
+ */
+export const TIME_ON_FEET_LONG_MINUTES: readonly number[] = Array.from(
+  { length: 18 },
+  (_, i) => 45 + 15 * i
+);
+
+/** The id of a long run of `minutes` on feet. */
+export const timeOnFeetLongId = (minutes: number) => `long_time_${minutes}`;
+
+/**
+ * Run26 (2): an ultra's back-to-back runs, the day beside the long run, a
+ * rung every 15 minutes from an hour to three. Easy runs by type, as the
+ * medium-long is, so the week's one long run stays the long run. A Tropos
+ * heuristic.
+ */
+export const BACK_TO_BACK_MINUTES: readonly number[] = Array.from(
+  { length: 9 },
+  (_, i) => 60 + 15 * i
+);
+
+/** The id of a back-to-back run of `minutes`. */
+export const backToBackId = (minutes: number) => `back_to_back_${minutes}`;
+
+const TIME_ON_FEET_TEMPLATES: RunTemplate[] = [
+  ...TIME_ON_FEET_LONG_MINUTES.map((minutes): RunTemplate => ({
+    id: timeOnFeetLongId(minutes),
+    name: `Long ${timeOnFeetName(minutes)}`,
+    type: "long",
+    icon: "route",
+    description:
+      "Easy effort for the time, not a distance. Walk the steep climbs",
+    estimatedDuration: minutes,
+    config: { targetDurationMinutes: minutes, timeOnFeet: true },
+  })),
+  ...BACK_TO_BACK_MINUTES.map((minutes): RunTemplate => ({
+    id: backToBackId(minutes),
+    name: `Back-to-back ${timeOnFeetName(minutes)}`,
+    type: "easy",
+    icon: "route",
+    description: "Easy effort on tired legs, the day beside your long run",
+    estimatedDuration: minutes,
+    config: {
+      targetDurationMinutes: minutes,
+      timeOnFeet: true,
+      backToBack: true,
+    },
+  })),
+];
+
+/**
+ * Run26 (2): a trail plan's sessions, by effort. Longer climbs run
+ * comfortably hard, a trail plan's tempo, on the tempo ladder's rungs;
+ * downhill repeats at a controlled effort for a race whose descents are a
+ * large part of it (`isDescentHeavy`), on the interval ladder's, with a
+ * gentler one for a base week. Prior exposure to downhill running is the
+ * best-supported way to tolerate it (Bontemps et al. 2020, Sports Med
+ * 50:2083), and one bout protected for up to six weeks and not nine
+ * (Byrnes et al. 1985, J Appl Physiol 59:710), so the plan holds one
+ * every few weeks. A taper sharpener for a trail race and one for a road
+ * ultra. Sizes and rests are Tropos heuristics; a warm-up of 15 minutes
+ * leaves time to reach a hill, as the hill repeats' does.
+ */
+const TRAIL_SESSION_TEMPLATES: RunTemplate[] = [
+  {
+    id: "climbs_3x5min",
+    name: "Climbs 3×5 min",
+    type: "intervals",
+    icon: "mountain",
+    description: "3 climbs of 5 min, comfortably hard, walking or jogging down",
+    estimatedDuration: 41,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      steadyClimbs: true,
+      intervals: {
+        reps: 3,
+        workDuration: 300,
+        restDuration: 180,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "climbs_4x5min",
+    name: "Climbs 4×5 min",
+    type: "intervals",
+    icon: "mountain",
+    description: "4 climbs of 5 min, comfortably hard, walking or jogging down",
+    estimatedDuration: 49,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      steadyClimbs: true,
+      intervals: {
+        reps: 4,
+        workDuration: 300,
+        restDuration: 180,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "climbs_4x6min",
+    name: "Climbs 4×6 min",
+    type: "intervals",
+    icon: "mountain",
+    description: "4 climbs of 6 min, comfortably hard, walking or jogging down",
+    estimatedDuration: 56,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      steadyClimbs: true,
+      intervals: {
+        reps: 4,
+        workDuration: 360,
+        restDuration: 240,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "downhill_4x60s",
+    name: "Downhill 4×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "4 controlled 60s descents, walking back up between",
+    estimatedDuration: 33,
+    config: {
+      repeatsAt: "feel",
+      downhill: true,
+      intervals: {
+        reps: 4,
+        workDuration: 60,
+        restDuration: 180,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "downhill_5x60s",
+    name: "Downhill 5×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "5 controlled 60s descents, walking back up between",
+    estimatedDuration: 37,
+    config: {
+      repeatsAt: "feel",
+      downhill: true,
+      intervals: {
+        reps: 5,
+        workDuration: 60,
+        restDuration: 180,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "downhill_6x90s",
+    name: "Downhill 6×90s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 controlled 90s descents, walking back up between",
+    estimatedDuration: 49,
+    config: {
+      repeatsAt: "feel",
+      downhill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 90,
+        restDuration: 240,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "downhill_6x2min",
+    name: "Downhill 6×2 min",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 controlled 2 min descents, walking back up between",
+    estimatedDuration: 52,
+    config: {
+      repeatsAt: "feel",
+      downhill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 120,
+        restDuration: 240,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_trail",
+    name: "Sharpener hills 6×45s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 strong 45s climbs, walking or jogging back down",
+    estimatedDuration: 32,
+    config: {
+      taper: true,
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 45,
+        restDuration: 90,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_ultra",
+    name: "Sharpener 3×6 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 3×6 min, 2 min floats → 5 min cooldown",
+    estimatedDuration: 37,
+    config: {
+      taper: true,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [360, 360, 360],
+        floatSec: 120,
+        cooldownSec: 300,
+      },
+    },
+  },
+];
+
+export const RUN_TEMPLATES: RunTemplate[] = [
+  ...BASE_RUN_TEMPLATES,
+  ...RACE_PACE_LONG_TEMPLATES,
+  ...TIME_ON_FEET_TEMPLATES,
+  ...TRAIL_SESSION_TEMPLATES,
+];
+
+/**
+ * Run26 (2): a run's family for the fits and swaps that shorten it: a run
+ * in time on feet stays in time on feet, a back-to-back stays a
+ * back-to-back, and nothing else is ever fitted to either, so a plan in
+ * kilometres never meets one. Null for every other run.
+ */
+export function timeOnFeetFamilyOf(
+  template: Pick<RunTemplate, "config"> | null | undefined
+): "long" | "backToBack" | null {
+  if (!template?.config.timeOnFeet) return null;
+  return template.config.backToBack ? "backToBack" : "long";
+}
+
+/**
+ * Run27 (19): whether a run is one of the week's long runs: the long run,
+ * or an ultra's back-to-back run beside it, a second long run that is an
+ * easy run by type (Run26 (2)). The one test for both: the starting point's
+ * fit holds either to the long run's climb, and the lifting says so of a
+ * leg session the day before either.
+ */
+export function isLongRunTemplate(
+  template: Pick<RunTemplate, "type" | "config"> | null | undefined
+): boolean {
+  return template?.type === "long" || template?.config.backToBack === true;
+}
+
+/** Run26 (2): whether a run may be fitted or swapped to another, by their
+ *  families (`timeOnFeetFamilyOf`). */
+export function sameTimeOnFeetFamily(
+  a: Pick<RunTemplate, "config"> | null | undefined,
+  b: Pick<RunTemplate, "config"> | null | undefined
+): boolean {
+  return timeOnFeetFamilyOf(a) === timeOnFeetFamilyOf(b);
+}
+
+/**
+ * Run26 (2): whether a run is held by effort, never judged by its pace: a
+ * long run or back-to-back sized in time on feet, run on ground like the
+ * race's, where the hills set the pace. The run screen's easy cue stays
+ * quiet on one, and it gets no pace verdict after.
+ */
+export function runsByEffort(templateId: string | null | undefined): boolean {
+  if (!templateId) return false;
+  return (
+    RUN_TEMPLATES.find((t) => t.id === templateId)?.config.timeOnFeet === true
+  );
+}
+
+/** Run24 (5): each race's long runs with race-pace blocks, shortest first:
+ *  the ladder a lighter week steps one down. */
+export const RACE_PACE_LONG_LADDERS: Readonly<
+  Record<RacePaceBlocks["race"], readonly string[]>
+> = {
+  marathon: RACE_PACE_LONG_RUNGS_KM.marathon.map((km) =>
+    racePaceLongId(km, "marathon")
+  ),
+  half: RACE_PACE_LONG_RUNGS_KM.half.map((km) => racePaceLongId(km, "half")),
+};
 
 /** Canonical race-template gate. Resolves a run template id to its
  *  type and asks "is it a race?" — the id-agnostic check the codebase

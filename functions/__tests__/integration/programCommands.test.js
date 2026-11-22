@@ -55,7 +55,6 @@ function seedState() {
     currentPhase: "progression",
     weekNumber: 5,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 1000,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -185,7 +184,7 @@ suite("runProgramCommandTransaction — apply + receipt", () => {
       now: NOW,
     });
     // Corrupt state under the same id to prove the replay does NOT re-apply.
-    await programRef().update({ fatigueScore: 42 });
+    await programRef().update({ sessionMinutes: 42 });
     const res = await runProgramCommandTransaction({
       firestore: db,
       uid: UID,
@@ -194,7 +193,52 @@ suite("runProgramCommandTransaction — apply + receipt", () => {
     });
     expect(res.duplicate).toBe(true);
     const state = (await programRef().get()).data();
-    expect(state.fatigueScore).toBe(42); // untouched by the replay
+    expect(state.sessionMinutes).toBe(42); // untouched by the replay
+  });
+
+  // App1 Q24: every plan written before the change carries `fatigueScore`,
+  // and some the other retired keys. Each goes, silently, on the next
+  // command; the deload neither reads nor writes the score, and the real
+  // Admin SDK here refuses an `undefined` it might have written.
+  it("takes a command on a plan carrying retired keys, and drops them", async () => {
+    await programRef().set({
+      ...seedState(),
+      fatigueScore: 9,
+      plateauResponses: 1,
+      templateId: "ppl_4day",
+      recoveringMuscles: ["Chest"],
+      settings: {
+        autoProgression: true,
+        smallPlates: false,
+        microloading: true,
+      },
+    });
+    for (const [kind, commandId] of [
+      ["applyDeloadWeek", "cmd_int_retired_deload"],
+      ["revertDeloadWeek", "cmd_int_retired_revert"],
+    ]) {
+      const res = await runProgramCommandTransaction({
+        firestore: db,
+        uid: UID,
+        command: validate({ kind, commandId, expectedWeekNumber: 5 }),
+        now: NOW,
+      });
+      expect(res.duplicate).toBe(false);
+      const state = (await programRef().get()).data();
+      for (const key of [
+        "fatigueScore",
+        "plateauResponses",
+        "templateId",
+        "recoveringMuscles",
+      ]) {
+        expect(key in state, `${kind}: ${key}`).toBe(false);
+      }
+      expect("microloading" in state.settings).toBe(false);
+      expect(state.runDays[0].templateId).toBe("easy_30");
+    }
+    const state = (await programRef().get()).data();
+    expect(state.currentPhase).toBe("progression");
+    expect(state.workouts).toEqual(seedState().workouts);
   });
 
   it("two different commands both survive (no last-write-wins clobber)", async () => {

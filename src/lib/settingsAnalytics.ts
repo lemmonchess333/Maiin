@@ -81,7 +81,16 @@ export type SettingsToggle =
   /** One of the activity notification switches (S3). Sends
    *  `"{category}:{on|off}"` (e.g. `"follows:on"`), like
    *  `share_default_set` pairs its value with the type it applies to. */
-  | "activity_notification";
+  | "activity_notification"
+  /** Use Watch for runs (connected training): `"on"`, `"off"`, or
+   *  `"on:failed"` when the paired Watch could not be switched on, so the
+   *  stream counts connection attempts as well as connections. */
+  | "watch_runs"
+  /** The Live Activities switch (Wid2 call 6): `"on"` or `"off"`. */
+  | "live_activities"
+  /** One of the two email switches (App1 Q55). Sends `"{kind}:{on|off}"`
+   *  (e.g. `"weeklyReview:on"`), like `activity_notification`. */
+  | "email";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user

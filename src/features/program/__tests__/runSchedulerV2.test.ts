@@ -11,7 +11,6 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  scheduleStructuredWeekV2,
   generateRacePlanV2,
   classifyRaceTiming,
   getRaceFloorWeeks,
@@ -20,221 +19,20 @@ import {
   type RacePlanV2Input,
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-
-const mondayStart = "2026-05-11"; // Monday — the week anchor (RunWk2)
-const baseInput = {
-  weekNumber: 1,
-  weekStart: mondayStart,
-};
-
-/* ─── scheduleStructuredWeekV2 ───────────────────────────────── */
-
-describe("scheduleStructuredWeekV2", () => {
-  it("returns empty array when no run-eligible days in schedule", () => {
-    const allLift: ScheduleDay[] = generateSchedule(4, 0);
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: allLift,
-    });
-    expect(result).toEqual([]);
-  });
-
-  it("schedules runs on every run-eligible day in weekSchedule", () => {
-    const schedule = generateSchedule(2, 3); // 3 run days
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    expect(result).toHaveLength(3);
-  });
-
-  it("emits v2-shaped runDays with id / date / weekKey / status", () => {
-    const schedule = generateSchedule(3, 2);
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    result.forEach((rd) => {
-      expect(rd.id).toBeTruthy();
-      expect(rd.id).toMatch(/^runday_/);
-      expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(rd.weekKey).toBe(mondayStart);
-      expect(rd.status).toBe("planned");
-    });
-  });
-
-  it("emits the week's runs in CALENDAR order — a Sunday run comes last, not first", () => {
-    // `dayIndex` is a getDay() weekday, so sorting on it puts Sunday (0)
-    // first; under the Monday anchor Sunday is the week's LAST day. The
-    // scheduler sorts on week position instead. Nothing asserted order
-    // before, which is how a Sunday-first array would have shipped.
-    const schedule: ScheduleDay[] = [
-      { day: 0, type: "run" }, // Sunday — last in a Monday week
-      { day: 1, type: "rest" },
-      { day: 2, type: "run" },
-      { day: 3, type: "rest" },
-      { day: 4, type: "run" },
-      { day: 5, type: "rest" },
-      { day: 6, type: "rest" },
-    ];
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    expect(result.map((rd) => rd.date)).toEqual([
-      "2026-05-12", // Tue
-      "2026-05-14", // Thu
-      "2026-05-17", // Sun
-    ]);
-    const dates = result.map((rd) => rd.date!);
-    expect([...dates].sort()).toEqual(dates);
-  });
-
-  it("normalises an off-anchor weekStart, so any day of the week yields that week's plan", () => {
-    // Production passes an on-anchor key. A caller handing in a Wednesday
-    // must not get runs keyed to one week and dated in another — the
-    // builder keys to the CONTAINING week, so the arithmetic has to start
-    // there too. Pinned as equality with the Monday plan rather than as a
-    // list of dates, so the property is the claim.
-    const schedule: ScheduleDay[] = [
-      { day: 0, type: "run" },
-      { day: 1, type: "run" },
-      { day: 2, type: "rest" },
-      { day: 3, type: "run" },
-      { day: 4, type: "rest" },
-      { day: 5, type: "rest" },
-      { day: 6, type: "run" },
-    ];
-    const fromMonday = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekStart: "2026-05-11", // Mon
-      weekSchedule: schedule,
-    });
-    const fromWednesday = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekStart: "2026-05-13", // Wed, same week
-      weekSchedule: schedule,
-    });
-    expect(fromWednesday).toEqual(fromMonday);
-    expect(fromMonday.every((rd) => rd.weekKey === "2026-05-11")).toBe(true);
-  });
-
-  it("a race plan from a mid-week weekStart equals the plan from that week's Monday", () => {
-    // `generateRacePlanV2` does its own week arithmetic from `weekStart`
-    // (final-week start, race offset) while the builder keys every run to
-    // the CONTAINING week. If the two started from different days, the
-    // race offset would be measured from the wrong day and the shakeout
-    // filter would keep or cut the wrong slots. Equality with the Monday
-    // plan is the whole property; a date list would only pin one case.
-    const schedule: ScheduleDay[] = [
-      { day: 0, type: "run" },
-      { day: 1, type: "run" },
-      { day: 2, type: "rest" },
-      { day: 3, type: "run" },
-      { day: 4, type: "rest" },
-      { day: 5, type: "run" },
-      { day: 6, type: "rest" },
-    ];
-    const base = {
-      weekSchedule: schedule,
-      raceGoal: { distance: "half" as const, targetDate: "2026-06-21" }, // a Sunday
-      weeklyRunDays: 4,
-      recentLayoff: "none" as const,
-    };
-    const fromMonday = generateRacePlanV2({
-      ...base,
-      currentDate: "2026-05-11",
-      weekStart: "2026-05-11", // Mon
-    });
-    const fromWednesday = generateRacePlanV2({
-      ...base,
-      currentDate: "2026-05-11",
-      weekStart: "2026-05-13", // Wed of the same week
-    });
-    expect(fromWednesday.weeks).toEqual(fromMonday.weeks);
-    const race = fromMonday.weeks.at(-1)!.find((r) => r.type === "race")!;
-    expect(race.date).toBe("2026-06-21");
-  });
-
-  it("derives `date` from weekStart + dayIndex correctly", () => {
-    // weekStart = Mon 2026-05-11. Run on dayIndex 3 (Wed) = 2026-05-13.
-    // Wed 13 May sat in the old Sunday week too, so the date is the
-    // same under both anchors — only the key moved.
-    const schedule: ScheduleDay[] = [
-      { day: 0, type: "rest" },
-      { day: 1, type: "rest" },
-      { day: 2, type: "rest" },
-      { day: 3, type: "run" },
-      { day: 4, type: "rest" },
-      { day: 5, type: "rest" },
-      { day: 6, type: "rest" },
-    ];
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    expect(result).toHaveLength(1);
-    expect(result[0].date).toBe("2026-05-13");
-  });
-
-  it("schedules runs on Both days (the headline P0-3 hybrid fix)", () => {
-    // 6 lifts + 2 runs = 8 sessions → 1 both day required
-    // Verify the run-eligible-from-weekSchedule path schedules a run
-    // on the Both day, which V1 explicitly excluded.
-    const schedule = generateSchedule(6, 2);
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    expect(result).toHaveLength(2);
-    // At least one of the runs should land on a Both day
-    const onBothDays = result.filter(
-      (rd) => schedule[rd.dayIndex].type === "both"
-    );
-    expect(onBothDays.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("alternates tempo (even weeks) and intervals (odd weeks)", () => {
-    const schedule = generateSchedule(2, 3);
-    const evenWeek = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-      weekNumber: 2,
-    });
-    const oddWeek = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-      weekNumber: 3,
-    });
-    expect(evenWeek.find((rd) => rd.type === "tempo")).toBeTruthy();
-    expect(oddWeek.find((rd) => rd.type === "intervals")).toBeTruthy();
-  });
-
-  it("places exactly one long run per week", () => {
-    const schedule = generateSchedule(2, 3);
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    const longs = result.filter((rd) => rd.type === "long");
-    expect(longs).toHaveLength(1);
-  });
-
-  it("is sorted by dayIndex ascending", () => {
-    const schedule = generateSchedule(2, 3);
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    for (let i = 1; i < result.length; i++) {
-      expect(result[i].dayIndex).toBeGreaterThan(result[i - 1].dayIndex);
-    }
-  });
-});
+import { pickLongRunSlot } from "../runPlacement";
 
 /* ─── Stress-aware long-run placement ────────────────────────── */
 
-describe("scheduleStructuredWeekV2 · long-run placement", () => {
+describe("pickLongRunSlot · long-run placement", () => {
+  /** The long run's day, from a week's run and both days. */
+  const longRunDay = (schedule: ScheduleDay[]) =>
+    pickLongRunSlot(
+      schedule
+        .filter((d) => d.type === "run" || d.type === "both")
+        .map((d) => d.day),
+      schedule
+    );
+
   it("prefers run-only slot over Both slot for the long run", () => {
     // 2 lift, 3 run = 5 sessions, no doubles. Run-only slots get
     // the long.
@@ -247,13 +45,8 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "run" }, // run-only — weekend, gets long
     ];
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    const longRun = result.find((rd) => rd.type === "long");
-    expect(longRun).toBeTruthy();
-    expect(schedule[longRun!.dayIndex].type).toBe("run");
+    const longRun = longRunDay(schedule);
+    expect(schedule[longRun].type).toBe("run");
   });
 
   it("falls back to Both slot when no run-only slots available", () => {
@@ -268,14 +61,9 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
       { day: 5, type: "both" },
       { day: 6, type: "rest" },
     ];
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: allBothNoRunOnly,
-    });
-    const longRun = result.find((rd) => rd.type === "long");
-    expect(longRun).toBeTruthy();
+    const longRun = longRunDay(allBothNoRunOnly);
     // No run-only slots, so the long run must land on a Both slot
-    expect(allBothNoRunOnly[longRun!.dayIndex].type).toBe("both");
+    expect(allBothNoRunOnly[longRun].type).toBe("both");
   });
 
   it("prefers weekend run-only slot over weekday run-only", () => {
@@ -288,12 +76,8 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
       { day: 5, type: "lift" },
       { day: 6, type: "rest" },
     ];
-    const result = scheduleStructuredWeekV2({
-      ...baseInput,
-      weekSchedule: schedule,
-    });
-    const longRun = result.find((rd) => rd.type === "long");
-    expect(longRun?.dayIndex).toBe(0); // Sunday wins
+    const longRun = longRunDay(schedule);
+    expect(longRun).toBe(0); // Sunday wins
   });
 });
 

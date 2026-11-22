@@ -2,15 +2,15 @@ import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
 import { WifiOff, Check, CloudUpload } from "lucide-react";
 import {
-  AnalyticsTabIcon,
   FoodTabIcon,
   HomeTabIcon,
+  ProgressTabIcon,
   SocialTabIcon,
   TrainTabIcon,
   type TabIcon,
 } from "@/components/icons/TabIcons";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   getQueueLength,
   getFailedWorkoutCompletionCount,
@@ -28,6 +28,7 @@ import { toast } from "@/lib/toast";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
+import { layoutKey } from "@/lib/sessionPages";
 import { useUid } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -80,7 +81,7 @@ const tabs: { to: string; icon: TabIcon; label: string }[] = [
   { to: "/program", icon: TrainTabIcon, label: "Train" },
   { to: "/food", icon: FoodTabIcon, label: "Food" },
   { to: "/social", icon: SocialTabIcon, label: "Social" },
-  { to: "/history", icon: AnalyticsTabIcon, label: "Analytics" },
+  { to: "/history", icon: ProgressTabIcon, label: "Progress" },
 ];
 
 export default function Layout() {
@@ -93,7 +94,10 @@ export default function Layout() {
   const hideNav =
     location.pathname === "/run" || location.pathname === "/upgrade";
   const { isOnline, wasOffline } = useOnlineStatus();
-  const { count: unreadCount, markSeen } = useUnreadCount();
+  /* The Social tab's dot is the notification tray's unread (App1 Q34):
+     someone did something for you. It is the same count Social's bell
+     shows, and opening the tray there clears both. */
+  const { unreadCount: unreadActivity } = useNotifications();
   const prefersReducedMotion = useReducedMotion();
   const uid = useUid();
   const {
@@ -324,8 +328,9 @@ export default function Layout() {
         {/* Keyed by path, so /user/a to /user/b mounts a fresh page, but
             with no fade: a page arrives at once, as a native tab does,
             and PageShell's content starts settled for the same reason
-            (DESIGN_GUIDE §14h). */}
-        <div key={location.pathname}>
+            (DESIGN_GUIDE §14h). Train and its session pages share a key,
+            so the engine they share stays mounted (`layoutKey`). */}
+        <div key={layoutKey(location.pathname)}>
           <Suspense
             fallback={<PageContentSkeleton pathname={location.pathname} />}
           >
@@ -339,8 +344,7 @@ export default function Layout() {
         <BottomNavigation
           tabs={tabs}
           pathname={location.pathname}
-          unreadCount={unreadCount}
-          onSocialVisit={markSeen}
+          socialNewActivity={unreadActivity > 0}
         />
       )}
     </div>

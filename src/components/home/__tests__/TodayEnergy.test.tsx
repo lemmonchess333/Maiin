@@ -93,7 +93,7 @@ describe("TodayEnergy — the Food page's ring and tiles", function () {
   it("leads with what is left of the target, inside the ring", function () {
     renderAt(A_DAY);
     expect(ring()).toHaveAccessibleName(
-      /^1450 of 2200 calories logged, 750 remaining/
+      /\b1450 of 2200 calories logged, 750 remaining/
     );
     expect(screen.getByText(groupText(750))).toBeInTheDocument();
     expect(screen.getByText("kcal left")).toBeInTheDocument();
@@ -156,9 +156,11 @@ describe("TodayEnergy — the day's shape", function () {
     // The figure above "kcal left" in the ring. Raw textContent, so the
     // runtime's own grouping (`group`), not Testing Library's normalized
     // form: fr-FR groups with U+202F.
-    expect(screen.getByText("kcal left").previousSibling?.textContent).toBe(
-      group(2200)
-    );
+    // The text between them is the space that keeps them two words.
+    expect(
+      screen.getByText("kcal left").previousSibling?.previousSibling
+        ?.textContent
+    ).toBe(group(2200));
     // Zero is information, not a reason to hide the macros.
     reads("protein", "160", "left");
   });
@@ -269,7 +271,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     // Whatever the phase, the card works from the target and never shows
     // a +300/-500 delta.
     renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
-    expect(ring()).toHaveAccessibleName(/^1450 of 1700 calories logged/);
+    expect(ring()).toHaveAccessibleName(/\b1450 of 1700 calories logged/);
     expect(screen.queryByText(/[+−-]\s?\d{3}/)).toBeNull();
   });
 
@@ -290,6 +292,26 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     expect(
       screen.getByText("Post-run: refuel with carbs and protein soon")
     ).toBeInTheDocument();
+  });
+
+  it("says the day's fuel label, as Food's hero does (App1 Q29)", () => {
+    renderAt({
+      calories: 1200,
+      targets: { ...targets, fuelLabel: "Race week, carb load" },
+      postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
+    });
+    const label = screen.getByText("Race week, carb load");
+    // The day's line first, then what the session just done asks.
+    const nudge = screen.getByText(/40g protein to your target/i);
+    expect(
+      label.compareDocumentPosition(nudge) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("says no fuel label on a day without one", () => {
+    renderAt({ calories: 1200, targets: { ...targets, fuelLabel: null } });
+    expect(ring()).toBeInTheDocument();
+    expect(screen.queryByText(/carb load|fuel up|Taper/)).toBeNull();
   });
 
   it("does not restate the activity breakdown Food's drill-down owns", () => {
@@ -417,7 +439,7 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
 
   it("still shows a real zero once loading is done", function () {
     renderAt({ calories: 0, mealsLoading: false });
-    expect(ring()).toHaveAccessibleName(/^0 of 2200 calories logged/);
+    expect(ring()).toHaveAccessibleName(/\b0 of 2200 calories logged/);
     reads("protein", "160", "left");
   });
 });
@@ -448,7 +470,7 @@ describe("TodayEnergy food read failures", () => {
     expect(
       screen.getByText("Showing last available totals.")
     ).toBeInTheDocument();
-    expect(ring()).toHaveAccessibleName(/^1450 of 2200 calories logged/);
+    expect(ring()).toHaveAccessibleName(/\b1450 of 2200 calories logged/);
     expect(screen.queryByText(/Post-lift:/)).toBeNull();
   });
 
@@ -475,7 +497,7 @@ describe("TodayEnergy food read failures", () => {
     );
     expect(screen.queryByRole("alert")).toBeNull();
     expect(ring()).toHaveAccessibleName(
-      /^0 of 2200 calories logged, 2200 remaining/
+      /\b0 of 2200 calories logged, 2200 remaining/
     );
   });
 

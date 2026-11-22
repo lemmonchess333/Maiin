@@ -193,6 +193,20 @@ test.describe("onboarding screenshots", () => {
     await page.getByRole("button", { name: /some experience/i }).click();
     await next(page);
 
+    // The agreement to store health details (Priv1 call 1), before the
+    // first body question: shot as asked, and as Not now leaves it, then
+    // agreed to.
+    await expect(
+      page.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+    ).toBeVisible();
+    await shootBoth(page, "onboarding-8-health");
+    await page.getByRole("button", { name: "Not now", exact: true }).click();
+    await shootBoth(page, "onboarding-8-health-declined");
+    await page.getByRole("button", { name: "Go back", exact: true }).click();
+    await page
+      .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+      .click();
+
     // Step 4 — limitations require an explicit answer.
     await shootBoth(page, "onboarding-4-injuries");
     await expect(
@@ -202,14 +216,15 @@ test.describe("onboarding screenshots", () => {
     await next(page);
 
     // Step 5 — about you. Nothing here arrives filled in: height, weight
-    // and the age range are the whole calorie estimate, so the step will
+    // and the year of birth are the whole calorie estimate, so the step will
     // not advance on figures nobody entered. The frame is shot in that
     // as-arrived state, which is what a new account actually sees.
     await shootBoth(page, "onboarding-5-about-you");
     await page.getByLabel("Weight (kg)", { exact: true }).fill("81.5");
     await page.getByLabel("Height (cm)", { exact: true }).fill("175");
-    // en dash in the rendered label, so match on the leading digits.
-    await page.getByRole("radio", { name: /^25/ }).click();
+    await page
+      .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+      .fill("1995");
     await next(page);
 
     // Step 7 — confirmation. Shot but NOT submitted (completeOnboarding

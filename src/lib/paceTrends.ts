@@ -11,6 +11,7 @@
 
 import type { ActivityType, RunPlace } from "@/types/run";
 import { isPaceTrendEligible } from "./runStatsEligibility";
+import { holdsPaceRecord } from "./runRecordSelection";
 import { isRunWalkTemplateId } from "./workoutTemplates";
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
@@ -80,19 +81,35 @@ const CONSISTENT_THRESHOLD = 1.02; // within 2% of recent average
 
 export function calculatePaceTrend(
   currentRun: RunForTrend,
-  allRuns: RunForTrend[]
+  allRuns: RunForTrend[],
+  {
+    records,
+  }: {
+    /**
+     * The runs Bests reads its outdoor pace records from (`isPaceEligible`
+     * over the whole history), or null while the whole history is not
+     * known. Given, "New best" needs the run to hold one of those records
+     * as well (`holdsPaceRecord`), so the best the finish screen names is
+     * a row on Bests (App1 Q15). A run faster than every comparable run
+     * that holds none reads Faster or Steady by the rules below. Left out,
+     * the trend is the comparable runs' alone.
+     */
+    records?: readonly RunForTrend[] | null;
+  } = {}
 ): PaceTrendResult {
   if (!trendable(currentRun)) {
     return { trend: "no-data", label: "", className: "" };
   }
 
-  // Find comparable runs (within 20% distance, excluding the current one:
-  // once saved, the run on screen is in its own history, and against
-  // itself a PR reads as "Faster")
+  // Once saved, the run on screen is in its own history, and against
+  // itself a PR reads as "Faster".
+  const isCurrent = (r: RunForTrend) =>
+    (currentRun.id !== undefined && r.id === currentRun.id) ||
+    r.completedAt.getTime() === currentRun.completedAt.getTime();
+
+  // Find comparable runs (within 20% distance, excluding the current one)
   const comparable = allRuns.filter((r) => {
-    if (currentRun.id !== undefined && r.id === currentRun.id) return false;
-    if (r.completedAt.getTime() === currentRun.completedAt.getTime())
-      return false;
+    if (isCurrent(r)) return false;
     if (!trendable(r)) return false;
     const ratio = r.distance / currentRun.distance;
     return ratio >= 1 - DISTANCE_TOLERANCE && ratio <= 1 + DISTANCE_TOLERANCE;
@@ -112,8 +129,16 @@ export function calculatePaceTrend(
     sorted.slice(-3).reduce((s, r) => s + r.avgPace, 0) /
     Math.min(3, sorted.length);
 
-  // PR — current run is faster than all comparable
-  if (currentRun.avgPace < bestPace) {
+  // PR — current run is faster than all comparable, and a record on Bests
+  // when the caller holds Bests' pool.
+  const onBests = () =>
+    records === undefined ||
+    (records !== null &&
+      holdsPaceRecord(
+        currentRun,
+        records.filter((r) => !isCurrent(r))
+      ));
+  if (currentRun.avgPace < bestPace && onBests()) {
     return {
       trend: "pr",
       label: "New best",

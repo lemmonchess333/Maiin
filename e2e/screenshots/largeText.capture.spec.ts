@@ -7,13 +7,16 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food, its meal menu and its manual entry and edit
+ * on a Monday, and the overview's Score details open for a Pro account),
+ * Food, its meal menu and its manual entry and edit
  * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
  * workout, a run before, during and after, the exercise, run and workout
- * detail pages, the Weekly review, sign-up, setup and the Pro page. The
+ * detail pages, the Weekly review, sign-up, setup (with the health-details
+ * agreement, and its Not now) and the Pro page, and the same agreement as
+ * an account set up before it meets it, before the app. The
  * sheets: the weight log,
  * the streak's days, Social's notifications and a run's share and
  * rename sheets,
@@ -26,6 +29,8 @@
  * in both sheets that show it; and the In progress strip on Home and on
  * Train, for a programme workout and for a saved routine's; and an empty
  * workout's review, with the sheets that say when it started and name it.
+ * And circuit mode: its picker, a circuit at work and at rest, its end
+ * question and its finish.
  *
  * And the training plan's week and all sessions: the plan page, its week
  * reset (as opened, and after a week that felt like a bit much) with the
@@ -54,7 +59,14 @@ import { emulatorActive } from "../helpers/emulator";
 import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { finishSetupWithoutHealthConsent } from "../helpers/healthConsent";
 
 const WIDTHS = [393, 320] as const;
 const SCALES = [135, 200] as const;
@@ -98,6 +110,7 @@ const SETTINGS_PAGES = [
   "run-plan",
   "nutrition",
   "pantry",
+  "hidden-posts",
   "recently-deleted-meals",
   "health",
   "shoes",
@@ -244,6 +257,14 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading", { name: "Train" }));
       await measure(page, "train", width, found);
 
+      // A lift's own page (TrainWk1 call 2): the week's first lift.
+      await page.goto("program/lift/0");
+      await ready(
+        page,
+        page.getByRole("button", { name: "Reorder exercises", exact: true })
+      );
+      await measure(page, "lift-session", width, found);
+
       for (const view of ["", "lifting", "running", "body", "food"]) {
         await page.goto(view ? `history?view=${view}` : "history");
         await ready(page, nav);
@@ -272,12 +293,27 @@ test.describe("large text", () => {
       await page.getByLabel("What did you eat").blur();
 
       // A diary row's sheet, with the day's line and Copy to another day,
-      // and the copy sheet it opens.
+      // and the copy sheet it opens, from yesterday's diary: seed:rich logs
+      // meals on the five days up to the one it ran on, so yesterday has
+      // them whether or not the run has crossed midnight since it seeded,
+      // as the edit sheet below reads it. A run seeded at 23:46 on 14
+      // November 2026 reached this step after midnight and found today's
+      // diary empty at 320 px.
+      const yesterday = await page.evaluate(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      });
+      await page.goto(`food?date=${yesterday}`);
+      // A diary row is named by what it shows, then ", edit".
+      const diaryRow = page
+        .locator("[data-food-row]")
+        .getByRole("button", { name: /\bedit$/ })
+        .first();
+      await ready(page, diaryRow);
       await page.waitForTimeout(600);
-      await page
-        .getByRole("button", { name: /^Edit / })
-        .first()
-        .click();
+      await diaryRow.click();
       const copy = page.getByRole("button", { name: "Copy to another day" });
       await copy.waitFor({ state: "visible", timeout: 20_000 });
       await page.waitForTimeout(800);
@@ -341,6 +377,28 @@ test.describe("large text", () => {
             );
           }
         }
+      } finally {
+        await setTestUserTier("free");
+      }
+
+      expect(found).toEqual([]);
+    });
+
+    /* Progress's Score details, open (App1 Q10): the score in its ring,
+       its window and its change, the 12-week chart, the breakdown with
+       the food logged and the 12-week average. They are Pro (Q84), so
+       the account is Pro for the pass, and the lead above them, whose
+       verdict steps down to the card's width, is measured with them. */
+    test(`Progress's Score details at ${width}px`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await setTestUserTier("pro");
+      const found: string[] = [];
+      try {
+        await signInAsTestUser(page);
+        await page.goto("history?score=details");
+        await ready(page, page.getByRole("region", { name: "Your score" }));
+        await measure(page, "history-score-details", width, found);
       } finally {
         await setTestUserTier("free");
       }
@@ -479,15 +537,44 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /full gym/i }).click();
       await page.getByRole("button", { name: /some experience/i }).click();
       await next();
+      // Priv1 call 1: the agreement to store health details, as asked and
+      // as Not now leaves it.
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 8000 });
+      await measure(page, "setup-health", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "setup-health-declined", width, found);
+      await page.getByRole("button", { name: "Go back", exact: true }).click();
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
+      await page.waitForTimeout(500);
       await measure(page, "setup-limitations", width, found);
       await page.getByRole("button", { name: "None", exact: true }).click();
       await next();
       await measure(page, "setup-about-you", width, found);
       await page.getByLabel("Weight (kg)", { exact: true }).fill("81.5");
       await page.getByLabel("Height (cm)", { exact: true }).fill("175");
-      await page.getByRole("radio", { name: /^25/ }).click();
+      await page
+        .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+        .fill("1995");
       await next();
       await measure(page, "setup-summary", width, found);
+
+      // The same agreement for an account set up before setup asked: one
+      // screen before the app, on its next open.
+      await finishSetupWithoutHealthConsent(email);
+      await page.goto("/");
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 30_000 });
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate-declined", width, found);
 
       expect(found).toEqual([]);
     });
@@ -555,7 +642,9 @@ test.describe("large text", () => {
           .or(page.getByText("You don’t follow anyone yet"))
           .or(
             page
-              .getByRole("button", { name: /^(Add a comment|View comments)$/ })
+              .getByRole("button", {
+                name: /^(Add a comment|View comments|[\d,.\s]+ comments?)$/,
+              })
               .first()
           )
       );
@@ -605,7 +694,7 @@ test.describe("large text", () => {
       const found: string[] = [];
       const dialog = page.getByRole("dialog").first();
 
-      const weight = page.getByRole("button", { name: /^Weight / }).first();
+      const weight = page.getByRole("button", { name: /^Weight\b/ }).first();
       await page.goto("");
       await ready(page, weight);
       await weight.click();
@@ -693,7 +782,10 @@ test.describe("large text", () => {
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       });
       await page.goto(`food?date=${yesterday}`);
-      const meal = page.getByRole("button", { name: /^Edit / }).first();
+      const meal = page
+        .locator("[data-food-row]")
+        .getByRole("button", { name: /\bedit$/ })
+        .first();
       await ready(page, meal);
       await meal.click();
       await page.getByRole("dialog").waitFor({ timeout: 10_000 });
@@ -981,6 +1073,30 @@ test.describe("large text", () => {
         });
       }
 
+      // A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's
+      // card: the day's run, or the week's next one. A week with none
+      // left to start has no ⋯; the plan page above still measured.
+      await page.goto("program?tab=run");
+      const manage = page.getByRole("button", {
+        name: "Manage session",
+        exact: true,
+      });
+      if (
+        await manage.waitFor({ state: "visible", timeout: 20_000 }).then(
+          () => true,
+          () => false
+        )
+      ) {
+        await manage.click();
+        await ready(page, page.getByText("Manage run", { exact: true }));
+        await measure(page, "run-session", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "run-session: no run left to start this week",
+        });
+      }
+
       expect(found).toEqual([]);
     });
 
@@ -1169,6 +1285,44 @@ test.describe("large text", () => {
         .waitFor({ timeout: 10_000 });
       await page.waitForTimeout(600);
       await measure(page, "rename-sheet", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* Circuit mode (Circ1), on a clock the spec moves on
+       (helpers/circuit.ts). Nothing is saved. */
+    test(`a circuit at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await openCircuit(page);
+      await ready(page, page.getByRole("heading", { name: "Circuit" }));
+      await measure(page, "circuit-picker", width, found);
+
+      await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+      await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+      await measure(page, "circuit-work", width, found);
+      await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+      await measure(page, "circuit-rest", width, found);
+
+      await page.getByRole("button", { name: "End circuit" }).click();
+      const ask = page.getByRole("alertdialog");
+      const keepGoing = ask.getByRole("button", { name: "Keep going" });
+      await keepGoing.waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-end-question", width, found);
+      await keepGoing.click();
+      await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+      // On past the circuit's 10 minutes: it finishes by itself.
+      await runCircuitClock(page, 600);
+      await page
+        .getByText("How did it feel?")
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-finish", width, found);
 
       expect(found).toEqual([]);
     });

@@ -4,6 +4,14 @@
  * race-card anatomy (RACE chip, date + city), and the race filter chips
  * (2026-10-01; two selects before). The Feed's compact row, and the Q6
  * gate that kept races out of it, went the same day with the row.
+ *
+ * Every Space is offered from a person's first day, however few people
+ * are on Tropos (App1 Q6): one under the member count's floor says it is
+ * filling up.
+ *
+ * Search (Run27 call 11): a query finds Spaces by name, or a race by its
+ * city, among every Space and race whatever the chips say, and its
+ * results stand in for the rows until it is cleared.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -119,7 +127,7 @@ describe("SpacesDirectory — Races & Events", () => {
     renderDirectory();
     expect(
       within(
-        screen.getByRole("link", { name: "Great North Run space" })
+        screen.getByRole("link", { name: /^Great North Run\b/ })
       ).getByText("Half marathon")
     ).toBeInTheDocument();
     expect(screen.getByText(/13 Sept? 2099/)).toBeInTheDocument();
@@ -140,24 +148,34 @@ describe("SpacesDirectory — Races & Events", () => {
     }
   });
 
-  it("an interest card shows a real member count, and nothing below the gate", () => {
-    const small: SpaceDirectoryEntry = {
+  it("an interest card shows a real member count from 5, and says it is filling up under 5 (App1 Q6)", () => {
+    const at = (id: string, name: string, memberCount: number | null) => ({
       ...INTEREST,
-      def: { ...INTEREST.def, id: "strength", name: "Strength" },
-      memberCount: 2,
-    };
+      def: { ...INTEREST.def, id, name },
+      memberCount,
+    });
     mockUseSpacesDirectory.mockReturnValue({
-      entries: [INTEREST, small],
+      entries: [
+        INTEREST,
+        at("five", "Five", 5),
+        at("four", "Four", 4),
+        at("empty", "Empty", 0),
+        at("unknown", "Unknown", null),
+      ],
       upcomingRaces: [],
       refresh: vi.fn(),
     });
     renderDirectory();
-    expect(
-      screen.getByRole("link", { name: "Runners space" }).textContent
-    ).toContain("12 members");
-    const smallCard = screen.getByRole("link", { name: "Strength space" });
-    expect(smallCard.textContent).toBe("Strength");
-    expect(screen.queryByText(/New space/)).not.toBeInTheDocument();
+    const card = (name: string) =>
+      screen.getByRole("link", { name: new RegExp(`^${name}\\b`) }).textContent;
+    expect(card("Runners")).toBe("Runners space12 members");
+    expect(card("Five")).toBe("Five space5 members");
+    expect(card("Four")).toBe("Four spaceFilling up");
+    expect(card("Empty")).toBe("Empty spaceFilling up");
+    // A count still being read, or one that failed, claims neither. Each
+    // name is followed by the unseen "space" (#3429).
+    expect(card("Unknown")).toBe("Unknown space");
+    expect(screen.queryByText(/0 members|4 members/)).toBeNull();
   });
 
   it("races row collapses when no upcoming races are in the entries", () => {
@@ -188,12 +206,10 @@ it("keeps filters visible through no matches and recovers across countries", asy
   }));
   renderDirectory();
   expect(
-    screen.queryByRole("link", { name: "Berlin Marathon space" })
+    screen.queryByRole("link", { name: /^Berlin Marathon\b/ })
   ).not.toBeInTheDocument();
   // The country chip names the default and opens its sheet.
-  fireEvent.click(
-    screen.getByRole("button", { name: "Country: United Kingdom" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Country: UK" }));
   fireEvent.click(
     within(screen.getByRole("radiogroup", { name: "Country" })).getByRole(
       "radio",
@@ -215,15 +231,13 @@ it("keeps filters visible through no matches and recovers across countries", asy
   expect(
     screen.getByRole("button", { name: "Country: Germany" })
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("link", { name: "Runners space" })
-  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /^Runners\b/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
   expect(
-    screen.getByRole("link", { name: "Berlin Marathon space" })
+    screen.getByRole("link", { name: /^Berlin Marathon\b/ })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
 });
 
@@ -238,8 +252,92 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   });
   renderDirectory();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
   expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
+});
+
+describe("SpacesDirectory on a new Tropos (App1 Q6)", () => {
+  it("offers every Space and race to someone in none, with the chips and search", () => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [
+        { ...INTEREST, memberCount: 0 },
+        { ...RACE, memberCount: 0 },
+      ],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Great North Run")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Runners\b/ }).textContent).toBe(
+      "Runners spaceFilling up"
+    );
+    expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
+    expect(screen.getByRole("searchbox")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Your spaces" })).toBeNull();
+  });
+});
+
+describe("searching Spaces (Run27 call 11)", () => {
+  const BRIGHTON = spaceDef("brighton-marathon")!;
+  const search = () => screen.getByRole("searchbox", { name: "Search spaces" });
+
+  beforeEach(() => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [INTEREST, RACE],
+      // Every race, whatever the chips say: Brighton is not in the rows.
+      upcomingRaces: [RACE.def, BRIGHTON],
+      refresh: vi.fn(),
+    });
+  });
+
+  it("finds Brighton Marathon for “brighton”, and its results stand in for the rows", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "brighton" } });
+    const found = screen.getByRole("list", { name: "Spaces found" });
+    const link = within(found).getByRole("link", { name: /Brighton Marathon/ });
+    expect(link).toHaveAttribute("href", "/space/brighton-marathon");
+    expect(within(found).getAllByRole("listitem")).toHaveLength(1);
+    // The rows and their chips give way while a query stands.
+    expect(
+      screen.queryByRole("heading", { name: "Races & events" })
+    ).toBeNull();
+    expect(screen.queryByText("Runners")).toBeNull();
+    expect(screen.getByText("1 space found")).toBeInTheDocument();
+  });
+
+  it("is not fussy about case, and finds a race by its city", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "NEWCASTLE" } });
+    expect(
+      within(screen.getByRole("list", { name: "Spaces found" })).getByRole(
+        "link",
+        { name: /Great North Run/ }
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("says when nothing matches, and Clear search brings the rows back", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "zzz" } });
+    expect(screen.getByText("No matching spaces")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Clear search" })[0]);
+    expect(search()).toHaveValue("");
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
+  });
+
+  it("a single letter searches nothing yet", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "b" } });
+    expect(screen.queryByRole("list", { name: "Spaces found" })).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
+  });
 });

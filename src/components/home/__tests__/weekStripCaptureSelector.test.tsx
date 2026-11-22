@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import WeekStrip from "@/components/home/WeekStrip";
+import { stripWeek } from "@/test/stripWeek";
 import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -88,7 +89,6 @@ function makeProfile(): UserProfile {
   return {
     uid: "u-1",
     displayName: "Test",
-    email: "t@example.com",
     weekSchedule,
   } as UserProfile;
 }
@@ -100,7 +100,6 @@ function makeProgramState(): ProgramState {
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -114,9 +113,12 @@ function dayCellNames(): string[] {
     <WeekStrip
       todayKey={localDateString()}
       dayMap={new Map()}
-      profile={makeProfile()}
-      programState={makeProgramState()}
-      claimMap={new Map<string, ClaimState>()}
+      week={stripWeek({
+        todayKey: localDateString(),
+        profile: makeProfile(),
+        programState: makeProgramState(),
+        claimMap: new Map<string, ClaimState>(),
+      })}
       selectedDate={null}
       onDayTap={vi.fn()}
     />

@@ -39,14 +39,48 @@ const OUTSIDE_LAYOUT: Record<string, string> = {
   "/privacy": "pages/PrivacyPolicy.tsx",
   "/terms": "pages/TermsOfService.tsx",
   "/support": "pages/Support.tsx",
+  // Signed out, a shared post's public page; signed in, the same path is
+  // ActivityPost inside Layout.
+  "/activity/:activityId": "pages/PublicPost.tsx",
   "/review": "components/review/RecapStory.tsx",
   "/run": "pages/Run.tsx",
   "/run-summary": "pages/RunSummary.tsx",
+  // Circuit mode (Circ1): its picker, runner and finish each pad themselves.
+  "/circuit": "components/circuit/CircuitRunner.tsx",
   "/diagnostics": "pages/Diagnostics.tsx",
   "/admin/moderation": "pages/AdminModeration.tsx",
   // During setup, the account page renders in App.tsx's own padded <main>.
   "/settings/account": "App.tsx",
 };
+
+/**
+ * Where the `<Route>` opened at `start` closes: its `</Route>`, past the
+ * routes nested in it (Train's session pages sit inside `/program`).
+ */
+function closingRoute(app: string, start: number): number {
+  let depth = 0;
+  const tags = /<Route\b|<\/Route>/g;
+  tags.lastIndex = start;
+  for (let m = tags.exec(app); m; m = tags.exec(app)) {
+    if (m[0] === "</Route>") {
+      depth--;
+      if (depth === 0) return m.index;
+      continue;
+    }
+    // The opening tag ends at the first `>` outside its props' braces; a
+    // `/>` there closes it at once.
+    let braces = 0;
+    let i = m.index + m[0].length;
+    for (; i < app.length; i++) {
+      if (app[i] === "{") braces++;
+      else if (app[i] === "}") braces--;
+      else if (app[i] === ">" && braces === 0) break;
+    }
+    if (app[i - 1] !== "/") depth++;
+    tags.lastIndex = i;
+  }
+  throw new Error("a <Route> that never closes");
+}
 
 describe("full-screen layers clear the status bar", () => {
   it("pads every opaque full-screen layer by the safe area, on the layer or its top bar", () => {
@@ -80,13 +114,13 @@ describe("full-screen layers clear the status bar", () => {
     const app = read("App.tsx");
     const start = app.indexOf("<Route element={<Layout />}>");
     expect(start, "App.tsx has no Layout route").toBeGreaterThan(-1);
-    const end = app.indexOf("</Route>", start);
+    const end = closingRoute(app, start);
     const outside = app.slice(0, start) + app.slice(end);
     const paths = [...outside.matchAll(/path="([^"]+)"/g)]
       .map((m) => m[1])
-      // The labs are not product surfaces; "/log" redirects; "*" is the
-      // signed-out and setup fallback (Login and Onboarding pad already).
-      .filter((p) => !p.startsWith("/dev/") && p !== "/log" && p !== "*");
+      // The labs are not product surfaces; "*" is the signed-out and
+      // setup fallback (Login and Onboarding pad already).
+      .filter((p) => !p.startsWith("/dev/") && p !== "*");
     expect([...new Set(paths)].sort()).toEqual(
       Object.keys(OUTSIDE_LAYOUT).sort()
     );

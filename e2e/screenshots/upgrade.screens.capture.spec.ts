@@ -3,7 +3,7 @@
  * after onboarding, and the one surface the funnel work of 2026-09-13
  * reshaped end to end with no frame in the capture channel. Both beats,
  * both themes: the offer (headline, preview rail, the price after the
- * trial — "7 days free, then £34.99 a year" — with "No payment due today"
+ * trial — "7 days free, then £39.99 a year" — with "No payment due today"
  * under it, Continue / Continue with Free) and the plans (picker, trial
  * timeline, the trial CTA with its price directly beneath it).
  *

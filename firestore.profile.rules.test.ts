@@ -1,7 +1,8 @@
 import {
-  isTrainableRaceEvent,
+  raceEventPlanDistance,
   raceSpaceDefs,
 } from "./src/features/spaces/spaceDefs";
+import { VALID_RACE_DISTANCE } from "./src/features/program/programTypes";
 /**
  * users/{uid} profile writes, against the real rules engine.
  *
@@ -29,6 +30,7 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import {
+  deleteField,
   doc,
   serverTimestamp,
   setDoc,
@@ -81,7 +83,6 @@ function signupProfile(uid: string) {
   return {
     uid,
     displayName: "",
-    email: "m@example.com",
     photoURL: null,
     athleteType: "Lifter",
     weightKg: 70,
@@ -96,12 +97,26 @@ function signupProfile(uid: string) {
     onboardingComplete: false,
     trialExpiresAt: null,
     subscriptionTier: "free",
+    program: { goal: "recomp", currentPhase: "base" },
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * What a build from before App1 Q24 sends at sign-up: the same document
+ * with the fields that release retired. The rules keep allowing them until
+ * config/client.minSupportedVersion is past that release, so an older
+ * build can still make an account.
+ */
+function olderBuildSignupProfile(uid: string) {
+  return {
+    ...signupProfile(uid),
+    email: "m@example.com",
     currentStreak: 0,
     longestStreak: 0,
     lastLogDate: null,
     adjustCaloriesForTraining: true,
     program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
-    createdAt: new Date(),
   };
 }
 
@@ -117,6 +132,13 @@ suite("users/{uid} create", () => {
     // so the create was rejected outright.
     const db = env.authenticatedContext("u1").firestore();
     await assertSucceeds(setDoc(doc(db, "users/u1"), signupProfile("u1")));
+  });
+
+  it("still accepts an older build's sign-up, retired fields and all", async () => {
+    const db = env.authenticatedContext("u1-old").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users/u1-old"), olderBuildSignupProfile("u1-old"))
+    );
   });
 
   it("rejects a create carrying an unlisted key", async () => {
@@ -153,6 +175,208 @@ suite("users/{uid} update — the client-writable surface", () => {
         { timezone: "Europe/London" },
         { merge: true }
       )
+    );
+  });
+});
+
+/* App1 (grill Q57): the year of birth Settings → Profile writes. A whole
+   year from this year less 120 to this year less 18 (Biz1 call 4; 16
+   before it), with one year more at
+   the young end for New Year across time zones (the app holds the exact
+   limit). The years come from the clock the rules read. */
+suite("users/{uid} update — the year of birth", () => {
+  const year = new Date().getUTCFullYear();
+  async function write(uid: string, birthYear: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return setDoc(doc(db, `users/${uid}`), { birthYear }, { merge: true });
+  }
+
+  it.each([
+    ["thirty years back", year - 30],
+    ["this year less 18", year - 18],
+    ["this year less 17, the New Year slack", year - 17],
+    ["this year less 120", year - 120],
+  ])("accepts %s", async (_case, birthYear) => {
+    await assertSucceeds(write(`by-ok-${birthYear}`, birthYear));
+  });
+
+  it.each([
+    ["this year less 16", year - 16],
+    ["this year less 121", year - 121],
+    ["a year as text", String(year - 30)],
+    ["a fraction", year - 30.5],
+  ])("refuses %s", async (_case, birthYear) => {
+    await assertFails(write(`by-no-${String(birthYear)}`, birthYear));
+  });
+});
+
+/* Priv1 call 1: the agreement to store health details. An account set up
+   before setup asked agrees on its next open, and that write is the one
+   shape a client may store: { at: the server's time, version: 1 }. Setup's
+   agreement is written by completeOnboarding with the Admin SDK, so no
+   sign-up carries one, and no update may backdate, re-word, widen or
+   remove it. */
+suite("users/{uid}, the health-details agreement", () => {
+  async function agree(uid: string, consent: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return updateDoc(doc(db, `users/${uid}`), { healthDataConsent: consent });
+  }
+
+  it("accepts the gate's agreement, dated by the server", async () => {
+    await assertSucceeds(agree("hc-ok", { at: serverTimestamp(), version: 1 }));
+  });
+
+  it("accepts agreeing again over an earlier agreement", async () => {
+    await seedProfile("hc-again");
+    const db = env.authenticatedContext("hc-again").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-again"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-again"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+
+  it("lets another field change beside a stored agreement", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/hc-beside"), {
+        ...signupProfile("hc-beside"),
+        healthDataConsent: { at: Timestamp.now(), version: 1 },
+      });
+    });
+    const db = env.authenticatedContext("hc-beside").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-beside"), { timezone: "Europe/London" })
+    );
+  });
+
+  it.each([
+    [
+      "a date of the device's choosing",
+      { at: new Date(2020, 0, 1), version: 1 },
+    ],
+    ["a stored timestamp", { at: Timestamp.fromMillis(0), version: 1 }],
+    ["a later wording", { at: "SERVER", version: 2 }],
+    ["an earlier wording", { at: "SERVER", version: 0 }],
+    ["a version as text", { at: "SERVER", version: "1" }],
+    ["a fractional version", { at: "SERVER", version: 1.5 }],
+    ["no time", { version: 1 }],
+    ["no version", { at: "SERVER" }],
+    ["anything beside it", { at: "SERVER", version: 1, scope: "all" }],
+    ["a bare yes", true],
+    ["null", null],
+  ])("refuses %s", async (_case, consent) => {
+    const written =
+      consent &&
+      typeof consent === "object" &&
+      "at" in consent &&
+      consent.at === "SERVER"
+        ? { ...consent, at: serverTimestamp() }
+        : consent;
+    await assertFails(
+      agree(`hc-no-${String(_case).replace(/\W+/g, "-")}`, written)
+    );
+  });
+
+  it("refuses taking an agreement away", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/hc-remove"), {
+        ...signupProfile("hc-remove"),
+        healthDataConsent: { at: Timestamp.now(), version: 1 },
+      });
+    });
+    const db = env.authenticatedContext("hc-remove").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/hc-remove"), {
+        healthDataConsent: deleteField(),
+      })
+    );
+  });
+
+  it("refuses a sign-up that carries one", async () => {
+    const db = env.authenticatedContext("hc-create").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/hc-create"), {
+        ...signupProfile("hc-create"),
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+
+  it("refuses anyone but the account's owner", async () => {
+    await seedProfile("hc-owner");
+    const db = env.authenticatedContext("someone-else").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/hc-owner"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+});
+
+/* Priv1 call 2: Settings → Social & privacy → Share usage analytics. The
+   account keeps false when Google Analytics is off, and takes only a
+   boolean, from its own account. */
+suite("users/{uid} update: Share usage analytics", () => {
+  async function write(uid: string, usageAnalytics: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return setDoc(doc(db, `users/${uid}`), { usageAnalytics }, { merge: true });
+  }
+
+  it.each([
+    ["off", false],
+    ["on", true],
+    ["cleared (null, read as on)", null],
+  ])("accepts %s", async (_case, usageAnalytics) => {
+    await assertSucceeds(
+      write(`ua-ok-${String(usageAnalytics)}`, usageAnalytics)
+    );
+  });
+
+  it.each([
+    ["a word", "off"],
+    ["a number", 0],
+    ["a map", { enabled: false }],
+  ])("refuses %s", async (_case, usageAnalytics) => {
+    await assertFails(write(`ua-no-${typeof usageAnalytics}`, usageAnalytics));
+  });
+
+  it("refuses another account's answer", async () => {
+    await seedProfile("ua-owner");
+    const db = env.authenticatedContext("ua-other").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "users/ua-owner"),
+        { usageAnalytics: false },
+        { merge: true }
+      )
+    );
+  });
+
+  it("accepts a sign-up that carries off", async () => {
+    const db = env.authenticatedContext("ua-signup-off").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users/ua-signup-off"), {
+        ...signupProfile("ua-signup-off"),
+        usageAnalytics: false,
+      })
+    );
+  });
+
+  it("refuses a sign-up that carries anything but a boolean", async () => {
+    const db = env.authenticatedContext("ua-signup").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ua-signup"), {
+        ...signupProfile("ua-signup"),
+        usageAnalytics: "off",
+      })
     );
   });
 });
@@ -255,6 +479,11 @@ suite("registry ↔ engine", () => {
     await seedProfile("sweep");
     const db = env.authenticatedContext("sweep").firestore();
     const rejected: string[] = [];
+    // A field whose rule takes one exact shape and refuses null is admitted
+    // with that shape; the question stays admission.
+    const admittedAs: Record<string, unknown> = {
+      healthDataConsent: { at: serverTimestamp(), version: 1 },
+    };
     for (const field of CLIENT_WRITABLE_PROFILE_FIELDS) {
       if (skip.has(field)) continue;
       try {
@@ -262,7 +491,7 @@ suite("registry ↔ engine", () => {
         // here is admission, not value validation.
         await setDoc(
           doc(db, "users/sweep"),
-          { [field]: null },
+          { [field]: field in admittedAs ? admittedAs[field] : null },
           { merge: true }
         );
       } catch {
@@ -365,8 +594,9 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
 
 /**
  * The figures other people read on a profile (survey item 18): the joined
- * date, the two streaks and the badge summary. The owner's device writes
- * them, so the rules bound their shape rather than their truth.
+ * date and the two streaks. The owner's device writes them, so the rules
+ * bound their shape rather than their truth. The badge summary is the
+ * server's (App1 Q33): its suite is below, beside medalSummary's.
  */
 suite(
   "users/{uid}/public/profile — the joined date, streaks and badges",
@@ -465,74 +695,6 @@ suite(
       });
       await assertSucceeds(
         setDoc(ref(), { displayName: "Sam" }, { merge: true })
-      );
-    });
-
-    it("takes the badge summary the app writes, and nothing larger or inconsistent", async () => {
-      await assertSucceeds(
-        setDoc(
-          ref(),
-          {
-            badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 },
-          },
-          { merge: true }
-        )
-      );
-      const many = Object.fromEntries(
-        Array.from({ length: 101 }, (_, i) => [`b${i}`, "2026-06-07"])
-      );
-      for (const bad of [
-        { earnedMap: { first_step: "2026-06-07" }, count: 40 },
-        { earnedMap: many, count: 101 },
-        { earnedMap: {}, count: 0, extra: "payload" },
-        { earnedMap: "first_step", count: 1 },
-      ]) {
-        await assertFails(
-          setDoc(ref(), { badgeSummary: bad }, { merge: true })
-        );
-      }
-    });
-
-    /* The 100-entry cap left each entry unbounded: a 9 KB "date" a
-       hundred times parked most of a megabyte in a document every search
-       result downloads. The app writes a badge id (18 characters at most)
-       and an ISO date (24). */
-    it("takes every badge with its ISO date, but not a padded date or id", async () => {
-      // The refusals run first, on an empty document: a merge write merges
-      // the map into what is stored, so after the full map below each of
-      // these would fail the entry count instead, and prove nothing.
-      for (const bad of [
-        { earnedMap: { first_step: "x".repeat(4001) }, count: 1 },
-        // Firestore refuses a field name over 1,500 bytes itself, so the
-        // ids are padded short of that and over the total together.
-        {
-          earnedMap: {
-            ["a".repeat(1400)]: "2026-06-07",
-            ["b".repeat(1400)]: "2026-06-07",
-            ["c".repeat(1400)]: "2026-06-07",
-          },
-          count: 3,
-        },
-        // A nested map has no text form to measure. A number or boolean
-        // does, and is bounded like a date; the reader skips it.
-        { earnedMap: { first_step: { at: "x".repeat(5000) } }, count: 1 },
-      ]) {
-        await assertFails(
-          setDoc(ref(), { badgeSummary: bad }, { merge: true })
-        );
-      }
-      const all = Object.fromEntries(
-        Array.from({ length: 100 }, (_, i) => [
-          `programme_complete_${i}`,
-          "2026-06-07T08:09:10.123Z",
-        ])
-      );
-      await assertSucceeds(
-        setDoc(
-          ref(),
-          { badgeSummary: { earnedMap: all, count: 100 } },
-          { merge: true }
-        )
       );
     });
 
@@ -786,6 +948,74 @@ suite("users/{uid}/public/profile — medalSummary is the server's", () => {
 });
 
 /**
+ * `badgeSummary` — the badges other people read (App1 Q33: every badge is
+ * awarded by the server). Written only with the badge itself, by the award
+ * in functions/lib/badgeAwards.js, so the owner may leave it as it is and
+ * nothing else, as with medalSummary. It used to be the owner's device's to
+ * write, bounded by shape; a bound on shape could not stop a client
+ * claiming a badge it had not earned. Each refusal is paired with the
+ * write the app really makes beside it.
+ */
+suite("users/{uid}/public/profile — badgeSummary is the server's", () => {
+  const ME = "pub-badges";
+  const path = `users/${ME}/public/profile`;
+  const summary = {
+    earnedMap: { first_step: "2026-06-07T08:09:10.123Z" },
+    count: 1,
+  };
+  const seed = (data: Record<string, unknown>) =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), path), data);
+    });
+  const ref = () => doc(env.authenticatedContext(ME).firestore(), path);
+
+  it("refuses a client that writes one on a new profile", async () => {
+    await assertFails(
+      setDoc(
+        ref(),
+        { displayName: "Me", badgeSummary: summary },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(setDoc(ref(), { displayName: "Me" }, { merge: true }));
+  });
+
+  it("refuses a client that adds to, changes or empties the stored one", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
+    for (const forged of [
+      {
+        earnedMap: { ...summary.earnedMap, year_long: "2026-06-08" },
+        count: 2,
+      },
+      { earnedMap: { first_step: "2020-01-01T00:00:00.000Z" }, count: 1 },
+      { earnedMap: {}, count: 0 },
+    ]) {
+      await assertFails(updateDoc(ref(), { badgeSummary: forged }));
+    }
+    // A merge write merges the map key by key, so adding one is a change.
+    await assertFails(
+      setDoc(
+        ref(),
+        { badgeSummary: { earnedMap: { year_long: "2026-06-08" } } },
+        { merge: true }
+      )
+    );
+  });
+
+  it("lets a profile holding one write its other fields", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
+    await assertSucceeds(
+      setDoc(ref(), { displayName: "Sam", currentStreak: 3 }, { merge: true })
+    );
+  });
+
+  it("lets a full overwrite leave it out", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
+    await assertSucceeds(setDoc(ref(), { uid: ME, displayName: "Me" }));
+  });
+});
+
+/**
  * `raceGoal` value gate.
  *
  * `allowedUserFields()` gates key NAMES, so before this rule the field could
@@ -821,8 +1051,34 @@ suite("users/{uid} — raceGoal value gate", () => {
         raceGoal: { ...VALID, eventSpaceId: "london-marathon" },
       })
     );
-    for (const distance of ["5k", "10k", "half", "marathon"]) {
+    // Every distance a plan prepares for, the ultras with them (Run26 (2)).
+    for (const distance of VALID_RACE_DISTANCE) {
       await assertSucceeds(write({ raceGoal: { ...VALID, distance } }));
+    }
+  });
+
+  it("accepts an ultra goal and a climb, in whole metres up to the bound", async () => {
+    // Run26 (2): a profile written by today's app, with neither, passes
+    // above; these are the new keys, each in and out of range.
+    const ULTRA = { distance: "50k", targetDate: "2027-09-25" };
+    await assertSucceeds(write({ raceGoal: ULTRA }));
+    for (const climbM of [0, 1, 1500, 20000]) {
+      await assertSucceeds(write({ raceGoal: { ...ULTRA, climbM } }));
+      await assertSucceeds(write({ raceGoal: { ...VALID, climbM } }));
+    }
+    await assertSucceeds(
+      write({
+        raceGoal: {
+          ...ULTRA,
+          climbM: 1500,
+          entry: "race",
+          eventName: "Chiltern 50 Ultra Challenge",
+          eventSpaceId: "chiltern-50",
+        },
+      })
+    );
+    for (const climbM of [-1, 20001, 450.5, "1500", null, true]) {
+      await assertFails(write({ raceGoal: { ...ULTRA, climbM } }));
     }
   });
 
@@ -830,11 +1086,13 @@ suite("users/{uid} — raceGoal value gate", () => {
     // One write per supported race, so this test grows with the catalogue. It
     // ran past the default 5 s timeout on a slow CI runner.
     for (const race of raceSpaceDefs()) {
-      if (!isTrainableRaceEvent(race.event!)) continue;
+      // An ultra trains for the plan nearest its kilometres (Run26 (2)).
+      const distance = raceEventPlanDistance(race.event!);
+      if (!distance) continue;
       await assertSucceeds(
         write({
           raceGoal: {
-            distance: race.event!.distance,
+            distance,
             targetDate: race.event!.dateKey,
             eventName: race.name,
             eventSpaceId: race.id,
@@ -844,9 +1102,15 @@ suite("users/{uid} — raceGoal value gate", () => {
     }
   }, 60_000);
 
-  it("refuses training plans for directory-only ultras", async () => {
-    for (const race of raceSpaceDefs()) {
-      if (isTrainableRaceEvent(race.event!)) continue;
+  // Run26 (2): every listed ultra has a plan now, so this refuses the
+  // directory's own word for one, "ultra", which no plan holds (was: the
+  // ultras themselves, which had no plan).
+  it("refuses the directory's ultra distance as a plan's", async () => {
+    const ultras = raceSpaceDefs().filter(
+      (race) => race.event!.distance === "ultra"
+    );
+    expect(ultras.length).toBeGreaterThan(0);
+    for (const race of ultras) {
       await assertFails(
         write({
           raceGoal: {
@@ -876,6 +1140,8 @@ suite("users/{uid} — raceGoal value gate", () => {
     // in dailyRaceReconciliationSweep.
     await assertFails(write({ raceGoal: { ...VALID, distance: "ultra" } }));
     await assertFails(write({ raceGoal: { ...VALID, distance: "5K" } }));
+    // 100 miles is not a plan (Run26 (2)).
+    await assertFails(write({ raceGoal: { ...VALID, distance: "100mi" } }));
     await assertFails(write({ raceGoal: { ...VALID, distance: 5 } }));
   });
 
@@ -1288,5 +1554,157 @@ suite("users/{uid} — notificationPreferences value gate", () => {
         notificationPreferences: { kudos: false },
       })
     );
+  });
+});
+
+/**
+ * `racePlanFreeWeekUsed` value gate (whole-app grill Q85's gap).
+ *
+ * The free week of a half or full marathon plan is once per account: the app
+ * writes `true` the first time a free account's plan passes it, and a later
+ * plan is Pro from its first week. Only `true` (or `null`, never set) is
+ * taken, and once `true` it stays, so a client cannot clear it to start a
+ * second free week. Each refusal is paired with the nearest accepted write.
+ */
+suite("users/{uid} — racePlanFreeWeekUsed value gate", () => {
+  const UID = "fw1";
+
+  async function signedIn() {
+    await seedProfile(UID);
+    return env.authenticatedContext(UID).firestore();
+  }
+
+  it("accepts the one write the app sends", async () => {
+    const db = await signedIn();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: true },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses any value but true, or null where it was never set", async () => {
+    const db = await signedIn();
+    for (const bad of [false, "true", 1, {}, ["x"]]) {
+      await assertFails(
+        setDoc(
+          doc(db, `users/${UID}`),
+          { racePlanFreeWeekUsed: bad },
+          { merge: true }
+        )
+      );
+    }
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: null },
+        { merge: true }
+      )
+    );
+  });
+
+  it("keeps it once set: no clearing, no false, no delete", async () => {
+    const db = await signedIn();
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), { racePlanFreeWeekUsed: true })
+    );
+    for (const cleared of [null, false]) {
+      await assertFails(
+        updateDoc(doc(db, `users/${UID}`), { racePlanFreeWeekUsed: cleared })
+      );
+    }
+    await assertFails(
+      updateDoc(doc(db, `users/${UID}`), {
+        racePlanFreeWeekUsed: deleteField(),
+      })
+    );
+    // Writing true again beside another field still goes through.
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: true, darkMode: false },
+        { merge: true }
+      )
+    );
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("fw2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/fw2"), {
+        ...signupProfile("fw2"),
+        racePlanFreeWeekUsed: false,
+      })
+    );
+    const ok = env.authenticatedContext("fw3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/fw3"), {
+        ...signupProfile("fw3"),
+        racePlanFreeWeekUsed: true,
+      })
+    );
+  });
+});
+
+suite("users/{uid}.emailConsent — the server's record (App1 Q55)", () => {
+  /**
+   * Consent to the two emails is recorded only by the server, with its own
+   * time (functions/lib/emailConsent.js): setup through completeOnboarding,
+   * the Settings switches through setEmailConsent, and the unsubscribe
+   * link. A client that could write it could record a yes nobody gave, or
+   * backdate one, or quietly undo an unsubscribe. The registry loop above
+   * refuses `false`; these refuse the record's real shape, both ways in.
+   */
+  const yes = {
+    weeklyReview: {
+      on: true,
+      givenAt: serverTimestamp(),
+      givenVia: "settings",
+      wording: 1,
+    },
+  };
+
+  it("is refused on sign-up", async () => {
+    const db = env.authenticatedContext("ec1").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec1"), {
+        ...signupProfile("ec1"),
+        emailConsent: yes,
+      })
+    );
+  });
+
+  it("is refused on an update, even with the server's time", async () => {
+    await seedProfile("ec2");
+    const db = env.authenticatedContext("ec2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec2"), { emailConsent: yes }, { merge: true })
+    );
+    await assertFails(
+      updateDoc(doc(db, "users/ec2"), { "emailConsent.winBack.on": true })
+    );
+  });
+
+  it("cannot be taken off a profile the server wrote it to", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/ec3"), {
+        ...signupProfile("ec3"),
+        emailConsent: {
+          weeklyReview: {
+            on: false,
+            withdrawnAt: Timestamp.now(),
+            withdrawnVia: "unsubscribe",
+          },
+        },
+      });
+    });
+    const db = env.authenticatedContext("ec3").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/ec3"), { emailConsent: deleteField() })
+    );
+    // The rest of the profile stays the owner's to change.
+    await assertSucceeds(updateDoc(doc(db, "users/ec3"), { darkMode: false }));
   });
 });

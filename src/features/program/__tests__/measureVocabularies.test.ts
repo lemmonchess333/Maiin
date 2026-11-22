@@ -22,10 +22,24 @@ describe("plan-measure vocabularies (D3 single source)", () => {
     ]);
   });
   it("equipment", () => {
-    expect([...VALID_EQUIPMENT]).toEqual(["full_gym", "home_gym", "minimal"]);
+    expect([...VALID_EQUIPMENT]).toEqual([
+      "full_gym",
+      "home_gym",
+      "minimal",
+      "no_equipment",
+    ]);
   });
   it("race distance", () => {
-    expect([...VALID_RACE_DISTANCE]).toEqual(["5k", "10k", "half", "marathon"]);
+    // Run26 (2): the ultras join the road races.
+    expect([...VALID_RACE_DISTANCE]).toEqual([
+      "5k",
+      "10k",
+      "half",
+      "marathon",
+      "50k",
+      "50mi",
+      "100k",
+    ]);
   });
   it("no duplicate values within a vocabulary", () => {
     for (const v of [VALID_EXPERIENCE, VALID_EQUIPMENT, VALID_RACE_DISTANCE]) {

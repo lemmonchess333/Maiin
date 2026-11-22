@@ -8,6 +8,12 @@ import {
   resumeReads,
 } from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
+/* The saved screen's reminder offer reads providers this file does not
+   mount; it shows on a saved screen with no share, as a workout found on
+   the server on reopening has. ReminderOffer's own tests cover it. */
+vi.mock("@/components/workout/ReminderOffer", () => ({
+  default: () => null,
+}));
 /* Every save hands back a share now, as the writers' always did; the row
    that offers it is SessionShareRow's own tests' to cover. */
 const shareRow = vi.hoisted(() => ({ action: undefined as unknown }));
@@ -39,8 +45,6 @@ const h = vi.hoisted(() => ({
   message: vi.fn(),
   user: null as { uid: string } | null,
   profile: null as Record<string, unknown> | null,
-  awardEventBadge: vi.fn(),
-  awardEventBadges: vi.fn(),
   authReads: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
@@ -60,10 +64,7 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
-  useStreaks: () => ({
-    awardEventBadge: h.awardEventBadge,
-    awardEventBadges: h.awardEventBadges,
-  }),
+  useStreaks: () => ({}),
 }));
 vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
   // The pure helpers (`draftLayout`) stay real.
@@ -529,6 +530,214 @@ describe("the new-best moment (DS3)", () => {
     expect(
       follows(timer, screen.getByRole("button", { name: /^Complete set/ }))
     ).toBe(true);
+  });
+
+  /* DS6 step 5: the dock floats over the foot of the list, frosted, and
+     the list keeps its height as room at its end and as scroll padding,
+     written before the set row is asked into view. */
+  it("docks over the foot of the list, taking taps only on its cards", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    const card = screen.getByTestId("new-best-moment");
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    const dock = card.closest("[data-workout-dock]") as HTMLElement;
+    const list = document.querySelector("[data-workout-list]") as HTMLElement;
+    expect(dock).not.toBeNull();
+    expect(timer.closest("[data-workout-dock]")).toBe(dock);
+    // The dock follows the list and pulls itself up over its foot by its
+    // own height, so it floats there rather than taking the list's room.
+    expect(dock.parentElement).toBe(list.parentElement);
+    expect(dock.previousElementSibling).toBe(list);
+    expect(list.className).toMatch(/\bflex-1 overflow-y-auto\b/);
+    expect(dock.className).toContain("-mt-[var(--dock-h,0px)]");
+    expect(dock.className).toMatch(/\brelative z-10\b/);
+    // Held to the list's own box: the exercise strip stays clear.
+    expect(dock.className).toContain("max-h-[var(--dock-room,100%)]");
+    expect(dock.className).toMatch(/\bpointer-events-none\b/);
+    expect(card.className).toMatch(/\bpointer-events-auto\b/);
+    expect(timer.parentElement?.className).toMatch(/\bpointer-events-auto\b/);
+  });
+
+  it("frosts each docked card on the element that fades it", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    expect(screen.getByTestId("new-best-moment").className).toMatch(
+      /\bdock-glass\b/
+    );
+    // The rest band draws no surface: its fading parent is the card.
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    expect(timer.className).not.toMatch(/\bbg-card\b/);
+    expect(timer.parentElement?.className).toMatch(/\bdock-glass\b/);
+    expect(timer.parentElement?.className).toMatch(/\bcard-shadow\b/);
+  });
+
+  it("keeps the dock's height as room under the list before the set is placed", async () => {
+    // jsdom lays nothing out; give the dock a height when it holds a card.
+    const height = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.hasAttribute("data-workout-list")) return 500;
+        return this.hasAttribute("data-workout-dock") &&
+          this.querySelector('[role="group"]')
+          ? 236
+          : 0;
+      });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    const seen: string[] = [];
+    scroll.mockImplementation(function (this: Element) {
+      if (this.hasAttribute("data-set-row"))
+        seen.push(
+          (
+            document.querySelector("[data-workout-list]") as HTMLElement
+          ).style.getPropertyValue("--dock-h")
+        );
+    });
+    try {
+      seedBest();
+      await act(async () => {
+        openSession();
+      });
+      liftFirstSet("62.5");
+      const list = document.querySelector("[data-workout-list]") as HTMLElement;
+      const dock = document.querySelector("[data-workout-dock]") as HTMLElement;
+      await vi.waitFor(() =>
+        expect(list.style.getPropertyValue("--dock-h")).toBe("236px")
+      );
+      expect(dock.style.getPropertyValue("--dock-h")).toBe("236px");
+      // Its ceiling is the list's own box.
+      expect(dock.style.getPropertyValue("--dock-room")).toBe("500px");
+      // The row asked into view after the tick already saw the room.
+      expect(seen.at(-1)).toBe("236px");
+      expect(list.className).toContain("pb-[var(--dock-pad,1rem)]");
+      // The room at the end: the dock's height and a margin.
+      expect(list.style.getPropertyValue("--dock-pad")).toBe("252px");
+      expect(list.className).toContain("scroll-pb-[var(--dock-h,0px)]");
+    } finally {
+      height.mockRestore();
+      scroll.mockImplementation(() => {});
+    }
+  });
+
+  /* jsdom has no ResizeObserver: a stand-in that records what it was
+     asked to watch, and lets a test say a size changed. */
+  const stubResizeObserver = () => {
+    const made: {
+      cb: () => void;
+      watched: Element[];
+      disconnected: boolean;
+    }[] = [];
+    class FakeResizeObserver {
+      private entry;
+      constructor(cb: () => void) {
+        this.entry = { cb, watched: [] as Element[], disconnected: false };
+        made.push(this.entry);
+      }
+      observe(el: Element) {
+        if (!this.entry.watched.includes(el)) this.entry.watched.push(el);
+      }
+      unobserve() {}
+      disconnect() {
+        this.entry.disconnected = true;
+      }
+    }
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => {
+      fn(0);
+      return 0;
+    });
+    return made;
+  };
+
+  it("follows the dock's own size changes, and lets go of it when the screen goes", async () => {
+    const made = stubResizeObserver();
+    let dockHeight = 236;
+    const height = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.hasAttribute("data-workout-list")) return 500;
+        return this.hasAttribute("data-workout-dock") ? dockHeight : 0;
+      });
+    try {
+      seedBest();
+      await act(async () => {
+        openSession();
+      });
+      liftFirstSet("62.5");
+      const list = document.querySelector("[data-workout-list]") as HTMLElement;
+      const dock = document.querySelector("[data-workout-dock]") as HTMLElement;
+      const observer = made.find((o) => o.watched.includes(dock));
+      expect(observer?.watched).toContain(list);
+      // A word wraps in the card: no render, only the observer.
+      dockHeight = 260;
+      act(() => observer?.cb());
+      expect(list.style.getPropertyValue("--dock-h")).toBe("260px");
+      expect(dock.style.getPropertyValue("--dock-h")).toBe("260px");
+      cleanup();
+      expect(observer?.disconnected).toBe(true);
+    } finally {
+      height.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("keeps the room in view when a card leaves at the list's end, and lets it go on a scroll back", async () => {
+    // On main a card leaving grew the list's box and moved no row. Here
+    // the list's end room must not shrink under rows in view, or the
+    // list's scroll would clamp and the rows drop under the thumb.
+    const made = stubResizeObserver();
+    let dockHeight = 236;
+    const height = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.hasAttribute("data-workout-list")) return 500;
+        return this.hasAttribute("data-workout-dock") ? dockHeight : 0;
+      });
+    try {
+      seedBest();
+      await act(async () => {
+        openSession();
+      });
+      liftFirstSet("62.5");
+      const list = document.querySelector("[data-workout-list]") as HTMLElement;
+      const room = () => parseFloat(list.style.getPropertyValue("--dock-pad"));
+      // 748 px of rows, then the room; scrolled to the very end.
+      let top = 500;
+      Object.defineProperty(list, "clientHeight", { value: 500 });
+      Object.defineProperty(list, "scrollHeight", {
+        get: () => 748 + room(),
+      });
+      Object.defineProperty(list, "scrollTop", {
+        get: () => top,
+        set: (v: number) => {
+          top = v;
+        },
+      });
+      expect(room()).toBe(252);
+      // The new best goes: the dock is 116 px shorter.
+      dockHeight = 120;
+      const observer = made.find((o) =>
+        o.watched.includes(
+          document.querySelector("[data-workout-dock]") as Element
+        )
+      );
+      act(() => observer?.cb());
+      expect(list.style.getPropertyValue("--dock-h")).toBe("120px");
+      // 252 px of room are in view, so the room holds and no row moves.
+      expect(room()).toBe(252);
+      // Scrolled back 200 px: only 52 px of room are in view now.
+      top = 300;
+      fireEvent.scroll(list);
+      expect(room()).toBe(136);
+    } finally {
+      height.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("stays quiet for a set that did not beat the best", async () => {
@@ -1178,6 +1387,64 @@ it("recognises a server-acknowledged completion after reopening instead of writi
   expect(viewWorkout).toHaveBeenCalledExactlyOnceWith(
     "programme-landed-original"
   );
+});
+
+it("a retry that fails after the server is found to have the workout leaves it saved (App1 Q20)", async () => {
+  h.user = { uid: "reopened-user" };
+  h.load.mockReturnValueOnce({
+    dayIndex: 0,
+    dayName: "Test lift",
+    identity: "test",
+    completionId: "landed-original",
+    completionCommandId: "landed-original",
+    completionPending: true,
+    elapsedSeconds: 1500,
+    currentExIndex: 0,
+    exerciseNotes: {},
+    setLogs: [[{ reps: 8, weight: 20, completed: true, type: "working" }]],
+  } as never);
+  seedFirestore({
+    "users/reopened-user/workouts/programme-landed-original": {
+      completionId: "landed-original",
+      date: "2026-09-06",
+      exercises: [],
+    },
+  });
+  // The read on reopening is held while the person taps Retry sync.
+  deferReads();
+  let failRetry!: (error: Error) => void;
+  const complete = vi.fn<CompleteDay>(
+    () =>
+      new Promise<LiftCompletionReceipt>((_, reject) => {
+        failRetry = reject;
+      })
+  );
+  await act(async () => openSession(complete));
+  await vi.waitFor(() =>
+    expect(pendingReads()).toContain(
+      "users/reopened-user/workouts/programme-landed-original"
+    )
+  );
+  // The finish screen loads on its own (`workoutSessionColdParts`).
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Retry sync" }, { timeout: 5000 })
+  );
+  await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  // The read answers first: the server has it.
+  await act(async () => {
+    resumeReads();
+    releaseAllReads();
+  });
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
+  // Then the retry fails. It used to mark the saved screen "Needs
+  // attention", under Done, with no retry on it.
+  await act(async () => failRetry(new Error("offline")));
+  expect(screen.getByText("Saved")).toBeVisible();
+  expect(
+    screen.queryByText("Needs attention · your session is here to retry")
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+  expect(h.error).not.toHaveBeenCalled();
 });
 
 describe("completed-set corrections", () => {
@@ -1900,7 +2167,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
      cancels the animation; the extra tick lets the pending frame fire on
      jsdom's own driver, which is what opens both latches. The full
      mechanism, and the five fixes that do NOT work, are recorded above
-     `completeAndSave` in the Plate-Club group.
+     `completeAndSave` in the Plate-Club sets group.
 
      Found by `--sequence.shuffle`: written order put every victim ahead
      of this block, so the file passed. */
@@ -2130,13 +2397,13 @@ it("Undo followed by finishing early saves only the final completed work", async
   });
 });
 
-describe("Plate-Club badges are awarded the moment the workout saves", () => {
-  /* The server awards these from onWorkoutCreated too; this pins that the
-     client no longer waits for that round-trip. The owner reported the
-     badge appearing only after leaving and returning to the screen — by
-     then the function had finished. Now the same completed sets the
-     command carries are scored here, in `acknowledge`, and handed to the
-     transactional award. */
+describe("a saved workout carries the sets the server's Plate Club scores", () => {
+  /* Every badge is awarded by the server (App1 Q33): onWorkoutCreated
+     scores the Plate Club from the workout built from the completed sets
+     this command carries, and the screen awards nothing itself. Until
+     then the screen scored them here too, so the seal cracked before the
+     trigger's round trip; the reveal now comes from the server's record,
+     on this screen if it is still open and from Home's row if not. */
   async function completeAndSave(
     exercise: Partial<ProgramExercise>,
     kg: string
@@ -2221,17 +2488,6 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     return onCompleteDay;
   }
 
-  it("a 100 kg compound set awards plate_club AND two_plate on save, in one call", async () => {
-    await completeAndSave({ exerciseId: "squat", name: "Squat" }, "100");
-    await vi.waitFor(() =>
-      expect(h.awardEventBadges).toHaveBeenCalledWith([
-        "plate_club",
-        "two_plate",
-      ])
-    );
-    expect(h.awardEventBadges).toHaveBeenCalledTimes(1);
-  });
-
   it("scores what the command carries: the weight on the completed sets, not the plan", async () => {
     // Prescribed 0 kg, lifted 62.5 — the logged weight is what counts.
     const cmd = await completeAndSave(
@@ -2244,21 +2500,6 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     expect(sent.setLogs[0].every((l) => l.completed && l.weight === 62.5)).toBe(
       true
     );
-    await vi.waitFor(() =>
-      expect(h.awardEventBadges).toHaveBeenCalledWith(["plate_club"])
-    );
-  });
-
-  it("a non-compound lift at 140 kg awards nothing", async () => {
-    await completeAndSave(
-      { exerciseId: "barbell-curl", name: "Barbell Curl" },
-      "140"
-    );
-    // `acknowledge` is where the award lives, and its first line clears
-    // the draft — so the draft-clear spy is the proof that the code path
-    // ran and chose to award nothing, rather than never running at all.
-    await vi.waitFor(() => expect(h.clear).toHaveBeenCalled());
-    expect(h.awardEventBadges).not.toHaveBeenCalled();
   });
 });
 

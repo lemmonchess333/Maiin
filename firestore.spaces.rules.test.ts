@@ -10,6 +10,10 @@
  *   - the spaces/{id} parent path is fully denied
  *   - a race's plan-group count (raceCohorts/{id}) is read by anyone
  *     signed in and written by no client
+ *   - a Space's members' sessions (spaces/{id}/sessions) and its week
+ *     (spaces/{id}/weeks) are read by anyone signed in and written by no
+ *     client; a member's week credit (users/{uid}/spaceWeeks) is read and
+ *     written by no client, its owner included (Run27 call 11)
  *
  * Same emulator-gated harness as firestore.rules.test.ts: skips when
  * FIRESTORE_EMULATOR_HOST is unset; REQUIRE_FIRESTORE_EMULATOR=1 turns
@@ -26,8 +30,13 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -323,6 +332,38 @@ suite("firestore.rules — community spaces", () => {
         await assertSucceeds(
           setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/lift`), post(lift))
         );
+      });
+
+      it("takes a circuit's mark on a workout only, and only as true (Circ1)", async () => {
+        await seedMember(MEMBER);
+        const circuit = {
+          type: "workout",
+          totalVolume: 0,
+          exerciseCount: 5,
+          muscleGroups: [],
+          duration: 600,
+          leadExerciseId: "bodyweight-squat",
+          circuit: true,
+        };
+        await assertSucceeds(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/circuit`),
+            post(circuit)
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/circuit-run`),
+            post({ ...run, circuit: true })
+          )
+        );
+        for (const [i, mark] of [false, "yes", 1, { moves: 5 }].entries())
+          await assertFails(
+            setDoc(
+              doc(db(MEMBER), `spaces/${SPACE}/posts/circuit-bad-${i}`),
+              post({ ...circuit, circuit: mark })
+            )
+          );
       });
 
       it("refuses a field the snapshot does not have, or a type it cannot be", async () => {
@@ -738,6 +779,110 @@ suite("firestore.rules — community spaces", () => {
         if (snap.data()?.count !== 12)
           throw new Error("the seeded count changed");
       });
+    });
+  });
+  /* Run27 call 11: a Space's members' sessions are routing rows the server
+     writes, read by anyone signed in (the post itself is read on its own,
+     under the activities rules); the Space's week is a figure that names no
+     one, read by anyone signed in; a member's week credit has no client
+     access at all. No client writes any of them, so none can put a post in
+     a Space, keep one there, or move a week's figures. */
+  describe("a Space's members' sessions and its week (Run27 call 11)", () => {
+    const ROW = `spaces/${SPACE}/sessions/post-1`;
+    const WEEK = `spaces/${SPACE}/weeks/2026-11-09`;
+    const CREDIT = `users/${MEMBER}/spaceWeeks/${SPACE}_2026-11-09`;
+    const seed = () =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        const admin = ctx.firestore();
+        await setDoc(doc(admin, ROW), {
+          activityId: "post-1",
+          authorId: MEMBER,
+          createdAt: new Date(),
+        });
+        await setDoc(doc(admin, WEEK), {
+          weekKey: "2026-11-09",
+          members: 38,
+          sessions: 120,
+          meters: 412000,
+          updatedAt: new Date(),
+        });
+        await setDoc(doc(admin, CREDIT), {
+          uid: MEMBER,
+          spaceId: SPACE,
+          weekKey: "2026-11-09",
+          spaceWeek: `${SPACE}_2026-11-09`,
+          sessions: 3,
+          meters: 15000,
+        });
+      });
+
+    it("anyone signed in reads a Space's rows, as a page, and its week", async () => {
+      await seed();
+      await assertSucceeds(
+        getDocs(
+          query(
+            collection(db(OTHER), `spaces/${SPACE}/sessions`),
+            orderBy("createdAt", "desc"),
+            limit(20)
+          )
+        )
+      );
+      await assertSucceeds(getDoc(doc(db(OTHER), ROW)));
+      await assertSucceeds(getDoc(doc(db(OTHER), WEEK)));
+    });
+
+    it("signed out, nobody reads them", async () => {
+      await seed();
+      const anon = env.unauthenticatedContext().firestore();
+      await assertFails(getDoc(doc(anon, ROW)));
+      await assertFails(getDoc(doc(anon, WEEK)));
+    });
+
+    it("no client writes a row, its own post's included", async () => {
+      await seedMember(MEMBER);
+      await assertFails(
+        setDoc(doc(db(MEMBER), `spaces/${SPACE}/sessions/post-2`), {
+          activityId: "post-2",
+          authorId: MEMBER,
+          createdAt: new Date(),
+        })
+      );
+      await seed();
+      await assertFails(
+        updateDoc(doc(db(MEMBER), ROW), { createdAt: new Date(2099, 0, 1) })
+      );
+      await assertFails(deleteDoc(doc(db(MEMBER), ROW)));
+      await assertFails(deleteDoc(doc(db(OTHER), ROW)));
+    });
+
+    it("no client writes a Space's week", async () => {
+      await seed();
+      await assertFails(updateDoc(doc(db(MEMBER), WEEK), { members: 999 }));
+      await assertFails(
+        setDoc(doc(db(MEMBER), `spaces/${SPACE}/weeks/2026-11-16`), {
+          weekKey: "2026-11-16",
+          members: 5,
+        })
+      );
+      await assertFails(deleteDoc(doc(db(MEMBER), WEEK)));
+    });
+
+    it("no client reads or writes a week credit, its owner included", async () => {
+      await seed();
+      for (const client of [db(MEMBER), db(OTHER)]) {
+        await assertFails(getDoc(doc(client, CREDIT)));
+        await assertFails(updateDoc(doc(client, CREDIT), { sessions: 50 }));
+        await assertFails(deleteDoc(doc(client, CREDIT)));
+      }
+      await assertFails(
+        setDoc(
+          doc(db(MEMBER), `users/${MEMBER}/spaceWeeks/runners_2026-11-09`),
+          {
+            uid: MEMBER,
+            sessions: 50,
+          }
+        )
+      );
     });
   });
 });

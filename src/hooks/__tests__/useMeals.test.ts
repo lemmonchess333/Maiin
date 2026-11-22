@@ -29,7 +29,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 vi.mock("firebase/firestore");
 
-import { useMeals } from "../useMeals";
+import { parseMealDoc, useMeals } from "../useMeals";
 import {
   seedFirestore,
   resetFirestore,
@@ -323,5 +323,52 @@ describe("useMeals", () => {
       });
       expect(updatePatches()[0].userEditedFields).toEqual(["totalProtein"]);
     });
+  });
+});
+
+/* Owner, 2026-11-21: every meal photo older builds stored on the server is
+   deleted (functions/scripts/purgeLegacyFoodPhotos.js), and the app reads
+   none. A document the purge has not reached yet still carries the URL and
+   the path; the meal the app builds from it has neither, so no surface can
+   draw the server photo. The device photo (foodPhotoStore) is keyed by the
+   meal's id and needs nothing from the document. */
+describe("useMeals: the server photo older builds stored", () => {
+  beforeEach(() => {
+    resetFirestore();
+  });
+
+  const legacy = {
+    date: "2026-08-01",
+    foodName: "Salmon bowl",
+    items: [],
+    totalCalories: 610,
+    totalProtein: 40,
+    totalCarbs: 50,
+    totalFat: 20,
+    confidence: "high",
+    createdAt: "__TS__",
+    photoUrl:
+      "https://firebasestorage.googleapis.com/v0/b/b/o/food-photos%2Fme%2F1.jpg?alt=media&token=t",
+    photoPath: "food-photos/me/1.jpg",
+  };
+
+  it("parses a document that still carries photoUrl and photoPath without either", () => {
+    const meal = parseMealDoc("legacy", legacy);
+    // Anchor: the rest of the meal is read.
+    expect(meal.foodName).toBe("Salmon bowl");
+    expect(meal.totalCalories).toBe(610);
+    expect(meal).not.toHaveProperty("photoUrl");
+    expect(meal).not.toHaveProperty("photoPath");
+  });
+
+  it("hands the diary that meal without the server photo", async () => {
+    const { result } = renderHook(() => useMeals());
+    await act(async () => {
+      seedMeals([{ id: "legacy", data: legacy }]);
+      await flushSnapshots();
+    });
+    await waitFor(() => expect(result.current.meals).toHaveLength(1));
+    expect(result.current.meals[0].foodName).toBe("Salmon bowl");
+    expect(result.current.meals[0]).not.toHaveProperty("photoUrl");
   });
 });

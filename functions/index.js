@@ -32,10 +32,13 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
-const activationCohort = require("./lib/activationCohort");
 const weeklyRecap = require("./lib/weeklyRecap");
+const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
+const emailConsent = require("./lib/emailConsent");
 const { activationSport } = require("./lib/firstWeekActivation");
+// App1 Q17: the first session and week-4 return, kept once per account.
+const launchMilestones = require("./lib/launchMilestones");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
@@ -51,6 +54,8 @@ const leagueRules = require("./lib/leagueRules");
 const medals = require("./lib/medals");
 // Soc15: plan groups, how many people are training for each race.
 const raceCohorts = require("./lib/raceCohorts");
+const spaceFeed = require("./lib/spaceFeed");
+const spaceWeeks = require("./lib/spaceWeeks");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
@@ -72,11 +77,10 @@ const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
-const {
-  runMilestoneBadges,
-  lifetimeMilestoneBadges,
-  liftWeightMilestoneBadges,
-} = require("./lib/badgeRules");
+const { lifetimeMilestoneBadges } = require("./lib/badgeRules");
+// App1 Q33: every badge is awarded here, from the triggers that see its
+// facts (lib/badgeAwards.js has which trigger decides which badge).
+const badgeAwards = require("./lib/badgeAwards");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const {
@@ -90,9 +94,11 @@ const photoScreen = require("./lib/photoScreen");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
+  savableStreak,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,
+  STREAK_NUDGE_MIN_STREAK,
 } = require("./lib/streakNudge");
 const {
   isLocalSendHour,
@@ -114,6 +120,13 @@ const {
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
+// App1 Q60 and Q62: one budget for every push not from a person, and a
+// reminder nobody answers goes quiet.
+const pushBudget = require("./lib/pushBudget");
+const reminderAttention = require("./lib/reminderAttention");
+// App1 Q18: pushes from people, and props once a day.
+const socialPush = require("./lib/socialPush");
+const { wantsNotification } = require("./lib/notificationPreferences");
 
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
@@ -177,6 +190,8 @@ const activityReversal = require("./lib/activityReversal");
 const communityGoal = require("./lib/communityGoal");
 // The live pulse: each day's count of sessions across Tropos (Soc15).
 const pulse = require("./lib/pulse");
+// Run26 call 3: segments, their efforts and the boards of who you follow.
+const segments = require("./lib/segments");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
@@ -735,6 +750,7 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const healthConsent = require("./lib/healthConsent");
 
 /* A display name that trips the word filter is refused, as
    failed-precondition so the client can show the sentence
@@ -746,6 +762,12 @@ function assertDisplayNameAllowed(displayName) {
     throw new functions.https.HttpsError("failed-precondition", refusal);
   }
 }
+
+/* The first-week journey every account is stamped with (App1, whole-app
+   grill Q27). It was XB1's version 2 beside a comparison group stamped 1;
+   the group, its share and its switch went with App1, and every account,
+   older ones included, now takes this journey in the app. */
+const ONE_ACTIVATION_JOURNEY_VERSION = 2;
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -784,9 +806,23 @@ exports.completeOnboarding = functions
         weekSchedule: rawWeekSchedule,
         activationJourneyVersion,
         onboardingPlatform,
+        healthDataConsent: setupHealthConsent,
       } = data;
-      // The cohort is chosen by this callable, never by a profile write.
-      // Omitted means an older client and keeps the legacy journey.
+      // App1 Q55: setup's email opt-in, outside profileData so the profile
+      // sanitiser never carries consent. Ticked, it is a yes to both emails
+      // the toggle names, recorded below with the server's time; unticked,
+      // nothing is recorded (absent already means no).
+      const emailOptIn = emailConsent.readSetupEmailOptIn(data);
+      if (emailOptIn.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          emailOptIn.error
+        );
+      }
+      // Every account takes the one first-week journey (App1, whole-app
+      // grill Q27), so the journey is stamped below whatever a client
+      // sends. A client from before App1 sends 2 or nothing; anything else
+      // is refused, as it was while the journey was chosen here.
       if (
         activationJourneyVersion !== undefined &&
         activationJourneyVersion !== 2
@@ -798,8 +834,7 @@ exports.completeOnboarding = functions
       }
       if (
         onboardingPlatform !== undefined &&
-        (activationJourneyVersion !== 2 ||
-          !activationBilling.validOnboardingPlatform(onboardingPlatform))
+        !activationBilling.validOnboardingPlatform(onboardingPlatform)
       ) {
         throw new functions.https.HttpsError(
           "invalid-argument",
@@ -822,6 +857,15 @@ exports.completeOnboarding = functions
           "programState is required."
         );
       }
+      // Priv1 call 1: setup asks for the agreement to store health details
+      // before its first body question, and the plan is not saved without
+      // it. The app cannot send a plan without it; a build from before the
+      // question is told to update (lib/healthConsent.js). Checked once the
+      // request's shape is, and before anything is read or written.
+      healthConsent.assertSetupHealthConsent(
+        setupHealthConsent,
+        functions.https.HttpsError
+      );
 
       // Allow-list + per-field sanitise. Unknown fields, off-allowlist
       // photoURL schemes, out-of-range numbers etc. are dropped to
@@ -855,10 +899,16 @@ exports.completeOnboarding = functions
       // prevented the empty case, so a request that hits this branch
       // is either an out-of-range value (which we want to reject) or
       // a malicious caller (who shouldn't get diagnostic detail).
+      //
+      // The age comes as a year of birth (App1, grill Q57), from which it is
+      // worked out when it is read, or as `age` from a client still running
+      // an older bundle. A year sent is the one asked for, so a year the
+      // sanitiser refused (under 18) fails here as itself. Nothing derived
+      // from it is stored: the year is the one copy of the fact (Q21).
       const requiredFields = [
         "weightKg",
         "heightCm",
-        "age",
+        rawProfileData.birthYear != null ? "birthYear" : "age",
         "sex",
         "activityLevel",
       ];
@@ -971,22 +1021,22 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
-      // The server's cohort, not the client's (XB1 call 9): a comparison
-      // group and a switch that turns v2 off (lib/activationCohort.js).
-      const journey = await activationCohort.journeyFor(
-        db,
-        uid,
-        activationJourneyVersion
-      );
-      const acceptedVersion = await db.runTransaction(async (transaction) => {
+      await db.runTransaction(async (transaction) => {
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
         const nextProfileData = { ...profileData };
+        // The agreement given in this setup, dated by the server. A retry
+        // records the latest agreement: the person agreed again to finish.
+        nextProfileData.healthDataConsent = healthConsent.healthConsentRecord(
+          admin.firestore.FieldValue.serverTimestamp()
+        );
 
-        // The timestamp and cohort describe the first successful setup
+        // The timestamp and journey describe the first successful setup
         // commit. A retry, even from a newer client, must not move the
-        // activation window or enroll an existing account.
+        // activation window or restamp an account set up earlier. The
+        // journey stays stamped, always 2, for the activation report and
+        // for app builds from before App1, which read it.
         const alreadyCompleted = existingData.onboardingComplete === true;
         if (!alreadyCompleted) {
           nextProfileData.onboardingCompletedAt =
@@ -994,11 +1044,29 @@ exports.completeOnboarding = functions
           nextProfileData.onboardingSport = activationSport(
             nextProfileData.athleteType
           );
-          if (journey !== null) {
-            nextProfileData.activationJourneyVersion = journey;
-            if (onboardingPlatform) {
-              nextProfileData.onboardingPlatform = onboardingPlatform;
+          // App1 Q17: an account set up from here on has its launch
+          // numbers kept (lib/launchMilestones). Empty until its first
+          // counted session; an older account never gets one, so its next
+          // session is not taken for its first.
+          nextProfileData.launchMilestones = {};
+          nextProfileData.activationJourneyVersion =
+            ONE_ACTIVATION_JOURNEY_VERSION;
+          if (onboardingPlatform) {
+            nextProfileData.onboardingPlatform = onboardingPlatform;
+          }
+        }
+        if (emailOptIn.optIn) {
+          const consent = emailConsent.applyEmailConsent(
+            existingData.emailConsent,
+            { weeklyReview: true, winBack: true },
+            {
+              via: "setup",
+              wording: emailOptIn.wording,
+              at: admin.firestore.FieldValue.serverTimestamp(),
             }
+          );
+          if (consent.changed.length > 0) {
+            nextProfileData.emailConsent = consent.next;
           }
         }
         if (existing.exists) {
@@ -1069,16 +1137,13 @@ exports.completeOnboarding = functions
           { merge: true }
         );
         transaction.set(programRef, onbProgram.value);
-
-        return alreadyCompleted
-          ? existingData.activationJourneyVersion === 2 ||
-            existingData.activationJourneyVersion === 1
-            ? existingData.activationJourneyVersion
-            : null
-          : journey;
       });
 
-      return { success: true, activationJourneyVersion: acceptedVersion };
+      // App builds from before App1 route on this: 2 goes to Today.
+      return {
+        success: true,
+        activationJourneyVersion: ONE_ACTIVATION_JOURNEY_VERSION,
+      };
     } catch (err) {
       // Re-throw HttpsError as-is (validation errors, etc.)
       if (err instanceof functions.https.HttpsError) {
@@ -1503,9 +1568,15 @@ exports.analyzeFood = functions
       // on the service's side after that gives it back (aiScanQuota).
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -1776,9 +1847,15 @@ exports.analyzeFoodText = functions
       // gives it back.
       let charge = null;
       const failScan = async (modelStatus) => {
-        if (charge && aiScanQuota.isServiceFailure(modelStatus))
-          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
-        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        // Nothing charged yet is nothing used; a charge is used unless it
+        // is given back.
+        const refunded =
+          !charge ||
+          (aiScanQuota.isServiceFailure(modelStatus) &&
+            (await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge)));
+        const failed = aiScanQuota.failedScanResponse(modelStatus, {
+          refunded,
+        });
         res.status(failed.status).json(failed.body);
       };
       try {
@@ -3163,15 +3240,15 @@ exports.rolloverChallenges = functions
 //
 // Composes the pure decision helpers — shouldSendStreakNudge (#964) plus the
 // once-ever shouldSendFirstWeekNudge below the `>= 2` floor (D-1 day-1→day-2
-// fix), isLocalSendHour (#1001), the inlined consent check (mirrors
-// src/lib/pushConsent — functions/ can't import the TS client module), and the
-// server-side active-date derivation (#activeDates / Option A) — with the FCM
-// I/O. Fires hourly; each eligible user is sent at most once/day at ~19:00
-// LOCAL, outside quiet hours, gated on streak consent. SCHEDULED_CAP
-// (maxInstances:1); admin.messaging() uses the default service-account creds
-// (no bound secret). Only targets users with a registered device token.
-
-const STREAK_NUDGE_LOCAL_HOUR = 19;
+// fix), isLocalSendHour (#1001), the person's one switch and time for the
+// evening reminder (lib/reminderChoices.js, App1 Q26), and the server-side
+// active-date derivation (#activeDates / Option A) — with the FCM I/O. Fires
+// hourly; each eligible user is sent at most once/day, at the LOCAL hour they
+// chose (it was 19:00 for everyone, whatever the app's time said), outside
+// quiet hours, only when push carries the reminder (otherwise the phone
+// schedules it, never both). SCHEDULED_CAP (maxInstances:1);
+// admin.messaging() uses the default service-account creds (no bound
+// secret). Only targets users with a registered device token.
 
 // Consent gate — see functions/lib/pushConsent.js. It was inlined here under
 // a comment claiming it mirrored src/lib/pushConsent.mayTargetUser, which had
@@ -3402,6 +3479,141 @@ async function releaseClaimedPushSendLeases(uid, registrations) {
   );
 }
 
+// --- App1 Q60: the day's one push, and which push it goes to -------------
+//
+// lib/pushBudget.js has the budget and the order (streak, recap, closing
+// challenge, new challenges, badge). A push that is ready gives way while a
+// higher one is still armed for now or later the same local day; then it
+// takes the day's one push in a transaction, or finds it taken.
+
+/** Whether the evening reminder may still go by push today: on, carried by
+ *  push, its hour now or later, not sent yet, nothing logged yet, and a
+ *  streak a log would keep (or the first-week return still to come). */
+async function eveningReminderArmed(uid, now, timezone) {
+  const localHour = localHourInTz(now, timezone);
+  const todayKey = localDateKeyInTz(now, timezone);
+  if (localHour === null || !todayKey) return false;
+  const consent =
+    (await db.doc(`users/${uid}/settings/push`).get()).data() || null;
+  const hour = await reminderChoices.streakReminderPushHour(db, uid, consent);
+  if (hour === null || hour < localHour) return false;
+  const [streakSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+  const pushState = stateSnap.data() || {};
+  if (pushState.lastStreakNudgeDateKey === todayKey) return false;
+  const streak = streakSnap.data() || {};
+  if (streak.lastActiveDate === todayKey) return false;
+  if (savableStreak({ ...streak, timezone }, now) >= STREAK_NUDGE_MIN_STREAK)
+    return true;
+  const yesterdayKey = localDateKeyInTz(
+    new Date(now.getTime() - 86400000),
+    timezone
+  );
+  return (
+    !pushState.firstWeekNudgeDateKey && streak.lastActiveDate === yesterdayKey
+  );
+}
+
+/** Whether Monday's review push is still to go this morning. */
+async function reviewPushArmed(uid, now, timezone) {
+  if (localWeekdayInTz(now, timezone) !== RECAP_LOCAL_WEEKDAY) return false;
+  const localHour = localHourInTz(now, timezone);
+  if (localHour === null || localHour > RECAP_LOCAL_HOUR) return false;
+  const [consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+  if (
+    !(await reminderChoices.reviewReminderByPush(
+      db,
+      uid,
+      consentSnap.data() || null
+    ))
+  )
+    return false;
+  return (
+    (stateSnap.data() || {}).lastRecapDateKey !==
+    localDateKeyInTz(now, timezone)
+  );
+}
+
+/**
+ * Takes today's push for `kind`: null when a higher push is still armed
+ * today, or the day or the seven days are used up. Resolves to the claim,
+ * which `releaseTodaysPush` gives back if the push reached no device.
+ */
+async function claimTodaysPush(uid, kind, now, timezone) {
+  const dayKey = localDateKeyInTz(now, timezone);
+  if (!dayKey) return null;
+  const above = pushBudget.PUSH_PRIORITY.slice(
+    0,
+    Math.max(0, pushBudget.PUSH_PRIORITY.indexOf(kind))
+  );
+  const armed = [];
+  if (
+    above.includes("streak") &&
+    (await eveningReminderArmed(uid, now, timezone))
+  )
+    armed.push("streak");
+  if (above.includes("recap") && (await reviewPushArmed(uid, now, timezone)))
+    armed.push("recap");
+  if (pushBudget.yieldsTo(kind, armed)) return null;
+  return pushBudget.claimPushBudget(db, uid, { kind, dayKey });
+}
+
+async function releaseTodaysPush(uid, claimId) {
+  await pushBudget.releasePushBudget(db, uid, claimId).catch(() => {});
+}
+
+// --- App1 Q62: a reminder ignored three times running goes quiet ----------
+
+function remindersRef(uid) {
+  return db.doc(
+    `users/${uid}/settings/${reminderChoices.REMINDERS_SETTINGS_DOC}`
+  );
+}
+
+/**
+ * Settles the last push of a reminder (lib/reminderAttention.js) before
+ * the next goes. When it was the third ignored running, the reminder is
+ * turned off with the mark Home reads, and null is returned: send nothing.
+ */
+async function settleReminderBeforeSend(
+  uid,
+  kind,
+  now,
+  timezone,
+  actedDayKeys
+) {
+  const reminders = (await remindersRef(uid).get()).data() || {};
+  const settle = reminderAttention.settleReminderPush(kind, reminders, {
+    actedDayKeys,
+    sentDayKey: (ms) => localDateKeyInTz(new Date(ms), timezone),
+  });
+  if (settle.quiet) {
+    await remindersRef(uid).set(
+      reminderAttention.quietPatch(
+        kind,
+        admin.firestore.Timestamp.fromDate(now)
+      ),
+      { merge: true }
+    );
+    return null;
+  }
+  return settle;
+}
+
+/** Records how the settle came out, and the push now waiting, if one went. */
+async function recordReminderPush(uid, kind, settle, sentAt) {
+  if (!settle || (!settle.settled && !sentAt)) return;
+  await remindersRef(uid).set(
+    reminderAttention.settledPatch(kind, settle.ignored, sentAt),
+    { merge: true }
+  );
+}
+
 async function maybeSendStreakNudge(uid, now, profile) {
   // The sweep passes the user's document it already read; the hour is
   // checked from it before anything else is.
@@ -3410,17 +3622,21 @@ async function maybeSendStreakNudge(uid, now, profile) {
     null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
-  // Hour-bucket: only at ~19:00 local, never inside quiet hours.
-  if (!isLocalSendHour(now, timezone, STREAK_NUDGE_LOCAL_HOUR)) return false;
+  // The person's evening reminder: on, carried by push (the account takes
+  // push), and this is its local hour. Off, or on the phone, the server
+  // sends nothing (App1 Q26: one switch, one time, one channel).
+  const consentSnap = await db.doc(`users/${uid}/settings/push`).get();
+  const hour = await reminderChoices.streakReminderPushHour(
+    db,
+    uid,
+    consentSnap.data() || null
+  );
+  if (hour === null || !isLocalSendHour(now, timezone, hour)) return false;
 
-  const [streakSnap, consentSnap, stateSnap] = await Promise.all([
+  const [streakSnap, stateSnap] = await Promise.all([
     db.doc(`users/${uid}/streaks/data`).get(),
-    db.doc(`users/${uid}/settings/push`).get(),
     db.doc(`users/${uid}/settings/pushState`).get(),
   ]);
-
-  // Consent: streak push must be opted in.
-  if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
 
   const streak = streakSnap.data() || {};
   const pushState = stateSnap.data() || {};
@@ -3480,6 +3696,9 @@ async function maybeSendStreakNudge(uid, now, profile) {
     lastActiveDate: streak.lastActiveDate,
     anchorStreak: streak.anchorStreak,
     anchorDate: streak.anchorDate,
+    // The day the streak is kept through, rest days ahead included (App1
+    // Q32): the app's forecast from the plan, so no plan is read here.
+    keptThrough: streak.keptThrough,
     remindersOptedIn: true,
     timezone,
     activeDateKeys,
@@ -3490,9 +3709,37 @@ async function maybeSendStreakNudge(uid, now, profile) {
   const firstWeek = !eligible && shouldSendFirstWeekNudge(decisionInput, now);
   if (!eligible && !firstWeek) return false;
 
+  // Q62: the last evening reminder is settled first (answered if the app
+  // was opened after it that day, or anything was logged that day). After
+  // three ignored running it goes quiet instead. The once-ever first-week
+  // return is not a repeating reminder and is not counted.
+  let settle = null;
+  if (eligible) {
+    settle = await settleReminderBeforeSend(
+      uid,
+      "streak",
+      now,
+      timezone,
+      activeDateKeys
+    );
+    if (!settle) return false;
+  }
+
+  // Q60: the day's one push. The evening reminder is first in the order,
+  // so it waits for nothing; the day or the seven days may be used up.
+  const claim = await claimTodaysPush(uid, "streak", now, timezone);
+  if (!claim) {
+    await recordReminderPush(uid, "streak", settle, null);
+    return false;
+  }
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    await recordReminderPush(uid, "streak", settle, null);
+    return false;
+  }
 
   const message = firstWeek
     ? buildFirstWeekNudgeMessage()
@@ -3502,6 +3749,9 @@ async function maybeSendStreakNudge(uid, now, profile) {
     batch = await admin
       .messaging()
       .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     // Release send leases before pruning (prune uses releaseTokenIfOwned,
     // which must not contend with an unexpired lease of its own).
@@ -3510,6 +3760,18 @@ async function maybeSendStreakNudge(uid, now, profile) {
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+
+  // A push that reached no device gives the day back. The one that went
+  // is the evening reminder now waiting to be answered (from `now`, the
+  // sweep's start, so an open straight after it counts).
+  const delivered = batch.successCount > 0;
+  if (!delivered) await releaseTodaysPush(uid, claim);
+  await recordReminderPush(
+    uid,
+    "streak",
+    settle,
+    delivered && settle ? admin.firestore.Timestamp.fromDate(now) : null
+  );
 
   // ≤1/day idempotency marker (local day); the first-week nudge additionally
   // records its once-EVER marker.
@@ -3527,18 +3789,27 @@ async function maybeSendStreakNudge(uid, now, profile) {
 
 // Push #961 / badge sender #968 — badge-earned nudge. Earned badges live in
 // users/{uid}/streaks/data.badges[] ({ id, earnedAt }). This fires at the next
-// non-quiet local hour after a badge is earned (not pinned to one hour, so it
+// local hour from 10:00 after a badge is earned (not pinned to one hour, so it
 // feels timely), at most once/day, gated on "badge" consent. The 2-day
 // recency window + pushedBadgeIds marker prevent back-spam of historical
 // badges and re-sends. Generic payload (Q7 — badge names leak streak counts).
+// Last in the day's order (App1 Q60, lib/pushBudget.js): it starts at 10:00,
+// after the 09:00 pushes, gives way to an evening reminder still to come,
+// and waits for a later hour or day when today's push has gone.
 async function maybeSendBadgeNudge(uid, now, profile) {
   const timezone =
     (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
     null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
-  // Any non-quiet local hour (timely), never inside quiet hours.
-  if (withinQuietHours(localHourInTz(now, timezone))) return false;
+  // From 10:00 local, never inside quiet hours.
+  const localHour = localHourInTz(now, timezone);
+  if (
+    withinQuietHours(localHour) ||
+    localHour === null ||
+    localHour < pushBudget.BADGE_EARLIEST_HOUR
+  )
+    return false;
 
   const [streakSnap, consentSnap, stateSnap] = await Promise.all([
     db.doc(`users/${uid}/streaks/data`).get(),
@@ -3559,9 +3830,16 @@ async function maybeSendBadgeNudge(uid, now, profile) {
   const fresh = pushableBadgeIds(badges, pushedBadgeIds, now);
   if (fresh.length === 0) return false;
 
+  // Q60: not marked pushed when it waits, so a later hour can send it.
+  const claim = await claimTodaysPush(uid, "badge", now, timezone);
+  if (!claim) return false;
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    return false;
+  }
 
   let batch;
   try {
@@ -3569,12 +3847,16 @@ async function maybeSendBadgeNudge(uid, now, profile) {
       tokens,
       ...withNativePushAlert(buildBadgeNudgeMessage(), uid),
     });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+  if (batch.successCount === 0) await releaseTodaysPush(uid, claim);
 
   // Mark these badge ids pushed + today's ≤1/day marker. Union with the
   // existing set so an earlier day's pushes aren't forgotten.
@@ -3589,7 +3871,8 @@ async function maybeSendBadgeNudge(uid, now, profile) {
   return batch.successCount > 0;
 }
 
-// Push #961 / weekly recap #967 — Monday ~8am LOCAL recap push. Celebratory
+// Push #961 / weekly recap #967 — Monday 09:00 LOCAL recap push (the review
+// reminder's one time, App1 Q26; it was 08:00 against the phone's 09:00). Celebratory
 // when the user kept up; fell-behind-aware (deep-links the Programme page where
 // the FellBehindSheet surfaces) when they ran <50% of their weekly target last
 // week. Fell-behind status is computed FRESH here from the prior week, NOT read
@@ -3598,22 +3881,26 @@ async function maybeSendBadgeNudge(uid, now, profile) {
 // 05:00 UTC pass — so the persisted flag would be stale for them. It shares the
 // `_fellBehindRatio` computation with that check (single source of truth), and
 // when behind it ensures the flag is written (idempotent merge, same shape) so
-// the deep-link target reliably exists when the user taps. Counts under the ≤1
-// server-push/day cap with priority recap > streak: a sent recap writes the
-// same `lastStreakNudgeDateKey` marker #966 reads, suppressing that evening's
-// streak nudge. ≤1 recap/day via `lastRecapDateKey`. Runs inside the existing
-// hourly sweep (no second active-user pass).
+// the deep-link target reliably exists when the user taps. Counts under the
+// day's one push (App1 Q60, lib/pushBudget.js), second in its order: it gives
+// way to an evening reminder still to come that day, which protects a streak
+// and cannot wait, where the review waits on Home all week. That reverses
+// #967's recap > streak, which wrote `lastStreakNudgeDateKey` to silence the
+// evening's reminder; the budget now keeps the day to one push. Ignored three
+// Mondays running, it goes quiet (App1 Q62, lib/reminderAttention.js).
+// ≤1 recap/day via `lastRecapDateKey`. Runs inside the existing hourly sweep
+// (no second active-user pass).
 //
 // #576 reconciliation: #576's "Friday weekly check-in" is the Watch/APNs sender
 // off the same fell-behind signal; this is the FCM web/phone transport. They
 // intentionally differ by transport + cadence and SHARE the `_fellBehindRatio`
 // computation rather than each re-deriving "who's behind".
-const RECAP_LOCAL_HOUR = 8;
+const RECAP_LOCAL_HOUR = reminderChoices.REVIEW_REMINDER_HOUR;
 const RECAP_LOCAL_WEEKDAY = 1; // Monday (0=Sun..6=Sat)
 
 async function maybeSendWeeklyRecap(uid, now, profile) {
   // Cheap gate first: the tz (from the sweep's read, or one profile read),
-  // then the local Monday-8am check (skips the heavier reads on the other
+  // then the local Monday-09:00 check (skips the heavier reads on the other
   // 167 hours of the week).
   const timezone =
     (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
@@ -3629,8 +3916,16 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     db.doc(`users/${uid}/settings/pushState`).get(),
   ]);
 
-  // Consent: recap push must be opted in (absent per-type flag → on).
-  if (!mayTargetUserConsent(consentSnap.data() || null, "recap")) return false;
+  // The person's Monday review reminder: on, and carried by push. Off, or
+  // on the phone, the server sends nothing (App1 Q26).
+  if (
+    !(await reminderChoices.reviewReminderByPush(
+      db,
+      uid,
+      consentSnap.data() || null
+    ))
+  )
+    return false;
 
   const state = stateSnap.data() || {};
   if (state.lastRecapDateKey === todayKey) return false; // ≤1 recap/day
@@ -3668,9 +3963,26 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
   if (!behind && !(await weeklyRecap.reviewWaits(db, uid, range.weekEnd)))
     return false;
 
+  // Q62: last Monday's review push, settled: answered if the app was
+  // opened after it that day, or the review was read. After three ignored
+  // running it goes quiet instead.
+  const settle = await settleReminderBeforeSend(uid, "review", now, timezone);
+  if (!settle) return false;
+
+  // Q60: the day's one push, unless the evening reminder may still go.
+  const claim = await claimTodaysPush(uid, "recap", now, timezone);
+  if (!claim) {
+    await recordReminderPush(uid, "review", settle, null);
+    return false;
+  }
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    await recordReminderPush(uid, "review", settle, null);
+    return false;
+  }
 
   const message = behind
     ? buildFellBehindRecapMessage()
@@ -3680,12 +3992,23 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     batch = await admin
       .messaging()
       .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+  const delivered = batch.successCount > 0;
+  if (!delivered) await releaseTodaysPush(uid, claim);
+  await recordReminderPush(
+    uid,
+    "review",
+    settle,
+    delivered ? admin.firestore.Timestamp.fromDate(now) : null
+  );
 
   // Behind → ensure the deep-link target exists. Write the fell-behind flag
   // (same shape weeklyFellBehindCheck writes) if it isn't already present for
@@ -3717,16 +4040,13 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     );
   }
 
-  // ≤1/day markers: record the recap AND suppress the evening streak nudge
-  // (recap > streak) by writing the same marker #966 reads.
+  // ≤1 recap/day. The evening's streak reminder is held back by the day's
+  // one push, not by a streak marker (App1 Q60).
   await db
     .doc(`users/${uid}/settings/pushState`)
-    .set(
-      { lastRecapDateKey: todayKey, lastStreakNudgeDateKey: todayKey },
-      { merge: true }
-    );
+    .set({ lastRecapDateKey: todayKey }, { merge: true });
 
-  return batch.successCount > 0;
+  return delivered;
 }
 
 exports.hourlyStreakNudge = functions
@@ -3765,8 +4085,8 @@ exports.hourlyStreakNudge = functions
             }
             // Three independent send-decisions per user in one sweep (avoids a
             // second full active-user pass — cost). A throw in one must not
-            // skip the others. Recap is evaluated first so its per-day marker
-            // (recap > streak) suppresses the evening streak nudge.
+            // skip the others. All three share the day's one push (App1 Q60,
+            // lib/pushBudget.js), whose order decides between them.
             try {
               if (await maybeSendWeeklyRecap(uid, now, profile)) recapSent++;
             } catch (e) {
@@ -3831,6 +4151,12 @@ function challengeNotificationOptions(uid, now, profile) {
     releaseRegistrations: releaseClaimedPushSendLeases,
     send: (message) => admin.messaging().sendEachForMulticast(message),
     prune: pruneDeadPushTokens,
+    // App1 Q60: the day's one push, after the review and the evening
+    // reminder in its order (lib/pushBudget.js).
+    budget: {
+      claim: (kind, timezone) => claimTodaysPush(uid, kind, now, timezone),
+      release: (claimId) => releaseTodaysPush(uid, claimId),
+    },
   };
 }
 
@@ -3894,6 +4220,275 @@ exports.hourlyChallengeAnnouncements = functions
   );
 
 exports._maybeSendChallengeAnnouncement = maybeSendChallengeAnnouncement;
+
+// ══════════════════════════════════════════════
+// App1 Q18 — pushes from people (lib/socialPush.js)
+// ══════════════════════════════════════════════
+//
+// A comment, a follow request (both ways), an invite joined and a league
+// result push as their tray row is written; props come together once a
+// day at 19:00 local. Outside App1 Q60's budget, which is for pushes not
+// from a person. createNotification is still the one writer of the rows,
+// with the block check and the recipient's switch; the push follows a row
+// it wrote, and is checked again as it goes.
+
+/** One push to an account's devices: leased, sent, released, pruned.
+ *  `message` is complete (`withNativePushAlert` already applied). */
+async function sendPushToAccount(uid, message) {
+  const registrations = await leaseClaimedPushRegistrations(uid);
+  const tokens = registrations.map((r) => r.token);
+  if (tokens.length === 0) return false;
+  let batch;
+  try {
+    batch = await admin
+      .messaging()
+      .sendEachForMulticast({ tokens, ...message });
+  } finally {
+    await releaseClaimedPushSendLeases(uid, registrations);
+  }
+  await pruneDeadPushTokens(uid, registrations, batch);
+  return batch.successCount > 0;
+}
+
+/** Whether `uid` takes a social push of `type` now: the account takes
+ *  push, and the switch for the kind is still on. */
+async function takesSocialPush(uid, type, profile) {
+  const consent =
+    (await db.doc(`users/${uid}/settings/push`).get()).data() || null;
+  if (!consent || consent.enabled !== true) return false;
+  return wantsNotification((profile || {}).notificationPreferences, type);
+}
+
+/** Whether a push may carry `fromUid`'s act to `uid`: someone else, with
+ *  no block either way and no restriction. Every named sender meets these
+ *  checks; a league result names none (socialPush.pushSender). */
+async function mayPushFrom(uid, fromUid) {
+  if (typeof fromUid !== "string" || !fromUid || fromUid === uid) return false;
+  if (await blockGuard.isBlockedBetween(db, uid, fromUid)) return false;
+  return !(await restriction.isRestricted(db, fromUid));
+}
+
+/** A social push as it goes: quietly in the person's quiet hours, and
+ *  gone after a day undelivered. */
+function socialDelivery(message, uid, now, timezone) {
+  let full = withNativePushAlert(message, uid);
+  if (socialPush.quietNow(now, timezone)) full = socialPush.quietly(full);
+  return socialPush.withSocialDelivery(full, now);
+}
+
+function propsBundleRef(uid) {
+  return db.doc(`users/${uid}/settings/${socialPush.PROPS_BUNDLE_DOC}`);
+}
+
+/** Props given: into the bundle due at the next 19:00 local. */
+async function addToPropsBundle(uid, item, timezone, now) {
+  if (
+    typeof item.fromUserId !== "string" ||
+    typeof item.activityId !== "string"
+  )
+    return;
+  const due = socialPush.propsBundleDueAt(now, timezone);
+  if (!due) return;
+  const ref = propsBundleRef(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const bundle = snap.exists ? snap.data() : null;
+    tx.set(ref, {
+      propsBundleDueAt:
+        (bundle && bundle.propsBundleDueAt) ||
+        admin.firestore.Timestamp.fromDate(due),
+      entries: socialPush.withProps(bundle, {
+        from: item.fromUserId,
+        activityId: item.activityId,
+        name: item.fromName,
+      }),
+    });
+  });
+}
+
+/** Props taken back before the bundle went: out of it. */
+async function removeFromPropsBundle(uid, item) {
+  const ref = propsBundleRef(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const entries = socialPush.withoutProps(snap.data(), {
+      from: item.fromUserId,
+      activityId: item.activityId,
+    });
+    if (entries.length === 0) tx.delete(ref);
+    else tx.set(ref, { ...snap.data(), entries });
+  });
+}
+
+async function handleNotificationItemWrite(change, context) {
+  const { uid } = context.params;
+  const before = change.before.exists ? change.before.data() || {} : null;
+  const after = change.after.exists ? change.after.data() || {} : null;
+  const type = (after || before || {}).type;
+  const bundled = type === socialPush.BUNDLED_PUSH_TYPE;
+  if (!bundled && !socialPush.SOCIAL_PUSH_TYPES.includes(type)) return null;
+  if (!after) {
+    if (bundled) await removeFromPropsBundle(uid, before);
+    return null;
+  }
+  if (!socialPush.isNewNotice(before, after)) return null;
+  const sender = socialPush.pushSender(after);
+  if (!sender) return null;
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "onNotificationItemWritten"
+    ))
+  )
+    return null;
+  const profile = (await db.doc(`users/${uid}`).get()).data() || {};
+  if (
+    !(await takesSocialPush(uid, type, profile)) ||
+    (!sender.system && !(await mayPushFrom(uid, sender.from)))
+  )
+    return null;
+  const now = new Date();
+  if (bundled) {
+    await addToPropsBundle(uid, after, profile.timezone || null, now);
+    return null;
+  }
+  const message = socialPush.socialPushMessage(after);
+  const key = socialPush.noticeKey(after);
+  if (!message || !key) return null;
+  // Claimed on the row before it goes: a retried event never sends twice.
+  const claimed = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(change.after.ref);
+    if (!snap.exists) return false;
+    const row = snap.data() || {};
+    if (socialPush.noticeKey(row) !== key || row.pushReceipt === key)
+      return false;
+    tx.update(change.after.ref, { pushReceipt: key });
+    return true;
+  });
+  if (!claimed) return null;
+  await sendPushToAccount(
+    uid,
+    socialDelivery(message, uid, now, profile.timezone || null)
+  );
+  return null;
+}
+
+// Every row of the tray passes here; only the kinds above do anything,
+// and only for a new notice (a read, a carried name or the push's own
+// receipt is an update with the same createdAt). Retried when it throws,
+// which is safe twice: the push is claimed on its row before it goes, so a
+// second delivery sends nothing again, and the bundle's writes replace one
+// entry per person and session. A push more than a day late is dropped.
+exports.onNotificationItemWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("notifications/{uid}/items/{itemId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    return handleNotificationItemWrite(change, context);
+  });
+
+/** Sends one bundle that is due, and clears it first: a sweep run twice
+ *  sends it once. Props from someone since blocked or restricted are left
+ *  out; nothing left, nothing sent. */
+async function sendPropsBundle(ref, now) {
+  const parts = ref.path.split("/");
+  if (
+    parts.length !== 4 ||
+    parts[0] !== "users" ||
+    parts[3] !== socialPush.PROPS_BUNDLE_DOC
+  ) {
+    // A due time on a document that is not a bundle was written by a
+    // client before the rules refused it. Left there it is read first by
+    // every hourly sweep, and a thousand of them kept every real bundle
+    // out of the sweep's read for good. Take the field off; the rest of
+    // the document is its owner's.
+    await ref.update({
+      propsBundleDueAt: admin.firestore.FieldValue.delete(),
+    });
+    return false;
+  }
+  const uid = parts[1];
+  const bundle = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return null;
+    const data = snap.data() || {};
+    const dueAt = socialPush.millisOf(data.propsBundleDueAt);
+    if (dueAt === null || dueAt > now.getTime()) return null;
+    tx.delete(ref);
+    return data;
+  });
+  if (!bundle) return false;
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "hourlyPropsBundle"
+    ))
+  )
+    return false;
+  const profile = (await db.doc(`users/${uid}`).get()).data() || {};
+  if (!(await takesSocialPush(uid, socialPush.BUNDLED_PUSH_TYPE, profile)))
+    return false;
+  const entries = [];
+  for (const entry of socialPush.bundleEntries(bundle))
+    if (await mayPushFrom(uid, entry.from)) entries.push(entry);
+  const sessions = [...new Set(entries.map((entry) => entry.activityId))];
+  const sessionTypes = {};
+  if (sessions.length === 1) {
+    const activity = await db.doc(`activities/${sessions[0]}`).get();
+    if (activity.exists) sessionTypes[sessions[0]] = activity.data().type;
+  }
+  const message = socialPush.propsBundleMessage(entries, { sessionTypes });
+  if (!message) return false;
+  return sendPushToAccount(
+    uid,
+    socialDelivery(message, uid, now, profile.timezone || null)
+  );
+}
+
+// The props bundles that are due (lib/socialPush.js: 19:00 local), on the
+// hour. A collection-group read of the one settings document that carries
+// `propsBundleDueAt` (firestore.indexes.json holds its index).
+exports.hourlyPropsBundle = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyPropsBundle", async () => {
+      const now = new Date();
+      const due = await db
+        .collectionGroup("settings")
+        .where(
+          "propsBundleDueAt",
+          "<=",
+          admin.firestore.Timestamp.fromDate(now)
+        )
+        .limit(1000)
+        .get();
+      let sent = 0;
+      let failed = 0;
+      for (let offset = 0; offset < due.docs.length; offset += 10) {
+        await Promise.all(
+          due.docs.slice(offset, offset + 10).map(async (doc) => {
+            try {
+              if (await sendPropsBundle(doc.ref, now)) sent++;
+            } catch (error) {
+              failed++;
+              console.error("hourlyPropsBundle: send failed", {
+                message: error && error.message,
+              });
+            }
+          })
+        );
+      }
+      return { due: due.size, sent, failed };
+    })
+  );
+
+exports._handleNotificationItemWrite = handleNotificationItemWrite;
+exports._sendPropsBundle = sendPropsBundle;
 
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
 // FCM message to the caller's own registered tokens so a user can confirm
@@ -4324,6 +4919,87 @@ exports.dailyRaceCohortRecount = functions
   );
 
 // ══════════════════════════════════════════════
+// A Space's members' sessions and its week (Run27 call 11)
+// ══════════════════════════════════════════════
+//
+// `spaces/{spaceId}/sessions/{activityId}` routes a member's public post to
+// the Spaces they are in (lib/spaceFeed.js). `spaces/{spaceId}/weeks/{weekKey}`
+// is the Space's week in figures that name no one, counted from each
+// member's credit in `users/{uid}/spaceWeeks` (lib/spaceWeeks.js). Both are
+// written only here and by the session triggers, and each writer reads the
+// facts again, so a retried or doubled delivery writes the same thing.
+
+/**
+ * A post created public, made public, narrowed, flagged or deleted: its
+ * rows in the Spaces match what is true of it now. Every other write (a
+ * prop, a comment count, a map image) returns before reading anything.
+ *
+ * Not held back for an account being deleted: it reads the deletion freeze
+ * in its transaction and then only removes rows.
+ */
+exports.onActivitySpaceRows = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("activities/{activityId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (
+      !spaceFeed.activityWriteMayMoveRows(
+        change.before.exists ? change.before.data() : null,
+        change.after.exists ? change.after.data() : null
+      )
+    )
+      return null;
+    await spaceFeed.syncActivityRows(db, context.params.activityId);
+    return null;
+  });
+
+/**
+ * A join or a leave (the member document is the app's own write, and
+ * account deletion's): the member's public posts come into the Space or go
+ * from it, and their week counts in it or stops counting. A rewrite of the
+ * same membership (a resynced name or photo) changes neither.
+ */
+exports.onSpaceMemberWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("spaces/{spaceId}/members/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (change.before.exists === change.after.exists) return null;
+    const { spaceId, uid } = context.params;
+    const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
+    await steps.run("sessions", () =>
+      spaceFeed.syncMemberRows(db, spaceId, uid)
+    );
+    await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
+    steps.settle();
+    return null;
+  });
+
+/**
+ * A restriction set or lifted (resolveReport, liftRestriction): a
+ * restricted account reaches no one (S4e), so its posts leave every
+ * Space's list and its sessions stop counting in every Space's week; once
+ * lifted, its recent public posts and this week come back.
+ */
+exports.onRestrictionWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("globalRestrictedUids/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (change.before.exists === change.after.exists) return null;
+    const { uid } = context.params;
+    const steps = triggerSteps(`onRestrictionWritten ${uid}`);
+    await steps.run("sessions", () =>
+      change.after.exists
+        ? spaceFeed.removeAuthorRows(db, uid)
+        : spaceFeed.restoreAuthorRows(db, uid)
+    );
+    await steps.run("weeks", () => spaceWeeks.syncAuthorWeeks(db, uid));
+    steps.settle();
+    return null;
+  });
+
+// ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
 // ══════════════════════════════════════════════
 //
@@ -4451,111 +5127,18 @@ exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
  * doc-growth footgun.
  */
 /**
- * Award milestone badges server-side. The catalogue's milestone badges
- * (running distances, …) can't be computed from the client's WINDOWED streak
- * snapshots, so the activity-create triggers award them here off the full doc.
- *
- * Writes the same two surfaces the client `awardBadge` does — `streaks/data`
- * (full `badges[]`, owner-only) + the `users/{uid}/public/profile.badgeSummary`
- * mirror — inside ONE transaction so concurrent activity triggers can't lose an
- * award. Idempotent: an already-earned badge (`earnedAt` set) is left alone, so
- * a trigger re-delivery (at-least-once) never re-awards. earnedAt is an ISO
- * string to match the client (`new Date().toISOString()`); the client hydrates
- * the rest of each badge from BADGE_DEFINITIONS by id on load.
- *
- * A MISSING streak doc is created rather than skipped. This used to return
- * early, under the belief — stated in this comment — that "the client
- * materialises + reconciles it on next load". The client does no such thing
- * for these badges: `badgeEarning.ts:badgesToAward` never evaluates
- * `first_5k`, `10k_club`, `plate_club` or any other single-session
- * milestone, because they are server-owned precisely BECAUSE the client's
- * snapshots are windowed (the reason stated at the top of this comment).
- * There was nothing to reconcile, and every one of these three call sites
- * is inside an `onCreate` trigger, so nothing ever retried.
- *
- * That made it a cold-start bug with no recovery, on the app's welcome
- * moment. Nothing on the server creates `streaks/data` — this function is
- * its only server-side writer and it bailed before writing — and the
- * client only creates it when the streak CHANGES (`useStreaks` explicitly
- * skips the write when the computed streak already equals the stored one,
- * and for a brand-new user both are 0). So on a user's first ever logged
- * session the doc does not exist yet, and the client's creating write
- * races the trigger. First run ≥5 km ⇒ `first_5k`; first workout with a
- * 60 kg compound set ⇒ `plate_club`. Routine, and silently lost.
- *
- * A partial doc is safe to create: `useStreaks` spreads DEFAULT_STREAKS
- * over whatever it reads and coerces non-finite numerics to 0, and every
- * write here is `merge: true`, so the client's later write fills the rest
- * in rather than colliding.
- *
- * The deletion guard below is load-bearing BECAUSE of that change. While
- * this function could only ever update an existing document it had no way
- * to resurrect one; now that it can create, it can re-create a doc the
- * account-deletion executor has already swept. Same failure ADR-0012's
- * first amendment describes for the lifetime counters.
+ * Award badges server-side, naming the session that earned them
+ * (`earnedBy`). The award is `lib/badgeAwards.js`: one transaction on
+ * `streaks/data` and the public summary, idempotent through `earnedAt`, so
+ * a trigger redelivery never re-awards. It creates a missing streak
+ * document (a first session's badge must land: the app writes that
+ * document only once its streak changes), which is why its deletion guard
+ * runs before every write: an award must not re-create a document the
+ * deletion executor has already swept (ADR-0012's first amendment).
+ * A failure is the caller's: the session triggers retry it.
  */
-async function awardMilestoneBadges(uid, ids) {
-  if (!Array.isArray(ids) || ids.length === 0) return;
-  if (
-    !(await accountDeletionLocks.shouldSystemWriteProceed(
-      db,
-      uid,
-      "awardMilestoneBadges"
-    ))
-  ) {
-    return;
-  }
-  const ref = db.doc(`users/${uid}/streaks/data`);
-  const publicRef = db.doc(`users/${uid}/public/profile`);
-  // A failure is the caller's: the session triggers retry it (idempotent
-  // through `earnedAt`), where a catch here lost the badge for good.
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const stored = snap.exists ? snap.data().badges : null;
-    const badges = Array.isArray(stored) ? stored.slice() : [];
-    const nowIso = new Date().toISOString();
-    let changed = false;
-
-    for (const id of ids) {
-      const idx = badges.findIndex((b) => b && b.id === id);
-      if (idx === -1) {
-        // Def absent from an older stored array — append the minimal pair;
-        // the client fills the rest from BADGE_DEFINITIONS by id.
-        badges.push({ id, earnedAt: nowIso });
-        changed = true;
-      } else if (!badges[idx].earnedAt) {
-        badges[idx] = { ...badges[idx], earnedAt: nowIso };
-        changed = true;
-      }
-      // else: already earned → idempotent no-op.
-    }
-
-    if (!changed) return;
-
-    // Recompute the public badge-summary mirror (same shape as the client).
-    const earnedMap = {};
-    for (const b of badges) {
-      if (!b || !b.earnedAt) continue;
-      earnedMap[b.id] =
-        typeof b.earnedAt === "string"
-          ? b.earnedAt
-          : b.earnedAt && typeof b.earnedAt.toDate === "function"
-            ? b.earnedAt.toDate().toISOString()
-            : nowIso;
-    }
-
-    tx.set(ref, { badges }, { merge: true });
-    tx.set(
-      publicRef,
-      {
-        badgeSummary: {
-          earnedMap,
-          count: Object.keys(earnedMap).length,
-        },
-      },
-      { merge: true }
-    );
-  });
+async function awardMilestoneBadges(uid, ids, earnedBy) {
+  await badgeAwards.awardBadges(db, uid, ids, earnedBy);
 }
 
 /**
@@ -4633,7 +5216,10 @@ async function accrueLifetimeStat(
     return updated;
   });
 
-  await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
+  await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal), {
+    kind: kind === "run" ? "run" : "workout",
+    id: sourceId,
+  });
 }
 
 /**
@@ -5307,6 +5893,10 @@ exports.onWorkoutCreated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data();
     // Which day this session belongs to — the workout's own local date,
     // NOT trigger delivery time. Drives challenge-window attribution.
@@ -5347,12 +5937,14 @@ exports.onWorkoutCreated = functions
       );
     }
 
-    // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
-    // heaviest compound set in THIS workout. Single-doc determinable, so
-    // awarded here off the full doc (the client's windowed snapshots can't
-    // see an old PR). Idempotent via earnedAt inside awardMilestoneBadges.
-    await steps.run("weight badges", () =>
-      awardMilestoneBadges(uid, liftWeightMilestoneBadges(data.exercises))
+    // Every badge this workout can earn (App1 Q33): first_step, the plate
+    // clubs off its heaviest compound set, first_pr from the new bests it
+    // carries, the hybrid windows and triple_threat on its day, and
+    // early_bird's day. Idempotent via earnedAt (lib/badgeAwards).
+    await steps.run("badges", () =>
+      badgeAwards.awardForWorkout(db, uid, workoutId, data, {
+        nowMs: eventTimeMs(context),
+      })
     );
 
     // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
@@ -5390,6 +5982,18 @@ exports.onWorkoutCreated = functions
         sourceRef: snap.ref,
         fieldValue: admin.firestore.FieldValue,
         nowMs: eventTimeMs(context),
+      })
+    );
+
+    // App1 Q17: the account's first session and its week-4 return, by the
+    // workout's create time (lib/launchMilestones; once each, so a retry
+    // writes nothing).
+    await steps.run("launch milestones", () =>
+      launchMilestones.recordSessionMilestones(db, {
+        uid,
+        kind: "lift",
+        data,
+        atMs: snap.createTime?.toMillis?.() ?? eventTimeMs(context),
       })
     );
 
@@ -5471,6 +6075,10 @@ exports.onRunCreated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data();
     // The run's own local day — drives challenge-window attribution, so a
     // run flushed offline in a later month still credits the right window.
@@ -5526,11 +6134,14 @@ exports.onRunCreated = functions
       // reversal derives the same figure through the same function
       // rather than restating it — ADR-0012's load-bearing constraint.
       const runMeters = lifetimeAccrual.runMetersFor(data);
-      await steps.run("run badges", () =>
-        awardMilestoneBadges(
-          uid,
-          runMilestoneBadges(runMeters, Number(data.duration) || 0)
-        )
+      // And every other badge the run can earn (App1 Q33): first_step, the
+      // hybrid windows and triple_threat on its day, early_bird's day.
+      await steps.run("badges", () =>
+        badgeAwards.awardForRun(db, uid, runId, data, {
+          meters: runMeters,
+          day: runDayKey(data, null),
+          nowMs: eventTimeMs(context),
+        })
       );
       // Lifetime-aggregate badge: century_km (run 100 km lifetime). Maintains
       // the cumulative distance counter idempotently (per-run marker) and
@@ -5593,6 +6204,16 @@ exports.onRunCreated = functions
           nowMs: eventTimeMs(context),
         })
       );
+      // App1 Q17: the account's first session and its week-4 return, by
+      // the run's create time (lib/launchMilestones; once each).
+      await steps.run("launch milestones", () =>
+        launchMilestones.recordSessionMilestones(db, {
+          uid,
+          kind: "run",
+          data,
+          atMs: snap.createTime?.toMillis?.() ?? eventTimeMs(context),
+        })
+      );
     } else {
       console.log(
         `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
@@ -5600,6 +6221,19 @@ exports.onRunCreated = functions
           `distance=${data.distance}, duration=${data.duration})`
       );
     }
+
+    // Run26 call 3: the run's efforts on every segment it ran, from its
+    // trace as saved, and the runner's board entries on them
+    // (lib/segments). Its own eligibility gate (a GPS run that counts);
+    // idempotent on the run, so a retry writes the same efforts.
+    await steps.run("segments", () =>
+      segments.matchRunToSegments(db, {
+        uid,
+        runId,
+        data,
+        nowMs: eventTimeMs(context),
+      })
+    );
 
     // PR-L L2: recovery-entry write. Runs BEFORE the rolling-window
     // and cooldown gates because recovery entry is independent of
@@ -5648,6 +6282,135 @@ exports.onRunCreated = functions
     return null;
   });
 
+// ── App1 Q33: the badges no session trigger sees ──
+//
+// Every badge is awarded by the server. The workout and run triggers above
+// award what a session decides; these award what a meal, a day's water, a
+// day's target, the streak's certificate and the plan moving on decide.
+// Each reads its facts from the document written and the ones around it,
+// and awards through lib/badgeAwards' one transaction, which sets only what
+// is not yet earned: at-least-once delivery awards each badge once. A
+// failure throws, and failurePolicy delivers the event again.
+
+const docData = (snap) => (snap.exists ? snap.data() || {} : null);
+
+/** A meal written: first_step, meal_prep_master, macro_master,
+ *  protein_pro, triple_threat, early_bird. */
+exports.onMealWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/meals/{mealId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, mealId } = context.params;
+    await badgeAwards.awardForMeal(
+      db,
+      uid,
+      mealId,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+// ── F5c: a soft-deleted meal is removed for good 30
+// days after it was deleted. Each hour, at quarter to, clear of the jobs on
+// the hour and the meet-up sweep at half past. lib/mealPurge.js has the
+// rule, the caps and the account-deletion check; its collection-group index
+// is in firestore.indexes.json. Each meal it deletes fires onMealWritten
+// above, which does nothing for a delete, as for Delete permanently.
+const mealPurge = require("./lib/mealPurge");
+
+exports.purgeSoftDeletedMeals = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("45 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "purgeSoftDeletedMeals", async () => {
+      const summary = await mealPurge.purgeSoftDeletedMeals({
+        firestore: db,
+        toTimestamp: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+        nowMs: Date.now(),
+      });
+      functions.logger.info("purgeSoftDeletedMeals.done", summary);
+      return summary;
+    })
+  );
+
+/** A day's water written (`waterLog/{date}`): hydration_hero. */
+exports.onWaterLogWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/waterLog/{day}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, day } = context.params;
+    await badgeAwards.awardForWater(
+      db,
+      uid,
+      day,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** A day's target snapshot written (`dailyNutrition/{date}`): the day's
+ *  food judged again against the target it now has. */
+exports.onDailyNutritionWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/dailyNutrition/{day}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, day } = context.params;
+    await badgeAwards.awardForTargets(
+      db,
+      uid,
+      day,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** The streak's certificate written (`streaks/data`): the streak badges.
+ *  The award writes this document too; a write that leaves the streak as
+ *  it was reads nothing and writes nothing, so it does not loop. */
+exports.onStreakWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/streaks/data")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const after = docData(change.after);
+    if (!after) return null;
+    await badgeAwards.awardForStreak(
+      db,
+      context.params.uid,
+      docData(change.before),
+      after,
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** The plan written (`programState/current`): programme_complete when it
+ *  moves on from a finished cycle's last week. */
+exports.onProgramStateWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/programState/current")
+  .onUpdate(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    await badgeAwards.awardForProgramme(
+      db,
+      context.params.uid,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
 // Saved-workout corrections reconcile current source facts, including retries.
 exports.onWorkoutUpdated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -5680,6 +6443,10 @@ exports.onWorkoutUpdated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -5726,6 +6493,10 @@ exports.onRunUpdated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     // A renamed run's post takes the new name (lib/runRename), read from
     // the current documents, so a retry writes it once.
     if (
@@ -5733,6 +6504,15 @@ exports.onRunUpdated = functions
     )
       await runRename.syncSharedRunName(db, uid, runId, {
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+    // Run26 call 3: a run shared, unshared or made invalid changes which
+    // of its segment efforts may be shown, so its board entries are
+    // recomputed from the current documents.
+    if (segments.boardMayHaveChanged(change.before.data(), change.after.data()))
+      await segments.refreshRunBoardEntries(db, {
+        uid,
+        runId,
+        nowMs: eventTimeMs(context),
       });
     return null;
   });
@@ -5804,6 +6584,10 @@ exports.onWorkoutDeleted = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     // Each reversal runs whatever happens to the other, and a failure
     // fails the event so failurePolicy delivers it again. The source is
     // already gone, so nothing else would ever re-fire: caught and logged,
@@ -5880,6 +6664,10 @@ exports.onRunDeleted = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data() || {};
     // No isVolumeEligibleRun re-check here, unlike the create side. An
     // ineligible run never credited, so it has no markers and every
@@ -5916,8 +6704,203 @@ exports.onRunDeleted = functions
         nowMs: eventTimeMs(context),
       })
     );
+    // Run26 call 3: its segment efforts, and the boards they were on.
+    await steps.run("segments", () =>
+      segments.removeRunEfforts(db, {
+        uid,
+        runId,
+        nowMs: eventTimeMs(context),
+      })
+    );
     steps.settle();
     console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
+    return null;
+  });
+
+// ══════════════════════════════════════════════
+// SEGMENTS (Run26 call 3) — lib/segments.js
+// ══════════════════════════════════════════════
+
+/* What a segment refusal from lib/segments.js becomes: its own code and
+   sentence, which the app shows (failed-precondition and the others carry
+   their message through describeRejection). */
+function segmentHttpsError(err) {
+  if (err && err.refusal) {
+    return new functions.https.HttpsError(
+      err.code || "failed-precondition",
+      err.message,
+      err.reason ? { reason: err.reason } : undefined
+    );
+  }
+  return err;
+}
+
+/**
+ * createSegment — a runner makes a segment from a stretch of one of their
+ * own saved runs: `{ runId, startIndex, endIndex, name }`, the indices into
+ * the run's saved points, both ends included. A segment's name is read by
+ * anyone whose run is timed on it, so it is public text: the account needs
+ * a verified email, may not be restricted, and the name goes through the
+ * word filter. Returns `{ segmentId, efforts }`, the efforts found on the
+ * maker's own latest runs.
+ */
+exports.createSegment = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const token = context.auth.token;
+    if (!token || token.email_verified !== true) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Verify your email to make a segment."
+      );
+    }
+    const uid = context.auth.uid;
+    const { runId, startIndex, endIndex, name } = data || {};
+    if (
+      !isDocumentId(runId) ||
+      !Number.isInteger(startIndex) ||
+      !Number.isInteger(endIndex) ||
+      typeof name !== "string"
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "A segment needs a run, a start, an end and a name."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(db, uid, functions);
+    if (await isRateLimited(uid, "createSegment", 10, 3_600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many segments made in the last hour. Try again later."
+      );
+    }
+    try {
+      return await segments.createSegment(db, {
+        uid,
+        runId,
+        startIndex,
+        endIndex,
+        name,
+      });
+    } catch (err) {
+      throw segmentHttpsError(err);
+    }
+  });
+
+/**
+ * deleteSegment — its maker deletes a segment, and with it every effort
+ * anyone has on it and its board: `{ segmentId }`.
+ *
+ * Answers `{ deleted: true }` and nothing more. The efforts it deletes are
+ * everyone's, from runs never shared, runs whose ends are in a privacy zone
+ * and runs by people who blocked the maker, which the board never shows.
+ * A count of them told the maker who ran their street and when: make a
+ * segment, wait, delete it, read the number, make it again.
+ */
+exports.deleteSegment = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const segmentId = data && data.segmentId;
+    if (!isDocumentId(segmentId)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which segment?"
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    if (await isRateLimited(uid, "deleteSegment", 20, 3_600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again later."
+      );
+    }
+    try {
+      await segments.deleteOwnSegment(db, { uid, segmentId });
+      return { deleted: true };
+    } catch (err) {
+      throw segmentHttpsError(err);
+    }
+  });
+
+/**
+ * getSegmentBoard — a segment's board as the caller may see it: the fastest
+ * shown effort of each person they follow who has run it
+ * (lib/segments.js readSegmentBoard says what is shown and why). The
+ * caller's own row is the app's, from their own efforts.
+ */
+exports.getSegmentBoard = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const segmentId = data && data.segmentId;
+    if (!isDocumentId(segmentId)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which segment?"
+      );
+    }
+    if (await isRateLimited(uid, "segmentBoard", 60, 60_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    const board = await segments.readSegmentBoard(db, {
+      viewerUid: uid,
+      segmentId,
+    });
+    if (!board) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "That segment isn’t there any more."
+      );
+    }
+    return board;
+  });
+
+/**
+ * A privacy zone drawn, moved or removed changes which of the person's
+ * segment efforts may be shown, so every board entry they have is
+ * recomputed (lib/segments.js). Board reads check the zones again, so an
+ * entry inside a new zone is hidden before this lands.
+ */
+exports.onPrivacyZoneWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true, timeoutSeconds: 300 })
+  .firestore.document("users/{uid}/privacyZones/{zoneId}")
+  .onWrite(async (change, context) => {
+    const { uid } = context.params;
+    // Recomputed from the current documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
+    // Account deletion sweeps the zones: nothing to recompute, and nothing
+    // may be written for an account being erased.
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onPrivacyZoneWritten"
+      ))
+    )
+      return null;
+    await segments.refreshAllBoardEntries(db, uid, {
+      nowMs: eventTimeMs(context),
+    });
     return null;
   });
 
@@ -6710,6 +7693,11 @@ function queueReason(value) {
     ? value
     : "other";
 }
+/** A stored report's category, when it is one the report form offers;
+ *  the queue names it as the alert email does. */
+function queueCategory(value) {
+  return reportTargets.REPORT_CATEGORIES.includes(value) ? value : null;
+}
 
 /**
  * Screens a photo the caller just uploaded for other people to see, a
@@ -6717,7 +7705,10 @@ function queueReason(value) {
  * uses it
  * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
  * refused as nudity, its file already deleted, and "unavailable" when it
- * could not be checked, so the app posts nothing it couldn't check.
+ * could not be checked, so the app posts nothing it couldn't check. A
+ * photo it passes is recorded against its generation, so the upload
+ * trigger neither screens that file again nor deletes it on the owner's
+ * day of screens.
  */
 exports.screenPhoto = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -6744,22 +7735,41 @@ exports.screenPhoto = functions
         "Too many photos checked at once. Wait a few minutes and try again."
       );
     }
+    const dayOfChecksSpent = () =>
+      new functions.https.HttpsError(
+        "resource-exhausted",
+        "That's as many photos as can be checked in a day. Try again later."
+      );
+    // And a day's worth (photoScreen.js says why the number).
+    if (
+      await isRateLimited(
+        context.auth.uid,
+        "screenPhotoDay",
+        photoScreen.CALLABLE_SCREENS_PER_DAY,
+        photoScreen.SCREEN_BUDGET_WINDOW_MS
+      )
+    ) {
+      throw dayOfChecksSpent();
+    }
+    let screened;
     try {
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
-      const { refused, adult } = await photoScreen.screenStoredPhoto({
+      screened = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(),
         path,
         accessToken: accessToken.access_token,
       });
-      if (refused)
-        functions.logger.warn("screenPhoto.refused", {
-          uid: context.auth.uid,
-          path,
-          adult,
-        });
-      return { ok: !refused };
+      if (!screened.refused)
+        screened.recorded = await photoScreen.recordCallablePass(
+          admin.firestore(),
+          {
+            owner: context.auth.uid,
+            path,
+            generation: screened.generation,
+          }
+        );
     } catch (error) {
       functions.logger.error("screenPhoto.failed", {
         path,
@@ -6770,40 +7780,104 @@ exports.screenPhoto = functions
         "Couldn't check this photo. Try again."
       );
     }
+    if (screened.refused) {
+      functions.logger.warn("screenPhoto.refused", {
+        uid: context.auth.uid,
+        path,
+        adult: screened.adult,
+      });
+      return { ok: false };
+    }
+    // The upload trigger got there first and dropped this file on the
+    // owner's day of upload screens: it is gone, so the app must not post it.
+    if (!screened.recorded) throw dayOfChecksSpent();
+    return { ok: true };
   });
 
 /**
  * The same check on every upload to a screened path, for a client that
  * skips `screenPhoto`: a refused photo's file is deleted, so a post or
  * profile that names it shows nothing.
+ *
+ * The photo itself is the only ground for deleting it, never the service:
+ *   - the callable passed this very file: nothing to do;
+ *   - past its owner's day of screens (photoScreen.UPLOAD_SCREENS_PER_DAY)
+ *     it is deleted without one, since every screen is a paid Vision
+ *     request and Storage limits no account's number of uploads;
+ *   - an image Vision cannot read, or too large to send it, is deleted at
+ *     once and never retried: it can never be screened;
+ *   - refused as nudity, it is deleted.
+ * A screen that fails for any other reason (Vision down, switched off,
+ * rate limited or refusing our credentials; Storage or the count
+ * unreadable) throws, so the event is delivered again. An upload still
+ * unscreened after a day of that is kept, marked unscreened in its
+ * metadata and logged as `screenUploadedPhoto.keptUnscreened`. It cannot
+ * be hidden from other people meanwhile: a post names a photo by its
+ * download URL, which Storage serves to anyone holding it whatever the
+ * rules say. The app posts no photo its own check couldn't screen, so
+ * such a file is only ever shown by a client that skipped the callable.
  */
 exports.screenUploadedPhoto = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .storage.object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
     const path = object.name;
-    if (photoScreen.screenedOwner(path) === null) return;
+    const owner = photoScreen.screenedOwner(path);
+    if (owner === null) return;
+    const bucket = admin.storage().bucket(object.bucket);
+    const { generation } = object;
+    const deleteUnscreened = async (reason) => {
+      await photoScreen.deleteUnscreenedPhoto({ bucket, path, generation });
+      functions.logger.warn("screenUploadedPhoto.deletedUnscreened", {
+        path,
+        reason,
+      });
+    };
     try {
+      const claim = await photoScreen.claimUploadScreen(admin.firestore(), {
+        owner,
+        path,
+        generation,
+        eventId: context && context.eventId,
+      });
+      if (claim === "passed") return;
+      if (claim === "over") {
+        await deleteUnscreened("daily-budget");
+        return;
+      }
       const accessToken = await admin.credential
         .applicationDefault()
         .getAccessToken();
       const { refused, adult } = await photoScreen.screenStoredPhoto({
-        bucket: admin.storage().bucket(object.bucket),
+        bucket,
         path,
-        generation: object.generation,
+        generation,
         accessToken: accessToken.access_token,
       });
       if (refused)
         functions.logger.warn("screenUploadedPhoto.refused", { path, adult });
     } catch (error) {
-      // Gone already: the callable refused it first.
+      // Gone already: the callable refused it first, or it was replaced.
       if (error && error.code === 404) return;
-      // Vision unavailable: the callable is the gate the app waits on,
-      // and this is the backstop.
+      if (photoScreen.isUnscreenable(error)) {
+        await deleteUnscreened("unscreenable");
+        return;
+      }
       functions.logger.error("screenUploadedPhoto.failed", {
         path,
         message: String(error && error.message),
       });
+      if (!pastRetryWindow(context)) throw error;
+      try {
+        await photoScreen.markUnscreenedPhoto({ bucket, path, generation });
+      } catch (markError) {
+        // Gone, replaced, or Storage failing too: the log line is the record.
+        functions.logger.error("screenUploadedPhoto.markFailed", {
+          path,
+          message: String(markError && markError.message),
+        });
+      }
+      functions.logger.warn("screenUploadedPhoto.keptUnscreened", { path });
     }
   });
 
@@ -6895,22 +7969,37 @@ exports.createReport = functions
     // Tell the owner a report is waiting. After the commit, so an alert
     // never announces a report that failed to store. sendReportAlert never
     // throws and gives up on a slow provider: a reporter told their report
-    // failed would file it again.
-    await reportAlert.sendReportAlert({
-      sendEmail: sendViaResend,
-      to: reportAlert.alertRecipient(),
-      queueUrl: reportAlert.moderationQueueUrl(
-        helpers.getStripeReturnBaseUrl()
-      ),
-      report: {
-        reportId: reportRef.id,
-        targetType: target.targetType,
-        category: input.category,
-        subReason: input.subReason,
-        freeformNote: input.freeformNote,
-      },
-      logger: functions.logger,
+    // failed would file it again. At most a few a day from one reporter and
+    // fifty from everyone (reportAlert.alertAllowance); past that the
+    // report waits in the queue without an email.
+    const allowance = await reportAlert.alertAllowance({
+      firestore,
+      reporterUid: context.auth.uid,
+      isLimited: isRateLimited,
     });
+    if (allowance.send) {
+      await reportAlert.sendReportAlert({
+        sendEmail: sendViaResend,
+        to: reportAlert.alertRecipient(),
+        queueUrl: reportAlert.moderationQueueUrl(
+          helpers.getStripeReturnBaseUrl()
+        ),
+        report: {
+          reportId: reportRef.id,
+          targetType: target.targetType,
+          category: input.category,
+          subReason: input.subReason,
+          freeformNote: input.freeformNote,
+          lastForNow: allowance.last,
+        },
+        logger: functions.logger,
+      });
+    } else {
+      functions.logger.warn("createReport.alert_held", {
+        reportId: reportRef.id,
+        held: allowance.held,
+      });
+    }
 
     return { reportId: reportRef.id };
   });
@@ -6986,6 +8075,11 @@ exports.listPendingReports = functions
           reportedTargetType: nullableString(report.targetType),
           reportedTargetId: nullableString(report.targetId),
           reason: queueReason(report.reason),
+          // What the reporter picked, as the alert email names it: a
+          // sub-reason such as "Child safety" is the triage signal, and
+          // `reason` alone folds it into one of four legacy words.
+          category: queueCategory(report.category),
+          subReason: nullableString(report.subReason),
           details:
             nullableString(report.freeformNote) ||
             nullableString(report.details),
@@ -7005,7 +8099,8 @@ exports.listPendingReports = functions
  * flag takes the reported content out of the app in the same call so
  * a moderator can dismiss + hide in one click: an activity becomes
  * `flagged: true, visibility: 'private'`; a comment (activity or space
- * post) or a space post is deleted. See reportTargets.queueContentHide.
+ * post), a space post or a segment is deleted. See
+ * reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -7048,9 +8143,12 @@ exports.resolveReport = functions
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
     // A hidden space post's likes and comments, swept after the commit.
     let removedSpacePostRef = null;
+    // A removed segment's efforts, board and owner record, swept after it.
+    let removedSegmentId = null;
 
     await firestore.runTransaction(async (transaction) => {
       removedSpacePostRef = null; // a retried attempt starts clean
+      removedSegmentId = null;
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -7133,6 +8231,9 @@ exports.resolveReport = functions
       if (hideActivity && target.targetType === "space_post") {
         removedSpacePostRef = target.targetRef;
       }
+      if (hideActivity && target.targetType === "segment") {
+        removedSegmentId = target.targetId;
+      }
 
       transaction.update(reportRef, {
         status: "resolved",
@@ -7171,6 +8272,24 @@ exports.resolveReport = functions
         await firestore.recursiveDelete(removedSpacePostRef);
       } catch (err) {
         functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
+
+    if (removedSegmentId) {
+      // The segment is gone, so no page opens it, no run is timed on it
+      // and no board is read. The rest of its maker's Delete follows:
+      // everyone's efforts on it, its board and its owner record
+      // (lib/segments.js removeSegment, whose queries cannot run in a
+      // transaction). Best effort, as for a space post: the app leaves out
+      // an effort whose segment is gone, and the maker's account deletion
+      // sweeps an owner record left behind.
+      try {
+        await segments.removeSegment(firestore, removedSegmentId);
+      } catch (err) {
+        functions.logger.warn("resolveReport.segment_cleanup_failed", {
           reportId,
           error: err && err.message,
         });
@@ -8179,6 +9298,38 @@ exports.sendPasswordResetLinkCallable =
 exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
 
+/* The Settings switches for the two emails a person can choose (App1 Q55):
+   the consent record is written only on the server (lib/emailConsent.js). */
+exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
+/* The emails a person chose, and the unsubscribe link each one carries
+   (App1 Q55): updateEmails.js. */
+const updateEmails = require("./updateEmails");
+exports.hourlyEmailSweep = updateEmails.hourlyEmailSweep;
+exports.emailUnsubscribe = updateEmails.emailUnsubscribe;
+
+// ══════════════════════════════════════════════
+// A shared post's public page (App1, Q50 and Q51)
+// ══════════════════════════════════════════════
+//
+// Hosting sends every /activity/** request here (firebase.json): the web
+// app's page with the post named in its head, for a pasted link's preview,
+// and its public figures in a data block for a signed-out visitor. The
+// rules stay shut to signed-out readers; lib/publicPost.js reads with the
+// Admin SDK and hands out only what the card draws, and only for a public
+// post by a live, unrestricted account. No secrets and no sign-in: anyone
+// with the address may ask, as anyone may open the page.
+const publicPost = require("./lib/publicPost");
+const loadPublicPostShell = publicPost.shellLoader();
+exports.publicPostPage = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) =>
+    publicPost.servePublicPost(req, res, {
+      db: admin.firestore(),
+      loadShell: loadPublicPostShell,
+      logger: functions.logger,
+    })
+  );
+
 // ══════════════════════════════════════════════
 // PR-L L4 — weekly fell-behind detection
 // ══════════════════════════════════════════════
@@ -8480,37 +9631,64 @@ exports.renewGoalSpaceInviteCode = functions
     }
   });
 
+/* The owner renames their Circle (Run27 call 11), under the rule a new
+   Circle's name meets: the word filter, with the display name's sentence
+   (lib/goalSpaceMembership renameGoalSpace). Everyone in it reads the new
+   name, so a restricted owner is refused it as they are refused starting
+   one. */
+exports.renameGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRename", 10, {
+      reachesOthers: true,
+    });
+    try {
+      return await goalSpaceMembership.renameGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        title: data?.title,
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
 exports.leaveGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
     const uid = await goalSpaceCallableGate(context, "goalSpaceLeave", 10);
+    const spaceId = String(data?.spaceId || "");
     try {
       await goalSpaceMembership.leaveGoalSpace({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
       });
-      return { ok: true };
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
+    await sweepMeetupsAfterLeaving(spaceId, uid);
+    return { ok: true };
   });
 
 exports.removeGoalSpaceMember = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
     const uid = await goalSpaceCallableGate(context, "goalSpaceRemove", 10);
+    const spaceId = String(data?.spaceId || "");
     try {
       await goalSpaceMembership.removeGoalSpaceMember({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
         memberUid: data?.memberUid,
       });
-      return { ok: true };
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
+    await sweepMeetupsAfterLeaving(spaceId, String(data?.memberUid || ""));
+    return { ok: true };
   });
 
 // ── SOCIAL-FOCUS-01 — server-owned weekly check-in + focus backing.
@@ -8600,18 +9778,213 @@ exports.resolveGoalSpaceTarget = functions
       10
     );
     try {
-      return await goalSpaceLifecycle.resolveTarget({
+      const spaceId = String(data?.spaceId || "");
+      const result = await goalSpaceLifecycle.resolveTarget({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
         action: data?.action,
         newTargetDate: data?.newTargetDate,
         now: Date.now(),
       });
+      // A wrapped Circle has ended, and its meet-ups go with it (Run26
+      // call 4). Best effort: the wrap stands either way, and the app
+      // shows no meet-ups on an ended Circle.
+      if (result.action === "wrap") {
+        try {
+          await circleMeetups.deleteCircleMeetups({
+            firestore: admin.firestore(),
+            spaceId,
+          });
+        } catch (sweepErr) {
+          functions.logger.warn("resolveGoalSpaceTarget.meetups_sweep_failed", {
+            spaceId,
+            message: sweepErr && sweepErr.message,
+          });
+        }
+      }
+      return result;
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
   });
+
+// ── Run26 call 4 — meet-ups in a Circle: a member plans a run or a lift
+// with a time and a place, and the others say whether they are in. The
+// rules refuse every client write to goalSpaces/{id}/meetups, so this one
+// callable is the writer (lib/circleMeetups). Planning and saying you're
+// in reach the other members, so a restricted account is refused them;
+// saying you can't make it and calling one off stay open (S4e).
+const circleMeetups = require("./lib/circleMeetups");
+
+/** The member's copy of their name, as the Circle event fan-out reads it. */
+async function circleMemberName(spaceId, uid) {
+  const snap = await db.doc(`goalSpaces/${spaceId}/members/${uid}`).get();
+  return (
+    (snap.exists && identityResync.carriedName(snap.data().displayName)) ||
+    "A Circle member"
+  );
+}
+
+/** Tell members about a meet-up. A failed notice is logged: the plan or
+ *  the call-off it is about has happened either way. */
+async function notifyCircleMeetup({
+  spaceId,
+  meetupId,
+  fromUid,
+  recipients,
+  type,
+  verb,
+  sport,
+}) {
+  if (recipients.length === 0) return;
+  try {
+    const fromName = await circleMemberName(spaceId, fromUid);
+    const what = sport === "lift" ? "a group lift" : "a group run";
+    await Promise.all(
+      recipients.map((toUid) =>
+        socialFanout.createNotification({
+          firestore: admin.firestore(),
+          fromUid,
+          toUid,
+          data: { type, fromName, message: `${fromName} ${verb} ${what}` },
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          notificationId: `${type}_${spaceId}_${meetupId}`,
+        })
+      )
+    );
+  } catch (err) {
+    functions.logger.warn("circleMeetup.notification_failed", {
+      spaceId,
+      meetupId,
+      type,
+      message: err && err.message,
+    });
+  }
+}
+
+/** After someone leaves or is removed: their part in the Circle's
+ *  meet-ups goes, and all of them if the Circle ended. Best effort, as the
+ *  leaving stands; the app shows only current members' meet-ups and names. */
+async function sweepMeetupsAfterLeaving(spaceId, uid) {
+  if (!spaceId || !uid) return;
+  try {
+    await circleMeetups.afterMemberLeft({
+      firestore: admin.firestore(),
+      spaceId,
+      uid,
+    });
+  } catch (err) {
+    functions.logger.warn("goalSpace.meetups_sweep_failed", {
+      spaceId,
+      message: err && err.message,
+    });
+  }
+}
+
+exports.circleMeetup = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const action = data?.action;
+    if (!circleMeetups.MEETUP_ACTIONS.includes(action)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unknown action."
+      );
+    }
+    const uid = await goalSpaceCallableGate(context, "circleMeetup", 30, {
+      reachesOthers: action === "plan" || action === "going",
+    });
+    const spaceId = String(data?.spaceId || "");
+    const firestore = admin.firestore();
+    const now = Date.now();
+    try {
+      if (action === "plan") {
+        const { meetupId, recipients, sport } = await circleMeetups.planMeetup({
+          firestore,
+          uid,
+          spaceId,
+          input: data?.meetup,
+          now,
+          makeId: goalSpaceRandomId,
+          containsProfanity: (text) => profanityFilter.containsProfanity(text),
+        });
+        await notifyCircleMeetup({
+          spaceId,
+          meetupId,
+          fromUid: uid,
+          recipients,
+          type: "circle_meetup",
+          verb: "planned",
+          sport,
+        });
+        return { ok: true, meetupId };
+      }
+      const meetupId = String(data?.meetupId || "");
+      if (action === "cancel") {
+        const { notify, sport } = await circleMeetups.cancelMeetup({
+          firestore,
+          uid,
+          spaceId,
+          meetupId,
+          now,
+        });
+        await notifyCircleMeetup({
+          spaceId,
+          meetupId,
+          fromUid: uid,
+          recipients: notify,
+          type: "circle_meetup_cancelled",
+          verb: "called off",
+          sport,
+        });
+        return { ok: true };
+      }
+      const { going } = await circleMeetups.setMeetupGoing({
+        firestore,
+        uid,
+        spaceId,
+        meetupId,
+        going: action === "going",
+        now,
+      });
+      return { ok: true, going };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+// ── Run27 call 10 — a meet-up's reminder and its weekly repeat. Each hour:
+// a weekly meet-up that is over plans its next (the same time of day in the
+// organiser's zone a week on), and everyone in a meet-up that starts in
+// about 24 hours gets one notice, under the Circles switch, which
+// onNotificationItemWritten pushes (lib/socialPush.js). The work and its
+// once-only markers are lib/circleMeetups.js's (sweepMeetups); the two
+// collection-group indexes it reads are in firestore.indexes.json. At half
+// past, clear of the jobs on the hour.
+exports.hourlyMeetupSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyMeetupSweep", async () => {
+      const summary = await circleMeetups.sweepMeetups({
+        firestore: db,
+        now: Date.now(),
+        notify: circleMeetups.meetupReminderNotifier({
+          firestore: db,
+          createNotification: socialFanout.createNotification,
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        }),
+        makeId: goalSpaceRandomId,
+        deleteField: () => admin.firestore.FieldValue.delete(),
+        isRestricted: (uid) => restriction.isRestricted(db, uid),
+        containsProfanity: (text) => profanityFilter.containsProfanity(text),
+      });
+      functions.logger.info("hourlyMeetupSweep.done", summary);
+      return summary;
+    })
+  );
 
 // ── CIRCLE-ACTIVITY-NOTIFICATIONS — fan an in-app notification to the
 // other Circle members when a co-member publishes a high-signal event.
@@ -8749,6 +10122,15 @@ exports.onGoalSpaceEventCreated = functions
  * createNotification holds the block check and each recipient's switch,
  * and skips an account that is being deleted.
  */
+/** A follow request, or a direct follow, made again within a day of the
+ *  last one the person was told about tells them nothing new
+ *  (createNotification's `quietForMs`): no second push, and the row is not
+ *  made unread again. A request can be cancelled and made again, and a
+ *  follow undone and made again, as often as a client can write; each
+ *  request was pushed until the person blocked. Tropos heuristic: a day,
+ *  the same window as the props bundle's once a day. */
+const FOLLOW_NOTICE_QUIET_MS = 24 * 60 * 60 * 1000;
+
 async function sendFollowNotice({
   toUid,
   fromUid,
@@ -8775,6 +10157,13 @@ async function sendFollowNotice({
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
+      // A request made by joining from an invite is told whatever came
+      // before it: it is the one notice of the join, and its words differ.
+      // A direct follow too: unfollowing and following again made the
+      // row unread each time (it is not pushed, and is off by default).
+      ...((type === "follow_request" || type === "follow") && !fromInvite
+        ? { quietForMs: FOLLOW_NOTICE_QUIET_MS }
+        : {}),
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {

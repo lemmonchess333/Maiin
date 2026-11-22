@@ -36,6 +36,12 @@ interface DeloadBannerProps {
    * deload the athlete is in, instead of one sentence covering both.
    */
   runsEased?: number;
+  /** Why a lighter week is offered, in the words of the reason that
+   *  fired and the sport that carried the week (`lighterWeekOffer`, whole-app
+   *  grill Q11). It said "Your running load has been high, with signs of
+   *  reduced recovery" for all three of the engine's reasons, in either
+   *  sport. Without one the offer is its title and button alone. */
+  reason?: string;
   /** Lift4 (10): which of a race's final weeks this lighter week is
    *  (`programState.raceWeek`), so the confirmation says so. A lighter week
    *  taken in a build week is an ordinary one. */
@@ -90,6 +96,7 @@ export default function DeloadBanner({
   visible,
   weekKey,
   deloadActive = false,
+  reason,
   runsEased,
   raceWeek,
   raceRest = false,
@@ -244,11 +251,11 @@ export default function DeloadBanner({
                 </p>
                 {/* Foreground on the tinted banner, where the grey misses
                     AA. */}
-                <p className="text-xs text-foreground mt-0.5 leading-snug">
-                  {deloadActive
-                    ? active.body
-                    : "Your running load has been high, with signs of reduced recovery. A lighter week can help you come back stronger."}
-                </p>
+                {(deloadActive || reason) && (
+                  <p className="text-xs text-foreground mt-0.5 leading-snug">
+                    {deloadActive ? active.body : reason}
+                  </p>
+                )}
               </div>
               {!deloadActive && (
                 <button

@@ -32,7 +32,11 @@ import {
 } from "@/test/sim/liftSeason";
 import { liftTrace } from "@/test/sim/liftTrace";
 import { runCoachingFindings } from "@/test/sim/runCoaching";
-import { HALF_ON_3_DAYS, RUN_PERSONAS } from "@/test/sim/runPersonas";
+import {
+  HALF_ON_3_DAYS,
+  RUN_PERSONAS,
+  ULTRA_PERSONAS,
+} from "@/test/sim/runPersonas";
 import { runTrace } from "@/test/sim/runTrace";
 
 const SEED = 1;
@@ -74,12 +78,23 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   their own week takes Tuesday's medium-long past the hour beside
  *   Wednesday's quality, and their Tuesday-to-Sunday days leave none
  *   clear (D16 holds it under the hour only beside two quality sessions).
+ *   Run24 (4)'s time trials, which take a quality week in five and so move
+ *   the quality ladder, gave sub-3:30 and the 2-3-day hybrids a
+ *   `volume-jump` back (the week after a cutback, 28% and 26% over it)
+ *   and the hybrids their `taper-cut`. Run24 (5), the session library in
+ *   the plan, took the 2-3-day hybrids' out again: their cutback holds
+ *   3 × 2 km at 10K pace where it held 4 × 1 km, so the week after it is
+ *   within a quarter of it, 166 minutes after 139 where it was 163 after
+ *   129 (`volume-jump`), and the 10K's own sharpener, 4 × 1 km at 10K pace,
+ *   holds their first taper week at 94 minutes of the build's 180, where
+ *   8 × 400 m held 90 of 182 (`taper-cut`). Sub-3:30 keeps its
+ *   `volume-jump` with a second quality day.
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": ["spike", "volume-jump"],
   "half-3-days": ["spike", "volume-jump"],
-  "sub-3-30": ["spike"],
+  "sub-3-30": ["spike", "volume-jump"],
   "sick-six-weeks": ["spike", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
@@ -87,6 +102,11 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
   "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
+  /* Run24 (3): a plan with no race date, build to 10K on four runs. Its
+     long run climbs a 2 km rung at a time from the runner's own 8 km to
+     the goal's 12 (Run24 (6)'s ladder), each rung past the single-run
+     guard, as every race plan's are (`spike`). */
+  "build-10k-no-date": ["spike"],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each
@@ -94,7 +114,29 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
      marathon read whole (R1) gives a benchmark 5 VDOT under them, which
      then calls their recovery runs too fast (`derived-low`, `easy-nag`).
      Six lift days leave a major group out of some weeks
-     (`lift:acsm-coverage`). */
+     (`lift:acsm-coverage`). With the rolling base before its 20-week block
+     (Run24 (3)) and the block's sizes kept (`RaceBlockInputs`), the build
+     holds a 20 km long run, which this runner skips, so the taper's reduced
+     long runs (14 and 12 km) are past the 50 minutes their own running has
+     climbed to, and the starting point's fit makes each an easy run of
+     those minutes (a 6 km long run takes 51 at their pace): no long run in
+     the two weeks before race week (`taper-long`). */
+  /* Run26 (2): a 50K over hills on four runs and about five hours a week,
+     lifting twice. Its long run climbs a 15-minute rung a week in time on
+     feet, each past the single-run guard (`spike`), as every race plan's
+     rungs are; the week after each step-back climbs back over a quarter
+     on the week before it (`volume-jump`) while it stays under Run24 (6)'s
+     15% over the last week that was not one; and on four runs a 3½-hour
+     long run is over half the week in most build weeks (`long-share`), the
+     price of an ultra on four days. Its two back-to-back weekends are the
+     pair the plan holds on purpose, which `back-to-back` leaves out. */
+  "trail-50k": ["long-share", "spike", "volume-jump"],
+  /* Run26 (2): a flat 100K on five runs. Its rungs, in kilometres in the
+     rolling base and in time on feet in the block, each pass the
+     single-run guard (`spike`). Its back-to-back weeks hold the
+     medium-long under the hour where no weekday is clear of the weekend,
+     so Monday is not one more demanding day after it. */
+  "road-100k": ["spike"],
   "owner-marathon": [
     "derived-low",
     "easy-nag",
@@ -103,6 +145,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "lift:acsm-coverage:quads",
     "long-share",
     "spike",
+    "taper-long",
     "volume-jump",
   ],
 };
@@ -119,54 +162,53 @@ function seasonOf(persona: LiftPersona, weeks: number): Season {
 
 const lifts = (persona: LiftPersona) => persona.tracked.length > 0;
 
-describe.each(RUN_PERSONAS.map((p) => [p.persona.name, p] as const))(
-  "%s",
-  (name, { persona, weeks }) => {
-    it(
-      "keeps the app's rules, or only the ones known broken",
-      () => {
-        const season = seasonOf(persona, weeks);
-        const known = KNOWN_RULE_FAILURES[name] ?? [];
-        const fresh = season.failures
-          .filter((f) => !known.includes(f.rule))
-          .slice(0, 10)
-          .map((f) => describeFailure(season, f));
-        expect(fresh).toEqual([]);
-        // A known failure that no longer happens: take it out of the list.
-        const broken = new Set(season.failures.map((f) => f.rule));
-        expect(known.filter((rule) => !broken.has(rule))).toEqual([]);
-      },
-      TIMEOUT
-    );
+describe.each(
+  [...RUN_PERSONAS, ...ULTRA_PERSONAS].map((p) => [p.persona.name, p] as const)
+)("%s", (name, { persona, weeks }) => {
+  it(
+    "keeps the app's rules, or only the ones known broken",
+    () => {
+      const season = seasonOf(persona, weeks);
+      const known = KNOWN_RULE_FAILURES[name] ?? [];
+      const fresh = season.failures
+        .filter((f) => !known.includes(f.rule))
+        .slice(0, 10)
+        .map((f) => describeFailure(season, f));
+      expect(fresh).toEqual([]);
+      // A known failure that no longer happens: take it out of the list.
+      const broken = new Set(season.failures.map((f) => f.rule));
+      expect(known.filter((rule) => !broken.has(rule))).toEqual([]);
+    },
+    TIMEOUT
+  );
 
-    it(
-      "does what its trace says",
-      async () => {
-        const season = seasonOf(persona, weeks);
-        const text = lifts(persona)
-          ? `${runTrace(season, persona)}\n${liftTrace(season, persona.tracked)}`
-          : runTrace(season, persona);
-        await expect(text).toMatchFileSnapshot(`./__traces__/run/${name}.txt`);
-      },
-      TIMEOUT
-    );
+  it(
+    "does what its trace says",
+    async () => {
+      const season = seasonOf(persona, weeks);
+      const text = lifts(persona)
+        ? `${runTrace(season, persona)}\n${liftTrace(season, persona.tracked)}`
+        : runTrace(season, persona);
+      await expect(text).toMatchFileSnapshot(`./__traces__/run/${name}.txt`);
+    },
+    TIMEOUT
+  );
 
-    it(
-      "has only the coaching findings known today",
-      () => {
-        const season = seasonOf(persona, weeks);
-        const found = [
-          ...runCoachingFindings(season, persona),
-          ...(lifts(persona)
-            ? coachingFindings(season, persona).map((f) => `lift:${f}`)
-            : []),
-        ].sort();
-        expect(found).toEqual([...(KNOWN_COACHING[name] ?? [])].sort());
-      },
-      TIMEOUT
-    );
-  }
-);
+  it(
+    "has only the coaching findings known today",
+    () => {
+      const season = seasonOf(persona, weeks);
+      const found = [
+        ...runCoachingFindings(season, persona),
+        ...(lifts(persona)
+          ? coachingFindings(season, persona).map((f) => `lift:${f}`)
+          : []),
+      ].sort();
+      expect(found).toEqual([...(KNOWN_COACHING[name] ?? [])].sort());
+    },
+    TIMEOUT
+  );
+});
 
 describe("the run simulator", () => {
   it(

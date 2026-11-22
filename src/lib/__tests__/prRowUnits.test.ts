@@ -34,6 +34,12 @@ import type { DistanceUnit } from "../distanceUnits";
  *
  * Held against what the builder (`runRecordRows`) returns, in both units,
  * for every card it feeds: all-time, last 30 days and indoor.
+ *
+ * The real fastest kilometres this file asked for joined in App1 Q15
+ * (November 2026): "Fastest 1K", "Fastest 5K" and "Fastest 10K" are each
+ * a run's own time over that distance (its saved best effort, else its
+ * kilometre splits), so their labels may name the distance, and their
+ * values are times, never a pace.
  */
 
 const NOW = new Date(2026, 8, 16, 14, 30, 0);
@@ -59,11 +65,17 @@ function run(
     duration: km * pace,
     avgPace: pace,
     activityType: type,
+    // A GPS run's whole kilometres; a treadmill run keeps none.
+    kmSplitSeconds:
+      type === "treadmill"
+        ? []
+        : Array.from({ length: Math.floor(km) }, () => pace),
   };
 }
 
 /* A short blast holds the best pace and a longer run the best over 5 km,
-   so every row the builder can write is written, on every card. */
+   and the outdoor runs time a 1K, a 5K and a 10K, so every row the
+   builder can write is written, on every card. */
 const RUNS = [
   run("blast", 2, 1.2, 290),
   run("steady", 3, 10, 320),
@@ -71,6 +83,8 @@ const RUNS = [
   run("belt-short", 4, 1.5, 280, "treadmill"),
   run("belt-long", 6, 8, 300, "treadmill"),
 ];
+
+const FASTEST = ["Fastest 1K", "Fastest 5K", "Fastest 10K"];
 
 const cards = (unit: DistanceUnit): RunRecordRows =>
   runRecordRows(RUNS, RANGE, unit);
@@ -87,16 +101,19 @@ describe("PR rows labelled by distance", () => {
     expect(lifetime.map((r) => r.label)).toEqual([
       "Best pace",
       "Best pace · 5K+",
+      ...FASTEST,
       "Longest run",
     ]);
     expect(recent30d.map((r) => r.label)).toEqual([
       "Best pace",
       "Best pace · 5K+",
+      ...FASTEST,
       "Longest run",
     ]);
     expect(indoor.map((r) => r.label)).toEqual([
       "Best pace",
       "Best pace · 5K+",
+      "Longest run",
     ]);
   });
 
@@ -105,6 +122,10 @@ describe("PR rows labelled by distance", () => {
     for (const row of allRows(unit)) {
       if (row.label === "Longest run") {
         expect(row.value, row.label).toMatch(new RegExp(` ${unit}$`));
+      } else if (FASTEST.includes(row.label)) {
+        // A time over the distance the label names, in either unit: never
+        // a pace, which would need its unit.
+        expect(row.value, row.label).toMatch(/^(\d+:)?\d+:\d{2}$/);
       } else {
         expect(
           row.value,

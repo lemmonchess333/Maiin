@@ -2,14 +2,38 @@
  * The training week: what was done and what was planned, Monday to Sunday,
  * from the day the account began.
  *
- * Home's "This week", both finish screens' "Your week so far", the run
- * finish screen's plan row and the weekly recap read it, so no two of them
- * can count one week two ways.
+ * Every count of a week's sessions reads it (App1 Q14: "every weekly
+ * count comes from one module"), so no two screens can count one week
+ * two ways:
+ *
+ *   - Home's "This week" (`weekSummary.ts`), both finish screens' "Your
+ *     week so far" and the run finish screen's plan row (`useWeekPulse`),
+ *     and the weekly review (`useWeeklyReview`): `trainingWeek`;
+ *   - a free run's hero line ("12.4 km this week", `homeHero.ts`), the
+ *     Following feed's week card (`personalTrajectory.ts`), the weekly
+ *     challenge's own lifts (`myWeekLifts.ts`) and Train's free-running
+ *     week (`ProgrammeRunSection`): `weekDone`;
+ *   - a weekly running goal's runs and minutes (`nonRaceGoal.ts`):
+ *     `weekRunsThatCount`;
+ *   - an anniversary's 50th and 100th session (`anniversaries.ts`):
+ *     `countedSessions`, the sessions the week's done counts count, ever;
+ *   - the league's planned sessions: `functions/lib/leaguePlanned.js`, a
+ *     server copy pinned by leaguePlanned.cross.test.ts. The league's done
+ *     count (`functions/lib/weekTally.js`) counts recorded sessions only,
+ *     and weekTally.cross.test.ts pins it to `weekDone` for them.
+ *
+ * A food day is the same kind of rule, in `foodDay.ts`.
+ * `oneWeekCountGuard.test.ts` fails on a new counter written elsewhere.
  *
  *   lifts done     sessions saved for a day in the week, planned or not:
  *                  a session on a rest day happened
  *   lifts planned  the schedule's lift days from the start day; none when
- *                  the schedule plans no lifting
+ *                  the schedule plans no lifting. Race week counts only
+ *                  what it asks for (TrainWk1, the owner's call (b)): read
+ *                  in the plan's own week, on a day of race week or one of
+ *                  a race's rest days, the lifts the plan has skipped are
+ *                  the ones the app rested before the race, and are not
+ *                  planned (`liftsAsked`)
  *   runs done      runs that count (`isVolumeEligible`, the rule every run
  *                  total uses, so a run saved anyway counts nowhere) on a
  *                  day in the week, and planned runs marked done by hand on
@@ -26,18 +50,22 @@
  */
 import type {
   ManualCompletion,
+  ProgramState,
+  RunPlan,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
-import {
-  addLocalDays,
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "./dateHelpers";
-import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
+import { isRaceRestDay } from "@/features/program/raceRest";
+import { localDateString, localWeekKey } from "./dateHelpers";
 import { isLegacyCompleted } from "./scheduledRunStatus";
 import { beforeStart, scheduledDaysSinceStart, startDayKey } from "./startDay";
 import { resolveRunDayForDate, weekScheduleFor } from "./trainingResolver";
+import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
+import { weekDays, weekRunsThatCount, type WeekRun } from "./weekRuns";
+
+// The week's days and its runs that count live in weekRuns.ts, which reads no
+// plan, so a module the profile type reaches (nonRaceGoal.ts) can use them
+// without an import cycle back to auth.tsx through trainingResolver.
+export { weekDays, weekRunsThatCount, type WeekRun };
 
 export interface WeekCount {
   done: number;
@@ -55,12 +83,6 @@ export interface TrainingWeek {
   };
 }
 
-/** A saved run as the week counts it. */
-export interface WeekRun extends RunRecord {
-  /** The day the run belongs to, "yyyy-MM-dd". */
-  day: string;
-}
-
 export interface TrainingWeekInput {
   /** The week's Monday, "yyyy-MM-dd". */
   weekKey: string;
@@ -75,6 +97,12 @@ export interface TrainingWeekInput {
     | {
         runDays?: ScheduledRunDay[];
         manualCompletions?: Record<string, ManualCompletion>;
+        /** The week's lifts, read for the ones skipped in race week. */
+        workouts?: readonly { completed?: boolean; skipped?: boolean }[];
+        raceWeek?: ProgramState["raceWeek"];
+        runPlan?: Pick<RunPlan, "mode" | "raceGoal"> | null;
+        /** The week the plan's lifts are for: its marks are that week's. */
+        liftWeekKey?: string;
       }
     | null
     | undefined;
@@ -82,17 +110,117 @@ export interface TrainingWeekInput {
   workouts: readonly { date: string }[];
   runs: readonly WeekRun[];
   /**
-   * When the week is read. Only an older plan's undated run days need it:
-   * they belong to the week the plan was generated for, which is this one.
+   * When the week is read. An older plan's undated run days belong to the
+   * week the plan was generated for, which is this one; and the plan's
+   * skipped lifts are race week's rested ones only on a day of its week.
    */
   now?: Date;
 }
 
-/** The seven days of the week that starts on `weekKey`. */
-export function weekDays(weekKey: string): string[] {
-  const monday = parseLocalDate(weekKey);
-  return Array.from({ length: 7 }, (_, i) =>
-    localDateString(addLocalDays(monday, i))
+/**
+ * The saved sessions a count of sessions counts: every saved lift (a
+ * session on a rest day happened), and every run that counts
+ * (`isVolumeEligible`, so a run saved anyway counts nowhere). The week's
+ * done counts are these, in its seven days; an anniversary's 50th and
+ * 100th session are these, ever (App1 Q58).
+ */
+export function countedSessions<
+  W extends { date: string },
+  R extends RunRecord,
+>(
+  workouts: readonly W[],
+  runs: readonly R[]
+): { lifts: readonly W[]; runs: R[] } {
+  return { lifts: workouts, runs: runs.filter((run) => isVolumeEligible(run)) };
+}
+
+/** The week's sessions done, and the distance its runs covered. */
+export interface WeekDone {
+  lifts: number;
+  runs: number;
+  /** Metres the runs that count covered. */
+  metres: number;
+}
+
+/** What `weekDone` reads: the week and its sessions, and the plan, whose
+ *  runs marked done by hand count too. Without a plan, only what was
+ *  recorded counts. */
+export type WeekDoneInput = Omit<
+  TrainingWeekInput,
+  "profile" | "programState"
+> & {
+  profile?: TrainingWeekInput["profile"];
+  programState?: TrainingWeekInput["programState"];
+};
+
+/** The plan's runs in the week: each day from the start day that the plan
+ *  holds a run on. */
+function plannedRunDays(
+  days: readonly string[],
+  programState: TrainingWeekInput["programState"],
+  startKey: string | null,
+  now: Date
+): { date: string; runDay: ScheduledRunDay }[] {
+  const planned: { date: string; runDay: ScheduledRunDay }[] = [];
+  const planWeekKey = localWeekKey(now);
+  for (const date of days) {
+    if (beforeStart(date, startKey)) continue;
+    const runDay = resolveRunDayForDate(
+      date,
+      programState?.runDays,
+      planWeekKey
+    );
+    if (runDay) planned.push({ date, runDay });
+  }
+  return planned;
+}
+
+function countDone(
+  days: readonly string[],
+  workouts: readonly { date: string }[],
+  runs: readonly WeekRun[],
+  plannedRuns: readonly { date: string; runDay: ScheduledRunDay }[],
+  manual: Record<string, ManualCompletion>
+): WeekDone {
+  const inWeek = (day: string) => day >= days[0] && day <= days[6];
+  const sessions = countedSessions(
+    workouts.filter((w) => inWeek(w.date)),
+    runs.filter((run) => inWeek(run.day))
+  );
+  const counted = sessions.runs;
+  const daysWithARun = new Set(counted.map((run) => run.day));
+  const doneByHand = plannedRuns.filter(
+    ({ date, runDay }) =>
+      ((runDay.id !== undefined && !!manual[runDay.id]) ||
+        isLegacyCompleted(runDay.status)) &&
+      !daysWithARun.has(date)
+  ).length;
+  return {
+    lifts: sessions.lifts.length,
+    runs: counted.length + doneByHand,
+    metres: counted.reduce((sum, run) => sum + (run.distance ?? 0), 0),
+  };
+}
+
+/**
+ * The week's sessions done, counted as `trainingWeek` counts them, for a
+ * screen that shows what was done and not the plan beside it.
+ */
+export function weekDone({
+  weekKey,
+  profile = null,
+  programState = null,
+  workouts,
+  runs,
+  now = new Date(),
+}: WeekDoneInput): WeekDone {
+  const days = weekDays(weekKey);
+  return countDone(
+    days,
+    workouts,
+    runs,
+    plannedRunDays(days, programState, startDayKey(profile?.createdAt), now),
+    programState?.manualCompletions ?? {}
   );
 }
 
@@ -105,7 +233,6 @@ export function trainingWeek({
   now = new Date(),
 }: TrainingWeekInput): TrainingWeek {
   const days = weekDays(weekKey);
-  const inWeek = (day: string) => day >= days[0] && day <= days[6];
   const startKey = startDayKey(profile?.createdAt);
 
   const liftDays = scheduledDaysSinceStart(
@@ -114,42 +241,65 @@ export function trainingWeek({
     weekKey,
     startKey
   );
-
-  const counted = runs.filter(
-    (run) => inWeek(run.day) && isVolumeEligible(run)
+  const plannedRuns = plannedRunDays(days, programState, startKey, now);
+  const done = countDone(
+    days,
+    workouts,
+    runs,
+    plannedRuns,
+    programState?.manualCompletions ?? {}
   );
-  const daysWithARun = new Set(counted.map((run) => run.day));
 
-  const plannedRuns: { date: string; runDay: ScheduledRunDay }[] = [];
-  const planWeekKey = localWeekKey(now);
-  for (const date of days) {
-    if (beforeStart(date, startKey)) continue;
-    const runDay = resolveRunDayForDate(
-      date,
-      programState?.runDays,
-      planWeekKey
-    );
-    if (runDay) plannedRuns.push({ date, runDay });
-  }
-  const manual = programState?.manualCompletions ?? {};
-  const doneByHand = plannedRuns.filter(
-    ({ date, runDay }) =>
-      ((runDay.id !== undefined && !!manual[runDay.id]) ||
-        isLegacyCompleted(runDay.status)) &&
-      !daysWithARun.has(date)
-  ).length;
-
-  const metres = counted.reduce((sum, run) => sum + (run.distance ?? 0), 0);
+  const liftsPlanned = liftsAsked(liftDays, programState, weekKey, now);
   return {
     weekKey,
     lifts: {
-      done: workouts.filter((w) => inWeek(w.date)).length,
-      planned: liftDays > 0 ? liftDays : null,
+      done: done.lifts,
+      planned: liftsPlanned > 0 ? liftsPlanned : null,
     },
     runs: {
-      done: counted.length + doneByHand,
+      done: done.runs,
       planned: plannedRuns.length > 0 ? plannedRuns.length : null,
-      km: Math.round(metres / 100) / 10,
+      km: Math.round(done.metres / 100) / 10,
     },
   };
+}
+
+/**
+ * The week's planned lifts, with race week counting only what it asks for
+ * (TrainWk1, the owner's call (b)): a lift the app rests before a race is
+ * not planned, so the week is not short of sessions it never asked for.
+ *
+ * The app rests them by skipping them: race week's rollover keeps one
+ * session and skips the rest (`raceWeekSession`), and from two days before
+ * a race the sessions not done yet are skipped (`raceRestSkips`). The plan
+ * keeps no record of who skipped a lift, so on a day of race week, or on
+ * one of a race's rest days, every lift skipped and not done is one the
+ * app rested, as `layOutWeek`'s Rest before your race group reads them.
+ * Only the plan's own week holds those marks: a week read on another day
+ * (last week's review), or a plan not yet rolled over to the week (its
+ * `liftWeekKey` another week's, as on a Monday before the rollover),
+ * counts its lift days. What race week keeps is the plan's lifts not
+ * rested, never more than the week's lift days.
+ */
+function liftsAsked(
+  liftDays: number,
+  programState: TrainingWeekInput["programState"],
+  weekKey: string,
+  now: Date
+): number {
+  if (
+    liftDays <= 0 ||
+    weekKey !== localWeekKey(now) ||
+    programState?.liftWeekKey !== weekKey
+  )
+    return liftDays;
+  if (
+    programState?.raceWeek !== "race" &&
+    !isRaceRestDay(programState?.runPlan, localDateString(now))
+  )
+    return liftDays;
+  const lifts = programState?.workouts ?? [];
+  const rested = lifts.filter((day) => day.skipped && !day.completed).length;
+  return rested > 0 ? Math.min(liftDays, lifts.length - rested) : liftDays;
 }

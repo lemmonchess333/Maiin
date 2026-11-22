@@ -1,0 +1,659 @@
+/**
+ * The purge of the meal photos older builds stored on the server (Food9,
+ * owner 2026-11-21: "Delete them all"). A dry run counts and changes
+ * nothing; --apply deletes every object under `food-photos/` and nothing
+ * outside it, and takes the two photo fields off every meal that has one,
+ * leaving the rest of the meal; it pages, resumes, and a second run finds
+ * nothing.
+ */
+import { describe, it, expect } from "vitest";
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const {
+  memoryFirestore,
+  fieldDelete,
+} = require("./helpers/memoryFirestore.cjs");
+const {
+  FOOD_PHOTO_PREFIX,
+  MEAL_PHOTO_FIELDS,
+  storedPhotoFields,
+  photoUrlBucket,
+  purgeLegacyFoodPhotos,
+  summaryLine,
+  parseArgs,
+} = require("../scripts/purgeLegacyFoodPhotos");
+
+const DELETE = fieldDelete();
+const BUCKET = "demo-tropos.firebasestorage.app";
+
+/**
+ * A bucket as the Storage SDK's: getFiles lists by prefix in name order,
+ * a page at a time (`autoPaginate: false` hands back the next query), and
+ * a file's delete with `ignoreNotFound` treats a missing object as done.
+ */
+function fakeBucket(
+  objects,
+  { failDelete = null, missing = false, name = BUCKET } = {}
+) {
+  const stored = new Map(Object.entries(objects));
+  const deleteCalls = [];
+  const file = (name) => ({
+    name,
+    metadata: { size: String(stored.get(name) ?? 0) },
+    delete: async (options = {}) => {
+      deleteCalls.push({ name, options });
+      if (failDelete && failDelete(name)) {
+        throw Object.assign(new Error("backend error"), { code: 503 });
+      }
+      if (!stored.has(name)) {
+        if (options.ignoreNotFound) return;
+        throw Object.assign(new Error("No such object"), { code: 404 });
+      }
+      stored.delete(name);
+    },
+  });
+  return {
+    name,
+    stored,
+    deleteCalls,
+    file,
+    getFiles: async ({ prefix = "", maxResults = 1000, pageToken } = {}) => {
+      if (missing) {
+        throw Object.assign(new Error("The specified bucket does not exist."), {
+          code: 404,
+        });
+      }
+      const names = [...stored.keys()]
+        .filter((n) => n.startsWith(prefix))
+        .sort()
+        .filter((n) => !pageToken || n > pageToken);
+      const page = names.slice(0, maxResults);
+      const next =
+        names.length > maxResults
+          ? { prefix, maxResults, pageToken: page[page.length - 1] }
+          : null;
+      return [page.map(file), next];
+    },
+  };
+}
+
+const legacyUrl = (uid, ts) =>
+  `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(
+    `food-photos/${uid}/${ts}.jpg`
+  )}?alt=media&token=t`;
+
+/** A meal an older build scanned: the photo's download URL and its path. */
+const scannedMeal = (uid, ts, extra = {}) => ({
+  date: "2026-08-01",
+  foodName: "Salmon bowl",
+  totalCalories: 610,
+  items: [{ name: "Salmon", calories: 610 }],
+  confidence: "high",
+  photoUrl: legacyUrl(uid, ts),
+  photoPath: `food-photos/${uid}/${ts}.jpg`,
+  ...extra,
+});
+
+const withoutPhoto = (meal) => {
+  const { photoUrl: _url, photoPath: _path, ...rest } = meal;
+  return rest;
+};
+
+const seededObjects = () => ({
+  "food-photos/ana/1720000000000.jpg": 210_000,
+  "food-photos/ana/1720000500000.jpg": 180_000,
+  "food-photos/ben/1721000000000.jpg": 150_000,
+  // Outside the prefix: never listed, never deleted.
+  "profile-photos/ana/avatar.jpg": 40_000,
+  "space-photos/ana/1.jpg": 90_000,
+  "food-photos-archive/ana/x.jpg": 1_000,
+});
+
+const seededFirestore = () =>
+  memoryFirestore({
+    "users/ana/meals/m1": scannedMeal("ana", 1720000000000),
+    // Soft-deleted in Recently deleted: its photo goes too.
+    "users/ana/meals/m2": scannedMeal("ana", 1720000500000, {
+      deletedAt: { seconds: 1 },
+    }),
+    // Only the URL, as a merge that landed half-way might leave.
+    "users/ben/meals/m3": {
+      ...withoutPhoto(scannedMeal("ben", 1)),
+      photoUrl: legacyUrl("ben", 1721000000000),
+    },
+    // Typed: never had a photo, so is never written.
+    "users/ben/meals/m4": withoutPhoto(scannedMeal("ben", 0)),
+    // Not a person's meal: another collection named `meals` is left alone.
+    "mealPlans/p1/meals/x": { photoUrl: "https://example.test/plan.jpg" },
+  });
+
+describe("purgeLegacyFoodPhotos", () => {
+  it("names the prefix and the two fields older builds wrote", () => {
+    expect(FOOD_PHOTO_PREFIX).toBe("food-photos/");
+    expect(MEAL_PHOTO_FIELDS).toEqual(["photoUrl", "photoPath"]);
+    expect(
+      storedPhotoFields({ photoUrl: "u", photoPath: "p", date: "d" })
+    ).toEqual(["photoUrl", "photoPath"]);
+    expect(storedPhotoFields({ photoUrl: null })).toEqual(["photoUrl"]);
+    expect(storedPhotoFields({ date: "d" })).toEqual([]);
+  });
+
+  it("a dry run is the default: it counts, and deletes and writes nothing", async () => {
+    const bucket = fakeBucket(seededObjects());
+    const fs = seededFirestore();
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+    });
+    expect(report).toMatchObject({
+      objects: 3,
+      bytes: 540_000,
+      objectsDeleted: 0,
+      scanned: 4,
+      foreign: 1,
+      holding: 3,
+      fields: { photoUrl: 3, photoPath: 2 },
+      urlsInBucket: 3,
+      stripped: 0,
+      dryRun: true,
+    });
+    expect(bucket.deleteCalls).toEqual([]);
+    expect(bucket.stored.size).toBe(6);
+    expect(fs.operations).toEqual([]);
+  });
+
+  it("--apply deletes every object under food-photos/ and nothing outside it", async () => {
+    const bucket = fakeBucket(seededObjects());
+    const report = await purgeLegacyFoodPhotos({
+      firestore: seededFirestore(),
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ objects: 3, objectsDeleted: 3 });
+    expect([...bucket.stored.keys()].sort()).toEqual([
+      "food-photos-archive/ana/x.jpg",
+      "profile-photos/ana/avatar.jpg",
+      "space-photos/ana/1.jpg",
+    ]);
+    // A missing object is done, not a failure: another run, or the account
+    // deletion's sweep, may have got there first.
+    expect(bucket.deleteCalls.every((c) => c.options.ignoreNotFound)).toBe(
+      true
+    );
+  });
+
+  it("--apply takes the photo fields off every meal that has one and leaves the rest", async () => {
+    const fs = seededFirestore();
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket(seededObjects()),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ holding: 3, stripped: 3, dryRun: false });
+    expect(fs.data.get("users/ana/meals/m1")).toEqual(
+      withoutPhoto(scannedMeal("ana", 1720000000000))
+    );
+    expect(fs.data.get("users/ana/meals/m2")).toEqual(
+      withoutPhoto(
+        scannedMeal("ana", 1720000500000, { deletedAt: { seconds: 1 } })
+      )
+    );
+    expect(fs.data.get("users/ben/meals/m3")).toEqual(
+      withoutPhoto(scannedMeal("ben", 1))
+    );
+    // Only the meals that held a field were written.
+    expect(fs.operations.map(([, path]) => path)).toEqual([
+      "users/ana/meals/m1",
+      "users/ana/meals/m2",
+      "users/ben/meals/m3",
+    ]);
+    expect(fs.data.get("mealPlans/p1/meals/x")).toEqual({
+      photoUrl: "https://example.test/plan.jpg",
+    });
+  });
+
+  it("a second run finds nothing, and its dry run reads 0 and 0", async () => {
+    const fs = seededFirestore();
+    const bucket = fakeBucket(seededObjects());
+    await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    const again = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+    });
+    expect(again).toMatchObject({
+      objects: 0,
+      holding: 0,
+      scanned: 4,
+      dryRun: true,
+    });
+  });
+
+  it("pages through more objects and meals than one page holds, and resumes after a checkpoint", async () => {
+    const objects = {};
+    const seed = {};
+    for (let i = 0; i < 450; i += 1) {
+      const id = String(i).padStart(3, "0");
+      objects[`food-photos/u${id}/1.jpg`] = 1;
+      seed[`users/u${id}/meals/m`] = scannedMeal(`u${id}`, 1);
+    }
+    const bucket = fakeBucket(objects);
+    const fs = memoryFirestore(seed);
+    const checkpoints = [];
+    // The bucket's pages are listed to the end whatever --max-pages says:
+    // it bounds the meal scan, which is the part that resumes.
+    const first = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+      maxPages: 1,
+      objectPageSize: 100,
+      onPage: (checkpoint) => checkpoints.push(checkpoint),
+    });
+    expect(first).toMatchObject({
+      objects: 450,
+      objectsDeleted: 450,
+      scanned: 200,
+      stripped: 200,
+      pages: 1,
+    });
+    expect(bucket.stored.size).toBe(0);
+    expect(checkpoints.at(-1).cursor).toBe("users/u199/meals/m");
+
+    const rest = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+      after: parseArgs([
+        "--project",
+        "demo-tropos",
+        "--bucket",
+        BUCKET,
+        "--after",
+        checkpoints.at(-1).cursor,
+      ]).after,
+    });
+    expect(rest).toMatchObject({ objects: 0, scanned: 250, stripped: 250 });
+    expect(
+      [...fs.data.values()].every(
+        (d) => !("photoUrl" in d) && !("photoPath" in d)
+      )
+    ).toBe(true);
+  });
+
+  it("a page of meals that fails writes nothing, and running again finishes it", async () => {
+    const fs = seededFirestore();
+    fs.failures.set("update:users/ben/meals/m3", new Error("NOT_FOUND"));
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket: fakeBucket(seededObjects()),
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow("NOT_FOUND");
+    expect(fs.data.get("users/ana/meals/m1")).toEqual(
+      scannedMeal("ana", 1720000000000)
+    );
+
+    fs.failures.clear();
+    const again = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket({}),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(again).toMatchObject({ holding: 3, stripped: 3 });
+  });
+
+  it("an object it cannot delete fails the run before any meal is written", async () => {
+    const fs = seededFirestore();
+    const bucket = fakeBucket(seededObjects(), {
+      failDelete: (name) => name.startsWith("food-photos/ben/"),
+    });
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket,
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow("backend error");
+    expect(fs.operations).toEqual([]);
+  });
+
+  /* Listing the prefix is the check: it needs only the object permissions
+     the purge needs anyway, where asking for the bucket itself
+     (bucket.exists) needs storage.buckets.get, which the CI account that
+     runs this may not hold. */
+  it("refuses a bucket that does not exist, before deleting or writing anything", async () => {
+    const bucket = fakeBucket(seededObjects(), { missing: true });
+    const fs = seededFirestore();
+    await expect(
+      purgeLegacyFoodPhotos({ firestore: fs, bucket, fieldDelete: DELETE })
+    ).rejects.toThrow(/--bucket/);
+    expect(fs.operations).toEqual([]);
+    expect(bucket.deleteCalls).toEqual([]);
+  });
+
+  it("passes any other listing failure through, a missing permission say", async () => {
+    const bucket = {
+      ...fakeBucket(seededObjects()),
+      getFiles: async () => {
+        throw Object.assign(new Error("no storage.objects.list access"), {
+          code: 403,
+        });
+      },
+    };
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: seededFirestore(),
+        bucket,
+        fieldDelete: DELETE,
+      })
+    ).rejects.toThrow("storage.objects.list");
+  });
+});
+
+/* A bucket that exists but is not the one older builds uploaded to (the
+   project's appspot.com bucket when uploads went to firebasestorage.app,
+   say) lists nothing under food-photos/ and answers no 404. Stripping the
+   meals then would lose the only record of where the photos are, and the
+   recount would pass. Each meal's download URL names its bucket, so the
+   run checks every one before it deletes or writes anything. It is not a
+   check on counts: a run again after an apply that stopped part-way finds
+   the meals left still naming the right bucket, and goes on. */
+describe("the bucket the meals' photos are in", () => {
+  const OTHER = "demo-tropos.appspot.com";
+
+  it("is read out of a download URL, and nothing else names one", () => {
+    expect(photoUrlBucket(legacyUrl("ana", 1))).toBe(BUCKET);
+    expect(
+      photoUrlBucket(
+        `https://firebasestorage.googleapis.com/v0/b/${OTHER}/o/food-photos%2Fa%2F1.jpg?alt=media`
+      )
+    ).toBe(OTHER);
+    expect(photoUrlBucket("https://example.test/plan.jpg")).toBeNull();
+    expect(photoUrlBucket("data:image/svg+xml,%3Csvg%3E")).toBeNull();
+    expect(photoUrlBucket("not a url")).toBeNull();
+    expect(photoUrlBucket(undefined)).toBeNull();
+  });
+
+  it("strips when every meal's photo is in the bucket named", async () => {
+    const fs = seededFirestore();
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket(seededObjects()),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ objectsDeleted: 3, stripped: 3 });
+  });
+
+  it.each([
+    ["a dry run", false],
+    ["--apply", true],
+  ])(
+    "%s refuses, naming the meals' bucket, when the bucket named is another one, and touches nothing",
+    async (_label, apply) => {
+      const bucket = fakeBucket(seededObjects(), { name: OTHER });
+      const fs = seededFirestore();
+      await expect(
+        purgeLegacyFoodPhotos({
+          firestore: fs,
+          bucket,
+          fieldDelete: DELETE,
+          apply,
+        })
+      ).rejects.toThrow(
+        `The meals' photos are in ${BUCKET}, not ${OTHER}. Nothing was deleted or written: run again with --bucket ${BUCKET}.`
+      );
+      expect(bucket.deleteCalls).toEqual([]);
+      expect(bucket.stored.size).toBe(6);
+      expect(fs.operations).toEqual([]);
+    }
+  );
+
+  it("refuses when one meal among many names another bucket", async () => {
+    const fs = seededFirestore();
+    fs.data.set("users/cy/meals/m9", {
+      ...scannedMeal("cy", 9),
+      photoUrl: `https://firebasestorage.googleapis.com/v0/b/${OTHER}/o/food-photos%2Fcy%2F9.jpg?alt=media`,
+    });
+    const bucket = fakeBucket(seededObjects());
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket,
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow(`The meals' photos are in ${OTHER}, not ${BUCKET}.`);
+    expect(bucket.deleteCalls).toEqual([]);
+    expect(fs.operations).toEqual([]);
+  });
+
+  /* A URL the script cannot read names no bucket it can check. Passing such
+     a meal unexamined would let a run whose every URL is in an unexpected
+     form (another host, gs://, a malformed value) strip them all with the
+     guard above never firing, so it stops the run the same way. */
+  it.each([
+    [
+      "another host",
+      `https://storage.googleapis.com/${BUCKET}/food-photos/ana/1.jpg`,
+    ],
+    ["a gs:// URL", `gs://${BUCKET}/food-photos/ana/1.jpg`],
+    ["a malformed value", "not a url"],
+    ["not a string", 42],
+  ])(
+    "refuses, dry run and apply alike, a meal whose photo URL is %s",
+    async (_label, photoUrl) => {
+      for (const apply of [false, true]) {
+        const fs = seededFirestore();
+        fs.data.set("users/cy/meals/m9", { ...scannedMeal("cy", 9), photoUrl });
+        const bucket = fakeBucket(seededObjects());
+        await expect(
+          purgeLegacyFoodPhotos({
+            firestore: fs,
+            bucket,
+            fieldDelete: DELETE,
+            apply,
+          })
+        ).rejects.toThrow(
+          "1 meal(s) hold a photo URL this script cannot read, so it cannot tell which bucket their photos are in. Nothing was deleted or written."
+        );
+        expect(bucket.deleteCalls).toEqual([]);
+        expect(fs.operations).toEqual([]);
+      }
+    }
+  );
+
+  it("passes a readable URL that names the bucket, and counts it", async () => {
+    const fs = memoryFirestore({
+      "users/ana/meals/m1": scannedMeal("ana", 1),
+    });
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket({ "food-photos/ana/1.jpg": 1 }),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ urlsInBucket: 1, stripped: 1 });
+  });
+
+  /* Older builds wrote the URL and the path in one merge, so a meal with a
+     path and no URL is not one they left. A path names no bucket, so it
+     cannot refuse the run: the meal is stripped as before, like any other
+     meal holding a photo field. */
+  it("strips a meal with only photoPath, which names no bucket", async () => {
+    const fs = memoryFirestore({
+      "users/ana/meals/p1": {
+        ...withoutPhoto(scannedMeal("ana", 1)),
+        photoPath: "food-photos/ana/1.jpg",
+      },
+    });
+    const report = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket: fakeBucket({ "food-photos/ana/1.jpg": 1 }),
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(report).toMatchObject({ objectsDeleted: 1, stripped: 1 });
+    expect(fs.data.get("users/ana/meals/p1")).toEqual(
+      withoutPhoto(scannedMeal("ana", 1))
+    );
+  });
+
+  it("goes on after an apply that stopped part-way, whatever the counts", async () => {
+    const fs = seededFirestore();
+    const bucket = fakeBucket(seededObjects());
+    fs.failures.set("update:users/ben/meals/m3", new Error("NOT_FOUND"));
+    await expect(
+      purgeLegacyFoodPhotos({
+        firestore: fs,
+        bucket,
+        fieldDelete: DELETE,
+        apply: true,
+      })
+    ).rejects.toThrow("NOT_FOUND");
+    // The objects are gone and the meals still name them: 0 objects beside
+    // 3 meals holding a field is what a part-way run leaves, not a sign of
+    // the wrong bucket.
+    expect(bucket.stored.size).toBe(3);
+    fs.failures.clear();
+    const again = await purgeLegacyFoodPhotos({
+      firestore: fs,
+      bucket,
+      fieldDelete: DELETE,
+      apply: true,
+    });
+    expect(again).toMatchObject({ objects: 0, holding: 3, stripped: 3 });
+  });
+});
+
+/* An apply run ends by running the script again as a dry run and grepping
+   its last line for 0 objects and 0 meals. The pattern lives in the
+   workflow and the sentence here, so the two are held together: a reworded
+   sentence would fail every apply after it had already deleted, and a
+   loosened pattern would pass one that left something. */
+describe("the line the workflow's recount reads", () => {
+  const workflow = readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../.github/workflows/purge-legacy-food-photos.yml",
+        import.meta.url
+      )
+    ),
+    "utf8"
+  );
+  // `grep -q '<pattern>' recount.txt`: a basic regular expression, whose
+  // brackets are literal characters.
+  const pattern = workflow.match(/grep -q '([^']+)' recount\.txt/)?.[1];
+  const recount = new RegExp((pattern ?? "").replace(/[()]/g, "\\$&"));
+  const report = (over = {}) => ({
+    objects: 0,
+    bytes: 0,
+    objectsDeleted: 0,
+    scanned: 412,
+    foreign: 0,
+    holding: 0,
+    fields: { photoUrl: 0, photoPath: 0 },
+    urlsInBucket: 0,
+    stripped: 0,
+    pages: 3,
+    cursor: null,
+    dryRun: true,
+    ...over,
+  });
+
+  it("finds the recount's pattern in the workflow", () => {
+    expect(pattern).toMatch(/^\^DRY RUN: 0 /);
+  });
+
+  it("passes a dry run that found nothing left", () => {
+    expect(summaryLine(report())).toMatch(recount);
+    expect(summaryLine(report())).not.toContain("\n");
+  });
+
+  /* The check on each meal's bucket needs URLs to check: the dry run says
+     how many named the bucket, which should be every meal holding one. */
+  it("says how many photo URLs name the bucket", () => {
+    const line = summaryLine(
+      report({ objects: 3, holding: 3, urlsInBucket: 3 })
+    );
+    expect(line).toContain(
+      "3 object(s) under food-photos/ and 3 of 412 meal(s) hold a photo field; 3 of their photo URLs name this bucket."
+    );
+    expect(summaryLine(report())).toContain(
+      "0 of their photo URLs name this bucket."
+    );
+  });
+
+  it("passes a dry run with nothing left whatever its URL count reads", () => {
+    expect(summaryLine(report({ urlsInBucket: 0 }))).toMatch(recount);
+  });
+
+  it.each([
+    [{ objects: 3 }],
+    [{ holding: 10 }],
+    [{ objects: 1, holding: 1 }],
+    [{ objects: 10, holding: 0 }],
+    [{ objects: 0, holding: 20 }],
+  ])("fails a dry run that found %o", (over) => {
+    expect(summaryLine(report(over))).not.toMatch(recount);
+  });
+
+  it("never passes an apply's own line", () => {
+    expect(
+      summaryLine(report({ dryRun: false, objectsDeleted: 0, stripped: 0 }))
+    ).not.toMatch(recount);
+  });
+});
+
+describe("parseArgs", () => {
+  const base = ["--project", "demo-tropos", "--bucket", BUCKET];
+
+  it("is a dry run unless --apply is given", () => {
+    expect(parseArgs(base)).toMatchObject({
+      projectId: "demo-tropos",
+      bucketName: BUCKET,
+      apply: false,
+      after: null,
+    });
+    expect(parseArgs([...base, "--apply"]).apply).toBe(true);
+  });
+
+  it("needs the project and the bucket named", () => {
+    expect(() => parseArgs(["--bucket", BUCKET])).toThrow(/--project/);
+    expect(() => parseArgs(["--project", "demo-tropos"])).toThrow(/--bucket/);
+    expect(() =>
+      parseArgs([...base.slice(0, 2), "--bucket", "gs://x"])
+    ).toThrow(/--bucket/);
+  });
+
+  it("resumes only from a meal's path", () => {
+    expect(parseArgs([...base, "--after", "users/u1/meals/m1"]).after).toBe(
+      "users/u1/meals/m1"
+    );
+    expect(() => parseArgs([...base, "--after", "users/u1"])).toThrow(
+      /--after/
+    );
+  });
+
+  it("refuses an argument it does not know", () => {
+    expect(() => parseArgs([...base, "--force"])).toThrow(/Unknown/);
+  });
+});

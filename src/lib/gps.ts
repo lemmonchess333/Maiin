@@ -175,58 +175,163 @@ export function routeTimeAtDistance(
   return Math.max(0, (movingClockMs(last) - c0) / 1000);
 }
 
-/**
- * Smooths a run of fixes: each fix pulls the position towards itself by how
- * much it is trusted against the position so far.
- *
- * How unsure the position is grows with the time since the last fix
- * (`processNoise` a second), not by a fixed step per fix. Per fix, a fix
- * after two minutes without one was weighed as if a second had passed: it
- * moved the position a sixth of the way, and the next dozen fixes, a second
- * apart, dragged it the rest, at up to 90 m/s. Distance, splits and best
- * efforts all measure the smoothed positions, so a 7-minute gap at 10:25 /km
- * produced kilometres of 14:51 and 5:59 and a "1K 4:33". Weighed by its
- * time, a fix after a long gap is mostly believed and the gap's distance
- * lands in the gap. At a fix a second or faster nothing changes: a step is
- * never counted as less than a second.
- */
-export class KalmanFilter {
-  private lat = 0;
-  private lon = 0;
-  private variance = -1;
-  private processNoise: number;
+/** Metres in a degree of latitude, by `haversine`'s R. */
+const METRES_PER_DEGREE = (6_371_000 * Math.PI) / 180;
 
-  constructor(processNoise = 3) {
-    this.processNoise = processNoise;
+/**
+ * How hard a runner can change velocity, as the filter models it: the
+ * spectral density of the acceleration, in m²/s³. A Tropos heuristic,
+ * chosen on the synthetic bench (`gpsDistanceBench.test.ts`): a turn at a
+ * street corner is about 4 m/s² for a second, a track bend 0.3 m/s²
+ * held, and a value this size follows both while still averaging a few
+ * fixes. Lower values overshoot a track's bends and read long; higher ones
+ * pass the fixes' own wander through and read long on a straight.
+ */
+export const RUN_FILTER_ACCELERATION_NOISE = 48;
+
+/**
+ * Longer than this without a fix, in seconds, and the filter starts again
+ * from the next fix instead of predicting across the gap. A Tropos
+ * heuristic: over ten seconds a runner may have turned, stopped or been
+ * held, so a prediction at the old velocity is worth less than the fix,
+ * and the gap's distance lands in the gap as a straight line.
+ */
+export const RUN_FILTER_MAX_GAP_S = 10;
+
+/**
+ * Smooths a run's fixes with a constant-velocity Kalman filter: it keeps
+ * a position and a velocity, predicts where the runner is now from the
+ * last estimate, and pulls the prediction towards each fix by how much the
+ * fix is trusted (its reported accuracy).
+ *
+ * Why velocity. A filter that keeps only a position assumes the runner is
+ * standing still between fixes, so it trails a moving runner by
+ * (1 − gain) / gain fixes: about 7 m at ±5 m, 16 m at ±10 m and 33 m at
+ * ±16 m for a 3 m/s runner. On a straight a trailing copy of the line is
+ * as long as the line; at every turn it cuts across, and at every 180°
+ * turnaround it never reaches the end. On the synthetic bench that read a
+ * 400 m track 3% to 16% short and a street grid 4% to 13% short. Keeping
+ * the velocity removes the lag on a straight, and the movement gate
+ * (`traceStepMetres`) keeps the fixes' wander out of the distance.
+ *
+ * Works in metres on a flat plane centred on the first fix after a reset:
+ * exact enough over a run, and the conversion back is the same linear map,
+ * so a fix that is believed comes back where it was.
+ */
+export class VelocityKalmanFilter {
+  private origin: { lat: number; lon: number; metresPerLon: number } | null =
+    null;
+  private lastAt = 0;
+  /** Per axis (east, north): position and velocity, in metres and m/s. */
+  private readonly x = [
+    [0, 0],
+    [0, 0],
+  ];
+  /** Per axis: the covariance's three distinct terms, pp, pv and vv. */
+  private readonly p = [
+    [0, 0, 0],
+    [0, 0, 0],
+  ];
+  private readonly accelerationNoise: number;
+
+  constructor(accelerationNoise = RUN_FILTER_ACCELERATION_NOISE) {
+    this.accelerationNoise = accelerationNoise;
   }
 
+  /**
+   * One fix in, the smoothed position out. `at` is when the fix was taken,
+   * in epoch ms (`fixTimestamp`): the filter predicts across the time
+   * since the last fix it took, however many of those became points.
+   */
   process(
     lat: number,
     lon: number,
     accuracy: number,
-    /** Seconds since the previous fix this filter took. */
-    secondsSinceLast = 1
+    at: number
   ): { lat: number; lon: number } {
-    if (this.variance < 0) {
-      this.lat = lat;
-      this.lon = lon;
-      this.variance = accuracy * accuracy;
-    } else {
-      const seconds = Number.isFinite(secondsSinceLast)
-        ? Math.max(1, secondsSinceLast)
-        : 1;
-      this.variance += this.processNoise * seconds;
-      const k = this.variance / (this.variance + accuracy * accuracy);
-      this.lat += k * (lat - this.lat);
-      this.lon += k * (lon - this.lon);
-      this.variance *= 1 - k;
+    const variance = Math.max(1, accuracy * accuracy);
+    const seconds = (at - this.lastAt) / 1000;
+    if (
+      !this.origin ||
+      !Number.isFinite(seconds) ||
+      seconds > RUN_FILTER_MAX_GAP_S
+    ) {
+      this.origin = {
+        lat,
+        lon,
+        metresPerLon: METRES_PER_DEGREE * Math.cos((lat * Math.PI) / 180),
+      };
+      this.lastAt = at;
+      for (let axis = 0; axis < 2; axis++) {
+        this.x[axis] = [0, 0];
+        // Speed unknown: a standard deviation of 5 m/s, faster than a sprint.
+        this.p[axis] = [variance, 0, 25];
+      }
+      return { lat, lon };
     }
-    return { lat: this.lat, lon: this.lon };
+    const dt = Math.max(0, seconds);
+    if (dt > 0) this.lastAt = at;
+    const q = this.accelerationNoise;
+    const measured = [
+      (lon - this.origin.lon) * this.origin.metresPerLon,
+      (lat - this.origin.lat) * METRES_PER_DEGREE,
+    ];
+    for (let axis = 0; axis < 2; axis++) {
+      const [pos, vel] = this.x[axis];
+      let [pp, pv, vv] = this.p[axis];
+      // Predict: move at the estimated velocity; grow the uncertainty.
+      const predicted = pos + vel * dt;
+      pp += 2 * dt * pv + dt * dt * vv + (q * dt * dt * dt) / 3;
+      pv += dt * vv + (q * dt * dt) / 2;
+      vv += q * dt;
+      // Update: weigh the fix against the prediction.
+      const s = pp + variance;
+      const kPos = pp / s;
+      const kVel = pv / s;
+      const innovation = measured[axis] - predicted;
+      this.x[axis] = [predicted + kPos * innovation, vel + kVel * innovation];
+      this.p[axis] = [(1 - kPos) * pp, (1 - kPos) * pv, vv - kVel * pv];
+    }
+    return {
+      lat: this.origin.lat + this.x[1][0] / METRES_PER_DEGREE,
+      lon: this.origin.lon + this.x[0][0] / this.origin.metresPerLon,
+    };
   }
 
+  /** Forget everything: the next fix starts the filter again. */
   reset() {
-    this.variance = -1;
+    this.origin = null;
   }
+}
+
+/**
+ * How far the smoothed position must move from the trace's last point, in
+ * metres, before it becomes a new point: half the fix's reported accuracy,
+ * kept between 2 and 8 m. A Tropos heuristic, from the synthetic bench.
+ *
+ * Every fix still moves the filter and the map's dot; only the trace waits.
+ * A fix's position wanders by a few metres from one fix to the next, and
+ * every wander sideways of the runner's path adds length to a line drawn
+ * through every fix. Measured between points a few metres apart, the same
+ * wander adds far less. 8 m at most keeps a corner's chord close to its
+ * arc; 2 m at least keeps a good signal's steps short.
+ */
+export function traceStepMetres(accuracy: number): number {
+  const half = Number.isFinite(accuracy) ? accuracy / 2 : 8;
+  return Math.min(8, Math.max(2, half));
+}
+
+/** Whether the smoothed position has moved far enough from the trace's
+ *  last point to become the next one (`traceStepMetres`). */
+export function isTraceStep(
+  last: GPSPoint,
+  next: { lat: number; lon: number },
+  accuracy: number
+): boolean {
+  return (
+    haversine(last.lat, last.lon, next.lat, next.lon) >=
+    traceStepMetres(accuracy)
+  );
 }
 
 export interface GPSPoint {
@@ -248,8 +353,13 @@ export interface GPSPoint {
    * recording. Nothing is recorded while the clock is held (useGPS), so
    * only differences mean anything: the MOVING time between two points is
    * their timestamp difference less their `pausedMs` difference
-   * (`movingClockMs`). That is how a split, a best effort and the live pace
-   * leave out ten minutes at a crossing, as Strava's do.
+   * (`movingClockMs`). That is how a split and the live pace leave out ten
+   * minutes at a crossing, as Strava's do. Best efforts are on the wall
+   * clock (`detectBestEfforts`, Run28 call 3).
+   *
+   * A run recorded with auto-pause off carries the holds auto-pause would
+   * have made, set at the finish (`runMovingTime.ts`, Run28 call 1); its
+   * points recorded inside one are kept.
    *
    * Cumulative rather than per-gap so it survives `sampleRoute` thinning
    * the saved trace: any two surviving points still subtract correctly.
@@ -367,11 +477,7 @@ export interface Split {
  * or a jump no runner makes.
  */
 export type ReadingVerdict =
-  | "ok"
-  | "still"
-  | "inaccurate"
-  | "out-of-order"
-  | "teleport";
+  "ok" | "still" | "inaccurate" | "out-of-order" | "teleport";
 
 export function readingVerdict(
   coords: GeolocationCoordinates,
@@ -392,10 +498,12 @@ export function readingVerdict(
     elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
   if (coords.accuracy > maxAccuracy) return "inaccurate";
 
-  /* Compare RAW to RAW. `lastPoint.lat/lon` are the Kalman OUTPUT (see
-     useGPS.makePoint, which keeps the unfiltered pair in rawLat/rawLon), and
-     the filter lags a moving runner — so measuring against it put the filter's
-     lag inside a check that is supposed to be about the athlete:
+  /* Compare RAW to RAW. `lastPoint.lat/lon` are the filter's OUTPUT (see
+     useGPS.makePoint, which keeps the unfiltered pair in rawLat/rawLon), and a
+     smoothed position is not where the device was. With the position-only
+     filter this rule was written against, which trailed a moving runner,
+     measuring against it put the filter's lag inside a check that is
+     supposed to be about the athlete:
 
          lag          ≈ (1 − k)/k × step
          impliedSpeed = (lag + step) / dt = trueSpeed / k
@@ -809,10 +917,12 @@ export function isImpossibleStep(metres: number, seconds: number): boolean {
 
 /**
  * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
- * stretch ending there that covers the distance, timed on the MOVING clock
- * (`movingClockMs`) and measured through `segmentMetres` — so a stretch
- * that waited at a crossing is timed without the wait, and a line drawn
- * across a pause cannot carry a stretch past the distance in no time.
+ * stretch ending there that covers the distance, timed on ELAPSED time,
+ * the wall clock between its fixes (Run28 call 3), as Strava times best
+ * efforts: a wait at a crossing inside a stretch counts in its time, as a
+ * pause does. Measured through `segmentMetres`, the rule the run's distance
+ * counts with, so a line drawn across a pause carries no more metres than
+ * the time running either side of it could have.
  *
  * No stretch spans a step faster than any runner (`isImpossibleStep`). A
  * 2.85 km run at 8:51 /km, with kilometres of 9:33 and 11:20, listed a
@@ -833,20 +943,20 @@ export function detectBestEfforts(
   const n = points.length;
   if (n < 2) return results;
 
-  // Credited distance and moving clock at each point. The clock never steps
-  // back, so no stretch can time out negative on a corrected phone clock.
-  // `impossible[i]`: the step into point i is faster than any runner.
+  // Credited distance and the wall clock at each point. The clock never
+  // steps back, so no stretch can time out negative on a corrected phone
+  // clock. `impossible[i]`: the step into point i is faster than any runner.
   const cum = new Array<number>(n);
   const clock = new Array<number>(n);
   const impossible = new Array<boolean>(n).fill(false);
   cum[0] = 0;
-  clock[0] = movingClockMs(points[0]);
+  clock[0] = points[0].timestamp;
   for (let i = 1; i < n; i++) {
     const metres = points[i].breakBefore
       ? 0
       : segmentMetres(points[i - 1], points[i]);
     cum[i] = cum[i - 1] + metres;
-    clock[i] = Math.max(clock[i - 1], movingClockMs(points[i]));
+    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
     impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
   }
 
@@ -896,8 +1006,40 @@ function escapeXml(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
+/**
+ * The trace as its fixes were taken: each point at its raw fix
+ * (`rawLat`/`rawLon`) instead of the smoothed position the app measures and
+ * draws. What a GPX export carries: an app that reads the file (Strava sums
+ * the distance from point to point in a GPX without a distance stream) runs
+ * its own clean-up on the positions, and expects the positions a device
+ * recorded, not ones already smoothed. A point without a usable raw fix (an
+ * imported or planned route) keeps its own position.
+ */
+export function rawTrace(points: GPSPoint[]): GPSPoint[] {
+  return points.map((p) =>
+    Number.isFinite(p.rawLat) && Number.isFinite(p.rawLon)
+      ? { ...p, lat: p.rawLat, lon: p.rawLon }
+      : p
+  );
+}
+
+/**
+ * A GPX 1.1 track of the points as given (callers export `rawTrace`, cut
+ * by the privacy zones on those same coordinates, `exportTrace` in
+ * shareRoute.ts). Each point keeps the time its fix was taken, in UTC: GPX
+ * has no pause event, so the receiving app works out moving time from the
+ * points, and a time moved to hide a pause would misplace every fix after
+ * it. A new track segment starts at a break (a privacy cut, a GPX track
+ * break) and after every hold, when nothing was recorded (a pause, an
+ * auto-pause), as GPX does for a receiver that was off.
+ */
 export function toGPX(points: GPSPoint[], name: string): string {
-  const segments = splitRouteSegments(points)
+  const marked = points.map((p, i) =>
+    i > 0 && !p.breakBefore && pausedMsOf(p) > pausedMsOf(points[i - 1])
+      ? { ...p, breakBefore: true }
+      : p
+  );
+  const segments = splitRouteSegments(marked)
     .map((segment) => {
       const trkpts = segment
         .map((p) => {

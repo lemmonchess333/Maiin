@@ -24,18 +24,26 @@
  * strides and tempo structure REPLACE minutes, never extend the session.
  */
 import type { GuidedRunWorkout, SegmentType } from "./guidedRun";
-import { paceMinSec } from "./runLabels";
+import { paceBandLabel, paceMinSec } from "./runLabels";
 import {
   distanceIn,
   distanceUnitLabel,
   paceUnitLabel,
   type DistanceUnit,
 } from "./distanceUnits";
+import type { RepeatsAt } from "./runPaces";
 import {
   cooldownCue,
   floatCue,
+  hillDownCue,
+  hillRepCue,
+  climbCue,
+  downhillCue,
+  walkUpCue,
   intervalRecoveryCue,
   intervalRepCue,
+  pickUpCue,
+  pickUpEaseCue,
   runWalkCooldownCue,
   runWalkRunCue,
   runWalkWalkCue,
@@ -58,8 +66,10 @@ export function isWorkSegment(
 
 /**
  * The pace a session pinned as its prescription: the goal race pace on a
- * goal-pace tempo's blocks or a long run's race-pace block (`pacePinned`).
- * Null when no work segment pins one.
+ * goal-pace tempo's blocks or a long run's race-pace block, or since Run24
+ * (5) repeats at repetition pace or a race's (`pacePinned`). Null when no
+ * work segment pins one. A run that pinned its pace is never read as
+ * evidence of fitness at the band (`benchmarkEfforts`).
  */
 export function pinnedWorkPace(
   segments: readonly SessionSegment[] | null | undefined
@@ -244,6 +254,50 @@ export function stepEyebrow(seg: SessionSegment): string {
   return effort;
 }
 
+/**
+ * A step's prescription, the line under its heading on the Run screen and
+ * on the Watch: band-first when the runner has a personalized band and the
+ * segment declares its bare effort (#18's band-first rule), else the built
+ * label. A `pacePinned` segment keeps its built label: its pace IS the
+ * prescription (the runner's own goal pace), not a template default the
+ * fitness band should supersede.
+ */
+export function stepHeadline(
+  seg: SessionSegment,
+  unit: DistanceUnit,
+  band?: [number, number]
+): string {
+  if (
+    band &&
+    seg.effort &&
+    !seg.pacePinned &&
+    (seg.type === "hard" || seg.type === "moderate")
+  ) {
+    return `${seg.effort} at ${paceBandLabel(band, unit)}`;
+  }
+  return seg.label;
+}
+
+/**
+ * Run24 (5), deep dive D5: how a session's repeats are run, from its
+ * template (`RunTemplate.config`): what they are run at, and whether they
+ * go up a hill. Absent, repeats at the interval band.
+ */
+export interface IntervalStyle {
+  repeatsAt?: RepeatsAt;
+  uphill?: boolean;
+  /** Run26 (2): the climbs are comfortably hard, not hard. */
+  steadyClimbs?: boolean;
+  /** Run26 (2): the repeats go down a hill, with a walk back up. */
+  downhill?: boolean;
+}
+
+/** A race's name on a repeat's heading, by what the repeats are run at. */
+const RACE_PACE_NAME: Partial<Record<RepeatsAt, string>> = {
+  "5k": "5K",
+  "10k": "10K",
+};
+
 export function segmentsFromIntervals(
   shape: IntervalShape,
   unit: DistanceUnit,
@@ -252,53 +306,156 @@ export function segmentsFromIntervals(
    *  within-session no-repeat guarantee — a constant offset never maps
    *  two distinct indices onto one pool entry). Callers derive it from
    *  run identity; 0 keeps the historical script. */
-  seed: number = 0
+  seed: number = 0,
+  style: IntervalStyle = {}
 ): SessionSegment[] {
   const out: SessionSegment[] = [];
   if (shape.warmupDuration) {
     out.push({
       type: "warmup",
       label: "Warm-up",
-      instruction: "Easy jogging",
+      instruction: style.uphill
+        ? "Easy jogging, to the foot of a hill"
+        : style.downhill
+          ? "Easy jogging, to the top of a hill"
+          : "Easy jogging",
       target: { kind: "duration", seconds: shape.warmupDuration },
       cue: warmupCue(seed),
       eyebrow: EFFORT_EYEBROW.easy,
     });
   }
-  const pace = shape.workPace
-    ? ` @ ${paceMinSec(shape.workPace, unit)} ${paceUnitLabel(unit)}`
+  // Run24 (5): repeats by feel (hills, a fartlek) carry no pace, whatever
+  // the config holds.
+  const byFeel = style.repeatsAt === "feel";
+  const workPace = byFeel ? undefined : shape.workPace;
+  const pace = workPace
+    ? ` @ ${paceMinSec(workPace, unit)} ${paceUnitLabel(unit)}`
     : "";
-  // Short repeats run quick and relaxed, longer ones hard (Run21 (1)).
-  const repEffort =
-    shape.workDistance && shape.workDistance < 1000
+  const raceName = style.repeatsAt ? RACE_PACE_NAME[style.repeatsAt] : null;
+  // Short repeats run quick and relaxed, longer ones hard (Run21 (1)); a
+  // race's pace is named for the race, a pace with a benchmark and an
+  // effort without one (Run24 (5)).
+  const repEffort = raceName
+    ? `${raceName} ${workPace ? "PACE" : "EFFORT"}`
+    : style.repeatsAt === "repetition" ||
+        (shape.workDistance && shape.workDistance < 1000)
       ? EFFORT_EYEBROW.quick
       : EFFORT_EYEBROW.hard;
   for (let rep = 1; rep <= shape.reps; rep++) {
-    out.push({
-      type: "hard",
-      label: `${workLabel(shape)}${pace}`,
-      instruction: `Rep ${rep} of ${shape.reps}`,
-      eyebrow: `${repEffort} · REP ${rep}/${shape.reps}`,
-      target: shape.workDistance
-        ? { kind: "distance", meters: shape.workDistance }
-        : { kind: "duration", seconds: shape.workDuration ?? 0 },
-      ...(shape.workPace ? { paceTarget: shape.workPace } : {}),
-      rep,
-      totalReps: shape.reps,
-      effort: workLabel(shape),
-      cue: intervalRepCue(rep, shape.reps, seed + rep),
-    });
-    if (rep < shape.reps) {
+    if (style.uphill && style.steadyClimbs) {
+      // Run26 (2): a trail plan's climbs, comfortably hard.
       out.push({
-        type: "recovery",
-        label: "Recover",
-        instruction: "Easy jog or walk",
-        target: { kind: "duration", seconds: shape.restDuration },
+        type: "moderate",
+        label: `${workLabel(shape)} climb`,
+        instruction: `Climb ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.comfortablyHard} · CLIMB ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
         rep,
         totalReps: shape.reps,
-        cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
-        eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
+        cue: climbCue(rep, shape.reps, seed + rep),
       });
+    } else if (style.downhill) {
+      // Run26 (2): downhill repeats at a controlled, easy effort.
+      out.push({
+        type: "moderate",
+        label: `${workLabel(shape)} downhill`,
+        instruction: `Descent ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.easy} · DOWNHILL ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: downhillCue(rep, shape.reps, seed + rep),
+      });
+    } else if (style.uphill) {
+      out.push({
+        type: "hard",
+        label: `${workLabel(shape)} uphill`,
+        instruction: `Hill ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.hard} · HILL ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: hillRepCue(rep, shape.reps, seed + rep),
+      });
+    } else if (byFeel) {
+      out.push({
+        type: "moderate",
+        label: `${workLabel(shape)} pick-up`,
+        instruction: `Pick-up ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.comfortablyHard} · ${rep}/${shape.reps}`,
+        target: shape.workDistance
+          ? { kind: "distance", meters: shape.workDistance }
+          : { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: pickUpCue(rep, shape.reps, seed + rep),
+      });
+    } else {
+      // Run24 (5): repeats at repetition pace or a race's pace keep their
+      // own pace: the in-run shell would put the interval band on them.
+      const ownPace = !!workPace && !!style.repeatsAt;
+      out.push({
+        type: "hard",
+        label: `${workLabel(shape)}${pace}`,
+        instruction: `Rep ${rep} of ${shape.reps}`,
+        eyebrow: `${repEffort} · REP ${rep}/${shape.reps}`,
+        target: shape.workDistance
+          ? { kind: "distance", meters: shape.workDistance }
+          : { kind: "duration", seconds: shape.workDuration ?? 0 },
+        ...(workPace ? { paceTarget: workPace } : {}),
+        ...(ownPace ? { pacePinned: true } : {}),
+        rep,
+        totalReps: shape.reps,
+        effort: workLabel(shape),
+        cue: intervalRepCue(rep, shape.reps, seed + rep),
+      });
+    }
+    if (rep < shape.reps) {
+      out.push(
+        style.downhill
+          ? {
+              type: "recovery",
+              label: "Walk up",
+              instruction: "Walk back up the hill",
+              target: { kind: "duration", seconds: shape.restDuration },
+              rep,
+              totalReps: shape.reps,
+              cue: walkUpCue(seed + rep),
+              eyebrow: `${EFFORT_EYEBROW.easy} · WALK UP`,
+            }
+          : style.uphill
+            ? {
+                type: "recovery",
+                label: "Jog down",
+                instruction: "Easy jog or walk back down",
+                target: { kind: "duration", seconds: shape.restDuration },
+                rep,
+                totalReps: shape.reps,
+                cue: hillDownCue(seed + rep),
+                eyebrow: `${EFFORT_EYEBROW.easy} · JOG DOWN`,
+              }
+            : byFeel
+              ? {
+                  type: "recovery",
+                  label: "Easy",
+                  instruction: "Easy running",
+                  target: { kind: "duration", seconds: shape.restDuration },
+                  rep,
+                  totalReps: shape.reps,
+                  cue: pickUpEaseCue(seed + rep),
+                  eyebrow: `${EFFORT_EYEBROW.easy} · AFTER ${rep}/${shape.reps}`,
+                }
+              : {
+                  type: "recovery",
+                  label: "Recover",
+                  instruction: "Easy jog or walk",
+                  target: { kind: "duration", seconds: shape.restDuration },
+                  rep,
+                  totalReps: shape.reps,
+                  cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
+                  eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
+                }
+      );
     }
   }
   if (shape.cooldownDuration) {
@@ -312,6 +469,42 @@ export function segmentsFromIntervals(
     });
   }
   return out;
+}
+
+/**
+ * Run24 (5), deep dive D5: a progression run. Easy running, then a finish
+ * comfortably hard, at the threshold pace a benchmark gives (else by
+ * effort, Run20). The finish is the run's one work segment, so the pace is
+ * judged there only; the two sum to the session's minutes.
+ */
+export function segmentsFromProgression(
+  shape: { easySec: number; finishSec: number },
+  unit: DistanceUnit,
+  paceTarget?: number
+): SessionSegment[] {
+  const pace = paceTarget
+    ? ` @ ${paceMinSec(paceTarget, unit)} ${paceUnitLabel(unit)}`
+    : "";
+  return [
+    {
+      type: "easy",
+      label: `Easy ${min(shape.easySec)} min`,
+      instruction: "Conversational pace, the faster finish comes at the end",
+      target: { kind: "duration", seconds: shape.easySec },
+      cue: "Easy running. Settle in, the faster finish comes at the end.",
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+    {
+      type: "moderate",
+      label: `${min(shape.finishSec)} min to finish${pace}`,
+      instruction: "Comfortably hard, and hold it to the end",
+      target: { kind: "duration", seconds: shape.finishSec },
+      ...(paceTarget ? { paceTarget } : {}),
+      effort: `${min(shape.finishSec)} min to finish`,
+      eyebrow: EFFORT_EYEBROW.comfortablyHard,
+      cue: "Pick it up to comfortably hard, and hold it to the finish.",
+    },
+  ];
 }
 
 export function segmentsFromTempo(
@@ -399,6 +592,64 @@ export function segmentsFromTempo(
     eyebrow: EFFORT_EYEBROW.easy,
   });
   return out;
+}
+
+/**
+ * Run24 (4), deep dive D4: a time trial, the plan's benchmark session. An
+ * easy warm-up, the distance as one hard segment with no pace on it (the
+ * run is how the pace is found), and an easy cool-down. Its one work
+ * segment is the run's work portion, which is read as a race.
+ */
+export function segmentsFromTimeTrial(
+  shape: { distanceKm: number; warmupSec: number; cooldownSec: number },
+  seed: number = 0
+): SessionSegment[] {
+  const km = `${shape.distanceKm} km`;
+  return [
+    {
+      type: "warmup",
+      label: "Warm-up",
+      instruction: "Easy jogging, a few quick strides at the end",
+      target: { kind: "duration", seconds: shape.warmupSec },
+      cue: warmupCue(seed),
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+    {
+      type: "hard",
+      label: `${km} time trial`,
+      instruction: "As hard as you can hold evenly to the end",
+      eyebrow: "TIME TRIAL",
+      target: { kind: "distance", meters: shape.distanceKm * 1000 },
+      effort: `${km} time trial`,
+      cue: `${km} time trial. Start a little slower than feels right, then hold it to the end.`,
+    },
+    {
+      type: "cooldown",
+      label: "Cool-down",
+      instruction: "Easy jogging",
+      target: { kind: "duration", seconds: shape.cooldownSec },
+      cue: cooldownCue(seed),
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+  ];
+}
+
+/**
+ * A timed easy run: one easy step of its minutes, played by the same
+ * pause-corrected player, remaining-time display and finish cue as every
+ * structured session. A planned easy run's (`templateToPrefill`), and the
+ * easy run a hot day offers in place of a quality session.
+ */
+export function segmentsFromEasy(minutes: number): SessionSegment[] {
+  return [
+    {
+      type: "easy",
+      label: `Easy ${minutes} min`,
+      instruction: "Conversational pace",
+      target: { kind: "duration", seconds: minutes * 60 },
+      cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
+    },
+  ];
 }
 
 /**
@@ -511,6 +762,173 @@ export function segmentsFromLongWithRacePace(
       cue: `Race-pace block. ${blockKm} kilometres at ${marathonBand ? "marathon pace" : "your goal pace"} — strong to the finish.`,
     },
   ];
+}
+
+/**
+ * Run24 (5), deep dive D5: a long run with blocks at race pace
+ * (`RunTemplate.config.racePaceBlocks`). Easy running, the blocks with easy
+ * running between, then easy to the finish, every segment by distance, so
+ * the player walks them on GPS metres and they sum to exactly `totalKm`.
+ * With a goal time, or a marathon band (Run24 (9)), the blocks carry that
+ * pace, pinned; without one they are run by effort, named for the race.
+ */
+export function segmentsFromLongWithRacePaceBlocks(
+  totalKm: number,
+  blocks: {
+    race: "marathon" | "half";
+    reps: number;
+    blockKm: number;
+    floatKm: number;
+    finishKm: number;
+  },
+  unit: DistanceUnit,
+  pace: { goalPaceS: number; marathonBand?: boolean } | null = null
+): SessionSegment[] {
+  const workKm =
+    blocks.reps * blocks.blockKm +
+    (blocks.reps - 1) * blocks.floatKm +
+    blocks.finishKm;
+  const easyKm = Math.max(0, totalKm - workKm);
+  const compact = (km: number) =>
+    distanceIn(km * 1000, unit)
+      .toFixed(1)
+      .replace(/\.0$/, "");
+  const u = distanceUnitLabel(unit);
+  const raceName = blocks.race === "marathon" ? "marathon" : "half marathon";
+  const named = pace
+    ? pace.marathonBand
+      ? "marathon pace"
+      : "your goal pace"
+    : `${raceName} effort`;
+  const heading = `${raceName.toUpperCase()} ${pace ? "PACE" : "EFFORT"}`;
+  const out: SessionSegment[] = [
+    {
+      type: "easy",
+      label: `Easy ${compact(easyKm)} ${u}`,
+      instruction: `Conversational pace, the ${raceName} pace blocks come later`,
+      target: { kind: "distance", meters: Math.round(easyKm * 1000) },
+      cue: `Easy running. Settle in, the ${raceName} pace blocks come later.`,
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+  ];
+  const paceLabel = pace
+    ? ` @ ${paceMinSec(Math.round(pace.goalPaceS), unit)} ${paceUnitLabel(unit)}`
+    : ` at ${raceName} effort`;
+  for (let rep = 1; rep <= blocks.reps; rep++) {
+    out.push({
+      type: "moderate",
+      label: `${compact(blocks.blockKm)} ${u}${paceLabel}`,
+      instruction: pace
+        ? `${pace.marathonBand ? "Marathon pace" : "Your goal race pace"}: even, the rhythm you’ll race at`
+        : `${blocks.race === "marathon" ? "Marathon" : "Half marathon"} effort: even and controlled, the rhythm you’d race at`,
+      target: { kind: "distance", meters: Math.round(blocks.blockKm * 1000) },
+      ...(pace ? { paceTarget: pace.goalPaceS, pacePinned: true } : {}),
+      rep,
+      totalReps: blocks.reps,
+      effort: `${compact(blocks.blockKm)} ${u} @ ${named}`,
+      eyebrow: `${heading} · BLOCK ${rep}/${blocks.reps}`,
+      cue: `Block ${rep} of ${blocks.reps} at ${named}. Settle into your race rhythm.`,
+    });
+    if (rep < blocks.reps) {
+      out.push({
+        type: "recovery",
+        label: `Easy ${compact(blocks.floatKm)} ${u}`,
+        instruction: "Easy running between the blocks",
+        target: { kind: "distance", meters: Math.round(blocks.floatKm * 1000) },
+        rep,
+        totalReps: blocks.reps,
+        cue: "Easy now. Let your breathing settle before the next block.",
+        eyebrow: `${EFFORT_EYEBROW.easy} · AFTER BLOCK ${rep}/${blocks.reps}`,
+      });
+    }
+  }
+  out.push({
+    type: "easy",
+    label: `Easy ${compact(blocks.finishKm)} ${u}`,
+    instruction: "Easy to the finish",
+    target: { kind: "distance", meters: Math.round(blocks.finishKm * 1000) },
+    cue: "Easy running to the finish. The blocks are done.",
+    eyebrow: EFFORT_EYEBROW.easy,
+  });
+  return out;
+}
+
+/**
+ * Run24 (8), deep dive D6: an easy run with pick-ups by time
+ * (`RunTemplate.config.pickUps`), a new runner's light quality. Easy
+ * running, the pick-ups by feel with easy running between, then easy to the
+ * run's minutes. No segment carries a pace, with a benchmark or without.
+ * The segments sum to the run's minutes, as the strides run's do.
+ */
+export function segmentsFromEasyWithPickUps(
+  totalMinutes: number,
+  pickUps: {
+    reps: number;
+    workSeconds: number;
+    easySeconds: number;
+    warmupSeconds: number;
+  },
+  /** Same cross-run rotation contract as segmentsFromIntervals. */
+  seed: number = 0
+): SessionSegment[] {
+  const blockSec =
+    pickUps.reps * pickUps.workSeconds +
+    (pickUps.reps - 1) * pickUps.easySeconds;
+  const warmupSec = Math.min(
+    pickUps.warmupSeconds,
+    Math.max(0, totalMinutes * 60 - blockSec)
+  );
+  const finishSec = Math.max(0, totalMinutes * 60 - warmupSec - blockSec);
+  const work = segmentTargetLabel({
+    kind: "duration",
+    seconds: pickUps.workSeconds,
+  });
+  const out: SessionSegment[] = [
+    {
+      type: "easy",
+      label: `Easy ${min(warmupSec)} min`,
+      instruction: "Conversational pace, the pick-ups come after",
+      target: { kind: "duration", seconds: warmupSec },
+      cue: "Easy running. Settle in, the pick-ups come after.",
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+  ];
+  for (let rep = 1; rep <= pickUps.reps; rep++) {
+    out.push({
+      type: "moderate",
+      label: `${work} pick-up`,
+      instruction: "Comfortably hard, by feel: smooth, never a sprint",
+      target: { kind: "duration", seconds: pickUps.workSeconds },
+      rep,
+      totalReps: pickUps.reps,
+      effort: `${work} pick-up`,
+      eyebrow: `${EFFORT_EYEBROW.comfortablyHard} · ${rep}/${pickUps.reps}`,
+      cue: pickUpCue(rep, pickUps.reps, seed + rep),
+    });
+    if (rep < pickUps.reps) {
+      out.push({
+        type: "recovery",
+        label: "Easy",
+        instruction: "Easy running",
+        target: { kind: "duration", seconds: pickUps.easySeconds },
+        rep,
+        totalReps: pickUps.reps,
+        cue: pickUpEaseCue(seed + rep),
+        eyebrow: `${EFFORT_EYEBROW.easy} · AFTER ${rep}/${pickUps.reps}`,
+      });
+    }
+  }
+  if (finishSec > 0) {
+    out.push({
+      type: "easy",
+      label: `Easy ${min(finishSec)} min`,
+      instruction: "Conversational pace to the end",
+      target: { kind: "duration", seconds: finishSec },
+      cue: "Easy running to the end. The pick-ups are done.",
+      eyebrow: EFFORT_EYEBROW.easy,
+    });
+  }
+  return out;
 }
 
 /**

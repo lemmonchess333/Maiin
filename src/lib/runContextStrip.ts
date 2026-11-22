@@ -22,16 +22,16 @@ import type { RunPlanMetadata } from "./runPlanMetadata";
  *
  * Six visible states:
  *   - race_prep today_plan         → "Race prep · Week N of M · {distance}"
- *   - structured today_plan        → "This week's plan · {todayLabel}"
- *   - race_prep / structured rest_day      → "Rest day in your plan."
- *   - race_prep / structured completed_day → completed-day copy
+ *   - rolling today_plan           → "This week’s plan · {todayLabel}"
+ *   - a plan's rest_day            → "Rest day in your plan."
+ *   - a plan's completed_day       → completed-day copy
  *   - race_prep elapsed            → "Race prep ended" + Settings link
  *   - freeform / no plan           → strip not rendered (null)
  */
 export interface ProgramContextStrip {
   kind:
     | "race_prep_today"
-    | "structured_today"
+    | "rolling_today"
     | "rest_day"
     | "completed_day"
     | "race_prep_elapsed";
@@ -41,7 +41,8 @@ export interface ProgramContextStrip {
   distanceLabel?: string;
   /** For race_prep today: ISO target date, rendered as a secondary line. */
   targetDate?: string;
-  /** For structured today: "Tempo Run" / "Easy 30" — the day's template name. */
+  /** For a rolling plan's today: "Tempo Run" / "Easy 30" — the day's
+   *  template name. */
   todayLabel?: string;
 }
 
@@ -60,7 +61,7 @@ export function deriveStrip(
   metadata: RunPlanMetadata,
   runPlan:
     | {
-        mode: "structured" | "race_prep" | "starter";
+        mode: "race_prep" | "starter" | "rolling";
         raceGoal?: { distance: string; targetDate: string };
         totalWeeks?: number;
         currentWeek?: number;
@@ -101,7 +102,7 @@ export function deriveStrip(
   ) {
     // For URL-template overrides on a freeform user, no strip
     // (no plan context to surface). For URL-template on a
-    // structured/race_prep user with a planned day, fall through
+    // race_prep or rolling user with a planned day, fall through
     // to the planned-day strip — the user is overriding their plan
     // and we still surface the plan context.
     if (metadata.planMode === "race_prep") {
@@ -123,7 +124,8 @@ export function deriveStrip(
         targetDate: runPlan?.raceGoal?.targetDate,
       };
     }
-    if (metadata.planMode === "structured") {
+    // A plan with no race date names today's run (Run24 (3)).
+    if (metadata.planMode === "rolling") {
       if (
         metadata.plannedRunDayIndex === null &&
         metadata.planSource === "url_template"
@@ -134,7 +136,7 @@ export function deriveStrip(
         (t) => t.id === metadata.plannedTemplateId
       );
       return {
-        kind: "structured_today",
+        kind: "rolling_today",
         todayLabel: todayTemplate && runTemplateName(todayTemplate.name, unit),
       };
     }

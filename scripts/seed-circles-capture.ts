@@ -34,6 +34,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { localWeekKey } from "../src/lib/dateHelpers";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -91,7 +92,6 @@ async function ensureProfile(
       {
         uid,
         displayName: account.displayName,
-        email: account.email,
         photoURL: null,
         athleteType: "Lifter",
         weightKg: 70,
@@ -102,16 +102,13 @@ async function ensureProfile(
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1), so the
+        // account opens on the app rather than on the agreement.
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "free",
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLogDate: null,
-        adjustCaloriesForTraining: true,
-        program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+        program: { goal: "recomp", currentPhase: "base" },
         targetCalories: 2200,
         targetProtein: 160,
-        targetCarbs: 250,
-        targetFat: 60,
       },
       { merge: true }
     );

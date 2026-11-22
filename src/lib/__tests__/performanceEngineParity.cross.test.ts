@@ -61,6 +61,7 @@ import { createRequire } from "node:module";
 import { scorePerformance as scoreTs } from "../performanceEngine";
 import type { WeeklyAggregates, Baseline } from "../performanceTypes";
 import { ADAPTIVE_TDEE_DEFAULTS } from "../adaptiveTdee";
+import { FOOD_DAY_KCAL } from "../foodDay";
 
 const require = createRequire(import.meta.url);
 const js = require("../../../functions/lib/perfScoring");
@@ -258,6 +259,36 @@ const fixtures: Fixture[] = [
     bl: makeBl(),
     profile: { goal: "recomp", targetCalories: 2600, targetProtein: 170 },
   },
+  {
+    // Circ1 (6): a circuit counts as a session done and for nothing else.
+    // Two lifts and two circuits against a target of four score full
+    // adherence on both copies; a copy that dropped the circuits would
+    // score half.
+    name: "circuits — counted for adherence only",
+    agg: makeAgg({ liftSessions: 2, runSessions: 0, circuitSessions: 2 }),
+    bl: makeBl(),
+    profile: {
+      goal: "recomp",
+      weeklyWorkoutsTarget: 4,
+      targetCalories: 2500,
+      targetProtein: 170,
+    },
+  },
+  {
+    name: "circuits only — no lift load, the sessions still count",
+    agg: makeAgg({
+      liftTonnage: 0,
+      liftHardSets: 0,
+      liftSessions: 0,
+      runKm: 0,
+      runLongKm: 0,
+      runQualityCount: 0,
+      runSessions: 0,
+      circuitSessions: 3,
+    }),
+    bl: makeBl(),
+    profile: { goal: "cut", weeklyWorkoutsTarget: 3 },
+  },
 ];
 
 describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", () => {
@@ -273,6 +304,20 @@ describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", (
       expect(jsOut).toEqual(tsOut);
     });
   }
+
+  it("a circuit raises adherence on both copies, and nothing else (Circ1 (6))", () => {
+    const profile = { goal: "recomp", weeklyWorkoutsTarget: 4 } as const;
+    const without = makeAgg({ liftSessions: 2, runSessions: 0 });
+    const withCircuits = { ...without, circuitSessions: 2 };
+    for (const score of [scoreTs, scoreJs]) {
+      const a = score(without, makeBl(), profile);
+      const b = score(withCircuits, makeBl(), profile);
+      expect(b.adherenceScore).toBeGreaterThan(a.adherenceScore);
+      expect(b.liftLoadScore).toBe(a.liftLoadScore);
+      expect(b.runLoadScore).toBe(a.runLoadScore);
+      expect(b.recoveryScore).toBe(a.recoveryScore);
+    }
+  });
 
   // The whole point of the fix: with a cut goal the scored PI must differ from
   // a goal-blind (undefined) scoring of the same week. If this ever collapses
@@ -291,11 +336,11 @@ describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", (
 });
 
 describe("the food-day floor", () => {
-  it("the server's FULL_FOOD_DAY_KCAL is the adaptive estimator's floor", () => {
-    // The PI's calorie average and the learned TDEE exclude the same days, and
-    // the weekly review reads the client constant directly.
-    expect(js.FULL_FOOD_DAY_KCAL).toBe(
-      ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal
-    );
+  it("the server's FULL_FOOD_DAY_KCAL is the app's food day", () => {
+    // A food day is one rule (App1 Q14, `foodDay.ts`): the PI's food days
+    // and calorie average, the learned TDEE's trusted days, Home's week,
+    // the weekly review and Analytics all count the same days.
+    expect(js.FULL_FOOD_DAY_KCAL).toBe(FOOD_DAY_KCAL);
+    expect(ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal).toBe(FOOD_DAY_KCAL);
   });
 });

@@ -15,27 +15,25 @@
  *     lines a race plan's gap is a scheduling miss, which the weekly check's
  *     realign already answers.
  *
- * Only someone whose plan has running in it is greeted (`runningPlan`), and
- * only once they have a run to be back from: a new account has none, and a
- * lift-only plan has nothing to return to.
+ * Only someone whose plan has running in it is greeted (`runningPlan`, from
+ * `trainingKind`), and only once they have a run to be back from: a new
+ * account has none, and a lift-only plan has nothing to return to.
  *
- * The absence is measured from saved runs through the shared eligibility
- * rule (`lastRunDay`), the same runs and rule the race plan's re-entry
- * measures, so the sheet's words and the plan a rebuild makes agree.
+ * The absence is the running half of the one return check
+ * (`trainingReturn.ts`, App1 Q35): saved runs through the shared eligibility
+ * rule, measured by the rule the race plan's re-entry measures with
+ * (`absenceFromDays`), so the sheet's words and the plan a rebuild makes
+ * agree, and the lifter's return is measured the same way.
  *
  * This module REPORTS. Home shows the surface and the sheets act; no plan
  * changes here.
  */
 import type { UserProfile } from "@/lib/auth";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
+import { trainingKind, type TrainingKindProfile } from "@/lib/trainingKind";
 import type { ProgramState } from "./programTypes";
 import { WELCOME_BACK_DAYS } from "./liftLayoff";
-import {
-  classifyLayoff,
-  daysSinceLastRun,
-  lastRunDay,
-  type DatedRun,
-} from "./layoffDetection";
+import { classifyLayoff, type SportAbsence } from "./layoffDetection";
 
 /**
  * What the person's running is, as far as a welcome back cares.
@@ -69,19 +67,18 @@ export interface RunReturnAssessment {
  *  easy run in the library, at conversational effort. */
 export const RETURN_RUN_TEMPLATE_ID = "easy_20";
 
-type RunningProfile = Pick<
-  UserProfile,
-  "athleteType" | "runMode" | "raceGoal" | "weekSchedule"
->;
+type RunningProfile = TrainingKindProfile &
+  Partial<Pick<UserProfile, "raceGoal">>;
 
 /**
  * Whether the plan has running in it, and of which kind.
  *
  * A race counts while its rebuild could run: race prep with a race on the
  * profile, before race day and outside the recovery weeks after it, which
- * are the refusals `realignRacePlan` makes. Free running has no planned
- * days, so the athlete type says it (the rule `todaySession` offers a free
- * runner's run on); a week with a run day in it says it for anyone else.
+ * are the refusals `realignRacePlan` makes. Any other running on the plan
+ * is free (`trainingKind`, the rule `todaySession` offers a free runner's
+ * run on): a race over or in its recovery, the starter goal, run days, or
+ * free running, which has no planned days.
  */
 export function runningPlan(
   profile: RunningProfile | null | undefined,
@@ -94,34 +91,26 @@ export function runningPlan(
     if (!plan.isElapsed && !plan.inRecovery) return "race";
     return "free";
   }
-  if (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
-    return "free";
-  if (profile.runMode === "race_prep" || profile.runMode === "structured")
-    return "free";
-  const runDay = (profile.weekSchedule ?? []).some(
-    (day) => day?.type === "run" || day?.type === "both"
-  );
-  return runDay ? "free" : "none";
+  return trainingKind(profile, programState).runs ? "free" : "none";
 }
 
 /**
- * Whether Home greets this runner, from their plan and their runs.
+ * Whether Home greets this runner, from their plan and the time since their
+ * last run.
  *
- * `runs` is null until the read is confirmed by the server: a cached list
- * can be missing the run someone logged on another phone yesterday, and a
- * welcome back to a person who never left is the one thing this must not
- * say.
+ * `absence` is null until the runs are read and confirmed by the server: a
+ * cached list can be missing the run someone logged on another phone
+ * yesterday, and a welcome back to a person who never left is the one
+ * thing this must not say.
  */
-export function assessRunReturn(input: {
-  plan: RunningPlan;
-  runs: readonly DatedRun[] | null;
-  todayKey: string;
-}): RunReturnAssessment {
-  const { plan, runs, todayKey } = input;
-  if (runs === null) return { daysAway: null, dismissKey: null, offer: null };
-  const daysAway = daysSinceLastRun(runs, todayKey);
-  const dismissKey = lastRunDay(runs);
-  return { daysAway, dismissKey, offer: offerFor(plan, daysAway) };
+export function runReturnFrom(
+  plan: RunningPlan,
+  absence: SportAbsence | null
+): RunReturnAssessment {
+  if (absence === null)
+    return { daysAway: null, dismissKey: null, offer: null };
+  const { daysAway, lastDay } = absence;
+  return { daysAway, dismissKey: lastDay, offer: offerFor(plan, daysAway) };
 }
 
 function offerFor(

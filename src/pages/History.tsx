@@ -36,6 +36,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
+import { leadPlan } from "@/lib/performanceWeekBreakdown";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -97,8 +98,6 @@ import AnalyticsGoDeeper, {
   type AnalyticsPage,
 } from "@/components/analytics/AnalyticsGoDeeper";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
-import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
-import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { distanceLabel } from "@/lib/runLabels";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -127,7 +126,7 @@ import {
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { useWeekPulse } from "@/hooks/useWeekPulse";
 import {
   historyRange,
   liftFigures,
@@ -183,7 +182,9 @@ const ProgressPhotos = lazyRetry(
 );
 
 /* Two tabs: Analytics and Bests (Trim1 calls 3(c) and 6, 11 November
-   2026).
+   2026). The page is Progress since App1 Q4 (13 November 2026), so the
+   first tab says Overview; its `?tab=` value stays "analytics" for the
+   links already saved.
 
    Hist5b consolidated six tabs to three after the Performance fold and
    the PRs tab: Analytics, PRs and Badges. It called the Badges tab an
@@ -288,7 +289,7 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : "Bests",
+        label: f === "analytics" ? "Overview" : "Bests",
       }))}
     />
   );
@@ -401,9 +402,11 @@ export default function History() {
     tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
     (typeof window !== "undefined" &&
       PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
-  /* Q84: the score's details (the training load among them) and the
-     ranges older than 3 months are Pro. A free account's link to either
-     lands on what it has: the headline score, 3 months. */
+  /* Q84: the score's details (its card and ring, its 12-week chart and
+     average, what it is made of) and the ranges older than 3 months are
+     Pro. The 0–100 number itself is free, small on the lead (the owner,
+     18 November 2026). A free account's link to either lands on what it
+     has: the lead, with its verdict and number, and 3 months. */
   const { isPro } = useSubscription();
   const navigate = useNavigate();
   const openHistoryPro = useCallback(() => {
@@ -642,12 +645,6 @@ export default function History() {
   const { workouts, loading: workoutsLoading } = useWorkouts({
     coverage: "complete",
   });
-  // Training-load curve feed — self-fetching (needs warmup history beyond
-  // the visible range, so it can't reuse the range-scoped runs above), and
-  // only while the score's details, which draw it, are open.
-  const trainingLoad = useTrainingLoadSeries(rangeDays, {
-    enabled: filter === "analytics" && view === "overview" && scoreOpen,
-  });
   const uid = useUid();
   const {
     meals,
@@ -676,6 +673,12 @@ export default function History() {
     error: mealsError,
   });
   const { profile } = useAuth();
+  /* This week as Home and the finish screens count it, read once: the
+     lifts and runs the plan holds now (`trainingWeek`; grill Q14, one
+     module for every weekly count). */
+  const weekPulse = useWeekPulse();
+  const plannedThisWeek =
+    (weekPulse?.lifts?.planned ?? 0) + (weekPulse?.runs?.planned ?? 0);
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
@@ -784,8 +787,9 @@ export default function History() {
    *
    * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
    * and by nothing since. The goal-weight recipe
-   * (`buildGoalWeightPersistPayload`) writes `targetCalories` and the three
-   * gram fields but not this one, and neither does the weigh-in patch. So a
+   * (`buildGoalWeightPersistPayload`) wrote `targetCalories` and the gram
+   * fields but not this one, and neither did the weigh-in patch. The field
+   * is retired now (App1 Q24). So a
    * user who onboarded at maintenance and later set a goal weight kept
    * seeing their onboarding-day plan here — "target 2,650 kcal" against a
    * plan that had been 2,100 for months, widening with every goal change,
@@ -1203,7 +1207,7 @@ export default function History() {
     <PageShell
       {...pullBindProps}
       className={ONE_CARD_RADIUS}
-      title="Analytics"
+      title="Progress"
       actions={
         <Link
           to={periodHistoryHref}
@@ -1248,7 +1252,7 @@ export default function History() {
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics…
+            Loading progress…
           </div>
         }
       >
@@ -1285,15 +1289,16 @@ export default function History() {
             )}
 
             {/* Hist6: Performance pinned to the top, range-independent
-                ("this week"). The range below scopes only the history
-                under it, so changing it never moves the index. Trim1
-                call 5: this is the one place the score is shown, and
-                what it is made of opens in place under "Score details",
-                the training load among it, which carries the range in
-                its own card as it did on the Performance page.
-                Suppressed in cold-start: the "Your first week starts
-                here" card below stands in until the first session is
-                logged. */}
+                (the last 7 days). The range below scopes only the
+                history under it, so changing it never moves the lead.
+                App1 Q10: the lead is the verdict and the last 7 days
+                against the usual week, with the 0–100 number small
+                beside the window, free (the owner, 18 November 2026).
+                Its details, opened in place under "Score details", are
+                Pro (Q84), and Progress is the one page that shows the
+                score (Q12). Suppressed in cold-start:
+                the "Your first week starts here" card below stands in
+                until the first session is logged. */}
             {filter === "analytics" &&
               view === "overview" &&
               !isAnalyticsColdStart && (
@@ -1310,18 +1315,11 @@ export default function History() {
                     detailsOpen={scoreOpen}
                     onToggleDetails={setScoreOpen}
                     detailsLocked={!isPro}
-                  >
-                    <SectionErrorBoundary sectionName="training-load">
-                      <TrainingLoadCard
-                        points={trainingLoad.points}
-                        loading={trainingLoad.loading}
-                        failed={trainingLoad.failed}
-                        onRetry={trainingLoad.refresh}
-                        guardrails={trainingLoad.guardrails}
-                        range={{ selected: timeRange, onChange: setTimeRange }}
-                      />
-                    </SectionErrorBoundary>
-                  </PerformanceSection>
+                    /* The plan the score's adherence counted against
+                       and this week's own count, so the lead says "3 of
+                       5 planned sessions" only when the two agree. */
+                    plan={leadPlan(profile, weekPulse)}
+                  />
                 </SectionErrorBoundary>
               )}
 
@@ -1452,16 +1450,12 @@ export default function History() {
                         to: periodHistoryHref,
                         returnTo: historyReturnTo,
                       }}
-                      /* The user's own weekly targets. `daysPerWeek` is what
-                         onboarding asked for and, capped at 6, is never
-                         reshaped by the engine's 7-day cap — so requested
-                         and actual agree. The run side goes through the
-                         canonical resolver rather than reading either of
-                         the two drifted profile fields directly. */
-                      plannedThisWeek={
-                        (profile?.daysPerWeek ?? 0) +
-                        getWeeklyRunTarget(profile)
-                      }
+                      /* This week's planned sessions from the plan as it is
+                         now (`trainingWeek`, the count Home and the finish
+                         screens show), not the days asked for at setup,
+                         which are written once (App1's third settings
+                         fault). */
+                      plannedThisWeek={plannedThisWeek}
                       distanceUnit={unit}
                     />
                   </SectionErrorBoundary>
@@ -1568,7 +1562,6 @@ export default function History() {
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "distance",
                             binKey: b.key,
-                            value: b.distanceM,
                           })
                         }
                         average={
@@ -1681,7 +1674,6 @@ export default function History() {
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "volume",
                             binKey: b.key,
-                            value: b.volumeKg,
                           })
                         }
                         average={

@@ -3,8 +3,8 @@
  *
  * Locked decision (S4b + S4c):
  *   - Five top-level categories (Harassment / Spam / Inappropriate /
- *     Impersonation / Other) × 2-4 sub-reasons each. Single screen,
- *     no modal stacking.
+ *     Impersonation / Other), each but Other with its sub-reasons
+ *     (src/lib/reportCategories.ts). Single screen, no modal stacking.
  *   - Three checkboxes at submit: Report (default-ON), Hide from feed
  *     (default-ON), Block author (default-OFF).
  *     Submit disabled only if all three are unchecked.
@@ -48,6 +48,7 @@ const TARGET_NOUN: Record<ReportTargetType, string> = {
   user: "user",
   space_post: "post",
   space_post_comment: "comment",
+  segment: "segment",
 };
 
 export interface ReportFormProps {
@@ -104,7 +105,7 @@ export default function ReportForm({
     try {
       // Run the three actions independently so a failure in one
       // doesn't block the others. Block takes precedence (heaviest);
-      // Report queues to admin; Hide is local-only.
+      // Report queues to admin; Hide is the person's own list.
       if (doBlock && blockAvailable && targetAuthorUid) {
         await blockUser(uid, targetAuthorUid);
         // Every surface reading the block list drops them now, not on
@@ -126,7 +127,9 @@ export default function ReportForm({
         });
       }
       if (doHide && targetType === "activity") {
-        hide(targetId);
+        // Kept in the account, so it stays hidden on every device and
+        // Settings → Social & privacy → Hidden posts can show it again.
+        hide(targetId, targetAuthorUid);
       }
       // Success messaging — adapt copy to what actually fired.
       const parts: string[] = [];
@@ -183,7 +186,7 @@ export default function ReportForm({
                   "motion-safe:transition-colors",
                   isSelected
                     ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border/50 bg-muted text-muted-foreground hover:bg-muted/80"
+                    : "border-border/50 bg-muted chip-edge text-muted-foreground hover:bg-muted/80 dark:border-transparent"
                 )}
               >
                 {c.label}
@@ -218,7 +221,7 @@ export default function ReportForm({
                     "motion-safe:transition-colors",
                     isSelected
                       ? "bg-primary-strong text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      : "bg-muted chip-edge text-muted-foreground"
                   )}
                 >
                   {sr}
@@ -265,7 +268,7 @@ export default function ReportForm({
           {targetType === "activity" ? (
             <ActionCheckbox
               label="Hide from my feed"
-              description="You won’t see this activity again."
+              description="You won’t see it in your feed. Undo it in Settings."
               checked={doHide}
               onChange={setDoHide}
             />
@@ -323,7 +326,7 @@ function ActionCheckbox({
         "motion-safe:transition motion-safe:active:scale-[0.99]",
         checked
           ? "border-primary/30 bg-primary/5"
-          : "border-border/50 bg-card hover:bg-muted/30"
+          : "border-border/50 bg-card hover:bg-muted/30 dark:card-shadow dark:border-transparent"
       )}
     >
       <span

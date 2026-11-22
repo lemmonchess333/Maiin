@@ -23,6 +23,26 @@
   }
 }
 
+/* ─── COUNTDOWN TICK (the run's 3-2-1, StartCountdown) ────────
+   Each second settles in from a little larger and fainter as it
+   replaces the last: transform and opacity only (§14h), and only when
+   motion is welcome. Under Reduce Motion the digit just changes. */
+@keyframes ds-countdown-tick {
+  from {
+    transform: scale(1.18);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ds-countdown-tick {
+    animation: ds-countdown-tick 0.35s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+}
+
 /* ─── SKELETON (LoadingSkeleton's `Skeleton`) ─────────────────
    A breathing opacity and a sweep across the theme-flipped
    `--skeleton-shimmer` gradient the component sets inline. Only when

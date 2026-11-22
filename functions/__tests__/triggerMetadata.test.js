@@ -140,6 +140,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // A shared post's public page behind Hosting's /activity/** rewrite
+  // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
+  publicPostPage: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   analyzeFoodText: {
     kind: "http",
     maxInstances: 100,
@@ -206,6 +213,24 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // App1 Q18: a comment, a follow request, an invite joined and a league
+  // result push as their tray row is written; props once a day at 19:00
+  // local (lib/socialPush.js).
+  onNotificationItemWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/notifications/{uid}/items/{itemId}",
+  },
+  hourlyPropsBundle: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
   },
   dailyRaceReconciliationSweep: {
     kind: "schedule",
@@ -289,6 +314,49 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
+  // App1 Q33 — the badges no session trigger sees (lib/badgeAwards). A
+  // delete reaches the four write triggers too, during an account sweep,
+  // and each returns before reading anything.
+  onMealWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/meals/{mealId}",
+  },
+  onWaterLogWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/waterLog/{day}",
+  },
+  onDailyNutritionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/dailyNutrition/{day}",
+  },
+  onStreakWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/streaks/data",
+  },
+  onProgramStateWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/programState/current",
+  },
   // ADR-0012 — the delete halves. Same collections, same cap: they fire
   // once per document during an account deletion sweep, so an uncapped
   // pair would fan out across a user's entire logged history.
@@ -328,6 +396,37 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
+  // Run27 call 11: a post created public, made public, narrowed, flagged or
+  // deleted moves its rows in the Spaces its author is in (lib/spaceFeed.js).
+  onActivitySpaceRows: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
+  // Run27 call 11: a join or a leave brings the member's public posts and
+  // their week into a Space or takes them out (lib/spaceFeed.js,
+  // lib/spaceWeeks.js).
+  onSpaceMemberWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/spaces/{spaceId}/members/{uid}",
+  },
+  // Run27 call 11: a restriction set or lifted takes a member out of every
+  // Space's sessions and weeks, or brings them back.
+  onRestrictionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/globalRestrictedUids/{uid}",
   },
   onActivityDeleted: {
     kind: "event",
@@ -476,6 +575,23 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["RESEND_API_KEY"],
   },
+  setEmailConsent: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  hourlyEmailSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: ["RESEND_API_KEY"],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
+  emailUnsubscribe: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   weeklyFellBehindCheck: {
     kind: "schedule",
     maxInstances: 1,
@@ -523,6 +639,36 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Run26 call 4: a Circle's meet-ups (plan, in, out, call off).
+  circleMeetup: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // Run27 call 10: a meet-up's reminder and its weekly repeat, each hour.
+  hourlyMeetupSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "30 * * * *",
+    timeoutSeconds: 540,
+  },
+  // F5c (STATUS 2026-11-21): a soft-deleted meal is removed for good 30
+  // days after it was deleted (lib/mealPurge.js). At quarter to, clear of
+  // the jobs on the hour and the meet-up sweep at half past.
+  purgeSoftDeletedMeals: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "45 * * * *",
+    timeoutSeconds: 540,
+  },
+  // Run27 call 11: the owner renames a Circle.
+  renameGoalSpace: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onGoalSpaceEventCreated: {
     kind: "event",
     maxInstances: 50,
@@ -545,6 +691,35 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // Segments (Run26 call 3, lib/segments.js). Making and deleting one match
+  // or sweep a run's worth of documents, past the 60 s default.
+  createSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  deleteSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  getSegmentBoard: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // A zone drawn or removed recomputes every board entry its owner has.
+  onPrivacyZoneWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    timeoutSeconds: 300,
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/privacyZones/{zoneId}",
   },
   weeklyLeagueTurn: {
     kind: "schedule",
@@ -722,27 +897,45 @@ describe("functions trigger metadata snapshot", () => {
     }
   });
 
-  /* Every Firestore trigger is delivered again when it throws
+  /* Every event trigger is delivered again when it throws
      (failurePolicy), and its header says why a second delivery is safe.
      Until 2026-10-20 the six social triggers and the participant recount
      had no retry, and the session triggers caught their own failures, so
      a transient error lost the work for good (lib/triggerRetry.js). A
-     trigger that cannot safely run twice goes here, with its reason. */
+     trigger that cannot safely run twice goes here, with its reason.
+
+     Every event trigger, not only Firestore's: the Storage trigger
+     `screenUploadedPhoto` throws on a failed screen so that it is
+     delivered again, and only a retried delivery past the window marks
+     the file and logs `keptUnscreened`. Without its policy a thrown
+     screen is dropped, the file kept and never marked, and until
+     2026-11-21 nothing here noticed, since this read Firestore triggers
+     alone. `onAuthUserCreated` is held the same way. */
   const NO_RETRY = {};
 
-  it("every Firestore trigger is retried unless listed with a reason", () => {
+  it("every event trigger is retried unless listed with a reason", () => {
     const noRetry = Object.entries(fns)
       .filter(([, fn]) => {
         const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
-        return (
-          trigger &&
-          /cloud\.firestore/.test(trigger.eventType) &&
-          trigger.retry !== true
-        );
+        return trigger && trigger.retry !== true;
       })
       .map(([name]) => name)
       .sort();
     expect(noRetry).toEqual(Object.keys(NO_RETRY).sort());
+  });
+
+  /* The two event triggers that are not Firestore's, named, so that
+     widening the rule above cannot pass by finding none of them. */
+  it("the Storage and Auth triggers are retried", () => {
+    const retryOf = (name) =>
+      fns[name] &&
+      fns[name].__endpoint &&
+      fns[name].__endpoint.eventTrigger &&
+      fns[name].__endpoint.eventTrigger.retry;
+    expect({
+      screenUploadedPhoto: retryOf("screenUploadedPhoto"),
+      onAuthUserCreated: retryOf("onAuthUserCreated"),
+    }).toEqual({ screenUploadedPhoto: true, onAuthUserCreated: true });
   });
 
   /* A retried trigger that throws on a bug is delivered again, with
@@ -762,7 +955,7 @@ describe("functions trigger metadata snapshot", () => {
       "the join backfill has no other path, and its join time is the event's",
   };
 
-  it("every retried Firestore trigger drops an event past the retry window", () => {
+  it("every retried event trigger drops an event past the retry window", () => {
     const source = readFileSync(
       fileURLToPath(new URL("../index.js", import.meta.url)),
       "utf8"
@@ -777,11 +970,7 @@ describe("functions trigger metadata snapshot", () => {
     const retried = Object.entries(fns)
       .filter(([, fn]) => {
         const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
-        return (
-          trigger &&
-          /cloud\.firestore/.test(trigger.eventType) &&
-          trigger.retry === true
-        );
+        return trigger && trigger.retry === true;
       })
       .map(([name]) => name);
     expect(retried.length).toBeGreaterThan(10);

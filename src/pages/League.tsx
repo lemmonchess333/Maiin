@@ -14,12 +14,14 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import LeagueJoin from "@/features/league/LeagueJoin";
+import LeagueJoinedBar from "@/features/league/LeagueJoinedBar";
 import TierBadge from "@/features/league/TierBadge";
 import {
   countdownLine,
   leagueCardState,
   lockedLine,
   sessionsLine,
+  showsJoinedCount,
   type RankedStanding,
 } from "@/features/league/league";
 import {
@@ -38,6 +40,10 @@ import { useLeagueJoin } from "@/features/league/useLeagueJoin";
  * Someone either of you has blocked is left out of what you see, as on
  * every social surface (`useBlockedUsers`); the places still count
  * everyone, so the numbers can skip one.
+ *
+ * Before groups are made (App1 Q6, `src/lib/fillingUp.ts`) the page says
+ * what the league starts at and how many are in so far, and someone who
+ * has not joined can join here.
  */
 export default function League() {
   const uid = useUid();
@@ -47,6 +53,7 @@ export default function League() {
   const { blocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const sharing = useLeagueJoin(league.reload);
+  const optedIn = profile?.leagueOptIn === true;
   const [confirmLeave, setConfirmLeave] = useState(false);
   // The countdown moves on the minute.
   const [now, setNow] = useState(() => new Date());
@@ -73,7 +80,7 @@ export default function League() {
         {[0, 1, 2, 3].map((i) => (
           <li
             key={i}
-            className="flex items-center gap-3 rounded-xl bg-card p-3"
+            className="flex items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <Skeleton className="size-6 rounded-full" />
             <Skeleton className="size-9 rounded-full" />
@@ -93,7 +100,7 @@ export default function League() {
   } else {
     const state = leagueCardState({
       uid,
-      optedIn: profile?.leagueOptIn === true,
+      optedIn,
       status: league.status,
       member: league.member,
       standings: league.standings,
@@ -132,6 +139,9 @@ export default function League() {
                 ? lockedLine(state.joined, state.needed)
                 : "Your group starts on Monday."}
             </p>
+            {locked && showsJoinedCount(state.joined) && (
+              <LeagueJoinedBar joined={state.joined} needed={state.needed} />
+            )}
             <p className="text-xs text-muted-foreground text-pretty">
               Groups of about 20 are made each Monday from people who trained in
               the last 14 days. You score on the sessions you do against your
@@ -329,7 +339,9 @@ function StandingRow({
       aria-current={self ? "true" : undefined}
       className={cn(
         "flex flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-        self ? "border border-primary/25 bg-primary/10" : "bg-card"
+        self
+          ? "border border-primary/25 bg-primary/10"
+          : "bg-card dark:card-shadow"
       )}
     >
       <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">

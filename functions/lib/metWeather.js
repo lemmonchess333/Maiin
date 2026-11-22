@@ -20,6 +20,15 @@
  * src/lib/__tests__/weatherSymbols.cross.test.ts holds every symbol here
  * against the client's icon and tips.
  *
+ * The answer also carries the next hours (Run26 (5), today's coolest
+ * hour): each hour's start, air temperature and dew point, read from the
+ * same response, so it costs MET no second request. The compact product
+ * has no dew point (MET's data model lists `dew_point_temperature` only in
+ * complete.json), so it is worked out from the hour's air temperature and
+ * relative humidity, as the app already works out the current hour's.
+ * The field is additive: an app that predates it reads the fields it
+ * knows and leaves `hours` alone.
+ *
  * Privacy: nothing here logs or keeps a coordinate beyond the rounded
  * cache key, and the cache lives only in the function instance's memory.
  */
@@ -39,10 +48,20 @@ const MIN_CACHE_MS = 10 * 60 * 1000;
 const MAX_CACHE_CELLS = 1000;
 /** A forecast hour further than this from now is not "now". */
 const MAX_HOUR_GAP_MS = 90 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+/** How many hours ahead the answer carries (Run26 (5)): twelve, a Tropos
+ *  heuristic, enough to reach from a morning to the evening or from an
+ *  afternoon to the night. Every response has them already: MET's steps
+ *  are hourly at first, then six-hourly (api.met.no's ForecastJSON
+ *  documentation), and four recorded responses, from Norway, France and
+ *  New Zealand, ran hourly for 54 to 61 hours. */
+const NEXT_HOURS = 12;
 /** The stretch of the forecast worth keeping: a little behind now, and
- *  ahead past any Expires time MET normally sends. */
-const KEEP_BEHIND_MS = 2 * 60 * 60 * 1000;
-const KEEP_AHEAD_MS = 12 * 60 * 60 * 1000;
+ *  ahead far enough that a forecast held until its Expires time, or
+ *  served stale through an outage, still has twelve hours ahead of it
+ *  (three hours' slack, a Tropos heuristic). */
+const KEEP_BEHIND_MS = 2 * HOUR_MS;
+const KEEP_AHEAD_MS = (NEXT_HOURS + 3) * HOUR_MS;
 
 class WeatherError extends Error {
   constructor(code, message) {
@@ -203,6 +222,70 @@ function feelsLikeC(tempC, windKmh, humidity) {
   return tempC;
 }
 
+/**
+ * Dew point (°C) from air temperature (°C) and relative humidity (%): the
+ * Magnus formula with the constants the WMO's guide gives (17.62 and
+ * 243.12 °C), humidity held to 1–100%. The client's `dewPointC`
+ * (src/lib/heatAdjustment.ts) is the same formula, and
+ * src/lib/__tests__/weatherHours.cross.test.ts holds the two together.
+ */
+function dewPointC(tempC, humidity) {
+  const rh = Math.min(100, Math.max(1, humidity));
+  const a = 17.62;
+  const b = 243.12;
+  const gamma = (a * tempC) / (b + tempC) + Math.log(rh / 100);
+  return (b * gamma) / (a - gamma);
+}
+
+/** One decimal place: a tenth of a degree. */
+function round1(value) {
+  return Math.round(value * 10) / 10;
+}
+
+/**
+ * The forecast's hours after `nowMs` (Run26 (5)): at most twelve, none
+ * further than twelve hours ahead, in time order, each as
+ * `{ time, temperature, dewPoint }`: the hour's start as an ISO 8601 UTC
+ * string, and its air temperature and dew point in °C to a tenth. The dew
+ * point is MET's own where the response has one (complete.json) and is
+ * worked out from the relative humidity where it doesn't (compact.json,
+ * which this module asks for). An hour lacking a value is left out, never
+ * guessed.
+ */
+function nextHours(timeseries, nowMs) {
+  if (!Array.isArray(timeseries)) return [];
+  const hours = [];
+  for (const entry of timeseries) {
+    const at = Date.parse(entry && entry.time);
+    if (!Number.isFinite(at)) continue;
+    if (at <= nowMs || at > nowMs + NEXT_HOURS * HOUR_MS) continue;
+    const details =
+      entry.data && entry.data.instant && entry.data.instant.details
+        ? entry.data.instant.details
+        : {};
+    const temp = details.air_temperature;
+    if (!isFiniteNumber(temp)) continue;
+    const dewPoint = isFiniteNumber(details.dew_point_temperature)
+      ? details.dew_point_temperature
+      : isFiniteNumber(details.relative_humidity)
+        ? dewPointC(temp, details.relative_humidity)
+        : null;
+    if (dewPoint === null) continue;
+    hours.push({
+      at,
+      hour: {
+        time: new Date(at).toISOString(),
+        temperature: round1(temp),
+        dewPoint: round1(dewPoint),
+      },
+    });
+  }
+  return hours
+    .sort((a, b) => a.at - b.at)
+    .slice(0, NEXT_HOURS)
+    .map((h) => h.hour);
+}
+
 /** The forecast hour's symbol: the next hour's, else the next six's, else
  *  the next twelve's (the longer ones are all a later hour carries). */
 function symbolOf(data) {
@@ -256,6 +339,14 @@ function currentConditions(timeseries, nowMs) {
     weatherCode: condition.weatherCode,
     description: condition.description,
   };
+}
+
+/** The callable's answer for `nowMs`: the current conditions with the
+ *  next hours (`nextHours`), or null when there are no current
+ *  conditions. */
+function weatherAt(timeseries, nowMs) {
+  const current = currentConditions(timeseries, nowMs);
+  return current ? { ...current, hours: nextHours(timeseries, nowMs) } : null;
 }
 
 /** When a forecast fetched at `nowMs` may next be asked for again: MET's
@@ -375,25 +466,25 @@ function createWeatherService({
     return request;
   }
 
-  /** The app's WeatherData for a place, or throws a WeatherError. */
+  /** The app's WeatherData for a place, with the next hours, or throws a
+   *  WeatherError. */
   async function currentWeather(rawLat, rawLon) {
     const { lat, lon } = validateCoords(rawLat, rawLon);
     const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
     const held = cells.get(key);
     const at = now();
-    const fresh =
-      held && at < held.until && currentConditions(held.timeseries, at);
+    const fresh = held && at < held.until && weatherAt(held.timeseries, at);
     if (fresh) return fresh;
 
     let cell;
     try {
       cell = await sharedFetch(key, lat, lon, held);
     } catch (err) {
-      const stale = held && currentConditions(held.timeseries, now());
+      const stale = held && weatherAt(held.timeseries, now());
       if (stale) return stale;
       throw err;
     }
-    const weather = currentConditions(cell.timeseries, now());
+    const weather = weatherAt(cell.timeseries, now());
     if (!weather) {
       throw new WeatherError(
         "provider-unavailable",
@@ -411,6 +502,7 @@ module.exports = {
   MET_USER_AGENT,
   MIN_CACHE_MS,
   MAX_CACHE_CELLS,
+  NEXT_HOURS,
   SYMBOLS,
   WeatherError,
   roundCoord,
@@ -420,6 +512,9 @@ module.exports = {
   windChillC,
   heatIndexC,
   currentConditions,
+  dewPointC,
+  nextHours,
+  weatherAt,
   cacheUntil,
   createWeatherService,
 };

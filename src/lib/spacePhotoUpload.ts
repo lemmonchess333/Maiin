@@ -12,7 +12,8 @@
  *
  * Storage contract: space-photos/{uid}/{ts}.jpg — owner-write /
  * authenticated-read (posts are visible to every signed-in user),
- * 10MB rule cap (client re-encode lands far under), swept by the
+ * 7 MB rule cap, the most Vision can screen (client re-encode lands
+ * far under, about 1 MB at most), swept by the
  * account-deletion executor's prefix cleanup (inventory:
  * spacePhotosStorage).
  */

@@ -141,7 +141,7 @@ describe("ProModal — visible copy (no white-on-white regression)", () => {
         `Log meals from a photo, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day. No manual searching.`
       )
     ).toBeInTheDocument();
-    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(100);
+    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(15);
     expect(container.ownerDocument.body.textContent).not.toMatch(/unlimited/i);
   });
 });
@@ -176,16 +176,16 @@ describe("ProModal — plan radiogroup", () => {
 
   it("CTA copy updates to reflect the selected plan's price", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText("Start Pro — £34.99/yr")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £39.99/yr")).toBeTruthy();
     const radios = screen.getAllByRole("radio");
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
-    expect(screen.getByText("Start Pro — £3.99/mo")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £6.99/mo")).toBeTruthy();
   });
 
   it("draws checkout as the app's primary button, not a gradient", () => {
     renderModal({ onClose: () => {} });
-    const cta = screen.getByRole("button", { name: "Start Pro — £34.99/yr" });
+    const cta = screen.getByRole("button", { name: "Start Pro — £39.99/yr" });
     // It was a purple-to-teal gradient (2026-09-29).
     expect(cta.className).toContain("bg-primary-strong");
     expect(cta.getAttribute("style") ?? "").not.toMatch(/gradient/);
@@ -195,7 +195,7 @@ describe("ProModal — plan radiogroup", () => {
     renderModal({ onClose: () => {} });
     expect(
       screen.getByText(
-        "£34.99 a year. Renews automatically until cancelled. Cancel any time."
+        "£39.99 a year. Renews automatically until cancelled. Cancel any time."
       )
     ).toBeTruthy();
     const radios = screen.getAllByRole("radio");
@@ -203,7 +203,7 @@ describe("ProModal — plan radiogroup", () => {
     fireEvent.click(monthly);
     expect(
       screen.getByText(
-        "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+        "£6.99 a month. Renews automatically until cancelled. Cancel any time."
       )
     ).toBeTruthy();
   });
@@ -217,7 +217,7 @@ describe("ProModal — initialPlan", () => {
     const yearly = radios.find((r) => r.textContent?.includes("Yearly"));
     expect(monthly?.getAttribute("aria-checked")).toBe("true");
     expect(yearly?.getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByText("Start Pro — £3.99/mo")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £6.99/mo")).toBeTruthy();
   });
 
   it("opens with Yearly pre-selected when initialPlan='yearly'", () => {
@@ -229,7 +229,7 @@ describe("ProModal — initialPlan", () => {
 
   it("falls back to DEFAULT_PLAN (yearly) when initialPlan is omitted", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText("Start Pro — £34.99/yr")).toBeTruthy();
+    expect(screen.getByText("Start Pro — £39.99/yr")).toBeTruthy();
   });
 });
 
@@ -275,7 +275,7 @@ describe("ProModal — feature-specific hero", () => {
 
 describe("ProModal — checkout", () => {
   it("calls purchase() with the currently-selected plan on CTA tap", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
@@ -287,7 +287,7 @@ describe("ProModal — checkout", () => {
   });
 
   it("calls purchase() with monthly after the user switches plan", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     const radios = screen.getAllByRole("radio");
     fireEvent.click(radios.find((r) => r.textContent?.includes("Monthly"))!);
@@ -300,8 +300,8 @@ describe("ProModal — checkout", () => {
 
   it("surfaces an inline error when purchase() fails", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
-      error: "Card declined.",
+      kind: "failed",
+      message: "Card declined.",
     });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -311,7 +311,7 @@ describe("ProModal — checkout", () => {
 
   it("a purchase the store took shows a note, not an error", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
+      kind: "pending",
       pending: "entitlement",
     });
     renderModal({ onClose: () => {} });
@@ -341,10 +341,10 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     });
     const beneath = cta.nextElementSibling as HTMLElement;
     expect(beneath.textContent).toBe(
-      "7 days free, then £34.99 a year. Renews automatically until cancelled. Cancel any time."
+      "7 days free, then £39.99 a year. Renews automatically until cancelled. Cancel any time."
     );
     const priceLine = within(beneath).getByText(
-      "7 days free, then £34.99 a year."
+      "7 days free, then £39.99 a year."
     );
     // The button label's own size and weight, in the text colour.
     for (const cls of ["text-base", "font-semibold"]) {
@@ -363,7 +363,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
         screen.getByRole("button", { name: "Start your 7-day free trial" })
           .nextElementSibling as HTMLElement
       ).textContent
-    ).toMatch(/^7 days free, then £3\.99 a month\. /);
+    ).toMatch(/^7 days free, then £6\.99 a month\. /);
   });
 
   it("the timeline's last step names what is then charged", () => {
@@ -373,7 +373,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
       name: "How your free trial works",
     });
     expect(timeline.textContent).toContain(
-      "Day 7 — Your subscription starts at £34.99 a year unless you’ve cancelled."
+      "Day 7 — Your subscription starts at £39.99 a year unless you’ve cancelled."
     );
   });
 
@@ -428,7 +428,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
 
   it("Cycle 7: tapping the trial CTA passes withTrial=true to purchase()", async () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: false });
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(
       screen.getByRole("button", { name: /Start your 7-day free trial/ })
@@ -444,7 +444,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
 
   it("Cycle 8: tapping the no-trial CTA passes withTrial=false to purchase()", async () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: true });
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
@@ -505,7 +505,7 @@ describe("ProModal — restore purchases visibility", () => {
     renderModal({ onClose: () => {} });
     expect(
       screen.getByText(
-        "£34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+        "£39.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
       )
     ).toBeInTheDocument();
     expect(screen.queryByText(/Apple ID/)).toBeNull();

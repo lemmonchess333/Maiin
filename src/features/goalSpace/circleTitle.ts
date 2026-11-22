@@ -1,6 +1,11 @@
 import type { WordFilter } from "@/lib/wordFilter";
 import { LAUNCH_TEMPLATES, type GoalSpace } from "./goalSpaceTypes";
 
+/** How long a Circle's name may be typed, starting one or renaming it
+ *  (Run27 call 11). The server keeps up to GOAL_SPACE_TEXT_MAX; this is
+ *  the field's cap, so a name fits a row on Together. */
+export const CIRCLE_NAME_MAX = 60;
+
 /**
  * A Circle's name as the app shows it.
  *

@@ -27,14 +27,15 @@ import {
 } from "./layoffDetection";
 
 /** How many recent runs to inspect. See "why the cap is safe" above. Home's
- *  run return reads the same window (`useRunReturn`), so the welcome back
+ *  return check reads the same window (`useTrainingReturn`), so the welcome back
  *  it shows and the re-entry plan a rebuild makes measure the same runs. */
 export const RECENT_RUN_SCAN_LIMIT = 20;
 
 /**
  * Saved runs as layoff detection reads them: each dated by its Lift3 day,
- * with the fields `isVolumeEligible` judges. The one mapping, shared by
- * this read and Home's run return.
+ * with the fields `isVolumeEligible` judges and what was run, so a race
+ * block's pace is read from the runner's own running (`runsAtOwnPace`). The
+ * one mapping, shared by this read and Home's run return.
  */
 export function datedRuns(saved: readonly SavedRun[]): DatedRun[] {
   return saved.map((run) => ({
@@ -43,6 +44,9 @@ export function datedRuns(saved: readonly SavedRun[]): DatedRun[] {
     duration: run.duration,
     isInvalid: run.isInvalid === true,
     savedAnyway: run.savedAnyway === true,
+    ...(run.activityType ? { activityType: run.activityType } : {}),
+    ...(run.templateId ? { templateId: run.templateId } : {}),
+    ...(run.workPacePinned ? { workPacePinned: true } : {}),
   }));
 }
 

@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { capacitorPlugin } from "@/test/capacitorPlugin";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 /**
  * Slice 3 (#1099) — enabled-path tests for purchase / restore / prices.
@@ -12,6 +13,7 @@ import { capacitorPlugin } from "@/test/capacitorPlugin";
  */
 const mockPurchases = {
   configure: vi.fn(),
+  getAppUserID: vi.fn(),
   logIn: vi.fn(),
   logOut: vi.fn(),
   getOfferings: vi.fn(),
@@ -28,6 +30,8 @@ vi.mock("@capacitor/core", () => ({
 }));
 
 const PID = "com.tropos.app.pro.monthly";
+/** The signed-in account, as RevenueCat's App User ID (ADR-0006). */
+const UID = "u1";
 
 function offeringsWith(packages: unknown[]) {
   return { current: { availablePackages: packages } };
@@ -44,6 +48,12 @@ async function loadModule() {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("VITE_REVENUECAT_IOS_KEY", "appl_test_key");
+  // RevenueCat is this account unless a test says otherwise.
+  mockPurchases.getAppUserID.mockResolvedValue({ appUserID: UID });
+  // Set-up succeeds unless a test says otherwise. clearAllMocks keeps a
+  // mock's implementation, so a test that made set-up fail would leave it
+  // failing for whichever test ran next.
+  mockPurchases.configure.mockResolvedValue(undefined);
 });
 
 describe("rcPurchase", () => {
@@ -65,11 +75,10 @@ describe("rcPurchase", () => {
     });
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
+    const outcome = await rcPurchase(PID, UID);
     // The price goes to the server for the trial reminder's email.
     expect(outcome).toEqual({
-      success: true,
-      isProActive: true,
+      kind: "bought",
       price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
     });
     expect(mockPurchases.purchasePackage).toHaveBeenCalledWith({
@@ -86,9 +95,7 @@ describe("rcPurchase", () => {
     mockPurchases.purchasePackage.mockRejectedValue({ userCancelled: true });
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.userCancelled).toBe(true);
-    expect(outcome.success).toBe(false);
+    expect(await rcPurchase(PID, UID)).toEqual({ kind: "cancelled" });
   });
 
   it("a failed purchase says so in the app's words, and keeps the SDK's for the log", async () => {
@@ -100,18 +107,22 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
-    expect(outcome.detail).toBe("There was a problem with the App Store.");
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "failed",
+      message: "Couldn’t complete the purchase. Try again.",
+      detail: "There was a problem with the App Store.",
+    });
   });
 
   it("fails plainly when the product is missing from the current offering", async () => {
     mockPurchases.getOfferings.mockResolvedValue(offeringsWith([]));
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.success).toBe(false);
-    expect(outcome.error).toBeTruthy();
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome).toEqual({
+      kind: "failed",
+      message: "This plan isn’t available right now. Try again later.",
+    });
     expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
   });
 
@@ -136,10 +147,9 @@ describe("rcPurchase", () => {
     // No `error`: "Couldn't complete the purchase. Try again." would ask the person to
     // pay for something the store already has. The price still goes out,
     // for the sync that asks RevenueCat again.
-    const outcome = await rcPurchase(PID);
+    const outcome = await rcPurchase(PID, UID);
     expect(outcome).toEqual({
-      success: false,
-      isProActive: false,
+      kind: "pending",
       pending: "entitlement",
       price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
     });
@@ -155,12 +165,8 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome).toEqual({
-      success: false,
-      isProActive: false,
-      pending: "approval",
-    });
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome).toEqual({ kind: "pending", pending: "approval" });
   });
 
   it("reads the pending code the SDK really uses", async () => {
@@ -179,7 +185,10 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    expect((await rcPurchase(PID)).pending).toBe("approval");
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "pending",
+      pending: "approval",
+    });
   });
 
   it("any other store error is still a failure", async () => {
@@ -193,9 +202,10 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.pending).toBeUndefined();
-    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
+    expect(await rcPurchase(PID, UID)).toMatchObject({
+      kind: "failed",
+      message: "Couldn’t complete the purchase. Try again.",
+    });
   });
 
   it("is a guarded no-op without the public key", async () => {
@@ -203,9 +213,87 @@ describe("rcPurchase", () => {
     const { rcPurchase, isRevenueCatEnabled } = await loadModule();
 
     expect(isRevenueCatEnabled()).toBe(false);
-    const outcome = await rcPurchase(PID);
-    expect(outcome.success).toBe(false);
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome.kind).toBe("failed");
     expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * App1 Q20: the sheet opens only once RevenueCat is the account buying.
+ * A failed log-in at sign-in left it on an anonymous id, and a purchase
+ * made then did not reach the account (`docs/state-machines.md`).
+ */
+describe("rcPurchase — the account before the sheet", () => {
+  const ANONYMOUS = "$RCAnonymousID:1234";
+
+  beforeEach(() => {
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    mockPurchases.purchasePackage.mockResolvedValue({
+      customerInfo: proActiveInfo,
+    });
+  });
+
+  it("buys at once when RevenueCat is already this account", async () => {
+    const { rcPurchase } = await loadModule();
+    expect((await rcPurchase(PID, UID)).kind).toBe("bought");
+    expect(mockPurchases.logIn).not.toHaveBeenCalled();
+  });
+
+  it("sets RevenueCat up as this account when it never was", async () => {
+    const { rcPurchase } = await loadModule();
+    await rcPurchase(PID, UID);
+    expect(mockPurchases.configure).toHaveBeenCalledExactlyOnceWith({
+      apiKey: "appl_test_key",
+      appUserID: UID,
+    });
+  });
+
+  it("logs an anonymous RevenueCat in as this account first, then buys", async () => {
+    mockPurchases.getAppUserID
+      .mockResolvedValueOnce({ appUserID: ANONYMOUS })
+      .mockResolvedValueOnce({ appUserID: UID });
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("bought");
+    expect(mockPurchases.logIn).toHaveBeenCalledExactlyOnceWith({
+      appUserID: UID,
+    });
+    expect(mockPurchases.logIn.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPurchases.purchasePackage.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("never opens the sheet while RevenueCat stays anonymous", async () => {
+    mockPurchases.getAppUserID.mockResolvedValue({ appUserID: ANONYMOUS });
+    const { rcPurchase } = await loadModule();
+
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "failed",
+      message: "Couldn’t start checkout. Try again.",
+      detail: "RevenueCat is not signed in as this account",
+    });
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+  });
+
+  it("never opens the sheet when the log-in fails", async () => {
+    mockPurchases.getAppUserID.mockResolvedValue({ appUserID: "someone-else" });
+    mockPurchases.logIn.mockRejectedValueOnce(new Error("offline"));
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("failed");
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
+  });
+
+  it("never opens the sheet when RevenueCat could not be set up", async () => {
+    mockPurchases.configure.mockRejectedValueOnce(new Error("SDK unavailable"));
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("failed");
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
   });
 });
 
@@ -268,7 +356,8 @@ describe("rcGetLocalizedPrices", () => {
         },
       ])
     );
-    const { rcGetLocalizedPrices } = await loadModule();
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    await configureRevenueCat(UID);
 
     expect(await rcGetLocalizedPrices()).toEqual({
       [PID]: { priceString: "$4.99", price: 4.99, currencyCode: "USD" },
@@ -282,11 +371,115 @@ describe("rcGetLocalizedPrices", () => {
 
   it("returns null when offerings are empty and when disabled", async () => {
     mockPurchases.getOfferings.mockResolvedValue(offeringsWith([]));
-    const { rcGetLocalizedPrices } = await loadModule();
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    await configureRevenueCat(UID);
     expect(await rcGetLocalizedPrices()).toBeNull();
 
     vi.stubEnv("VITE_REVENUECAT_IOS_KEY", "");
     const disabled = await loadModule();
     expect(await disabled.rcGetLocalizedPrices()).toBeNull();
+  });
+
+  it("waits for sign-in to set the SDK up, then reads the prices", async () => {
+    // A paywall opened as the app starts asked before set-up; the SDK
+    // refused, and the iPhone paywall said the store didn't answer.
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "$4.99",
+            price: 4.99,
+            currencyCode: "USD",
+          },
+        },
+      ])
+    );
+    const { rcGetLocalizedPrices, configureRevenueCat } = await loadModule();
+    const prices = rcGetLocalizedPrices();
+    await Promise.resolve();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+    await configureRevenueCat(UID);
+    expect((await prices)?.[PID]?.priceString).toBe("$4.99");
+  });
+
+  describe("when the store doesn't answer", () => {
+    afterEach(async () => {
+      await restoreRealTimers();
+    });
+
+    it("gives up after STORE_READ_TIMEOUT_MS, so the paywall can say so", async () => {
+      vi.useFakeTimers();
+      mockPurchases.getOfferings.mockReturnValue(new Promise(() => {}));
+      const mod = await loadModule();
+      await mod.configureRevenueCat(UID);
+      const prices = mod.rcGetLocalizedPrices();
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS);
+      expect(await prices).toBeNull();
+    });
+
+    it("gives up when sign-in never sets the SDK up, without asking", async () => {
+      vi.useFakeTimers();
+      const mod = await loadModule();
+      const prices = mod.rcGetLocalizedPrices();
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS);
+      expect(await prices).toBeNull();
+      expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+    });
+
+    it("waits one budget for the set-up and the store's answer together, not one each", async () => {
+      // The wait for sign-in and the offerings fetch each had their own
+      // 10 s, so a set-up that came late held the placeholder for 20 s.
+      vi.useFakeTimers();
+      mockPurchases.getOfferings.mockReturnValue(new Promise(() => {}));
+      const mod = await loadModule();
+      let settled = false;
+      const prices = mod.rcGetLocalizedPrices().then((p) => {
+        settled = true;
+        return p;
+      });
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS - 1_000);
+      await mod.configureRevenueCat(UID);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(settled).toBe(true);
+      expect(await prices).toBeNull();
+    });
+  });
+
+  it("sets the SDK up as the signed-in account when sign-in's set-up failed and stopped trying", async () => {
+    // useRevenueCatIdentity tries four times in five minutes, then stops.
+    // A read that only waited for it gave the paywall no prices, and so no
+    // buy button, for the rest of the session.
+    mockPurchases.configure.mockRejectedValue(new Error("network"));
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "$4.99",
+            price: 4.99,
+            currencyCode: "USD",
+          },
+        },
+      ])
+    );
+    const { rcGetLocalizedPrices, rcLogIn } = await loadModule();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      expect(await rcLogIn(UID)).toBe(false);
+    }
+
+    mockPurchases.configure.mockResolvedValue(undefined);
+    expect((await rcGetLocalizedPrices(UID))?.[PID]?.priceString).toBe("$4.99");
+    expect(mockPurchases.configure).toHaveBeenLastCalledWith({
+      apiKey: "appl_test_key",
+      appUserID: UID,
+    });
+  });
+
+  it("says no prices when the set-up it starts fails, without waiting out the budget", async () => {
+    mockPurchases.configure.mockRejectedValue(new Error("network"));
+    const { rcGetLocalizedPrices } = await loadModule();
+    expect(await rcGetLocalizedPrices(UID)).toBeNull();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
   });
 });

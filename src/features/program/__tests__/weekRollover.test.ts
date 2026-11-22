@@ -199,6 +199,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 2,
     expected: [
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
       "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
@@ -223,7 +224,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_20k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 hills_6x30s,easy_30_strides,long_20k | plan race_prep 5/17",
     ],
   },
   {
@@ -257,6 +258,7 @@ const cases: {
     }),
     weeksBehind: 2,
     expected: [
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
       "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 1/13",
     ],
   },
@@ -266,11 +268,15 @@ const cases: {
     edit: (s) => ({ ...s, liftWeekKey: shift(s.liftWeekKey ?? START, 7) }),
     weeksBehind: 2,
     expected: [
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
       "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
 ];
 
+// Run24 (5): a base week on three run days holds its light session (a
+// fartlek or short hills) where its strides run was, so the 10K base weeks'
+// remaining runs are an easy run and the long run.
 describe("a plan behind the calendar", () => {
   it.each(cases)("$name", (c) => {
     const built = build(c.answers);
@@ -386,6 +392,8 @@ describe("a race week built mid-week (Run19, R21)", () => {
         carry: {
           currentWeek: plan.state.runPlan?.currentWeek,
           totalWeeks: plan.state.runPlan?.totalWeeks,
+          blockInputs: plan.state.runPlan?.blockInputs,
+          shortBase: plan.state.runPlan?.shortBase,
         },
         ...extra,
       })

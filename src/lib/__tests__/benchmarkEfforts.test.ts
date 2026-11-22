@@ -38,6 +38,39 @@ const tempo = (over: Partial<EffortRun> = {}) =>
   });
 
 describe("benchmarkEffortOf", () => {
+  it("reads every race on its elapsed time: the goal race and any other Race effort (Run28 call 4, its STATUS)", () => {
+    // 25:00 moving, 26:10 from the clock's start to the finish.
+    const stamped = { duration: 1500, elapsedSeconds: 1570 };
+    expect(benchmarkEffortOf(run({ ...stamped, goalRace: true }))?.timeS).toBe(
+      1570
+    );
+    // A parkrun started as "Race effort", not the goal race: elapsed too.
+    expect(benchmarkEffortOf(run(stamped))?.timeS).toBe(1570);
+    // A race saved without both stamps: its duration.
+    expect(benchmarkEffortOf(run({ goalRace: true }))?.timeS).toBe(1500);
+    expect(benchmarkEffortOf(run())?.timeS).toBe(1500);
+    // So a race with stops sets a slower benchmark than its moving time would.
+    expect(effortVdot(benchmarkEffortOf(run(stamped))!)).toBeLessThan(
+      effortVdot(benchmarkEffortOf(run())!)
+    );
+  });
+
+  it("reads the goal race and its elapsed time from the saved run", () => {
+    const parsed = parseSavedRun("race", {
+      completedAt: at,
+      distance: 5000,
+      duration: 1500,
+      avgPace: 300,
+      activityType: "race",
+      recordingStartedAt: { seconds: 1_790_000_000, nanoseconds: 0 },
+      recordingEndedAt: { seconds: 1_790_001_570, nanoseconds: 0 },
+      racePrediction: { v: 1, distance: "5k", targetDate: "2026-10-01" },
+    })!;
+    expect(parsed.elapsedSeconds).toBe(1570);
+    expect(parsed.goalRace).toBe(true);
+    expect(benchmarkEffortOf(parsed)?.timeS).toBe(1570);
+  });
+
   it("reads a race whole, with the run it came from", () => {
     expect(benchmarkEffortOf(run())).toEqual({
       kind: "race",
@@ -230,6 +263,28 @@ describe("the saved run, read back", () => {
       expect(merged.workPortion).toEqual({ seconds: 1200, meters: 4000 });
       expect(merged.workPacePinned).toBe(true);
       expect(benchmarkEffortOf(merged)).toBeNull();
+    });
+
+    it("keeps a hot day when the write didn't touch its config (Run27 (14))", () => {
+      const loaded = parseSavedRun(
+        "h",
+        stored({ runConfig: { activityType: "tempo", hotDay: true } })
+      )!;
+      expect(loaded.hotDay).toBe(true);
+      queueDurableWrite(
+        "runner",
+        "users/runner/runs",
+        "h",
+        { relativeEffort: "harder" },
+        true
+      );
+      const [merged] = withQueuedRuns("runner", [loaded], { all: true });
+      expect(merged.relativeEffort).toBe("harder");
+      expect(merged.hotDay).toBe(true);
+      expect(benchmarkEffortOf(merged)).toMatchObject({
+        kind: "tempo",
+        hotDay: true,
+      });
     });
   });
 });

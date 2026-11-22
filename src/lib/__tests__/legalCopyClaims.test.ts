@@ -60,6 +60,7 @@ const TERMS_PROSE = TERMS.replace(/\s+/g, " ");
 const STORE = read("../foodPhotoStore.ts");
 const HEALTH_KIT = read("../healthKit.ts");
 const STEPS_HOOK = read("../../hooks/useSteps.ts");
+const STEP_OFFER_HOOK = read("../../hooks/useStepActivityOffer.ts");
 const ANALYTICS_REDACTION = read("../analyticsRedaction.ts");
 const SHARE_DEFAULTS_ROW = read(
   "../../components/settings/ShareDefaultsRow.tsx"
@@ -260,7 +261,23 @@ describe("Apple Health permissions and storage match the policy", () => {
     expect(PRIVACY_PROSE).toMatch(
       /Raw heart rate samples are held on your device/
     );
+    // The Watch asks to save workouts only because a workout session must;
+    // the policy and the Watch's own usage text both say it saves none.
+    expect(PRIVACY_PROSE).toMatch(
+      /Apple asks an app that runs one for permission to save workouts as well; the Watch saves none/
+    );
+    expect(read("../../../ios/App/TroposWatch/Info.plist")).toMatch(
+      /<key>NSHealthUpdateUsageDescription<\/key>\s*<string>[^<]*The Watch saves no workout to Health/
+    );
     expect(PRIVACY_PROSE).toMatch(/If you separately turn on workout export/);
+    // A Bluetooth heart rate sensor reads heart rate the same way, with no
+    // Watch: on the device until the run is saved, never to analytics.
+    expect(PRIVACY_PROSE).toMatch(
+      /If\s+you pair a Bluetooth heart rate sensor/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Raw\s+readings are held on your device until you save or discard the\s+run/
+    );
     expect(PRIVACY_PROSE).toMatch(/without a GPS route/);
     // The pilot build, which carries Watch runs and workout export, says
     // so where iOS asks; a standard build asks for steps alone.
@@ -321,6 +338,39 @@ describe("Apple Health permissions and storage match the policy", () => {
     expect(STEPS_HOOK.match(/setDocGuarded\(/g)).toHaveLength(1);
     expect(STEPS_HOOK).toMatch(/setDocGuarded\(ref, merged,/);
   });
+
+  it("the activity level offer keeps when Keep was tapped, never a step count", () => {
+    // Whole-app grill Q31: a week of steps is read on the phone and
+    // compared there; the policy says the count is not stored or sent,
+    // and the one write the offer makes is the time of a "Keep".
+    expect(PRIVACY_PROSE).toMatch(
+      /With Pro, it compares last week’s average with the activity level your calorie target assumes/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(/to show it on Home/);
+    expect(STEP_OFFER_HOOK.match(/setDocGuarded\(/g)).toHaveLength(1);
+    expect(STEP_OFFER_HOOK).toMatch(/\{ dismissedAt: Date\.now\(\) \}/);
+  });
+});
+
+describe("motion during runs matches the policy", () => {
+  const SOURCE = read("../runMotionSource.ts");
+  const AUTO_PAUSE = read("../runAutoPause.ts");
+  const HOOK = read("../../hooks/useRunMotion.ts");
+
+  it("discloses that motion is read on the phone and not stored or sent", () => {
+    expect(PRIVACY_PROSE).toMatch(/Motion During Runs \(iPhone\)/);
+    expect(PRIVACY_PROSE).toMatch(
+      /It is read on your phone and is not stored or sent to Tropos/
+    );
+  });
+
+  it("keeps the readings in memory: no storage, network or analytics in their path", () => {
+    for (const source of [SOURCE, AUTO_PAUSE, HOOK]) {
+      expect(source).not.toMatch(
+        /localStore|firestoreWrite|offlineQueue|analytics|fetch\(|logEvent|trackLifecycleEvent/
+      );
+    }
+  });
 });
 
 describe("what the policy says about analytics, sharing and deletion holds", () => {
@@ -353,8 +403,8 @@ describe("what the policy says about analytics, sharing and deletion holds", () 
   });
 
   it("makes no 'exclusively' or 'solely' claim about how data is used", () => {
-    // Analytics, including some fitness figures, reach Google Analytics, so
-    // a claim that data is used for one purpose alone is untrue.
+    // Usage events reach Google Analytics, so a claim that data is used for
+    // one purpose alone is untrue.
     expect(PRIVACY_PROSE).not.toMatch(/exclusively|solely/i);
   });
 

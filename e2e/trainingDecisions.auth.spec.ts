@@ -12,6 +12,7 @@ import {
   localWeekKey,
   addLocalDays,
 } from "../src/lib/dateHelpers";
+import { seededHealthConsent } from "./helpers/healthConsent";
 
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
 test("training advice, saved correction and the next session agree", async ({
@@ -106,7 +107,6 @@ test("training advice, saved correction and the next session agree", async ({
   try {
     await root.set({
       uid: user.uid,
-      email: user.email,
       displayName: "Training Journey",
       photoURL: null,
       athleteType: "Hybrid",
@@ -118,11 +118,9 @@ test("training advice, saved correction and the next session agree", async ({
       preferredWeightUnit: "kg",
       preferredHeightUnit: "cm",
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 130,
       ...plan.profileUpdates,

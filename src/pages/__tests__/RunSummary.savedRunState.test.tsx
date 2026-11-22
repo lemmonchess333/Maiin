@@ -14,6 +14,10 @@
  *    Retry after a later step failed resumes against that id, so the run
  *    is saved once (`completeRun`).
  *
+ * 4. The goal race (`racePrediction.ts`): set against the last prediction
+ *    Tropos made before it, and saved with the predictions on the run; a
+ *    shorter run on race day is neither.
+ *
  * The mocked `useProgram` runs at the top of every render, so it records
  * what the previous commit left in the DOM — that is how a commit that
  * showed something for one frame is caught. Firestore runs on the one
@@ -163,7 +167,7 @@ vi.mock("@/components/WeekPulseView", () => ({
     return null;
   },
 }));
-vi.mock("@/components/social/SavedRunKudos", () => ({
+vi.mock("@/components/social/SavedSessionKudos", () => ({
   default: () => {
     h.optionalAttempts.push("kudos");
     if (h.failedOptional === "kudos")
@@ -183,6 +187,12 @@ import {
 } from "@/lib/runResumeStorage";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  appendHeartRateSample,
+  beginMoving,
+  clearHeartRateSessionsForUser,
+  pauseMoving,
+} from "@/lib/heartRateSession";
 import {
   readsAt,
   releaseAllReads,
@@ -212,7 +222,7 @@ function savedRun(notes = "") {
     runConfig: {
       activityType: "freerun",
       planMetadata: {
-        planMode: "structured",
+        planMode: "starter",
         planSource: "today_plan",
         plannedRunDayIndex: 2,
         plannedTemplateId: "tempo_run",
@@ -592,10 +602,14 @@ describe("RunSummary — grade-adjusted pace", () => {
 
 describe("RunSummary — Save", () => {
   /** The same run, finished and not yet saved: no receipt. */
-  function renderUnsaved() {
+  function renderUnsaved(extra: Record<string, unknown> = {}) {
     const { savedRun: _receipt, ...run } = savedRun();
     return render(
-      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state: run }]}>
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/run-summary", state: { ...run, ...extra } },
+        ]}
+      >
         <Routes>
           <Route path="/run-summary" element={<RunSummary />} />
         </Routes>
@@ -633,6 +647,34 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("counts a Watch run as one, with how much of it the heart rate covered", async () => {
+    // The connected-training proposal's measurement of paired runs and
+    // coverage: a band, never a reading, and no run or session id.
+    const startedAt = Date.now() - 1_600_000;
+    renderUnsaved({
+      watchCompanionUsed: true,
+      finishedAt: Date.now() - 10_000,
+      identity: {
+        uid: "runner",
+        sessionId: "watch-run",
+        runId: "watch-run",
+        scheduledRunId: "rd-1",
+        startedAt,
+        startLocalDate: localDateString(new Date(startedAt)),
+        originTimeZone: "UTC",
+      },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(h.track).toHaveBeenCalledWith("run_completed", {
+      watchCompanion: true,
+      // No Watch readings reached this phone.
+      heartRateCoverage: "none",
+    });
   });
 
   it("recovers a finished review after reload and saves under the start-time ID", async () => {
@@ -992,6 +1034,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       activityType?: string;
       segments?: Record<string, unknown>[];
       workPortion?: { seconds: number; meters: number };
+      hotDay?: boolean;
     } = {}
   ) {
     const activityType = run.activityType ?? "easy";
@@ -1001,6 +1044,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       runConfig: {
         activityType,
         ...(run.segments ? { segments: run.segments } : {}),
+        ...(run.hotDay ? { hotDay: true } : {}),
         planMetadata: {
           planMode: "race_prep",
           planSource: "today_plan",
@@ -1056,6 +1100,41 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
     ).toBeNull();
+  });
+
+  /* Heat (heatAdjustment.ts): a run started on a hot day is never judged
+     slow. The same tempo on a cooler day reads "Easier than a tempo". */
+  it("never calls a hot day's tempo slow: slower in the heat is expected", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    // The tempo blocks at 6:00 /km, well past a 25-minute 5K's threshold
+    // window of 5:16–5:22 /km.
+    const slowBlocks = { seconds: 1440, meters: 4000 };
+    const cool = renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion: slowBlocks,
+    });
+    expect(
+      await screen.findByText(/^Easier than a tempo today: 6:00 \/km/)
+    ).toBeInTheDocument();
+    cool.unmount();
+
+    renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion: slowBlocks,
+      hotDay: true,
+    });
+    expect(
+      await screen.findByText(
+        "Slower in the heat today: 6:00 /km. That’s expected, and it still counts."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Easier than a tempo/)).toBeNull();
   });
 
   /* Pgm8 R1: Pace Insight reads efforts only. The summary hands over the
@@ -1132,6 +1211,35 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     const pinned = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
     expect(pinned.workPacePinned).toBe(true);
     expect(benchmarkEffortOf(pinned)).toBeNull();
+  });
+
+  /* Run27 (14): a run started on a hot day is handed over as one, so it
+     may raise the benchmark and never lowers it (`heatHoldsBenchmark`). */
+  it("hands Pace Insight a hot day's tempo marked hot, and a mild day's not", async () => {
+    const workPortion = { seconds: 1200, meters: 4000 };
+    const hot = renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion,
+      hotDay: true,
+    });
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
+    const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(handed.hotDay).toBe(true);
+    expect(benchmarkEffortOf(handed)).toMatchObject({
+      kind: "tempo",
+      hotDay: true,
+    });
+    hot.unmount();
+
+    renderPlanned("tempo_20", { activityType: "tempo", workPortion });
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
+    const mild = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(mild.hotDay).toBeUndefined();
+    expect(benchmarkEffortOf(mild)?.hotDay).toBeUndefined();
   });
 
   it("gives a run-walk no pace trend against runs", async () => {
@@ -1341,8 +1449,10 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
   });
 
   it("gives a typed pace no trend against outdoor runs", async () => {
-    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is a PR outdoors,
-    // and nothing on the treadmill, whatever the run's type.
+    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is faster than
+    // all of them outdoors, and nothing on the treadmill, whatever the
+    // run's type. Offline, as this block is, the whole history is not
+    // known, so the chip claims no New best (App1 Q15) and says Faster.
     seedFirestore(
       Object.fromEntries(
         Array.from({ length: 8 }, (_, i) => [
@@ -1360,7 +1470,8 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       )
     );
     const outdoors = renderTreadmillRun(true);
-    expect(await screen.findByText("New best")).toBeInTheDocument();
+    expect(await screen.findByText("Faster")).toBeInTheDocument();
+    expect(screen.queryByText("New best")).toBeNull();
     outdoors.unmount();
 
     renderTreadmillRun();
@@ -1372,6 +1483,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("Faster")).toBeNull();
     expect(screen.queryByText("New best")).toBeNull();
   });
 
@@ -1392,5 +1504,234 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
     expect(h.paceEnabled.at(-1)).toBe(true);
+  });
+});
+
+/* Run24 (12): a paired Bluetooth sensor reads any run, so the summary reads
+   heart rate for a treadmill run too, where the Watch never ran. */
+describe("RunSummary — heart rate from a sensor on a treadmill run", () => {
+  const profile = h.auth.profile;
+  beforeEach(() => {
+    h.auth.profile = { ...profile, maxHeartRate: 190 } as typeof profile;
+  });
+  afterEach(() => {
+    h.auth.profile = profile;
+    clearHeartRateSessionsForUser("runner");
+  });
+
+  it("shows time in zone from the readings the run kept", async () => {
+    const startedAt = Date.now() - 1_600_000;
+    beginMoving("runner", "s-tread", startedAt);
+    for (let i = 0; i < 300; i += 1)
+      appendHeartRateSample("runner", "s-tread", {
+        id: `ble:${i}`,
+        at: startedAt + i * 5_000,
+        bpm: 140,
+        source: "bluetooth",
+      });
+    pauseMoving("runner", "s-tread", startedAt + 1_500_000);
+    renderSummary({
+      identity: {
+        sessionId: "s-tread",
+        runId: "run-1",
+        uid: "runner",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: localDateString(),
+        originTimeZone: "UTC",
+      },
+      runConfig: { ...savedRun().runConfig, place: "treadmill" },
+    });
+    expect(
+      await screen.findByText(/Sensor covered 100% of moving time/)
+    ).toBeVisible();
+    // 140 of 190 is Zone 3, for the 25 moving minutes.
+    const zone3 = screen.getByText("Z3 · Steady");
+    expect(zone3).toBeVisible();
+    expect(zone3.parentElement).toHaveTextContent("25:00");
+  });
+});
+
+describe("RunSummary — elapsed time beside moving time (Run28 call 2)", () => {
+  /** The saved receipt (25:00 moving), stamped `wall` seconds apart. */
+  const stamps = (wall: number) => {
+    const startedAt = Date.now() - 3600_000;
+    return {
+      recordingStartedAt: startedAt,
+      finishedAt: startedAt + wall * 1000,
+    };
+  };
+
+  it("shows the elapsed time a minute or more over the moving time", async () => {
+    renderSummary(stamps(1500 + 60));
+    expect(
+      (await screen.findByText("Moving time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
+      "Elapsed time 26:00"
+    );
+  });
+
+  it("stays one figure under a minute apart", async () => {
+    renderSummary(stamps(1500 + 59));
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Elapsed time/)).toBeNull();
+    expect(screen.queryByText("Moving time")).toBeNull();
+  });
+
+  it("times a Race effort that is not the goal race on its elapsed time too (Run28 call 4, its STATUS)", async () => {
+    // A parkrun started as "Race effort": 25:00 moving, 26:00 wall clock.
+    renderSummary({
+      ...stamps(1500 + 60),
+      runConfig: { ...savedRun().runConfig, activityType: "race" },
+    });
+    expect(
+      (await screen.findByText(/^Race ·/)).previousElementSibling
+    ).toHaveTextContent("26:00");
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+  });
+
+  it("stays one figure for a run saved without both stamps", async () => {
+    renderSummary({ recordingStartedAt: null });
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Elapsed time/)).toBeNull();
+  });
+});
+
+describe("RunSummary — the goal race against what Tropos predicted", () => {
+  /* Race day is today: a run with no trace is today's. */
+  const today = localDateString();
+  const LOG = "users/runner/programState/racePrediction";
+  const prediction = (predictedS: number, weeksDone: number) => ({
+    at: new Date(Date.now() - (12 - weeksDone) * 7 * 86_400_000).toISOString(),
+    reason: weeksDone === 0 ? "first" : "changed",
+    predictedS,
+    vdot: 38.3,
+    source: "race",
+    weeksDone,
+    planWeeks: 12,
+    daysToRace: (12 - weeksDone) * 7,
+  });
+  const profile = h.auth.profile as Record<string, unknown>;
+  const queued = () => pendingDocumentWrites("runner", "users/runner/runs");
+
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    profile.runMode = "race_prep";
+    profile.raceGoal = { distance: "10k", targetDate: today };
+    seedFirestore({
+      [LOG]: {
+        v: 1,
+        distance: "10k",
+        targetDate: today,
+        snapshots: [prediction(3127, 0), prediction(3002, 4)],
+      },
+    });
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  });
+  afterEach(() => {
+    online.mockRestore();
+    delete profile.runMode;
+    delete profile.raceGoal;
+  });
+
+  /** A finished run, not yet saved, started as a race; `wall` seconds
+   *  from its clock's start to the finish, when stamped. */
+  function renderRun(distance: number, elapsed: number, wall?: number) {
+    const { savedRun: _receipt, ...run } = savedRun();
+    const startedAt = Date.now() - 4 * 3600_000;
+    return render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: {
+              ...run,
+              distance,
+              elapsed,
+              ...(wall !== undefined
+                ? {
+                    recordingStartedAt: startedAt,
+                    finishedAt: startedAt + wall * 1000,
+                  }
+                : {}),
+              runConfig: { ...run.runConfig, activityType: "race" },
+            },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("sets the race against the last prediction and keeps the predictions on the saved run", async () => {
+    renderRun(10_050, 2950);
+    expect(await screen.findByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 50:02. You ran 49:10, 0:52 faster."
+    );
+    expect(screen.getByText(/First predicted/)).toHaveTextContent(
+      "First predicted 52:07 in week 1 of 12."
+    );
+    fireEvent.click(screen.getByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).toMatchObject({
+      racePrediction: {
+        v: 1,
+        distance: "10k",
+        targetDate: today,
+        entry: "race",
+        goalTimeS: null,
+        predictions: [
+          expect.objectContaining({ predictedS: 3127, weeksDone: 0 }),
+          expect.objectContaining({ predictedS: 3002, weeksDone: 4 }),
+        ],
+      },
+    });
+  });
+
+  it("times the race on its elapsed time, and its pace on the moving time (Run28 call 4)", async () => {
+    // 49:10 moving, 50:40 from the clock's start to the finish.
+    renderRun(10_050, 2950, 3040);
+    expect(await screen.findByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 50:02. You ran 50:40, 0:38 slower."
+    );
+    // The race's own figure is its elapsed time…
+    expect(
+      screen.getByText(/^Race ·/).previousElementSibling
+    ).toHaveTextContent("50:40");
+    // …and the stats keep the moving time, the elapsed time beside it.
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("49:10");
+    expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
+      "Elapsed time 50:40"
+    );
+  });
+
+  it("says nothing and keeps nothing for a run on race day that was not the race", async () => {
+    // The warm-up jog before the start.
+    renderRun(2400, 840);
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    // POSITIVE anchor: the run was saved.
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).not.toHaveProperty("racePrediction");
+    expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+    expect(readsAt(LOG)).toHaveLength(0);
   });
 });

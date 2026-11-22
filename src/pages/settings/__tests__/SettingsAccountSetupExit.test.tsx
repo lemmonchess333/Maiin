@@ -14,7 +14,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { saveOnboardingDraft } from "@/lib/onboardingDraft";
+import {
+  HEALTH_CONSENT_STEP,
+  saveOnboardingDraft,
+} from "@/lib/onboardingDraft";
 
 const h = vi.hoisted(() => ({
   signOut: vi.fn(async () => {}),
@@ -70,7 +73,7 @@ function saveDraftAtStep(step: number) {
     raceTargetDate: "",
     injuries: ["none"],
     gender: "male",
-    ageRange: "25-34",
+    birthYearText: "1995",
     heightCm: 175,
     weightKg: 81.5,
     heightUnit: "cm",
@@ -102,6 +105,19 @@ describe("SettingsAccount — signing out of setup", () => {
       })
     );
     expect(h.signOut).toHaveBeenCalledTimes(1);
+    expect(track).toHaveBeenCalledTimes(1);
+  });
+
+  /* Priv1 call 1: analytics hears of the health-details agreement only
+     that its step was reached. Leaving from it says nothing of where, or
+     it would tell analytics the person did not agree. */
+  it("reports leaving from the health-details agreement without the step", async () => {
+    saveDraftAtStep(HEALTH_CONSENT_STEP);
+    show(true);
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    await waitFor(() =>
+      expect(track).toHaveBeenCalledWith("onboarding_abandoned", {})
+    );
     expect(track).toHaveBeenCalledTimes(1);
   });
 

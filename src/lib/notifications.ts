@@ -2,6 +2,14 @@ import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { logger } from "@/lib/logger";
 import { notifyNotificationScheduleChanged } from "./notificationScheduleEvents";
+import type { ReminderKind } from "./reminderChoices";
+import {
+  clearReminderFires,
+  isReminderKind,
+  recordCancelledReminder,
+  recordReminderTap,
+  recordScheduledReminder,
+} from "./reminderFires";
 
 export interface NotificationPayload {
   /** Stable integer ID — lets us cancel or replace a previously scheduled notification */
@@ -33,6 +41,12 @@ export interface NotificationPayload {
    * only the paths `localNotificationRoute` allows.
    */
   route?: string;
+  /**
+   * The reminder this is, for App1 Q62's count (`reminderAttention.ts`):
+   * a native reminder with a kind is recorded when scheduled, its fires
+   * are counted when the app next runs, and a tap on it is an answer.
+   */
+  kind?: ReminderKind;
 }
 
 /** The window event a web notification's click sends its route on. */
@@ -211,6 +225,10 @@ export async function scheduleNotification(
   try {
     if (isNative) {
       const schedule = nativeSchedule(payload);
+      const extra = {
+        ...(payload.route ? { route: payload.route } : {}),
+        ...(payload.kind ? { kind: payload.kind } : {}),
+      };
       await LocalNotifications.schedule({
         notifications: [
           {
@@ -218,10 +236,17 @@ export async function scheduleNotification(
             title: payload.title,
             body: payload.body,
             schedule,
-            ...(payload.route ? { extra: { route: payload.route } } : {}),
+            ...(Object.keys(extra).length > 0 ? { extra } : {}),
           },
         ],
       });
+      if (payload.kind && payload.scheduleAt)
+        recordScheduledReminder(
+          payload.id,
+          payload.kind,
+          payload.scheduleAt,
+          schedule && "on" in schedule ? (payload.repeatEvery ?? "day") : null
+        );
       return true;
     }
 
@@ -293,8 +318,11 @@ export async function listenForNotificationRoutes(
       native = await LocalNotifications.addListener(
         "localNotificationActionPerformed",
         (action) => {
-          const route = (action.notification.extra as { route?: unknown })
-            ?.route;
+          const extra = action.notification.extra as
+            { route?: unknown; kind?: unknown } | undefined;
+          // Opened from a reminder: its answer (App1 Q62).
+          if (isReminderKind(extra?.kind)) recordReminderTap(extra.kind);
+          const route = extra?.route;
           if (typeof route === "string") onRoute(route);
         }
       );
@@ -317,6 +345,8 @@ export async function cancelNotification(id: number): Promise<void> {
   if (timer !== undefined) clearTimeout(timer);
   webTimers.delete(id);
   if (!isNative) return;
+  // What it fired before it was taken back still counts (App1 Q62).
+  recordCancelledReminder(id);
   try {
     await LocalNotifications.cancel({ notifications: [{ id }] });
   } catch (err) {
@@ -332,6 +362,7 @@ export async function cancelNotification(id: number): Promise<void> {
 export async function cancelAllNotifications(): Promise<void> {
   for (const timer of webTimers.values()) clearTimeout(timer);
   webTimers.clear();
+  clearReminderFires();
   if (!isNative) return;
   try {
     const pending = await LocalNotifications.getPending();

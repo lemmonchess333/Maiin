@@ -20,8 +20,16 @@ import Onboarding from "../Onboarding";
 import {
   saveOnboardingDraft,
   loadOnboardingDraft,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
   type OnboardingDraft,
 } from "@/lib/onboardingDraft";
+import {
+  DELETE_ACCOUNT_ANCHOR,
+  HEALTH_CONSENT_COPY,
+  HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_DATA_CONSENT_VERSION,
+} from "@/lib/healthConsent";
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
@@ -29,19 +37,26 @@ import { track } from "@/lib/lifecycleAnalytics";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
 import {
+  NO_EQUIPMENT_EXERCISE_IDS,
+  NO_EQUIPMENT_PULL_NOTE,
+} from "@/features/program/noEquipment";
+import type { WorkoutDay } from "@/features/program/programTypes";
+import {
   addLocalDays,
   localDateString,
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
-const { complete, refresh } = vi.hoisted(() => ({
+const { complete, refresh, signOut } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
+  signOut: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "setup-test", email: "test@example.com" },
     refreshProfile: refresh,
+    signOut,
   }),
 }));
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -70,7 +85,7 @@ const draft: OnboardingDraft = {
   raceTargetDate: "",
   injuries: ["none"],
   gender: "male",
-  ageRange: "25-34",
+  birthYearText: "1995",
   heightCm: 175,
   weightKg: 81.5,
   heightUnit: "cm",
@@ -80,6 +95,8 @@ const draft: OnboardingDraft = {
   goalConfirmed: true,
   runConfirmed: true,
   displayName: "Test athlete",
+  // Agreed on its step (Priv1 call 1).
+  healthConsentVersion: 1,
 };
 function LocationProbe() {
   const location = useLocation();
@@ -87,10 +104,7 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
-      {/* The legacy offer is handed where "Continue with Free" goes. */}
-      {(location.state as { next?: string } | null)?.next
-        ? ` → ${(location.state as { next: string }).next}`
-        : ""}
+      {location.hash}
     </output>
   );
 }
@@ -145,6 +159,8 @@ describe("onboarding chapters and commit", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // The agreement to store health details comes before the limitations.
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "None" }));
     cleanup();
@@ -193,12 +209,25 @@ describe("onboarding chapters and commit", () => {
     expect(payload.profileData.goalWeightKg).toBe(81.5);
     expect(payload.profileData.weeklyRateKg).toBe(0);
     // The plan's `program` is merged in, not assigned over the map: the
-    // start weight and phase set beside the nutrition phase survive.
+    // phase set beside the nutrition phase survives.
     expect(payload.profileData.program).toEqual({
       goal: preview.profileUpdates.program.goal,
-      startWeight: 81.5,
       currentPhase: "base",
     });
+    // Retired profile fields (App1 Q24) are not sent: the email is Auth's,
+    // the streak is the streaks document's, and the day's carbs and fat
+    // are worked out from the calorie target.
+    for (const retired of [
+      "email",
+      "currentStreak",
+      "longestStreak",
+      "lastLogDate",
+      "tdeeBase",
+      "aiCalorieAdjustment",
+      "targetCarbs",
+      "targetFat",
+    ])
+      expect(payload.profileData).not.toHaveProperty(retired);
     resolve({ data: { success: true, activationJourneyVersion: 2 } });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     // The public profile seed leaves the photo alone: sign-up wrote the
@@ -217,20 +246,24 @@ describe("onboarding chapters and commit", () => {
     );
     builder.mockRestore();
   });
-  it("keeps the established offer when the server did not accept version 2", async () => {
-    saveOnboardingDraft("setup-test", draft);
-    complete.mockResolvedValue({
-      data: { success: true, activationJourneyVersion: null },
-    });
-    open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
-    await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
-    );
-    expect(complete.mock.calls[0][0].activationJourneyVersion).toBe(2);
-  });
+  /* App1 (whole-app grill Q27): setup ends on Today for every account.
+     The answer's journey version decides nothing, even one from a server
+     that still answered 1 or none for its comparison group. */
+  it.each([1, null, undefined])(
+    "lands on Today whatever journey version the server answers (%s)",
+    async (activationJourneyVersion) => {
+      saveOnboardingDraft("setup-test", draft);
+      complete.mockResolvedValue({
+        data: { success: true, activationJourneyVersion },
+      });
+      open();
+      fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+      await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      );
+    }
+  );
   it("shows a recoverable error and retains the intended answers after a failed commit", async () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });
@@ -296,7 +329,7 @@ describe("the review in the person's own units", () => {
     saveOnboardingDraft("setup-test", { ...draft, heightUnit: "ft" });
     open();
     expect(
-      screen.getByText("81.5 kg · 5 ft 9 in · age 25-34")
+      screen.getByText("81.5 kg · 5 ft 9 in · born 1995")
     ).toBeInTheDocument();
     expect(screen.queryByText(/175 cm/)).toBeNull();
   });
@@ -421,14 +454,19 @@ describe("activity-relevant setup", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // A runner is asked for the agreement before About you's numbers.
+    expect(
+      screen.getByRole("heading", { name: SETUP.healthDetails })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     expect(
       screen.getByRole("heading", { name: "Start with your numbers" })
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Equipment access" })
     ).not.toBeInTheDocument();
-    // Height, weight and the age range all feed the calorie estimate, so
-    // none of them may be taken from the control's starting position.
+    // Height, weight and the year of birth all feed the calorie estimate,
+    // so none of them may be taken from the control's starting position.
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "81.5" },
@@ -437,7 +475,9 @@ describe("activity-relevant setup", () => {
       target: { value: "175" },
     });
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
+    fireEvent.change(screen.getByLabelText(SETUP.birthYear), {
+      target: { value: "1995" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       screen.getByRole("region", { name: "First run preview" })
@@ -530,9 +570,7 @@ describe("inspect the generated week", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
     const original =
       builder.mock.results.at(-1)!.value.programState.workouts[0];
-    fireEvent.click(
-      screen.getByRole("button", { name: /Minimal \/ bodyweight/ })
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
     const updated = builder.mock.results.at(-1)!.value.programState.workouts[0];
     expect(
       updated.exercises.map((exercise: { name: string }) => exercise.name)
@@ -557,6 +595,98 @@ describe("inspect the generated week", () => {
     expect(
       screen.getByRole("region", { name: "First lift preview" })
     ).toHaveTextContent(updated.exercises[0].name);
+    builder.mockRestore();
+  });
+
+  it("asks a home gym and Minimal about a pull-up bar, on for one and off for the other", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^Home gym/ }));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("button", { name: /^Minimal/ }));
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "minimal",
+      pullUpBar: false,
+    });
+    fireEvent.click(bar);
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({ pullUpBar: true });
+    builder.mockRestore();
+  });
+
+  it("builds no equipment from what the floor allows, and asks only about a bar", () => {
+    // Answers kept from a home gym don't follow the person to no equipment.
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      equipment: "home_gym",
+      barbellAtHome: true,
+      smallPlates: true,
+    });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    fireEvent.click(screen.getByRole("button", { name: /^No equipment/ }));
+    // A doorway bar is the one thing to have: no barbell, no plates.
+    expect(screen.getByText("What do you have?")).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    expect(screen.queryByRole("switch", { name: "Small plates" })).toBeNull();
+    // What it can't train, said under the bar switch.
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+    const week = builder.mock.results.at(-1)!.value.programState
+      .workouts as WorkoutDay[];
+    const ids = week.flatMap((day) => day.exercises.map((e) => e.exerciseId));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.filter((id) => !NO_EQUIPMENT_EXERCISE_IDS.has(id))).toEqual([]);
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "no_equipment",
+      barbellAtHome: false,
+      pullUpBar: false,
+      smallPlates: false,
+    });
+    builder.mockRestore();
+  });
+
+  it("gives no equipment its pull with a doorway bar, and drops the note", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      experience: "intermediate",
+      daysPerWeek: 5,
+      equipment: "no_equipment",
+    });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    const bar = screen.getByRole("switch", { name: SETUP.pullUpBar });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(bar);
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+    expect(builder.mock.calls.at(-1)![0]).toMatchObject({
+      equipment: "no_equipment",
+      pullUpBar: true,
+    });
+    const plan = builder.mock.results.at(-1)!.value.programState as {
+      splitType: string;
+      workouts: WorkoutDay[];
+    };
+    // Five days build no Pull day with no equipment, bar or no bar (the
+    // owner's answer to the print); the bar's pull-ups go on other days.
+    expect(plan.splitType).toBe("upper_lower_fb");
+    expect(
+      plan.workouts.some((day) =>
+        day.exercises.some((e) => e.exerciseId === "pull-ups")
+      )
+    ).toBe(true);
     builder.mockRestore();
   });
 });
@@ -630,6 +760,7 @@ describe("answers the user has not given", () => {
       /Full gym/,
       /Home gym/,
       /Minimal/,
+      /No equipment/,
       /New to lifting/,
       /Some experience/,
       /Experienced/,
@@ -762,6 +893,63 @@ describe("a race needs a date", () => {
     });
   });
 
+  // Run26 (2): an ultra with its climb, from a setup's draft to the goal
+  // and the plan it builds.
+  it("saves an ultra and its climb on the goal, and plans for them", async () => {
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 140));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      weeklyRunDays: 4,
+      raceDistance: "50k",
+      raceTargetDate: raceDay,
+      raceEntry: "race",
+      raceClimbM: 1500,
+      runningWeekMinutes: "240",
+      runningLongestMinutes: "120",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.raceGoal).toEqual({
+      distance: "50k",
+      targetDate: raceDay,
+      entry: "race",
+      climbM: 1500,
+    });
+    expect(programState.runPlan).toMatchObject({
+      mode: "race_prep",
+      raceGoal: { distance: "50k", climbM: 1500 },
+    });
+  });
+
+  it("offers the ultras under the road races, and says 100 miles isn't one", () => {
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(screen.getByText("No 100-mile plan yet.")).toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByRole("radiogroup", { name: "Ultra distance" })
+      ).getByRole("radio", { name: "100K" })
+    );
+    expect(
+      screen.getByText(
+        "An ultra plan works best on four runs a week, with both weekend days free for the long runs. Add a day, or choose a shorter race."
+      )
+    ).toBeInTheDocument();
+    // The climb is checked before the step goes on.
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: localDateString(addLocalDays(new Date(), 140)) },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    fireEvent.change(screen.getByLabelText("Total climb (optional)"), {
+      target: { value: "lots" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
   it("begins the 30-minute goal today, with no race goal (Run9)", async () => {
     await loadWordFilter();
     saveOnboardingDraft("setup-test", {
@@ -817,7 +1005,11 @@ describe("a race needs a date", () => {
   it("no longer calls the date optional", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
-    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
+    // Run26 (2): the race's climb is optional, and the one field that says
+    // so (was: no field at all called optional).
+    expect(
+      screen.queryAllByLabelText(/optional/i).map((field) => field.id)
+    ).toEqual(["setup-race-climb"]);
   });
 });
 
@@ -1322,6 +1514,46 @@ describe("a recent race at setup", () => {
   });
 });
 
+/* Deep dive D8, Run24 (1): the longest run setup states is the saved
+   plan's. The preview ran without the easy pace the save plans with, so a
+   runner who typed a slow race was told the longest run of a plan at no
+   pace at all: 32 km for a marathon their plan takes to 20. */
+describe("the longest run setup states", () => {
+  it("is the saved plan's, at the pace of the race typed", async () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceDistance: "marathon",
+      // About five months out, from the clock.
+      raceTargetDate: localDateString(addLocalDays(new Date(), 22 * 7 + 6)),
+      raceEntry: "own",
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    const peak = () => screen.getByText(/Your longest run will be/);
+    expect(peak()).toHaveTextContent(/Your longest run will be 32 km\.$/);
+    // A 10K in 68:00, as a 2:30 half: easy about 8:25 /km, where the
+    // marathon's 180 minutes reach 20 km.
+    const recentRace = screen.getByRole("region", { name: "Recent race" });
+    fireEvent.click(within(recentRace).getByRole("radio", { name: "10K" }));
+    fireEvent.change(
+      within(recentRace).getByRole("textbox", { name: "Minutes" }),
+      { target: { value: "68" } }
+    );
+    expect(peak()).toHaveTextContent(
+      /Your longest run will be 20 km, about 2 h 50 min\.$/
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].programState.runPlan.peakLongRunKm).toBe(
+      20
+    );
+  });
+});
+
 /* DS3: each choice shows a drawing of what it leads to. The drawings are
    decorative, so the exact names below prove they add nothing to what a
    screen reader hears, and the e2e selectors that find these cards by
@@ -1356,7 +1588,8 @@ describe("choices with drawings", () => {
     // The approved incline press still pictures dumbbells and a bench
     // while the flat bench illustration is withheld.
     expect(artOf(/Home gym/).img).toMatch(/incline-db-press\.webp$/);
-    expect(artOf(/Minimal/).img).toMatch(/bodyweight-squat\.webp$/);
+    expect(artOf(/Minimal/).img).toMatch(/goblet-squat\.webp$/);
+    expect(artOf(/No equipment/).img).toMatch(/bodyweight-squat\.webp$/);
     for (const [name, solid] of [
       [/New to lifting/, 1],
       [/Some experience/, 2],
@@ -1456,6 +1689,10 @@ describe("setup, by the names the journeys use", () => {
       expect(button(level)).toBeInTheDocument();
     fireEvent.click(button("Some experience"));
     next();
+    expect(
+      screen.getByRole("heading", { name: SETUP.healthDetails })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     fireEvent.click(screen.getByRole("button", { name: SETUP.noInjuries }));
     next();
 
@@ -1472,13 +1709,9 @@ describe("setup, by the names the journeys use", () => {
     fireEvent.click(
       within(group(SETUP.sex)).getByRole("radio", { name: "Male" })
     );
-    for (const age of SETUP_OPTIONS.ages)
-      expect(
-        within(group(SETUP.age)).getByRole("radio", { name: age })
-      ).toBeInTheDocument();
-    fireEvent.click(
-      within(group(SETUP.age)).getByRole("radio", { name: "25–34" })
-    );
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.birthYear }), {
+      target: { value: "1995" },
+    });
     next();
 
     fireEvent.change(screen.getByRole("textbox", { name: SETUP.name }), {
@@ -1499,6 +1732,93 @@ describe("setup, by the names the journeys use", () => {
         source: "self_reported",
       }
     );
+  });
+});
+
+/* App1 (grill Q57; the owner chose a year of birth, 13 November 2026):
+   setup asks the year of birth in place of the age range. The age gate
+   counts in the year's terms: this year less 16 or earlier passes, and a
+   later year is refused with the gate's line. The years come from the
+   clock. */
+describe("the year of birth", () => {
+  const year = Number(localDateString().slice(0, 4));
+  const yearField = () =>
+    screen.getByRole("textbox", { name: SETUP.birthYear });
+  const continueButton = () => screen.getByRole("button", { name: "Continue" });
+  const underEighteen = "You need to be at least 18 to use Tropos.";
+  const atAboutYou = () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      step: 5,
+      birthYearText: "",
+      bodyAnswered: true,
+    });
+    open();
+  };
+  const enter = (value: string) =>
+    fireEvent.change(yearField(), { target: { value } });
+
+  it("starts empty and holds the step until a year is given", () => {
+    atAboutYou();
+    expect(yearField()).toHaveValue("");
+    expect(yearField()).toHaveAttribute("inputmode", "numeric");
+    expect(continueButton()).toBeDisabled();
+    enter("19");
+    expect(continueButton()).toBeDisabled();
+    expect(screen.queryByRole("alert")).toBeNull();
+    enter("1995");
+    expect(continueButton()).toBeEnabled();
+  });
+
+  it("takes this year less 18, and refuses the year after with the gate's line", () => {
+    atAboutYou();
+    enter(String(year - 17));
+    expect(screen.getByRole("alert")).toHaveTextContent(underEighteen);
+    expect(continueButton()).toBeDisabled();
+    enter(String(year - 18));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(continueButton()).toBeEnabled();
+  });
+
+  it("keeps only the digits typed", () => {
+    atAboutYou();
+    enter("19a95");
+    expect(yearField()).toHaveValue("1995");
+  });
+
+  it("refuses a year over 120 or after this one", () => {
+    atAboutYou();
+    for (const value of [String(year - 121), String(year + 1)]) {
+      enter(value);
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Check the year you were born."
+      );
+      expect(continueButton()).toBeDisabled();
+    }
+  });
+
+  it("sends the year of birth, and neither an age nor an age range", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const sent = complete.mock.calls[0][0].profileData;
+    expect(sent.birthYear).toBe(1995);
+    expect(sent).not.toHaveProperty("age");
+    expect(sent).not.toHaveProperty("ageRange");
+  });
+
+  it("opens a draft saved with an age range on About you, then back to the review", () => {
+    const old: OnboardingDraft = { ...draft, ageRange: "25-34" };
+    delete old.birthYearText;
+    saveOnboardingDraft("setup-test", old);
+    open();
+    expect(yearField()).toHaveValue("");
+    enter("1995");
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    expect(
+      screen.getByRole("button", { name: "Start my plan" })
+    ).toBeInTheDocument();
   });
 });
 
@@ -1744,7 +2064,9 @@ describe("what each answer changes (FV3)", () => {
     fireEvent.change(screen.getByLabelText("Height (cm)"), {
       target: { value: "175" },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
+    fireEvent.change(screen.getByLabelText(SETUP.birthYear), {
+      target: { value: "1995" },
+    });
     const target = () =>
       screen.getByRole("region", { name: "Your daily target" });
     expect(target()).toHaveTextContent("kcal");
@@ -1871,4 +2193,239 @@ describe("body answers through interruptions", () => {
       expect(complete).not.toHaveBeenCalled();
     }
   );
+});
+
+/* Priv1 call 1 (owner, 2026-11-21): setup asks for the agreement to store
+   health details on its own screen with its own button, before the first
+   body question, and the plan is saved with it. Not now says why the plan
+   needs these details and offers every way on. Analytics hears that the
+   step was reached, and nothing of the answer. */
+describe("the agreement to store health details", () => {
+  const healthStep = () =>
+    screen.getByRole("heading", { name: SETUP.healthDetails });
+  const toAgreement = () => {
+    // A lifter: aim, week, kit, then the agreement.
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Get stronger/ }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("button", { name: /Full gym/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+  };
+
+  it("asks before the limitations, in its own words, with its own button", () => {
+    toAgreement();
+    expect(healthStep()).toHaveFocus();
+    // About you opens on it: the agreement, the limitations, the numbers.
+    expect(screen.getByText("About you ·", { exact: false })).toBeVisible();
+    expect(screen.getByText("1 of 3 in this chapter")).toBeInTheDocument();
+    for (const line of [
+      HEALTH_CONSENT_COPY.stored,
+      HEALTH_CONSENT_COPY.use,
+      HEALTH_CONSENT_COPY.withdraw,
+    ])
+      expect(screen.getByText(line)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: SETUP.continue })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Anything to work around?" })
+    ).not.toBeInTheDocument();
+    // The policy can be read before agreeing, from the step itself.
+    expect(
+      screen.getByRole("link", { name: HEALTH_CONSENT_COPY.policy })
+    ).toHaveAttribute("href", "/privacy");
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    expect(
+      screen.getByRole("heading", { name: "Anything to work around?" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 of 3 in this chapter")).toBeInTheDocument();
+    expect(
+      loadOnboardingDraft("setup-test", ONBOARDING_MAX_STEP)
+    ).toMatchObject({
+      step: 4,
+      healthConsentVersion: HEALTH_DATA_CONSENT_VERSION,
+    });
+  });
+
+  it("tells analytics the step was reached, and nothing of the answer", () => {
+    toAgreement();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    const events = vi
+      .mocked(track)
+      .mock.calls.filter(
+        ([, meta]) => (meta as { step?: string } | undefined)?.step === "health"
+      );
+    // Anchored: the step's view was sent, so an empty list is not why
+    // nothing else was.
+    expect(events.map(([name]) => name)).toEqual(["onboarding_step_viewed"]);
+  });
+
+  it("sends the agreement with the plan", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].healthDataConsent).toEqual({
+      version: HEALTH_DATA_CONSENT_VERSION,
+    });
+    // The agreement is the account's, written by the server, never sent
+    // as a profile field.
+    expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
+      "healthDataConsent"
+    );
+  });
+
+  it("says why on Not now, and offers going back, deleting the account and signing out", async () => {
+    toAgreement();
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    const declined = screen.getByRole("heading", {
+      name: HEALTH_CONSENT_DECLINED_COPY.title,
+    });
+    expect(declined).toHaveFocus();
+    expect(
+      screen.getByText(HEALTH_CONSENT_DECLINED_COPY.body)
+    ).toBeInTheDocument();
+    // Its three ways on are the screen's only buttons: no Back, no I agree.
+    expect(
+      screen.queryByRole("button", { name: SETUP.agreeHealth })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Back" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_DECLINED_COPY.signOut })
+    );
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_DECLINED_COPY.back })
+    );
+    expect(healthStep()).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: SETUP.agreeHealth })
+    ).toBeEnabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: HEALTH_CONSENT_DECLINED_COPY.deleteAccount,
+      })
+    );
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      `/settings/account#${DELETE_ACCOUNT_ANCHOR}`
+    );
+    // None of it goes to analytics.
+    expect(
+      vi
+        .mocked(track)
+        .mock.calls.filter(([name]) => name === "onboarding_step_completed")
+        .map(([, meta]) => (meta as { step?: string }).step)
+    ).not.toContain("health");
+  });
+
+  /* Step numbers are ids, not places: the agreement (8) comes before About
+     you (5). A setup left on the agreement, with no year of birth yet (as
+     every setup there has), opened on About you's numbers, past the
+     question that has to come first. */
+  it("reopens a setup left on the agreement on the agreement, before any body question", () => {
+    const {
+      healthConsentVersion: _agreed,
+      bodyAnswered: _body,
+      ...before
+    } = {
+      ...draft,
+      bodyAnswered: undefined,
+    };
+    void _agreed;
+    void _body;
+    saveOnboardingDraft("setup-test", {
+      ...before,
+      step: HEALTH_CONSENT_STEP,
+      birthYearText: "",
+      returnToReview: false,
+      trainingActivity: "lifting",
+    });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: SETUP.agreeHealth })
+    ).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    // The numbers are still the person's to give: none is taken as given.
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: SETUP.weight })).toHaveValue("");
+    expect(screen.getByRole("button", { name: SETUP.continue })).toBeDisabled();
+  });
+
+  it("takes back a yes given before, when Not now is chosen", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      step: HEALTH_CONSENT_STEP,
+      returnToReview: false,
+    });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    expect(
+      loadOnboardingDraft("setup-test", ONBOARDING_MAX_STEP)
+        ?.healthConsentVersion
+    ).toBeUndefined();
+  });
+
+  it("opens a setup saved past the agreement without it on the agreement, then goes on with its answers", async () => {
+    const { healthConsentVersion: _agreed, ...before } = draft;
+    void _agreed;
+    saveOnboardingDraft("setup-test", { ...before, step: 7 });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    // Not straight back to the review: the steps after the agreement come
+    // next, their answers kept.
+    expect(screen.getByRole("button", { name: "None" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].healthDataConsent).toEqual({
+      version: HEALTH_DATA_CONSENT_VERSION,
+    });
+  });
+
+  it("shows the server's sentence when it refuses a setup without the agreement", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockRejectedValueOnce(
+      Object.assign(
+        new Error(
+          "failed-precondition: Agree to Tropos storing your health details to finish setting up."
+        ),
+        { code: "functions/failed-precondition" }
+      )
+    );
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    expect(
+      await screen.findByText(
+        "Agree to Tropos storing your health details to finish setting up."
+      )
+    ).toBeInTheDocument();
+  });
 });

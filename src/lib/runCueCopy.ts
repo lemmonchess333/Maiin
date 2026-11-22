@@ -380,6 +380,136 @@ export function walkBackCue(variant: number): string {
   return pick(WALK_BACK, variant);
 }
 
+/* Run24 (5): hill repeats and a fartlek's pick-ups, run by feel. Pools
+ * sized past the longest session's count (10 hills), as REP_MIDDLE's are. */
+const HILL = [
+  "Strong up the hill, short quick steps.",
+  "Drive the arms, stay tall.",
+  "Lean into the hill, quick feet.",
+  "Hard but in control to the top.",
+  "Eyes up the hill, run tall.",
+  "Short steps, strong push.",
+  "Same effort as the last one.",
+  "Keep the effort, let the pace go.",
+  "Relax the shoulders and climb.",
+];
+
+/** `Hill 3 of 8. Drive the arms, stay tall.` */
+export function hillRepCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Hill ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Strong to the top.`;
+  return `${head} ${pick(HILL, variant)}`;
+}
+
+const HILL_DOWN = [
+  "Jog back down. Easy and loose.",
+  "Turn and jog down. Let the breathing settle.",
+  "Easy jog down. Full recovery.",
+  "Back down gently, ready for the next one.",
+  "Walk or jog down. No hurry.",
+];
+
+/** The jog back down between hill repeats. */
+export function hillDownCue(variant: number): string {
+  return pick(HILL_DOWN, variant);
+}
+
+/* Run26 (2): a trail plan's climbs, comfortably hard, and downhill
+ * repeats with a walk back up, by feel. Pools sized past the longest
+ * session's count, as HILL's is. */
+const CLIMB = [
+  "Comfortably hard, a few words at a time.",
+  "Short steps, steady breathing.",
+  "Hike the steep bits if you need to. Same effort.",
+  "Hold the effort, let the pace go.",
+  "Run tall and relax the shoulders.",
+  "An effort you could hold up a long climb on race day.",
+  "Steady to the top.",
+];
+
+/** `Climb 2 of 4. Short steps, steady breathing.` */
+export function climbCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Climb ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Steady to the top.`;
+  return `${head} ${pick(CLIMB, variant)}`;
+}
+
+const DOWNHILL = [
+  "Quick, light steps. Let the slope do the work.",
+  "Stay tall, eyes ahead.",
+  "Controlled, not braking hard.",
+  "Short strides, soft landings.",
+  "Easy on the breathing, busy feet.",
+  "Arms out a little for balance.",
+  "Relaxed and in control to the bottom.",
+];
+
+/** `Descent 3 of 6. Quick, light steps. Let the slope do the work.` */
+export function downhillCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Descent ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Controlled to the bottom.`;
+  return `${head} ${pick(DOWNHILL, variant)}`;
+}
+
+const WALK_UP = [
+  "Walk back up. No hurry.",
+  "Easy walk to the top.",
+  "Walk it up and let the legs settle.",
+  "Back to the top, at a walk.",
+  "Walk up. Ready for the next one.",
+];
+
+/** The walk back up between downhill repeats. */
+export function walkUpCue(variant: number): string {
+  return pick(WALK_UP, variant);
+}
+
+const PICK_UP = [
+  "Comfortably hard, by feel.",
+  "Pick it up, smooth and strong.",
+  "Lift the pace. No watch needed.",
+  "Strong and relaxed.",
+  "Quicker, but in control.",
+  "A few words at a time. That’s the effort.",
+  "Run by feel. Comfortably hard.",
+];
+
+/** `Pick-up 2 of 6. Pick it up, smooth and strong.` */
+export function pickUpCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Pick-up ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Strong to the end.`;
+  return `${head} ${pick(PICK_UP, variant)}`;
+}
+
+const PICK_UP_EASE = [
+  "Ease back to easy.",
+  "Back to easy. Let it settle.",
+  "Easy now until the next one.",
+  "Float it. Easy running.",
+  "Easy. Shake the arms out.",
+];
+
+/** The easy running between a fartlek's pick-ups. */
+export function pickUpEaseCue(variant: number): string {
+  return pick(PICK_UP_EASE, variant);
+}
+
 const FLOAT = [
   "Float. Easy running until the next block.",
   "Float it. Keep the legs turning over.",

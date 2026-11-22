@@ -4,8 +4,8 @@
  * renamed button fails in the unit suite in seconds, not weeks into a
  * journey in CI.
  *
- * - Setup's names: `Onboarding.test.tsx` walks setup by them.
- * - The offer after setup: `Upgrade.test.tsx`.
+ * - Setup's names: `Onboarding.test.tsx` walks setup by them, the
+ *   health-details agreement's I agree included.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -16,6 +16,8 @@
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
  *   title and the tab bar: `journeyScreens.test.tsx`.
+ * - A sport added or removed in Settings: `AddLiftingFlow.test.tsx`,
+ *   `RunPlanSettings.test.tsx` and `ProgrammeSettings.test.tsx`.
  */
 import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -42,11 +44,18 @@ export const SETUP = {
   weekMinutes: "Minutes a week",
   longestRun: "Longest run, min",
   legTrim: "Lighten leg sessions while your runs build",
+  /** "What do you have?" beside a home gym, Minimal and no equipment. */
+  pullUpBar: "A pull-up bar",
+  /** Priv1 call 1: the agreement to store health details, asked before
+   *  the first body question (a lifter's limitations, or About you). */
+  healthDetails: "Your health details",
+  agreeHealth: "I agree",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",
   sex: "Sex for calorie calculation",
-  age: "Age range",
+  /** App1 (Q57): the year of birth that replaced the age range. */
+  birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
 } as const;
@@ -68,19 +77,29 @@ export const SETUP_OPTIONS = {
   liftMinutes: ["30 min", "45 min", "60 min", "75+ min"],
   runners: ["New to running", "Occasional runner", "Regular runner"],
   raceDistances: ["5K", "10K", "Half", "Full"],
-  equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
+  equipment: ["Full gym", "Home gym", "Minimal", "No equipment"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
-  ages: ["16–24", "25–34", "35–44", "45–54", "55+"],
 } as const;
 
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =
   (typeof SETUP_OPTIONS)[Question][number];
 
-/** The offer setup ends on (`Upgrade`). */
-export const OFFER = {
-  ready: "Your plan is ready",
-  free: "Continue with Free",
+/** A sport added or removed after setup (TrainWk1 step 6): Lift plan's Add
+ *  lifting (`AddLiftingFlow`, setup's questions under `SETUP`'s names),
+ *  Run plan's Add running, and each editor's Stop and its confirmation
+ *  (`StopSportDialog`). */
+export const SPORT_CHANGE = {
+  liftPlan: "/settings/lift-plan",
+  runPlan: "/settings/run-plan",
+  addLiftingQuestion: "How often will you lift?",
+  addLifting: "Add lifting",
+  addRunningQuestion: "How much do you run now?",
+  addRunning: "Add running",
+  stopLifting: "Stop lifting",
+  stopLiftingAsked: "Stop lifting?",
+  stopRunning: "Stop running",
+  stopRunningAsked: "Stop running?",
 } as const;
 
 /** The workout screen (`WorkoutSession`), from Train's Start workout. */
@@ -149,7 +168,7 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where a saved version 2 plan lands (`Home`'s page h1: for screen
+/** Home, where a saved plan lands (`Home`'s page h1: for screen
  *  readers only since DS4, where the hero names the screen). */
 export const HOME = {
   heading: "Today",
@@ -166,7 +185,8 @@ export const TRAIN = {
   viewRun: "View run",
   /** Today's planned run starts from its card, straight into the run. */
   startRun: "Start run",
-  /** The Lift tab's way into a workout with no plan day
+  /** The Lift tab's way into a workout with no plan day: its name starts
+   *  with these words, the line under them follows
    *  (`EmptyWorkoutEntry.test.tsx`). */
   emptyWorkout: "Empty workout",
 } as const;
@@ -175,15 +195,18 @@ export const TRAIN = {
  *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
 export const runWeekLabel = runStripLabel;
 
-/** A day on Train's run week, by its name: the run's short label
- *  (`runWeekLabel`), and whether the day is today or the run done. Until
- *  its run is done its text is the date's day of the month, which tells
- *  apart days whose runs share a name. */
+/** A day on Train's run week, by its name: the date's day of the month,
+ *  which its circle shows until its run is done and which tells apart
+ *  days whose runs share a name, then the run's short label
+ *  (`runWeekLabel`), and whether the day is today or the run done. The
+ *  number leads because it is the tab's visible text (WCAG 2.5.3). */
 export function runWeekTabName(
+  day: number | string,
   label: string,
   state?: "today" | "completed" | "skipped"
 ): string {
-  return state ? `${label}, ${state}` : label;
+  const name = `${day}, ${label}`;
+  return state ? `${name}, ${state}` : name;
 }
 
 /** The banner over Train's lift week in the weeks a race plan turns
@@ -218,18 +241,21 @@ export const TABS = {
   train: "Train",
   food: "Food",
   social: "Social",
-  analytics: "Analytics",
+  progress: "Progress",
 } as const;
 
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];
 
 /** Run9's starter goal: setup's option, and its Done on Home and Train
- *  (`StarterDoneCard`). */
+ *  (`StarterDoneCard`), with what comes next: the 5K, and the plans with
+ *  no race date (Run24 (3)). */
 export const STARTER = {
   setupOption: "30 minutes",
   goal: "30 minutes without stopping",
   done: "Done",
   offer: "Train for a 5K",
+  buildTo5k: "Build to 5K",
+  keepFit: "Keep fit",
   notNow: "Not now",
   /** Train's starter card once this week's runs are in. */
   weekDone: "This stage is complete. The next one starts on Monday.",

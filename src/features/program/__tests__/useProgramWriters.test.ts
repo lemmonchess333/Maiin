@@ -13,7 +13,7 @@ import { createRequire } from "node:module";
  *     V2-shaped runDays (id/date/weekKey/status)
  *   - 6 lift + 2 run schedule produces 2 scheduled runs (the V1
  *     hybrid bug — V1 lost the Both-day's run exposure)
- *   - structured + race-prep refresh both write V2 runDays
+ *   - race-prep refresh writes V2 runDays
  *   - compressed race plans propagate the compressed flag
  *   - regenerate writes programSchemaVersion
  *
@@ -173,7 +173,7 @@ type MockProfile = {
   weeklyWorkoutsTarget?: number;
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
-  runMode?: "freeform" | "structured" | "race_prep";
+  runMode?: "freeform" | "race_prep" | "starter";
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -268,14 +268,14 @@ vi.mock("date-fns", () => ({ format: vi.fn(() => "2026-05-12") }));
 
 // ─── Test fixtures ───────────────────────────────────────────────────
 
-function structuredProfile(overrides: Partial<MockProfile> = {}): MockProfile {
+function hybridProfile(overrides: Partial<MockProfile> = {}): MockProfile {
   return {
     uid: "test-user-1",
     weekSchedule: generateSchedule(6, 2), // hybrid — includes a Both day
     weekScheduleVersion: 1,
     weeklyWorkoutsTarget: 6,
     weeklyRunDaysTarget: 2,
-    runMode: "structured",
+    runMode: "freeform",
     primaryGoal: "hypertrophy",
     program: { goal: "recomp" },
     ...overrides,
@@ -313,7 +313,7 @@ function raceProfile(
   overrides: Partial<MockProfile> = {}
 ): MockProfile {
   return {
-    ...structuredProfile(overrides),
+    ...hybridProfile(overrides),
     runMode: "race_prep",
     raceGoal: { distance: "10k", targetDate },
     ...overrides,
@@ -365,11 +365,10 @@ beforeEach(() => {
 });
 
 describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
-  it("Run9: initial creation for a legacy structured user migrates to freeform with NO runDays", async () => {
-    // Run9 (3a) retired `structured`: a legacy structured user is migrated to
-    // freeform on load, and freeform generates no auto-assigned runDays. Only
-    // a race plan (race_prep + raceGoal) produces a week.
-    mockProfile = structuredProfile();
+  it("initial creation for a free runner writes NO runDays", async () => {
+    // Free running generates no auto-assigned runDays. Only a race plan
+    // (race_prep + raceGoal) and the starter goal produce a week.
+    mockProfile = hybridProfile();
     resetFirestore(); // no existing programState doc
 
     const { result } = mountProgram();
@@ -383,12 +382,8 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     const lastWrite = setDocCalls()[setDocCalls().length - 1]
       .data as ProgramState;
     expect(lastWrite.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
-
-    // No structured week is generated — freeform has no runDays.
     expect(lastWrite.runDays).toBeUndefined();
-
-    // runMode is migrated structured → freeform.
-    expect(readDoc("users/test-user-1")).toMatchObject({ runMode: "freeform" });
+    expect(lastWrite.runPlan).toBeUndefined();
   });
 
   it("race-prep initial creation writes compressed flag on runPlan", async () => {
@@ -427,7 +422,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         weekNumber: 1,
         splitType: "ppl",
         workouts: [],
-        fatigueScore: 0,
         updatedAt: Date.now(),
         settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
@@ -479,7 +473,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -529,7 +522,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -563,18 +555,19 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     });
   });
 
-  it("Run9: loading a legacy structured user WIPES the orphaned runDays + runPlan", async () => {
-    // Run9 (3a): structured is retired. On load, a structured user's
-    // auto-assigned runDays + runPlan are wiped (they're meaningless under
-    // freeform) and runMode is migrated.
-    mockProfile = structuredProfile();
+  it("App1 Q25: a stored plan of the retired structured mode loads as free running", async () => {
+    // Run9 (3a) retired `structured` and App1 Q25 took it out of the code.
+    // A plan still holding it loads as free running: its auto-assigned
+    // runDays and its runPlan are cleared and stored so. The profile comes
+    // here already read as free running (`hydrateProfile`, pinned by
+    // authRetiredRunMode.test.tsx), and this load writes no run mode.
+    mockProfile = hybridProfile();
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -591,26 +584,32 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         } as ScheduledRunDay,
       ],
       runPlan: { mode: "structured" },
-    } as ProgramState);
+    } as unknown as ProgramState);
 
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
 
-    // runMode migrated structured → freeform.
-    expect(readDoc("users/test-user-1")).toMatchObject({ runMode: "freeform" });
-    // The wipe write cleared the orphaned structured runDays to []. (Assert a
-    // wipe write exists rather than the LAST write: the migration's
-    // updateProfile triggers a re-render whose second load pass reads the
-    // unchanged mock doc, so the ordering of writes isn't deterministic in the
-    // harness — the wipe having happened is the contract.)
+    const stored = readDoc(
+      "users/test-user-1/programState/current"
+    ) as unknown as ProgramState;
+    expect(stored.runPlan).toBeUndefined();
+    expect(stored.runDays).toEqual([]);
+    expect(result.current.programState?.runPlan).toBeUndefined();
+    expect(result.current.programState?.runDays).toEqual([]);
+    // Nothing wrote a run mode, the retired one least of all.
     expect(
-      setDocCalls().some((c) => {
-        const rd = (c.data as ProgramState).runDays;
-        return Array.isArray(rd) && rd.length === 0;
-      })
-    ).toBe(true);
+      writeLog().filter(
+        (w) =>
+          w.path === "users/test-user-1" &&
+          "runMode" in ((w.data ?? {}) as Record<string, unknown>)
+      )
+    ).toEqual([]);
+    expect(mockUpdateProfile).not.toHaveBeenCalledWith(
+      expect.objectContaining({ runMode: expect.anything() }),
+      expect.anything()
+    );
   });
 
   it("refreshRunSchedule accepts explicit weekSchedule override (not stale closure)", async () => {
@@ -636,7 +635,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -685,7 +683,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         status: "planned",
       }) as ScheduledRunDay;
     const seedNewer = () => {
-      mockProfile = structuredProfile({
+      mockProfile = hybridProfile({
         runMode: "next_kind" as MockProfile["runMode"],
       });
       seedProgram({
@@ -694,7 +692,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         weekNumber: 2,
         splitType: "ppl",
         workouts: [],
-        fatigueScore: 0,
         updatedAt: Date.now(),
         settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
@@ -759,7 +756,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 5,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -805,7 +801,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       durationWeeks: 8 as const,
       startDate: "2026-08-01",
       goalBefore: "hypertrophy" as const,
-      amnestyWeeksLeft: 3,
       weeklyLiftTarget: 4,
       anchorExerciseIds: [],
       why: "",
@@ -819,7 +814,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 5,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -852,7 +846,6 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekNumber: 5,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -911,20 +904,18 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
   // (skipRunDay refusal) survive unchanged.
 
   it("skipRunDay refuses to skip a legacy completed:true doc", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [legacyCompletedRunDay()],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -976,7 +967,6 @@ describe("Run9 phase-3 — realign keeps completions across regen", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1080,7 +1070,6 @@ describe("Run19 — a race week built partway through plans no run before today 
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1338,7 +1327,6 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1347,7 +1335,6 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
         plannedRunDay(1, "runday_target_id"),
         plannedRunDay(3, "runday_other_id"),
       ],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -1377,13 +1364,11 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [plannedRunDay(1, "runday_a"), plannedRunDay(3, "runday_b")],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -1414,7 +1399,6 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1425,7 +1409,6 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
           status: "skipped",
         },
       ],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -1445,7 +1428,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
 
 // ─── PR-B regression — refreshRunSchedule REPLACES runDays, never patches ───
 
-describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structured", () => {
+describe("PR-B — refreshRunSchedule replaces runDays, never merges", () => {
   // The inline mode picker (restored in PR-B) sequences
   // `updateProfile({ runMode: "structured" })` then
   // `refreshRunSchedule(...)`. Phase B QA flagged a concern: if
@@ -1467,10 +1450,9 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
   // fails CI before reaching device QA.
 
   // The structured→ direction of this contract is retired: structured is no
-  // longer a target mode, and a legacy structured user's orphaned runDays are
-  // wiped on load instead — held by "Run9: loading a legacy structured user
-  // WIPES the orphaned runDays + runPlan" above, which asserts the wipe write
-  // rather than merely that nothing crashed.
+  // longer a mode (App1 Q25), and a stored structured plan is cleared on
+  // load instead — held by "App1 Q25: a stored plan of the retired
+  // structured mode loads as free running" above.
   //
   // Its test used to sit here as `it.skip`, kept "to preserve the
   // merge-vs-replace intent doc". That reason does not survive reading: the
@@ -1486,11 +1468,10 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
   // race runDays" would be false. Only the marker id and the runPlan mode are
   // checkable here.
 
-  it("race_prep refresh from a structured-shape runDays array also replaces (inverse direction)", async () => {
-    // The reverse case — restoring race_prep from a structured
-    // baseline. Same replace-not-merge contract; if we ever
-    // regress to merging, structured easy_30 entries would leak
-    // into race-period weeks.
+  it("race_prep refresh from an earlier runDays array replaces it (inverse direction)", async () => {
+    // The reverse case — a race plan over run days an earlier plan left.
+    // Same replace-not-merge contract; if we ever regress to merging,
+    // the earlier easy_30 entries would leak into race-period weeks.
     mockProfile = raceProfile(raceHalfAYearOut(), { weeklyRunDaysTarget: 3 });
 
     const structuredPeriodRunDays: ScheduledRunDay[] = [
@@ -1511,13 +1492,11 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: structuredPeriodRunDays,
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -1579,7 +1558,6 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1638,7 +1616,6 @@ describe("current-week running prescription compatibility on open", () => {
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -1726,7 +1703,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1786,7 +1762,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
         weekNumber: 1,
         splitType: "ppl",
         workouts: [],
-        fatigueScore: 0,
         updatedAt: Date.now(),
         settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
@@ -1859,7 +1834,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       weekNumber: 6,
       splitType: "ppl",
       workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1916,7 +1890,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
           exercises: [],
         },
       ],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2005,7 +1978,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
           exercises: [squat, bench],
         },
       ],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2060,7 +2032,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2134,7 +2105,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2192,7 +2162,6 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2264,7 +2233,6 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2340,7 +2308,6 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           exercises: [squat],
         },
       ],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2399,7 +2366,6 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           { dayName: "A", dayType: "full", exercises: [], completed: true },
           { dayName: "B", dayType: "full", exercises: [], completed: false },
         ],
-        fatigueScore: 0,
         updatedAt: Date.now(),
         settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
@@ -2466,14 +2432,13 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       const day = String(d.getDate()).padStart(2, "0");
       return `${y}-${m}-${day}`;
     })();
-    mockProfile = structuredProfile({ weeklyRunDaysTarget: 2 });
+    mockProfile = hybridProfile({ weeklyRunDaysTarget: 2 });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2490,7 +2455,6 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -2504,20 +2468,18 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
   });
 
   it("skips freeform users (no runDays to rotate)", async () => {
-    mockProfile = structuredProfile({ runMode: "freeform" });
+    mockProfile = hybridProfile({ runMode: "freeform" });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
-      runPlan: { mode: "structured" },
     } as ProgramState);
 
     const { result } = mountProgram();
@@ -2540,7 +2502,6 @@ describe("cache-first paint (cold-open latency)", () => {
       weekNumber: 3,
       splitType: "full_body",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2553,7 +2514,7 @@ describe("cache-first paint (cold-open latency)", () => {
     // cache paint is racing an actual in-flight read, which is the
     // situation being tested.
     deferReads();
-    mockProfile = structuredProfile({ runMode: "freeform" });
+    mockProfile = hybridProfile({ runMode: "freeform" });
 
     const { result } = mountProgram();
 
@@ -2568,7 +2529,7 @@ describe("cache-first paint (cold-open latency)", () => {
     // First-ever load: nothing cached → getDocFromCache rejects. The server
     // read must still drive the load exactly as it did pre-cache-first.
     resetFirestore(); // no server doc either → initial-creation path
-    mockProfile = structuredProfile({ runMode: "freeform" });
+    mockProfile = hybridProfile({ runMode: "freeform" });
 
     const { result } = mountProgram();
 
@@ -2590,7 +2551,6 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       weekNumber: 1,
       currentPhase: "base",
       splitType: "ppl",
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -2941,14 +2901,13 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     }) as unknown as ProgramState["workouts"][number];
 
   function seedLiftState(extra: Partial<ProgramState> = {}) {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [day("Push", { completed: true }), day("Pull"), day("Legs")],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -3043,7 +3002,6 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -3134,7 +3092,6 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -3177,7 +3134,7 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
   });
 
   it("a plan with no race is not realigned", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedRacePlan(localDateString(addLocalDays(new Date(), 70)));
 
     expect(await realign()).toEqual({
@@ -3204,13 +3161,11 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts,
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays,
-      runPlan: { mode: "structured" },
     } as ProgramState;
   }
 
@@ -3308,7 +3263,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
   });
 
   it("restoreWorkoutDay: clears `skipped` on a non-completed lift day", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedProgram(
       stateWith(
         [],
@@ -3347,7 +3302,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
   });
 
   it("restoreWorkoutDay: refuses a completed lift day (no command sent)", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedProgram(
       stateWith(
         [],
@@ -3389,13 +3344,11 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays,
-      runPlan: { mode: "structured" },
     } as ProgramState;
   }
 
@@ -3595,7 +3548,6 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
       currentPhase: "progression",
       weekNumber: 3,
       splitType: "upper_lower",
-      fatigueScore: 0,
       updatedAt: 0,
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       ...(liftWeekKey ? { liftWeekKey } : {}),
@@ -3770,7 +3722,6 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       currentPhase: "progression",
       weekNumber: 3,
       splitType: "upper_lower",
-      fatigueScore: 0,
       updatedAt: 0,
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       liftWeekKey: lastWeek(),
@@ -3926,7 +3877,6 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -4089,7 +4039,6 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -4150,7 +4099,7 @@ describe("the week rollover waits for a finish (Lift4)", () => {
    the clock it starts. Nothing reads these fields yet, by design. ── */
 describe("per-set evidence survives the save (D2)", () => {
   it("writes set type, RPE and the planned pair onto the workout doc", async () => {
-    mockProfile = structuredProfile({ runMode: "freeform" });
+    mockProfile = hybridProfile({ runMode: "freeform" });
     resetFirestore();
 
     const { result } = mountProgram();
@@ -4233,7 +4182,6 @@ describe("#2422 — programState mirrors server writes this client did not make"
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -4395,14 +4343,13 @@ describe("refetchProgramState keeps programState byte-equal to the store", () =>
   // regenerate — or from the rollover conflict loop the mirror's test
   // describes, since the rollover's refusal handler refetches too.
   it("a workouts-changing write after a refetch is not refused", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = hybridProfile();
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -4474,7 +4421,6 @@ describe("#2422 — an action computed before another write landed still commits
       weekNumber: 1,
       splitType: "ppl",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -4582,7 +4528,6 @@ describe("the rollover waits for the loader's migration", () => {
       currentPhase: "progression",
       weekNumber: 3,
       splitType: "upper_lower",
-      fatigueScore: 0,
       updatedAt: 0,
       programSchemaVersion: version,
       liftWeekKey,
@@ -4705,7 +4650,6 @@ describe("the rollover waits for the loader's server read", () => {
       currentPhase: "progression",
       weekNumber: 1,
       splitType: "full_body",
-      fatigueScore: 0,
       updatedAt: 0,
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       liftWeekKey,

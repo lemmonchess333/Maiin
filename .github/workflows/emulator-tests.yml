@@ -83,7 +83,7 @@ jobs:
       # some action versions are finicky about the type — the docs
       # canonically show quoted strings.
       - name: Set up Java 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: "21"
@@ -332,7 +332,7 @@ jobs:
       # Same JVM requirement as the job above — firebase-tools errors out
       # hard on JDK < 21.
       - name: Set up Java 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: "21"
@@ -431,7 +431,7 @@ jobs:
       # Same JVM requirement as the jobs above — firebase-tools errors out
       # hard on JDK < 21.
       - name: Set up Java 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: "21"
@@ -503,8 +503,9 @@ jobs:
   # signed-out specs, and the ones that catch a broken build or route.
   # Until now they ran in no CI job. Their own job, so one going red is
   # seen without turning emulator-tests red while they bed in. Not a
-  # required check (only `unit` is: requiredCheckComposition.test.ts),
-  # and not to be made one until they have been green for two weeks.
+  # required check (the required ones are `unit`, by the repository
+  # ruleset, and `emulator-tests`, by main's branch protection), and not
+  # to be made one until they have been green for two weeks.
   # The other six signed-out specs run nightly (nightly-e2e.yml).
   signed-out-specs:
     runs-on: ubuntu-latest
@@ -519,7 +520,7 @@ jobs:
 
       # The app's build talks to the emulators, so they run under it.
       - name: Set up Java 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: "21"

@@ -154,7 +154,6 @@ function productionDeps(nowMs) {
         uid,
         apiKey: process.env.REVENUECAT_REST_KEY,
         fetchImpl: fetch,
-        serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
         logger: functions.logger,
       }),
     getEmail: authEmail,

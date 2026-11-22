@@ -18,7 +18,6 @@ const clean = homeProgramSnapshot(
     currentPhase: "base",
     splitType: "full_body",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 1,
   } as ProgramState,
   profile,
@@ -47,10 +46,27 @@ describe("Home programme maintenance boundary", () => {
     expect(homeProgramSnapshot(null, profile, date).needsMaintenance).toBe(
       true
     );
-    expect(
-      homeProgramSnapshot(clean, { ...profile, runMode: "structured" }, date)
-        .needsMaintenance
-    ).toBe(true);
+    // A plan of the retired structured mode (App1 Q25) is shown as free
+    // running, and the engine loads to store it so.
+    const structured = {
+      ...clean,
+      runPlan: { mode: "structured" },
+      runDays: [
+        {
+          id: "runday_old",
+          date: "2026-09-16",
+          weekKey: "2026-09-14",
+          dayIndex: 3,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+        },
+      ],
+    } as unknown as ProgramState;
+    const result = homeProgramSnapshot(structured, profile, date);
+    expect(result.needsMaintenance).toBe(true);
+    expect(result.programState?.runPlan).toBeUndefined();
+    expect(result.programState?.runDays).toEqual([]);
   });
   it("checks malformed run-day shapes even at the latest schema version", () => {
     const result = homeProgramSnapshot(

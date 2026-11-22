@@ -66,7 +66,7 @@ vi.mock("../nativeAuth", () => ({
 }));
 vi.mock("../revenuecat", () => ({
   isRevenueCatEnabled: () => true,
-  rcPurchase: async () => ({ success: true, isProActive: true }),
+  rcPurchase: async () => ({ kind: "bought" }),
   rcRestore: async () => ({ success: true, isProActive: true }),
   rcGetLocalizedPrices: async () => null,
 }));
@@ -201,7 +201,7 @@ describe("AuthProvider — live subscription state", () => {
       await purchaseOrRestore(action);
 
       await waitFor(() => expect(state().tier).toBe("pro"));
-      expect(state().limit).toBe("100");
+      expect(state().limit).toBe("15");
       expect(state().source).toBe("ios_iap");
       expect(state().trial).toBe("com.tropos.app.pro.monthly");
       expect(h.sync).toHaveBeenCalledOnce();
@@ -219,7 +219,7 @@ describe("AuthProvider — live subscription state", () => {
 
       await writeSubscription(pro);
       await waitFor(() => expect(state().tier).toBe("pro"));
-      expect(state().limit).toBe("100");
+      expect(state().limit).toBe("15");
     }
   );
 

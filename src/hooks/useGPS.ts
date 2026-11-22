@@ -1,13 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  KalmanFilter,
+  VelocityKalmanFilter,
   fixTimestamp,
+  isTraceStep,
   isValidReading,
   pausedMsOf,
   readingVerdict,
   segmentMetres,
   totalDistance,
 } from "../lib/gps";
+import { isFixInHand, isStartAccuracy } from "../lib/gpsStart";
 import { getLocationSource, type LocationWatch } from "../lib/locationSource";
 import { logger } from "../lib/logger";
 import type { GPSPoint } from "../lib/gps";
@@ -53,6 +55,28 @@ interface GPSState {
   lastFixAt: number | null;
 }
 
+/** The latest fix to arrive, from either watch, and when it was taken. */
+interface LatestFix {
+  lat: number;
+  lon: number;
+  accuracy: number;
+  altitude: number | null;
+  speed: number | null;
+  at: number;
+}
+
+function latestFixOf(pos: GeolocationPosition, arrivedAt: number): LatestFix {
+  const { latitude, longitude, accuracy, altitude, speed } = pos.coords;
+  return {
+    lat: latitude,
+    lon: longitude,
+    accuracy,
+    altitude,
+    speed,
+    at: fixTimestamp(pos.timestamp, arrivedAt, null),
+  };
+}
+
 function getSignalQuality(accuracy: number | null): GPSSignalQuality {
   if (accuracy === null) return "searching";
   if (accuracy <= 8) return "strong";
@@ -75,12 +99,28 @@ export function useGPS(elapsedSeconds = 0) {
   });
 
   const watchRef = useRef<LocationWatch | null>(null);
+  /* The run screen's watch before Start (`warm`), which records nothing:
+     it keeps the signal shown and `latestFixRef` current, so Start usually
+     finds the fix that starts the clock already in hand (Run25 call 2). */
+  const warmRef = useRef<LocationWatch | null>(null);
+  const latestFixRef = useRef<LatestFix | null>(null);
+  /* While a run waits for its first good fix (`startAwaitingFix`),
+     only a fix within GPS_START_ACCURACY_M becomes the first point, and
+     never stamped before `armedAtRef`, the tap of Start. Cleared by that
+     fix, or by Start anyway (`startAnyway`). */
+  const awaitingStartFixRef = useRef(false);
+  const armedAtRef = useRef(0);
+  /** The tap of Start, for the `start` that `startAwaitingFix` calls. */
+  const startArmRef = useRef<number | null>(null);
   // iOS-Safari/PWA fallback: see the watchdog in `start()`. `pollRef` is the
   // getCurrentPosition polling interval; `watchHealthyRef` flips true the
   // first time watchPosition actually delivers a fix.
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchHealthyRef = useRef(false);
-  const kalmanRef = useRef(new KalmanFilter());
+  /* The trace's smoothing (gps.ts). It takes every fix the trace could
+     use, moving or still, and is started again whenever the trace is:
+     a fresh run, a re-anchored start, the end of a hold, a restored trail. */
+  const filterRef = useRef(new VelocityKalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
   const elapsedRef = useRef(elapsedSeconds);
@@ -100,7 +140,7 @@ export function useGPS(elapsedSeconds = 0) {
   const provisionalStartRef = useRef(false);
   /** ms to wait for a ≤150 m first fix before starting on a coarse one. */
   const FIRST_FIX_RELAX_MS = 6000;
-  /* Holds — the run's clock stopped (countdown, pause, auto-pause; Run.tsx
+  /* Holds — the run's clock stopped (pause, auto-pause; Run.tsx
      drives `pause`/`resume` from the same state that stops its timer).
      While held, fixes move the map's dot but nothing joins the trace or the
      distance, so GPS drift at a crossing is never distance. The time held
@@ -144,38 +184,60 @@ export function useGPS(elapsedSeconds = 0) {
     };
   }, []);
 
-  // Pre-warm: fire a quick getCurrentPosition first so the browser/OS
-  // starts warming up the GPS chipset before watchPosition begins.
-  const preWarm = useCallback(() => {
-    if (!navigator.geolocation) return;
-    getLocationSource().getCurrent(
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 },
+  /** Stop the run screen's warm watch. */
+  const cool = useCallback(() => {
+    if (warmRef.current) {
+      warmRef.current.clear();
+      warmRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Watch location before Start, recording nothing (useGpsWarmup): every
+   * fix moves the signal shown and is kept as the latest, which Start reads
+   * for a fix in hand (Run25 call 2). It never asks for location (the
+   * source's "warm" watch), and a run's own watch, once running, stands in
+   * for it.
+   */
+  const warm = useCallback(() => {
+    if (warmRef.current || watchRef.current || !navigator.geolocation) return;
+    warmRef.current = getLocationSource().watch(
+      { enableHighAccuracy: true, maximumAge: 0 },
       (pos) => {
-        // Just update accuracy display — don't add to track yet
+        latestFixRef.current = latestFixOf(pos, Date.now());
         setState((s) => ({
           ...s,
           gpsAccuracy: pos.coords.accuracy,
           signalQuality: getSignalQuality(pos.coords.accuracy),
         }));
       },
-      // Best-effort, except that a refusal is worth knowing: the setup
-      // screen then stops showing a signal it cannot get, and the
-      // acquiring screen says how to turn location on.
+      // Quiet, except that a refusal is worth knowing: the setup screen
+      // then stops showing a signal it cannot get, and the run screen says
+      // how to turn location on.
       (err) => {
         if (err.code === 1)
           setState((s) => ({ ...s, permissionState: "denied" }));
-      }
+      },
+      "warm"
     );
   }, []);
 
+  /**
+   * Begin the run's own watch, and a fresh trace when none is recorded.
+   * Returns true when the trace began on a fix already in hand
+   * (`startAwaitingFix`), which is the moment to start the run's clock.
+   */
   const start = useCallback(() => {
     if (!navigator.geolocation) {
       setState((s) => ({ ...s, error: "Geolocation not supported" }));
-      return;
+      return false;
     }
+    // The run's own watch takes over from the run screen's.
+    cool();
 
+    let startedOnFix = false;
     if (pointsRef.current.length === 0) {
-      kalmanRef.current.reset();
+      filterRef.current.reset();
       pointsRef.current = [];
       distanceRef.current = 0;
       // PR H: reset rejected-fix count on a fresh tracking session
@@ -188,10 +250,51 @@ export function useGPS(elapsedSeconds = 0) {
       heldSinceRef.current = null;
       pausedTotalMsRef.current = 0;
       resumedAtRef.current = 0;
+      awaitingStartFixRef.current = false;
+      const at = startArmRef.current;
+      startArmRef.current = null;
+      if (at !== null) {
+        const fix = latestFixRef.current;
+        if (fix && isFixInHand(fix, at)) {
+          /* The fix in hand is where the runner stands as Start is tapped,
+           so it is the first point, stamped then: the trace, its splits
+           and the run's clock all start at that one instant. */
+          filterRef.current.process(fix.lat, fix.lon, fix.accuracy, at);
+          pointsRef.current = [
+            {
+              lat: fix.lat,
+              lon: fix.lon,
+              altitude: fix.altitude,
+              accuracy: fix.accuracy,
+              speed: fix.speed,
+              timestamp: at,
+              rawLat: fix.lat,
+              rawLon: fix.lon,
+            },
+          ];
+          startedOnFix = true;
+        } else {
+          awaitingStartFixRef.current = true;
+          armedAtRef.current = at;
+        }
+      }
+      const first = pointsRef.current[0] ?? null;
       /* Reset lastFixAt on a fresh tracking session so a 'GPS lost'
-         flag from a previous run doesn't bleed into this one. The
-         first valid fix in this session will populate it. */
-      setState((s) => ({ ...s, lastFixAt: null }));
+       flag from a previous run doesn't bleed into this one. The
+       first valid fix in this session will populate it. */
+      setState((s) => ({
+        ...s,
+        lastFixAt: null,
+        ...(first
+          ? {
+              points: [first],
+              currentPoint: first,
+              distance: 0,
+              isTracking: true,
+              error: null,
+            }
+          : {}),
+      }));
     }
 
     const options: PositionOptions = {
@@ -216,6 +319,7 @@ export function useGPS(elapsedSeconds = 0) {
         // below this point can decline to record the position (too coarse,
         // implausibly fast, less than a metre of movement) without any of
         // that being evidence about reception.
+        latestFixRef.current = latestFixOf(pos, arrivedAt);
         const quality = getSignalQuality(accuracy);
         setState((s) => ({
           ...s,
@@ -225,8 +329,8 @@ export function useGPS(elapsedSeconds = 0) {
         }));
 
         /* When the fix was TAKEN, not when it got here — the two part
-           company when the OS delivers fixes late or in a batch. Reception
-           (`lastFixAt` above) stays on arrival: that is its question. */
+         company when the OS delivers fixes late or in a batch. Reception
+         (`lastFixAt` above) stays on arrival: that is its question. */
         const fixAt = fixTimestamp(
           pos.timestamp,
           arrivedAt,
@@ -234,21 +338,15 @@ export function useGPS(elapsedSeconds = 0) {
         );
 
         const GOOD_FIX_M = 150;
-        const makePoint = (useKalman: boolean): GPSPoint => {
-          // The filter takes the fixes that become points, so the time
-          // since the last point is the time it has gone without a fix,
-          // across a gap in the signal or a hold.
-          const c = useKalman
-            ? kalmanRef.current.process(
-                latitude,
-                longitude,
-                accuracy,
-                lastPoint ? (fixAt - lastPoint.timestamp) / 1000 : 1
-              )
-            : { lat: latitude, lon: longitude };
+        const raw = { lat: latitude, lon: longitude };
+        /** The fix through the filter, which predicts across the time
+         *  since the last fix it took. */
+        const smooth = () =>
+          filterRef.current.process(latitude, longitude, accuracy, fixAt);
+        const makePoint = (at: { lat: number; lon: number }): GPSPoint => {
           return {
-            lat: c.lat,
-            lon: c.lon,
+            lat: at.lat,
+            lon: at.lon,
             altitude,
             accuracy,
             speed,
@@ -263,7 +361,7 @@ export function useGPS(elapsedSeconds = 0) {
           };
         };
 
-        // ── Held (countdown, pause, auto-pause). The dot follows the runner
+        // ── Held (pause, auto-pause). The dot follows the runner
         // and auto-resume reads the fix's speed — from fixes that would
         // have been recorded, as before — but nothing joins the trace or
         // the distance. Not counted as rejected either: a held fix is not a
@@ -274,7 +372,7 @@ export function useGPS(elapsedSeconds = 0) {
             heldSinceRef.current !== null &&
             isValidReading(pos.coords, lastPoint, elapsedMs / 1000, fixAt)
           ) {
-            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+            setState((s) => ({ ...s, currentPoint: makePoint(raw) }));
           }
           return;
         }
@@ -285,6 +383,31 @@ export function useGPS(elapsedSeconds = 0) {
         // whatever's available (marked provisional) rather than spinning
         // "Acquiring GPS" forever.
         if (pointsRef.current.length === 0) {
+          /* Run25 call 2: a run waiting for its first good fix takes only
+           one within GPS_START_ACCURACY_M as its first point, and the
+           run's clock starts on it (Run.tsx). A rougher fix before it is
+           not the run's, so it is not counted against the route either. */
+          if (awaitingStartFixRef.current) {
+            if (!isStartAccuracy(accuracy)) return;
+            awaitingStartFixRef.current = false;
+            const at = Math.max(fixAt, armedAtRef.current);
+            const point: GPSPoint = {
+              ...makePoint(
+                filterRef.current.process(latitude, longitude, accuracy, at)
+              ),
+              timestamp: at,
+            };
+            pointsRef.current.push(point);
+            setState((s) => ({
+              ...s,
+              points: [...pointsRef.current],
+              currentPoint: point,
+              distance: distanceRef.current,
+              isTracking: true,
+              error: null,
+            }));
+            return;
+          }
           const acquireMs = acquireStartRef.current
             ? Date.now() - acquireStartRef.current
             : Infinity;
@@ -300,7 +423,7 @@ export function useGPS(elapsedSeconds = 0) {
               watchHealthyRef.current ? "watch" : "poll"
             } (±${Math.round(accuracy)}m)`
           );
-          const point = makePoint(true);
+          const point = makePoint(smooth());
           pointsRef.current.push(point);
           setState((s) => ({
             ...s,
@@ -319,8 +442,8 @@ export function useGPS(elapsedSeconds = 0) {
             // First good fix — re-anchor the start here so the coarse lead-in
             // doesn't inject phantom distance. Drop the provisional point and
             // restart the track + distance from this fix.
-            kalmanRef.current.reset();
-            const point = makePoint(true);
+            filterRef.current.reset();
+            const point = makePoint(smooth());
             pointsRef.current = [point];
             distanceRef.current = 0;
             provisionalStartRef.current = false;
@@ -336,7 +459,7 @@ export function useGPS(elapsedSeconds = 0) {
           }
           // Still coarse — let the map follow the position, but don't record
           // it (avoids phantom distance from jumping between coarse fixes).
-          setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+          setState((s) => ({ ...s, currentPoint: makePoint(raw) }));
           return;
         }
 
@@ -347,17 +470,26 @@ export function useGPS(elapsedSeconds = 0) {
           elapsedMs / 1000,
           fixAt
         );
-        if (verdict !== "ok") {
-          // A fix that has not moved is not a bad one: route quality reads
-          // this count, and a runner standing at a crossing has a signal.
-          if (verdict === "still") {
-            // The route must not accumulate jitter, but auto-pause needs the
-            // current speed, not the speed of the last point that moved.
-            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
-          } else rejectedFixCountRef.current += 1;
+        if (verdict !== "ok" && verdict !== "still") {
+          rejectedFixCountRef.current += 1;
           return;
         }
-        const point = makePoint(true);
+        /* A fix that has not moved, or has not moved the smoothed position
+         a step (`isTraceStep`), is not a bad one: route quality reads the
+         rejected count, and a runner standing at a crossing has a signal.
+         It still goes through the filter, which then knows the runner
+         slowed, and still moves the dot: the route must not take in
+         jitter, but auto-pause needs the current speed, not the speed of
+         the last point that moved. */
+        const smoothed = smooth();
+        if (
+          verdict === "still" ||
+          (lastPoint && !isTraceStep(lastPoint, smoothed, accuracy))
+        ) {
+          setState((s) => ({ ...s, currentPoint: makePoint(smoothed) }));
+          return;
+        }
+        const point = makePoint(smoothed);
         if (lastPoint) {
           // The splits' rule (gps.ts), so the run's distance and its splits
           // agree — including across a pause.
@@ -438,6 +570,33 @@ export function useGPS(elapsedSeconds = 0) {
     pollRef.current = setInterval(pollOnce, 3000);
 
     setState((s) => ({ ...s, isTracking: true }));
+    return startedOnFix;
+  }, [cool]);
+
+  /**
+   * Begin a GPS run's watch and trace, waiting for the fix its clock starts
+   * on (Run25 call 2, gpsStart.ts): a fix in hand from the warm watch is
+   * the first point at once, stamped `at`, the tap of Start; otherwise only
+   * a fix within GPS_START_ACCURACY_M becomes it, never stamped before
+   * `at`. True when the trace began on a fix in hand.
+   */
+  const startAwaitingFix = useCallback(
+    (at: number): boolean => {
+      startArmRef.current = at;
+      const onFix = start();
+      startArmRef.current = null;
+      return onFix;
+    },
+    [start]
+  );
+
+  /**
+   * Start anyway (Run25 call 2): the run's clock is running without a good
+   * fix, so its trace stops waiting for one and takes the first fix the
+   * reading gate passes, as any trace does (`readingVerdict`).
+   */
+  const startAnyway = useCallback(() => {
+    awaitingStartFixRef.current = false;
   }, []);
 
   const stop = useCallback(() => {
@@ -453,8 +612,7 @@ export function useGPS(elapsedSeconds = 0) {
   }, []);
 
   /**
-   * Hold the trace: the run's clock has stopped (countdown, pause,
-   * auto-pause). Independent of `stop` — a manual pause on the web stops
+   * Hold the trace: the run's clock has stopped (pause, auto-pause). Independent of `stop` — a manual pause on the web stops
    * the watch too, an auto-pause keeps it running to see the runner set
    * off again, and a backgrounded web page stops it WITHOUT a hold.
    *
@@ -482,12 +640,19 @@ export function useGPS(elapsedSeconds = 0) {
     pausedTotalMsRef.current += Math.max(0, now - since);
     heldSinceRef.current = null;
     resumedAtRef.current = now;
+    // Nothing was recorded while held, and the runner may have stopped or
+    // walked: the velocity from before the hold says nothing about now.
+    filterRef.current.reset();
   }, []);
 
   // Clean up the active watch + fallback poll on unmount to prevent
   // memory/battery leak.
   useEffect(() => {
     return () => {
+      if (warmRef.current) {
+        warmRef.current.clear();
+        warmRef.current = null;
+      }
       if (watchRef.current) {
         watchRef.current.clear();
         watchRef.current = null;
@@ -522,6 +687,7 @@ export function useGPS(elapsedSeconds = 0) {
     // Rebuild cumulative distance from the restored trail, by the rule the
     // live distance counts with (and the resume prompt shows).
     const dist = totalDistance(restored);
+    filterRef.current.reset();
     pointsRef.current = [...pointsRef.current, ...restored];
     distanceRef.current = distanceRef.current + dist;
     const lastRestored = restored[restored.length - 1];
@@ -549,8 +715,11 @@ export function useGPS(elapsedSeconds = 0) {
 
   return {
     ...state,
-    preWarm,
+    warm,
+    cool,
     start,
+    startAwaitingFix,
+    startAnyway,
     stop,
     pause,
     resume,

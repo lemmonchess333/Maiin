@@ -77,6 +77,7 @@ describe("ReportModal — what it calls the thing being reported", () => {
     ["user", "user"],
     ["space_post", "post"],
     ["space_post_comment", "comment"],
+    ["segment", "segment"],
   ] as const)("a %s report says %s", (targetType, noun) => {
     renderWith(
       <ReportModal
@@ -307,7 +308,7 @@ describe("ReportModal — submit orchestration", () => {
     });
     expect(reportContentMock).toHaveBeenCalledTimes(1);
     expect(blockUserMock).not.toHaveBeenCalled();
-    expect(hideMock).toHaveBeenCalledWith("act-1");
+    expect(hideMock).toHaveBeenCalledWith("act-1", "u-other");
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -367,7 +368,7 @@ describe("ReportModal — submit orchestration", () => {
       fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
     });
     expect(reportContentMock).not.toHaveBeenCalled();
-    expect(hideMock).toHaveBeenCalledWith("act-1");
+    expect(hideMock).toHaveBeenCalledWith("act-1", "u-other");
   });
 
   it("includes the chosen category + sub-reason in the report payload", async () => {
@@ -402,6 +403,88 @@ describe("ReportModal — submit orchestration", () => {
       })
     );
     expect(payload).not.toHaveProperty("targetUid");
+  });
+});
+
+describe("ReportModal — the reasons the legal audit asked for", () => {
+  const subReasons = () =>
+    screen
+      .getAllByRole("radio")
+      .filter((r) => r.closest('[aria-label="Sub-reason"]'))
+      .map((r) => r.textContent);
+
+  it("offers Child safety, eating disorders and illegal content under Inappropriate content", () => {
+    renderWith(
+      <ReportModal
+        targetType="activity"
+        targetId="act-1"
+        targetAuthorUid="u-other"
+        onClose={() => {}}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Inappropriate content" })
+    );
+    expect(subReasons()).toEqual([
+      "Sexual or explicit",
+      "Child safety",
+      "Hateful symbols or slurs",
+      "Violent or graphic",
+      "Promotes eating disorders",
+      "Illegal content",
+    ]);
+  });
+
+  it("offers Copyright under Impersonation, beside Brand or organisation", () => {
+    renderWith(
+      <ReportModal
+        targetType="activity"
+        targetId="act-1"
+        targetAuthorUid="u-other"
+        onClose={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Impersonation" }));
+    expect(subReasons()).toEqual([
+      "Pretending to be someone else",
+      "Brand or organisation",
+      "Copyright",
+    ]);
+  });
+});
+
+describe("ReportModal — a segment", () => {
+  it("sends it to the review team with its reason, and offers no block or hide", async () => {
+    const onClose = vi.fn();
+    // The page knows no maker: the owner record is the maker's alone.
+    renderWith(
+      <ReportModal targetType="segment" targetId="hill" onClose={onClose} />
+    );
+    fireEvent.click(
+      screen.getByRole("radio", { name: "Inappropriate content" })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Child safety" }));
+    expect(
+      screen.getByRole("checkbox", { name: /Send to review team/ })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("checkbox", { name: /Block/ })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: /Hide/ })).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
+    });
+    expect(reportContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetType: "segment",
+        targetId: "hill",
+        category: "inappropriate",
+        subReason: "Child safety",
+        blockAuthor: false,
+      })
+    );
+    expect(hideMock).not.toHaveBeenCalled();
+    expect(blockUserMock).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
 });
 

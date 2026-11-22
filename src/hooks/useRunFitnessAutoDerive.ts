@@ -9,6 +9,8 @@ import {
 import {
   bestEffort,
   derivedFitness,
+  heatHoldsBenchmark,
+  storedBenchmarkVdot,
   type BenchmarkEffort,
   type DerivedFitness,
 } from "@/lib/runPaces";
@@ -30,6 +32,10 @@ import { logger } from "@/lib/logger";
  *    Settings' entry are `source: "manual"`, and a derived one they accepted
  *    is theirs;
  *  - writes at most once per mount (`firedRef`).
+ *
+ * A run on a hot or extreme day is an effort like any other, and may set
+ * or raise the benchmark; it never lowers one (Run27 (14),
+ * `heatHoldsBenchmark`).
  *
  * One effort is enough. The old gate, three runs, was there to pick the best
  * of a few easy runs, which were all it had to read; a race or a tempo is a
@@ -97,6 +103,10 @@ export function resolveAutoDerive(
   if (fitness && !setByAnOldRule(fitness, runs)) return null;
   const best = bestEffort(benchmarkEfforts(runs));
   if (!best) return fitness ? { runFitness: null, effort: null } : null;
+  // Run27 (14): a run on a hot or extreme day never lowers a benchmark,
+  // this one included.
+  if (fitness && heatHoldsBenchmark(best, storedBenchmarkVdot(fitness)))
+    return null;
   return {
     runFitness: {
       ...derivedFitness(best),

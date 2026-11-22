@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-  KalmanFilter,
+  VelocityKalmanFilter,
+  isTraceStep,
   segmentMetres,
   totalDistance,
   type GPSPoint,
@@ -72,20 +73,25 @@ describe("routePaceRatios", () => {
     const random = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32;
     const gauss = () =>
       Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random());
-    const filter = new KalmanFilter();
+    const filter = new VelocityKalmanFilter();
     let errNorth = 0;
     let errEast = 0;
-    const points = road([[6000, 300]]).map((p) => {
+    const points: GPSPoint[] = [];
+    for (const p of road([[6000, 300]])) {
       errNorth = 0.9 * errNorth + Math.sqrt(1 - 0.81) * 3 * gauss();
       errEast = 0.9 * errEast + Math.sqrt(1 - 0.81) * 3 * gauss();
       const east = (p.lon + 0.12) * M_LON + errEast;
       const kept = filter.process(
         LAT + errNorth / 111_195,
         -0.12 + east / M_LON,
-        5
+        5,
+        p.timestamp
       );
-      return { ...p, ...kept };
-    });
+      // A point once the smoothed position has moved a step, as useGPS
+      // records them.
+      const last = points[points.length - 1];
+      if (!last || isTraceStep(last, kept, 5)) points.push({ ...p, ...kept });
+    }
     const average = averagePace(points);
 
     // Anchor: stretch by stretch, the wobble alone leaves the middle colour

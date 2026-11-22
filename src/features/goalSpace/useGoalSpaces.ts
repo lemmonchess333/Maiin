@@ -24,6 +24,7 @@ import {
   limit,
   orderBy,
   query,
+  where,
 } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { db } from "@/lib/firebase";
@@ -43,6 +44,15 @@ import {
 } from "./goalSpaceTypes";
 import { describeJoinRejection } from "./joinRejection";
 import { inviteCodeExpiresAt } from "./inviteCode";
+import {
+  MEETUPS_AHEAD_MAX,
+  MEETUP_SHOWN_AFTER_START_MS,
+  parseCircleMeetup,
+  type CircleMeetup,
+  type MeetupPlan,
+} from "./circleMeetups";
+import { describeMeetupRejection } from "./meetupRejection";
+import { describeRenameRejection } from "./renameRejection";
 
 /** A join either landed, or was refused for a reason worth showing. */
 export type JoinOutcome = { ok: true } | { ok: false; reason: string };
@@ -80,6 +90,29 @@ function answeredExpiry(value: unknown): number {
 export interface CircleDetail {
   members: GoalSpaceMember[];
   events: GoalSpaceEvent[];
+  /** Meet-ups not yet over, soonest first (Run26 call 4). */
+  meetups: CircleMeetup[];
+}
+
+/** A rename either landed, with the name as stored, or was refused for a
+ *  reason worth showing (Run27 call 11). */
+export type RenameOutcome =
+  { ok: true; title: string } | { ok: false; reason: string };
+
+/** Planning a meet-up either landed, or was refused for a reason worth
+ *  showing. */
+export type MeetupOutcome =
+  { ok: true; meetupId: string } | { ok: false; reason: string };
+
+/** A Circle's meet-ups not yet over, soonest first: at most the number a
+ *  Circle may have ahead, so one read covers them all. */
+function meetupsAhead(spaceId: string, now: number) {
+  return query(
+    collection(db, "goalSpaces", spaceId, "meetups"),
+    where("startsAt", ">=", now - MEETUP_SHOWN_AFTER_START_MS),
+    orderBy("startsAt"),
+    limit(MEETUPS_AHEAD_MAX)
+  );
 }
 
 function fns() {
@@ -123,6 +156,20 @@ async function readCircleIndex(uid: string): Promise<CircleSummary[]> {
   return spaces
     .filter((s): s is CircleSummary => s !== null)
     .sort((a, b) => b.space.createdAt - a.space.createdAt);
+}
+
+/** A Circle's meet-ups ahead. A failed read is an empty list: the rest of
+ *  the Circle still shows, and meet-ups are not its only content. */
+async function readMeetups(spaceId: string): Promise<CircleMeetup[]> {
+  try {
+    const snap = await getDocs(meetupsAhead(spaceId, Date.now()));
+    return snap.docs
+      .map((d) => parseCircleMeetup({ id: d.id, ...d.data() }))
+      .filter((m): m is CircleMeetup => m !== null);
+  } catch (err) {
+    logger.error("goalSpaces: meet-ups read failed", err);
+    return [];
+  }
 }
 
 export function useGoalSpaces(uid: string | undefined) {
@@ -228,6 +275,30 @@ export function useGoalSpaces(uid: string | undefined) {
     [reload]
   );
 
+  /** Run27 call 11: the owner renames a Circle. Server-owned (the space
+   *  doc is rules-locked), so the list reloads to carry the new name into
+   *  every row; the refusal comes back in words. */
+  const renameCircle = useCallback(
+    async (spaceId: string, title: string): Promise<RenameOutcome> => {
+      try {
+        const res = await httpsCallable(
+          fns(),
+          "renameGoalSpace"
+        )({ spaceId, title });
+        await reload();
+        const data = res.data as { title?: unknown };
+        return {
+          ok: true,
+          title: typeof data.title === "string" ? data.title : title,
+        };
+      } catch (err) {
+        logger.error("goalSpaces: rename failed", err);
+        return { ok: false, reason: describeRenameRejection(err) };
+      }
+    },
+    [reload]
+  );
+
   const joinCircle = useCallback(
     // Accepts the raw pasted/typed code. The server resolves any accepted
     // form — a short code (K7P4-9M2H), or the legacy spaceId.token string —
@@ -271,17 +342,19 @@ export function useGoalSpaces(uid: string | undefined) {
         const ownCheckInRef = uid
           ? doc(db, "goalSpaces", spaceId, "events", `${uid}_${localWeekKey()}`)
           : null;
-        const [membersSnap, eventsSnap, ownCheckInSnap] = await Promise.all([
-          getDocs(collection(db, "goalSpaces", spaceId, "members")),
-          getDocs(
-            query(
-              collection(db, "goalSpaces", spaceId, "events"),
-              orderBy("createdAt", "desc"),
-              limit(30)
-            )
-          ),
-          ownCheckInRef ? getDoc(ownCheckInRef) : Promise.resolve(null),
-        ]);
+        const [membersSnap, eventsSnap, ownCheckInSnap, meetups] =
+          await Promise.all([
+            getDocs(collection(db, "goalSpaces", spaceId, "members")),
+            getDocs(
+              query(
+                collection(db, "goalSpaces", spaceId, "events"),
+                orderBy("createdAt", "desc"),
+                limit(30)
+              )
+            ),
+            ownCheckInRef ? getDoc(ownCheckInRef) : Promise.resolve(null),
+            readMeetups(spaceId),
+          ]);
         const members = membersSnap.docs
           .map((d) => d.data() as GoalSpaceMember)
           .sort((a, b) => a.joinedAt - b.joinedAt);
@@ -302,10 +375,10 @@ export function useGoalSpaces(uid: string | undefined) {
             events.sort((a, b) => b.createdAt - a.createdAt);
           }
         }
-        return { members, events };
+        return { members, events, meetups };
       } catch (err) {
         logger.error("goalSpaces: detail failed", err);
-        return { members: [], events: [] };
+        return { members: [], events: [], meetups: [] };
       }
     },
     [uid]
@@ -420,6 +493,72 @@ export function useGoalSpaces(uid: string | undefined) {
     []
   );
 
+  /** Run26 call 4: plan a meet-up. The server writes it and tells the
+   *  other members; a refusal comes back in words. */
+  const planMeetup = useCallback(
+    async (spaceId: string, plan: MeetupPlan): Promise<MeetupOutcome> => {
+      try {
+        const res = await httpsCallable(
+          fns(),
+          "circleMeetup"
+        )({ action: "plan", spaceId, meetup: plan });
+        const data = res.data as { meetupId?: unknown };
+        return { ok: true, meetupId: String(data.meetupId ?? "") };
+      } catch (err) {
+        logger.error("goalSpaces: meet-up plan failed", err);
+        return { ok: false, reason: describeMeetupRejection(err) };
+      }
+    },
+    []
+  );
+
+  /** Say you're in, or that you can't make it. The list as stored, or a
+   *  refusal in words. */
+  const setMeetupGoing = useCallback(
+    async (
+      spaceId: string,
+      meetupId: string,
+      going: boolean
+    ): Promise<
+      { ok: true; going: string[] } | { ok: false; reason: string }
+    > => {
+      try {
+        const res = await httpsCallable(
+          fns(),
+          "circleMeetup"
+        )({ action: going ? "going" : "notGoing", spaceId, meetupId });
+        const data = res.data as { going?: unknown };
+        return {
+          ok: true,
+          going: Array.isArray(data.going)
+            ? data.going.filter((s): s is string => typeof s === "string")
+            : [],
+        };
+      } catch (err) {
+        logger.error("goalSpaces: meet-up answer failed", err);
+        return { ok: false, reason: describeMeetupRejection(err) };
+      }
+    },
+    []
+  );
+
+  /** Call a meet-up off: its organiser or the Circle's owner. */
+  const cancelMeetup = useCallback(
+    async (spaceId: string, meetupId: string): Promise<boolean> => {
+      try {
+        await httpsCallable(
+          fns(),
+          "circleMeetup"
+        )({ action: "cancel", spaceId, meetupId });
+        return true;
+      } catch (err) {
+        logger.error("goalSpaces: meet-up cancel failed", err);
+        return false;
+      }
+    },
+    []
+  );
+
   return {
     loading: uid !== undefined && current === null,
     circles: current?.circles ?? [],
@@ -427,6 +566,7 @@ export function useGoalSpaces(uid: string | undefined) {
     reload,
     createCircle,
     renewInviteCode,
+    renameCircle,
     joinCircle,
     leaveCircle,
     loadDetail,
@@ -434,5 +574,8 @@ export function useGoalSpaces(uid: string | undefined) {
     setWeeklyFocus,
     backCheckIn,
     resolveTarget,
+    planMeetup,
+    setMeetupGoing,
+    cancelMeetup,
   };
 }

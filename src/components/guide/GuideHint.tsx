@@ -65,7 +65,7 @@ interface GuideHintProps {
   /** The page says the moment has come: the thing the hint explains is on
    *  screen, and nothing else is in front of it. */
   when: boolean;
-  /** Show it even if it has been seen: a first-week row asked for it. */
+  /** Show it even if it has been seen: the page's help asked for it. */
   requested?: boolean;
   /** Words other than the hint's own, when the page knows better (the
    *  first set without the automatic rest timer). */
@@ -80,10 +80,9 @@ interface GuideHintProps {
 }
 
 /**
- * One of the first-visit guide's hints (FV1): the guide's mark, a line
+ * One of the first-use guide's hints (FV1): the guide's mark, a line
  * about the thing in front of you, and Got it. It turns up once, the first
- * time a place is used, for an account that has met the guide; a
- * first-week row can ask for it again.
+ * time a place is used; the page's own help can ask for it again.
  *
  * It points at whatever carries `data-guide-anchor="<id>"`, found in the
  * page rather than wrapped: wrapping a control in a floating-ui reference

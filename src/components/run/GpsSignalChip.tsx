@@ -26,6 +26,7 @@ export default function GpsSignalChip({
   pointCount,
   signalQuality,
   onPage = false,
+  ready = true,
 }: {
   accuracy: number | null;
   isTracking: boolean;
@@ -35,6 +36,10 @@ export default function GpsSignalChip({
    *  muted fill, and words for a run not started yet ("GPS ready"). It
    *  announces itself, since the signal arriving is news there. */
   onPage?: boolean;
+  /** On the page: whether Start would start the run's clock on the fix
+   *  shown (gpsStart.ts, Run25 call 2). A fix short of that reads
+   *  "Finding GPS", as the run screen will, never "GPS ready". */
+  ready?: boolean;
 }) {
   if (!isTracking) return null;
   const quality: GPSSignalQuality =
@@ -48,7 +53,9 @@ export default function GpsSignalChip({
       : quality === "weak"
         ? "Weak GPS"
         : onPage
-          ? "GPS ready"
+          ? ready
+            ? "GPS ready"
+            : "Finding GPS"
           : "GPS";
   const metres =
     quality === "weak" && accuracy !== null ? Math.round(accuracy) : null;
@@ -57,7 +64,9 @@ export default function GpsSignalChip({
     <div
       className={cn(
         "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold",
-        onPage ? "bg-muted text-foreground" : "text-white backdrop-blur"
+        onPage
+          ? "bg-muted text-foreground"
+          : "text-white backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
       )}
       style={onPage ? undefined : { background: THEME.scrim }}
       role={onPage ? "status" : undefined}

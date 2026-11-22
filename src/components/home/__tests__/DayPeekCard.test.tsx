@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { weekDay } from "@/test/stripWeek";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import type { UserProfile } from "@/lib/auth";
 import type {
@@ -27,6 +28,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/lib/runClaims";
 import {
+  addLocalDays,
   localDateString,
   localWeekKey,
   parseLocalDate,
@@ -34,6 +36,7 @@ import {
 import { groupTextRe } from "@/test/localeGrouping";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -113,7 +116,6 @@ function makeProfile(weekSchedule: ScheduleDay[]): UserProfile {
   return {
     uid: "u-1",
     displayName: "Test",
-    email: "t@example.com",
     weekSchedule,
   } as UserProfile;
 }
@@ -125,7 +127,6 @@ function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -141,14 +142,15 @@ function emptyTotals() {
 // Today (per CLAUDE.md context) is Saturday 2026-05-16. Build the
 // test dates around that so resolver matching exercises the
 // real same-week / future-week branches.
-const TODAY_DOW = new Date().getDay();
 // Pick a date in this calendar week for the planned-run cases.
 // Today is in the strip, so a Tuesday in this week is either past
 // or future depending on the weekday — but the resolver matches
-// by date string regardless of "future vs past".
+// by date string regardless of "future vs past". The weekday is read
+// with the date, at the call: read once when the file loaded, a run that
+// crossed midnight put every later case's Tuesday in last week.
 const dayOfThisWeek = (dow: number): string => {
   const todaySunday = new Date();
-  todaySunday.setDate(todaySunday.getDate() - TODAY_DOW + dow);
+  todaySunday.setDate(todaySunday.getDate() - todaySunday.getDay() + dow);
   const y = todaySunday.getFullYear();
   const m = String(todaySunday.getMonth() + 1).padStart(2, "0");
   const d = String(todaySunday.getDate()).padStart(2, "0");
@@ -208,7 +210,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     } as UserProfile;
     const program = makeProgramState([
       makeRunDay({
-        dayIndex: TODAY_DOW,
+        dayIndex: parseLocalDate(date).getDay(),
         date,
         weekKey: localWeekKey(parseLocalDate(date)),
         templateId: "easy_30",
@@ -244,9 +246,15 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
   it("keeps the actual dose and strides visible while disclosing the coaching reason", () => {
     const date = dayOfThisWeek(2);
-    const profile = makeProfile(
-      makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
-    );
+    // A race plan's runner: the card reads the run mode through the
+    // programme (`runModeWithPlan`), where a profile with none is free
+    // running, as Train has it.
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
     const program = makeProgramState([
       makeRunDay({
         dayIndex: 2,
@@ -348,9 +356,13 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     // intervals (Run15), and its reason can't be the sessions it doesn't have.
     const date = dayOfThisWeek(2);
     const weekKey = localWeekKey(parseLocalDate(date));
-    const profile = makeProfile(
-      makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
-    );
+    // A race plan's runner, as the test above has it (`runModeWithPlan`).
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
     const withWeek = (otherTemplateId: string) => {
       const program = makeProgramState([
         makeRunDay({ dayIndex: 2, date, weekKey, templateId: "easy_30" }),
@@ -1038,15 +1050,14 @@ describe("DayPeekCard — lift row tap-through", () => {
  * carries "Why this run". The card names the session; the reason waits.
  */
 describe("DayPeekCard — why this lift", () => {
-  const LIFT_WEEK = makeSchedule([
-    "rest",
-    "rest",
-    "lift",
-    "rest",
-    "rest",
-    "rest",
-    "rest",
-  ]);
+  /* Today lifts: the week lays the plan's next lift on it (`layOutWeek`).
+     A lift day already passed holds no lift to do, so the day under test
+     is today, whatever weekday the suite runs on. */
+  const LIFT_WEEK = makeSchedule(
+    [0, 1, 2, 3, 4, 5, 6].map((d) =>
+      d === new Date().getDay() ? "lift" : "rest"
+    )
+  );
 
   function liftProgramme(overrides: Partial<ProgramState> = {}) {
     return {
@@ -1070,11 +1081,21 @@ describe("DayPeekCard — why this lift", () => {
     programState: ProgramState,
     workouts: { id: string; notes?: string }[] = []
   ) {
+    const today = localDateString();
+    const profile = { ...makeProfile(LIFT_WEEK), experience: "intermediate" };
     renderCard(
       <DayPeekCard
-        todayKey={localDateString()}
-        dateKey={dayOfThisWeek(2)}
-        profile={{ ...makeProfile(LIFT_WEEK), experience: "intermediate" }}
+        todayKey={today}
+        dateKey={today}
+        day={weekDay({
+          todayKey: today,
+          dateKey: today,
+          profile: profile as UserProfile,
+          programState,
+          claimMap: emptyClaimMap,
+          workouts: workouts.map((w) => ({ id: w.id, date: today })),
+        })}
+        profile={profile as UserProfile}
         programState={programState}
         claimMap={emptyClaimMap}
         extras={emptyExtras}
@@ -1191,17 +1212,40 @@ describe("DayPeekCard — the badge names what the card holds", () => {
 
   it("still says Lift + Run day when the run really is scheduled", () => {
     /* The badge must not simply stop claiming runs — that would trade one
-       wrong answer for another. */
-    const tueKey = dayOfThisWeek(2);
-    const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
+       wrong answer for another. Today, so the week lays its lift there. */
+    const today = localDateString();
+    const profile = makeProfile(
+      makeSchedule(
+        [0, 1, 2, 3, 4, 5, 6].map((d) =>
+          d === new Date().getDay() ? "both" : "rest"
+        )
+      )
+    );
+    const programState = {
+      ...makeProgramState([
+        makeRunDay({
+          dayIndex: new Date().getDay(),
+          date: today,
+          weekKey: localWeekKey(parseLocalDate(today)),
+        }),
+      ]),
+      workouts: [
+        { dayName: "Pull", dayType: "pull", exercises: [], completed: false },
+      ],
+    } as ProgramState;
     render(
       <DayPeekCard
-        todayKey={localDateString()}
-        dateKey={tueKey}
-        profile={makeProfile(schedule)}
-        programState={makeProgramState([
-          makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey }),
-        ])}
+        todayKey={today}
+        dateKey={today}
+        day={weekDay({
+          todayKey: today,
+          dateKey: today,
+          profile,
+          programState,
+          claimMap: emptyClaimMap,
+        })}
+        profile={profile}
+        programState={programState}
         claimMap={emptyClaimMap}
         workouts={[]}
         dailyTotals={emptyTotals()}
@@ -1449,8 +1493,87 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
   });
 });
 
-/* Today's peek names the lift the today card offers: the programme's next
-   (homeLift.ts), not the weekday's slot in the schedule. The two differ
+describe("DayPeekCard — a run in a plan with no race date (Run24 (3))", () => {
+  // The profile stays on free running; the plan is the programme's.
+  function renderRolling(
+    templateId: string,
+    type: string,
+    rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null
+  ) {
+    const date = dayOfThisWeek(2);
+    const weekKey = localWeekKey(parseLocalDate(date));
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+      ),
+      runMode: "freeform",
+    } as UserProfile;
+    const program = makeProgramState([
+      makeRunDay({ dayIndex: 2, date, weekKey, templateId, type }),
+    ]);
+    program.runPlan = {
+      mode: "rolling",
+      rollingGoal: "build_10k",
+      currentWeek: 5,
+      rollingWeekKey: weekKey,
+    };
+    return renderCard(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        rollingContexts={
+          rollingContexts === undefined
+            ? new Map([
+                [
+                  weekKey,
+                  {
+                    goal: "build_10k",
+                    unit: "km",
+                    opening: false,
+                    lighter: false,
+                    longRun: { topKm: 12, holding: false },
+                  },
+                ],
+              ])
+            : rollingContexts
+        }
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("says why a long run is in the week, in the plan's terms", () => {
+    renderRolling("long_10k", "long");
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it’s in your week.*It climbs a step at a time to 12 km, then holds there\./
+    );
+  });
+
+  it("says a time trial is the plan's benchmark", () => {
+    renderRolling("time_trial_5k", "intervals");
+    expect(
+      screen.getByText("Why this run").closest("details")!
+    ).toHaveTextContent(/Why it’s in your week.*finds your paces/);
+  });
+
+  it("gives no reason it cannot read, and names no race phase", () => {
+    renderRolling("long_10k", "long", null);
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveTextContent(/Why it’s in your week/);
+    expect(why).not.toHaveTextContent(/base|race/i);
+  });
+});
+
+/* Today's peek names the lift the today card offers: the programme's next,
+   as the week lays it on today (`layOutWeek`), not the weekday's slot in
+   the schedule. The two differ
    whenever the week's lifts ran out of step with its weekdays, and the
    peek said "Legs A" over a card that said "Push A" on the same day. */
 describe("DayPeekCard — today's lift is the today card's", () => {
@@ -1487,6 +1610,13 @@ describe("DayPeekCard — today's lift is the today card's", () => {
       <DayPeekCard
         todayKey={today}
         dateKey={today}
+        day={weekDay({
+          todayKey: today,
+          dateKey: today,
+          profile,
+          programState: programme(next),
+          claimMap: emptyClaimMap,
+        })}
         profile={profile}
         programState={programme(next)}
         claimMap={emptyClaimMap}
@@ -1498,5 +1628,108 @@ describe("DayPeekCard — today's lift is the today card's", () => {
     );
     expect(screen.getByText(NAMES[next])).toBeInTheDocument();
     expect(screen.queryByText(NAMES[slot!])).toBeNull();
+  });
+});
+
+/* TrainWk1 step 2: the peek names the lift the week lays on the day, the
+   one the strip draws and today's card offers. Read as of this week's
+   Wednesday (the card reads the day it is given), Monday, Wednesday and
+   Friday lift, nothing done. */
+describe("DayPeekCard — the lift the week lays on the day", () => {
+  const MWF = makeProfile(
+    makeSchedule(["rest", "lift", "rest", "lift", "rest", "lift", "rest"])
+  );
+  const monday = localWeekKey(new Date());
+  const day = (i: number) =>
+    localDateString(addLocalDays(parseLocalDate(monday), i));
+  const lifts = (...names: string[]) =>
+    ({
+      ...makeProgramState([]),
+      workouts: names.map((dayName) => ({
+        dayName,
+        dayType: "full",
+        exercises: [],
+        completed: false,
+      })),
+    }) as ProgramState;
+
+  function renderPeek(
+    dateKey: string,
+    programState: ProgramState,
+    todayKey = day(2),
+    profile = MWF
+  ) {
+    renderCard(
+      <DayPeekCard
+        todayKey={todayKey}
+        dateKey={dateKey}
+        day={weekDay({
+          todayKey,
+          dateKey,
+          profile,
+          programState,
+          claimMap: emptyClaimMap,
+        })}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+        onManage={vi.fn()}
+      />
+    );
+  }
+
+  it("says where a passed lift day's lift went, never that it was missed", () => {
+    renderPeek(day(0), lifts("Pull", "Push", "Legs"));
+    expect(screen.getByText("Pull")).toBeInTheDocument();
+    expect(screen.getByText(/moved to today/)).toBeInTheDocument();
+    expect(screen.getByText("Lift day")).toBeInTheDocument();
+    expect(screen.queryByText(/missed/i)).toBeNull();
+  });
+
+  it("names the lift the order reaches on a later day, and where it moved from", () => {
+    // Friday holds Push, Wednesday's in the week as first laid out; the
+    // weekday's slot named Legs.
+    renderPeek(day(4), lifts("Pull", "Push", "Legs"));
+    expect(screen.getByText(/^Push/)).toBeInTheDocument();
+    expect(screen.getByText(/moved from Wednesday/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Legs/)).toBeNull();
+    // Its Manage sheet acts on the same lift.
+    expect(screen.getByText("Manage day")).toBeInTheDocument();
+  });
+
+  it("keeps a lift skipped from the day on it, skipped, with its Manage", () => {
+    // Read Monday: Pull skipped from today's sheet, Push skipped from
+    // Wednesday's. Each stays on its day, so Restore is a tap away there.
+    const plan = {
+      ...lifts("Pull", "Push", "Legs"),
+    } as ProgramState;
+    plan.workouts = plan.workouts.map((w, i) =>
+      i < 2 ? { ...w, skipped: true } : w
+    );
+    renderPeek(day(0), plan, day(0));
+    expect(screen.getByText(/^Pull/)).toBeInTheDocument();
+    expect(screen.getByText(/· skipped/)).toBeInTheDocument();
+    expect(screen.getByText("Manage day")).toBeInTheDocument();
+    cleanup();
+    renderPeek(day(2), plan, day(0));
+    expect(screen.getByText(/^Push/)).toBeInTheDocument();
+    expect(screen.getByText(/· skipped/)).toBeInTheDocument();
+  });
+
+  it("says a lift day before a race rests", () => {
+    const programState = {
+      ...lifts("Pull", "Push", "Legs"),
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "half", targetDate: day(6) },
+      },
+    } as unknown as ProgramState;
+    renderPeek(day(4), programState, day(3));
+    expect(screen.getByText("Rest before your race")).toBeInTheDocument();
+    expect(screen.getByText("Rest day")).toBeInTheDocument();
   });
 });

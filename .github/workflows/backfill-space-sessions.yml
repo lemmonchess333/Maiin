@@ -1,0 +1,91 @@
+name: Backfill Space sessions
+
+# onSpaceMemberWritten, onActivitySpaceRows and onRestrictionWritten keep a
+# Space's list of members' sessions and its week in step, but only from the
+# first join, post or session after they were deployed (Run27 call 11).
+# This brings in the members who joined before
+# (functions/scripts/backfill-space-sessions.js). It is safe to run at any
+# time and beside the triggers; a second run adds no rows.
+#
+# The backfill also recounts each Space's week, which runs the same count
+# and sum queries as the live recount. A missing index fails those queries
+# with FAILED_PRECONDITION and a link to create it, so a green run is also
+# the check that the week's indexes are built.
+#
+# Run it by hand from the Actions tab, or add a dated line to
+# .github/backfill-space-sessions.request on main: a change to that file
+# runs it too, which is the way to start it from a session whose GitHub app
+# cannot dispatch a workflow.
+
+on:
+  workflow_dispatch:
+  # A new line in the request file on main. Only main, which is also the
+  # only branch the production environment lets this job read its
+  # credentials on.
+  push:
+    branches: [main]
+    paths:
+      - .github/backfill-space-sessions.request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: space-sessions-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run.
+    environment: production
+    # Install, two passes over every Space's members, and a log read.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Backfill
+        run: node functions/scripts/backfill-space-sessions.js adaptive-fitness-af8bb
+
+      - name: Run again and expect no row left to add
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-space-sessions.js adaptive-fitness-af8bb | tee second-run.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("second-run.json", "utf8"));
+            if (t.rowsAdded !== 0) {
+              console.error(`The second run still added ${t.rowsAdded} rows.`);
+              process.exit(1);
+            }
+          '
+
+      # The deployed recount's own errors over the last two days. Read-only,
+      # and informational: the service account may not hold Logs Viewer, and
+      # a log it cannot read is not a failed backfill.
+      - name: Missing-index errors in the Functions logs
+        continue-on-error: true
+        run: |
+          gcloud logging read \
+            'severity>=ERROR AND (textPayload:"requires an index" OR textPayload:"FAILED_PRECONDITION" OR jsonPayload.message:"requires an index")' \
+            --project adaptive-fitness-af8bb --freshness=2d --limit=20 \
+            --format='value(timestamp,resource.labels.function_name,resource.labels.service_name,textPayload,jsonPayload.message)' \
+            | tee index-errors.txt
+          if [ -s index-errors.txt ]; then
+            echo "::warning::Missing-index errors found in the Functions logs (above)."
+          else
+            echo "No missing-index errors in the last two days."
+          fi

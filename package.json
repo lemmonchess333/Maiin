@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/stamp-sw.mjs",
-    "build:hosting": "tsc -b && HOSTING_TARGET=firebase vite build && node scripts/stamp-sw.mjs",
+    "build:hosting": "tsc -b && HOSTING_TARGET=firebase vite build && HOSTING_TARGET=firebase node --import tsx scripts/website/prerender.ts && node scripts/stamp-sw.mjs",
     "build:e2e": "tsc -b && vite build --mode=test",
     "build:ios": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync ios",
     "build:android": "echo 'Android platform is not committed yet (ios/ only) — see README: Capacitor / Android' && exit 1",
@@ -29,7 +29,7 @@
     "test:e2e:journeys": "playwright test --project=journeys --workers=1",
     "test:design-qa": "playwright test --project=auth-emulator e2e/design-qa",
     "score:screens": "TROPOS_SCORE=1 playwright test --project=auth-emulator e2e/design-qa/screenScore.capture.spec.ts --trace off",
-    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts firestore.profile.rules.test.ts firestore.goalSpaces.rules.test.ts firestore.partnerBonds.rules.test.ts firestore.ownerSubcollections.rules.test.ts firestore.restriction.rules.test.ts firestore.followRequests.rules.test.ts firestore.friendsBoard.rules.test.ts firestore.followCounts.rules.test.ts firestore.leagues.rules.test.ts firestore.pulse.rules.test.ts firestore.blocks.rules.test.ts firestore.collectionGroup.test.ts'",
+    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts firestore.profile.rules.test.ts firestore.goalSpaces.rules.test.ts firestore.partnerBonds.rules.test.ts firestore.ownerSubcollections.rules.test.ts firestore.restriction.rules.test.ts firestore.followRequests.rules.test.ts firestore.friendsBoard.rules.test.ts firestore.followCounts.rules.test.ts firestore.leagues.rules.test.ts firestore.pulse.rules.test.ts firestore.segments.rules.test.ts firestore.blocks.rules.test.ts firestore.collectionGroup.test.ts'",
     "test:rules:storage": "firebase emulators:exec --only firestore,storage --project demo-tropos 'vitest run storage.rules.test.ts'",
     "secrets:check": "node scripts/check-required-secrets.mjs",
     "env:check:web": "node scripts/check-web-env.mjs",
@@ -100,7 +100,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/cli": "^8.6.0",
     "@eslint/js": "^9.39.5",
     "@firebase/rules-unit-testing": "^5.0.1",

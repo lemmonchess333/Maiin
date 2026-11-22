@@ -48,7 +48,7 @@ export default function GhostDeltaChip({
 
   return (
     <div
-      className="flex items-center gap-1 rounded-full bg-black/55 px-3 py-1 text-xs text-white backdrop-blur"
+      className="flex items-center gap-1 rounded-full bg-black/55 px-3 py-1 text-xs text-white backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black"
       role="status"
       aria-label={
         ahead

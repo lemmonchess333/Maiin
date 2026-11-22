@@ -27,6 +27,19 @@
 
 export type RunMode = "race_prep" | "starter" | "freeform";
 
+/**
+ * Whether a stored run mode, or a stored plan's mode, is the "structured"
+ * one Run9 (3a) retired. App1 Q25 took it out of this build once a count
+ * (`functions/scripts/countStructuredRunMode.js`) found no account holding
+ * it; a document written before then may still. Nothing writes it: a
+ * profile reads it as free running (`hydrateProfile` in `auth.tsx`, which
+ * writes free running back), and a plan of that kind is dropped as it is
+ * read (`migrateProgramState`).
+ */
+export function isRetiredRunMode(mode: unknown): boolean {
+  return mode === "structured";
+}
+
 export interface RaceGoal {
   distance: string;
   /** Local "YYYY-MM-DD". */
@@ -44,6 +57,8 @@ export interface RaceGoal {
    *  distance run on their own. Absent on a goal set before the question
    *  was asked, which reads as a race (`raceGoalEntry`). */
   entry?: "race" | "own";
+  /** Run26 (2): the race's total climb, whole metres. */
+  climbM?: number;
 }
 
 /**

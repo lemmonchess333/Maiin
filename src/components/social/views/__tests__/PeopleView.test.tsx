@@ -140,6 +140,13 @@ it("asks someone in no space to join one, and someone in a space where suggestio
   ).toBeInTheDocument();
 });
 
+it("offers Browse spaces to someone in no Space, from their first day (App1 Q6)", () => {
+  renderPeople(true);
+  expect(
+    screen.getByRole("button", { name: "Browse spaces" })
+  ).toBeInTheDocument();
+});
+
 it("lists suggestions with their reason once they arrive, and no line where there is none", () => {
   H.people = [
     {

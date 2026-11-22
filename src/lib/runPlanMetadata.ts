@@ -17,7 +17,7 @@
  * data: profile snapshot, programState (or its absence), URL params.
  */
 
-import { intervalRestSeconds } from "./intervalRest";
+import { intervalRestSeconds, plannedRepeatPace } from "./intervalRest";
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
@@ -31,11 +31,16 @@ import {
   type RaceTarget,
 } from "./racePace";
 import {
+  segmentsFromEasy,
+  segmentsFromEasyWithPickUps,
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromLongWithRacePaceBlocks,
+  segmentsFromProgression,
   segmentsFromRunWalk,
   segmentsFromTempo,
+  segmentsFromTimeTrial,
   type SessionSegment,
 } from "./runSegments";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
@@ -48,8 +53,15 @@ import {
 // ─── Field types ─────────────────────────────────────────────────────
 
 /** A saved run's snapshot of `profile.runMode`. `starter`: Run9's starter
- *  goal, whose planned days are matched as any plan's are. */
-export type PlanMode = "freeform" | "structured" | "race_prep" | "starter";
+ *  goal, whose planned days are matched as any plan's are. A run saved
+ *  under the retired "structured" mode (App1 Q25) keeps it as history;
+ *  its readers ask only whether a run was race prep. */
+export type PlanMode =
+  | "freeform"
+  | "race_prep"
+  | "starter"
+  /** Run24 (3): a plan with no race date (`runModeWithPlan`). */
+  | "rolling";
 
 export type PlanSource =
   "today_plan" | "url_template" | "manual" | "rest_day" | "completed_day";
@@ -738,7 +750,8 @@ function timedMinutes(tmpl: RunTemplate): number | undefined {
   if (
     tmpl.type === "easy" &&
     !tmpl.config.targetDistanceKm &&
-    !tmpl.config.strides
+    !tmpl.config.strides &&
+    !tmpl.config.pickUps
   ) {
     return tmpl.estimatedDuration;
   }
@@ -765,6 +778,7 @@ function templateToPrefill(
   const work = racePaceWork(tmpl, race);
   const tempoAtGoal = work?.kind === "tempo" ? work : null;
   const raceFinish = work?.kind === "finish" ? work : null;
+  const raceBlocks = work?.kind === "blocks" ? work : null;
   if (tmpl.config.targetDistanceKm) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
     // editing templates), but RunConfig.target.value is metres
@@ -799,15 +813,24 @@ function templateToPrefill(
   if (tmpl.config.intervals) {
     // Adaptive Paces: personalize the interval work pace (VO₂max) from the
     // user's fitness; falls through to undefined (PaceZoneBar's own fallback)
-    // when there's no benchmark.
-    const workPace = resolveSessionPaces(tmpl.type, paceTable ?? null).workPace;
+    // when there's no benchmark. Run24 (5): repeats at repetition pace or a
+    // race's take theirs from it, and repeats by feel none
+    // (`plannedRepeatPace`).
+    const workPace = plannedRepeatPace(
+      tmpl,
+      resolveSessionPaces("intervals", paceTable ?? null).workPace
+    );
     // Deep dive D15: with the rep pace known, the rest is a share of the
     // rep's own time (`intervalRestSeconds`).
     prefill.intervals = workPace
       ? {
           ...tmpl.config.intervals,
           workPace,
-          restDuration: intervalRestSeconds(tmpl.config.intervals, workPace),
+          restDuration: intervalRestSeconds(
+            tmpl.config.intervals,
+            workPace,
+            tmpl.config.repeatsAt
+          ),
         }
       : tmpl.config.intervals;
   }
@@ -825,8 +848,24 @@ function templateToPrefill(
   // derive from the (personalized) interval config; tempo from the promoted
   // structure with the resolved target pace; strides from the easy variant.
   // A2 adds the build-phase long run closing at goal race pace.
-  if (prefill.intervals) {
-    prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed);
+  if (tmpl.config.timeTrial) {
+    // Run24 (4): no pace on a time trial; the run is how it is found.
+    delete prefill.target;
+    prefill.segments = segmentsFromTimeTrial(tmpl.config.timeTrial, seed);
+  } else if (prefill.intervals) {
+    prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed, {
+      repeatsAt: tmpl.config.repeatsAt,
+      uphill: tmpl.config.uphill,
+      steadyClimbs: tmpl.config.steadyClimbs,
+      downhill: tmpl.config.downhill,
+    });
+  } else if (tmpl.config.progression) {
+    // Run24 (5): the finish at the threshold pace a benchmark gives.
+    prefill.segments = segmentsFromProgression(
+      tmpl.config.progression,
+      unit,
+      prefill.target?.type === "pace" ? prefill.target.value : undefined
+    );
   } else if (tmpl.config.tempo) {
     prefill.segments = segmentsFromTempo(
       tmpl.config.tempo,
@@ -843,21 +882,34 @@ function templateToPrefill(
       tmpl.config.strides,
       seed
     );
+  } else if (tmpl.config.pickUps) {
+    // Run24 (8): pick-ups by feel, no pace anywhere in them.
+    prefill.segments = segmentsFromEasyWithPickUps(
+      tmpl.estimatedDuration,
+      tmpl.config.pickUps,
+      seed
+    );
   } else if (tmpl.config.runWalk) {
     // Run20 (5): a timed target (above) and no pace anywhere in it.
     prefill.segments = segmentsFromRunWalk(tmpl.config.runWalk, seed);
   } else if (tmpl.type === "easy" && minutes) {
     // Use the same pause-corrected player, remaining-time display and finish
     // cue as every structured session. A completed target never auto-saves.
-    prefill.segments = [
-      {
-        type: "easy",
-        label: `Easy ${minutes} min`,
-        instruction: "Conversational pace",
-        target: { kind: "duration", seconds: minutes * 60 },
-        cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
-      },
-    ];
+    prefill.segments = segmentsFromEasy(minutes);
+  } else if (tmpl.config.racePaceBlocks && tmpl.config.targetDistanceKm) {
+    // Run24 (5): the blocks at the race's pace where the plan has one,
+    // else by effort.
+    prefill.segments = segmentsFromLongWithRacePaceBlocks(
+      tmpl.config.targetDistanceKm,
+      tmpl.config.racePaceBlocks,
+      unit,
+      raceBlocks
+        ? {
+            goalPaceS: raceBlocks.goalPaceS,
+            marathonBand: raceBlocks.source === "band",
+          }
+        : null
+    );
   } else if (raceFinish && tmpl.config.targetDistanceKm) {
     prefill.segments = segmentsFromLongWithRacePace(
       tmpl.config.targetDistanceKm,

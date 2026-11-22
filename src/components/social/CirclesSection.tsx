@@ -33,6 +33,7 @@
 
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import {
+  Suspense,
   useCallback,
   useEffect,
   useState,
@@ -81,14 +82,32 @@ import {
   isInviteCodeExpired,
 } from "@/features/goalSpace/inviteCode";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
+import { lazyRetry } from "@/lib/lazyRetry";
+import {
+  defaultMeetupSport,
+  meetupTypedWords,
+  meetupWhen,
+  upcomingMeetups,
+  type CircleMeetup,
+  type MeetupPlan,
+} from "@/features/goalSpace/circleMeetups";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/objectionableMessages";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { useWordFilter } from "@/hooks/useWordFilter";
-import { circleTitle } from "@/features/goalSpace/circleTitle";
+import { CIRCLE_NAME_MAX, circleTitle } from "@/features/goalSpace/circleTitle";
 import { appInviteUrl } from "@/lib/publicLinks";
+
+/* A Circle's meet-ups (Run26 call 4) load with its sheet, not with Social:
+   the list when a Circle is opened, the plan sheet when it is first asked
+   for. */
+const CircleMeetupList = lazyRetry(() => import("./CircleMeetupList"));
+const CircleMeetupSheet = lazyRetry(() => import("./CircleMeetupSheet"));
+
+const MEETUP_OBJECTIONABLE_MESSAGE =
+  "This meet-up contains objectionable language. Reword it and try again.";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -301,6 +320,7 @@ export default function CirclesSection({
     reload,
     createCircle,
     renewInviteCode,
+    renameCircle,
     joinCircle,
     leaveCircle,
     loadDetail,
@@ -308,6 +328,9 @@ export default function CirclesSection({
     setWeeklyFocus,
     backCheckIn,
     resolveTarget,
+    planMeetup,
+    setMeetupGoing,
+    cancelMeetup,
   } = useGoalSpaces(uid);
   /* Circle names go through the word filter (circleTitle), so a list with
      Circles in it waits for it as it waits for the Circles: no name is
@@ -361,6 +384,19 @@ export default function CirclesSection({
   const [detailSeenAt, setDetailSeenAt] = useState(0);
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
+  /* Run26 call 4: the open Circle's meet-ups, the plan sheet, and which
+     meet-up an answer or a call-off is in flight for. */
+  const [meetups, setMeetups] = useState<CircleMeetup[]>([]);
+  const [meetupSheetOpen, setMeetupSheetOpen] = useState(false);
+  /* The plan sheet mounts the first time it is asked for, and stays, so it
+     can animate closed. */
+  const [meetupSheetMounted, setMeetupSheetMounted] = useState(false);
+  const [meetupBusy, setMeetupBusy] = useState(false);
+  const [meetupBusyId, setMeetupBusyId] = useState<string | null>(null);
+  /* Run27 call 11: the owner's new name for the open Circle, while the
+     field is open (null when it is not), and whether it is being saved. */
+  const [renameDraft, setRenameDraft] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
   // When the create sheet is opened with a goal already chosen (cold-start
   // tap or a race-plan hand-off), the full goal picker is redundant — the
@@ -466,6 +502,8 @@ export default function CirclesSection({
   const [featuredRead, setFeaturedRead] = useState<{
     key: string;
     detail: CircleDetail;
+    /** When it landed: the moment its meet-ups are read as over or not. */
+    at: number;
   } | null>(null);
   const featuredDetail =
     featuredRead !== null && featuredRead.key === featuredKey
@@ -475,7 +513,8 @@ export default function CirclesSection({
     if (!featuredKey || !featuredId) return;
     let cancelled = false;
     void loadDetail(featuredId).then((detail) => {
-      if (!cancelled) setFeaturedRead({ key: featuredKey, detail });
+      if (!cancelled)
+        setFeaturedRead({ key: featuredKey, detail, at: Date.now() });
     });
     return () => {
       cancelled = true;
@@ -575,9 +614,135 @@ export default function CirclesSection({
     setDetailOf(c);
     setDetailSeenAt(Date.now());
     setMembers(null);
+    setRenameDraft(null);
     const detail = await loadDetail(c.space.id);
     setMembers(detail.members);
     setEvents(detail.events);
+    setMeetups(detail.meetups);
+  };
+
+  /* Meet-ups change in two copies, as check-ins do: the open sheet's and
+     the featured row's, so the row's next meet-up and the sheet agree. */
+  const patchMeetups = (
+    spaceId: string,
+    patch: (prev: CircleMeetup[]) => CircleMeetup[]
+  ) => {
+    if (detailOf?.space.id === spaceId) setMeetups(patch);
+    if (spaceId === featuredId) {
+      setFeaturedRead((prev) =>
+        prev && prev.key === featuredKey
+          ? {
+              ...prev,
+              detail: { ...prev.detail, meetups: patch(prev.detail.meetups) },
+            }
+          : prev
+      );
+    }
+  };
+
+  const submitMeetup = async (plan: MeetupPlan): Promise<boolean> => {
+    if (!detailOf || refused()) return false;
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn’t plan it. Try again.");
+      return false;
+    }
+    if (meetupTypedWords(plan).some((text) => filter.containsProfanity(text))) {
+      toast.error(MEETUP_OBJECTIONABLE_MESSAGE);
+      return false;
+    }
+    const spaceId = detailOf.space.id;
+    setMeetupBusy(true);
+    const res = await planMeetup(spaceId, plan);
+    setMeetupBusy(false);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return false;
+    }
+    const planned: CircleMeetup = {
+      id: res.meetupId,
+      organiserUid: uid,
+      ...plan,
+      going: [uid],
+      createdAt: Date.now(),
+    };
+    patchMeetups(spaceId, (prev) =>
+      [...prev.filter((m) => m.id !== planned.id), planned].sort(
+        (a, b) => a.startsAt - b.startsAt
+      )
+    );
+    setMeetupSheetOpen(false);
+    toast.success("Meet-up planned.");
+    return true;
+  };
+
+  const answerMeetup = async (m: CircleMeetup, going: boolean) => {
+    if (!detailOf) return;
+    // Saying you're in reaches the others; saying you can't stays open.
+    if (going && refused()) return;
+    haptic("light");
+    const spaceId = detailOf.space.id;
+    setMeetupBusyId(m.id);
+    const res = await setMeetupGoing(spaceId, m.id, going);
+    setMeetupBusyId(null);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return;
+    }
+    patchMeetups(spaceId, (prev) =>
+      prev.map((x) => (x.id === m.id ? { ...x, going: res.going } : x))
+    );
+  };
+
+  const callOffMeetup = async (m: CircleMeetup) => {
+    if (!detailOf) return;
+    const spaceId = detailOf.space.id;
+    setMeetupBusyId(m.id);
+    const ok = await cancelMeetup(spaceId, m.id);
+    setMeetupBusyId(null);
+    if (!ok) {
+      toast.error("Couldn’t call it off. Try again.");
+      return;
+    }
+    patchMeetups(spaceId, (prev) => prev.filter((x) => x.id !== m.id));
+    toast.success("Called off.");
+  };
+
+  /* Run27 call 11: the owner renames the open Circle. The name meets the
+     word filter here, and the server's after it, with the sentence a
+     display name gets; the list reloads with it, and the open sheet takes
+     it at once. */
+  const saveRename = async () => {
+    if (!detailOf || renameDraft === null || refused()) return;
+    const trimmed = renameDraft.trim();
+    if (!trimmed) {
+      toast.error("Give the circle a name.");
+      return;
+    }
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn’t rename it. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(trimmed)) {
+      toast.error(OBJECTIONABLE_NAME_MESSAGE);
+      return;
+    }
+    const spaceId = detailOf.space.id;
+    setRenaming(true);
+    const res = await renameCircle(spaceId, trimmed);
+    setRenaming(false);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return;
+    }
+    setDetailOf((d) =>
+      d && d.space.id === spaceId
+        ? { ...d, space: { ...d.space, title: res.title } }
+        : d
+    );
+    setRenameDraft(null);
+    toast.success("Circle renamed.");
   };
 
   /* A row's check-in: the weekly focus sheet, for the Circle it is on.
@@ -870,7 +1035,7 @@ export default function CirclesSection({
           retry block replaces the list/empty state so a network blip
           never funnels an existing member into the cold-start selector. */}
       {!loading && loadFailed && (
-        <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3">
+        <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3 dark:card-shadow">
           <p className="text-sm text-muted-foreground">
             Couldn’t load your circles.
           </p>
@@ -892,7 +1057,7 @@ export default function CirclesSection({
           only (!loadFailed). "Join with code" sits beside Start so an
           invited user isn't funneled into creating. */}
       {!loading && !loadFailed && circles.length === 0 && (
-        <div className="rounded-2xl bg-card p-4 space-y-3">
+        <div className="rounded-2xl bg-card p-4 space-y-3 dark:card-shadow">
           <div className="flex items-start gap-3">
             <div className="size-9 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
               <Users className="size-4 text-primary-strong" aria-hidden />
@@ -977,7 +1142,25 @@ export default function CirclesSection({
                   featuredDetail &&
                   featuredDetail.members.length >= 2 &&
                   featuredFocusCount > 0;
-                const meta = pulse ? (
+                /* The featured Circle's next meet-up, when it has one,
+                 is its line: the most useful thing to know about it this
+                 week (Run26 call 4). */
+                const nextMeetup =
+                  isFeatured && featuredDetail
+                    ? (upcomingMeetups(
+                        featuredDetail.meetups,
+                        featuredMemberUids,
+                        featuredRead?.at ?? 0
+                      )[0] ?? null)
+                    : null;
+                const meta = nextMeetup ? (
+                  <>
+                    {nextMeetup.title} ·{" "}
+                    <span className="font-mono tabular-nums">
+                      {meetupWhen(nextMeetup.startsAt)}
+                    </span>
+                  </>
+                ) : pulse ? (
                   <>
                     <span className="font-mono tabular-nums">
                       {featuredFocusCount}
@@ -1188,7 +1371,7 @@ export default function CirclesSection({
                 setGoalPrechosen(true); // goal chosen here — skip the re-pick
                 setShowCreate(true);
               }}
-              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
+              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97] chip-edge"
             >
               <p className="text-sm font-semibold text-foreground">{t.label}</p>
               <p className="text-xs text-muted-foreground">{t.description}</p>
@@ -1201,7 +1384,7 @@ export default function CirclesSection({
               setChooserOpen(false);
               navigate("/review");
             }}
-            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
+            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97] chip-edge"
           >
             <p className="text-sm font-semibold text-foreground">
               Private progress
@@ -1226,7 +1409,7 @@ export default function CirclesSection({
           }
         }}
         title="Start a circle"
-        description="Invite-only, 2–8 people. The circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite-only, 2–8 people. The circle sees check-ins and meet-ups, never your numbers, meals or photos."
       >
         <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
@@ -1288,7 +1471,7 @@ export default function CirclesSection({
                     "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     template === t.type
                       ? "bg-primary/10 border border-primary/40"
-                      : "bg-muted border border-transparent"
+                      : "bg-muted chip-edge border border-transparent"
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground">
@@ -1305,7 +1488,7 @@ export default function CirclesSection({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            maxLength={60}
+            maxLength={CIRCLE_NAME_MAX}
             placeholder={`Name it (${
               COLD_START_OPTIONS.find((t) => t.type === template)
                 ?.namePlaceholder ?? "e.g. Autumn strength block"
@@ -1429,7 +1612,7 @@ export default function CirclesSection({
                   {members.map((m) => (
                     <span
                       key={m.uid}
-                      className="px-3 py-2 rounded-xl bg-muted text-xs font-semibold text-foreground"
+                      className="px-3 py-2 rounded-xl bg-muted text-xs font-semibold text-foreground chip-edge"
                     >
                       {m.displayName}
                       {m.role === "owner" && (
@@ -1581,6 +1764,27 @@ export default function CirclesSection({
                   </div>
                 )}
 
+                <Suspense fallback={null}>
+                  <CircleMeetupList
+                    meetups={upcomingMeetups(meetups, memberUids, detailSeenAt)}
+                    members={members}
+                    viewerUid={uid}
+                    ownerUid={detailOf.space.ownerId}
+                    canPlan={
+                      detailOf.space.active && !leadsWithInvite(detailOf)
+                    }
+                    busyId={meetupBusyId}
+                    onPlan={() => {
+                      if (refused()) return;
+                      haptic("light");
+                      setMeetupSheetMounted(true);
+                      setMeetupSheetOpen(true);
+                    }}
+                    onAnswer={(m, going) => void answerMeetup(m, going)}
+                    onCancel={(m) => void callOffMeetup(m)}
+                  />
+                </Suspense>
+
                 <div className="space-y-1.5">
                   <SectionHeading size="compact" as="h3">
                     Recent
@@ -1651,6 +1855,62 @@ export default function CirclesSection({
                   })}
                 </div>
 
+                {/* Run27 call 11: the owner renames a live Circle, in the
+                    sheet itself, as a meet-up is called off: a dialog over
+                    the sheet would sit outside its focus trap. */}
+                {detailOf.space.ownerId === uid &&
+                  detailOf.space.active &&
+                  (renameDraft === null ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        if (refused()) return;
+                        haptic("light");
+                        setRenameDraft(circleTitle(detailOf.space, wordFilter));
+                      }}
+                    >
+                      Rename circle
+                    </Button>
+                  ) : (
+                    <div
+                      className="space-y-2"
+                      role="group"
+                      aria-label="Rename circle"
+                    >
+                      <input
+                        type="text"
+                        value={renameDraft}
+                        onChange={(e) => setRenameDraft(e.target.value)}
+                        maxLength={CIRCLE_NAME_MAX}
+                        aria-label="Circle name"
+                        className="ds-input text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Everyone in the circle sees the new name.
+                      </p>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setRenameDraft(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          loading={renaming}
+                          disabled={renameDraft.trim().length === 0}
+                          onClick={() => void saveRename()}
+                        >
+                          Save name
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1679,14 +1939,14 @@ export default function CirclesSection({
           if (!o) setInviteHandoff(null);
         }}
         title="Your circle is ready"
-        description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite 1–7 people. The circle sees check-ins and meet-ups, never your numbers, meals or photos."
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">
             {/* An expired code is not shown or offered; the one way on is
                 a new code, which this sheet then shows. */}
             {!handoffCodeExpired && (
-              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
+              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all chip-edge">
                 {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
               </p>
             )}
@@ -1731,6 +1991,20 @@ export default function CirclesSection({
           </div>
         )}
       </BottomSheet>
+
+      {/* ── Plan a meet-up (Run26 call 4) ── over the detail sheet, as
+          the weekly focus sheet is. */}
+      {meetupSheetMounted && (
+        <Suspense fallback={null}>
+          <CircleMeetupSheet
+            open={meetupSheetOpen}
+            onOpenChange={setMeetupSheetOpen}
+            defaultSport={defaultMeetupSport(detailOf?.space.type ?? "race")}
+            busy={meetupBusy}
+            onSubmit={submitMeetup}
+          />
+        </Suspense>
+      )}
 
       {/* ── Weekly focus sheet (SOCIAL-FOCUS-01) ──
           Exactly ONE instance; its inputs come from whichever surface

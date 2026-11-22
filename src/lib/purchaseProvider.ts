@@ -23,9 +23,12 @@ import {
   type PurchasePending,
 } from "@/lib/revenuecat";
 import { traceBoot } from "@/lib/bootTrace";
+import type { PurchaseOutcome } from "@/lib/checkoutFlow";
 
 export type { PlanId, PurchasePending };
 
+/** What a restore or "Manage subscription" came to. A purchase comes to a
+ *  `PurchaseOutcome` instead (`checkoutFlow.ts`), one of five. */
 export interface PurchaseResult {
   success: boolean;
   /** A sentence for the person: callers show it as it is. */
@@ -33,17 +36,11 @@ export interface PurchaseResult {
   /** The underlying error's own text (an SDK's, a fetch's), for logs and
    *  telemetry. Never shown. */
   detail?: string;
-  /** The person closed the purchase sheet. Not a failure: callers say
-   *  nothing, and `error` is unset. */
-  cancelled?: boolean;
-  /** The store has the purchase and Pro is not active yet. Not a failure:
-   *  `error` is unset, and callers say what the person is waiting for. */
-  pending?: PurchasePending;
-  /** Optional URL the caller can redirect to (the web checkout, the
-   *  customer portal, the App Store's subscriptions page). When set, the caller is
-   *  responsible for navigation — purchase() and manageSubscription()
-   *  do their own redirect for the standard flow, but having the URL
-   *  on the result lets callers handle it via window.open instead. */
+  /** Optional URL the caller can redirect to (the customer portal, the
+   *  App Store's subscriptions page). When set, the caller is responsible
+   *  for navigation — manageSubscription() does its own redirect for the
+   *  standard flow, but having the URL on the result lets callers handle
+   *  it via window.open instead. */
   redirectUrl?: string;
 }
 
@@ -144,17 +141,17 @@ function purchaseOnWeb(
   plan: PlanId,
   uid: string,
   email: string
-): PurchaseResult {
+): PurchaseOutcome {
   const token = webPurchaseToken();
   if (!token || !uid) {
     return {
-      success: false,
-      error: "Purchases aren’t available in this build.",
+      kind: "failed",
+      message: "Purchases aren’t available in this build.",
     };
   }
   const url = webPurchaseUrl(plan, uid, email, token);
   window.location.href = url;
-  return { success: true, redirectUrl: url };
+  return { kind: "redirected", url };
 }
 
 /**
@@ -166,34 +163,32 @@ function purchaseOnWeb(
  * best-effort sync callable only closes the purchase→webhook latency gap so
  * Pro unlocks the moment the sheet dismisses.
  */
-async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
+async function purchaseWithRevenueCat(
+  plan: PlanId,
+  uid: string
+): Promise<PurchaseOutcome> {
   const productId = APPLE_PRODUCT_IDS[plan];
-  const outcome = await rcPurchase(productId);
-  if (outcome.userCancelled) {
-    return { success: false, cancelled: true };
-  }
-  if (outcome.pending) {
-    // A purchase the store took is what the sync is for: it asks
-    // RevenueCat again from the server. An approval has nothing to sync
-    // until it is given, and the webhook brings that.
-    if (outcome.pending === "entitlement") {
+  const outcome = await rcPurchase(productId, uid);
+  switch (outcome.kind) {
+    case "cancelled":
+    case "failed":
+      return outcome;
+    case "pending":
+      // A purchase the store took is what the sync is for: it asks
+      // RevenueCat again from the server. An approval has nothing to sync
+      // until it is given, and the webhook brings that.
+      if (outcome.pending === "entitlement") {
+        await syncEntitlementBestEffort(
+          outcome.price ? reportedPrice(productId, outcome.price) : undefined
+        );
+      }
+      return { kind: "pending", pending: outcome.pending };
+    case "bought":
       await syncEntitlementBestEffort(
         outcome.price ? reportedPrice(productId, outcome.price) : undefined
       );
-    }
-    return { success: false, pending: outcome.pending };
+      return { kind: "bought" };
   }
-  if (!outcome.success) {
-    return {
-      success: false,
-      error: outcome.error ?? "Couldn’t complete the purchase. Try again.",
-      detail: outcome.detail,
-    };
-  }
-  await syncEntitlementBestEffort(
-    outcome.price ? reportedPrice(productId, outcome.price) : undefined
-  );
-  return { success: true };
 }
 
 /** The price the server keeps for the trial reminder's email
@@ -257,10 +252,10 @@ export async function purchase(
   uid: string,
   email: string,
   _options: PurchaseOptions = {}
-): Promise<PurchaseResult> {
+): Promise<PurchaseOutcome> {
   if (isNativeIOS()) {
     if (isRevenueCatEnabled()) {
-      return purchaseWithRevenueCat(plan);
+      return purchaseWithRevenueCat(plan, uid);
     }
     // No second iOS path. `cordova-plugin-purchase` sat here as a
     // fallback; it was never device-tested, its products were never
@@ -274,8 +269,8 @@ export async function purchase(
     // key cannot sell anything on iOS, and now says so rather than
     // failing somewhere further in.
     return {
-      success: false,
-      error: "Purchases aren’t available in this build.",
+      kind: "failed",
+      message: "Purchases aren’t available in this build.",
     };
   }
   return purchaseOnWeb(plan, uid, email);
@@ -341,6 +336,37 @@ export async function manageSubscription(
         describeRejection(err) ?? "Couldn’t open billing portal. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
+  }
+}
+
+/**
+ * Go to the page where a subscription bought on the website is managed and
+ * cancelled: RevenueCat's management link for the signed-in person
+ * (`getSubscriptionManagementUrl`). On every platform, the iPhone included,
+ * since the App Store does not manage a website purchase. A navigation,
+ * not a new window: it needs no tap still in progress after the call
+ * (Safari blocks a window opened that late), and in the iPhone app
+ * Capacitor hands a page on another host to Safari, as Manage subscription
+ * does. Resolves with the sentence to show when there is no link.
+ */
+export async function openWebSubscription(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  const fallback = "Couldn’t open your subscription. Try again.";
+  try {
+    const manageLink = httpsCallable<Record<string, never>, { url: string }>(
+      functions,
+      "getSubscriptionManagementUrl"
+    );
+    const url = (await manageLink({})).data?.url;
+    if (!url) return { ok: false, error: fallback };
+    window.location.href = url;
+    return { ok: true };
+  } catch (err) {
+    logger.error("[purchase] web subscription link failed", err);
+    // A failed-precondition carries a sentence the server wrote for the
+    // person, as for Manage subscription.
+    return { ok: false, error: describeRejection(err) ?? fallback };
   }
 }
 

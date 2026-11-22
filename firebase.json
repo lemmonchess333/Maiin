@@ -2,9 +2,24 @@
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "trailingSlash": false,
     "rewrites": [
       {
-        "source": "**",
+        "source": "/activity/**",
+        "function": {
+          "functionId": "publicPostPage",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/email/unsubscribe",
+        "function": {
+          "functionId": "emailUnsubscribe",
+          "region": "us-central1"
+        }
+      },
+      {
+        "regex": "^/(?:admin|circuit|diagnostics|dev|empty-workout|followers|following|history|league|onboarding|program|review|routine|run|run-summary|segment|settings|space|upgrade|user|workout)(?:/.*)?$",
         "destination": "/index.html"
       }
     ],
@@ -49,6 +64,19 @@
       },
       {
         "source": "/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
         "headers": [
           {
             "key": "Content-Type",

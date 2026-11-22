@@ -1,11 +1,19 @@
 name: Deploy to Firebase Hosting
 
-# Serves the web app from Firebase Hosting (PROJECT.web.app /
-# PROJECT.firebaseapp.com). Unlike the GitHub Pages deploy, Hosting puts the
-# app on the SAME origin as the Firebase auth handler
-# (PROJECT.firebaseapp.com/__/auth/handler), which is what makes OAuth sign-in
-# (Apple / Google popup) work on iOS Safari — a cross-origin popup from
-# github.io is severed by Safari's tracking protection (auth/internal-error).
+# Serves troposfit.com (and PROJECT.web.app / PROJECT.firebaseapp.com) from
+# Firebase Hosting. Since App1 Q52 (owner, 15 Nov 2026) that is the website,
+# not the app: `npm run build:hosting` builds website.html (src/website/)
+# alone and writes it out as index.html (scripts/website/websiteEntry.ts).
+# It points to the App Store, draws a shared post's page (publicPostPage
+# fetches this index.html) and the legal and support pages, and keeps every
+# address already handed out answering (src/website/__tests__/
+# websiteAddresses.test.tsx). The whole app is the GitHub Pages deploy.
+#
+# The website reads VITE_FIREBASE_PROJECT_ID (who sent an invite) and
+# IOS_APP_ID_PREFIX (the universal-links file). The other variables below
+# are the app's, kept while the owner chooses how the website sells Pro
+# (docs/qa/pre-launch-backlog.md, Part W rows); Vite puts in a bundle only
+# what its code reads, so they add nothing to the website.
 #
 # Setup (one-time, operator):
 #   1. Add the FIREBASE_SERVICE_ACCOUNT repo secret — a service-account JSON
@@ -13,8 +21,6 @@ name: Deploy to Firebase Hosting
 #      Firebase Console → Project settings → Service accounts → Generate new
 #      private key, OR `firebase init hosting:github` which creates it for you.
 #   2. The VITE_FIREBASE_* secrets are already set (shared with deploy.yml).
-#   3. Share the https://<project>.firebaseapp.com link with testers — that
-#      domain is same-origin with the auth handler, so popup sign-in works.
 
 on:
   # Production entry point (including manual redeploys): deploy-production.yml.
@@ -51,7 +57,7 @@ jobs:
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-      # Root-based, same-origin bundle (base "/" instead of "/Maiin/").
+      # The website, root-based (base "/" instead of "/Maiin/").
       - run: npm run build:hosting
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -89,6 +95,15 @@ jobs:
           # price and no buy button (canSellInThisBuild). Hosting only: the
           # GitHub Pages preview does not sell.
           VITE_REVENUECAT_WEB_PURCHASE_TOKEN: ${{ vars.REVENUECAT_WEB_PURCHASE_TOKEN }}
+          # The signed iPhone app's application-identifier prefix, so
+          # troposfit.com's invite, post and Space links open the app
+          # (docs/ios-invite-links.md). It is the Team ID: the signing log of
+          # deploy-ios run 43682416087 (15 Nov 2026) shows the app as
+          # "***.com.tropos.app", masked exactly as APPLE_TEAM_ID is, where a
+          # legacy prefix would print in clear. A repository variable of the
+          # same name overrides it. Unset, the build fails (App1 Q52): without
+          # this file Hosting serves Firebase's own, which claims every path.
+          IOS_APP_ID_PREFIX: ${{ vars.IOS_APP_ID_PREFIX || secrets.APPLE_TEAM_ID }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |

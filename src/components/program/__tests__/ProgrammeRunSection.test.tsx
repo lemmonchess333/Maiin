@@ -62,6 +62,12 @@ import type { LayoffClass } from "@/features/program/layoffDetection";
 // regardless of the real clock.
 const TODAY_KEY = localDateString(new Date());
 const TODAY_DOW = new Date().getDay();
+/** A starter plan this week: a plan with run days and no race. */
+const STARTER_PLAN = {
+  mode: "starter" as const,
+  stage: 1,
+  stageWeekKey: localWeekKey(parseLocalDate(TODAY_KEY)),
+};
 
 // A1c cleanup — the "Change plan" link now deeplinks to
 // /settings/training instead of opening the legacy ConfigurePlanModal.
@@ -214,7 +220,6 @@ function makeProgramState(
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -524,15 +529,15 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (structured)", () => {
+  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (starter)", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
         profile={profile}
         programState={makeProgramState([makeRunDay()], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -829,6 +834,67 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
   });
 });
 
+/* Run27 (18): an ultra plan is Pro after its first week, exactly as the
+   half and the marathon are (Q85); a 10K is free throughout. Today's
+   planned session on a free account offers Pro in place of Start from the
+   plan's second week (`currentWeek` 1). */
+describe("ProgrammeRunSection — the race plan's free week (Q85, Run27 (18))", () => {
+  beforeEachReset();
+
+  function renderPlan(distance: string, currentWeek: number) {
+    const props = raceProps(distance, "2099-04-18");
+    return renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState(
+          [
+            makeRunDay({
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ],
+          {
+            runPlan: {
+              mode: "race_prep",
+              raceGoal: { distance, targetDate: "2099-04-18" },
+              totalWeeks: 20,
+              currentWeek,
+            },
+          } as Partial<ProgramState>
+        )}
+      />
+    );
+  }
+
+  it("an ultra plan offers Pro at week 2 exactly as a marathon does, and a 10K doesn't", () => {
+    for (const distance of ["marathon", "50k", "50mi", "100k"]) {
+      const week1 = renderPlan(distance, 0);
+      expect(
+        screen.getByRole("button", { name: "Start run" })
+      ).toBeInTheDocument();
+      week1.unmount();
+
+      const week2 = renderPlan(distance, 1);
+      expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+      expect(
+        screen.getByText(
+          "After your free week, your race plan is part of Pro. Runs you record stay free."
+        )
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Try Pro free" }));
+      expect(navigateMock).toHaveBeenLastCalledWith("/upgrade?from=race_plan");
+      week2.unmount();
+    }
+
+    renderPlan("10k", 1);
+    expect(
+      screen.getByRole("button", { name: "Start run" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try Pro free" })).toBeNull();
+  });
+});
+
 describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
   beforeEachReset();
 
@@ -877,6 +943,29 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(navigateMock).toHaveBeenLastCalledWith(
       expect.stringMatching(/^\/run\?.*scheduledRunId=runday_today.*&start=1$/)
     );
+  });
+
+  /* TrainWk1 call 2: a session opens its own page. The card's ⋯ opened
+     the day's sheet; it opens the run's page, which holds the same
+     actions, and nothing of the sheet is left on the tab. */
+  it("opens the run's own page from the card's ⋯", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Manage session" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(`/program/run/${TODAY_KEY}`);
+    expect(screen.queryByText("Manage run")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("draws the runner on the run card, the fast stride for a tempo", () => {
@@ -1193,7 +1282,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
 
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
@@ -1207,7 +1296,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
               dayIndex: TODAY_DOW,
             }),
           ],
-          { runPlan: { mode: "structured" } }
+          { runPlan: STARTER_PLAN }
         )}
       />
     );
@@ -1260,7 +1349,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     // as "Next ·" and "all runs done" never fired. The claim-aware nextStartable
     // must treat it as complete.
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     const claimedDay = makeRunDay({
       status: "planned",
       date: TODAY_KEY,
@@ -1281,7 +1370,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         {...props}
         profile={profile}
         programState={makeProgramState([claimedDay], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -1303,9 +1392,9 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     renderWith(
       <ProgrammeRunSection
         {...commonProps()}
-        profile={makeProfile({ runMode: "structured", raceGoal: undefined })}
+        profile={makeProfile({ runMode: "starter", raceGoal: undefined })}
         programState={makeProgramState([claimedDay], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -1316,13 +1405,13 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
 
   it("renders 'Configure your runs' CTA for non-freeform users with runsTarget=0 and no race goal", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
         profile={profile}
         runsTarget={0}
-        programState={makeProgramState([], { runPlan: { mode: "structured" } })}
+        programState={makeProgramState([], { runPlan: STARTER_PLAN })}
       />
     );
     expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
@@ -1462,7 +1551,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
   it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
     const props = commonProps();
     const profile = makeProfile({
-      runMode: "structured",
+      runMode: "starter",
       raceGoal: undefined,
       weeklyRunDaysTarget: 0,
     });
@@ -1620,7 +1709,16 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     expect(
       screen.queryByRole("button", { name: /Switch to structured/i })
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Back to freeform/i }));
+    // Run24 (3), D7: what comes next is offered, not a stop: a plan with
+    // no race date, the next race, or no plan for now (the exit to free
+    // running, labelled in the person's words).
+    fireEvent.click(screen.getByRole("button", { name: "Choose a plan" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(
+      "/settings/run-plan?goal=keep_fit"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Set next race" }));
+    expect(navigateMock).toHaveBeenLastCalledWith("/settings/run-plan");
+    fireEvent.click(screen.getByRole("button", { name: "No plan for now" }));
     expect(props.skipRecoveryEarly).toHaveBeenCalledTimes(1);
   });
 
@@ -2085,6 +2183,70 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
     expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
   });
 
+  it("offers a plan with no race date beside it (Run24 (3)), dismissible", () => {
+    const { props, profile } = freeformProps();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    fireEvent.click(screen.getByText("Keep your running going"));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/settings/run-plan?goal=keep_fit"
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Dismiss the plan with no race date",
+      })
+    );
+    expect(
+      screen.queryByText("Keep your running going")
+    ).not.toBeInTheDocument();
+  });
+
+  it("draws a plan with no race date as a plan: its week, not the free running offers", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={4}
+        programState={makeProgramState([makeRunDay()], {
+          runPlan: {
+            mode: "rolling",
+            rollingGoal: "keep_fit",
+            currentWeek: 2,
+          },
+        })}
+      />
+    );
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Keep your running going")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("tablist", { name: "Run week" })
+    ).toBeInTheDocument();
+    // Its card, where a race plan has its own, with the weeks ahead.
+    const card = screen.getByRole("region", { name: "Run plan" });
+    expect(card).toHaveTextContent("Plan, no race");
+    expect(
+      within(card).getByRole("heading", { name: "Keep fit" })
+    ).toBeInTheDocument();
+    expect(within(card).getByText("The weeks ahead")).toBeInTheDocument();
+    // No race plan's card, and the footer's Edit run plan stays the way in.
+    expect(
+      screen.queryByRole("region", { name: "Race plan" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Edit run plan/ })
+    ).toBeInTheDocument();
+  });
+
   it("does NOT render for a race_prep user (freeform block hidden)", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "race_prep" });
@@ -2250,7 +2412,8 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
         }),
       ])
     );
-    expect(screen.getByRole("tab", { name: "Easy 30" })).toHaveAttribute(
+    // The circle shows the 12th, so the name leads with it (WCAG 2.5.3).
+    expect(screen.getByRole("tab", { name: "12, Easy 30" })).toHaveAttribute(
       "aria-selected",
       "true"
     );
@@ -2334,7 +2497,9 @@ describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", ()
     );
     const strip = screen.getByRole("tablist", { name: "Run week" });
     expect(
-      within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
+      within(strip).getByRole("tab", {
+        name: `${today.getDate()}, Easy 30 + strides, today`,
+      })
     ).toBeInTheDocument();
     expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
   });
@@ -2451,11 +2616,17 @@ describe("ProgrammeRunSection — one run is up next", () => {
       }),
     ]);
 
-  const open = (name: string) =>
+  /* A day's tab is named by the date its circle shows, then its run
+     (WCAG 2.5.3), so the run is found after the number. */
+  const open = (run: string) =>
     fireEvent.click(
       within(screen.getByRole("tablist", { name: "Run week" })).getByRole(
         "tab",
-        { name }
+        {
+          name: new RegExp(
+            `^\\d+, ${run.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(, |$)`
+          ),
+        }
       )
     );
 
@@ -2648,5 +2819,72 @@ describe("ProgrammeRunSection — the 30-minute goal offered", () => {
       makeProgramState([], { runPlan: undefined })
     );
     expect(offer()).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — the lighter-week offer (Q11)", () => {
+  /* One lighter-week decision for both sports: Train hands the Run tab
+     the same offer the Lift tab draws, so a runner meets it where they
+     plan their runs. It leads the week's notices, before the race's own. */
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const OFFER = (
+    <section aria-label="Lighter week suggested">
+      You ran 30% more than your usual week.
+    </section>
+  );
+
+  it("draws the offer it is handed, ahead of the race's banners", () => {
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+    } as Partial<UserProfile>);
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+        lighterWeekNotice={OFFER}
+      />
+    );
+    const offer = screen.getByRole("region", {
+      name: "Lighter week suggested",
+    });
+    const elapsed = screen.getByText("Your race has passed");
+    expect(
+      offer.compareDocumentPosition(elapsed) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("draws it for a freeform runner too", () => {
+    renderSection(
+      { ...commonProps(), lighterWeekNotice: OFFER } as ReturnType<
+        typeof commonProps
+      >,
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.getByRole("region", { name: "Lighter week suggested" })
+    ).toBeInTheDocument();
+  });
+
+  it("draws nothing in its place without one", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.queryByRole("region", { name: "Lighter week suggested" })
+    ).toBeNull();
   });
 });

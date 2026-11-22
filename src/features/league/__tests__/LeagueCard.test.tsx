@@ -1,11 +1,16 @@
 /**
  * The weekly league's card on Social (Soc15 call 3), in each of its four
  * states, from what the server wrote: not joined (what joining shows and
- * to whom, and Join), locked ("3 so far", and no count under three), waiting for Monday, and in a
+ * to whom, and Join), locked ("4 so far", and no count under three), waiting for Monday, and in a
  * group (tier, place, points, sessions against the plan, "Ends Sunday").
  * Joining goes through the callable; a restricted account is told why it
  * cannot. Firestore runs on the one fake (ADR-0009); dates come from the
  * clock.
+ *
+ * The card is drawn from a person's first day (App1 Q6): until groups are
+ * made it offers Join and says what the league starts at and, from three,
+ * how many are in so far, with no number before the server has counted
+ * anyone.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -32,6 +37,7 @@ vi.mock("firebase/functions", () => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: H.profile, refreshProfile: H.refresh }),
+  useUid: () => "me",
 }));
 vi.mock("@/hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => ({ isRestricted: H.restricted }),
@@ -71,9 +77,9 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("not joined", () => {
-  it("says what a league is, what joining shows and to whom, and offers Join", async () => {
+  it("says what a league is, what joining shows and to whom, what it starts at and how many are in so far, and offers Join", async () => {
     seedFirestore({
-      "leagueStatus/current": { joined: 3, needed: 10, open: false },
+      "leagueStatus/current": { joined: 4, needed: 10, open: false },
     });
     renderCard();
     expect(
@@ -85,11 +91,62 @@ describe("not joined", () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Leagues open when 10 people have joined. 3 so far.")
+      screen.getByText(
+        "The league starts once 10 people have joined. 4 so far."
+      )
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "People who have joined" })
+    ).toHaveAttribute("aria-valuenow", "4");
     expect(
       screen.getByRole("button", { name: "Join the league" })
     ).toBeInTheDocument();
+  });
+
+  it("on a new Tropos, before the server has counted anyone, says what it starts at with no number, and offers Join (App1 Q6)", async () => {
+    renderCard();
+    expect(
+      await screen.findByText("The league starts once 10 people have joined.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/so far/)).toBeNull();
+    expect(
+      screen.queryByRole("progressbar", { name: "People who have joined" })
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Join the league" })
+    ).toBeInTheDocument();
+  });
+
+  it("names no count and draws no bar under three", async () => {
+    seedFirestore({
+      "leagueStatus/current": { joined: 2, needed: 10, open: false },
+    });
+    renderCard();
+    expect(
+      await screen.findByText("The league starts once 10 people have joined.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("progressbar", { name: "People who have joined" })
+    ).toBeNull();
+  });
+
+  it("once groups are made, offers Join with nothing about filling up", async () => {
+    seedFirestore({
+      "leagueStatus/current": {
+        joined: 40,
+        needed: 10,
+        open: true,
+        weekKey: WEEK,
+      },
+    });
+    renderCard();
+    expect(
+      await screen.findByRole("button", { name: "Join the league" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/The league starts/)).toBeNull();
+    expect(
+      screen.queryByRole("progressbar", { name: "People who have joined" })
+    ).toBeNull();
   });
 
   it("Join calls the server, then reads the profile and the league again", async () => {
@@ -131,7 +188,7 @@ describe("joined", () => {
     renderCard();
     expect(
       await screen.findByText(
-        "Leagues open when 10 people have joined. 3 so far."
+        "The league starts once 10 people have joined. 3 so far."
       )
     ).toBeInTheDocument();
     expect(
@@ -154,7 +211,7 @@ describe("joined", () => {
     });
     renderCard();
     expect(
-      await screen.findByText("Leagues open when 10 people have joined.")
+      await screen.findByText("The league starts once 10 people have joined.")
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("progressbar", { name: "People who have joined" })
@@ -229,7 +286,8 @@ describe("joined", () => {
 
 describe("a read that fails", () => {
   it("says so, with Try again", async () => {
-    failNextFirestore("getDoc", { path: "leagueStatus/current" });
+    H.profile = { uid: "me", leagueOptIn: true };
+    failNextFirestore("getDoc", { path: "leagueMembers/me" });
     renderCard();
     expect(
       await screen.findByText("Couldn’t load your league.")

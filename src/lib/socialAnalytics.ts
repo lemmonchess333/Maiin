@@ -13,6 +13,7 @@
  */
 
 import { emit } from "./analyticsClient";
+import type { GoalSpaceType } from "@/features/goalSpace/goalSpaceTypes";
 
 export type SocialEvent =
   | "social_tab_selected"
@@ -47,11 +48,7 @@ export type SocialEvent =
 export type SocialTab = "together" | "feed" | "find";
 export type SocialFeedSubTab = "following" | "explore" | "communities";
 export type ShareCardTemplate =
-  | "run"
-  | "lift"
-  | "hybrid"
-  | "nutrition"
-  | "recap";
+  "run" | "lift" | "hybrid" | "nutrition" | "recap" | "anniversary";
 export type ShareCardFormat = "story" | "square";
 export type ShareCardBackground = "brand" | "dark" | "transparent" | "photo";
 
@@ -78,8 +75,8 @@ export interface SocialEventMetadata {
   /** challenge_joined: the challenge's id, whose prefix ("weekly-",
    *  "monthly-") names its kind. */
   challengeId?: string;
-  /** circle_created: the Circle's template. */
-  circleType?: string;
+  /** circle_created: the Circle's template, never its typed title. */
+  circleType?: GoalSpaceType;
   /** circle_invite_sent: how the invite left the app. */
   inviteMethod?: "share" | "copy";
 }

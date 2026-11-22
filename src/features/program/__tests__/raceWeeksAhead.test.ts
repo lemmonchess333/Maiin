@@ -219,10 +219,11 @@ describe("a race plan's coming weeks", () => {
       expect(typeOf(w.holds.long!.templateId)).toBe("long");
       expect(km(w.holds.long!.templateId)).toBeLessThan(longest);
     }
-    // ...and the week before race week holds its sharpener and no long run.
+    // ...and the week before race week holds its sharpener and no long run,
+    // the marathon's own (Run24 (5)).
     expect(weeks[raceWeek - 1].holds.long).toBeNull();
     expect(weeks[raceWeek - 1].holds.quality.map((q) => q.name)).toEqual([
-      "8×400m Speed",
+      "Sharpener 2×12 min",
     ]);
     // None of them is a lighter week: the taper cuts its own way.
     expect(weeks.slice(raceWeek - 3).some((w) => w.lighter)).toBe(false);

@@ -64,6 +64,10 @@ const LIST_CARD = cardClasses({
  * are. The page keeps one filled button, neutral: the weekly challenge's
  * action, or, while there is no Circle (`weeklyLeads` false), the
  * start-or-join card's Start a circle.
+ *
+ * Every section is drawn from the person's first day, however few people
+ * are on Tropos (App1 Q6, `src/lib/fillingUp.ts`): a challenge, a Space or
+ * the league that is still small says it is filling up, and Join stays.
  */
 export function ChallengeList({
   refreshRef,

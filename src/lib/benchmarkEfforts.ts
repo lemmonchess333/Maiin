@@ -16,7 +16,9 @@
  *   template can't say; the type can.
  * - A race is a run started as one: the plan's race, or "Race" in the run
  *   chooser ("Race effort"), which is how a time trial or a parkrun is
- *   recorded (the app has no time-trial session). It is read whole.
+ *   recorded (the app has no time-trial session). It is read whole, on its
+ *   elapsed time, as Strava times a run tagged Race (Run28 call 4 and its
+ *   STATUS).
  * - A tempo is read by its work segments (`workPortion`), its
  *   blocks without the warm-up and
  *   cool-down. One that recorded none, started from the chooser with no
@@ -24,15 +26,24 @@
  *   tempo, so it sets nothing. Nor does a goal-pace tempo: its blocks were
  *   run at the race goal the plan pinned (A2), not at the runner's threshold.
  *   `vdotFromTempoPace` reads the work as threshold pace.
+ * - Repeats are read only at the interval band (Run24 (5)): a session's
+ *   short reps at repetition pace, repeats at a race's pace, hill repeats
+ *   and a fartlek's pick-ups are not.
  * - Every effort is first an outdoor GPS run with valid figures
  *   (`isPaceEligible`): a typed treadmill distance never sets a benchmark.
+ * - A run started on a hot or extreme day (`hotDay`, the run screen's
+ *   `RunConfig.hotDay`, saved with the run's config) is still an effort,
+ *   marked as one run in the heat: it may raise a benchmark and never
+ *   lowers one (Run27 (14), `heatHoldsBenchmark`).
  *
  * The benchmark the app derives (`useRunFitnessAutoDerive`), Pace Insight
  * (`usePaceInsight`) and the simulator all read efforts here, so they can't
  * drift apart.
  */
 import type { BenchmarkEffort } from "./runPaces";
+import { raceSeconds } from "./runElapsed";
 import { isPaceEligible } from "./runStatsEligibility";
+import { isTimeTrialTemplateId, RUN_TEMPLATES } from "./workoutTemplates";
 
 /** The shortest race read as a benchmark, metres: the 2 km floor the derive
  *  has always had. Under it, a race-equivalent VDOT means little. */
@@ -68,6 +79,17 @@ export interface EffortRun {
   completedAt?: Date | null;
   workPortion?: { seconds: number; meters: number } | null;
   workPacePinned?: boolean;
+  /** What was run, as the saved run names it: a time trial is read by its
+   *  work as a race (Run24 (4)). */
+  templateId?: string;
+  /** Run27 (14): started on a hot or extreme day (`RunConfig.hotDay`). */
+  hotDay?: boolean;
+  /** The run was saved as the goal race (it keeps its `racePrediction`).
+   *  Its time is its elapsed time (Run28 call 4). */
+  goalRace?: boolean;
+  /** Seconds from the clock's start to the finish (`runElapsed.ts`), for a
+   *  run saved with both stamps. */
+  elapsedSeconds?: number;
 }
 
 /** The effort a run was, or null when it was none. */
@@ -76,13 +98,32 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
   const source = {
     ...(run.id ? { id: run.id } : {}),
     ...(run.completedAt ? { completedAt: run.completedAt } : {}),
+    ...(run.hotDay === true ? { hotDay: true } : {}),
   };
+  // Run24 (4), deep dive D4: the plan's time trial, read by its one work
+  // segment as a race over that distance; the warm-up and cool-down around
+  // it are not the effort.
+  if (isTimeTrialTemplateId(run.templateId)) {
+    const work = run.workPortion;
+    if (!work || !(work.meters >= MIN_RACE_METERS) || !(work.seconds > 0))
+      return null;
+    return {
+      kind: "race",
+      distanceM: work.meters,
+      timeS: work.seconds,
+      ...source,
+    };
+  }
   if (run.activityType === "race") {
-    if (!(run.distance >= MIN_RACE_METERS) || !(run.duration > 0)) return null;
+    // A race is read on its elapsed time, as Strava times a run tagged
+    // Race: the goal race (Run28 call 4) and any other race effort (its
+    // STATUS).
+    const timeS = raceSeconds(run.duration, run.elapsedSeconds);
+    if (!(run.distance >= MIN_RACE_METERS) || !(timeS > 0)) return null;
     return {
       kind: "race",
       distanceM: run.distance,
-      timeS: run.duration,
+      timeS,
       ...source,
     };
   }
@@ -102,8 +143,14 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     };
   }
   // Run24 (4), deep dive D4: an interval session by its repeats, read as
-  // repeats at interval pace (`vdotFromIntervalPace`).
-  if (run.activityType === "intervals" && !run.workPacePinned) {
+  // repeats at interval pace (`vdotFromIntervalPace`). Run24 (5): not
+  // repeats run at anything else, repetition pace, a race's or by feel up a
+  // hill or in a fartlek, which say nothing about the interval band.
+  if (
+    run.activityType === "intervals" &&
+    !run.workPacePinned &&
+    !RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config.repeatsAt
+  ) {
     const work = run.workPortion;
     if (
       !work ||
