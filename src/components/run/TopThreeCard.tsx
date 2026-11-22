@@ -15,8 +15,9 @@ import {
  * Your top three, on the run finish (Run29): the distances this run placed
  * 1st to 3rd at among your own times, each with its disc, its time and
  * your best, and one sentence on a 2nd or 3rd ("Ran 5K in 25:41, your 2nd
- * fastest."). A 1st is the reward above it (`finishMoment`), so it says no
- * sentence here. Nothing for a run that placed nowhere.
+ * fastest."). A run with a 1st says no sentence here: a new best is the
+ * reward above it (`finishMoment`), and a first time at a distance is a
+ * 1st with nothing to compare. Nothing for a run that placed nowhere.
  */
 export default function TopThreeCard({
   placings,

@@ -1831,7 +1831,8 @@ export default function RunSummary() {
           <div className="h-6" aria-hidden="true" />
 
           {/* Your top three (Run29): under the reward, the distances this
-              run placed 1st to 3rd at, quiet; a 1st is the reward above. */}
+              run placed 1st to 3rd at, quiet; a new best is the reward
+              above. */}
           {finishFacts && finishFacts.placings.length > 0 && (
             <div className="mx-4 mb-4">
               <TopThreeCard placings={finishFacts.placings} />

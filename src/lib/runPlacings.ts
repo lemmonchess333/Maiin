@@ -7,11 +7,11 @@
  * Only pace-eligible runs count (`isPaceEligible`): a treadmill or manual
  * run's distance was typed, so it places nowhere and moves no one.
  *
- * A place is claimed only when the run beat at least one earlier time at
- * the distance, so "your 2nd fastest" is never also your slowest: a first
- * 5K places nowhere, and a run's place needs one more earlier time than
- * the place. Two runs at the same time keep the order they were run in,
- * the earlier ahead.
+ * A run's place is its rank among every eligible time at the distance up
+ * to and including its own, shown from 1st to 3rd, as Strava ranks a
+ * run's efforts: a first 5K is a 1st, and a second 5K slower than the
+ * first is your 2nd fastest. Two runs at the same time keep the order
+ * they were run in, the earlier ahead.
  *
  * No Firebase and no React here.
  */
@@ -36,8 +36,9 @@ export interface RunPlacing {
   seconds: number;
   place: Place;
   /** The fastest earlier time at the distance: the one this run is behind
-   *  for a 2nd or 3rd, the one it beat for a 1st. */
-  bestSeconds: number;
+   *  for a 2nd or 3rd, the one it beat for a 1st. Null for the first time
+   *  at the distance. */
+  bestSeconds: number | null;
 }
 
 /** One of your times at a distance, fastest first. */
@@ -103,26 +104,27 @@ export function runPlacings(
     const times = earlier
       .map((other) => runEffortSeconds(other, meters))
       .filter((time): time is number => time !== null);
-    if (times.length === 0) continue;
     /* An earlier run at the same time keeps its place. */
     const place = times.filter((time) => time <= seconds).length + 1;
-    if (place > 3 || place > times.length) continue;
+    if (place > 3) continue;
     placings.push({
       meters,
       seconds,
       place: place as Place,
-      bestSeconds: Math.min(...times),
+      bestSeconds: times.length > 0 ? Math.min(...times) : null,
     });
   }
   return placings;
 }
 
-/** A place in the words a segment's place uses (`rankWords`): "Your best",
- *  "Your 2nd best", "Your 3rd best". */
-export function placeWords(place: Place): string {
-  return place === 1
+/** A place in the words a segment's place uses (`rankWords`): "Your first
+ *  time" for the first at the distance, else "Your best", "Your 2nd best",
+ *  "Your 3rd best". */
+export function placeWords(placing: RunPlacing): string {
+  if (placing.bestSeconds === null) return "Your first time";
+  return placing.place === 1
     ? "Your best"
-    : place === 2
+    : placing.place === 2
       ? "Your 2nd best"
       : "Your 3rd best";
 }
@@ -133,8 +135,9 @@ export function placeLabel(place: Place): string {
 }
 
 /** A row's comparison: "best 25:10" for a 2nd or 3rd, "New best" for a
- *  1st. */
+ *  1st, "First time" for the first at the distance. */
 export function placingGap(placing: RunPlacing): string {
+  if (placing.bestSeconds === null) return "First time";
   return placing.place === 1
     ? "New best"
     : `best ${formatClock(placing.bestSeconds)}`;

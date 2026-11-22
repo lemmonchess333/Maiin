@@ -127,16 +127,18 @@ describe("runPlacings", () => {
     ]);
   });
 
-  it("claims no place a run could only take for want of earlier runs", () => {
-    // A first 5K is the fastest of nothing.
-    expect(runPlacings(run(1, { 5000: 1600 }), [])).toEqual([]);
-    // Slower than the only earlier one: 2nd of two is last, so nothing.
-    expect(runPlacings(run(2, { 5000: 1700 }), [run(1, { 5000: 1600 })])).toEqual(
-      []
-    );
-    // Two earlier: 3rd of three is last, so nothing; between them is 2nd.
+  it("ranks a run among every time up to its own, as Strava does", () => {
+    // A first 5K is a 1st, with nothing before it to compare.
+    expect(runPlacings(run(1, { 5000: 1600 }), [])).toEqual([
+      { meters: 5000, seconds: 1600, place: 1, bestSeconds: null },
+    ]);
+    // Slower than the only earlier one: your 2nd fastest of two.
+    expect(
+      runPlacings(run(2, { 5000: 1700 }), [run(1, { 5000: 1600 })])
+    ).toEqual([{ meters: 5000, seconds: 1700, place: 2, bestSeconds: 1600 }]);
+    // Slower than both earlier ones: 3rd of three.
     const two = [run(1, { 5000: 1600 }), run(2, { 5000: 1650 })];
-    expect(runPlacings(run(3, { 5000: 1700 }), two)).toEqual([]);
+    expect(runPlacings(run(3, { 5000: 1700 }), two)[0]?.place).toBe(3);
     expect(runPlacings(run(3, { 5000: 1620 }), two)[0]?.place).toBe(2);
     // Faster than the only earlier one: a new best.
     expect(
@@ -211,14 +213,26 @@ describe("the words", () => {
     expect(placingSentence([placing(1, 1000), placing(2)])).toBeNull();
   });
 
-  it("gives a row your best, or a new best for a 1st", () => {
+  it("gives a row your best, a new best for a 1st, or a first time", () => {
     expect(placingGap(placing(2))).toBe("best 25:10");
     expect(placingGap(placing(3))).toBe("best 25:10");
     expect(placingGap(placing(1))).toBe("New best");
+    expect(placingGap({ ...placing(1), bestSeconds: null })).toBe(
+      "First time"
+    );
   });
 
   it("names a place as a segment's place is named", () => {
     for (const place of [1, 2, 3] as const)
-      expect(placeWords(place)).toBe(rankWords(place, 4));
+      expect(placeWords(placing(place))).toBe(rankWords(place, 4));
+    expect(placeWords({ ...placing(1), bestSeconds: null })).toBe(
+      rankWords(1, 1)
+    );
+  });
+
+  it("says no sentence for a first time, which is a 1st", () => {
+    expect(
+      placingSentence([{ ...placing(1), bestSeconds: null }, placing(2, 1000)])
+    ).toBeNull();
   });
 });
