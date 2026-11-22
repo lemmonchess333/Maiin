@@ -4,7 +4,8 @@
  * renamed button fails in the unit suite in seconds, not weeks into a
  * journey in CI.
  *
- * - Setup's names: `Onboarding.test.tsx` walks setup by them.
+ * - Setup's names: `Onboarding.test.tsx` walks setup by them, the
+ *   health-details agreement's I agree included.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -45,6 +46,10 @@ export const SETUP = {
   legTrim: "Lighten leg sessions while your runs build",
   /** "What do you have?" beside a home gym, Minimal and no equipment. */
   pullUpBar: "A pull-up bar",
+  /** Priv1 call 1: the agreement to store health details, asked before
+   *  the first body question (a lifter's limitations, or About you). */
+  healthDetails: "Your health details",
+  agreeHealth: "I agree",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",

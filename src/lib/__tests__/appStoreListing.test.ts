@@ -399,6 +399,9 @@ describe("App Store listing: the privacy label and the privacy manifest agree", 
   const PURPOSE_KEY: Record<string, string> = {
     "app functionality": "AppFunctionality",
     analytics: "Analytics",
+    // Apple's "Developer's Advertising or Marketing": the emails a person
+    // can choose (App1 Q55).
+    "developer's advertising or marketing": "DeveloperAdvertising",
   };
 
   /** The listing's "Data linked to you" rows as manifest keys. */

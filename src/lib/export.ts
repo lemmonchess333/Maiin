@@ -82,7 +82,7 @@ export async function exportMealsCSV(uid: string): Promise<string> {
 
   snap.docs.forEach((docSnap) => {
     const m = docSnap.data();
-    // Soft-deleted meals (Recently Deleted, 24 h window) are not part of
+    // Soft-deleted meals (Recently Deleted, kept 30 days) are not part of
     // the diary the totals, review and scoring show — the export must not
     // say otherwise.
     if (!isActiveMealDoc(m)) return;

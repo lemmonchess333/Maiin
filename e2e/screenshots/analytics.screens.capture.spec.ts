@@ -22,6 +22,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { setTestUserTier } from "../helpers/testUserTier";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -77,9 +78,14 @@ async function seedTrainingHistory(uid: string): Promise<void> {
   const now = new Date();
   const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000);
 
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
 
   // `distance` is METRES and `avgPace` is SECONDS PER KM — the units
   // `isVolumeEligible` gates on (>= 50m, >= 30s). The first draft of this

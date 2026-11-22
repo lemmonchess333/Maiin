@@ -35,6 +35,7 @@ const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const weeklyRecap = require("./lib/weeklyRecap");
 const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
+const emailConsent = require("./lib/emailConsent");
 const { activationSport } = require("./lib/firstWeekActivation");
 // App1 Q17: the first session and week-4 return, kept once per account.
 const launchMilestones = require("./lib/launchMilestones");
@@ -749,6 +750,7 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const healthConsent = require("./lib/healthConsent");
 
 /* A display name that trips the word filter is refused, as
    failed-precondition so the client can show the sentence
@@ -804,7 +806,19 @@ exports.completeOnboarding = functions
         weekSchedule: rawWeekSchedule,
         activationJourneyVersion,
         onboardingPlatform,
+        healthDataConsent: setupHealthConsent,
       } = data;
+      // App1 Q55: setup's email opt-in, outside profileData so the profile
+      // sanitiser never carries consent. Ticked, it is a yes to both emails
+      // the toggle names, recorded below with the server's time; unticked,
+      // nothing is recorded (absent already means no).
+      const emailOptIn = emailConsent.readSetupEmailOptIn(data);
+      if (emailOptIn.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          emailOptIn.error
+        );
+      }
       // Every account takes the one first-week journey (App1, whole-app
       // grill Q27), so the journey is stamped below whatever a client
       // sends. A client from before App1 sends 2 or nothing; anything else
@@ -843,6 +857,15 @@ exports.completeOnboarding = functions
           "programState is required."
         );
       }
+      // Priv1 call 1: setup asks for the agreement to store health details
+      // before its first body question, and the plan is not saved without
+      // it. The app cannot send a plan without it; a build from before the
+      // question is told to update (lib/healthConsent.js). Checked once the
+      // request's shape is, and before anything is read or written.
+      healthConsent.assertSetupHealthConsent(
+        setupHealthConsent,
+        functions.https.HttpsError
+      );
 
       // Allow-list + per-field sanitise. Unknown fields, off-allowlist
       // photoURL schemes, out-of-range numbers etc. are dropped to
@@ -1003,6 +1026,11 @@ exports.completeOnboarding = functions
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
         const nextProfileData = { ...profileData };
+        // The agreement given in this setup, dated by the server. A retry
+        // records the latest agreement: the person agreed again to finish.
+        nextProfileData.healthDataConsent = healthConsent.healthConsentRecord(
+          admin.firestore.FieldValue.serverTimestamp()
+        );
 
         // The timestamp and journey describe the first successful setup
         // commit. A retry, even from a newer client, must not move the
@@ -1025,6 +1053,20 @@ exports.completeOnboarding = functions
             ONE_ACTIVATION_JOURNEY_VERSION;
           if (onboardingPlatform) {
             nextProfileData.onboardingPlatform = onboardingPlatform;
+          }
+        }
+        if (emailOptIn.optIn) {
+          const consent = emailConsent.applyEmailConsent(
+            existingData.emailConsent,
+            { weeklyReview: true, winBack: true },
+            {
+              via: "setup",
+              wording: emailOptIn.wording,
+              at: admin.firestore.FieldValue.serverTimestamp(),
+            }
+          );
+          if (consent.changed.length > 0) {
+            nextProfileData.emailConsent = consent.next;
           }
         }
         if (existing.exists) {
@@ -6271,6 +6313,30 @@ exports.onMealWritten = functions
     return null;
   });
 
+// ── F5c: a soft-deleted meal is removed for good 30
+// days after it was deleted. Each hour, at quarter to, clear of the jobs on
+// the hour and the meet-up sweep at half past. lib/mealPurge.js has the
+// rule, the caps and the account-deletion check; its collection-group index
+// is in firestore.indexes.json. Each meal it deletes fires onMealWritten
+// above, which does nothing for a delete, as for Delete permanently.
+const mealPurge = require("./lib/mealPurge");
+
+exports.purgeSoftDeletedMeals = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("45 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "purgeSoftDeletedMeals", async () => {
+      const summary = await mealPurge.purgeSoftDeletedMeals({
+        firestore: db,
+        toTimestamp: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+        nowMs: Date.now(),
+      });
+      functions.logger.info("purgeSoftDeletedMeals.done", summary);
+      return summary;
+    })
+  );
+
 /** A day's water written (`waterLog/{date}`): hydration_hero. */
 exports.onWaterLogWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -9231,6 +9297,15 @@ exports.sendPasswordResetLinkCallable =
   accountEmails.sendPasswordResetLinkCallable;
 exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
+
+/* The Settings switches for the two emails a person can choose (App1 Q55):
+   the consent record is written only on the server (lib/emailConsent.js). */
+exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
+/* The emails a person chose, and the unsubscribe link each one carries
+   (App1 Q55): updateEmails.js. */
+const updateEmails = require("./updateEmails");
+exports.hourlyEmailSweep = updateEmails.hourlyEmailSweep;
+exports.emailUnsubscribe = updateEmails.emailUnsubscribe;
 
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)

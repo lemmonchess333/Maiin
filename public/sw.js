@@ -227,6 +227,14 @@ self.addEventListener("fetch", (event) => {
   if (url.origin === self.location.origin && url.pathname.startsWith("/__/")) {
     return;
   }
+  // The unsubscribe link in an email (App1 Q55) is a function's page, not a
+  // route of the app: taken by the rule below it would be kept as the shell
+  // and open offline in place of the app, and its address holds the
+  // person's unsubscribe token. The browser has it, uncached.
+  if (url.origin === self.location.origin &&
+      url.pathname.startsWith(BASE_PATH + "email/")) {
+    return;
+  }
   // A firebaseapp.com hostname can also be the app itself. Only external API
   // requests belong in this skip-list; same-origin assets and routes need the
   // offline cache just as they do on web.app, a custom domain, or Pages.

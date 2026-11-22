@@ -66,7 +66,16 @@ export const ONBOARDING_STEP_IDS = [
   "about",
   "preview",
   "confirm",
+  // Priv1 call 1: the agreement to store health details, asked before the
+  // first body question. Last here so every other step keeps its number.
+  "health",
 ] as const;
+
+/** The highest stored step number, which a resumed draft may not pass. */
+export const ONBOARDING_MAX_STEP = ONBOARDING_STEP_IDS.length - 1;
+
+/** The step that asks for the agreement to store health details. */
+export const HEALTH_CONSENT_STEP = ONBOARDING_STEP_IDS.indexOf("health");
 export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
@@ -215,6 +224,11 @@ export interface OnboardingDraft {
    *  once the phone allowed notifications, and its "HH:mm". */
   reminderOn?: boolean;
   reminderTime?: string;
+  /** Priv1 call 1: the version of the health-details wording the person
+   *  agreed to on this step of this setup. Kept on this device only until
+   *  the plan is saved, when `completeOnboarding` stamps the agreement on
+   *  the account. Absent until they agree, and cleared by Not now. */
+  healthConsentVersion?: number;
 }
 
 interface DraftEnvelope {
@@ -320,7 +334,11 @@ export function isValidDraft(
     (d.reminderOn === undefined || typeof d.reminderOn === "boolean") &&
     (d.reminderTime === undefined ||
       (typeof d.reminderTime === "string" &&
-        /^\d{2}:\d{2}$/.test(d.reminderTime)))
+        /^\d{2}:\d{2}$/.test(d.reminderTime))) &&
+    (d.healthConsentVersion === undefined ||
+      (typeof d.healthConsentVersion === "number" &&
+        Number.isInteger(d.healthConsentVersion) &&
+        d.healthConsentVersion > 0))
   );
 }
 

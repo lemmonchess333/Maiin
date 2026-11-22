@@ -97,11 +97,17 @@ const manifest = parsePlist(read("ios/App/App/PrivacyInfo.xcprivacy")) as Dict;
 
 const APP = "NSPrivacyCollectedDataTypePurposeAppFunctionality";
 const ANALYTICS = "NSPrivacyCollectedDataTypePurposeAnalytics";
+/** Apple's "Developer's Advertising or Marketing": the weekly review and the
+ *  emails after a break a person can choose (App1 Q55) are marketing in the
+ *  ICO's reading, sent to the address, and the emails after a break are
+ *  timed by when the person last logged. The weekly review's figures are the
+ *  person's own, sent to them at their request: app functionality. */
+const MARKETING = "NSPrivacyCollectedDataTypePurposeDeveloperAdvertising";
 
 /** The agreed declaration: type → purposes. */
 const DECLARED: Record<string, string[]> = {
   Name: [APP],
-  EmailAddress: [APP],
+  EmailAddress: [APP, MARKETING],
   // No health or fitness figure goes to analytics
   // (`analyticsHealthFigures.test.ts`).
   Health: [APP],
@@ -116,7 +122,7 @@ const DECLARED: Record<string, string[]> = {
   DeviceID: [APP, ANALYTICS],
   PurchaseHistory: [APP],
   ProductInteraction: [APP, ANALYTICS],
-  OtherUsageData: [APP, ANALYTICS],
+  OtherUsageData: [APP, ANALYTICS, MARKETING],
   CrashData: [APP],
   PerformanceData: [ANALYTICS],
   OtherDiagnosticData: [APP],

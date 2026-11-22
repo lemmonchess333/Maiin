@@ -66,6 +66,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   tropos_fcm_device_tokens: "the push token IS the device identity",
   "tropos.liveActivities.off":
     "the Live Activities switch (Wid2 call 6): the Lock Screen and the Dynamic Island are this phone's, as iOS's own switch for the app is, so a second account on the phone keeps the phone's choice",
+  "tropos.usageAnalytics.off":
+    "Share usage analytics as this device was last told (Priv1 call 2), read at launch before any account has loaded so a device that turned Google Analytics off sends nothing; the signed-out screens read it too, and a signed-in account's own answer overwrites it as its profile loads",
   "tropos.run.bgGrantNoteDismissed":
     "acknowledges THIS DEVICE's iOS location grant (While Using vs Always) — an OS per-app setting no account owns; re-nagging a second account about the same grant would be noise",
   tropos_offline_queue:

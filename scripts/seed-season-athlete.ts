@@ -57,6 +57,7 @@ import type {
   PerformanceSignals,
   WeeklyAggregates,
 } from "../src/lib/performanceTypes";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -777,6 +778,9 @@ async function main() {
       photoURL: null,
       athleteType: "Hybrid",
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
       darkMode: false,
       preferredWeightUnit: "kg",

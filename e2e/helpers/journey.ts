@@ -432,6 +432,16 @@ export async function setUpPlan(
       new RegExp(`^${answers.experience ?? "Some experience"}`)
     ).click();
     await next(page);
+  }
+
+  // Priv1 call 1: the agreement to store health details, on its own
+  // screen before the first body question.
+  await expect(
+    page.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+  ).toBeVisible();
+  await button(page, SETUP.agreeHealth).click();
+
+  if (answers.activity !== "Running") {
     await button(page, SETUP.noInjuries).click();
     await next(page);
   }

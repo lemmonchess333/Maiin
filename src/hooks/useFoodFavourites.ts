@@ -199,8 +199,9 @@ export function useFoodFavourites() {
             const wasBelow = (prev?.useCount ?? 0) < 2;
             const isAtOrAbove = fav.useCount >= 2;
             if (wasBelow && isAtOrAbove) {
+              // Never the favourite's id: it is the food's name
+              // (`makeKey`), so sending it sent what was typed.
               trackFoodEvent("food_pantry_graduated", {
-                favouriteId: fav.id,
                 useCount: fav.useCount,
                 source: fav.source,
               });
@@ -272,7 +273,6 @@ export function useFoodFavourites() {
           doc(db, "users", uid, "foodFavourites", target.id)
         );
         trackFoodEvent("food_pantry_eviction", {
-          favouriteId: target.id,
           useCount: target.useCount,
           totalBefore: favourites.length,
         });
