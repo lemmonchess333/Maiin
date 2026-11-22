@@ -49,6 +49,10 @@ const OUTSIDE_LAYOUT: Record<string, string> = {
   "/circuit": "components/circuit/CircuitRunner.tsx",
   "/diagnostics": "pages/Diagnostics.tsx",
   "/admin/moderation": "pages/AdminModeration.tsx",
+  // Setup before there is an account (A6), and the trial offer that ends
+  // it: each pads itself.
+  "/setup": "pages/Onboarding.tsx",
+  "/trial-offer": "pages/TrialOffer.tsx",
   // During setup, the account page renders in App.tsx's own padded <main>.
   "/settings/account": "App.tsx",
 };

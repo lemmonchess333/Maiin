@@ -42,13 +42,16 @@
  * finish (closed after Apple's sheet, or a trial that turned paid with the
  * app shut) still counts, and counts once.
  *
- * Read the start of the funnel in that order: auth_screen_viewed (welcome,
- * `returningDevice` false) → auth_screen_viewed (sign_up) →
- * signup_completed → the onboarding steps → onboarding_completed. Someone
- * who closes the app part-way shows as the step they reached and nothing
- * after it: a phone does not say an app was closed for good rather than
- * paused, so `onboarding_abandoned` is sent only for the exit the app can
- * see, signing out of setup (A1b pin 4).
+ * Read the start of the funnel in that order (A6, sign-up at the end of
+ * setup): welcome_viewed (once a phone) → setup_started (once a phone) →
+ * the onboarding steps → auth_screen_viewed (save_plan) → account_created
+ * → onboarding_completed → trial_offer_viewed → trial_started.
+ * `auth_screen_viewed` is sent on every showing of a signed-out screen, the
+ * first-run events once (`firstRunEvents.ts`). Someone who closes the app
+ * part-way shows as the step they reached and nothing after it: a phone
+ * does not say an app was closed for good rather than paused, so
+ * `onboarding_abandoned` is sent only for the exit the app can see,
+ * signing out of setup (A1b pin 4).
  */
 import { emit } from "./analyticsClient";
 import type { RunMode } from "@/features/program/runModeResolution";
@@ -58,7 +61,14 @@ import type { WatchRunCommandRejection } from "./watchRunBridge";
 
 export type LifecycleEvent =
   | "auth_screen_viewed"
-  | "signup_completed"
+  /** A6's first-run events (`firstRunEvents.ts`): the welcome and setup's
+   *  first question, once a phone, and the trial offer once an account. */
+  | "welcome_viewed"
+  | "setup_started"
+  | "trial_offer_viewed"
+  /** The account is made, with its method: once an account, where its
+   *  profile is first written (`auth.tsx`). Was `signup_completed`. */
+  | "account_created"
   | "email_verified"
   | "onboarding_step_viewed"
   | "onboarding_step_completed"
@@ -139,13 +149,19 @@ export type ReturnChoice =
   | "easy_run";
 
 export interface LifecycleEventMetadata {
-  /** auth_screen_viewed: which signed-out screen was shown. */
-  screen?: "welcome" | "sign_in" | "sign_up";
-  /** auth_screen_viewed: whether an account has signed in on this device
-   *  before. Every signed-out visit opens on the welcome (DS9 STATUS), so
-   *  the funnel's first rung is the welcome with this false. */
+  /** auth_screen_viewed: which signed-out screen was shown. `save_plan` is
+   *  Save your plan, where setup makes the account (A6). */
+  screen?: "welcome" | "sign_in" | "save_plan";
+  /** auth_screen_viewed, welcome_viewed: whether an account has signed in
+   *  on this device before. Every signed-out visit opens on the welcome
+   *  (DS9 STATUS), so the funnel's first rung is the welcome with this
+   *  false. */
   returningDevice?: boolean;
-  /** signup_completed: which auth provider created the account. */
+  /** setup_started: whether an account was signed in when setup began (a
+   *  new Google or Apple account from the welcome's Sign in), or not (A6's
+   *  setup before the account). */
+  signedIn?: boolean;
+  /** account_created: which auth provider created the account. */
   method?: SignupMethod;
   /** onboarding_step_* and onboarding_abandoned: stable step identifier
    *  (non-PII), from ONBOARDING_STEP_IDS. */
