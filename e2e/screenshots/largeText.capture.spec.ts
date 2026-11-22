@@ -50,13 +50,14 @@
  */
 import { test, expect, type Page } from "@playwright/test";
 import {
-  openSignUpForm,
+  openSetup,
   openSignInForm,
+  saveYourPlanWithEmail,
   signInAsTestUser,
 } from "../helpers/auth";
 import { setTestUserTier } from "../helpers/testUserTier";
 import { emulatorActive } from "../helpers/emulator";
-import { SETUP } from "../../src/test/journeyScreens";
+import { SETUP, TRIAL_OFFER } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import {
@@ -65,7 +66,6 @@ import {
   runCircuitUntil,
   TEN_MINUTE_CIRCUIT,
 } from "../helpers/circuit";
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { finishSetupWithoutHealthConsent } from "../helpers/healthConsent";
 
 const WIDTHS = [393, 320] as const;
@@ -464,7 +464,9 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
-    test(`sign-up, setup and Pro at ${width}px`, async ({ page }) => {
+    test(`sign-in, setup, Save your plan and the trial offer at ${width}px`, async ({
+      page,
+    }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
       const found: string[] = [];
@@ -486,22 +488,10 @@ test.describe("large text", () => {
       await openSignInForm(page);
       await page.waitForTimeout(500);
       await measure(page, "sign-in", width, found);
+      // Setup before the account (A6).
       await page.goto("/");
-      await openSignUpForm(page);
-      await page.waitForTimeout(500);
-      await measure(page, "sign-up", width, found);
-
+      await openSetup(page);
       const email = `e2e-large-text-${width}-${Date.now()}@tropos.test`;
-      await page.fill("#login-email", email);
-      await page.fill("#login-password", "test-password-123");
-      await page
-        .getByRole("button", { name: /create account/i })
-        .click({ timeout: 8000 });
-      await verifySignupEmail(page, email);
-
-      await page
-        .getByRole("button", { name: /build muscle/i })
-        .waitFor({ state: "visible", timeout: 30_000 });
       await measure(page, "setup-goal", width, found);
       await page.getByRole("button", { name: /build muscle/i }).click();
       await next();
@@ -563,6 +553,23 @@ test.describe("large text", () => {
       await next();
       await measure(page, "setup-summary", width, found);
 
+      // Save your plan, where the account is made; the capture rig runs no
+      // Functions, so the plan it then builds is refused, and the review
+      // says so with Try again.
+      await page
+        .getByRole("textbox", { name: SETUP.name, exact: true })
+        .fill("Large text");
+      await page
+        .getByRole("button", { name: SETUP.start, exact: true })
+        .click();
+      await page.waitForTimeout(500);
+      await measure(page, "save-your-plan", width, found);
+      await saveYourPlanWithEmail(page, email, "test-password-123");
+      await page
+        .getByRole("button", { name: /^(Try again|Not now)$/ })
+        .first()
+        .waitFor({ timeout: 30_000 });
+
       // The same agreement for an account set up before setup asked: one
       // screen before the app, on its next open.
       await finishSetupWithoutHealthConsent(email);
@@ -575,6 +582,22 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: "Not now", exact: true }).click();
       await page.waitForTimeout(500);
       await measure(page, "health-gate-declined", width, found);
+
+      // The trial offer that ends setup (A6 call 2), once the account has
+      // agreed; on the web build it has nothing to sell.
+      await page.getByRole("button", { name: "Go back", exact: true }).click();
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
+      await page
+        .getByRole("navigation", { name: /main navigation/i })
+        .waitFor({ timeout: 30_000 });
+      await page.goto("trial-offer");
+      await page
+        .getByText(TRIAL_OFFER.kicker, { exact: true })
+        .waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(500);
+      await measure(page, "trial-offer", width, found);
 
       expect(found).toEqual([]);
     });

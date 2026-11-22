@@ -1,11 +1,18 @@
-import { expect, type Page, type Response } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Response,
+} from "@playwright/test";
 import { emulatorActive, EXPECTED_AUTH_HOST } from "./emulator";
 
 /** Verify a fresh account's email the way a person does, using only the
  * local emulator.
  *
- * Email sign-ups go straight to onboarding: verification comes after the
- * plan, so this first proves there is no wall. It then finds the link the
+ * Email sign-ups go straight on (since A6 they are made on Save your plan,
+ * at setup's end, and go on to build the plan): verification comes after
+ * the plan, so this first proves there is no wall, the screen after the
+ * sign-up (`landed`) being on show. It then finds the link the
  * app sent at sign-up (Firebase's own mail when the Functions emulator is
  * not running), applies it, and has the app notice it as a return from Mail
  * does: the App-level gate rechecks on focus, reloads the user and
@@ -13,12 +20,14 @@ import { emulatorActive, EXPECTED_AUTH_HOST } from "./emulator";
  * fresh token, so this waits for the refresh rather than for anything on
  * screen, which shows nothing while onboarding is open.
  */
-export async function verifySignupEmail(page: Page, email: string) {
+export async function verifySignupEmail(
+  page: Page,
+  email: string,
+  landed: Locator
+) {
   if (!emulatorActive)
     throw new Error("Signup verification requires local emulators");
-  await expect(page.getByRole("button", { name: /build muscle/i })).toBeVisible(
-    { timeout: 20_000 }
-  );
+  await expect(landed).toBeVisible({ timeout: 30_000 });
 
   let code = "";
   await expect

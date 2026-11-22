@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "./helpers/verifySignupEmail";
-import { openSignUpForm } from "./helpers/auth";
+import { newAccountAtSetup } from "./helpers/auth";
 /**
  * The water total must never travel backwards while you are adding.
  *
@@ -118,13 +117,7 @@ test.describe("water total never travels backwards mid-tap", () => {
     const email = `waterflash-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    await newAccountAtSetup(page, email, "test-password-123");
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

@@ -28,6 +28,12 @@
  */
 
 import { type Page, expect } from "@playwright/test";
+import { SAVE_PLAN } from "../../src/test/journeyScreens";
+import {
+  DRAFT_VERSION,
+  type OnboardingDraft,
+} from "../../src/lib/onboardingDraft";
+import { emulatorAdmin } from "./realCallables";
 
 export const TEST_USER = {
   email: "e2e-test@tropos.test",
@@ -35,22 +41,147 @@ export const TEST_USER = {
 };
 
 /**
- * Signed out, the app opens on the welcome screen, where "Get started"
- * leads to the sign-up form. Just after an account is deleted or its email
- * changed it opens on the sign-in form, whose "Sign up" switches to it.
- * Either way this returns with the sign-up form showing.
+ * Signed out, the welcome's "Get started" opens setup's first question
+ * before any account (A6): the account is made at setup's end, on Save
+ * your plan. Just after an account is deleted the app opens on the
+ * sign-in form, whose own "Get started" does the same.
  */
-export async function openSignUpForm(page: Page): Promise<void> {
-  const getStarted = page.getByRole("button", {
-    name: "Get started",
-    exact: true,
-  });
-  const signUp = page.getByRole("button", { name: /sign up/i });
-  await expect(getStarted.or(signUp)).toBeVisible({ timeout: 20_000 });
-  await ((await getStarted.isVisible()) ? getStarted : signUp).click();
+export async function openSetup(page: Page): Promise<void> {
+  const getStarted = page
+    .getByRole("button", { name: "Get started", exact: true })
+    .first();
+  await expect(getStarted).toBeVisible({ timeout: 20_000 });
+  await getStarted.click();
   await page
-    .locator("#login-email")
+    .getByRole("button", { name: /build muscle/i })
     .waitFor({ state: "visible", timeout: 20_000 });
+}
+
+/**
+ * The draft a person leaves at setup's review, signed out: every answer
+ * given and the health-details agreement made. Planted on the phone's own
+ * key, as `saveSignedOutDraft` stores it (`onboardingDraft.test.ts` holds
+ * the key, the owner and the version this writes to what the app reads).
+ */
+export const SIGNED_OUT_REVIEW: OnboardingDraft = {
+  step: 7,
+  primaryGoal: "strength",
+  daysPerWeek: 3,
+  equipment: "full_gym",
+  runFrequency: "none",
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  raceDistance: "10k",
+  raceTargetDate: "",
+  injuries: ["none"],
+  gender: "female",
+  birthYearText: "1994",
+  heightCm: 168,
+  weightKg: 64,
+  heightUnit: "cm",
+  weightUnit: "kg",
+  trainingWhy: "",
+  experience: "beginner",
+  goalConfirmed: true,
+  runConfirmed: true,
+  equipmentConfirmed: true,
+  experienceConfirmed: true,
+  bodyAnswered: true,
+  displayName: "Save tester",
+  trainingActivity: "lifting",
+  healthConsentVersion: 1,
+};
+
+/** Signed out, straight to Save your plan: setup's answers planted at its
+ *  review, then its Start my plan. For a spec about the screen itself. */
+export async function openSaveYourPlan(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([key, record]) => localStorage.setItem(key, record),
+    [
+      "tropos.onboarding.draft.signedOut",
+      JSON.stringify({
+        v: DRAFT_VERSION,
+        uid: "(signed out)",
+        savedAt: Date.now(),
+        draft: SIGNED_OUT_REVIEW,
+      }),
+    ] as const
+  );
+  await page.goto("setup");
+  await page
+    .getByRole("button", { name: "Start my plan", exact: true })
+    .click({ timeout: 20_000 });
+  await expect(
+    page.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
+  ).toBeVisible({ timeout: 20_000 });
+}
+
+/**
+ * Save your plan with an email address, once setup's review has had its
+ * Start my plan: the email form makes the account, and the app goes on to
+ * build the plan from the answers given signed out.
+ */
+export async function saveYourPlanWithEmail(
+  page: Page,
+  email: string,
+  password: string
+): Promise<void> {
+  await expect(
+    page.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
+  ).toBeVisible({ timeout: 20_000 });
+  await page.fill("#login-email", email);
+  await page.fill("#login-password", password);
+  await page
+    .getByRole("button", { name: SAVE_PLAN.create, exact: true })
+    .click({ timeout: 8_000 });
+}
+
+/**
+ * A new account that has no plan yet, signed in on the welcome's Sign in
+ * and left on setup's first question: the state a Google or Apple account
+ * with no plan reaches. For a spec that needs an account before setup, to
+ * seed it or set it up its own way; since A6 the app's email accounts are
+ * made at setup's end. Made here as the emulator's admin, verified, with
+ * the profile documents the app writes at sign-up. Returns its uid.
+ */
+export async function newAccountAtSetup(
+  page: Page,
+  email: string,
+  password: string
+): Promise<string> {
+  const { auth, db, Timestamp } = emulatorAdmin();
+  const { uid } = await auth.createUser({
+    email,
+    password,
+    emailVerified: true,
+  });
+  await db.doc(`users/${uid}`).set({
+    uid,
+    displayName: "",
+    athleteType: "Lifter",
+    onboardingComplete: false,
+    subscriptionTier: "free",
+    createdAt: Timestamp.now(),
+  });
+  await db.doc(`users/${uid}/public/profile`).set({
+    uid,
+    displayName: null,
+    photoURL: null,
+    photoStoragePath: null,
+    athleteType: "Lifter",
+    currentStreak: 0,
+    longestStreak: 0,
+    createdAt: Timestamp.now(),
+  });
+  await page.goto("/");
+  await openSignInForm(page);
+  await page.fill("#login-email", email);
+  await page.fill("#login-password", password);
+  await page.locator('button[type="submit"]').first().click();
+  await page
+    .getByRole("button", { name: /build muscle/i })
+    .waitFor({ state: "visible", timeout: 30_000 });
+  return uid;
 }
 
 /** The sign-in form, by "Sign in" from the welcome screen. The form's own

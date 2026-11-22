@@ -517,3 +517,22 @@ describe("setup answered signed out (A6)", () => {
     expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
   });
 });
+
+/* The e2e rig plants a signed-out draft at the review the way the app
+   stores one (`e2e/helpers/auth.ts`, openSaveYourPlan): this holds its key,
+   its owner and its version to what the app reads. */
+describe("a signed-out draft planted as the e2e rig plants it", () => {
+  it("loads", () => {
+    const d = makeDraft({ step: 7 });
+    localStorage.setItem(
+      "tropos.onboarding.draft.signedOut",
+      JSON.stringify({
+        v: DRAFT_VERSION,
+        uid: "(signed out)",
+        savedAt: Date.now(),
+        draft: d,
+      })
+    );
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
+  });
+});

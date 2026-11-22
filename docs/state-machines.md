@@ -32,7 +32,8 @@ inside that type.
 | Run save                 | `src/lib/runGuards.ts` (`SaveStatus`)                                                                                                  | idle, saving, saved, error                                                                                                                                                                                                                                                      |
 | Follow control           | `src/hooks/useFollowState.ts` (`FollowState`)                                                                                          | following, requested, not-following                                                                                                                                                                                                                                             |
 | AI consent               | `src/lib/aiConsent.ts` (`AiConsentStatus`)                                                                                             | unasked, allowed, off                                                                                                                                                                                                                                                           |
-| Sign-in screen           | `src/pages/Login.tsx` (`View`, `LoadingAction`)                                                                                        | typed views and one busy action                                                                                                                                                                                                                                                 |
+| Sign-in screen           | `src/pages/Login.tsx` (`View`), `src/components/auth/AccountForm.tsx` (`AccountFormMode`)                                              | welcome or sign-in (Get started opens setup, A6); the form makes an account or signs in, one busy action at a time                                                                                                                                                              |
+| Setup before the account | `src/lib/setupSave.ts` (`SetupSave`), `src/lib/onboardingDraft.ts` (`OnboardingDraft`)                                                 | signed out at `/setup` (the answers on the phone), Save your plan, signing in (the mark set), then signed in: the answers taken and the plan built, or an existing plan kept (A6)                                                                                               |
 | Steps connection         | `src/hooks/useSteps.ts` (`StepsStatus`)                                                                                                | unavailable, unprompted, connected, ambiguous                                                                                                                                                                                                                                   |
 | A session document       | `src/hooks/useSessionDoc.ts` (`SessionDocStatus`)                                                                                      | loading, ready, missing, failed                                                                                                                                                                                                                                                 |
 | Someone's profile        | `src/hooks/useUserProfileData.ts` (`ProfileStatus`)                                                                                    | loading, missing, error, ready                                                                                                                                                                                                                                                  |
@@ -130,6 +131,17 @@ code can hold that it should not, and what would make it explicit.
   Not now clears the version in the same tap; the plan is saved only with
   the version present (`answersValid`, and `completeOnboarding` refuses
   without it).
+- **Since 22 November 2026 (A6).** Setup runs signed out too, at `/setup`,
+  its draft under the phone's own key until an account exists. Three more
+  pieces: `saveView` (Save your plan in the review's place, never saved, so
+  a setup opened again shows the review and asks the email question
+  afresh), `setupSave` (the mark a sign-in from Save your plan leaves,
+  `src/lib/setupSave.ts`, read once as setup is drawn under the new
+  account) and `autoBuildRef` (the build that mark starts, once the name
+  has been read). What it can hold: the mark with no answers waiting, when
+  the draft could not be kept; setup then starts from its first question
+  and the mark lapses within the hour. `handleFinish` reads the account
+  from the server before it writes, so a plan made elsewhere is kept.
 - **Explicit form.** One reducer over `OnboardingDraft` and a pure module for
   validity and the payload. Candidate A4.
 
@@ -199,6 +211,28 @@ null` used to mean both "this account has no profile yet" and "the profile
   Delete account) is the one other page they reach. It is not a
   `ProfileLoad` state: the profile is `ready`, and the gate reads a field
   of it.
+
+## What A6 changed (22 November 2026)
+
+- **Setup before the account.** A signed-out person can now be in setup:
+  `src/App.tsx`'s signed-out routes add `/setup`, which draws `Onboarding`
+  with no account, its answers kept under the phone's own key
+  (`saveSignedOutDraft`). The review's button opens Save your plan, where
+  Apple, Google or email makes the account; a sign-in from there leaves a
+  mark (`src/lib/setupSave.ts`), and the signed-in routes, unchanged in
+  shape, draw setup again under the new account, which takes the answers
+  (`adoptSignedOutDraft`) and builds the plan. A pending deletion,
+  `ProfileUnavailable` and the agreement's gate stand as they were for a
+  signed-in account.
+- **An existing plan is never replaced.** Two places see it: the app
+  (`AppRoutes`), when the account's profile already carries
+  `onboardingComplete`, and `handleFinish`, which reads the account from
+  the server before writing, for a device whose copy is older. Either
+  drops the answers and says so on Home (`KEPT_PLAN_NOTICE`).
+- **The trial offer.** Once the plan is built, setup goes to
+  `/trial-offer` (`src/pages/TrialOffer.tsx`) for an account that can take
+  a trial, before Home; every way off it goes Home, a purchase through
+  `CheckoutState` as before.
 
 ## What App1 Q20 changed (13 November 2026)
 
