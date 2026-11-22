@@ -319,7 +319,7 @@ export default function AddLiftingFlow({
           once they no longer fit (larger text), as setup's footer. Sticky
           over the tab bar, as the editors' save bars are. */}
       <div
-        className="@container sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
+        className="@container sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
         style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
       >
         {last && readiness === "failed" && (

@@ -690,13 +690,13 @@ export default function RunMap({
             aria-label="Zoom in"
             icon={<Plus />}
             onClick={() => mapRef.current?.zoomIn()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label="Zoom out"
             icon={<Minus />}
             onClick={() => mapRef.current?.zoomOut()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label={
@@ -707,7 +707,7 @@ export default function RunMap({
             className={
               headingUp
                 ? "bg-running-fill text-white shadow-sm"
-                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
             }
           />
           {showRecenter && (
@@ -740,7 +740,7 @@ export default function RunMap({
         // status the long copy points to. Wide-first. The query is in rem,
         // not em: a container query's em is the container's own 12px, so
         // 20em never matched.
-        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black">
           <span className="@max-[20rem]:hidden">
             Map tiles unavailable. Check your connection. GPS status is shown
             separately.

@@ -5204,14 +5204,26 @@ phone's safe area, its blur and its brightness are for a phone to show.
 - [ ] **Frames.** Scroll a long Social feed quickly. Passing: the bar and
       the page move without stutter. If they stutter, the bar goes back to
       solid with its rim (DS6's named risk).
-- [ ] **Still blurred under Reduce Transparency (follow-up, not a
-      check).** With the setting on, these keep a backdrop blur, since
+- [x] **Still blurred under Reduce Transparency (follow-up, not a
+      check).** With the setting on, these kept a backdrop blur, since
       they predate the attribute: a Space's hero chips (`Space.tsx`,
       `SpacesDirectory.tsx`), a post's comment bar
-      (`ActivityPostComments.tsx`), History's chip row and the run map's
-      chips (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
-      `GhostDeltaChip`, `RunMap.tsx`). Each wants the same solid fallback;
-      tick this when they have it.
+      (`ActivityPostComments.tsx`) and the run map's chips
+      (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
+      `GhostDeltaChip`, `RunMap.tsx`). Done 2026-11-21 with the
+      `transparency-reduce:` variant, which also reached a run's Back and
+      Replay, Run summary's Back and the plan editors' sticky footers.
+      History's chip row had already gone (Hist5).
+- [ ] **The chips and bars go solid too.** With Reduce Transparency on,
+      open a Space with a cover photo, Spaces' directory, a saved run's
+      map (Back and Replay), Run summary, a post's comments, the lift and
+      run plan editors (scroll so the footer sits over content), and
+      start a run with a route and a previous run to chase. Passing:
+      every chip over a photo or the map is solid black with its words
+      clear, the map's zoom and compass are the card's colour, and the
+      sticky bars are the page's colour, with nothing showing through;
+      off route, the route chip is solid amber. Turned off again without
+      relaunching, they are frosted again.
 
 ## Motion 14 under every animation (2026-11-11)
 
