@@ -25,6 +25,8 @@ const h = vi.hoisted(() => ({
   run: null as Record<string, unknown> | null,
   mapProps: [] as Record<string, unknown>[],
   segmentRows: [] as unknown[],
+  placings: [] as unknown[],
+  placingCalls: [] as unknown[][],
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -74,6 +76,14 @@ vi.mock("@/hooks/useRunSegmentEfforts", () => ({
     failed: false,
     rows: h.segmentRows,
   }),
+}));
+// Run29: the run's top three, from a read of every saved run in its own
+// hook (useRunPlacings.test.ts); the page hands it the run and draws them.
+vi.mock("@/hooks/useRunPlacings", () => ({
+  useRunPlacings: (...args: unknown[]) => {
+    h.placingCalls.push(args);
+    return h.placings;
+  },
 }));
 const renameRun = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/runRename", async (importOriginal) => ({
@@ -141,6 +151,8 @@ beforeEach(() => {
   h.run = null;
   h.mapProps.length = 0;
   h.segmentRows = [];
+  h.placings = [];
+  h.placingCalls.length = 0;
 });
 afterEach(() => cleanup());
 
@@ -177,6 +189,26 @@ describe("RunDetail — best efforts", () => {
     expect(within(card).getByText("1K").nextElementSibling?.textContent).toBe(
       "4:22"
     );
+  });
+
+  it("marks an effort that placed among the runs before it (Run29)", () => {
+    h.run = savedRun({
+      bestEfforts: [{ distance: 1000, time: 262, label: "1K" }],
+    });
+    h.placings = [{ meters: 1000, seconds: 262, place: 3, bestSeconds: 248 }];
+    renderDetail();
+    const card = screen.getByRole("region", { name: "Best efforts" });
+    expect(within(card).getByText("Your 3rd best")).toBeVisible();
+    // The hook ranks the time the card shows, for this account and run.
+    const [uid, run] = h.placingCalls.at(-1) as [
+      string,
+      { id: string; bestEfforts: { distance: number; time: number }[] },
+    ];
+    expect(uid).toBe("runner");
+    expect(run.id).toBe("run-1");
+    expect(run.bestEfforts).toEqual([
+      { distance: 1000, time: 262, label: "1K" },
+    ]);
   });
 
   it("does not search a thinned track for a run saved before efforts were kept", () => {

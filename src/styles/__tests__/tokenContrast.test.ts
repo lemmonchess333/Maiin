@@ -821,7 +821,11 @@ describe("small secondary text on a tint", () => {
 describe("medal ranks — the numeral is text, the metal is a marker", () => {
   // The weekly challenge card draws its leaders with this row since
   // Trim1 call 3(a); its own copy of the markup, pinned here too, went.
-  it.each(["src/components/social/LeaderboardRow.tsx"])(
+  // A run's top-three disc (Run29) is drawn the same way.
+  it.each([
+    "src/components/social/LeaderboardRow.tsx",
+    "src/components/run/PlaceDisc.tsx",
+  ])(
     "%s never colours the rank numeral with a medal",
     (path) => {
       const src = readFile(path);
