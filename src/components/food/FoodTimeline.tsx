@@ -38,13 +38,13 @@ import {
  * keeps the compact rows. Every shape shares FoodRow's swipe and tap.
  *
  * Food9 moved that persistence off Firebase Storage and onto the device
- * (`foodPhotoStore.ts`), so the photo source is now resolved
- * ASYNCHRONOUSLY by `useFoodPhotoUrls` rather than read off the meal doc.
- * Docs written before the swap still carry a `photoUrl` pointing at a
- * Storage blob; that stays the fallback so nothing already on screen
- * disappears. A photo the retention sweep has since dropped simply
- * resolves to nothing and the row renders in its ordinary compact form —
- * the shape most rows already have, so the degrade needs no design.
+ * (`foodPhotoStore.ts`), so the photo source is resolved ASYNCHRONOUSLY by
+ * `useFoodPhotoUrls` and never read off the meal doc. The photos builds
+ * before Food9 stored on the server are deleted, and their `photoUrl` is
+ * not drawn (owner, 2026-11-21; `parseMealDoc` no longer reads it). A
+ * photo the retention sweep has since dropped simply resolves to nothing
+ * and the row renders in its ordinary compact form, the shape most rows
+ * already have, so the degrade needs no design.
  */
 
 /* Render-perf telemetry, throttled to once per day per user — the
@@ -177,13 +177,9 @@ export default function FoodTimeline({
     [entries]
   );
   const localPhotoUrls = useFoodPhotoUrls(photoCandidateIds);
-  /* Local first, legacy Storage URL second. Pre-Food9 docs keep rendering
-     from `photoUrl`; new ones never write that field at all, so the
-     fallback drains on its own as those meals age out of the 90-day diary
-     window. */
-  const photoUrlOf = (group: (typeof entries)[number]) =>
-    group.meals.map((meal) => localPhotoUrls[meal.id]).find(Boolean) ??
-    group.meals.find((m) => m.photoUrl)?.photoUrl;
+  /* The device's photo is the only one: a meal document names none. */
+  const photoSrcOf = (group: (typeof entries)[number]) =>
+    group.meals.map((meal) => localPhotoUrls[meal.id]).find(Boolean);
 
   /* Same render-timing shape as the FoodMealSection probe it replaces —
      see that pattern's rationale in the Food6e lock. */
@@ -247,8 +243,9 @@ export default function FoodTimeline({
             first paint: the day's rows are simply there. */}
         <AnimatePresence initial={false}>
           {entries.map((group) => {
-            // aria-label replaces the row's visible text. Name collisions
-            // therefore need the portion details in both action labels.
+            // Rows with the same name read alike, so the portion's
+            // details name each one: after the row's own words in the
+            // row's name, and in its Delete label.
             const accessibleFoodName =
               (nameCounts.get(group.foodName.toLowerCase().trim()) ?? 0) > 1
                 ? [
@@ -290,7 +287,7 @@ export default function FoodTimeline({
                 key={group.id}
                 group={rowGroup}
                 accessibleFoodName={accessibleFoodName}
-                photoUrl={photoUrlOf(group)}
+                photoSrc={photoSrcOf(group)}
                 subLabel={
                   <>
                     {/* The portion leads ("1.5 servings · Lunch · 13:17"):

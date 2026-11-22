@@ -412,11 +412,69 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("builds on a macOS image that is not deprecated", () => {
-    // macos-14 is deprecated (actions/runner-images#13518), and its default
-    // Xcode is older than App Store Connect accepts uploads from. macos-26
-    // carries the current Xcode as its default.
-    expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
+  it("builds with Xcode 27.1, before anything else touches the project", () => {
+    // Owner decision A (18 November 2026, the iPhone Duo notes, #3420): only
+    // an iOS 27.1 SDK build uses the iPhone Duo's whole display, and the iOS
+    // 27 SDK is required for every upload from April 2027. macos-26 tops
+    // out at Xcode 26.6 (macos-14, the first image, is deprecated:
+    // actions/runner-images#13518); the xcode-27 image carries several
+    // Xcodes, so both workflows select 27.1 by name, and the pull
+    // requests' compile builds what the release does.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    for (const [name, file] of [
+      ["deploy-ios.yml", workflow],
+      ["ios-native-compile.yml", compile],
+    ] as const) {
+      expect(file.match(/^\s*runs-on:\s*(\S+)/m)?.[1], name).toBe("xcode-27");
+      const select = file.indexOf("- name: Select Xcode 27.1");
+      expect(select, name).toBeGreaterThan(-1);
+      expect(file.slice(select, select + 1200), name).toContain(
+        "verify_ios_xcode.py --want 27.1"
+      );
+      // First after the checkout: no step runs Xcode or syncs the
+      // project with whatever the image's default is.
+      const steps = file.slice(file.indexOf("\n    steps:\n"));
+      const before = [...steps.matchAll(/^ {6}- (?:name|uses|run):.*$/gm)]
+        .map((m) => m[0].trim())
+        .slice(0, 2);
+      expect(before[0], name).toMatch(/^- uses: actions\/checkout@/);
+      expect(before[1], name).toBe("- name: Select Xcode 27.1");
+      expect(select, name).toBeLessThan(file.indexOf("xcodebuild -project"));
+      expect(select, name).toBeLessThan(file.indexOf("npm run build:ios"));
+    }
+  });
+
+  it("launches the pull requests' build on the iPhone Duo simulator, each display shot", () => {
+    // Objective 4 of the Duo track: where the runner's Xcode has an iPhone
+    // Duo simulator, a CI job builds and screenshots on it. Xcode 27.1 has
+    // one, with both displays in one device; the iPhone the other launch
+    // picks is never the Duo.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    const at = (name: string) => compile.indexOf(`- name: ${name}\n`);
+    const phone = at("Launch the standard build on a simulator");
+    const duo = at("Launch the standard build on the iPhone Duo simulator");
+    expect(phone).toBeGreaterThan(-1);
+    expect(duo).toBeGreaterThan(phone);
+    expect(compile.slice(phone, duo)).toContain(
+      'not d["name"].startswith("iPhone Duo")'
+    );
+    const step = compile.slice(duo, compile.indexOf("\n      - ", duo + 1));
+    expect(step).toContain('t["name"] == "iPhone Duo"');
+    expect(step).toContain('screenshot --display="$1"');
+    // The display showing the home screen before the launch has to show
+    // the app after it, so a black scene beside a lit system screen fails.
+    expect(step).toMatch(
+      /before the launch:[\s\S]*simctl launch[\s\S]*MISSING=/
+    );
+    expect(step).toContain("python3 scripts/verify_ios_launch.py");
+    expect(step).toContain('kill -0 "$PID"');
+    expect(compile).toMatch(
+      /name: ios-simulator-duo\n\s*path: \$\{\{ runner\.temp \}\}\/duo-\*\.png/
+    );
+    // Before the pilot's build replaces the standard one it installs.
+    expect(duo).toBeLessThan(
+      at("Compile the connected training pilot for simulator")
+    );
   });
 
   it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
@@ -822,7 +880,9 @@ describe("iOS project wiring — the app's own plugins", () => {
       .map(([, cls, jsName]) => ({ cls, jsName }));
     // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
     // HomeWidgets: the Home Screen widgets' snapshot and queued drinks (Wid1).
+    // AccessibilityPrefs: Reduce Transparency, which WebKit cannot see (DS6).
     expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "AccessibilityPrefs",
       "HeartRateSensor",
       "HomeWidgets",
       "MotionActivity",
@@ -833,6 +893,7 @@ describe("iOS project wiring — the app's own plugins", () => {
       const callers = [
         "src/lib/heartRateSensorBridge.ts",
         "src/lib/homeWidgets.ts",
+        "src/lib/reducedTransparency.ts",
         "src/lib/runMotionSource.ts",
         "src/lib/watchRunBridge.ts",
       ].filter((file) =>
@@ -905,5 +966,132 @@ describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
     expect(infoPlist).toMatch(
       /<key>UIBackgroundModes<\/key>\s*<array>\s*<string>location<\/string>\s*<string>bluetooth-central<\/string>\s*<\/array>/
     );
+  });
+});
+
+/**
+ * The UIScene life cycle (Duo track, 2026-11-18). "Apps built with the
+ * latest SDK must adopt the scene-based life cycle or they fail to launch"
+ * (iOS & iPadOS 27 Release Notes), and on the iPhone Duo a fold resizes
+ * the scene (the iPhone Duo notes under docs/ios, #3420). Nothing here can
+ * launch the app; a wrong class name or a delegate left out of the target
+ * is a black screen at launch that a compile does not see, so these read
+ * the wiring instead.
+ */
+describe("iOS project wiring — the scene life cycle", () => {
+  const sceneDelegate = read("ios/App/App/SceneDelegate.swift");
+  const appDelegate = read("ios/App/App/AppDelegate.swift");
+  const storyboard = read("ios/App/App/Base.lproj/Main.storyboard");
+
+  /** Paths the App target's Sources phase compiles. */
+  function compiledSourcePaths(): string[] {
+    const target = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+    const sourcesId = target[1].match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+    )?.[1];
+    if (!sourcesId) throw new Error("App target has no Sources phase");
+    const phase = pbxproj.match(
+      new RegExp(
+        `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+    return [
+      ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+    ].map(([, id]) => {
+      const ref = pbxproj.match(
+        new RegExp(
+          `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+          "m"
+        )
+      )?.[1];
+      const path = ref
+        ? pbxproj.match(
+            new RegExp(
+              `^\\s*${ref} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+              "m"
+            )
+          )?.[1]
+        : undefined;
+      if (!path) throw new Error(`build file ${id} has no path`);
+      return path;
+    });
+  }
+
+  it("declares one scene, its delegate and its storyboard", () => {
+    const manifest = infoPlist.match(
+      /<key>UIApplicationSceneManifest<\/key>\s*<dict>([\s\S]*?)<\/dict>\s*<key>UILaunchStoryboardName/
+    );
+    expect(manifest).not.toBeNull();
+    const body = manifest![1];
+    expect(body).toMatch(
+      /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/
+    );
+    expect(body).toMatch(
+      /<key>UIWindowSceneSessionRoleApplication<\/key>\s*<array>\s*<dict>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneConfigurationName<\/key>\s*<string>Default Configuration<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneDelegateClassName<\/key>\s*<string>\$\(PRODUCT_MODULE_NAME\)\.SceneDelegate<\/string>/
+    );
+    expect(body).toMatch(
+      /<key>UISceneStoryboardFile<\/key>\s*<string>Main<\/string>/
+    );
+    // A launch screen is required of 27.0 SDK builds too.
+    expect(plistKeys(infoPlist)).toContain("UILaunchStoryboardName");
+  });
+
+  it("compiles the delegate it names into the app", () => {
+    expect(compiledSourcePaths()).toContain("SceneDelegate.swift");
+    expect(sceneDelegate).toMatch(
+      /^class SceneDelegate: UIResponder, UIWindowSceneDelegate \{/m
+    );
+    expect(sceneDelegate).toMatch(/^\s*var window: UIWindow\?$/m);
+  });
+
+  it("starts the window on the storyboard's bridge, as before scenes", () => {
+    // The storyboard makes the window; the delegate makes none of its own.
+    expect(storyboard).toMatch(
+      /initialViewController="(\S+)"[\s\S]*<viewController id="\1" customClass="TroposBridgeViewController"/
+    );
+    expect(sceneDelegate).not.toMatch(/UIWindow\(/);
+  });
+
+  it("hands the app delegate's configuration the same name and delegate", () => {
+    expect(appDelegate).toMatch(
+      /configurationForConnecting connectingSceneSession: UISceneSession[\s\S]*?UISceneConfiguration\(\s*name: "Default Configuration"[\s\S]*?config\.delegateClass = SceneDelegate\.self/
+    );
+  });
+
+  it("moves opened URLs and universal links to the scene, Firebase Auth's first", () => {
+    // Under scenes these app delegate methods are never called.
+    expect(appDelegate).not.toMatch(/open url: URL/);
+    expect(appDelegate).not.toMatch(/continue userActivity: NSUserActivity/);
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, willConnectTo: session, options: connectionOptions\)/
+    );
+    expect(sceneDelegate).toMatch(
+      /openURLContexts URLContexts[\s\S]*?Auth\.auth\(\)\.canHandle\(\$0\.url\)[\s\S]*?SceneDelegateProxy\.shared\.scene\(scene, openURLContexts:/
+    );
+    expect(sceneDelegate).toMatch(
+      /SceneDelegateProxy\.shared\.scene\(scene, continue: userActivity\)/
+    );
+    // Push still reaches the app delegate under scenes.
+    expect(appDelegate).toMatch(
+      /didRegisterForRemoteNotificationsWithDeviceToken/
+    );
+  });
+
+  it("runs on a Capacitor with the scene proxy (8.5 and later)", () => {
+    const [major, minor] = (pkg.dependencies["@capacitor/ios"] ?? "")
+      .replace(/^[^\d]*/, "")
+      .split(".")
+      .map(Number);
+    expect(major > 8 || (major === 8 && minor >= 5)).toBe(true);
   });
 });

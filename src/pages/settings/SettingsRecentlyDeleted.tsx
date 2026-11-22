@@ -6,14 +6,19 @@
  * 3-second toast undo on the Food page — that surface handles the
  * "I just clicked wrong" case; this page handles the "I need that
  * one back from last night" case.
- * Deleted meals stay recoverable until the user restores or permanently
- * deletes them, or deletes their account. There is no automatic purge.
+ * Each meal is removed for good 30 days after it was deleted (F5c), by
+ * the server's hourly `purgeSoftDeletedMeals`
+ * (functions/lib/mealPurge.js). The page says so, and each row says how
+ * long that meal has left (`purgeCountdown`, src/lib/mealPurge.ts). It
+ * lists every soft-deleted meal still stored, one whose 30 days are up
+ * included, since until the job reaches it the meal can still be restored.
  */
 import { useState } from "react";
 import { Trash2, RotateCcw, Utensils } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { useDeletedMeals } from "@/hooks/useDeletedMeals";
+import { DELETED_MEAL_RETENTION_DAYS, purgeCountdown } from "@/lib/mealPurge";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
@@ -52,6 +57,24 @@ function formatRelative(ms: number): string {
   return `${d} day${d === 1 ? "" : "s"} ago`;
 }
 
+/** How long the meal has left before it is removed for good. */
+function TimeLeft({
+  deletedAtMs,
+  nowMs,
+}: {
+  deletedAtMs: number;
+  nowMs: number;
+}) {
+  const left = purgeCountdown(deletedAtMs, nowMs);
+  if (left.kind === "due") return <>goes soon</>;
+  return (
+    <>
+      <span className="font-mono tabular-nums">{left.days}</span>
+      {left.days === 1 ? " day left" : " days left"}
+    </>
+  );
+}
+
 export default function SettingsRecentlyDeleted() {
   const uid = useUid();
   /* The LIST comes from its own query, ordered by deletion time — the
@@ -66,6 +89,9 @@ export default function SettingsRecentlyDeleted() {
   const { restoreMeal, hardDeleteMeal } = useMeals();
   const { deletedMeals, loading } = useDeletedMeals(uid);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  // The days left are read against the time the page opened: a count in
+  // whole days does not need to tick while it is open.
+  const [nowMs] = useState(() => Date.now());
 
   // Sort by deletedAt DESC — most recent at top per F5c spec pin (6).
   const sorted = [...deletedMeals].sort(
@@ -109,7 +135,7 @@ export default function SettingsRecentlyDeleted() {
   return (
     <SettingsSection
       title="Recently deleted meals"
-      subtitle="Restore deleted meals or remove them permanently."
+      subtitle={`Each meal is removed for good ${DELETED_MEAL_RETENTION_DAYS} days after you delete it.`}
       backTo="/settings/account"
       backLabel="Account"
     >
@@ -121,14 +147,15 @@ export default function SettingsRecentlyDeleted() {
             compact
             icon={Utensils}
             headline="No recently deleted meals"
-            sub="Deleted meals stay here until you restore or permanently delete them."
+            sub={`Meals you delete stay here for ${DELETED_MEAL_RETENTION_DAYS} days so you can restore them.`}
           />
         </Card>
       ) : (
         <ul aria-label="Recently deleted meals" className="space-y-2">
           {sorted.map((meal) => {
             const isPending = pendingId === meal.id;
-            const relative = formatRelative(deletedAtMs(meal));
+            const deletedMs = deletedAtMs(meal);
+            const relative = formatRelative(deletedMs);
             return (
               <li key={meal.id} className="rounded-xl bg-card card-shadow p-3">
                 <div className="flex items-center gap-3">
@@ -142,6 +169,8 @@ export default function SettingsRecentlyDeleted() {
                       </span>
                       {" kcal · deleted "}
                       {relative}
+                      {" · "}
+                      <TimeLeft deletedAtMs={deletedMs} nowMs={nowMs} />
                     </p>
                   </div>
                 </div>

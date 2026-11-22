@@ -193,6 +193,20 @@ test.describe("onboarding screenshots", () => {
     await page.getByRole("button", { name: /some experience/i }).click();
     await next(page);
 
+    // The agreement to store health details (Priv1 call 1), before the
+    // first body question: shot as asked, and as Not now leaves it, then
+    // agreed to.
+    await expect(
+      page.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+    ).toBeVisible();
+    await shootBoth(page, "onboarding-8-health");
+    await page.getByRole("button", { name: "Not now", exact: true }).click();
+    await shootBoth(page, "onboarding-8-health-declined");
+    await page.getByRole("button", { name: "Go back", exact: true }).click();
+    await page
+      .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+      .click();
+
     // Step 4 — limitations require an explicit answer.
     await shootBoth(page, "onboarding-4-injuries");
     await expect(

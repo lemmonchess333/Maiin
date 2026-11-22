@@ -1,8 +1,9 @@
 /**
  * Tooltip visibility capture (pre-launch QA backlog, tooltip-primitive
  * section) — the light + dark "body and arrow must register in both
- * themes" row, filmed on the Performance Index tooltip in Analytics
- * (the rich seed carries 6 performance weeks, so the tab renders).
+ * themes" row, filmed on the Performance tooltip at the top of Progress,
+ * which explains the usual week (App1 Q10; the rich seed carries 6
+ * performance weeks, so the lead renders). The frames keep their names.
  *
  * The TrajectoryCard delta-chip wire-up stays a manual check — it needs
  * trajectory data the shared seeds don't stage.
@@ -45,10 +46,10 @@ test.describe("tooltip screenshots", () => {
     });
   }
 
-  test("Performance Index tooltip — light + dark", async ({ page }) => {
+  test("Performance tooltip — light + dark", async ({ page }) => {
     test.setTimeout(120_000);
-    // The index's tooltip sits beside the Performance heading, at the
-    // top of the Analytics overview.
+    // The tooltip sits beside the Performance heading, at the top of the
+    // Progress overview.
     await page.goto("history");
     await page
       .getByRole("navigation", { name: /main navigation/i })
@@ -56,7 +57,7 @@ test.describe("tooltip screenshots", () => {
 
     const openTooltip = async () => {
       await page
-        .getByRole("button", { name: /about performance index/i })
+        .getByRole("button", { name: /about your usual week/i })
         .click({ timeout: 15_000 });
       await expect(page.getByRole("tooltip")).toBeVisible({ timeout: 5000 });
       await page.waitForTimeout(300);

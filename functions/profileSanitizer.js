@@ -56,6 +56,11 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   // App1 Q17: the first session and week-4 return, stamped empty by
   // completeOnboarding and kept by the session triggers.
   "launchMilestones",
+  // App1 Q55: the email consent record. Setup's yes reaches
+  // completeOnboarding as its own `emailOptIn`, never inside profileData,
+  // and the server writes the record with its own time
+  // (lib/emailConsent.js); one sent in profileData is dropped.
+  "emailConsent",
 ]);
 
 /**
@@ -137,18 +142,19 @@ function isCalendarDay(s) {
 }
 
 /** The age range a profile keeps, as `age` below holds it. */
-const AGE_YEARS = Object.freeze({ min: 16, max: 120 });
+/** 18 since Biz1 call 4 (18 November 2026), overturning App1 Q65's 16. */
+const AGE_YEARS = Object.freeze({ min: 18, max: 120 });
 
 /**
  * A year of birth (App1, grill Q57; the owner chose the year over a full
  * date, 13 November 2026): a whole year from this year less 120 to this
- * year less 16, or undefined. The app holds a person to exactly that on
+ * year less 18, or undefined. The app holds a person to exactly that on
  * their own year (`birthYearProblem`, src/lib/age.ts, held to this by
  * bodyMetrics.cross.test.ts). This runs on the server's year, in UTC, and
  * at New Year a person's own year can already be the next one: Auckland
  * is in January while UTC is still in December. So the young end, here
  * and in firestore.rules' birthYearValid() only, takes one year more, and
- * someone born this year less 15 by UTC's count is not refused for being
+ * someone born this year less 17 by UTC's count is not refused for being
  * in a time zone ahead of it. The app keeps the exact limit.
  */
 function cleanBirthYear(value, now = new Date()) {
@@ -331,13 +337,17 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   equipment: (v) => cleanString(v, 30),
   // Lift4 (11): a barbell and a rack beside a home gym's kit.
   barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
+  // Lift4 (11): a pull-up bar beside a home gym's, a minimal or a
+  // no-equipment kit.
+  pullUpBar: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
   // D16 personal "why" — short free-text motivation (chip-seeded or custom).
   // Bounded to 120 chars; control chars stripped by cleanString.
   trainingWhy: (v) => cleanString(v, 120),
-  runMode: (v) =>
-    cleanEnum(v, ["freeform", "structured", "race_prep", "starter"]),
+  // The retired "structured" mode (App1 Q25) is dropped like any other
+  // unknown value.
+  runMode: (v) => cleanEnum(v, ["freeform", "race_prep", "starter"]),
   // Run9's starter goal (30 minutes without stopping): the day it began,
   // and the day it finished, or the day a race goal took its place with the
   // stage reached. `null` clears it. Same shape as firestore.rules'

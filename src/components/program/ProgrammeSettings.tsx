@@ -45,6 +45,7 @@ import {
   Footprints,
   Warehouse,
   User,
+  PersonStanding,
   Award,
   Sparkles,
   Check,
@@ -75,6 +76,13 @@ import {
   represcribeWorkouts,
 } from "@/features/program/represcribe";
 import {
+  buildsNoPullDay,
+  pullUpBarWhenChosen,
+  takesBarbellAtHome,
+  takesPullUpBar,
+} from "@/features/program/programLabels";
+import { noEquipmentPullNote } from "@/features/program/noEquipment";
+import {
   chooseSplit,
   splitLabel,
   splitRationale,
@@ -100,6 +108,9 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import { smallPlatesHint } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
+import { sportChange, sportChangeRefusal } from "@/lib/sportChange";
+import { localDateString } from "@/lib/dateHelpers";
+import StopSportDialog from "./StopSportDialog";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
@@ -205,8 +216,10 @@ function SettingsOptionCard({
         transition={{ duration: 0.18, delay: index * 0.025 }}
         className={cn(
           "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-          selected ? "border-transparent" : "border-border/70",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98] dark:card-shadow",
+          selected
+            ? "border-transparent"
+            : "border-border/70 dark:border-transparent",
           disabled && "opacity-35 pointer-events-none",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
@@ -218,8 +231,10 @@ function SettingsOptionCard({
                    PAGE, so in light the description under it (muted, 12px)
                    was 4.23:1 on #e3e2ee, and in dark the selected card sat
                    darker than its neighbours. axe caught it once Settings
-                   listed this editor (Trim1 call 2). */
-                background: `linear-gradient(${accent}14, ${accent}14), hsl(var(--card))`,
+                   listed this editor (Trim1 call 2). An image over the
+                   class's fill, so no shorthand resets it
+                   (inlineBackgroundFill.test.ts). */
+                backgroundImage: `linear-gradient(${accent}14, ${accent}14)`,
                 borderColor: `${accent}45`,
               }
             : undefined
@@ -335,14 +350,20 @@ const EQUIPMENT_OPTIONS: {
   {
     id: "home_gym",
     label: "Home gym",
-    desc: "Dumbbells, bench, pull-up bar",
+    desc: "Dumbbells, bench",
     icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
   },
   {
     id: "minimal",
-    label: "Minimal / bodyweight",
-    desc: "Bands, bodyweight, maybe dumbbells",
+    label: "Minimal",
+    desc: "Dumbbells and bodyweight",
     icon: <User size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "no_equipment",
+    label: "No equipment",
+    desc: "Bodyweight, on the floor",
+    icon: <PersonStanding size={20} style={{ color: THEME.teal }} />,
   },
 ];
 
@@ -390,7 +411,6 @@ const INJURY_OPTIONS: {
   },
 ];
 
-// Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
   recentLayoff = "none",
   recentRuns,
@@ -429,6 +449,7 @@ export default function ProgrammeSettings({
   );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
+  const [pullUpBar, setPullUpBar] = useState(saved.pullUpBar);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -440,6 +461,20 @@ export default function ProgrammeSettings({
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Stop lifting (TrainWk1 step 6): its own confirmation, and why it can't
+  // be done when it can't (the last sport, a training block running).
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopRefused = sportChangeRefusal(
+    profile,
+    programState,
+    "remove_lifting"
+  );
+  /* Lifting as the plan's one sport is said when Stop lifting is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A training block is said up front: it is the plan's own state. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
 
   const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
@@ -454,6 +489,7 @@ export default function ProgrammeSettings({
     preferredSplit: saved.preferredSplit,
     equipment,
     barbellAtHome,
+    pullUpBar,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -503,13 +539,19 @@ export default function ProgrammeSettings({
   // does NOT honour an explicit preference in this rebuild path. Surface the
   // split it WILL generate for the current draft so the picker reads honestly
   // rather than implying control the generation doesn't grant.
-  const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+  // A save at the same lift days keeps the week's structure (Pgm5), so the
+  // split and its reason are the saved setup's until the days change.
+  const draftNoPull = buildsNoPullDay(equipment);
+  const savedNoPull = buildsNoPullDay(saved.equipment);
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays, draftNoPull));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would
-  // derive for the saved lift-days.
-  const currentSplitLabel = splitLabel(
-    programState?.splitType ?? chooseSplit(saved.liftDays)
-  );
+  // derive for the saved lift-days, as for a split this build can't name
+  // (a newer app's).
+  const currentSplitLabel =
+    splitLabel(programState?.splitType) ||
+    splitLabel(chooseSplit(saved.liftDays, savedNoPull));
+  const pullNote = noEquipmentPullNote(equipment, pullUpBar, experience);
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
@@ -557,6 +599,7 @@ export default function ProgrammeSettings({
             sessionMinutes,
             equipment,
             barbellAtHome,
+            pullUpBar,
             injuries,
           },
           recentLayoff,
@@ -614,6 +657,62 @@ export default function ProgrammeSettings({
       toast.error(rejection.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** Takes lifting off the plan: its lift days go, and everything logged
+   *  stays (`sportChange`'s `remove_lifting`). */
+  async function stopLifting() {
+    if (stopping || readiness !== "ready") return;
+    const change = sportChange(
+      {
+        profile,
+        programState,
+        today: localDateString(new Date()),
+        recentLayoff,
+        recentRuns,
+      },
+      { kind: "remove_lifting" }
+    );
+    if (!change.ok) {
+      setConfirmStop(false);
+      toast.error(change.sentence);
+      return;
+    }
+    setStopping(true);
+    try {
+      const plan = buildPlan(change.input);
+      Object.assign(plan.profileUpdates, change.patch);
+      await configureLiftPlan(plan, profile, programState);
+      setConfirmStop(false);
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Save changes).
+        logger.warn(
+          "[ProgrammeSettings] lifting stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Lifting stopped");
+        window.location.reload();
+        return;
+      }
+      toast.success("Lifting stopped");
+      onSaved?.();
+    } catch (err) {
+      logger.error("[ProgrammeSettings] stop lifting failed:", err);
+      const rejection = planSaveRejection(
+        err,
+        "Your programme changed. Reopen settings to review the latest plan before saving."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setStopping(false);
     }
   }
 
@@ -797,7 +896,7 @@ export default function ProgrammeSettings({
                engine took ownership. Days, experience, equipment and
                injuries stay editable below, so an injury or an equipment
                change never costs the user their block. */
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm dark:card-shadow dark:border-transparent">
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-bold leading-tight">
                   {focusLabel(activeBlockFocus)}
@@ -881,12 +980,15 @@ export default function ProgrammeSettings({
             the exercise editor, not a split toggle. */}
         <div>
           <GroupHeading>Split</GroupHeading>
-          <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
             <p className="text-sm font-medium text-foreground">
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              {splitRationale(liftDays)}
+              {splitRationale(
+                liftDays,
+                liftDays === saved.liftDays ? savedNoPull : draftNoPull
+              )}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
@@ -906,7 +1008,7 @@ export default function ProgrammeSettings({
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
-        <div className="rounded-xl bg-muted px-3 py-2.5">
+        <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
           {/* "Edit days" drops under the counts when the two no longer
               fit side by side (larger text), rather than squeezing them. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -966,7 +1068,17 @@ export default function ProgrammeSettings({
               <SettingsOptionCard
                 key={opt.id}
                 selected={equipment === opt.id}
-                onSelect={() => setEquipment(opt.id)}
+                onSelect={() => {
+                  // A setup chosen anew starts from its own bar answer;
+                  // back to the saved one, the saved answer.
+                  if (opt.id !== equipment)
+                    setPullUpBar(
+                      opt.id === saved.equipment
+                        ? saved.pullUpBar
+                        : pullUpBarWhenChosen(opt.id)
+                    );
+                  setEquipment(opt.id);
+                }}
                 index={i}
                 icon={opt.icon}
                 label={opt.label}
@@ -975,7 +1087,7 @@ export default function ProgrammeSettings({
             ))}
           </div>
           {/* Lift4 (11): "what do you have?" beside the setups. */}
-          {equipment !== "full_gym" && (
+          {takesBarbellAtHome(equipment) && (
             <div className="mt-3 flex items-center justify-between">
               <div>
                 <p className="text-sm text-foreground">A barbell and a rack</p>
@@ -990,6 +1102,26 @@ export default function ProgrammeSettings({
                 onChange={() => setBarbellAtHome((v) => !v)}
               />
             </div>
+          )}
+          {takesPullUpBar(equipment) && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A pull-up bar</p>
+                <p className="text-xs text-muted-foreground">
+                  A doorway bar works. Pull-ups and chin-ups.
+                </p>
+              </div>
+              <Toggle
+                checked={pullUpBar}
+                label="A pull-up bar"
+                className="ml-3"
+                onChange={() => setPullUpBar((v) => !v)}
+              />
+            </div>
+          )}
+          {/* What a no-equipment plan can't train, under its bar switch. */}
+          {pullNote && (
+            <p className="mt-3 text-sm text-muted-foreground">{pullNote}</p>
           )}
         </div>
 
@@ -1055,6 +1187,34 @@ export default function ProgrammeSettings({
 
       {afterForm}
 
+      {/* Stop lifting (TrainWk1 step 6; the Train grill's Q33): lifting off
+          the plan, as Run plan's Stop running takes running off. Refused
+          with the reason when it would leave no sport, or while a training
+          block runs. */}
+      {stopHeld ? (
+        <p className="px-1 text-xs text-muted-foreground">
+          {stopHeld.sentence}
+        </p>
+      ) : (
+        <SettingsGroup
+          footer={
+            <span role="status">
+              {stopTried && stopRefused
+                ? stopRefused.sentence
+                : "Your saved workouts and best lifts stay. Your plan’s lift days go."}
+            </span>
+          }
+        >
+          <SettingsRow
+            tone="destructive"
+            label="Stop lifting"
+            onClick={() =>
+              stopRefused ? setStopTried(true) : setConfirmStop(true)
+            }
+          />
+        </SettingsGroup>
+      )}
+
       {/* Reset programme. It was the foot of Settings → Programme, a page
           that edited nothing; this editor is where the programme is set
           now (Trim1 call 2). */}
@@ -1071,7 +1231,7 @@ export default function ProgrammeSettings({
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)] transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           <PendingChangesSummary
@@ -1094,7 +1254,7 @@ export default function ProgrammeSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}
@@ -1103,6 +1263,14 @@ export default function ProgrammeSettings({
       )}
 
       {confirmModal}
+      <StopSportDialog
+        sport="lifting"
+        open={confirmStop}
+        busy={stopping}
+        ready={programReady}
+        onCancel={() => setConfirmStop(false)}
+        onConfirm={() => void stopLifting()}
+      />
     </div>
   );
 }

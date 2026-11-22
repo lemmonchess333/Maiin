@@ -30,10 +30,16 @@ import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
+import {
+  NO_EQUIPMENT_BEGINNER_BAR_NOTE,
+  NO_EQUIPMENT_PULL_NOTE,
+} from "@/features/program/noEquipment";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import type { DatedRun } from "@/features/program/layoffDetection";
 import { buildPlan } from "@/features/program/planBuilder";
+import { localDateString } from "@/lib/dateHelpers";
+import { SPORT_CHANGE } from "@/test/journeyScreens";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -216,15 +222,13 @@ describe("ProgrammeSettings — the lifting editor (Section-Split)", () => {
       eventSpaceId: "the-big-half",
       targetTimeS: 6300,
     };
-    setup(
-      {
-        runMode: "race_prep",
-        raceGoal,
-        weeklyRunDaysTarget: 3,
-        runVolume: "lighter",
-        runDifficulty: "harder",
-      }
-    );
+    setup({
+      runMode: "race_prep",
+      raceGoal,
+      weeklyRunDaysTarget: 3,
+      runVolume: "lighter",
+      runDifficulty: "harder",
+    });
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
@@ -418,6 +422,89 @@ describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
     expect(
       screen.getByRole("switch", { name: "A barbell and a rack" })
     ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("asks about a pull-up bar at home, keeps an older plan's, and saves an answer", async () => {
+    // An older Minimal plan, never asked: it has its pull-ups, so yes.
+    setup({ equipment: "minimal" });
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A pull-up bar")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.pullUpBar).toBe(false);
+  });
+
+  it("starts a newly chosen setup from its own bar answer, and asks a gym nothing", () => {
+    setup({ equipment: "full_gym" });
+    expect(screen.queryByRole("switch", { name: "A pull-up bar" })).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByText("Minimal"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    // No equipment asks too, off until turned on, and says what that means.
+    fireEvent.click(screen.getByText("No equipment"));
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+  });
+
+  it("drops the no-pull note once a bar gives the plan its pull", () => {
+    setup({ equipment: "no_equipment", experience: "intermediate" });
+    const bar = screen.getByRole("switch", { name: "A pull-up bar" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByText(NO_EQUIPMENT_PULL_NOTE)).toBeInTheDocument();
+    fireEvent.click(bar);
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+    expect(screen.queryByText(NO_EQUIPMENT_BEGINNER_BAR_NOTE)).toBeNull();
+  });
+
+  it("tells a beginner with a bar why the plan still has no pull-ups", () => {
+    setup({
+      equipment: "no_equipment",
+      experience: "beginner",
+      pullUpBar: true,
+    });
+    expect(
+      screen.getByRole("switch", { name: "A pull-up bar" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByText(NO_EQUIPMENT_BEGINNER_BAR_NOTE)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(NO_EQUIPMENT_PULL_NOTE)).toBeNull();
+  });
+
+  it("asks no equipment only about a bar, and saves it with the plan", async () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    fireEvent.click(screen.getByText("No equipment"));
+    // With no equipment there is no barbell to have.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("switch", { name: "A pull-up bar" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    const recap = within(screen.getByRole("alertdialog"));
+    expect(recap.getByText("No equipment")).toBeInTheDocument();
+    expect(recap.queryByText("A barbell and a rack")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("no_equipment");
+    expect(payload.profileUpdates.pullUpBar).toBe(true);
   });
 });
 
@@ -677,6 +764,17 @@ describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names the split from the days for one this build can't name", () => {
+    // A newer app's split, read by this one: no "undefined", and the card
+    // reads as the engine would build the saved days.
+    setup({}, {
+      ...programState,
+      splitType: "a_newer_apps_split",
+    } as unknown as ProgramState);
+    expect(screen.getByText("Upper / Lower")).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/)).toBeNull();
+  });
+
   it("threads the persisted preferredSplit through save (inert, not chosen)", async () => {
     setup(); // saved preferredSplit = "ppl"
     fireEvent.click(screen.getByText("Get stronger"));
@@ -851,5 +949,131 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
       screen.queryByRole("button", { name: /save and update sessions/i })
     ).toBeNull();
     expect(screen.getByRole("button", { name: /^save$/i })).toBeInTheDocument();
+  });
+});
+
+/* TrainWk1 step 6 (the Train grill's Q33): lifting taken off the plan.
+   One confirmation says what stays; the save sends a plan with no lift
+   days, and nothing logged. Refused, with the reason, when lifting is the
+   plan's one sport or a training block runs. */
+describe("ProgrammeSettings — Stop lifting", () => {
+  /** Someone who lifts three days and runs on a plan with no race date. */
+  function hybrid(): { profile: UserProfile; programState: ProgramState } {
+    const plan = buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "intermediate",
+      liftDays: 3,
+      preferredSplit: "full_body",
+      runMode: "freeform",
+      rollingGoal: "keep_fit",
+      weeklyRunDays: 3,
+      equipment: "full_gym",
+      injuries: [],
+      currentDate: localDateString(new Date()),
+      preserveHistory: false,
+    });
+    vi.mocked(buildPlan).mockClear();
+    return {
+      profile: makeProfile({
+        ...plan.profileUpdates,
+        runFrequency: "regular",
+      } as Partial<UserProfile>),
+      programState: plan.programState,
+    };
+  }
+
+  it("asks once, says what stays, and saves a plan with no lift days", async () => {
+    const { profile, programState: plan } = hybrid();
+    const { refreshProfile } = setup(profile, plan);
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopLifting })
+    );
+    const dialog = screen.getByRole("alertdialog", {
+      name: SPORT_CHANGE.stopLiftingAsked,
+    });
+    expect(
+      within(dialog).getByText(
+        "Your saved workouts and best lifts stay in Progress."
+      )
+    ).toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Stop lifting" })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+      programState: ProgramState;
+      weekSchedule: { type: string }[];
+    };
+    expect(payload.profileUpdates.weeklyWorkoutsTarget).toBe(0);
+    expect(payload.profileUpdates).not.toHaveProperty("athleteType");
+    expect(payload.programState.workouts).toEqual([]);
+    // The runs and their plan stay.
+    expect(payload.programState.runPlan).toMatchObject({ mode: "rolling" });
+    expect(
+      payload.weekSchedule.filter((d) => d.type === "lift" || d.type === "both")
+    ).toHaveLength(0);
+    await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalled());
+  });
+
+  it("Cancel sends nothing", async () => {
+    const { profile, programState: plan } = hybrid();
+    setup(profile, plan);
+    fireEvent.click(screen.getByRole("button", { name: "Stop lifting" }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Cancel",
+      })
+    );
+    // The dialog was open (Cancel was pressed inside it), so its going is
+    // the close, not the first poll.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    );
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("says why lifting stays when it is the plan's one sport, once Stop lifting is tried", () => {
+    const { profile, programState: plan } = hybrid();
+    setup(
+      {
+        ...profile,
+        runFrequency: "none",
+        runMode: "freeform",
+        weeklyRunDaysTarget: 0,
+        weekSchedule: profile.weekSchedule?.map((d) => ({
+          ...d,
+          type: d.type === "run" ? "rest" : d.type === "both" ? "lift" : d.type,
+        })),
+      },
+      { ...plan, runPlan: undefined, runDays: [] }
+    );
+    const sentence =
+      "Your plan is lifting only. To stop lifting, add running first.";
+    // Not said before it is asked: the foot shows Stop lifting as anyone's.
+    expect(screen.queryByText(sentence)).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopLifting })
+    );
+    // Tried: the sentence, said where the screen reader hears it, and no
+    // confirmation for a change that can't be made.
+    expect(screen.getByText(sentence).closest("[role=status]")).not.toBeNull();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("says why lifting stays while a training block runs", () => {
+    const { profile, programState: plan } = hybrid();
+    setup(profile, {
+      ...plan,
+      trainingBlock: { id: "b", owned: true, focus: "strength" },
+    } as ProgramState);
+    expect(
+      screen.getByText(
+        "Your training block is still on. To stop lifting, end it on Train first."
+      )
+    ).toBeInTheDocument();
   });
 });

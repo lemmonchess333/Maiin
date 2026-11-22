@@ -20,7 +20,7 @@ const meal: Meal = {
   id: "yesterday-oats", date: "2026-09-07", foodName: "Oats", meal: "breakfast",
   items: [{ name: "Oats", portionSize: "80 g", calories: 400, protein: 20, carbs: 60, fat: 10 }],
   totalCalories: 400, totalProtein: 20, totalCarbs: 60, totalFat: 10,
-  confidence: "manual", createdAt: new Date(), photoUrl: "legacy-photo",
+  confidence: "manual", createdAt: new Date(),
 };
 
 describe("copy meals through the durable queue", () => {
@@ -40,7 +40,6 @@ describe("copy meals through the durable queue", () => {
       items: [{ name: "Oats", portionSize: "0.5 × 80 g", calories: 200, protein: 10, carbs: 30, fat: 5 }],
     });
     expect(readDoc("users/a/meals/today-oats")?.deletedAt).toBeTruthy();
-    expect(readDoc("users/a/meals/today-oats")).not.toHaveProperty("photoUrl");
     expect(readDoc("users/a/meals/yesterday-oats")).toBeUndefined();
   });
 

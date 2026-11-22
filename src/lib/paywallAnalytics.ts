@@ -37,6 +37,9 @@ export type PaywallEvent =
   | "checkout_success_returned"
   | "checkout_cancelled_returned"
   | "restore_purchases_clicked"
+  /** The iPhone paywall could not get the App Store's prices, so it showed
+   *  none and offered to try again (`useProPlanPrices`). */
+  | "paywall_prices_failed"
   | "manage_subscription_clicked";
 
 export type PaywallSource =

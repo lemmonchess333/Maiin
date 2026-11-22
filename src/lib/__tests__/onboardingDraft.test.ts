@@ -20,11 +20,14 @@ import {
   DRAFT_SESSION_MINUTES,
   DRAFT_VERSION,
   DRAFT_TTL_MS,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
+  ONBOARDING_STEP_IDS,
   type OnboardingDraft,
 } from "../onboardingDraft";
 import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
 
-const MAX_STEP = 7; // TOTAL_STEPS - 1 in Onboarding.tsx
+const MAX_STEP = ONBOARDING_MAX_STEP; // what Onboarding.tsx loads with
 
 const UID_A = "user-aaa";
 const UID_B = "user-bbb";
@@ -168,6 +171,8 @@ describe("strict validation — any bad field rejects the whole draft", () => {
     rejects({ gender: 42 });
     rejects({ ageRange: "9000+" });
     rejects({ runMode: "structured-race" });
+    // The retired structured mode (App1 Q25): no setup offers it.
+    rejects({ runMode: "structured" });
     rejects({ raceDistance: "ultra" });
   });
 
@@ -404,5 +409,47 @@ describe("optional nutrition answers", () => {
     { paceKgPerWeek: NaN },
   ])("rejects malformed optional nutrition metadata: %j", (updates) => {
     expect(isValidDraft({ ...makeDraft(), ...updates }, MAX_STEP)).toBe(false);
+  });
+});
+
+/* Priv1 call 1: the agreement to store health details is its own step,
+   numbered after every older one so their stored numbers and analytics ids
+   hold, and the draft keeps the version agreed to until the plan is saved. */
+describe("the health-details agreement", () => {
+  it("adds its step without renumbering the others", () => {
+    expect(ONBOARDING_STEP_IDS.slice(0, 8)).toEqual([
+      "goal",
+      "days",
+      "equipment",
+      "run",
+      "injuries",
+      "about",
+      "preview",
+      "confirm",
+    ]);
+    expect(ONBOARDING_STEP_IDS[HEALTH_CONSENT_STEP]).toBe("health");
+    expect(MAX_STEP).toBe(HEALTH_CONSENT_STEP);
+  });
+
+  it("resumes on the agreement's own step", () => {
+    const draft = makeDraft({ step: HEALTH_CONSENT_STEP });
+    saveOnboardingDraft(UID_A, draft);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+  });
+
+  it("round-trips the version agreed to, and rejects anything but a whole version", () => {
+    const agreed = makeDraft({ healthConsentVersion: 1 });
+    saveOnboardingDraft(UID_A, agreed);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(agreed);
+    for (const bad of [true, "1", 0, 1.5, null])
+      expect(
+        isValidDraft(
+          {
+            ...makeDraft(),
+            healthConsentVersion: bad,
+          } as unknown as OnboardingDraft,
+          MAX_STEP
+        )
+      ).toBe(false);
   });
 });

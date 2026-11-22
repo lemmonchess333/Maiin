@@ -29,6 +29,7 @@ import { openSignUpForm } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleImages } from "../helpers/settleImages";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -175,9 +176,14 @@ function ymd(d: Date): string {
  *  history behind it and renders its stats rather than a cold start. */
 async function seedWorkout(uid: string): Promise<void> {
   const when = new Date(Date.now() - 2 * 86_400_000);
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
   await patch(`users/${uid}/workouts/form-demo-capture-w1`, {
     date: { stringValue: ymd(when) },
     createdAt: { timestampValue: when.toISOString() },

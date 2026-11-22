@@ -9,7 +9,7 @@ export default function PerformanceReadError({
   return (
     <ErrorState
       title="Performance could not load"
-      description="Your scores are unavailable right now."
+      description="Your last 7 days can’t be shown right now."
       retry={onRetry ? { onClick: onRetry } : undefined}
     />
   );

@@ -304,6 +304,9 @@ export interface SetupAnswers {
     running?: { weekMinutes: number; longestRun: number };
   };
   equipment?: SetupOption<"equipment">;
+  /** "A pull-up bar", where the setup asks; left as the setup starts it
+   *  when absent. */
+  pullUpBar?: boolean;
   experience?: SetupOption<"experience">;
   weightKg: number;
   /** Required by Lose fat, more than 1 kg under `weightKg` (A5 STATUS
@@ -417,11 +420,28 @@ export async function setUpPlan(
       page,
       new RegExp(`^${answers.equipment ?? "Full gym"}`)
     ).click();
+    if (answers.pullUpBar !== undefined) {
+      const bar = page.getByRole("switch", { name: SETUP.pullUpBar });
+      if (
+        (await bar.getAttribute("aria-checked")) !== String(answers.pullUpBar)
+      )
+        await bar.click();
+    }
     await button(
       page,
       new RegExp(`^${answers.experience ?? "Some experience"}`)
     ).click();
     await next(page);
+  }
+
+  // Priv1 call 1: the agreement to store health details, on its own
+  // screen before the first body question.
+  await expect(
+    page.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+  ).toBeVisible();
+  await button(page, SETUP.agreeHealth).click();
+
+  if (answers.activity !== "Running") {
     await button(page, SETUP.noInjuries).click();
     await next(page);
   }

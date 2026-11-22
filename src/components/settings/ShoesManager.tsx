@@ -218,7 +218,7 @@ export default function ShoesManager() {
       </div>
 
       {showAdd && (
-        <div className="p-3 rounded-xl bg-card border border-border space-y-3">
+        <div className="p-3 rounded-xl bg-card border border-border space-y-3 dark:card-shadow dark:border-transparent">
           {/* Name with typeahead — the panel sits above the brand field
               via absolute positioning so it never pushes layout. Brand
               and max-km auto-fill when the user picks a known model. */}
@@ -332,7 +332,7 @@ export default function ShoesManager() {
       {activeShoes.map((shoe) => (
         <div
           key={shoe.id}
-          className="p-3 rounded-xl bg-card border border-border space-y-2"
+          className="p-3 rounded-xl bg-card border border-border space-y-2 dark:card-shadow dark:border-transparent"
         >
           <div className="flex items-center justify-between">
             <div>

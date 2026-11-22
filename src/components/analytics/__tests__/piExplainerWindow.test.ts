@@ -19,9 +19,15 @@ import { readFileSync } from "node:fs";
  */
 
 const ENGINE = readFileSync("functions/performanceEngine.js", "utf8");
-// The sentence sits beside the Performance heading on the Analytics
-// overview: the one place the score is shown (Trim1 call 5).
+// The sentence sits beside the score's ring, the first of Progress's
+// Score details (Trim1 call 5, App1 Q10), which are Pro; the number itself
+// is free, small on the lead above (the owner, 18 November 2026).
 const TAB = readFileSync(
+  "src/components/analytics/PerformanceDetails.tsx",
+  "utf8"
+);
+// The lead above it explains its usual week from the same two windows.
+const LEAD = readFileSync(
   "src/components/analytics/PerformanceSection.tsx",
   "utf8"
 );
@@ -36,6 +42,12 @@ function constant(name: string): number {
 function explainer(): string {
   const m = TAB.match(/const PI_EXPLAINER =\s*\n?\s*"([^"]+)";/);
   if (!m) throw new Error("PI_EXPLAINER not found");
+  return m[1];
+}
+
+function leadExplainer(): string {
+  const m = LEAD.match(/const LEAD_EXPLAINER =\s*\n?\s*"([^"]+)";/);
+  if (!m) throw new Error("LEAD_EXPLAINER not found");
   return m[1];
 }
 
@@ -68,9 +80,32 @@ describe("the Performance Index explainer names the engine's windows", () => {
     );
   });
 
+  it("says what the score is made of in your training, never as load", () => {
+    /* "training load, recovery and consistency" named a metric where the
+       person's lifting and running are (house voice: say sessions, kilos
+       and kilometres; no load unless the screen explains it). */
+    expect(explainer()).not.toMatch(/\bload\b/i);
+    expect(explainer()).toContain("how much you lifted and ran");
+  });
+
   it("keeps the sentence that stops the score reading as a target", () => {
     // The half that was already right — a higher PI is not advice to
     // train harder, and removing that is how this becomes a leaderboard.
     expect(explainer()).toContain("not a recommendation to train harder");
+  });
+});
+
+describe("the lead's explainer names the same windows", () => {
+  it("states the 7 days against the usual week of the 4 before", () => {
+    // "These", not "your last": a score kept from before a break names an
+    // older window ("7 days to 2 Aug").
+    expect(leadExplainer()).toContain(`These ${constant("WINDOW_DAYS")} days`);
+    expect(leadExplainer()).toContain(
+      `the weeks you trained in the ${constant("BASELINE_DAYS") / 7} before them`
+    );
+  });
+
+  it("says which word means ease off, so no other reads as a target", () => {
+    expect(leadExplainer()).toContain("Backing off means ease off.");
   });
 });

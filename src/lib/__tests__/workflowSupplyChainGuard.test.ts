@@ -305,6 +305,7 @@ describe("jobs that read release credentials name the production environment", (
       "deploy-hosting.yml build-and-deploy",
       "deploy-ios.yml testflight",
       "deploy-storage.yml deploy",
+      "purge-legacy-food-photos.yml purge",
       "race-date-check.yml refresh",
       "sync-race-events.yml sync",
       "verify-production-rules.yml verify",

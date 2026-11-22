@@ -27,7 +27,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     email: "t@example.com",
     weeklyWorkoutsTarget: 4,
     weeklyRunDaysTarget: 2,
-    runMode: "structured",
+    runMode: "starter",
     ...overrides,
   } as UserProfile;
 }
@@ -413,7 +413,7 @@ describe("PR-0b-ii — apply uses the confirmed schedule, not stale profile.week
       weekSchedule: oldSchedule,
       weeklyWorkoutsTarget: 3,
       weeklyRunDaysTarget: 0,
-      runMode: "structured",
+      runMode: "starter",
     });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
 

@@ -21,6 +21,7 @@ import { openSignUpForm } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -76,9 +77,14 @@ function ymd(d: Date): string {
 /** Protein + fat over target, carbs far under — the reported screen. */
 async function seedLopsidedDay(uid: string): Promise<void> {
   const now = new Date();
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
   await patch(`users/${uid}/meals/macro-capture-m1`, {
     foodName: { stringValue: "Steak and avocado" },
     date: { stringValue: ymd(now) },
@@ -227,9 +233,13 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
       .getByRole("button", { name: /^(?!.*\(today\))\w+day \d+ \w+,/ })
       .first();
     await otherDay.click({ timeout: 10_000 });
-    await expect(page.getByText(/manage day|no sessions/i).first()).toBeVisible(
-      { timeout: 10_000 }
-    );
+    /* The peek is open once its close button is: every day's peek has
+       one. Its body differs by day (TrainWk1 step 2): a passed lift day
+       whose lift moved on says where it went and has no Manage day, so
+       "Manage day" is no anchor for an open peek. */
+    await expect(
+      page.getByRole("button", { name: "Close day details" })
+    ).toBeVisible({ timeout: 10_000 });
     await shoot(page, "home-day-peek");
     /* There is no `home-energy-expanded` frame any more, and its
        absence is the point rather than an omission: the nutrition card

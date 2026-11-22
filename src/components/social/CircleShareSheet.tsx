@@ -132,7 +132,7 @@ export default function CircleShareSheet({
         {!loading && loadFailed && circles.length === 0 && (
           <div
             role="alert"
-            className="flex items-center justify-between gap-3 rounded-xl bg-card p-3"
+            className="flex items-center justify-between gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <p className="text-small text-muted-foreground">
               Couldn&rsquo;t load your circles.
@@ -186,7 +186,7 @@ export default function CircleShareSheet({
                     "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     selectedId === c.space.id
                       ? "bg-primary/10 border border-primary/40"
-                      : "bg-muted border border-transparent"
+                      : "bg-muted chip-edge border border-transparent"
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground truncate">

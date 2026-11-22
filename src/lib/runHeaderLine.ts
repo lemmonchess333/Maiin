@@ -40,17 +40,8 @@ import {
 export interface RunHeaderLineArgs {
   /**
    * The PROFILE's runMode, which is already canonical (it is the
-   * materialized field) — this half was never the bug.
-   *
-   * Deliberately NOT `resolveRunPlan`'s `runMode`, and not the `RunMode`
-   * type. That type is Run9a's locked two-state model
-   * (`freeform | race_prep`), but `UserProfile.runMode` still admits the
-   * legacy `"structured"`, and `run9Migration.migrateRunStateToRun9` is
-   * pinned in KNOWN_ORPHAN_EXPORTS — never wired — so unmigrated structured
-   * profiles are still out there. Narrowing to `RunMode` here would relabel
-   * every one of them "Free running · Start whenever", since
-   * `deriveRunMode(null)` is `freeform`. `tsc -b` caught exactly that in a
-   * first pass of this change.
+   * materialized field) — this half was never the bug. A stored
+   * "structured" (retired, App1 Q25) reaches here as free running.
    */
   runMode: NonNullable<UserProfile["runMode"]>;
   /** RECONCILED — from `resolveRunPlan`, never the runPlan mirror directly. */
@@ -66,8 +57,6 @@ export interface RunHeaderLineArgs {
   todayKey: string;
   /** Plan-scoped: the plan's lead-in week (`RunPlan.leadInWeek`). */
   leadInWeek?: string | null;
-  /** Weekly run target, for the structured line. */
-  runsTarget: number;
   /** Plan-scoped: a starter plan's stage (Run9's starter goal). */
   starterStage?: number | null;
   /** Plan-scoped: the goal of a plan with no race date (Run24 (3),
@@ -84,13 +73,12 @@ export function runHeaderLine({
   recoveryEndDate,
   todayKey,
   leadInWeek,
-  runsTarget,
   starterStage,
   rollingGoal,
 }: RunHeaderLineArgs): string {
   // Run24 (3): a plan with no race date, on free running, by its goal and
   // its week. It has no last week, so no "of N".
-  if (rollingGoal && (runMode === "freeform" || runMode === "structured")) {
+  if (rollingGoal && runMode === "freeform") {
     return `${ROLLING_GOAL_NAMES[rollingGoal]} · Week ${(currentWeek ?? 0) + 1}`;
   }
   if (runMode === "starter") {
@@ -124,9 +112,6 @@ export function runHeaderLine({
     return week
       ? `Race prep · ${dist} · ${racePlanWeekLabel(week, "short")}`
       : `Race prep · ${dist}`;
-  }
-  if (runMode === "structured") {
-    return `Structured · ${runsTarget} ${runsTarget === 1 ? "run" : "runs"}/week`;
   }
   return "Free running · Start whenever";
 }

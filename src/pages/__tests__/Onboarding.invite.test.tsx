@@ -73,6 +73,8 @@ const draft: OnboardingDraft = {
   runConfirmed: true,
   trainingActivity: "lifting",
   displayName: "Test athlete",
+  // Agreed on its step (Priv1 call 1).
+  healthConsentVersion: 1,
 };
 
 const open = () =>

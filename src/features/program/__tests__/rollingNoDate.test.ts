@@ -421,7 +421,6 @@ describe("a plan with no race date in the programme", () => {
         raceGoal: null,
         currentWeek: 2,
         todayKey: START,
-        runsTarget: 4,
         rollingGoal: "build_10k",
       })
     ).toBe("Build to 10K · Week 3");

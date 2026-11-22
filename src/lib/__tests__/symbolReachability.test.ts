@@ -203,14 +203,8 @@ const KNOWN_ORPHAN_EXPORTS = [
   // that used to say so.
   "src/lib/backDismiss.ts:useBackDismissController",
 
-  // Staged seam: TrainWk1 builds the week's layout first, alone, and its
-  // step 2 has Home read it (the Train grill's Q52). The staleness guard
-  // evicts this entry when Home does.
-  "src/lib/layOutWeek.ts:layOutWeek",
-
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
-  "src/features/program/run9Migration.ts:migrateRunStateToRun9",
   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
   "src/lib/aiFoodIdentification.ts:isEmptyAiFoodResult",
   "src/lib/analyticsProvider.ts:isAnalyticsActive",

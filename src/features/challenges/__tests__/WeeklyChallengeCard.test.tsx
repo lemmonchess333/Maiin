@@ -120,7 +120,7 @@ describe("WeeklyChallengeCard — the challenge's own leaders", () => {
   it("someone who has not joined is shown no leaders", () => {
     card({ joined: false, progress: undefined });
     expect(
-      screen.getByRole("button", { name: "Join weekly challenge" })
+      screen.getByRole("button", { name: "Join challenge" })
     ).toBeInTheDocument();
     expect(leaders()).toBeNull();
     expect(screen.queryByText("Ana")).toBeNull();
@@ -159,5 +159,54 @@ describe("WeeklyChallengeCard — the challenge's own leaders", () => {
     expect(screen.getByText("No active challenges")).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/Follow people/)).toBeNull();
+  });
+});
+
+/* App1 Q6: the card is offered from a person's first day, however few
+   have joined, and says who is in it under its name. */
+describe("WeeklyChallengeCard — who has joined", () => {
+  const band = () =>
+    document.querySelector("[data-challenge-medal-band]") as HTMLElement;
+
+  it("says it is filling up under 3, with Join still offered", () => {
+    card({
+      weekly: { ...weekly, participantCount: 0 } as Challenge,
+      joined: false,
+      progress: undefined,
+      leaderboard: [],
+    });
+    expect(within(band()).getByText("Filling up")).toBeInTheDocument();
+    expect(band().textContent).not.toMatch(/joined/);
+    expect(
+      screen.getByRole("button", { name: /^Join (weekly )?challenge$/ })
+    ).toBeInTheDocument();
+  });
+
+  it("says so to someone in it too, with no count of two", () => {
+    card({ weekly: { ...weekly, participantCount: 2 } as Challenge });
+    expect(within(band()).getByText("Filling up")).toBeInTheDocument();
+    expect(band().textContent).not.toMatch(/2 joined/);
+  });
+
+  it("counts them from 3", () => {
+    card({ weekly: { ...weekly, participantCount: 3 } as Challenge });
+    expect(band().textContent).toContain("3 joined");
+    expect(within(band()).queryByText("Filling up")).toBeNull();
+  });
+
+  /* A count still being read, or one that is not a number, says nothing,
+     and the band draws no line for it: its name is the last thing in it,
+     with no empty spaced line under it. */
+  it.each([
+    ["not yet read", undefined],
+    ["not a number", "12"],
+  ])("draws no line under the name while the count is %s", (_, count) => {
+    card({
+      weekly: { ...weekly, participantCount: count } as unknown as Challenge,
+    });
+    const name = within(band()).getByText(weekly.name);
+    expect(name.nextElementSibling).toBeNull();
+    expect(within(band()).queryByText("Filling up")).toBeNull();
+    expect(band().textContent).not.toMatch(/joined/);
   });
 });
