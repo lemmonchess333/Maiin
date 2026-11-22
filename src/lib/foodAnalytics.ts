@@ -65,21 +65,24 @@ export interface FoodEventMetadata {
    *  at render-start vs next useEffect cycle. Drives the Food6e
    *  re-evaluation trigger T1 (P95 renderDurationMs > 100). */
   renderDurationMs?: number;
-  /** food_pantry_*: the doc id of the favourite involved. */
-  favouriteId?: string;
-  /** food_pantry_eviction / _graduated / _chip_tapped: useCount of
-   *  the favourite. On eviction this distinguishes fossil-prunes
-   *  (useCount=1) from heavier evictions. On graduation this is
-   *  always >= 2. On chip-tap this is the pre-increment count. */
+  /** food_pantry_chip_tapped: the row tapped was a saved food rather
+   *  than a recent one. Which food is never sent: a favourite's id is its
+   *  name, lower-cased (`chicken_and_rice`), and a hash of a guessable
+   *  name is the name. */
+  fromPantry?: boolean;
+  /** food_pantry_eviction / _graduated / _chip_removed /
+   *  _typeahead_selected: useCount of the favourite. On eviction this
+   *  distinguishes fossil-prunes (useCount=1) from heavier evictions. On
+   *  graduation this is always >= 2. */
   useCount?: number;
   /** food_pantry_eviction: total favourites before the eviction
    *  fired — useful for confirming the SOFT_CAP threshold lines
    *  up with observed prune patterns. */
   totalBefore?: number;
-  /** food_pantry_graduated / _chip_tapped: originating source
-   *  ("manual" | "photo" | "barcode" | "search" | "nl") so the
-   *  graduation funnel can be split by entry path. */
-  source?: string;
+  /** food_pantry_graduated: originating source, so the graduation
+   *  funnel can be split by entry path. `FoodFavourite["source"]`'s
+   *  values, spelled here so lib does not import a hook. */
+  source?: "manual" | "photo" | "barcode" | "search" | "nl";
   /** food_log_saved / _undo: which entry path produced the meal. */
   path?: FoodLogPath;
   /** food_log_saved: taps between `food_log_start` and the write. The

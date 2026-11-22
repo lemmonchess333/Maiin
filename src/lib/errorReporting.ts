@@ -5,6 +5,7 @@
  */
 
 import { recordNonFatal, setCrashReportingUser } from "./crashReporting";
+import { redactPageUrl } from "./analyticsRedaction";
 
 /* Firestore is loaded on first WRITE, not at import.
    This module is reached from App.tsx and RouteErrorBoundary, so a static
@@ -25,6 +26,10 @@ export interface ErrorReport {
   message: string;
   stack?: string;
   timestamp: number;
+  /** The page's address with every name and id in it replaced by `:id`,
+   *  and no query or fragment (`redactPageUrl`, as analytics sends it): a
+   *  custom exercise's name on /history/exercise/:name, another person's
+   *  uid on /user/:uid and a typed search in `?q=` stay out of the report. */
   url: string;
   userAgent: string;
   context?: Record<string, unknown>;
@@ -139,7 +144,10 @@ function createReport(
     message,
     stack,
     timestamp: Date.now(),
-    url: typeof window !== "undefined" ? window.location.href : "",
+    url:
+      typeof window !== "undefined"
+        ? redactPageUrl(window.location.href, import.meta.env.BASE_URL)
+        : "",
     userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
     context,
     type,

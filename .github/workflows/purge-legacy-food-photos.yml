@@ -1,0 +1,97 @@
+name: Purge legacy meal photos
+
+# Food9 (owner, 21 Nov 2026: "Delete them all"), operator-run, against
+# production: every meal photo older builds uploaded to Storage
+# (food-photos/ in the app's bucket, 4 July to 18 August 2026) and the
+# photoUrl and photoPath those builds left on meals
+# (functions/scripts/purgeLegacyFoodPhotos.js). Run it only once Deploy
+# production has shipped the release that stopped the app reading the
+# field, as the script's header says.
+#
+# Run it from the Actions tab. "dry-run", the default, only counts: how many
+# objects (and bytes) are under food-photos/ and how many meals hold each
+# field. "apply" deletes them, which cannot be undone, then counts again and
+# fails unless both counts are 0. The output is counts and checkpoint paths,
+# never a name or a photo.
+#
+# The bucket is the one the app uploads to (VITE_FIREBASE_STORAGE_BUCKET, the
+# secret the web builds already read here), unless the run names another.
+# Nothing else starts this workflow, unlike App1 data cleanup's request
+# file: a deletion takes the owner's own choice in the Actions tab.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run only counts. apply deletes every legacy meal photo and its meal fields, and cannot be undone."
+        type: choice
+        options:
+          - dry-run
+          - apply
+        default: dry-run
+      bucket:
+        description: "The bucket (empty: the app's own, VITE_FIREBASE_STORAGE_BUCKET)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: purge-legacy-food-photos
+  cancel-in-progress: false
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a job
+    # that names it can read its secrets, and its branch rule decides where
+    # such a job may run.
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Choose the bucket
+        env:
+          INPUT_BUCKET: ${{ inputs.bucket }}
+          APP_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+        run: |
+          set -euo pipefail
+          bucket="${INPUT_BUCKET:-$APP_BUCKET}"
+          bucket="${bucket#gs://}"
+          if [ -z "$bucket" ]; then
+            echo "::error::No bucket: name one in the run, or set VITE_FIREBASE_STORAGE_BUCKET."
+            exit 1
+          fi
+          echo "BUCKET=$bucket" >> "$GITHUB_ENV"
+
+      - name: Count, or delete
+        env:
+          MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          if [ "$MODE" = "apply" ]; then flag=--apply; else flag=; fi
+          node functions/scripts/purgeLegacyFoodPhotos.js --project adaptive-fitness-af8bb --bucket "$BUCKET" $flag
+
+      # The pattern below is held to the script's last line (summaryLine) by
+      # functions/__tests__/purgeLegacyFoodPhotos.test.js: change both or
+      # neither.
+      - name: Count again and expect nothing left
+        if: inputs.mode == 'apply'
+        run: |
+          set -euo pipefail
+          node functions/scripts/purgeLegacyFoodPhotos.js --project adaptive-fitness-af8bb --bucket "$BUCKET" | tee recount.txt
+          grep -q '^DRY RUN: 0 object(s) under food-photos/ and 0 of ' recount.txt || { echo "::error::A meal photo or a meal's photo field is still there."; exit 1; }

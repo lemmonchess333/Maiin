@@ -948,12 +948,13 @@ describe("what the policy says about the build, food searches, alerts and errors
   });
 
   it("says error reports keep the screen's address, names and ids taken out, and the user agent", () => {
-    // The address goes through redactPageUrl once claude/analytics-no-food-
-    // names is on main (the fact-check found the full href stored); this
-    // page merges after it. The example the policy gives is the function's
-    // own answer.
+    // The address goes through redactPageUrl (#3462): the report stores the
+    // page as analytics sends it. The example the policy gives is the
+    // function's own answer.
     const REPORTING = read("../errorReporting.ts");
-    expect(REPORTING).toMatch(/url: [^\n]*window\.location\.href/);
+    expect(REPORTING).toMatch(
+      /url:\s*[^;]*redactPageUrl\(window\.location\.href/
+    );
     expect(
       redactPageUrl("https://troposfit.com/history/exercise/My%20Secret%20Lift")
     ).toBe("https://troposfit.com/history/exercise/:id");

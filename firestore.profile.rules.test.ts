@@ -211,6 +211,176 @@ suite("users/{uid} update — the year of birth", () => {
   });
 });
 
+/* Priv1 call 1: the agreement to store health details. An account set up
+   before setup asked agrees on its next open, and that write is the one
+   shape a client may store: { at: the server's time, version: 1 }. Setup's
+   agreement is written by completeOnboarding with the Admin SDK, so no
+   sign-up carries one, and no update may backdate, re-word, widen or
+   remove it. */
+suite("users/{uid}, the health-details agreement", () => {
+  async function agree(uid: string, consent: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return updateDoc(doc(db, `users/${uid}`), { healthDataConsent: consent });
+  }
+
+  it("accepts the gate's agreement, dated by the server", async () => {
+    await assertSucceeds(agree("hc-ok", { at: serverTimestamp(), version: 1 }));
+  });
+
+  it("accepts agreeing again over an earlier agreement", async () => {
+    await seedProfile("hc-again");
+    const db = env.authenticatedContext("hc-again").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-again"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-again"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+
+  it("lets another field change beside a stored agreement", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/hc-beside"), {
+        ...signupProfile("hc-beside"),
+        healthDataConsent: { at: Timestamp.now(), version: 1 },
+      });
+    });
+    const db = env.authenticatedContext("hc-beside").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "users/hc-beside"), { timezone: "Europe/London" })
+    );
+  });
+
+  it.each([
+    [
+      "a date of the device's choosing",
+      { at: new Date(2020, 0, 1), version: 1 },
+    ],
+    ["a stored timestamp", { at: Timestamp.fromMillis(0), version: 1 }],
+    ["a later wording", { at: "SERVER", version: 2 }],
+    ["an earlier wording", { at: "SERVER", version: 0 }],
+    ["a version as text", { at: "SERVER", version: "1" }],
+    ["a fractional version", { at: "SERVER", version: 1.5 }],
+    ["no time", { version: 1 }],
+    ["no version", { at: "SERVER" }],
+    ["anything beside it", { at: "SERVER", version: 1, scope: "all" }],
+    ["a bare yes", true],
+    ["null", null],
+  ])("refuses %s", async (_case, consent) => {
+    const written =
+      consent &&
+      typeof consent === "object" &&
+      "at" in consent &&
+      consent.at === "SERVER"
+        ? { ...consent, at: serverTimestamp() }
+        : consent;
+    await assertFails(
+      agree(`hc-no-${String(_case).replace(/\W+/g, "-")}`, written)
+    );
+  });
+
+  it("refuses taking an agreement away", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/hc-remove"), {
+        ...signupProfile("hc-remove"),
+        healthDataConsent: { at: Timestamp.now(), version: 1 },
+      });
+    });
+    const db = env.authenticatedContext("hc-remove").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/hc-remove"), {
+        healthDataConsent: deleteField(),
+      })
+    );
+  });
+
+  it("refuses a sign-up that carries one", async () => {
+    const db = env.authenticatedContext("hc-create").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/hc-create"), {
+        ...signupProfile("hc-create"),
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+
+  it("refuses anyone but the account's owner", async () => {
+    await seedProfile("hc-owner");
+    const db = env.authenticatedContext("someone-else").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/hc-owner"), {
+        healthDataConsent: { at: serverTimestamp(), version: 1 },
+      })
+    );
+  });
+});
+
+/* Priv1 call 2: Settings → Social & privacy → Share usage analytics. The
+   account keeps false when Google Analytics is off, and takes only a
+   boolean, from its own account. */
+suite("users/{uid} update: Share usage analytics", () => {
+  async function write(uid: string, usageAnalytics: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return setDoc(doc(db, `users/${uid}`), { usageAnalytics }, { merge: true });
+  }
+
+  it.each([
+    ["off", false],
+    ["on", true],
+    ["cleared (null, read as on)", null],
+  ])("accepts %s", async (_case, usageAnalytics) => {
+    await assertSucceeds(
+      write(`ua-ok-${String(usageAnalytics)}`, usageAnalytics)
+    );
+  });
+
+  it.each([
+    ["a word", "off"],
+    ["a number", 0],
+    ["a map", { enabled: false }],
+  ])("refuses %s", async (_case, usageAnalytics) => {
+    await assertFails(write(`ua-no-${typeof usageAnalytics}`, usageAnalytics));
+  });
+
+  it("refuses another account's answer", async () => {
+    await seedProfile("ua-owner");
+    const db = env.authenticatedContext("ua-other").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "users/ua-owner"),
+        { usageAnalytics: false },
+        { merge: true }
+      )
+    );
+  });
+
+  it("accepts a sign-up that carries off", async () => {
+    const db = env.authenticatedContext("ua-signup-off").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users/ua-signup-off"), {
+        ...signupProfile("ua-signup-off"),
+        usageAnalytics: false,
+      })
+    );
+  });
+
+  it("refuses a sign-up that carries anything but a boolean", async () => {
+    const db = env.authenticatedContext("ua-signup").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ua-signup"), {
+        ...signupProfile("ua-signup"),
+        usageAnalytics: "off",
+      })
+    );
+  });
+});
+
 suite("users/{uid} update — fields a client must never write", () => {
   const serverOnly = PROFILE_FIELD_REGISTRY.filter((e) => e.serverOnly);
 
@@ -309,6 +479,11 @@ suite("registry ↔ engine", () => {
     await seedProfile("sweep");
     const db = env.authenticatedContext("sweep").firestore();
     const rejected: string[] = [];
+    // A field whose rule takes one exact shape and refuses null is admitted
+    // with that shape; the question stays admission.
+    const admittedAs: Record<string, unknown> = {
+      healthDataConsent: { at: serverTimestamp(), version: 1 },
+    };
     for (const field of CLIENT_WRITABLE_PROFILE_FIELDS) {
       if (skip.has(field)) continue;
       try {
@@ -316,7 +491,7 @@ suite("registry ↔ engine", () => {
         // here is admission, not value validation.
         await setDoc(
           doc(db, "users/sweep"),
-          { [field]: null },
+          { [field]: field in admittedAs ? admittedAs[field] : null },
           { merge: true }
         );
       } catch {
@@ -1470,5 +1645,66 @@ suite("users/{uid} — racePlanFreeWeekUsed value gate", () => {
         racePlanFreeWeekUsed: true,
       })
     );
+  });
+});
+
+suite("users/{uid}.emailConsent — the server's record (App1 Q55)", () => {
+  /**
+   * Consent to the two emails is recorded only by the server, with its own
+   * time (functions/lib/emailConsent.js): setup through completeOnboarding,
+   * the Settings switches through setEmailConsent, and the unsubscribe
+   * link. A client that could write it could record a yes nobody gave, or
+   * backdate one, or quietly undo an unsubscribe. The registry loop above
+   * refuses `false`; these refuse the record's real shape, both ways in.
+   */
+  const yes = {
+    weeklyReview: {
+      on: true,
+      givenAt: serverTimestamp(),
+      givenVia: "settings",
+      wording: 1,
+    },
+  };
+
+  it("is refused on sign-up", async () => {
+    const db = env.authenticatedContext("ec1").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec1"), {
+        ...signupProfile("ec1"),
+        emailConsent: yes,
+      })
+    );
+  });
+
+  it("is refused on an update, even with the server's time", async () => {
+    await seedProfile("ec2");
+    const db = env.authenticatedContext("ec2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/ec2"), { emailConsent: yes }, { merge: true })
+    );
+    await assertFails(
+      updateDoc(doc(db, "users/ec2"), { "emailConsent.winBack.on": true })
+    );
+  });
+
+  it("cannot be taken off a profile the server wrote it to", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/ec3"), {
+        ...signupProfile("ec3"),
+        emailConsent: {
+          weeklyReview: {
+            on: false,
+            withdrawnAt: Timestamp.now(),
+            withdrawnVia: "unsubscribe",
+          },
+        },
+      });
+    });
+    const db = env.authenticatedContext("ec3").firestore();
+    await assertFails(
+      updateDoc(doc(db, "users/ec3"), { emailConsent: deleteField() })
+    );
+    // The rest of the profile stays the owner's to change.
+    await assertSucceeds(updateDoc(doc(db, "users/ec3"), { darkMode: false }));
   });
 });

@@ -51,6 +51,7 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 // Single source of truth for "is this an emulator session?". The
 // helper reads firebase.json so the expected hosts stay in lockstep
@@ -133,6 +134,9 @@ async function ensureProfile(uid: string): Promise<void> {
     preferredHeightUnit: "cm",
     darkMode: false,
     onboardingComplete: true,
+    // Agreed to the storing of health details (Priv1 call 1), so the
+    // account opens on the app rather than on the agreement.
+    healthDataConsent: seededHealthConsent(),
     subscriptionTier: "free",
     program: { goal: "recomp", currentPhase: "base" },
     targetCalories: 2200,

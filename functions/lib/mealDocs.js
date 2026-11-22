@@ -2,8 +2,9 @@
  * Shared active-meal predicate for meal documents.
  *
  * Mirror of `src/lib/mealTotals.ts:isActiveMealDoc`. Deletion in Tropos
- * is SOFT (`deletedAt` + a 24h restore window), so a "deleted" meal is
- * still a document that any raw read hands back. Truthy `deletedAt` =
+ * is SOFT (`deletedAt`, kept 30 days for restore and then purged by
+ * lib/mealPurge.js, F5c), so a "deleted" meal is still a document that any
+ * raw read hands back. Truthy `deletedAt` =
  * deleted; `null` (the post-restore value) and absent = active.
  *
  * Same consolidation, and the same reason, as
