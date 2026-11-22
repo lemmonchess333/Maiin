@@ -56,6 +56,27 @@ real kill, and a sandbox purchase from the offer.
       (with its method), `onboarding_completed` and `trial_offer_viewed`,
       each once, and none of them with Share usage analytics off.
 
+## Your top three on a run (Run29, 2026-11-22)
+
+A run's 1K, 5K and 10K placed 1st to 3rd among your own times show on the
+run finish ("Your top three"), on the run's page and under Bests' Fastest
+rows (`runPlacings.ts`). The run's page shows the place the run took on its
+day, among the runs before it, as its finish said; Bests shows today's top
+three. So the two can differ: a run its page calls "Your 2nd best" can sit
+4th on Bests once two faster runs follow it, by design. The unit tests
+and the capture rig drive the web build.
+
+- [ ] **The finish on a phone.** Finish an outdoor run that places 2nd or
+      3rd at 1K, 5K or 10K. Passing: under the hero, "Your top three" with
+      "Ran 5K in 25:41, your 2nd fastest." and a row per distance placed,
+      each disc's number readable in both themes at the phone's text size;
+      a treadmill run shows no card.
+- [ ] **The page and Bests agree on the day, and may part later.** Open
+      that run from History: its best efforts carry the same discs and
+      "Your 2nd best". Progress → Bests lists it under the Fastest row. After
+      two faster runs at that distance, the run's page still says "Your 2nd
+      best" and Bests no longer lists it.
+
 ## The health-details agreement, in setup and once before the app (Priv1 call 1, 2026-11-21)
 
 Setup asks for the agreement to store health details on its own screen

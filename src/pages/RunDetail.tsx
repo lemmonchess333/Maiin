@@ -45,6 +45,8 @@ import BestEffortsCard, {
   type BestEffort,
 } from "../components/run/BestEffortsCard";
 import { KEPT_ROUTE_POINTS } from "@/lib/routeSegments";
+import { useRunPlacings } from "@/hooks/useRunPlacings";
+import type { PlacedRun } from "@/lib/runPlacings";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -192,6 +194,29 @@ export default function RunDetail() {
       ? detectBestEfforts(keptTrack, keptDistance ?? 0)
       : [];
   }, [keptTrack, keptDistance, savedEfforts, savedInvalid]);
+
+  /* Your top three (Run29): where the efforts above placed among the runs
+     before this one, as its finish screen said. The times ranked are the
+     ones the card shows. */
+  const placingRun = useMemo<PlacedRun | null>(() => {
+    const completedAt = run?.completedAt?.toDate?.();
+    if (!run || !runId || !(completedAt instanceof Date)) return null;
+    const distance = Number(run.distance) || 0;
+    const duration = Number(run.duration) || 0;
+    return {
+      id: runId,
+      completedAt,
+      distance,
+      duration,
+      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
+      activityType: run.activityType,
+      place: run.place,
+      isInvalid: run.isInvalid === true,
+      savedAnyway: run.savedAnyway === true,
+      bestEfforts,
+    };
+  }, [run, runId, bestEfforts]);
+  const placings = useRunPlacings(user?.uid, placingRun);
 
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
@@ -671,7 +696,7 @@ export default function RunDetail() {
 
         {/* The finish screen's two cards, in its order: best efforts,
             then one splits table. */}
-        <BestEffortsCard efforts={bestEfforts} />
+        <BestEffortsCard efforts={bestEfforts} placings={placings} />
         {/* Run26 call 3: the segments this run was timed on. */}
         <Suspense fallback={null}>
           <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
