@@ -11,8 +11,10 @@
  * the key), so the key cannot describe a different set of colours from
  * the one on the route: a step added here appears in both.
  *
- * Three steps, green to amber to coral, so the colours read as one scale
- * from faster to slower. A brand-purple step around the average sat
+ * Three steps, light yellow to amber to blue (`THEME.pace`), so the colours
+ * read as one scale from faster to slower in any colour vision (DS10 call
+ * 2). Green to coral, which it was, made the slow step the running colour
+ * and measured 7 apart for deuteranopia between fast and slow. A brand-purple step around the average sat
  * between green and amber until 2026-10-04: purple is the lifting colour,
  * and in the middle of a fast-to-slow scale it read as a fourth thing
  * rather than a step between two others.
@@ -34,11 +36,11 @@ export interface RoutePaceStep {
 /** Fastest first: the order the key reads, "Faster" to "Slower". */
 export const ROUTE_PACE_STEPS: readonly RoutePaceStep[] = [
   // More than 8% quicker than the run's average.
-  { below: 0.92, color: THEME.paceFast },
+  { below: 0.92, color: THEME.pace.fast },
   // Around the average: from 8% quicker to 10% slower.
-  { below: 1.1, color: THEME.warning },
+  { below: 1.1, color: THEME.pace.average },
   // Slower than that.
-  { below: Infinity, color: THEME.paceSlow },
+  { below: Infinity, color: THEME.pace.slow },
 ];
 
 /** The colour of a stretch whose pace is `ratio` times the average. A

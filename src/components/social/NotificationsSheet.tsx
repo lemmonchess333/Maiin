@@ -48,7 +48,7 @@ const TYPE_ICON: Record<
   NotificationType,
   { Icon: typeof Heart; color: string }
 > = {
-  kudos: { Icon: Heart, color: THEME.semantic.vitals },
+  kudos: { Icon: Heart, color: THEME.chrome.text },
   comment: { Icon: MessageCircle, color: THEME.chrome.text },
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
   follow_request: { Icon: UserPlus, color: THEME.semantic.positive },

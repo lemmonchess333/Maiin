@@ -46,10 +46,10 @@ export const THEME = {
   semantic: {
     activity: "#7B72E9", // purple — lifting (weight is neutral since DS10)
     hydration: "#52A3BD", // teal — water
-    vitals: "#D4637A", // coral — health, heart rate, recovery
+    vitals: "#D4637A", // coral — running (heart rate has its own scale, `hrZones`)
     nutrition: "#D9884E", // warm orange — food, calories, macros
-    positive: "#4DB872", // green — positive states (streak, PR)
-    negative: "#D4637A", // shares coral — negative states, alerts
+    positive: "#4DB872", // green — a done state, beside its tick
+    negative: "#EF4444", // red — errors and destructive actions (DS10 call 2)
   },
 
   // Food-specific action colour — used by the Scan CTA on the Food page.
@@ -68,11 +68,16 @@ export const THEME = {
      IS the amber family now, same value as THEME.amber, matching the CSS
      ramp that was already amber (--warning light ≈ amber-700, dark =
      amber-500). Fill/icon use only; TEXT takes hsl(var(--warning-strong)).
-     `success`/`danger` remain value-aliases of semantic.positive/vitals —
-     pixel-correct, name-only debt, pinned in colorCanonical.test.ts. */
+     `success` is a value-alias of semantic.positive, pinned in
+     colorCanonical.test.ts. `danger` is the error red, the dark theme's
+     `--destructive` to a channel, and `semantic.negative` with it:
+     both were the running coral until DS10 call 2 (owner, 22 November
+     2026), so on a run screen coral meant the run, "slow", "behind" and an
+     error at once. Coral means running only; slow and behind are neutral
+     with their chevron or word, and an error is red with its icon. */
   success: "#4DB872",
   warning: "#D97706",
-  danger: "#D4637A",
+  danger: "#EF4444",
   teal: "#52A3BD",
 
   // Text — softer contrast, not harsh white
@@ -185,10 +190,33 @@ export const THEME = {
   chartGrid: "rgba(255,255,255,0.05)",
   chartTooltipBg: "#242429",
 
-  // Pace colours (for splits — used in both themes). The route map's
-  // middle step is `warning`, amber (`routePace.ts`).
-  paceFast: "#4DB872",
-  paceSlow: "#D4637A",
+  /* The run's pace, light to dark (DS10 call 2): a fast stretch light
+     yellow, the run's own average the amber that data scales keep, a slow
+     stretch blue. Not green against coral: fast against slow measured 7
+     apart for deuteranopia there, by colour alone, and the slow step was
+     the running colour itself. Each neighbouring step is 15 or more apart
+     (CIEDE2000) in normal vision and at deuteranopia and protanopia
+     severity 100 (Machado 2009); `paceScale.test.ts` measures it. Read by
+     the route's colours (`routePace.ts`) and the live run's pace bar
+     (`PaceZoneBar`). */
+  pace: {
+    fast: "#F9D86A",
+    average: "#D97706",
+    slow: "#2975E0",
+  },
+  /* Heart-rate zones, Z1 to Z5, on the same blue-to-yellow line as the
+     pace (DS10 call 2): teal, green, two ambers and coral measured 6.5
+     apart between Z4 and Z5 for deuteranopia. Each neighbouring zone is
+     16 or more apart in every vision `paceScale.test.ts` measures, and
+     each clears 3:1 as a figure on the run's dark sheet. The figure also
+     carries its zone's name ("HR Z3"), so colour is never alone. */
+  hrZones: {
+    1: "#2975E0",
+    2: "#6EAEEB",
+    3: "#B7B2BA",
+    4: "#CFC9AB",
+    5: "#F9D86A",
+  },
   // Gradient helpers — subtler transitions
   gradient: {
     brand: "linear-gradient(135deg, #9590E0, #7B72E9)",

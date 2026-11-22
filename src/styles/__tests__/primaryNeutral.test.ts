@@ -50,10 +50,7 @@ describe("--primary is the text colour, in both themes", () => {
     const nav = [...CSS.matchAll(/--nav-active-foreground:\s*([^;]+);/g)].map(
       (m) => m[1].trim()
     );
-    expect(nav).toEqual([
-      "hsl(var(--foreground))",
-      "hsl(var(--foreground))",
-    ]);
+    expect(nav).toEqual(["hsl(var(--foreground))", "hsl(var(--foreground))"]);
     const pill = read("src/styles/components.css").match(
       /\.bottom-nav-pill\s*\{[^}]*\}/
     )?.[0];
@@ -110,7 +107,8 @@ describe("purple text is lifting's, not the chrome's", () => {
     const n = globSync("src/**/*.{ts,tsx}")
       .filter((f) => !f.includes("__tests__") && !f.startsWith("src/website"))
       .reduce(
-        (sum, f) => sum + (read(f).match(/\btext-lifting-strong\b/g) ?? []).length,
+        (sum, f) =>
+          sum + (read(f).match(/\btext-lifting-strong\b/g) ?? []).length,
         0
       );
     expect(n).toBeLessThanOrEqual(37);

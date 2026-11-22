@@ -40,16 +40,10 @@ import { Dialog } from "@/components/ui/Dialog";
 import { elevationLabel } from "@/lib/runLabels";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
-// HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
-// Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
-// Z5 max coral-red. Below-Z1 / unknown falls back to the muted stat colour.
-const ZONE_COLOR: Record<ZoneNumber, string> = {
-  1: THEME.teal,
-  2: THEME.success,
-  3: THEME.amberLight,
-  4: THEME.warning,
-  5: THEME.danger,
-};
+// HR zone → colour, cool to hot on the pace's blue-to-yellow line
+// (`THEME.hrZones`, DS10 call 2), readable in any colour vision. Below-Z1 /
+// unknown falls back to the muted stat colour.
+const ZONE_COLOR: Record<ZoneNumber, string> = THEME.hrZones;
 
 interface RunBottomSheetProps {
   /** Bumped by a tap on the map: the panel rises to full. */

@@ -16,16 +16,15 @@ export default function PaceZoneBar({
   const diff = currentPace - targetPace;
   const pct = Math.max(-1, Math.min(1, diff / (tolerance * 2)));
 
-  // Token identities, not raw Tailwind palette (green-500 drifted from
-  // THEME.success; the guardrail test bans the class form). Bar fills on
-  // the dark run surface — decorative data-viz, identities are correct.
-  const color =
-    Math.abs(diff) <= tolerance
-      ? THEME.success
-      : diff > 0
-        ? THEME.danger
-        : THEME.amberLight;
-
+  /* The bar is the pace scale, light to dark from fast to slow
+     (`THEME.pace`, DS10 call 2): the band either side of the target is the
+     average's amber, and the marker is white with its words above it. It
+     was a green, amber or coral marker, so "slow" was drawn in the clock's
+     own running coral. The marker's place and the words say where the pace
+     is; the colours say which way is fast. */
+  // The marker sits at 50 + pct x 48 per cent, and the tolerance is half
+  // of pct's range, so the target's band reaches 24 per cent either side.
+  const band = 24;
   const label =
     Math.abs(diff) <= tolerance
       ? "On pace"
@@ -41,6 +40,20 @@ export default function PaceZoneBar({
         <span>Slow</span>
       </div>
       <div className="h-2 bg-white/10 rounded-full relative overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 flex opacity-70">
+          <div
+            className="h-full"
+            style={{ width: `${50 - band}%`, background: THEME.pace.fast }}
+          />
+          <div
+            className="h-full"
+            style={{ width: `${band * 2}%`, background: THEME.pace.average }}
+          />
+          <div
+            className="h-full flex-1"
+            style={{ background: THEME.pace.slow }}
+          />
+        </div>
         {/* A full-width layer slid by the marker's place, the marker at its
             left edge: a translate is a percentage of the layer, so of the
             track, where animating `left` laid out every frame. */}
@@ -52,8 +65,8 @@ export default function PaceZoneBar({
         >
           <div className="absolute top-0 left-0 h-full w-3 rounded-full">
             <div
-              className="size-full rounded-full"
-              style={{ background: color }}
+              // eslint-disable-next-line no-restricted-syntax -- the marker sits on the run's always-dark stage; white is the neutral there in both themes.
+              className="size-full rounded-full bg-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.6)]"
             />
           </div>
         </div>

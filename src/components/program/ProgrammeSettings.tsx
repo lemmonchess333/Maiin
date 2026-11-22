@@ -254,7 +254,10 @@ function SettingsOptionCard({
           ) : null}
         </span>
         {selected && !disabled ? (
-          <Check className="size-4 shrink-0" style={{ color: THEME.chrome.text }} />
+          <Check
+            className="size-4 shrink-0"
+            style={{ color: THEME.chrome.text }}
+          />
         ) : null}
       </motion.button>
     </div>

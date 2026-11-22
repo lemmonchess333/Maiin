@@ -209,8 +209,11 @@ THEME.chrome.tint; // the text colour at 8%, for a chrome tile or callout
 // Semantic (harmonised)
 THEME.semantic.hydration; // #52A3BD teal   — water
 THEME.semantic.nutrition; // #D9884E orange — food/calories/macros
-THEME.semantic.vitals; // #D4637A coral  — health/HR/recovery (== running)
-THEME.semantic.positive; // #4DB872 green  — streaks/PRs
+THEME.semantic.vitals; // #D4637A coral  — running (== running)
+THEME.semantic.positive; // #4DB872 green  — a done state, beside its tick
+THEME.danger; // #EF4444 red  — an error or a destructive action, with its icon
+THEME.pace; // fast #F9D86A · average #D97706 · slow #2975E0 (DS10 call 2)
+THEME.hrZones; // Z1 to Z5 on the same blue-to-yellow line
 
 // Macros (dark-tuned; see 3d)
 THEME.macros.protein; // pink   THEME.macros.carbs // gold   THEME.macros.fat // sage
@@ -256,12 +259,15 @@ values in light mode). Use the raw values only for dots/tints/bars.
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Purple `#7B72E9`    | Lifting, and the brand only in the mark, the lockup and the drawn art (DS10)                                                                                                                                                                                                  |
 | Text and muted grey | The chrome: selection (one selected state, `--segment-selected` under a white label, or a foreground border and tint), links and text buttons, switches, focus rings, chrome icons and callouts, Pro's buttons (DS10)                                                       |
-| Coral `#D4637A`     | Running / vitals / recovery                                                                                                                                                                                                                                                    |
+| Coral `#D4637A`     | Running, and nothing else (DS10 call 2): never "slow", "behind" or an error on a run screen. Slow and behind are neutral with their chevron or word                                                                                                                         |
+| Red `#EF4444`       | An error or a destructive action, always with its icon (`THEME.danger`, `--destructive`)                                                                                                                                                                                      |
+| Pace scale          | Fast light yellow `#F9D86A`, the run's average amber `#D97706`, slow blue `#2975E0` (`THEME.pace`): the route on a run's detail and finish, and the live run's pace bar. Light to dark, each step 15 or more apart in normal, deutan and protan vision (`paceScale.test.ts`) |
+| Heart-rate zones    | Z1 `#2975E0` to Z5 `#F9D86A` on the pace's blue-to-yellow line (`THEME.hrZones`), each zone 16 or more apart in any vision and drawn beside its name ("HR Z3")                                                                                                                |
 | Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                                                                                  |
 | Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                                                                              |
 | Green `#4DB872`     | Positive (streak, PR, success)                                                                                                                                                                                                                                                 |
 | Coral-red `#FF6B4A` | Scanning, inside the scanner only — the shutter ring (`THEME.food.scan`) and the scan art in the Pro preview. The scanner's selected mode is a near-white chip (white on coral was 2.8:1). The Food page's camera button is food orange (owner call, CLAUDE.md Button mapping) |
-| Amber `#D97706`     | Warning _banners_ only (`THEME.amber`) — distinct from nutrition orange                                                                                                                                                                                                        |
+| Amber `#D97706`     | Warning _banners_ (`THEME.amber`), and the middle of a data scale: the pace scale's average (DS10). Distinct from nutrition orange                                                                                                                                            |
 
 Never repurpose one of these for an unrelated feature.
 

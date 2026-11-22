@@ -778,7 +778,10 @@ export default function DayActionContent({
                 }
                 className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
               >
-                <RotateCcw className="size-4" style={{ color: THEME.chrome.text }} />
+                <RotateCcw
+                  className="size-4"
+                  style={{ color: THEME.chrome.text }}
+                />
                 Restore to plan
               </button>
             )}
@@ -854,7 +857,10 @@ export default function DayActionContent({
               onClick={() => void act(() => restoreWorkoutDay(lift.index!))}
               className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <RotateCcw className="size-4" style={{ color: THEME.chrome.text }} />
+              <RotateCcw
+                className="size-4"
+                style={{ color: THEME.chrome.text }}
+              />
               Restore to plan
             </button>
           )}

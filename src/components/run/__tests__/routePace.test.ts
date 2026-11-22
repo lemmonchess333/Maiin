@@ -123,7 +123,7 @@ describe("routePaceRatios", () => {
       const i = points.findIndex((p) => (p.lon + 0.12) * M_LON >= metres);
       return routePaceColor(ratios[i] as number);
     };
-    expect(colourAt(1200)).toBe(THEME.paceFast);
+    expect(colourAt(1200)).toBe(THEME.pace.fast);
     expect(colourAt(300)).toBe(middle);
     expect(colourAt(2100)).toBe(middle);
   });
@@ -173,7 +173,7 @@ describe("routePaceRatios", () => {
     const ratios = routePaceRatios(points, 270);
     expect(ratios[first.length]).toBeNull();
     expect(routePaceColor(ratios[first.length + 1] as number)).toBe(
-      THEME.paceFast
+      THEME.pace.fast
     );
   });
 

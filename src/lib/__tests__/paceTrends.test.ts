@@ -148,7 +148,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("consistent");
       expect(result.label).toBe("Steady");
-      expect(result.className).toBe("bg-lifting/10 text-lifting-strong");
+      expect(result.className).toBe("bg-primary/10 text-primary");
     });
 
     it("returns consistent when pace matches recent average exactly", () => {
