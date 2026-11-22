@@ -1817,6 +1817,17 @@ describe("RunSummary — your top three", () => {
     expect(row.textContent).toContain("best 4:10");
   });
 
+  it("shows nothing for a distance run for the first time", async () => {
+    // No earlier 1K: as Strava marks no first effort on the run.
+    seedOneKs([]);
+    renderAndSave();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Your top three" })).toBeNull();
+  });
+
   it("shows nothing for a run that placed nowhere", async () => {
     seedOneKs([200, 210, 220]);
     renderAndSave();

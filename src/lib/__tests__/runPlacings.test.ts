@@ -128,10 +128,12 @@ describe("runPlacings", () => {
   });
 
   it("ranks a run among every time up to its own, as Strava does", () => {
-    // A first 5K is a 1st, with nothing before it to compare.
-    expect(runPlacings(run(1, { 5000: 1600 }), [])).toEqual([
-      { meters: 5000, seconds: 1600, place: 1, bestSeconds: null },
-    ]);
+    // A first 5K is marked nowhere on the run, as Strava marks none.
+    expect(runPlacings(run(1, { 5000: 1600 }), [])).toEqual([]);
+    // A first 1K beside a placed 5K: only the 5K shows.
+    expect(
+      runPlacings(run(2, { 1000: 280, 5000: 1700 }), [run(1, { 5000: 1600 })])
+    ).toEqual([{ meters: 5000, seconds: 1700, place: 2, bestSeconds: 1600 }]);
     // Slower than the only earlier one: your 2nd fastest of two.
     expect(
       runPlacings(run(2, { 5000: 1700 }), [run(1, { 5000: 1600 })])
@@ -213,26 +215,14 @@ describe("the words", () => {
     expect(placingSentence([placing(1, 1000), placing(2)])).toBeNull();
   });
 
-  it("gives a row your best, a new best for a 1st, or a first time", () => {
+  it("gives a row your best, or a new best for a 1st", () => {
     expect(placingGap(placing(2))).toBe("best 25:10");
     expect(placingGap(placing(3))).toBe("best 25:10");
     expect(placingGap(placing(1))).toBe("New best");
-    expect(placingGap({ ...placing(1), bestSeconds: null })).toBe(
-      "First time"
-    );
   });
 
   it("names a place as a segment's place is named", () => {
     for (const place of [1, 2, 3] as const)
-      expect(placeWords(placing(place))).toBe(rankWords(place, 4));
-    expect(placeWords({ ...placing(1), bestSeconds: null })).toBe(
-      rankWords(1, 1)
-    );
-  });
-
-  it("says no sentence for a first time, which is a 1st", () => {
-    expect(
-      placingSentence([{ ...placing(1), bestSeconds: null }, placing(2, 1000)])
-    ).toBeNull();
+      expect(placeWords(place)).toBe(rankWords(place, 4));
   });
 });

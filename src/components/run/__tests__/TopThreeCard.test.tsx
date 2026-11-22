@@ -47,19 +47,6 @@ describe("TopThreeCard", () => {
     );
   });
 
-  it("calls a first time at a distance a 1st, with nothing to compare", () => {
-    render(
-      <TopThreeCard
-        placings={[{ meters: 1000, seconds: 300, place: 1, bestSeconds: null }]}
-      />
-    );
-    const card = screen.getByRole("region", { name: "Your top three" });
-    expect(card.querySelector("p")).toBeNull();
-    expect(within(card).getByRole("listitem").textContent).toBe(
-      "1Fastest1K5:00First time"
-    );
-  });
-
   it("renders nothing when the run placed nowhere", () => {
     const { container } = render(<TopThreeCard placings={[]} />);
     expect(container).toBeEmptyDOMElement();

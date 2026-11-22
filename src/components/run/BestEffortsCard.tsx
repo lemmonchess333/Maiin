@@ -59,7 +59,7 @@ export default function BestEffortsCard({
                 </span>
                 {placing && (
                   <span className="block text-xs text-muted-foreground">
-                    {placeWords(placing)}
+                    {placeWords(placing.place)}
                   </span>
                 )}
               </dd>
