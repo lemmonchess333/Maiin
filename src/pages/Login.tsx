@@ -6,6 +6,7 @@ import {
   writeSessionJson,
 } from "@/lib/sessionStore";
 import { readString, remove } from "@/lib/localStore";
+import { cancelSetupSave } from "@/lib/setupSave";
 import { pendingEmailChange } from "@/lib/emailChangeNote";
 import { hasSignedInOnThisDevice } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -185,6 +186,10 @@ export default function Login() {
             )
           }
           onLegalLink={keepForm}
+          // A sign-in from here is not Save your plan's, so a mark left by
+          // one that never came back must not hand its answers to this
+          // account.
+          onStart={cancelSetupSave}
         />
 
         {/* No account yet: setup comes first, and makes one at its end

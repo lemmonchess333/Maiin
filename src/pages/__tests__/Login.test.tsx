@@ -319,6 +319,26 @@ describe("Login — Apple and Google come before the email form (A1)", () => {
   });
 });
 
+describe("Login — a sign-in from here is not Save your plan's", () => {
+  it("drops a mark left by a Save your plan sign-in that never came back", async () => {
+    // A sign-in sheet opened from Save your plan, then the app was killed.
+    localStorage.setItem(
+      "tropos.setupSave",
+      JSON.stringify({ emailOptIn: false, inviteCode: "", at: Date.now() })
+    );
+    h.signInWithGoogle.mockResolvedValueOnce(undefined);
+    showSignIn();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Continue with Google" })
+      );
+    });
+    // Without the mark, the account that appears drops the answers given
+    // signed out instead of building a plan from someone else's.
+    expect(localStorage.getItem("tropos.setupSave")).toBeNull();
+  });
+});
+
 describe("Login — closing the Google or Apple sheet", () => {
   /* Only the web popup's code was silenced, so a cancel on the phone showed
      Google's or Apple's own sentence as an error. */
