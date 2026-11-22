@@ -7564,3 +7564,86 @@ there), so CI's emulator job is its first run.
       `<meta name="robots" content="noindex" />` in its head. Pasting the
       address into Messages or Slack still draws the post's preview
       ("Sam’s run on Tropos").
+
+## A shared card's own page (Soc17 calls 1 to 3, 2026-11-22)
+
+Affects: the link at the end of every shared card's words that is not of a
+public post (`ShareCardSheet`, `src/lib/sharedCardShare.ts`), the
+`sharedCard` callable that keeps and takes back a card's copy (its `store`
+needs a verified email) and the `sharedCardPage` function behind Hosting's
+`/card/**` rewrite (`functions/lib/sharedCards.js`,
+`functions/lib/sharedCardPage.js`), the page itself
+(`src/website/pages/SharedCard.tsx`), the exercise cut-outs the Hosting
+build now ships for it (`CARD_ART_FILES`, about 3.4 MB), the delete
+triggers, the deletion executor (`sharedCards` by `ownerUid`) and the TTL
+policy on `sharedCards.expiresAt` (a card that shows no session or post
+lasts 30 days), and a public post's page, which takes the same layout
+(the owner's of 22 Nov 2026, `SharedLanding`) with "Join Tropos" to the
+App Store and no invite code. Unit-tested;
+`firestore.sharedCards.rules.test.ts` passed in CI's emulator job. Nothing
+has been deployed, and no phone or messaging app has opened a card's link.
+
+- [ ] **The rules suite in CI.** On the pull request, the emulator job's
+      `firestore.sharedCards.rules.test.ts` passes: no client reads, lists,
+      writes or deletes a `sharedCards` document, its owner included.
+- [ ] **The rewrite is live.** After Deploy production,
+      `curl -sI https://troposfit.com/card/AbCdEfGhIjKlMnOpQrStUv` answers 200
+      with `x-robots-tag: noindex`, and the page reads "This card isn’t
+      available" with Get Tropos. Passing: the same for a token that was
+      shared and then cancelled.
+- [ ] **A card's link opens Safari, not the app.** On an iPhone with Tropos,
+      share a followers-only lift from Train's history to Messages and tap the
+      link in the sent message. Passing: Safari opens on the card under the
+      small lockup and "<first name> shared a workout", the card as it was
+      sent (the same format, background, drawing and hidden figures, no
+      photo), no taller than 60% of the screen with Safari's bars shown or
+      hidden, then "Join Tropos", a line about Tropos and Safari's Tropos
+      banner. The button opens troposfit.com's invite page with the code to
+      copy and the App Store badge
+      (`https://troposfit.com/form-art/<id>.webp` answers 200).
+- [ ] **A run's card has no line.** Share a GPS run's card to Messages.
+      Passing: the shared image shows the route's line, and the card's page
+      shows the figures with no line and nothing where it was.
+- [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
+      Messages and into WhatsApp. Passing: each preview reads "<first
+      name>’s workout on Tropos" (run, day, week) with the card's figures in
+      a sentence under it and the app icon, and says no figure the sharer
+      hid.
+- [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,
+      and cancel the system sheet. Passing: in the Firestore console,
+      `sharedCards` has no document for that token (it is in the words the
+      sheet showed); share again and it has one. The same for a card
+      downloaded on the web, and, once the Instagram bridge lands, a card
+      sent to an Instagram story, which keeps no document at all.
+- [ ] **An unverified email shares the invite link.** On a new email
+      account before tapping the verification link, share a lift's card.
+      Passing: the words end with `https://troposfit.com/?invite=<code>`;
+      after verifying, the next share ends with a `/card/` link.
+- [ ] **The TTL policy is on.** After Deploy production, Firebase Console
+      › Firestore › Time-to-live lists `sharedCards` on `expiresAt` as
+      Serving (`scripts/verify-firestore-readiness.py` checks it too).
+      Passing: share a week's recap card, then in the console set its
+      `expiresAt` to a minute ago; the link answers "This card isn’t
+      available" at once, and the document is gone within a day.
+- [ ] **The copy goes with its session.** Share a workout's card, then
+      delete the workout. Passing: the link answers "This card isn’t
+      available" at once, and within a minute `sharedCards` has no document
+      for it. The same for a run, and for a feed post's card after deleting
+      the post.
+- [ ] **The copy goes with the account.** Share two cards from a test
+      account, then delete the account. Passing: `sharedCards` has no
+      document with its `ownerUid`, and both links answer "This card isn’t
+      available".
+- [ ] **A cold start.** After the functions have been idle for an hour,
+      open a finish screen's Share and tap Share at once. Passing: the
+      system sheet opens within a few seconds; the words end with the card's
+      link, or, when the copy was not kept in 2.5 s, the sharer's invite
+      link. Note how often a first share falls back: if most do, the sheet
+      should start the function earlier.
+- [ ] **New code stops old cards' invites.** Share a card, then press New
+      code in Social. Passing: the card's page still shows the card and its
+      heading, and its button goes to the App Store with no code.
+- [ ] **A public post's page.** Open a public post's address in a private
+      window. Passing: the same layout, "<first name> shared a run" (or a
+      workout), the button reads "Join Tropos" and opens the App Store, and
+      View Source has no invite code.

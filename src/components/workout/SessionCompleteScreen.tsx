@@ -118,6 +118,9 @@ interface SessionCompleteScreenProps {
   /** The account's first workout though it has run before
    *  (`isFirstOfSport`): rewarded as a first. */
   firstOfSport?: boolean;
+  /** The saved workout's id, once saved: a shared card's page goes with
+   *  it (Soc17 call 1). */
+  savedWorkoutId?: string;
 }
 
 export default function SessionCompleteScreen({
@@ -144,6 +147,7 @@ export default function SessionCompleteScreen({
   onRename,
   moments = null,
   firstOfSport = false,
+  savedWorkoutId,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -368,8 +372,12 @@ export default function SessionCompleteScreen({
   const prCutout =
     rewardPr && rewardExerciseId ? getFormArtCutout(rewardExerciseId) : null;
   const object =
-    prCutout && rewardPr
-      ? { cutout: prCutout, exerciseName: rewardPr.exercise }
+    prCutout && rewardPr && rewardExerciseId
+      ? {
+          cutout: prCutout,
+          exerciseName: rewardPr.exercise,
+          exerciseId: rewardExerciseId,
+        }
       : leadArt;
   const picture = object ? (
     <img
@@ -828,6 +836,8 @@ export default function SessionCompleteScreen({
               date: finishKicker(undefined, startedAt ?? openedAt),
               // Posted to the feed: the card links to the post while public.
               postId: postedActivityId(share),
+              // Saved: any other card's page goes with the workout (Soc17).
+              workoutId: saved ? savedWorkoutId : undefined,
               totalVolumeKg: totalVolume,
               totalReps,
               exerciseCount: exerciseSummary.length,
@@ -838,6 +848,8 @@ export default function SessionCompleteScreen({
               line: cardLine,
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
+              // The same drawing on the card's own page (Soc17).
+              artId: object?.exerciseId,
             }}
             /* CIRCLE-SESSION-01, as on the run's finish: a planned
                session, saved, can tell a Circle it was done. Only

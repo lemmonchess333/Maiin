@@ -663,6 +663,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "sharedCards",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "segmentEfforts",
       "fieldPath": "segmentId",
       "indexes": [

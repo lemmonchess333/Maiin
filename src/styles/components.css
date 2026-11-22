@@ -412,6 +412,25 @@ select.ds-input:focus {
   line-height: 1;
   letter-spacing: -0.01em;
 }
+/* The small lockup of a shared post's and card's page. */
+.ds-wordmark-small {
+  font-size: 15px;
+}
+
+/* A shared post's or card's card (owner, 22 Nov 2026): the page's hero,
+   at most 60% of the screen's height as it is now, so it shrinks with
+   Safari's bars (DESIGN_GUIDE §14m), and the column's width at most.
+   `--card-ratio` is its width over its height. */
+.ds-shared-card {
+  --card-cap: 60vh;
+  width: min(100%, calc(var(--card-cap) * var(--card-ratio)));
+  margin-inline: auto;
+}
+@supports (height: 100dvh) {
+  .ds-shared-card {
+    --card-cap: 60dvh;
+  }
+}
 
 /* ─── THE WELCOME'S PHOTOGRAPHS (WelcomePhotos, owner 2026-11-12) ──
    Five photographs fill the screen behind the welcome's words and fade

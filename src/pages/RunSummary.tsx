@@ -2501,6 +2501,8 @@ export default function RunSummary() {
           handle: profile?.displayName || "Athlete",
           // Posted to the feed: the card links to the post while public.
           postId: postedActivityId(shareAction),
+          // Saved: any other card's page goes with the run (Soc17).
+          runId: savedRunId ?? undefined,
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
           line: finishCardLine,
