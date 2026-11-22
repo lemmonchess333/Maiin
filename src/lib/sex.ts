@@ -8,8 +8,8 @@
  * A figure that differs by sex takes the person's answer, or, with none,
  * the mean of the two (owner, 22 November 2026): a figure between, not a
  * guess at either. `figureForSex` is that rule, and every reader of a sex
- * constant goes through it (`tdee.ts`, `startingLoads.ts`). Fibre keeps
- * its neutral 30 g (`microTargets.ts`).
+ * constant goes through it (`tdee.ts`, `startingLoads.ts`,
+ * `microTargets.ts`).
  */
 export type Sex = "male" | "female";
 

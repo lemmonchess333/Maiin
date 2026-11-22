@@ -381,8 +381,9 @@ describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", ()
   });
 
   /* Setup stores no `sex` for Prefer not to say (owner, 22 November 2026),
-     and the fibre goal keeps its neutral 30 g for it, not a man's 38 g. */
-  it("sets fibre's goal at 30 g with no sex stored", () => {
+     and the fibre goal is the midpoint of 38 and 25, rounded to 32 g, not
+     a man's 38 g. */
+  it("sets fibre's goal at 32 g with no sex stored", () => {
     auth.profile = {};
     try {
       render(
@@ -396,8 +397,8 @@ describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", ()
         />
       );
       const text = document.body.textContent ?? "";
-      expect(text).toMatch(/18\s*\/ 30g/);
-      expect(text).toMatch(/12g to goal/);
+      expect(text).toMatch(/18\s*\/ 32g/);
+      expect(text).toMatch(/14g to goal/);
     } finally {
       auth.profile = { sex: "male" };
     }

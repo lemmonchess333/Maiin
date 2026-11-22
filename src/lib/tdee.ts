@@ -14,7 +14,11 @@ import {
 import { figureForSex, type Sex } from "./sex";
 
 export type ActivityLevel =
-  "sedentary" | "light" | "moderate" | "active" | "very_active";
+  | "sedentary"
+  | "light"
+  | "moderate"
+  | "active"
+  | "very_active";
 export type FitnessGoal = "cut" | "recomp" | "lean bulk";
 
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
