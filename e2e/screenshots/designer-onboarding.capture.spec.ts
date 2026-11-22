@@ -92,6 +92,8 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   await page.getByRole("button", { name: /Full gym/ }).click();
   await page.getByRole("button", { name: /New to lifting/ }).click();
   await next();
+  // The agreement to store health details (Priv1 call 1).
+  await page.getByRole("button", { name: "I agree", exact: true }).click();
   await page.getByRole("button", { name: "None", exact: true }).click();
   await next();
   await page.getByRole("radio", { name: "lb", exact: true }).click();

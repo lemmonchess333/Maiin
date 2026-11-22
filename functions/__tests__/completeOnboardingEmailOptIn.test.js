@@ -34,6 +34,8 @@ function request(extra = {}, profileExtra = {}) {
       ...profileExtra,
     },
     programState: {},
+    // Setup is refused without the agreement to store health details (Priv1).
+    healthDataConsent: { version: 1 },
     ...extra,
   };
 }

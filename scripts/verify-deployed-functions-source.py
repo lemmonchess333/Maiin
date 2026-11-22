@@ -109,7 +109,9 @@ def source_targets():
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
-        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js", "lib/emailConsent.js"],
+        # Priv1 call 1: setup is refused without the health-details agreement.
+        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js",
+                               "lib/emailConsent.js", "lib/healthConsent.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
         # App1 Q55: the email switches, and the consent record they write.
         "setEmailConsent": ["index.js", "email/emailConsent.js", "lib/emailConsent.js"],
