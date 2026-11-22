@@ -84,12 +84,15 @@ core flow, an App Review rejection, or wrong data.
    run summary, and the Privacy, Terms and Support pages. Each top row (close
    and back buttons, titles) should sit fully below the clock and Dynamic
    Island.
-9. **Email sign-up.** Sign up with a fresh email address you can open on the
-   phone. Setup should start straight away. The verification email should
-   arrive while you answer. Tap its link in Mail, switch back, and Home's
-   "Verify your email" notice should be gone. Then sign out, and sign in with
-   Apple, then with Google, each with an account that has never signed in:
-   each should reach setup with no error. The phone's sign-in has only run
+9. **Email sign-up.** Signed out, tap Get started and answer setup; at the
+   review tap Continue, and on Save your plan make an account with a
+   fresh email address you can open on the phone (A6: setup comes before the
+   account). The plan should build straight away and the trial offer follow;
+   tap Not now. The verification email should arrive meanwhile. Tap its link
+   in Mail, switch back, and Home's "Verify your email" notice should be
+   gone. Then sign out, and do the same with Apple, then with Google, each
+   with an account that has never signed in: each should reach the trial
+   offer with no error and no second setup. The phone's sign-in has only run
    against mocks, and App Review tries every button.
 10. **The AI question.** On a Pro or trial account that has never been asked,
     open Food and take a meal photo. "Send food to Google for analysis?" should
@@ -257,7 +260,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 
 ### The first-visit guide
 
-- [ ] On the iPhone sign up a new account and finish setup: Start my plan opens Today with no Pro page and no walk (Home's walk went with App1, 13 November), and "Your first week" lists only the first workout, and the first run for a runner.
+- [ ] On the iPhone sign up a new account at the end of setup: Save your plan builds the plan and opens the trial offer (A6, Biz1 call 3), Not now opens Today with no walk (Home's walk went with App1, 13 November), and "Your first week" lists only the first workout, and the first run for a runner.
 - [ ] On an iPhone SE (or a mini with Display Zoom), on a new account open Food: the hint sits above the food box, not over the tab bar.
 - [ ] On an account that already answered 'Count your steps' (either way), force-quit and reopen Tropos, then switch to another tab and back to Home: the steps prompt never appears, even for a moment.
 
@@ -446,7 +449,7 @@ No phone or console needed; I'll work through these and tick them in the backlog
 - [ ] Open Food Facts credit under a barcode result, the search results: Playwright against the emulator at a 375x667 viewport: open Food, search for a food and open its portion sheet. Pass: 'Food data from Open Food Facts' and the sheet's confirm button are both inside the viewport, with no horizontal overflow.
 - [ ] Hide content on each kind. From the queue, hide a reported Space: Against the Firestore and Auth emulators: seed a Space post, a Space comment and an activity comment, each with a pending report. Call resolveReport's real handler (e2e/helpers/realCallables.ts) to hide each one, then read as a third signed-in account. Pass: all three are gone, and commentCount on t
 - [ ] A Space post that trips the filter is removed: Start the Functions and Firestore emulators (firebase emulators:start --only functions,firestore,auth). Create a clean spaces/{id}/posts doc, then update its body with a word from functions/lib/objectionableText.js using the SDK directly. Pass: the doc and its likes and comments are gone within a fe
-- [ ] The Terms line on sign-in and sign-up wraps cleanly: Playwright, signed out, at 320x568: open sign-in and sign-up. Pass: the 'By continuing, you agree to the Terms and Privacy Policy.' line wraps inside the screen with no overflow (or run `npx playwright test e2e/screenshots/largeText.capture.spec.ts -g sign-up --project=auth-emulator` against the emu
+- [ ] The Terms line on sign-in and Save your plan wraps cleanly: Playwright, signed out, at 320x568: open sign-in and Save your plan (setup's end, A6). Pass: the 'By continuing, you agree to the Terms and Privacy Policy.' line wraps inside the screen with no overflow (or run `npx playwright test e2e/screenshots/largeText.capture.spec.ts -g 'Save your plan' --project=auth-emulator` against the emu
 - [ ] The hints, each once: Train's lift tab, first set, Food's composer, run screen: Extend e2e/screenshots/guide.capture.spec.ts (localStorage tropos-guide-under-automation=on) to open /run on the same new account and run `firebase emulators:exec --only auth,firestore --project demo-tropos 'npx playwright test e2e/screenshots/guide.capture.spec.ts --project=auth-emulator'`: the fir
 - [ ] The ≤1280px downscale. toStorableJpeg needs <img> + canvas: In a Playwright page (real Chromium, after `npx playwright install chromium` — the container has no browser yet) import toStorableJpeg via the Vite dev server, feed it a 4000x3000 base64 JPEG, decode the returned base64 into an Image: passing = naturalWidth 1280, naturalHeight 960 (and a 800px input
 - [ ] Slow-scan escape. Tap the X during the sweep: Signed-in Playwright spec on the emulator rig with a Pro seed: route the analyzeFood request to never resolve, upload a photo in the Meal tab, click the X during the sweep. Passing = the modal is gone within 1 s (click not intercepted by the overlay), and reopening the camera shows the live viewfind

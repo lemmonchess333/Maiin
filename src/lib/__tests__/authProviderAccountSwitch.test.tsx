@@ -593,7 +593,7 @@ describe("AuthProvider — email sign-up", () => {
     });
     expect(unfiredFailures()).toEqual([]);
     await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("F"));
-    expect(track).toHaveBeenCalledWith("signup_completed", {
+    expect(track).toHaveBeenCalledWith("account_created", {
       method: "email",
     });
   });

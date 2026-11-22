@@ -20,13 +20,15 @@ export function usePendingInvite(): string | null {
   return readPendingInvite();
 }
 
-/** A newly opened link fills the field; ordinary typing stays local. */
-export function useInviteCodeInput() {
+/** A newly opened link fills the field; ordinary typing stays local.
+ *  `initial` is the field as it was before setup was drawn again under a
+ *  new account (A6's Save your plan), over the link's code. */
+export function useInviteCodeInput(initial?: string) {
   const revision = usePendingInviteRevision();
   const pending = readPendingInvite();
   const [seen, setSeen] = useState(revision);
-  const [value, setValue] = useState(() =>
-    pending ? formatInviteCode(pending) : ""
+  const [value, setValue] = useState(
+    () => initial ?? (pending ? formatInviteCode(pending) : "")
   );
   if (revision !== seen) {
     setSeen(revision);

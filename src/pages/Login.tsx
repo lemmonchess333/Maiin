@@ -1,68 +1,35 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   readSessionJson,
   removeSessionKey,
   writeSessionJson,
 } from "@/lib/sessionStore";
 import { readString, remove } from "@/lib/localStore";
+import { cancelSetupSave } from "@/lib/setupSave";
 import { pendingEmailChange } from "@/lib/emailChangeNote";
-import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
-import {
-  friendlyAuthError,
-  providerHint,
-  duplicateEmailHint,
-  isSignInCancelled,
-} from "@/lib/authErrors";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { hasSignedInOnThisDevice } from "@/lib/auth";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import BootSteps from "@/components/BootSteps";
-import { isNativePlatform } from "@/lib/platform";
-import { IconButton } from "@/components/ui/IconButton";
 import InviteNote from "@/components/onboarding/InviteNote";
 import AuthLockup from "@/components/auth/AuthLockup";
 import WelcomePhotos from "@/components/auth/WelcomePhotos";
 import SignInFigure from "@/components/auth/SignInFigure";
+import AccountForm from "@/components/auth/AccountForm";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
-
-/** The mark on the way in this phone last used (Polish2 call 3): with Hide
- *  My Email, signing in another way makes a second, empty account. */
-function LastUsed() {
-  return (
-    <span className="ml-2 shrink-0 whitespace-nowrap rounded-full border border-current/30 px-2 py-0.5 text-xs font-semibold">
-      Last used
-    </span>
-  );
-}
-
-// Pre-recovery this page tracked a single `loading: boolean` shared
-// across the email submit, the Apple button, and the Google button.
-// The Button primitive's loading state only fired on the email
-// submit; Apple/Google merely went disabled with no spinner. That's
-// a polish gap on a conversion-critical surface — we use a single
-// LoadingAction value here so exactly one button shows the spinner
-// and the others stay disabled.
-type LoadingAction = "email" | "google" | "apple" | "reset" | null;
+import { trackWelcomeViewed } from "@/lib/firstRunEvents";
 
 /** Signed out, the app opens on the welcome screen, whoever used the phone
  *  before, as Strava's and Nike's do (DS9 STATUS): "Sign in" under Get
  *  started is the way back in. A screen with a message to give opens where
  *  the message belongs, on sign-in: an account just deleted, an address
- *  just changed. */
-type View = "welcome" | "signIn" | "signUp";
+ *  just changed. Get started opens setup, which makes the account at its
+ *  end, on Save your plan (A6). */
+type View = "welcome" | "signIn";
 
-/* A link inside the agreement sentence. Underlined, so it reads as a link
-   without relying on colour; 44px tall for the thumb, with the negative
-   margin keeping the sentence's own line height (the Sign up toggle below
-   uses the same trick). */
+/** Where Get started goes: setup, before there is an account (A6). */
+export const SETUP_PATH = "/setup";
+
 /* The form, kept while the person reads the Terms or the Privacy Policy:
    those are pages of their own, so opening one leaves this screen, and
    Back would otherwise bring an empty form. The screen and the email come
@@ -76,32 +43,17 @@ function takeLoginForm(): { view: View; email: string } | null {
   removeSessionKey(LOGIN_FORM_KEY);
   if (!form) return null;
   const view =
-    form.view === "welcome" || form.view === "signIn" || form.view === "signUp"
-      ? form.view
-      : null;
+    form.view === "welcome" || form.view === "signIn" ? form.view : null;
   if (!view) return null;
   return { view, email: typeof form.email === "string" ? form.email : "" };
 }
 
-const AGREEMENT_LINK =
-  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm";
-
 export default function Login() {
-  const {
-    signIn,
-    signUp,
-    signInWithGoogle,
-    signInWithApple,
-    resetPassword,
-    fetchSignInMethods,
-  } = useAuth();
+  const navigate = useNavigate();
   /* An email change, once confirmed, signs this phone out; say so, and
      offer the new address (emailChangeNote.ts). */
   const [changedEmail] = useState(() => pendingEmailChange());
   const [returning] = useState(takeLoginForm);
-  const [lastMethod] = useState<SignInMethod | null>(() =>
-    readLastSignInMethod()
-  );
   /* Post-deletion confirmation (deletion QA 2026-07-27): the success toast
      fires in the same breath as signOut and is easy to miss during the
      auth-state transition — the observed failure mode was the user signing
@@ -118,179 +70,23 @@ export default function Login() {
     () =>
       returning?.view ?? (changedEmail || accountDeleted ? "signIn" : "welcome")
   );
-  const isSignUp = view === "signUp";
   // Whether this device has had an account, read once: the welcome opens
   // for both, and the funnel's first rung tells them apart.
   const [returningDevice] = useState(hasSignedInOnThisDevice);
   // The first rungs of the funnel: who sees the welcome screen, and who
-  // goes on to a form (lifecycleAnalytics' header has the order).
+  // goes on to sign in (lifecycleAnalytics' header has the order).
   useEffect(() => {
     trackLifecycle("auth_screen_viewed", {
-      screen:
-        view === "signIn"
-          ? "sign_in"
-          : view === "signUp"
-            ? "sign_up"
-            : "welcome",
+      screen: view === "signIn" ? "sign_in" : "welcome",
       returningDevice,
     });
+    if (view === "welcome") trackWelcomeViewed(returningDevice);
   }, [view, returningDevice]);
-  const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
-  const [email, setEmail] = useState(
-    () => returning?.email || changedEmail || ""
-  );
   // Opening a legal page keeps the form for the way back.
-  const keepForm = () => {
+  const keepForm = (email = "") => {
     writeSessionJson(LOGIN_FORM_KEY, { view, email });
   };
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  // Neutral confirmation for the password-reset flow (shown in a calm banner,
-  // not the destructive error one).
-  const [notice, setNotice] = useState("");
-  // An email change that ended the session says so until anything else
-  // has something to say.
-  const shownNotice =
-    notice ||
-    (changedEmail && !isSignUp
-      ? `Changing your email signs you out once the change is confirmed. Sign in with ${changedEmail}.`
-      : "");
-  const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
-
-  const isLoading = loadingAction !== null;
-
-  const handleForgotPassword = async () => {
-    setError("");
-    setNotice("");
-    if (!email.trim()) {
-      setError("Enter your email above, then tap Forgot password");
-      return;
-    }
-    setLoadingAction("reset");
-    // Sends a set-password link regardless of how the account was created.
-    // The server callable (sendPasswordResetLinkCallable) mints the link via
-    // the Admin SDK, which works for OAuth-only accounts too — completing it
-    // adds a password provider. This matches Spotify / MyFitnessPal: forgot-
-    // password always emails a link. (No provider steer here — the reset is
-    // no longer a dead end for Google/Apple accounts.)
-    try {
-      await resetPassword(email.trim());
-    } catch (err: unknown) {
-      // Swallow user-not-found so the flow can't enumerate registered
-      // emails; any OTHER failure (network, bad email format) is worth
-      // surfacing. The server's own "Too many" line is shown as written:
-      // it says whether to wait minutes or until tomorrow, and a generic
-      // "Try again" would send someone at the day's limit round in circles.
-      const message = err instanceof Error ? err.message : "";
-      if (
-        !message.includes("user-not-found") &&
-        !message.includes("invalid-credential")
-      ) {
-        setError(
-          message.startsWith("Too many")
-            ? message
-            : friendlyAuthError(message, "Couldn’t send the link. Try again.")
-        );
-        setLoadingAction(null);
-        return;
-      }
-    }
-    // Same neutral message whether or not the account exists.
-    setNotice(
-      `If an account exists for ${email.trim()}, a reset link is on its way.`
-    );
-    setLoadingAction(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setNotice("");
-    setLoadingAction("email");
-    try {
-      if (isSignUp) {
-        await signUp(email, password);
-      } else {
-        await signIn(email, password);
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      // On a failed password sign-in, a Google/Apple-only account is the most
-      // confusing case: "Wrong email or password" implies a wrong password
-      // when really there's NO password. If the email is OAuth-only, point to
-      // the right button instead. (Skipped on sign-up — nothing to look up.)
-      if (!isSignUp && /invalid-credential|wrong-password/.test(message)) {
-        const hint = providerHint(await fetchSignInMethods(email));
-        if (hint) {
-          setError(hint);
-          return;
-        }
-      }
-      setError(
-        friendlyAuthError(
-          message,
-          isSignUp
-            ? "Couldn’t create your account. Try again."
-            : "Couldn’t sign in. Try again."
-        )
-      );
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  /* Shared error surface for the OAuth buttons. The high-value case is
-     account-exists-with-different-credential — the duplicate-account trap
-     (a friend with an Apple account tapped Google, hit a dead generic
-     error, and created a second account). Firebase attaches the colliding
-     email to the error; look up its real sign-in methods and steer to the
-     right button by name. */
-  const surfaceOAuthError = async (err: unknown) => {
-    const message = err instanceof Error ? err.message : "Something went wrong";
-    if (isSignInCancelled(err)) return;
-    if (message.includes("account-exists-with-different-credential")) {
-      const collidingEmail = (err as { customData?: { email?: string } })
-        ?.customData?.email;
-      if (collidingEmail) {
-        const hint = duplicateEmailHint(
-          await fetchSignInMethods(collidingEmail)
-        );
-        if (hint) {
-          setError(hint);
-          return;
-        }
-      }
-    }
-    setError(friendlyAuthError(message, "Couldn’t sign in. Try again."));
-  };
-
-  const handleGoogle = async () => {
-    setError("");
-    setNotice("");
-    setLoadingAction("google");
-    try {
-      await signInWithGoogle();
-    } catch (err: unknown) {
-      await surfaceOAuthError(err);
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  const handleApple = async () => {
-    setError("");
-    setNotice("");
-    setLoadingAction("apple");
-    try {
-      await signInWithApple();
-    } catch (err: unknown) {
-      await surfaceOAuthError(err);
-    } finally {
-      setLoadingAction(null);
-    }
-  };
+  const startSetup = () => navigate(SETUP_PATH);
 
   if (view === "welcome") {
     return (
@@ -320,7 +116,7 @@ export default function Login() {
                 to the plan. Under it, one quiet way back in for an
                 account, as Strava's and Nike's welcomes have. */}
             <div className="flex flex-col items-center gap-1">
-              <Button fullWidth size="md" onClick={() => setView("signUp")}>
+              <Button fullWidth size="md" onClick={startSetup}>
                 Get started
               </Button>
               <Button
@@ -335,7 +131,7 @@ export default function Login() {
             <div className="flex items-center justify-center gap-3 text-xs text-stage-muted">
               <Link
                 to="/privacy"
-                onClick={keepForm}
+                onClick={() => keepForm()}
                 className="inline-flex items-center min-h-[44px] px-1 hover:text-stage-foreground transition-colors"
               >
                 Privacy Policy
@@ -343,7 +139,7 @@ export default function Login() {
               <span aria-hidden="true">·</span>
               <Link
                 to="/terms"
-                onClick={keepForm}
+                onClick={() => keepForm()}
                 className="inline-flex items-center min-h-[44px] px-1 hover:text-stage-foreground transition-colors"
               >
                 Terms of Service
@@ -358,15 +154,13 @@ export default function Login() {
   return (
     <div className="ds-auth-shell">
       <div className="ds-auth-page ds-page-stack">
-        {/* The lockup, then the heading at the foot of the lifter. The
-            lifter stays mounted between Sign in and Sign up, so it does
-            not play its rep again on the way across. */}
+        {/* The lockup, then the heading at the foot of the lifter. */}
         <div className="signin-head">
           <div className="signin-row">
             <AuthLockup />
             <SignInFigure />
             <h1 className="signin-heading text-h1 font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
-              {isSignUp ? "Create your account" : "Welcome back"}
+              Welcome back
             </h1>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -374,232 +168,45 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Soc15: arrived from a friend's invite link; signing up keeps
-            the code for setup. Sign-in has nothing to say about it. */}
-        {isSignUp && <InviteNote />}
-
-        {/* Notices and errors sit above every way in, so one from the
-            Apple or Google sheet is read where the eye already is. */}
-        {accountDeleted && (
-          <div
-            role="status"
-            className="flex items-start gap-2 p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
-          >
-            <CheckCircle2
-              className="size-4 mt-0.5 shrink-0 text-success-strong"
-              aria-hidden="true"
-            />
-            Your account and all data have been deleted.
-          </div>
-        )}
-        {error && (
-          <div
-            id="login-error"
-            role="alert"
-            className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive-strong text-sm font-medium"
-          >
-            <AlertCircle
-              className="size-4 shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <span>{error}</span>
-          </div>
-        )}
-        {/* On the iPhone, what each sign-in step did and how long it took,
-            for a failure nobody can inspect there (bootTrace.ts). */}
-        {error && isNativePlatform() && (
-          <details className="text-left">
-            <summary className="cursor-pointer text-xs text-muted-foreground">
-              Details
-            </summary>
-            <div className="mt-2">
-              <BootSteps />
-            </div>
-          </details>
-        )}
-
-        {shownNotice && (
-          <div
-            role="status"
-            className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
-          >
-            <Mail
-              className="size-4 shrink-0 mt-0.5 text-primary"
-              aria-hidden="true"
-            />
-            <span>{shownNotice}</span>
-          </div>
-        )}
-
-        {/* Apple, then Google, then the email form (A1a): the one-tap
-            ways in are on screen before the keyboard can cover them. */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleApple}
-            loading={loadingAction === "apple"}
-            disabled={isLoading && loadingAction !== "apple"}
-            fullWidth
-            // Apple brand styling: black-on-white in light mode,
-            // white-on-black in dark mode. The foreground/background
-            // token swap encodes that without a media query.
-            className="bg-foreground text-background hover:bg-foreground/90"
-            leftIcon={
-              <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
-              </svg>
-            }
-          >
-            Continue with Apple
-            {lastMethod === "apple" && <LastUsed />}
-          </Button>
-
-          <Button
-            onClick={handleGoogle}
-            loading={loadingAction === "google"}
-            disabled={isLoading && loadingAction !== "google"}
-            fullWidth
-            variant="outline"
-          >
-            Continue with Google
-            {lastMethod === "google" && <LastUsed />}
-          </Button>
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        {/* Form. When there's an error, the form is aria-describedby
-            the error banner so screen-reader users hear the error
-            associated with the form rather than as a free-floating
-            alert. */}
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-          aria-describedby={error ? "login-error" : undefined}
-        >
-          <div className="space-y-3">
-            <div className="relative">
-              <label htmlFor="login-email" className="sr-only">
-                Email address
-              </label>
-              <Mail
-                className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <input
-                id="login-email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="ds-input pl-10 pr-4 py-3"
-              />
-            </div>
-
-            <div className="relative">
-              <label htmlFor="login-password" className="sr-only">
-                Password
-              </label>
-              <Lock
-                className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <input
-                id="login-password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="ds-input pl-10 pr-12 py-3"
-              />
-              {/* size="md" is the iOS HIG 44pt floor — the password
-                  toggle is a standalone control inside the input, so
-                  the IconButton docs' "sm acceptable only when the
-                  parent row provides extra tap area" caveat doesn't
-                  apply here. The input already has pr-12, so 44px
-                  fits without overlapping typed text. */}
-              <IconButton
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                size="md"
-                className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
-                icon={showPassword ? <EyeOff /> : <Eye />}
-              />
-            </div>
-
-            {/* Forgot password — sign-in mode only. Sends a Firebase reset
-                email to the address typed above; the auth flow shows a
-                neutral "if an account exists…" message either way so it
-                can't be used to enumerate emails. */}
-            {!isSignUp && (
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={isLoading}
-                  className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-foreground hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
-                >
-                  {loadingAction === "reset"
-                    ? "Sending reset link…"
-                    : "Forgot password?"}
-                </button>
+        <AccountForm
+          mode="signIn"
+          initialEmail={returning?.email || changedEmail || ""}
+          standingNotice={
+            changedEmail
+              ? `Changing your email signs you out once the change is confirmed. Sign in with ${changedEmail}.`
+              : undefined
+          }
+          banner={
+            accountDeleted && (
+              <div
+                role="status"
+                className="flex items-start gap-2 p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
+              >
+                <CheckCircle2
+                  className="size-4 mt-0.5 shrink-0 text-success-strong"
+                  aria-hidden="true"
+                />
+                Your account and all data have been deleted.
               </div>
-            )}
-          </div>
+            )
+          }
+          onLegalLink={keepForm}
+          // A sign-in from here is not Save your plan's, so a mark left by
+          // one that never came back must not hand its answers to this
+          // account.
+          onStart={cancelSetupSave}
+        />
 
-          <Button
-            type="submit"
-            loading={loadingAction === "email"}
-            disabled={isLoading && loadingAction !== "email"}
-            fullWidth
-            size="md"
-          >
-            {isSignUp ? "Create account" : "Sign in"}
-            {!isSignUp && lastMethod === "password" && <LastUsed />}
-          </Button>
-        </form>
-
-        {/* Agreeing to the Terms. App Review 1.2 wants the people who
-            post in an app to have agreed to terms that rule out
-            objectionable content and abusive users. Every button on this
-            screen can create an account: the email form on Sign up, and
-            Apple and Google on either screen the first time they are
-            used. So the line sits under all of them, on both screens. The
-            links are the signed-out /terms and /privacy routes. */}
-        <p className="text-center text-xs text-muted-foreground">
-          By continuing, you agree to the{" "}
-          <Link to="/terms" onClick={keepForm} className={AGREEMENT_LINK}>
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link to="/privacy" onClick={keepForm} className={AGREEMENT_LINK}>
-            Privacy Policy
-          </Link>
-          .
-        </p>
-
-        {/* Toggle */}
+        {/* No account yet: setup comes first, and makes one at its end
+            (A6). */}
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
+          Don’t have an account?{" "}
           <button
             type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError("");
-            }}
-            aria-pressed={isSignUp}
-            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
+            onClick={startSetup}
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
-            {isSignUp ? "Sign in" : "Sign up"}
+            Get started
           </button>
         </p>
       </div>

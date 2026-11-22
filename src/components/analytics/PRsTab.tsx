@@ -10,7 +10,10 @@ import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
-import PRCard, { NewRecordChip } from "@/components/analytics/PRCard";
+import PRCard, {
+  NewRecordChip,
+  type RunnerUp,
+} from "@/components/analytics/PRCard";
 import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
 
 /* PR 7b follow-up — collapse the lifetime Lifting bests list to the
@@ -60,6 +63,8 @@ interface RunningPR {
   /** The run that holds this record, when one does. Absent on a bucket
    *  with nothing in it, where the row renders a "--" placeholder. */
   runId?: string;
+  /** A Fastest row's 2nd and 3rd fastest (Run29). */
+  runnersUp?: RunnerUp[];
 }
 
 interface RunningPRBuckets {

@@ -53,6 +53,8 @@ import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
+import TopThreeCard from "../components/run/TopThreeCard";
+import { runPlacings, type RunPlacing } from "@/lib/runPlacings";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
@@ -523,6 +525,8 @@ export default function RunSummary() {
     history: RunHistory | null;
     /** The account's first run though it has lifted before. */
     firstOfSport: boolean;
+    /** Where its 1K, 5K and 10K placed among the runner's own (Run29). */
+    placings: RunPlacing[];
   } | null>(null);
   const atFirstSave = useRef<{
     streak: StreakChange | null;
@@ -1514,6 +1518,26 @@ export default function RunSummary() {
         ),
         history: finishedRun.moments?.history ?? null,
         firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+        /* Your top three (Run29), against the whole history only, as the
+           post's bests are claimed. */
+        placings:
+          historyRead && historyRead.uid === user.uid && historyRead.known
+            ? runPlacings(
+                {
+                  id: saveRunId,
+                  completedAt: new Date(),
+                  distance,
+                  duration: elapsed,
+                  avgPace: avgPaceSeconds,
+                  activityType: runConfig?.activityType || "freerun",
+                  place: runConfig?.place ?? null,
+                  isInvalid,
+                  savedAnyway: isInvalid,
+                  bestEfforts,
+                },
+                historyRead.runs
+              )
+            : [],
       });
       setAnniversaryRun({
         id: saveRunId,
@@ -1800,6 +1824,15 @@ export default function RunSummary() {
           {/* Below the first screen: the week, the run's numbers, its
               splits and climb, and what the runner adds to it. */}
           <div className="h-6" aria-hidden="true" />
+
+          {/* Your top three (Run29): under the reward, the distances this
+              run placed 1st to 3rd at, quiet; a new best is the reward
+              above. */}
+          {finishFacts && finishFacts.placings.length > 0 && (
+            <div className="mx-4 mb-4">
+              <TopThreeCard placings={finishFacts.placings} />
+            </div>
+          )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (
