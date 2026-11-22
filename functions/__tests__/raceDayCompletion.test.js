@@ -145,10 +145,7 @@ describe("isStrictRaceRun", () => {
     /* Guards the guard: the tag was dropped, the distance bar was not.
        Without this, "untemplated ⇒ accepted" would pass the test above. */
     expect(
-      isStrictRaceRun(
-        rawRun({ actualTemplateId: null, distance: 9499 }),
-        10000
-      )
+      isStrictRaceRun(rawRun({ actualTemplateId: null, distance: 9499 }), 10000)
     ).toBe(false);
   });
 
@@ -183,8 +180,10 @@ describe("isStrictRaceRun", () => {
     // Every race-type id counts, so adding a race template cannot quietly
     // go unrecognised on the server.
     for (const id of RACE_TEMPLATE_IDS) {
-      expect(isStrictRaceRun(rawRun({ actualTemplateId: id }), 0), `id ${id}`)
-        .toBe(true);
+      expect(
+        isStrictRaceRun(rawRun({ actualTemplateId: id }), 0),
+        `id ${id}`
+      ).toBe(true);
     }
 
     // …and the literal "race" is pinned as a REJECTION, not merely absent.
@@ -213,6 +212,41 @@ describe("isStrictRaceRun", () => {
   it("handles null/undefined runs", () => {
     expect(isStrictRaceRun(null, 10000)).toBe(false);
     expect(isStrictRaceRun(undefined, 10000)).toBe(false);
+  });
+
+  it("refuses a treadmill run however far it went, by its place or its older type", () => {
+    /* A treadmill distance is typed in. A treadmill run on race day ended
+       the plan and started the recovery weeks until 22 November 2026
+       (rankings spec). `activityType: "treadmill"` is the type such a run
+       was saved under before the treadmill became a place (Pgm8). */
+    expect(isStrictRaceRun(rawRun({ place: "treadmill" }), 42195)).toBe(false);
+    expect(isStrictRaceRun(rawRun({ activityType: "treadmill" }), 42195)).toBe(
+      false
+    );
+    // The template tag does not make it the race either.
+    expect(
+      isStrictRaceRun(
+        rawRun({ place: "treadmill", actualTemplateId: "marathon_race" }),
+        0
+      )
+    ).toBe(false);
+  });
+
+  it("still counts a manual entry, or an outdoor run, that went the distance", () => {
+    /* Someone who raced without their phone types the race in: a manual
+       entry, outdoors, with no treadmill place. */
+    expect(isStrictRaceRun(rawRun({ activityType: "manual" }), 42195)).toBe(
+      true
+    );
+    expect(
+      isStrictRaceRun(rawRun({ activityType: "race", place: null }), 42195)
+    ).toBe(true);
+    expect(
+      isStrictRaceRun(
+        rawRun({ activityType: "manual", distance: 30000 }),
+        42195
+      )
+    ).toBe(false);
   });
 });
 
