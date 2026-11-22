@@ -44,7 +44,7 @@ function liftCard(overrides = {}) {
     date: "22 Nov 2026",
     hiddenStats: [],
     headline: "Push A done",
-    line: "Your best bench press: 80 kg, 2.5 kg up on last time.",
+    line: "Benched 80\u00A0kg\u00A0×\u00A08, a new best by 2.5\u00A0kg.",
     tone: "achievement",
     totalVolumeKg: 7470,
     totalReps: 96,
@@ -215,7 +215,25 @@ describe("the copy a card keeps", () => {
     expect(copy).not.toHaveProperty("headline");
     expect(copy).not.toHaveProperty("prExercise");
     expect(copy).not.toHaveProperty("date");
-    expect(copy.line).toMatch(/bench press/);
+    expect(copy.line).toMatch(/^Benched 80/);
+  });
+
+  it("keeps a no-break space, which the filter reads as a space", () => {
+    const copy = cardCopy(
+      liftCard({
+        headline: "Push  A\tdone",
+        prExercise: "fuck\u00A0press",
+      }),
+      profanityFilter.containsProfanity
+    );
+    expect(copy.line).toBe(
+      "Benched 80\u00A0kg\u00A0×\u00A08, a new best by 2.5\u00A0kg."
+    );
+    expect(copy.headline).toBe("Push A done");
+    expect(copy).not.toHaveProperty("prExercise");
+    expect(cardCopy(liftCard({ date: "22\u00A0Nov 2026" })).date).toBe(
+      "22 Nov 2026"
+    );
   });
 
   it("refuses what no template draws", () => {

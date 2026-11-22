@@ -216,12 +216,18 @@ function figure(value, max) {
     : undefined;
 }
 
-/** Text trimmed, capped and passed by the word filter, or undefined. */
+/** Text trimmed, capped and passed by the word filter, or undefined. A
+ *  no-break space is kept, so the page breaks the card's line where the
+ *  phone did ("80 kg × 8" stays on one line, `keepTogether`); the filter
+ *  reads every space as a space, since it splits words on spaces alone. */
 function words(value, max, containsProfanity) {
   if (typeof value !== "string") return undefined;
-  const trimmed = value.trim().replace(/\s+/g, " ");
+  const trimmed = value.trim().replace(/[^\S ]+/g, " ");
   if (!trimmed || trimmed.length > max) return undefined;
-  if (typeof containsProfanity === "function" && containsProfanity(trimmed)) {
+  if (
+    typeof containsProfanity === "function" &&
+    containsProfanity(trimmed.replace(/\s+/g, " "))
+  ) {
     return undefined;
   }
   return trimmed;
@@ -293,7 +299,10 @@ function cardCopy(raw, containsProfanity) {
     hiddenStats: hidden,
   };
 
-  const date = words(raw.date, TEXT_MAX.date, containsProfanity);
+  const date = words(raw.date, TEXT_MAX.date, containsProfanity)?.replace(
+    /\s/g,
+    " "
+  );
   if (date && DATE_TEXT.test(date)) card.date = date;
 
   for (const key of TEMPLATE_FIGURES[template]) {

@@ -99,7 +99,8 @@ const db = memoryFirestore({
       date: "22 Nov 2026",
       hiddenStats: [],
       headline: "Push A done",
-      line: "Your best bench press: 80 kg, 2.5 kg up on last time.",
+      // The card's sentence, as rewardLine's card voice writes it.
+      line: "Benched 80\u00A0kg\u00A0×\u00A08, a new best by 2.5\u00A0kg.",
       tone: "achievement",
       totalVolumeKg: 7470,
       totalReps: 96,

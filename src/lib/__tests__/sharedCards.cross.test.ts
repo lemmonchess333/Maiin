@@ -23,6 +23,7 @@ import {
 } from "@/lib/sharedCardShare";
 import { SHARED_CARD_DATA_ID, loadSharedCard } from "@/lib/sharedCardPage";
 import { FORM_ART_CUTOUTS } from "@/lib/formArtCutouts.data";
+import { rewardLine, rewardSentence } from "@/lib/finishMoment";
 import {
   CARD_ART_FILES,
   websitePublicFiles,
@@ -41,6 +42,22 @@ const TOKEN = "AbCdEfGhIjKlMnOpQrStUv";
 const SHELL =
   '<!doctype html><html><head><meta property="og:title" content="Tropos" /></head><body></body></html>';
 
+/* The card's sentence as the finish screen writes it, no-break spaces
+   and all (`keepTogether`), so the page breaks it where the phone did. */
+const CARD_LINE = rewardSentence(
+  rewardLine(
+    { kind: "pr", exercise: "Bench press", weightKg: 80, reps: 8 },
+    {
+      sport: "lift",
+      distanceUnit: "km",
+      loadIn: (kg) => kg,
+      loadUnit: "kg",
+      prBefore: { weightKg: 77.5, reps: 8 },
+      voice: "card",
+    }
+  )
+);
+
 const LIFT: ShareCardRenderData = {
   unit: "mi",
   liftUnit: "lbs",
@@ -51,7 +68,7 @@ const LIFT: ShareCardRenderData = {
   date: "22 Nov 2026",
   hiddenStats: new Set(["prs"]),
   headline: "Push A done",
-  line: "Your best bench press: 80 kg, 2.5 kg up on last time.",
+  line: CARD_LINE,
   tone: "achievement",
   totalVolumeKg: 7470,
   totalReps: 96,
@@ -183,7 +200,7 @@ describe("the page reads what the server writes", () => {
       date: "22 Nov 2026",
       hiddenStats: new Set(["prs"]),
       headline: "Push A done",
-      line: "Your best bench press: 80 kg, 2.5 kg up on last time.",
+      line: CARD_LINE,
       tone: "achievement",
       totalVolumeKg: 7470,
       totalReps: 96,
@@ -191,6 +208,10 @@ describe("the page reads what the server writes", () => {
       durationSec: 2460,
       artSrc: "/form-art/bench-press.webp",
     });
+    // The no-break spaces came through: the line breaks where the phone's did.
+    expect(view!.card.line).toBe(
+      "Benched 80\u00A0kg\u00A0×\u00A08, a new best by 2.5\u00A0kg."
+    );
     // Taken once: a second look asks the server afresh.
     expect(document.getElementById(SHARED_CARD_DATA_ID)).toBeNull();
   });
