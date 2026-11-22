@@ -3,8 +3,8 @@
  * owner's call in the run screen pass, 2026-10-12). Teal is water's colour
  * (DS3). The screen carried it on the timer, the km bar, the best lap,
  * Resume, the step card, the live route and position dot and the GPS
- * search. Only the heart-rate zone scale keeps a teal step: a five-colour
- * scale, not the screen's accent.
+ * search. The heart-rate zone scale kept a teal step until DS10 call 2,
+ * which moved it to the pace's blue-to-yellow line (`THEME.hrZones`).
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -21,7 +21,7 @@ const FILES = [
 ];
 
 describe("the live run screen's colour", () => {
-  it("is coral, with teal left only on the heart-rate zone scale", () => {
+  it("is coral, with no teal on it", () => {
     const uses = FILES.flatMap((file) =>
       readFileSync(resolve(root, file), "utf8")
         .split("\n")
@@ -31,8 +31,6 @@ describe("the live run screen's colour", () => {
         )
         .map((line) => `${file}: ${line}`)
     );
-    expect(uses).toEqual([
-      "src/components/run/RunBottomSheet.tsx: 1: THEME.teal,",
-    ]);
+    expect(uses).toEqual([]);
   });
 });
