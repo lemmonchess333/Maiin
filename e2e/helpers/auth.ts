@@ -113,6 +113,14 @@ export async function openSaveYourPlan(page: Page): Promise<void> {
       }),
     ] as const
   );
+  // The emulator's banner sits over the bottom buttons on a small phone.
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = ".firebase-emulator-warning{display:none !important}";
+      document.head.appendChild(style);
+    });
+  });
   await page.goto("setup");
   await page
     .getByRole("button", { name: SETUP.agreeHealth, exact: true })
