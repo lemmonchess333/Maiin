@@ -1553,7 +1553,6 @@ export default function Onboarding() {
                     setRunConfirmed(false);
                   }
                 }}
-                tone={trainingActivity === "running" ? "running" : "lifting"}
               />
               {hasLifting && (
                 <LiftWeekQuestion
@@ -1619,7 +1618,6 @@ export default function Onboarding() {
                     "freeform" | "race_prep" | "starter" | "rolling"
                   >
                     ariaLabel="Running plan"
-                    tone="running"
                     layout="wrap"
                     value={runMode}
                     onChange={setRunMode}
@@ -1644,7 +1642,6 @@ export default function Onboarding() {
                         <p className="text-sm">Runs per week</p>
                         <SegmentedControl<"2" | "3">
                           ariaLabel="Runs per week"
-                          tone="running"
                           value={starterRunDays <= 2 ? "2" : "3"}
                           onChange={(next) => setStarterRunDays(Number(next))}
                           options={[
@@ -1706,7 +1703,6 @@ export default function Onboarding() {
                       </label>
                       <SegmentedControl<RoadRaceDistance>
                         ariaLabel="Race distance"
-                        tone="running"
                         value={
                           isRoadDistance(raceDistance) ? raceDistance : null
                         }
@@ -1737,7 +1733,6 @@ export default function Onboarding() {
                         <p className="text-sm">Race or on your own</p>
                         <SegmentedControl<RaceGoalEntry | "">
                           ariaLabel="Race or on your own"
-                          tone="running"
                           layout="wrap"
                           value={raceEntry ?? ""}
                           onChange={(next) => {
@@ -1869,7 +1864,6 @@ export default function Onboarding() {
                           NonNullable<OnboardingDraft["recentRaceDistance"]>
                         >
                           ariaLabel="Recent race distance"
-                          tone="running"
                           className="w-36 max-w-full shrink-0"
                           value={recentRaceDistance}
                           onChange={setRecentRaceDistance}
@@ -2221,7 +2215,6 @@ export default function Onboarding() {
                       ),
                     }))}
                     onChange={setPaceKgPerWeek}
-                    tone="lifting"
                   />
                 )}
                 {goalPlan.direction !== "maintain" && !goalWeightNotBelow && (

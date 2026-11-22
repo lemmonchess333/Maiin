@@ -2272,7 +2272,6 @@ export default function RunSummary() {
                     setRelativeEffort((cur) => (cur === v ? null : v))
                   }
                   ariaLabel="How did this run feel compared to what you expected?"
-                  tone="running"
                 />
               </div>
             )}

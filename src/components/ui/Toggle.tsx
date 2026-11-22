@@ -124,10 +124,19 @@ export function Toggle({
               "bg-muted border border-muted-foreground/80 dark:border-border justify-start"
         )}
       >
+        {/* On, the track is the text colour (DS10 call 1: a switch is
+            chrome, and chrome is neutral) and the knob the colour that
+            reads on it, white in light and the page in dark. Off, the
+            knob is white on the muted track in both themes. */}
         <span
           ref={knobRef}
-          // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
-          className="size-[16px] rounded-full bg-white shadow-sm"
+          className={cn(
+            "size-[16px] rounded-full shadow-sm",
+            checked
+              ? "bg-primary-foreground"
+              : // eslint-disable-next-line no-restricted-syntax -- the off knob is white in BOTH themes; the muted track carries the theme.
+                "bg-white"
+          )}
         />
       </span>
     </button>

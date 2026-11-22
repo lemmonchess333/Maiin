@@ -1049,8 +1049,10 @@ function ActivityCard({
                     className={`grid size-10 shrink-0 place-items-center rounded-xl ${
                       lines.tone === "best"
                         ? "bg-achievement/15 text-achievement"
-                        : lines.tone === "sport" && isRun
-                          ? "bg-running/15 text-running-strong"
+                        : lines.tone === "sport"
+                          ? isRun
+                            ? "bg-running/15 text-running-strong"
+                            : "bg-lifting/12 text-lifting-strong"
                           : "bg-primary/15 text-primary"
                     }`}
                   >
@@ -1108,13 +1110,13 @@ function ActivityCard({
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1"
             style={{
-              background: `${THEME.brand}10`,
-              border: `1px solid ${THEME.brand}25`,
+              background: THEME.chrome.tint,
+              border: "1px solid hsl(var(--foreground) / 0.15)",
             }}
           >
             <Target
               className="size-4 shrink-0"
-              style={{ color: THEME.brand }}
+              style={{ color: THEME.chrome.text }}
             />
             {/* Text on the -strong step — brand is 3.87:1 as 12px text on
                 the light card; the Target icon keeps the identity. */}

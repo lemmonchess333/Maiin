@@ -5,7 +5,6 @@ import { Check } from "lucide-react";
 import { useUid } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
 import {
   saveRoutine,
   isExternalRoutineSource,
@@ -234,10 +233,7 @@ export default function SaveRoutineSheet({
             onClick={handleSave}
             disabled={saving || saved || !name.trim()}
             aria-live="polite"
-            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5"
-            style={{
-              backgroundColor: saved ? THEME.success : THEME.brandStrong,
-            }}
+            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5"
           >
             {saved ? (
               <>

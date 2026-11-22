@@ -291,7 +291,7 @@ export default function NutritionSection({
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                     activityLevel === key
-                      ? "bg-primary/10 text-lifting-strong font-medium"
+                      ? "bg-primary/10 text-foreground font-medium"
                       : "bg-muted chip-edge text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -481,7 +481,7 @@ export default function NutritionSection({
                 initial={{ opacity: 0.5, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="text-sm font-bold text-lifting-strong"
+                className="text-sm font-bold text-foreground"
               >
                 {formatCalories(tdee.targetCalories)} {CALORIE_UNIT}
               </motion.span>

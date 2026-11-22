@@ -49,19 +49,19 @@ const TYPE_ICON: Record<
   { Icon: typeof Heart; color: string }
 > = {
   kudos: { Icon: Heart, color: THEME.semantic.vitals },
-  comment: { Icon: MessageCircle, color: THEME.brand },
+  comment: { Icon: MessageCircle, color: THEME.chrome.text },
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
   follow_request: { Icon: UserPlus, color: THEME.semantic.positive },
   follow_accepted: { Icon: UserCheck, color: THEME.semantic.positive },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
-  circle_focus_backed: { Icon: Users, color: THEME.brand },
+  circle_focus_backed: { Icon: Users, color: THEME.chrome.text },
   circle_milestone: { Icon: Trophy, color: THEME.semantic.positive },
-  circle_needs_support: { Icon: HeartHandshake, color: THEME.brand },
-  circle_joined: { Icon: UserPlus, color: THEME.brand },
-  circle_routine_shared: { Icon: ClipboardList, color: THEME.brand },
-  circle_meetup: { Icon: CalendarClock, color: THEME.brand },
-  circle_meetup_cancelled: { Icon: CalendarX, color: THEME.brand },
-  circle_meetup_reminder: { Icon: CalendarClock, color: THEME.brand },
+  circle_needs_support: { Icon: HeartHandshake, color: THEME.chrome.text },
+  circle_joined: { Icon: UserPlus, color: THEME.chrome.text },
+  circle_routine_shared: { Icon: ClipboardList, color: THEME.chrome.text },
+  circle_meetup: { Icon: CalendarClock, color: THEME.chrome.text },
+  circle_meetup_cancelled: { Icon: CalendarX, color: THEME.chrome.text },
+  circle_meetup_reminder: { Icon: CalendarClock, color: THEME.chrome.text },
   // SOC-P2g — space-post engagement. Coral: the running/vitals register
   // the flame action itself uses.
   space_post_like: { Icon: Flame, color: THEME.running },
@@ -69,7 +69,7 @@ const TYPE_ICON: Record<
   invite_joined: { Icon: UserCheck, color: THEME.semantic.positive },
   // Soc15 call 3: the league's result, in the brand purple Social's
   // rewards wear.
-  league_result: { Icon: Medal, color: THEME.brand },
+  league_result: { Icon: Medal, color: THEME.chrome.text },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -214,7 +214,12 @@ export default function NotificationsSheet({
                   >
                     <div
                       className="size-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: color + "1A" }}
+                      style={{
+                        backgroundColor:
+                          color === THEME.chrome.text
+                            ? THEME.chrome.tint
+                            : color + "1A",
+                      }}
                     >
                       <Icon className="size-5" style={{ color }} />
                     </div>

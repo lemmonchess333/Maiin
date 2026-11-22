@@ -248,18 +248,21 @@
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
-  --primary: 246 88% 70%;
-  --primary-foreground: 0 0% 98%;
-  /* Darker step of the brand purple, used on filled primary CTAs and
-     high-emphasis pressable surfaces (Join, Follow, Invite, etc.).
-     Approximately #6560C8 — clears WCAG AA for white text where the
-     lighter --primary (#7B72E9) is borderline. Kept separate from
-     --primary so tinted accents (`${THEME.brand}14`) stay light. */
-  --primary-strong: 243 49% 58%;
+  /* The chrome's colour is the text's (DS10 call 1, owner 22 November
+     2026): selection, links and text buttons, switches, focus rings,
+     icon and callout tints and filled buttons are neutral, so purple
+     means lifting and the brand lives in the mark and the art. Every
+     `*-primary` class reads these, so the chrome went neutral in one
+     place and a new `bg-primary` cannot bring purple back.
+     `--primary` and `--primary-strong` are the foreground, and
+     `--primary-foreground` the colour that reads on it: white here, the
+     page in dark. `primaryNeutral.test.ts` holds all three. */
+  --primary: 240 10% 3.9%;
+  --primary-foreground: 0 0% 100%;
+  --primary-strong: 240 10% 3.9%;
   /* Sport-identity colours — coral=running, purple=lifting. SAME value
      in :root and .dark (fixed sport identity, not AA-tuned per-theme).
-     --lifting is the literal brand purple (#7B72E9) and is deliberately
-     NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
+     --lifting is the literal brand purple (#7B72E9). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 43%; /* #AC2F48 — worst case 4.53:1 (18% tint over background) */
   --running-fill: 348 57% 53.5%; /* #CC4560 — 4.58:1 under white */
@@ -333,7 +336,8 @@
      the frosted bar read as GLASS rather than a flat translucent strip. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.85);
   --nav-surface-opacity: 82%;
-  --nav-active-foreground: var(--ds-purple-700);
+  /* The open tab's label and icon: the text colour (DS10 call 1). */
+  --nav-active-foreground: hsl(var(--foreground));
   /* Semantic status colours — light mode.
      Destructive is a darker red than the legacy #e04040 because that
      value was borderline for white text on the filled surface; this
@@ -397,11 +401,10 @@
   --foreground: 240 10% 96%; /* #F4F4F6 */
   --card: 240 8% 9.8%; /* #17171B */
   --card-foreground: 240 10% 96%;
-  --primary: 244 72% 66%;
-  --primary-foreground: 0 0% 98%;
-  /* Dark-mode pairing for --primary-strong. Same hue, slightly more
-     saturated to keep filled buttons readable against #1A-#16 cards. */
-  --primary-strong: 243 55% 60%;
+  /* The foreground, as in :root (DS10 call 1), with the page under it. */
+  --primary: 240 10% 96%;
+  --primary-foreground: 240 10% 6%;
+  --primary-strong: 240 10% 96%;
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 71%; /* #DF8B9C — worst case 4.52:1 (18% tint over muted) */
@@ -451,7 +454,7 @@
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   --nav-frost-highlight: rgba(255, 255, 255, 0.14);
   --nav-surface-opacity: 88%;
-  --nav-active-foreground: var(--ds-purple-400);
+  --nav-active-foreground: hsl(var(--foreground));
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since

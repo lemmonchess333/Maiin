@@ -1410,7 +1410,6 @@ export default function History() {
                 <ArrivalFade {...overviewArrival}>
                   <EmptyState
                     icon={LineChart}
-                    accent={THEME.brand}
                     /* Day one is a starting line (DS4 words rules): the
                        first step, and what fills. The rules' rewrite of
                        "No analytics yet". */

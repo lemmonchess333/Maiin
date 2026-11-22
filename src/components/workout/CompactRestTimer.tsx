@@ -102,7 +102,7 @@ export default function CompactRestTimer({
               strokeDashoffset={done ? 0 : RING * elapsed}
               className={cn(
                 "transition-[stroke-dashoffset] duration-1000 ease-linear",
-                done ? "stroke-success" : "stroke-primary"
+                done ? "stroke-success" : "stroke-lifting"
               )}
             />
           </svg>

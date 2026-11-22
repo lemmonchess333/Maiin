@@ -34,7 +34,6 @@ import {
 } from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
 import { haptic } from "@/lib/haptic";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const PerformanceDetails = lazyRetry(
@@ -161,7 +160,6 @@ export default function PerformanceSection({
             <EmptyState
               compact
               icon={Activity}
-              accent={THEME.brand}
               headline={copy.headline}
               sub={copy.sub}
               action={
@@ -272,7 +270,7 @@ export default function PerformanceSection({
         aria-controls={detailsLocked ? undefined : detailsId}
         className={cn(
           "flex w-full items-center justify-between gap-2 min-h-11 rounded-lg text-sm font-semibold text-foreground",
-          "hover:text-lifting-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          "hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
       >
         {/* A space in the text, so "Score details Pro" reads as the

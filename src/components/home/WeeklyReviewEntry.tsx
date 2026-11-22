@@ -23,7 +23,7 @@ export default function WeeklyReviewEntry() {
     <Link
       to="/review"
       onClick={() => haptic("light")}
-      className="inline-flex min-h-11 items-center text-sm font-semibold text-lifting-strong rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       Weekly review
     </Link>

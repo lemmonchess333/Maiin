@@ -187,12 +187,7 @@ describe("colour canonical layer — index.css HSL ↔ canonical hex (tolerance)
     expect(Number(strong?.[1])).toBeLessThan(Number(fill?.[1]));
   });
 
-  it("--primary-strong is within 1 channel of brandStrong", () => {
-    expect(
-      channelDelta(
-        cssHslVarHex(indexCss, "--primary-strong"),
-        THEME.brandStrong
-      )
-    ).toBeLessThanOrEqual(1);
-  });
+  /* `--primary-strong` matched brandStrong until DS10 call 1 made the
+     chrome neutral; it is the text colour now (primaryNeutral.test.ts).
+     brandStrong stays the mark's and the art's darker purple. */
 });

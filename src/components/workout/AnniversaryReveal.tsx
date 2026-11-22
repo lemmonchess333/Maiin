@@ -64,7 +64,7 @@ export default function AnniversaryReveal({
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   const words = anniversaryWords(anniversary.kind, anniversary.since);
-  const colour = words.tone === "running" ? THEME.running : THEME.brand;
+  const colour = words.tone === "running" ? THEME.running : THEME.lifting;
 
   useBackDismiss(true, onDone);
 

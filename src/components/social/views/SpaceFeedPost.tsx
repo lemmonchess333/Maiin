@@ -42,7 +42,7 @@ export default function SpaceFeedPost({
         </Link>
         <Link
           to={postPath}
-          className="inline-flex min-h-11 items-center text-xs font-semibold text-lifting-strong"
+          className="inline-flex min-h-11 items-center text-xs font-semibold text-foreground"
           aria-label={`Open post in ${spaceName}`}
         >
           Open post

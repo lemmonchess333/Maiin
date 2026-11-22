@@ -57,7 +57,6 @@ const EXEMPT: Record<string, string> = {
   // The token source itself. `iconBg: "rgba(123, 114, 233, 0.10)"` IS
   // the canonical brand tint that the swept sites now point at; a
   // guard that flagged the definition would have nowhere to send it.
-  "lib/theme.ts": "the token definitions themselves",
 
   // The hydration fill ramp — #1E789B → #3A99BA → #52A3BD → #4EC3DC,
   // a designed four-stop gradient that deepens as the glass fills.

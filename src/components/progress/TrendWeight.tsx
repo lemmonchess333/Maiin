@@ -179,13 +179,13 @@ export function TrendWeight() {
         <SectionLabel>Weight trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
-            <span className="text-lifting-strong font-bold">
+            <span className="text-foreground font-bold">
               {hiddenHeadline}
             </span>
           ) : trendDisplay != null ? (
             <>
               Trending at{" "}
-              <span className="text-lifting-strong font-bold font-mono tabular-nums">
+              <span className="text-foreground font-bold font-mono tabular-nums">
                 {trendDisplay} {unit}
               </span>
               {goalDiff != null && (

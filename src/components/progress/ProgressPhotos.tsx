@@ -39,7 +39,6 @@ import { track } from "@/lib/historyAnalytics";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
-import { THEME } from "@/lib/theme";
 
 /** Days listed before "Show all". */
 const LISTED_DAYS = 4;
@@ -158,7 +157,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
         track("history_progress_photos_compared");
         setCompare({ ...comparison, key: Date.now() });
       }}
-      className="inline-flex min-h-11 items-center rounded-lg text-sm font-semibold text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="inline-flex min-h-11 items-center rounded-lg text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       Compare
     </button>
@@ -195,7 +194,6 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
               icon={Camera}
               headline="No photos yet"
               sub="Front, side and back every few weeks show change the scale can miss."
-              accent={THEME.brand}
               action={{
                 label: "Add photos",
                 onClick: () => openDay(localDateString()),

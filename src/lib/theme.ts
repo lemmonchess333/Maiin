@@ -44,7 +44,7 @@ export const THEME = {
 
   // Semantic — harmonised hues, calmer saturation
   semantic: {
-    activity: "#7B72E9", // purple — weight, brand, lifting
+    activity: "#7B72E9", // purple — lifting (weight is neutral since DS10)
     hydration: "#52A3BD", // teal — water
     vitals: "#D4637A", // coral — health, heart rate, recovery
     nutrition: "#D9884E", // warm orange — food, calories, macros
@@ -123,8 +123,23 @@ export const THEME = {
     runDay: "#D4637A", // coral dot = run day (matches running)
   },
 
-  // Unified icon background
-  iconBg: "rgba(123, 114, 233, 0.10)", // brand tint — subtle
+  /* The chrome's colours for inline styles (DS10 call 1, owner 22
+     November 2026): an icon, a tint or a line that is not the person's
+     data is neutral, so purple means lifting and the brand lives in the
+     mark and the art. `text` and `tint` follow the theme through the
+     tokens; `grey` is the one literal, for what cannot read a CSS
+     variable (a map's paint, a canvas). */
+  chrome: {
+    text: "hsl(var(--foreground))",
+    muted: "hsl(var(--muted-foreground))",
+    tint: "hsl(var(--foreground) / 0.08)",
+    grey: "#A1A1AA",
+    /* The text colour as a literal, per theme: a line on a map. */
+    line: { dark: "#F4F4F6", light: "#0E0E11" },
+  },
+
+  // Unified icon background: the chrome's tint (DS10 call 1).
+  iconBg: "hsl(var(--foreground) / 0.08)",
 
   // Macro colours — iconic food per macro:
   //   protein = meat-pink (Beef), carbs = wheat-gold (Wheat),

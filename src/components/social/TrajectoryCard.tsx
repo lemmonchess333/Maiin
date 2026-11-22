@@ -59,7 +59,7 @@ export default function TrajectoryCard({
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
       <div className="flex items-center gap-2 mb-3">
-        <Zap className="size-5" style={{ color: THEME.brand }} />
+        <Zap className="size-5" style={{ color: THEME.chrome.text }} />
         <div className="flex-1">
           <h3 className="text-base font-bold">Your trajectory</h3>
         </div>
@@ -84,7 +84,7 @@ export default function TrajectoryCard({
           <div className="flex flex-wrap items-baseline gap-3 mb-3">
             <span
               className="text-3xl font-figure tabular-nums font-extrabold"
-              style={{ color: THEME.brand }}
+              style={{ color: THEME.chrome.text }}
             >
               {thisWeek.sessions}
             </span>

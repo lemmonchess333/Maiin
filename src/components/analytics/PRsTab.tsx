@@ -210,7 +210,7 @@ function LiftPRList({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-lifting-strong"
+              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-foreground"
             >
               Show all ({prs.length})
             </button>

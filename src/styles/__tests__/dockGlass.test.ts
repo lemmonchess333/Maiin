@@ -111,7 +111,7 @@ describe("the docked cards' glass", () => {
       expect(
         contrast(hslToken(theme, "success-strong"), fill)
       ).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(hslToken(theme, "primary"), fill)).toBeGreaterThanOrEqual(
+      expect(contrast(hslToken(theme, "lifting"), fill)).toBeGreaterThanOrEqual(
         3
       );
     }
@@ -123,12 +123,9 @@ describe("the docked cards' glass", () => {
     expect(
       contrast(hslToken("light", "achievement-strong"), pill)
     ).toBeLessThan(4.55);
-    expect(
-      contrast(
-        hslToken("dark", "primary"),
-        over(hslToken("dark", "card"), 0.88, WHITE)
-      )
-    ).toBeLessThan(3);
+    // The rest ring was --primary, which a lighter dark fill took under
+    // 3:1. Since DS10 call 1 the ring is the lifting purple, which keeps
+    // 3:1 there too, so only the pill sets the floor now.
   });
 
   it("goes solid where the blur cannot be drawn and under Reduce Transparency", () => {

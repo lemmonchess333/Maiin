@@ -1247,7 +1247,7 @@ export default function Home() {
               onClick={() => setStreakSheet(true)}
               aria-haspopup="dialog"
               aria-label={`${streak}-day streak, show the days`}
-              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <StreakFlame
                 streak={streak}
@@ -1263,20 +1263,21 @@ export default function Home() {
             />
           )}
           {/* Settings opens from the user's own avatar (DS3): the photo when
-              there is one, otherwise the initial on a lifting tint. The
+              there is one, otherwise the initial on the chrome's neutral
+              tint (DS10 call 1: purple means lifting). The
               accessible name stays "Settings" because that is what it
               opens. */}
           <Link
             to="/settings"
             aria-label="Settings"
-            className="inline-flex items-center justify-center size-11 rounded-full motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center justify-center size-11 rounded-full motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Avatar
               photoURL={profile.photoURL}
               displayName={profile.displayName || user?.displayName}
               size="md"
-              fallbackBg="hsl(var(--lifting) / 0.12)"
-              fallbackColor="hsl(var(--lifting-strong))"
+              fallbackBg="hsl(var(--foreground) / 0.1)"
+              fallbackColor="hsl(var(--foreground))"
             />
           </Link>
         </>

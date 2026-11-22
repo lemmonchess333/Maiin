@@ -166,7 +166,7 @@ export default function SortableExerciseRow({
             // overwrites dnd-kit's activation listener and breaks dragging.
             onPointerDownCapture={() => haptic("light")}
             aria-label={`Reorder ${label}`}
-            className="size-11 touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="size-11 touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div
               aria-hidden="true"

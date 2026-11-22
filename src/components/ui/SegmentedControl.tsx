@@ -17,12 +17,13 @@
  *
  * The fill carries the selected state, so it is held to WCAG 1.4.11's
  * 3:1 against the track it sits in, and its label to 4.5:1 on it
- * (controlBoundaries.test.ts measures both themes). The neutral fill is
- * `--segment-selected`; the sport tones take their sport's white-text
- * fill step (`--running-fill` coral, `--lifting-fill` purple), so the
- * Lift/Run switch keeps its sport coding. A coloured LABEL on a grey fill
- * cannot do that job: any fill bright enough to clear 3:1 on the dark
- * track leaves the -strong labels near 2:1 on it.
+ * (controlBoundaries.test.ts measures both themes). The fill is
+ * `--segment-selected` on every control, the Lift/Run switch included:
+ * one selected state everywhere, neutral (DS10 call 1, owner 22 November
+ * 2026). It was purple on Train's Lift tab, coral on its Run tab and on
+ * run setup's goal, and grey elsewhere, so a colour meant "selected" on
+ * one screen and a sport on the next. The sport is in the option's icon
+ * and word.
  * `emphasis="tabs"` is the second level of a page's navigation, under a
  * track control that already picks the page's part (Social's Feed, then
  * its Following / Spaces / Explore): text tabs on a hairline, the selected
@@ -70,11 +71,6 @@ export interface SegmentedControlProps<T extends string | number> {
   onReselect?: (value: T) => void;
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
-  /** Selected-segment colour. `brand` = the neutral grey fill (default),
-   *  `running` = the coral fill, `lifting` = the purple fill, each under
-   *  a white label and (currentColor) icon, so the Programme Lift/Run
-   *  switch reads its sport identity symmetrically. */
-  tone?: "brand" | "running" | "lifting";
   /** `track` = the iOS track look (default). `tabs` = underlined text
    *  tabs, only for a second level under a track control (see the
    *  header). There is no filled-pill look: the one group that had it,
@@ -104,7 +100,7 @@ const OPTION_BASE = [
   "min-h-[44px] rounded-lg text-sm font-semibold",
   "active:scale-[0.97] motion-safe:transition",
   "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");
 
 function SegmentedControl<T extends string | number>({
@@ -113,7 +109,6 @@ function SegmentedControl<T extends string | number>({
   onChange,
   onReselect,
   ariaLabel,
-  tone = "brand",
   emphasis = "track",
   layout = "fill",
   size = "md",
@@ -248,12 +243,7 @@ function SegmentedControl<T extends string | number>({
                     ? cn(
                         // The fill is the selected state: 3:1 or more
                         // against the track, white 4.5:1 or more on it.
-                        "text-white",
-                        tone === "running"
-                          ? "bg-running-fill"
-                          : tone === "lifting"
-                            ? "bg-lifting-fill"
-                            : "bg-segment-selected"
+                        "text-white bg-segment-selected"
                       )
                     : // Unselected: transparent on the shared track (fill), or
                       // an individual muted pill when wrapped (no track behind).
@@ -268,12 +258,7 @@ function SegmentedControl<T extends string | number>({
               <span
                 className={cn(
                   "flex h-8 w-full min-w-0 items-center justify-center truncate rounded-[10px] px-2",
-                  selected &&
-                    (tone === "running"
-                      ? "bg-running-fill"
-                      : tone === "lifting"
-                        ? "bg-lifting-fill"
-                        : "bg-segment-selected")
+                  selected && "bg-segment-selected"
                 )}
               >
                 {opt.label}

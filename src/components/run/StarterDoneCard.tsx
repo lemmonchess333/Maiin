@@ -58,7 +58,7 @@ function NextGoalRow({
       onClick={onSelect}
       aria-labelledby={`${id}-name`}
       aria-describedby={`${id}-line`}
-      className="w-full min-h-14 flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-3.5 py-2.5 text-left active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="w-full min-h-14 flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-3.5 py-2.5 text-left active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span className="min-w-0">
         <span

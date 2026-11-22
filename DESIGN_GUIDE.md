@@ -22,8 +22,12 @@
 If you only remember thirteen things:
 
 1. **Five colours, one meaning each, and colour goes on the person's data
-   (DS4).** Purple is lifting and the brand, coral running, orange food, teal
-   water, gold a new best. An everyday screen carries at most 8% colour on
+   (DS4, DS10).** Purple is lifting, coral running, orange food, teal
+   water, gold a new best. The chrome is neutral: selection, links and text
+   buttons, switches, focus rings, icon and callout tints and Pro's buttons
+   are the text and muted greys, and one selected state serves every
+   screen (DS10 call 1, owner 22 November 2026). The brand lives in the
+   mark and the drawn art. An everyday screen carries at most 8% colour on
    dark and 15% on light, in at most three hues with one leading, and its
    biggest patch of colour is data (a ring, week segments, a route, a
    figure's lit muscles), never a button. A generic action (Follow, Edit
@@ -32,8 +36,10 @@ If you only remember thirteen things:
    into its surface. Adding a "nice blue" or neon is a regression; glass is
    for what floats, never for a card of the person's data (DS6, §14o).
    §14m.
-2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
-   (dots, labels, icons, CTAs). Never cross the wires.
+2. **Purple = lifting. Coral = running.** This sport-coding is everywhere
+   a sport is (dots, labels, icons, a sport's own actions). Never cross the
+   wires, and never lend a sport's colour to the chrome: a link, a selected
+   chip or a switch in purple says "lifting" on a screen about food.
 3. **Numbers come in two tiers, both with tabular figures.** A figure that
    stands on its own at display size (the calorie ring's 2,336, a tile's
    81.7, a hero stat, a timer, a set log's inputs) is Archivo:
@@ -50,8 +56,9 @@ If you only remember thirteen things:
 6. **Use the primitives.** `Button`, `IconButton`, `Banner`, `BottomSheet`,
    `Dialog`, `.ds-card`, `.ds-input`. Don't hand-roll a button out of a `div`
    and a Tailwind string.
-7. **Colours come from tokens, not hardcoded hex.** Use `bg-primary`,
-   `text-muted-foreground`, or `THEME.*` — never paste `#7B72E9` inline.
+7. **Colours come from tokens, not hardcoded hex.** Use `bg-primary` (the
+   neutral chrome), `text-muted-foreground`, `bg-lifting` or `THEME.*`,
+   never paste `#7B72E9` inline.
 8. **Light AND dark mode both have to work.** Every change is reviewed in both.
 9. **One hero per screen, and everything else steps down (DS4).** The
    hero is the thing about the person right now: 30-60% of the first screen,
@@ -95,14 +102,19 @@ If you only remember thirteen things:
   data and the screen's hero carry it (DS4). Light uses the
   warm grouped-background/card treatment. Every visual change must be
   reviewed in both.
-- **One colour per job (DS3):** purple is lifting and the brand, coral is
-  running, orange is food, teal is water, gold is a new best — and nothing
-  else. A colour that means a sport or a domain is not decoration.
-- **Brand colour:** Purple `#7B72E9` means lifting and the brand (DS4 call
-  1). It colours lifting data (week segments, a figure's lit muscles,
-  progress on a lifting goal), a brand moment and the smaller lifting
-  controls; a generic action (Follow, Edit profile, Start a circle, Done,
-  Save) is neutral, because a colour that is on every button means nothing.
+- **One colour per job (DS3, DS10):** purple is lifting, coral is
+  running, orange is food, teal is water, gold is a new best, and nothing
+  else. A colour that means a sport or a domain is not decoration, and the
+  chrome is neutral.
+- **Brand colour:** Purple `#7B72E9` is the brand's in the mark, the
+  lockup and the drawn art, and lifting's everywhere else (DS4 call 1,
+  DS10 call 1). It colours lifting data (week segments, a figure's lit
+  muscles, progress on a lifting goal, a set's row, the rest ring) and a
+  lift's own small controls; a generic action (Follow, Edit profile, Start
+  a circle, Done, Save, Upgrade) is neutral, because a colour that is on
+  every button means nothing. `--primary` is the text colour since DS10,
+  so `bg-primary`, `text-primary` and `ring-primary` are neutral wherever
+  they are written (`primaryNeutral.test.ts`).
   A screen's one full-width filled button is neutral too, white on dark and
   ink on light, Start workout included (owner, 7 November 2026): filled in
   purple it became the largest patch of colour on Home and took the screen
@@ -163,20 +175,19 @@ normal Tailwind utilities. They automatically adapt to dark mode.
 | `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                                |
 | `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                   |
 | `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                   |
-| `bg-primary` / `text-primary`                               | Brand purple (light — **for tints, accents, icons and large numerals**; under 4.5:1 as small text)                                        |
-| `text-lifting-strong`                                       | Brand purple as **small text** — the AA step (the brand and lifting are one purple; `text-primary-strong` is the fill, not the text step) |
-| `bg-primary-strong`                                         | Darker brand purple — **for filled CTAs with white text** (clears WCAG AA where `bg-primary` is borderline)                               |
+| `bg-primary` / `text-primary`                               | The chrome: the text colour (DS10). Tints (`bg-primary/10`), a selected chip's border, a focus ring, a switch that is on, a chrome icon  |
+| `bg-primary-strong` + `text-primary-foreground`             | A neutral filled button: white on dark, ink on light (`Button` `primary` and `neutral` look the same since DS10)                         |
+| `bg-lifting` / `text-lifting-strong`                        | Lifting purple: its data, and its small text at the AA step. Never a link, a selection or a generic button                              |
 | `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                   |
 | `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                           |
 | `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                  |
 | `border-border`                                             | The standard hairline border                                                                                                              |
 
-> ⚠️ **`bg-primary` vs `bg-primary-strong`:** if white text sits _on_ the
-> colour (a filled button, a "Join"/"Follow" pill), use `bg-primary-strong`.
-> If the colour is a light tint, use `bg-primary`. Purple TEXT smaller than
-> 24px (18.66px bold) takes `text-lifting-strong`, never `text-primary` —
-> `identityTextGuard.test.ts` counts the bare uses. The `Button` primitive
-> already does this for you.
+> ⚠️ **What sits on a filled `bg-primary`** is `text-primary-foreground`,
+> never `text-white`: the fill is near white in dark (`primaryNeutral.test.ts`
+> refuses the pair). Purple TEXT smaller than 24px (18.66px bold) takes
+> `text-lifting-strong`, and only for lifting; a link or a text button is
+> `text-foreground` with its weight (DS10).
 
 ### 3b. The `THEME` object (JS constants) — for what classes can't reach
 
@@ -189,9 +200,11 @@ import { THEME } from "@/lib/theme";
 
 // Sport-coding
 THEME.running; // #D4637A  coral  — running
-THEME.lifting; // #7B72E9  purple — lifting (same as brand)
-THEME.brand; // #7B72E9
-THEME.brandStrong; // #6560C8  filled CTA brand (AA-safe on white text)
+THEME.lifting; // #7B72E9  purple — lifting
+THEME.brand; // #7B72E9  the mark and the drawn art only (DS10)
+THEME.brandStrong; // #6560C8  the mark's and the art's darker step
+THEME.chrome.text; // the text colour, for an icon or a line that is chrome
+THEME.chrome.tint; // the text colour at 8%, for a chrome tile or callout
 
 // Semantic (harmonised)
 THEME.semantic.hydration; // #52A3BD teal   — water
@@ -225,7 +238,10 @@ constant. You'll see this constantly — learn the conversions:
 />
 ```
 
-`THEME.iconBg` (`rgba(123,114,233,0.10)`) is the pre-baked brand icon tint.
+`THEME.iconBg` is the chrome's neutral icon tint (the text colour at 8%),
+not a brand purple, since DS10. A tint written with the hex-alpha suffix
+is for a domain colour; the chrome's tints are `THEME.chrome.tint` or
+`bg-primary/10`.
 
 ### 3d. Macro colours need a light-mode swap
 
@@ -238,7 +254,8 @@ values in light mode). Use the raw values only for dots/tints/bars.
 
 | Colour              | Always means                                                                                                                                                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Purple `#7B72E9`    | Brand / lifting                                                                                                                                                                                                                                                                |
+| Purple `#7B72E9`    | Lifting, and the brand only in the mark, the lockup and the drawn art (DS10)                                                                                                                                                                                                  |
+| Text and muted grey | The chrome: selection (one selected state, `--segment-selected` under a white label, or a foreground border and tint), links and text buttons, switches, focus rings, chrome icons and callouts, Pro's buttons (DS10)                                                       |
 | Coral `#D4637A`     | Running / vitals / recovery                                                                                                                                                                                                                                                    |
 | Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                                                                                  |
 | Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                                                                              |
@@ -571,12 +588,13 @@ behaviour.
 - **`SegmentedControl`**: the one single-select pill group (Train's
   Lift/Run, Social's Together/Feed, Progress's Overview/Bests and ranges).
   The selected segment is a filled pill under a white label, with no outline,
-  as iOS draws its dark-mode control: grey (`--segment-selected`) by
-  default, coral (`--running-fill`) or purple (`--lifting-fill`) for
-  `tone="running"` / `"lifting"`. The fill is the selected state, so it
-  clears 3:1 against the track in both themes and its label 4.5:1
-  (`controlBoundaries.test.ts`). A coloured label on the grey cannot keep
-  the sport coding at AA, which is why the sport rides in the fill.
+  as iOS draws its dark-mode control: grey (`--segment-selected`) on every
+  control, Train's Lift/Run included. The sport tones went in DS10 call 1
+  (owner, 22 November 2026): selected was purple on the Lift tab, coral on
+  the Run tab and run setup's goal and grey elsewhere, so one selected
+  state now serves every screen and the sport is in the option's icon and
+  word. The fill is the selected state, so it clears 3:1 against the track
+  in both themes and its label 4.5:1 (`controlBoundaries.test.ts`).
   `emphasis="solid"` is the Food meal pills (§3f). `emphasis="tabs"` is
   a page's second level under a track control (Social's Feed, then
   Following / Spaces / Explore): text tabs on a hairline, the selected one
@@ -891,19 +909,19 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
 - **The Food hero keeps its wash and three macro cards (owner, 1 November 2026).** A 31 October pass put the ring and the macros on one plain card to calm the page; the owner compared the two on a phone and kept the earlier look, which was restored. Don't flatten the Food hero again without asking. The same day the welcome screen got back its three rows (Lifting, Running, Food, each with its drawing) in place of the pass's single photo. On 11 November 2026 the owner chose the welcome's picture over those rows (DS8, §14p). On 12 November 2026 he replaced that picture with photographs of athletes (§14p).
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — lifting and the brand (DS4 call 1): lifting actions and data, active tab indicators, progress on a lifting goal. Generic actions are neutral. Never as a full background: its only fills are the primary button on a lifting or brand action and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Brand colour:** Purple #7B72E9 — lifting, and the brand in the mark, the lockup and the drawn art (DS4 call 1, DS10 call 1). Lifting actions and data and progress on a lifting goal take it; the open tab, selection, links, switches, focus and generic actions are neutral (DS10, owner 22 November 2026: the chrome had made purple mean "selected", "a link", "Pro" and "lifting" at once). Never as a full background, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** a T whose stem rises into its bar: a bar notched under its middle and a stem pointed to fit, with an upward chevron as the gap between them. White on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose it on 2026-11-11 (DS7; `docs/visual-audit/bakeoff/DECISION.md`, decision 5) over the hexagon of decision 4, from the top apps' marks: a letter of the name, one shape straight on the field. It is the app icon (with dark and tinted versions for iOS's home-screen modes), the mark in the welcome and sign-in screens' lockup (DS8, §14p), the mark in the share card's lockup, and the launch image (the bar alone). The hexagon is no longer the logo; it stays the shape of badges and empty states (§7). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
 - **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same bar, `#boot-splash`, until the bundle runs). Once its first frame is up it takes the native launch image down (`nativeLaunchImage.ts`; the two frames are the same), so the rise is seen and not played underneath it. The stem rises into the bar; if the app is still loading a beat later, the mark breathes until it leaves. Once the app is ready (on Home, once Home's header mark holds still and Home has drawn today's session and food, `data-page-ready`, waited for at most a second) the mark flies into Home's header mark on a soft arc that leaves upward, on a spring with no bounce, as the page shows; anywhere but Home it lifts a little as the overlay fades. Every movement is a transform or an opacity, played by the Web Animations API on a layer of its own, so it keeps its frames while the app starts underneath. Reduce Motion: the stem fades in where it stays, nothing breathes, and the overlay fades. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
 
 ### 14b. Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
-- Purple brand: #7B72E9 (primary), #9590E0 (light), #6560C8 (dark)
+- Purple: #7B72E9 (lifting; the mark and the art), #9590E0 (light), #6560C8 (dark). `--primary` is NOT purple: it is the text colour (DS10 call 1)
 - Running coral: #D4637A
 - Nutrition orange: #D9884E / #e87316
 - Hydration teal: #52A3BD
 - Success green: #4DB872 / #22b558
-- Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
+- Icon backgrounds: the text colour at 8% (`THEME.iconBg`, `THEME.chrome.tint`), neutral since DS10
 - Card backgrounds: white (light) / #17171B (dark)
 - Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
 - Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
@@ -1143,7 +1161,7 @@ substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
 NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
 not reintroduce structured mode or structured-mode transitions. Settings →
 Run plan asks the one question the model has, whether there is a race:
-a coral `SegmentedControl`, "No race | Training for a race", the same
+a `SegmentedControl`, "No race | Training for a race", the same
 control as the race's Distance. It never names the stored mode.
 
 Constraints these primitives must keep:
@@ -1251,7 +1269,8 @@ the variant by the action's role:
 
 | Action role                   | Variant                         |
 | ----------------------------- | ------------------------------- |
-| Main lifting / brand CTA      | `primary`                       |
+| Main generic CTA (and Pro)    | `primary` (neutral since DS10)  |
+| A lift's own quieter action   | `lifting-tinted` (purple 10%)   |
 | Main running CTA              | `sport` (coral)                 |
 | Secondary action              | `secondary` or `outline`        |
 | Low-emphasis action           | `ghost`                         |
