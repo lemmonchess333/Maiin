@@ -412,6 +412,23 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     expect(screen.getByTestId("session-badge")).toBeInTheDocument();
   });
 
+  /* Owner, 22 November 2026: the card is read by anyone, so its sentence
+     names no one; the finish screen keeps "You". */
+  it("hands the share card the line without you", async () => {
+    shareCard.data = null;
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [pr("Bench Press", 80)] })}
+      />
+    );
+    expect(line()).toHaveTextContent("You benched 80 kg × 8");
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(shareCard.data).not.toBeNull());
+    expect(String(shareCard.data!.line).replace(/\u00A0/g, " ")).toBe(
+      "Benched 80 kg × 8, a new best by 2.5 kg."
+    );
+  });
+
   it("lists two new bests under the line, the line's own included", () => {
     render(
       <SessionCompleteScreen

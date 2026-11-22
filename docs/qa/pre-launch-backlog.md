@@ -5409,7 +5409,9 @@ above: the card's mark now sits in the lockup, purple on every card.
       the purple T, about a quarter of the card wide, with your name and
       the date at the right; on Clear the T and the words keep a dark edge
       over the bright photo; on Photo the foot is dark enough to read
-      whatever the photo; a long display name ends in "…".
+      whatever the photo; a long display name ends in "…". A best's
+      sentence on the card names no one ("Rowed 35 kg × 8, a new best by
+      2.5 kg."), while the finish screen still says "You rowed".
 
 ## The welcome shows your week, and sign-in a lifter who faces you (DS8, 2026-11-11)
 

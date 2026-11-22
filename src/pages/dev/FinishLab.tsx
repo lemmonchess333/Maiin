@@ -7,7 +7,7 @@ import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
 import type { PostMoment } from "@/lib/postMoments";
-import { rewardLine } from "@/lib/finishMoment";
+import { rewardLine, rewardSentence } from "@/lib/finishMoment";
 import sprintPhoto from "@/assets/welcome/welcome-1-sprint.webp";
 import type {
   ShareBackground,
@@ -116,9 +116,6 @@ function startedThisMorning(): number {
   return start.getTime();
 }
 
-const sentence = (line: { before: string; figure: string; after: string }) =>
-  `${line.before}${line.figure}${line.after}`;
-
 const ROUTE =
   "M500,120 C760,120 900,300 900,500 C900,700 760,880 500,880 C240,880 100,700 100,500 C100,300 240,120 500,120";
 
@@ -146,7 +143,7 @@ function shareData(
       ...common,
       template: "run",
       headline: "Tempo done",
-      line: sentence(
+      line: rewardSentence(
         rewardLine(
           { kind: "fastestEffort", meters: 5000, seconds: 1450 },
           {
@@ -155,6 +152,7 @@ function shareData(
             loadIn: (kg) => kg,
             loadUnit: "kg",
             fastestBefore: 1482,
+            voice: "card",
           }
         )
       ),
@@ -171,13 +169,14 @@ function shareData(
     headline: "Pull A done",
     ...(state === "share-lift-best"
       ? {
-          line: sentence(
+          line: rewardSentence(
             rewardLine(BEST[0], {
               sport: "lift",
               distanceUnit: "km",
               loadIn: (kg) => kg,
               loadUnit: "kg",
               prBefore: { weightKg: 32.5, reps: 8 },
+              voice: "card",
             })
           ),
           tone: "achievement" as const,

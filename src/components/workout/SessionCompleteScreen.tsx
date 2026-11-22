@@ -34,7 +34,9 @@ import {
   finishKicker,
   finishRegister,
   rewardLine,
+  rewardSentence,
   summaryLine,
+  type RewardLineContext,
 } from "@/lib/finishMoment";
 import type { PostMoment } from "@/lib/postMoments";
 import { liftUnitLabel } from "@/lib/liftLoad";
@@ -327,17 +329,22 @@ export default function SessionCompleteScreen({
      list sums the session up, the one in the line included. */
   const listedBests =
     bests.length === 1 && rewardPrRow?.key === bests[0].key ? [] : bests;
-  const line = reward
-    ? rewardLine(reward.moment, {
-        sport: "lift",
-        distanceUnit: "km",
-        loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
-        loadUnit: liftUnitLabel(liftUnit),
-        prBefore: bestBefore
-          ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
-          : null,
-      })
-    : null;
+  const lineContext: RewardLineContext = {
+    sport: "lift",
+    distanceUnit: "km",
+    loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
+    loadUnit: liftUnitLabel(liftUnit),
+    prBefore: bestBefore
+      ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
+      : null,
+  };
+  const line = reward ? rewardLine(reward.moment, lineContext) : null;
+  /* The share card's form of it, which names no one ("Rowed …"). */
+  const cardLine = reward
+    ? rewardSentence(
+        rewardLine(reward.moment, { ...lineContext, voice: "card" })
+      )
+    : undefined;
   /* The routine session's one line: a plan's week done, else what comes
      next. Either way it is said once on the screen. */
   const quietLine = saved
@@ -828,9 +835,7 @@ export default function SessionCompleteScreen({
               prExercise: bests[0]?.name,
               durationSec: Math.round(sessionDurationMinutes * 60),
               headline: heading,
-              line: line
-                ? `${line.before}${line.figure}${line.after}`
-                : undefined,
+              line: cardLine,
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
             }}
