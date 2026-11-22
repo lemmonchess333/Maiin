@@ -1118,8 +1118,8 @@ function ActivityCard({
               className="size-4 shrink-0"
               style={{ color: THEME.chrome.text }}
             />
-            {/* Text on the -strong step — brand is 3.87:1 as 12px text on
-                the light card; the Target icon keeps the identity. */}
+            {/* The milestone is chrome, so its words and its Target icon
+                are the text colour (DS10). */}
             <p
               className="min-w-0 max-w-full break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}

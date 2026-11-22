@@ -42,8 +42,8 @@ describe("adherenceTone", () => {
     }
     // Stated positively for the band that had the identity, so this
     // cannot pass by the colour simply having moved somewhere else.
-    // Since DS10 call 4 the reliable band is the text colour on the
-    // chrome's tint: green is a tick, not a word.
+    // The reliable band is the text colour on the chrome's tint: green is
+    // a tick, not a word (DS10 call 4).
     expect(adherenceTone(85).color).toBe("hsl(var(--foreground))");
   });
 

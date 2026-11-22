@@ -213,7 +213,7 @@ THEME.semantic.vitals; // #D4637A coral  — running (== running)
 THEME.semantic.positive; // #4DB872 green  — a done state, beside its tick
 THEME.danger; // #EF4444 red  — an error or a destructive action, with its icon
 THEME.pace; // fast #F9D86A · average #D97706 · slow #2975E0 (DS10 call 2)
-THEME.hrZones; // Z1 to Z5 on the same blue-to-yellow line
+THEME.hrZoneMax; // #CD1D93 heart-rate zone 5: not the running coral, not the error red
 
 // Macros (dark-tuned; see 3d). Protein orchid, carbs gold, fat jade (DS10)
 THEME.macros.protein; // #EC8AF5   THEME.macros.carbs // #EAB308   THEME.macros.fat // #0D907B
@@ -254,10 +254,8 @@ The raw `THEME.macros.*` values are tuned for dark mode. Protein and fat are
 and `text` for words, each the dark value in dark and `MACROS_LIGHT` /
 `MACROS_TEXT_LIGHT` in light. Carbs keeps its yellow fill in both themes.
 
-The macros were picked by measurement (DS10 call 3, owner 22 November 2026):
-fat left sage (6.6 from success green for everyone, 6 to 8 from the food
-ring for colour-blind people) and protein left pink (10 from the running
-coral on Home). On Food, Home and Progress › Food each is 20 or more
+The macros were picked by measurement (DS10 call 3, owner 22 November 2026).
+On Food, Home and Progress › Food each is 20 or more
 (CIEDE2000) from the ring, carbs, the other macro, running coral, water teal
 and lifting purple in normal vision, and 15 or more at deutan and protan 100
 from the ring, carbs and the other macro, which colour alone separates in the
@@ -268,8 +266,7 @@ meal's bar and the donut (`macroPalette.test.ts`).
 | Protein | `#EC8AF5` | `#A21CAF` | purple 22 (both)         | fat 26; the ring 47 (dark), 52 (light)       |
 | Fat     | `#0D907B` | `#007058` | water 21 / 22            | the ring 16 (dark), the deep ring 17 (light) |
 
-Protein is one colour everywhere: Progress's protein trend took the food
-orange until DS10, and its Food page the pink.
+Protein is one colour everywhere, Progress's protein trend included.
 
 ### 3e. Semantic colour meanings are fixed
 
@@ -280,11 +277,11 @@ orange until DS10, and its Food page the pink.
 | Coral `#D4637A`     | Running, and nothing else (DS10 call 2): never "slow", "behind" or an error on a run screen. Slow and behind are neutral with their chevron or word                                                                                                                            |
 | Red `#EF4444`       | An error or a destructive action, always with its icon (`THEME.danger`, `--destructive`)                                                                                                                                                                                       |
 | Pace scale          | Fast light yellow `#F9D86A`, the run's average amber `#D97706`, slow blue `#2975E0` (`THEME.pace`): the route on a run's detail and finish, and the live run's pace bar. Light to dark, each step 15 or more apart in normal, deutan and protan vision (`paceScale.test.ts`)   |
-| Heart-rate zones    | Z1 `#2975E0` to Z5 `#F9D86A` on the pace's blue-to-yellow line (`THEME.hrZones`), each zone 16 or more apart in any vision and drawn beside its name ("HR Z3")                                                                                                                 |
+| Heart-rate zones    | Teal, green, two ambers and zone 5's raspberry `#CD1D93` (`THEME.hrZoneMax`, DS10 call 2: neither the running coral nor the error red), a dot beside its name ("HR Z5") with the bpm in the stat colour                                                                        |
 | Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                                                                                  |
 | Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                                                                              |
 | Green `#4DB872`     | A done state, as a tick beside neutral words ("✓ Completed", "✓ Verified"). Never "PR", never a fill or a word on its own (DS10 call 4)                                                                                                                                        |
-| Gold                | A best and nothing else: a new best's value, the bests list, the longest streak (`--achievement`, DS10 call 4). The current streak is the text colour                                                                                                                          |
+| Gold                | A best and nothing else: a new best's value on the finish, the longest streak, a best's trophy and New chip (`--achievement`, DS10 call 4). The Bests page's values and the current streak are the text colour                                                                 |
 | Coral-red `#FF6B4A` | Scanning, inside the scanner only — the shutter ring (`THEME.food.scan`) and the scan art in the Pro preview. The scanner's selected mode is a near-white chip (white on coral was 2.8:1). The Food page's camera button is food orange (owner call, CLAUDE.md Button mapping) |
 | Amber `#D97706`     | Warning _banners_ (`THEME.amber`), and the middle of a data scale: the pace scale's average (DS10). Distinct from nutrition orange                                                                                                                                             |
 
@@ -597,12 +594,19 @@ Reach for these instead of bespoke markup. They already encode the radius,
 focus ring, touch target, press feedback, AA contrast, and reduced-motion
 behaviour.
 
-- **`Button`** (`src/components/ui/Button.tsx`): variants `primary` (filled
-  brand), `secondary`, `destructive`, `ghost`, `outline`, `sport` (coral run
-  CTA — "Start"/"Go"), `sport-tinted` (coral-tinted non-critical run action).
-  Sizes `sm` 36px / `md` 44px (default) / `lg` 52px. Has `loading`, `leftIcon`,
-  `rightIcon`, `fullWidth`. **Lifting CTAs use `primary`; running CTAs use
-  `sport`.**
+- **`Button`** (`src/components/ui/Button.tsx`): variants `primary` and
+  `neutral` (one button under two names: the text colour filled, DS10),
+  `secondary`, `destructive`, `ghost`, `outline`, `sport` (coral run CTA —
+  "Start"/"Go"), `sport-tinted` (coral-tinted non-critical run action),
+  `lifting-tinted` (a lift's quieter action). Sizes `sm` 36px / `md` 44px
+  (default) / `lg` 52px. Has `loading`, `leftIcon`, `rightIcon`,
+  `fullWidth`. **Running CTAs use `sport`; a lift's filled Start is neutral
+  and its tinted one `lifting-tinted`.**
+- **Links** (`link-standalone`, `link-inline` in `src/index.css`): the text
+  colour. A link that stands on its own line ends in a chevron ("Weekly
+  review", "See all", "Find people"); one inside a sentence is underlined.
+  A text button that acts rather than goes somewhere (Follow, Restore, Load
+  more) takes neither (DS10).
 - **`IconButton`**: icon-only; enforces `aria-label` at compile time; square
   44px default.
 - **`Banner`** (`info` | `warning`): inline, state-derived notices that live in
@@ -614,12 +618,10 @@ behaviour.
   Lift/Run, Social's Together/Feed, Progress's Overview/Bests and ranges).
   The selected segment is a filled pill under a white label, with no outline,
   as iOS draws its dark-mode control: grey (`--segment-selected`) on every
-  control, Train's Lift/Run included. The sport tones went in DS10 call 1
-  (owner, 22 November 2026): selected was purple on the Lift tab, coral on
-  the Run tab and run setup's goal and grey elsewhere, so one selected
-  state now serves every screen and the sport is in the option's icon and
-  word. The fill is the selected state, so it clears 3:1 against the track
-  in both themes and its label 4.5:1 (`controlBoundaries.test.ts`).
+  control, Train's Lift/Run included, so one selected state serves every
+  screen and the sport is in the option's icon and word (DS10 call 1). The
+  fill is the selected state, so it clears 3:1 against the track in both
+  themes and its label 4.5:1 (`controlBoundaries.test.ts`).
   `emphasis="solid"` is the Food meal pills (§3f). `emphasis="tabs"` is
   a page's second level under a track control (Social's Feed, then
   Following / Spaces / Explore): text tabs on a hairline, the selected one
@@ -701,7 +703,8 @@ behaviour.
   new best is the gold card docked above the workout's bottom bar
   (`NewBestMoment`).
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
-  `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
+  `ring-2 ring-primary ring-offset-2`, solid in the text colour so it
+  clears 3:1 on every surface. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
   for CSS (animations.css) and, through `MotionConfig`, for framer's
   POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
@@ -950,7 +953,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - Card backgrounds: white (light) / #17171B (dark)
 - Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
 - Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
-- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else: a new best's value, the bests list and the longest streak (DS10 call 4). Success green is a tick beside neutral words, never "PR"
+- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else: a new best's value on the finish, the longest streak, and a best's trophy and New chip; the Bests page's values are plain, as Strava's and Hevy's are (DS10 call 4). Success green is a tick beside neutral words, never "PR"
 - Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### 14c. Typography (Plus Jakarta Sans + Archivo)
@@ -1339,7 +1342,7 @@ progress bar, the current exercise's ring and the rest's arc.
 | ----------------------------------- | ----------- | ------------------ |
 | Logging food, on any page           | `nutrition` | `nutrition-tinted` |
 | Starting, logging or planning a run | `sport`     | `sport-tinted`     |
-| Starting a lift; a brand action     | `primary`   | `lifting-tinted`   |
+| Starting a lift                     | `neutral`   | `lifting-tinted`   |
 
 So "Log meal" is orange on Progress's empty state and in the manual logger,
 "Log food" is orange on Home's food card and in a search result's serving sheet,

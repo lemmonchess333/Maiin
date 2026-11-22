@@ -19,11 +19,8 @@
  * 3:1 against the track it sits in, and its label to 4.5:1 on it
  * (controlBoundaries.test.ts measures both themes). The fill is
  * `--segment-selected` on every control, the Lift/Run switch included:
- * one selected state everywhere, neutral (DS10 call 1, owner 22 November
- * 2026). It was purple on Train's Lift tab, coral on its Run tab and on
- * run setup's goal, and grey elsewhere, so a colour meant "selected" on
- * one screen and a sport on the next. The sport is in the option's icon
- * and word.
+ * one selected state everywhere, neutral (DS10 call 1). The sport is in
+ * the option's icon and word.
  * `emphasis="tabs"` is the second level of a page's navigation, under a
  * track control that already picks the page's part (Social's Feed, then
  * its Following / Spaces / Explore): text tabs on a hairline, the selected

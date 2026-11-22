@@ -45,9 +45,9 @@ export interface PaceTrendResult {
    * inside a guard that already existed, and raising the tint back to
    * /15 turns that suite red on its own.
    *
-   * Steady is the chrome's neutral tint and text (DS10 call 2): it was
-   * the lifting purple, on a run, and a steady run is neither good nor
-   * bad. The text colour on its own 10% tint is far over 4.5:1.
+   * Steady and Faster are the chrome's neutral tint and text (DS10): a
+   * steady run is neither good nor bad, and green is a tick, not a word.
+   * The text colour on its own 10% tint is far over 4.5:1.
    */
   className: string;
 }

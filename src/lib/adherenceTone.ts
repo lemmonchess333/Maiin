@@ -23,7 +23,7 @@ export interface AdherenceTone {
  * quiet reassurance. So the tone scales with the number:
  *
  *   >= 80  text   — the data below is reliable (the text colour on the
- *                   chrome's tint since DS10 call 4: green is a tick)
+ *                   chrome's tint: green is a tick, DS10 call 4)
  *   >= 50  muted  — the data below is decent
  *    < 50  amber  — the averages below are under-sampled
  *

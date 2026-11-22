@@ -62,13 +62,13 @@ const TYPE_ICON: Record<
   circle_meetup: { Icon: CalendarClock, color: THEME.chrome.text },
   circle_meetup_cancelled: { Icon: CalendarX, color: THEME.chrome.text },
   circle_meetup_reminder: { Icon: CalendarClock, color: THEME.chrome.text },
-  // SOC-P2g — space-post engagement. Coral: the running/vitals register
-  // the flame action itself uses.
+  // SOC-P2g — space-post engagement, in the coral of the flame action on
+  // a Space post.
   space_post_like: { Icon: Flame, color: THEME.running },
   space_post_comment: { Icon: MessageCircle, color: THEME.running },
   invite_joined: { Icon: UserCheck, color: THEME.chrome.text },
-  // Soc15 call 3: the league's result, in the brand purple Social's
-  // rewards wear.
+  // Soc15 call 3: the league's result, in the chrome's colour as every
+  // other row without a domain of its own.
   league_result: { Icon: Medal, color: THEME.chrome.text },
 };
 

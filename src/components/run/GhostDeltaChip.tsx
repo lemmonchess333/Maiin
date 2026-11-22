@@ -21,9 +21,9 @@ function fmtDelta(sec: number): string {
  * "vs last time" ghost pacing — when re-running a past run, compares your
  * current elapsed time at this point on the route against how long the original
  * took to reach the same distance (routeTimeAtDistance). The words and the
- * chevron say which: ahead, behind or level. Behind is neutral (DS10 call
- * 2): it was the running coral, the clock's own colour. Ahead keeps a green
- * chevron beside neutral words.
+ * chevron say which: ahead, behind or level. Behind is neutral, since coral
+ * means running (DS10 call 2). Ahead has a green chevron beside neutral
+ * words.
  *
  * Hidden when the route has no real timestamps (GPX without <time>) — there's
  * nothing to race against. The Strava "beat your time" affordance, no deps.

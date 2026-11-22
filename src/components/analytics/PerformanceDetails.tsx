@@ -119,8 +119,8 @@ function ScoreCard({
             <span
               className={
                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                // The sign says which way; green and coral said it twice
-                // and coral means running (DS10 calls 2 and 4).
+                // The sign says which way, so the chip is neutral: coral
+                // means running and green is a tick (DS10).
                 "bg-muted text-foreground"
               }
             >

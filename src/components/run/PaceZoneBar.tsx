@@ -18,10 +18,8 @@ export default function PaceZoneBar({
 
   /* The bar is the pace scale, light to dark from fast to slow
      (`THEME.pace`, DS10 call 2): the band either side of the target is the
-     average's amber, and the marker is white with its words above it. It
-     was a green, amber or coral marker, so "slow" was drawn in the clock's
-     own running coral. The marker's place and the words say where the pace
-     is; the colours say which way is fast. */
+     average's amber, and the marker is white with its words above it, so
+     "slow" is a word and a place, never the clock's running coral. */
   // The marker sits at 50 + pct x 48 per cent, and the tolerance is half
   // of pct's range, so the target's band reaches 24 per cent either side.
   const band = 24;

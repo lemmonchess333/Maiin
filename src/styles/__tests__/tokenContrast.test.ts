@@ -477,10 +477,6 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
       ).toBeGreaterThanOrEqual(AA_LARGE);
     }
   );
-
-  /* A test here recorded why the track took --primary rather than the
-     purple -strong step. Since DS10 call 1 both are the text colour, about
-     14.6:1 on the dark groove, so there is no choice left to record. */
 });
 
 /**

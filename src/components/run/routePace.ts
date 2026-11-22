@@ -13,8 +13,7 @@
  *
  * Three steps, light yellow to amber to blue (`THEME.pace`), so the colours
  * read as one scale from faster to slower in any colour vision (DS10 call
- * 2). Green to coral, which it was, made the slow step the running colour
- * and measured 7 apart for deuteranopia between fast and slow. A brand-purple step around the average sat
+ * 2), and no step is the running colour. A brand-purple step around the average sat
  * between green and amber until 2026-10-04: purple is the lifting colour,
  * and in the middle of a fast-to-slow scale it read as a fourth thing
  * rather than a step between two others.

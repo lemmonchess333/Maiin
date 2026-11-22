@@ -163,7 +163,7 @@ export function BadgeGrid() {
         <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
           {/* Gold is for bests only (DS10 call 4): the longest streak is
               the record, so it is gold, and the current one is the text
-              colour. They were gold and purple the other way round. */}
+              colour. */}
           <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {currentStreak}
           </p>

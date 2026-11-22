@@ -128,8 +128,8 @@ describe("colour canonical layer — theme.ts ↔ tokens.css (EXACT hex)", () =>
   it("sport + accent identity hexes are internally consistent", () => {
     expect(norm(THEME.running)).toBe("#d4637a");
     expect(norm(THEME.semantic.vitals)).toBe(norm(THEME.running));
-    // The error red is the dark theme's --destructive to a channel, not
-    // the running coral (DS10 call 2).
+    // The error red is the dark theme's --destructive to a channel; coral
+    // means running (DS10 call 2).
     expect(norm(THEME.danger)).toBe("#ef4444");
     expect(norm(THEME.semantic.negative)).toBe(norm(THEME.danger));
     expect(norm(THEME.teal)).toBe("#52a3bd");
@@ -189,8 +189,4 @@ describe("colour canonical layer — index.css HSL ↔ canonical hex (tolerance)
     );
     expect(Number(strong?.[1])).toBeLessThan(Number(fill?.[1]));
   });
-
-  /* `--primary-strong` matched brandStrong until DS10 call 1 made the
-     chrome neutral; it is the text colour now (primaryNeutral.test.ts).
-     brandStrong stays the mark's and the art's darker purple. */
 });
