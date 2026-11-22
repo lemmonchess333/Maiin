@@ -228,6 +228,9 @@ export default function AccountForm({
     }
   };
 
+  const handleApple = () => void handleOAuth("apple", signInWithApple);
+  const handleGoogle = () => void handleOAuth("google", signInWithGoogle);
+
   return (
     <>
       {/* Notices and errors sit above every way in, so one from the
@@ -271,7 +274,7 @@ export default function AccountForm({
 
       <div className="space-y-3">
         <Button
-          onClick={() => void handleOAuth("apple", signInWithApple)}
+          onClick={handleApple}
           loading={loadingAction === "apple"}
           disabled={isLoading && loadingAction !== "apple"}
           fullWidth
@@ -290,7 +293,7 @@ export default function AccountForm({
         </Button>
 
         <Button
-          onClick={() => void handleOAuth("google", signInWithGoogle)}
+          onClick={handleGoogle}
           loading={loadingAction === "google"}
           disabled={isLoading && loadingAction !== "google"}
           fullWidth
