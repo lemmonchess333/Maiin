@@ -30,11 +30,11 @@ afterEach(() => {
 });
 
 describe("useMacroPalette — light mode (default)", () => {
-  it("text track uses MACROS_TEXT_LIGHT", () => {
+  it("text track: the macros' words are the text colour, calories its AA orange", () => {
     const { result } = renderHook(() => useMacroPalette());
-    expect(result.current.text.protein).toBe(MACROS_TEXT_LIGHT.protein);
-    expect(result.current.text.carbs).toBe(MACROS_TEXT_LIGHT.carbs);
-    expect(result.current.text.fat).toBe(MACROS_TEXT_LIGHT.fat);
+    expect(result.current.text.protein).toBe("hsl(var(--foreground))");
+    expect(result.current.text.carbs).toBe("hsl(var(--foreground))");
+    expect(result.current.text.fat).toBe("hsl(var(--foreground))");
     expect(result.current.text.nutrition).toBe(MACROS_TEXT_LIGHT.nutrition);
   });
 
@@ -49,12 +49,12 @@ describe("useMacroPalette — light mode (default)", () => {
 });
 
 describe("useMacroPalette — dark mode", () => {
-  it("text track uses the bright accent values when .dark is on", () => {
+  it("text track: the macros' words stay the text colour when .dark is on", () => {
     document.documentElement.classList.add("dark");
     const { result } = renderHook(() => useMacroPalette());
-    expect(result.current.text.protein).toBe(THEME.macros.protein);
-    expect(result.current.text.carbs).toBe(THEME.macros.carbs);
-    expect(result.current.text.fat).toBe(THEME.macros.fat);
+    expect(result.current.text.fat).toBe("hsl(var(--foreground))");
+    expect(result.current.text.nutrition).toBe(THEME.semantic.nutrition);
+    expect(result.current.accent.fat).toBe(THEME.macros.fat);
   });
 });
 
@@ -62,7 +62,7 @@ describe("useMacroPalette — runtime dark-mode toggle", () => {
   it("flips text track when .dark is added to documentElement", async () => {
     const { result } = renderHook(() => useMacroPalette());
     /* Start in light mode. */
-    expect(result.current.text.protein).toBe(MACROS_TEXT_LIGHT.protein);
+    expect(result.current.text.nutrition).toBe(MACROS_TEXT_LIGHT.nutrition);
 
     /* User toggles dark mode via Settings — adds .dark to the root.
        The MutationObserver in the hook fires and updates the
@@ -73,7 +73,7 @@ describe("useMacroPalette — runtime dark-mode toggle", () => {
          the queue. */
       await Promise.resolve();
     });
-    expect(result.current.text.protein).toBe(THEME.macros.protein);
+    expect(result.current.text.nutrition).toBe(THEME.semantic.nutrition);
   });
 
   it("accent track stays stable across mode flips", () => {

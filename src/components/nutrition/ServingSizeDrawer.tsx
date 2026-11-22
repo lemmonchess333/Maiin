@@ -9,6 +9,7 @@ import { parseAmount } from "@/lib/mealPortion";
 import PortionAmountField from "./PortionAmountField";
 import PortionLeftLine from "./PortionLeftLine";
 import type { DayBudget } from "@/lib/portionLeft";
+import MacroSwatch from "@/components/food/MacroSwatch";
 
 interface Props {
   food: {
@@ -149,7 +150,8 @@ export function ServingSizeDrawer({
             >
               {Math.round(food.protein * previewServings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.protein }}>
+            <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <MacroSwatch color={accent.protein} />
               protein
             </p>
           </div>
@@ -163,7 +165,8 @@ export function ServingSizeDrawer({
             >
               {Math.round(food.carbs * previewServings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.carbs }}>
+            <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <MacroSwatch color={accent.carbs} />
               carbs
             </p>
           </div>
@@ -177,7 +180,8 @@ export function ServingSizeDrawer({
             >
               {Math.round(food.fat * previewServings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.fat }}>
+            <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <MacroSwatch color={accent.fat} />
               fat
             </p>
           </div>
