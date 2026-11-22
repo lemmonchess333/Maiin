@@ -129,14 +129,16 @@ const open = (path = "/setup") =>
 
 const route = () => screen.getByLabelText("Current route");
 
-/** Signed out at the review: Start my plan opens Save your plan. */
-function openSaveYourPlan() {
+/** Signed out at the review: Start my plan opens Save your plan, whose
+ *  ways in are their own chunk. */
+async function openSaveYourPlan() {
   saveSignedOutDraft(review);
   open();
   fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
   expect(
     screen.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
   ).toBeInTheDocument();
+  await screen.findByRole("button", { name: SAVE_PLAN.apple });
 }
 
 beforeAll(async () => {
@@ -212,8 +214,8 @@ describe("setup before there is an account", () => {
 });
 
 describe("Save your plan", () => {
-  it("opens from the review in its place, and Back returns to it", () => {
-    openSaveYourPlan();
+  it("opens from the review in its place, and Back returns to it", async () => {
+    await openSaveYourPlan();
     expect(screen.getByText(SAVE_PLAN_COPY.lead)).toBeInTheDocument();
     expect(h.complete).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
@@ -232,7 +234,7 @@ describe("Save your plan", () => {
       method().mockImplementation(async () => {
         markWhenOpened = readSetupSave();
       });
-      openSaveYourPlan();
+      await openSaveYourPlan();
       fireEvent.click(screen.getByRole("button", { name }));
       await waitFor(() => expect(method()).toHaveBeenCalledTimes(1));
       expect(markWhenOpened).toMatchObject({ emailOptIn: false });
@@ -240,7 +242,7 @@ describe("Save your plan", () => {
   );
 
   it("email makes the account with the address and password typed", async () => {
-    openSaveYourPlan();
+    await openSaveYourPlan();
     fireEvent.change(screen.getByLabelText(SAVE_PLAN.email), {
       target: { value: "robin@example.com" },
     });
@@ -260,7 +262,7 @@ describe("Save your plan", () => {
         code: "auth/popup-closed-by-user",
       })
     );
-    openSaveYourPlan();
+    await openSaveYourPlan();
     fireEvent.click(screen.getByRole("button", { name: SAVE_PLAN.apple }));
     await waitFor(() => expect(h.signInWithApple).toHaveBeenCalled());
     await waitFor(() => expect(readSetupSave()).toBeNull());

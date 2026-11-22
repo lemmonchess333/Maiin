@@ -160,7 +160,6 @@ import {
   snapshotPendingInvite,
 } from "@/lib/pendingInvite";
 import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
-import SaveYourPlan from "@/components/onboarding/SaveYourPlan";
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
@@ -181,6 +180,11 @@ import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 const loadSetupRacePicker = () =>
   import("@/components/onboarding/SetupRacePicker");
 const SetupRacePicker = lazyRetry(loadSetupRacePicker);
+/* Save your plan (A6) is drawn only signed out, at setup's end, so the
+   ways in are fetched when the review's button is pressed, not by every
+   signed-in setup. */
+const loadSaveYourPlan = () => import("@/components/onboarding/SaveYourPlan");
+const SaveYourPlan = lazyRetry(loadSaveYourPlan);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -690,6 +694,10 @@ export default function Onboarding() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
   }, [step, consentDeclined]);
+  /* Signed out at the review, Save your plan is the next screen. */
+  useEffect(() => {
+    if (!user && step === 7) void loadSaveYourPlan().catch(() => {});
+  }, [user, step]);
   /* Save your plan opens, and closes back to the review, at the top. */
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -1605,15 +1613,17 @@ export default function Onboarding() {
         </div>
         {saveView && (
           <div key="save-your-plan" className={stepEnters}>
-            <SaveYourPlan
-              onStart={() =>
-                startSetupSave({
-                  emailOptIn: askEmail && emailOptIn,
-                  inviteCode,
-                })
-              }
-              onStopped={cancelSetupSave}
-            />
+            <Suspense fallback={null}>
+              <SaveYourPlan
+                onStart={() =>
+                  startSetupSave({
+                    emailOptIn: askEmail && emailOptIn,
+                    inviteCode,
+                  })
+                }
+                onStopped={cancelSetupSave}
+              />
+            </Suspense>
           </div>
         )}
         <fieldset
