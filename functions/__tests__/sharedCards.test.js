@@ -6,11 +6,15 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const {
   SHARED_CARDS,
+  UNSOURCED_CARD_DAYS,
   cardCopy,
   storeSharedCard,
   removeSharedCard,
@@ -168,6 +172,30 @@ describe("the copy a card keeps", () => {
     expect(copy.durationSec).toBe(2460);
   });
 
+  it("keeps a lift's drawing as a released cut-out's id, never an address", () => {
+    expect(cardCopy(liftCard({ art: "bench-press" })).art).toBe("bench-press");
+    for (const art of [
+      "https://evil.example/x.png",
+      "/form-art/bench-press.webp",
+      "not-a-cutout",
+      "constructor",
+      42,
+    ]) {
+      expect(cardCopy(liftCard({ art }))).not.toHaveProperty("art");
+    }
+    // Only a lift card draws one.
+    expect(cardCopy(runCard({ art: "bench-press" }))).not.toHaveProperty("art");
+  });
+
+  it("reads only a toggle's own keys, never one an object inherits", () => {
+    const copy = cardCopy(
+      liftCard({ hiddenStats: ["constructor", "toString", "__proto__", "prs"] })
+    );
+    expect(copy.hiddenStats).toEqual(["prs"]);
+    expect(copy.totalVolumeKg).toBe(7470);
+    expect(cardCopy(liftCard({ template: "constructor" }))).toBeNull();
+  });
+
   it("draws a photo's card on the brand's stage", () => {
     expect(cardCopy(liftCard({ background: "photo" })).background).toBe(
       "brand"
@@ -287,6 +315,45 @@ describe("keeping a copy", () => {
         sources: {},
       })
     ).resolves.toEqual({ stored: true });
+  });
+
+  it("gives a card that shows nothing deletable 30 days, from when it was first kept", async () => {
+    const db = memoryFirestore(seed());
+    const nowMs = NOW.getTime();
+    const week = { template: "recap", sessionsCount: 5, hiddenStats: [] };
+    await store(db, { card: week, sources: {}, nowMs });
+    const kept = db.data.get(`${SHARED_CARDS}/${TOKEN}`);
+    expect(UNSOURCED_CARD_DAYS).toBe(30);
+    expect(kept.expiresAt).toEqual(new Date(nowMs + 30 * 86_400_000));
+    // Other choices a day later keep the first day's 30.
+    await store(db, {
+      card: { ...week, format: "square" },
+      sources: {},
+      nowMs: nowMs + 86_400_000,
+    });
+    expect(db.data.get(`${SHARED_CARDS}/${TOKEN}`).expiresAt).toEqual(
+      new Date(nowMs + 30 * 86_400_000)
+    );
+    // A card of a session lives as long as the session.
+    await store(db, { token: OTHER_TOKEN, nowMs });
+    expect(db.data.get(`${SHARED_CARDS}/${OTHER_TOKEN}`)).not.toHaveProperty(
+      "expiresAt"
+    );
+  });
+
+  it("has Firestore's TTL policy delete it, as the pulse's days are", () => {
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+    const { fieldOverrides } = JSON.parse(
+      readFileSync(resolve(root, "firestore.indexes.json"), "utf8")
+    );
+    expect(
+      fieldOverrides.some(
+        (o) =>
+          o.collectionGroup === SHARED_CARDS &&
+          o.fieldPath === "expiresAt" &&
+          o.ttl === true
+      )
+    ).toBe(true);
   });
 
   it("refuses a token that is not 128 bits written out, and a card it cannot draw", async () => {
@@ -472,6 +539,46 @@ describe("who a card's page is shown to", () => {
     ]) {
       expect(out).not.toContain(leak);
     }
+  });
+
+  it("draws a lift's drawing from the website's own copy of the cut-out", async () => {
+    const view = await readSharedCard(
+      memoryFirestore(
+        kept({
+          [`${SHARED_CARDS}/${TOKEN}`]: {
+            ownerUid: "sam",
+            workoutId: "w1",
+            card: cardCopy(liftCard({ art: "bench-press" })),
+            createdAt: NOW,
+          },
+        })
+      ),
+      TOKEN
+    );
+    expect(view.card.artSrc).toBe("/form-art/bench-press.webp");
+    expect(view.card).not.toHaveProperty("art");
+  });
+
+  it("answers a card past its 30 days as one that does not exist", async () => {
+    const week = {
+      ownerUid: "sam",
+      card: cardCopy({ template: "recap", sessionsCount: 5, hiddenStats: [] }),
+      createdAt: NOW,
+      expiresAt: new Date(NOW.getTime() + 30 * 86_400_000),
+    };
+    const db = memoryFirestore(kept({ [`${SHARED_CARDS}/${TOKEN}`]: week }));
+    const before = NOW.getTime() + 30 * 86_400_000 - 1;
+    await expect(
+      readSharedCard(db, TOKEN, undefined, before)
+    ).resolves.toMatchObject({ token: TOKEN });
+    await expect(
+      readSharedCard(db, TOKEN, undefined, before + 1)
+    ).resolves.toBe(null);
+    // A time it cannot read is past.
+    const broken = memoryFirestore(
+      kept({ [`${SHARED_CARDS}/${TOKEN}`]: { ...week, expiresAt: "soon" } })
+    );
+    await expect(readSharedCard(broken, TOKEN)).resolves.toBe(null);
   });
 
   it("leaves the code off once it is no longer theirs", async () => {

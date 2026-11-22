@@ -22,7 +22,15 @@
    executor queries `ownerUid`), and when the share sheet was cancelled
    (the `sharedCard` callable's remove). The page also checks the session
    is still there each time it is opened, so a delete the trigger has not
-   reached yet already shows nothing.
+   reached yet already shows nothing. A card that shows no session or post
+   (a day's food, a week) lasts 30 days (owner, Soc17): its copy carries
+   `expiresAt`, the page answers it as unavailable once that has passed,
+   and Firestore's TTL policy on `sharedCards.expiresAt`
+   (firestore.indexes.json) deletes it.
+
+   A lift card's drawing is kept as its exercise id (`art`), which must be
+   a released cut-out (cardArt.js); the page draws the website's own copy
+   of that cut-out, never an address the phone sent.
 
    Joining from the page goes through the sharer's invite code (Soc17
    call 2), the code they had when they shared. The page shows it only
@@ -36,6 +44,7 @@ const { transactionAccountsLive } = require("./deletionTransactionGuard");
 const { isRestricted } = require("./restriction");
 const { isAccountDeleting, isTombstoned } = require("./accountDeletionStatus");
 const { firstNameOf, normaliseInviteCode } = require("./inviteCodes");
+const { cardArtSrc } = require("./cardArt");
 
 /** Where the copies live. */
 const SHARED_CARDS = "sharedCards";
@@ -163,6 +172,19 @@ const DATE_TEXT = /^[\p{L}\p{N} .,:·/’'-]+$/u;
 /** How long a request's card may be once written out, before reading it. */
 const MAX_CARD_JSON = 4000;
 
+/** How long a card that shows no session or post keeps its page (owner,
+ *  Soc17): a day's food, a week. */
+const UNSOURCED_CARD_DAYS = 30;
+const DAY_MS = 86_400_000;
+
+/** A stored time in milliseconds: a Timestamp, a Date or a number. */
+function timeMs(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value.toMillis === "function") return value.toMillis();
+  return undefined;
+}
+
 class SharedCardError extends Error {
   constructor(code, reason) {
     super(reason);
@@ -240,12 +262,21 @@ function cardCopy(raw, containsProfanity) {
     return null;
   }
   if (size > MAX_CARD_JSON) return null;
-  const template = TEMPLATES.includes(raw.template) ? raw.template : null;
+  const template =
+    typeof raw.template === "string" && TEMPLATES.includes(raw.template)
+      ? raw.template
+      : null;
   if (!template) return null;
 
   const toggles = HIDDEN_FIGURES[template];
   const hidden = Array.isArray(raw.hiddenStats)
-    ? [...new Set(raw.hiddenStats.filter((key) => key in toggles))].sort()
+    ? [
+        ...new Set(
+          raw.hiddenStats.filter(
+            (key) => typeof key === "string" && Object.hasOwn(toggles, key)
+          )
+        ),
+      ].sort()
     : [];
   const left = new Set(hidden.flatMap((key) => toggles[key]));
 
@@ -288,6 +319,8 @@ function cardCopy(raw, containsProfanity) {
   if (SESSION_TEMPLATES.includes(template) && TONES.includes(raw.tone)) {
     card.tone = raw.tone;
   }
+  // A lift's drawing, by a released cut-out's id: never an address.
+  if (template === "lift" && cardArtSrc(raw.art)) card.art = raw.art;
   return card;
 }
 
@@ -358,6 +391,7 @@ async function sourcesLive(firestore, uid, sources) {
  *   card: unknown,
  *   sources: unknown,
  *   createdAt: unknown,
+ *   nowMs?: number,
  *   containsProfanity?: (text: string) => boolean,
  *   inviteCodeFor?: (uid: string) => Promise<string | null>,
  *   logger?: { warn: Function },
@@ -370,6 +404,7 @@ async function storeSharedCard({
   card,
   sources,
   createdAt,
+  nowMs = Date.now(),
   containsProfanity,
   inviteCodeFor,
   logger,
@@ -418,6 +453,14 @@ async function storeSharedCard({
       createdAt: held && held.createdAt ? held.createdAt : createdAt,
     };
     if (inviteCode) doc.inviteCode = inviteCode;
+    // Nothing it shows can be deleted, so it lasts 30 days from when it
+    // was first kept. The TTL policy reads a time, not a sentinel.
+    if (!named) {
+      doc.expiresAt =
+        held && timeMs(held.expiresAt) !== undefined
+          ? held.expiresAt
+          : new Date(nowMs + UNSOURCED_CARD_DAYS * DAY_MS);
+    }
     tx.set(ref, doc);
   });
   return { stored: true };
@@ -583,22 +626,27 @@ function cardNoun(card) {
 
 /**
  * The card for its page, or null when it is not to be shown: an unknown
- * token, a copy that cannot be drawn, a session or post since deleted, and
- * an owner who is restricted, being deleted or gone. Each gets the same
- * null, so the page never says why. Throws when a read fails, so the
- * caller can tell "not shown" from "could not tell".
+ * token, a copy that cannot be drawn, a session or post since deleted, a
+ * card past its 30 days, and an owner who is restricted, being deleted or
+ * gone. Each gets the same null, so the page never says why. Throws when a
+ * read fails, so the caller can tell "not shown" from "could not tell".
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} token
  * @param {(text: string) => boolean} [containsProfanity]
+ * @param {number} [nowMs]
  */
-async function readSharedCard(db, token, containsProfanity) {
+async function readSharedCard(db, token, containsProfanity, nowMs = Date.now()) {
   if (!isToken(token)) return null;
   const snap = await db.collection(SHARED_CARDS).doc(token).get();
   if (!snap.exists) return null;
   const stored = snap.data() || {};
   const ownerUid = stored.ownerUid;
   if (!isUid(ownerUid)) return null;
+  // The TTL policy deletes a copy some time after it expires; the page
+  // stops showing it at the time itself.
+  const expiresMs = timeMs(stored.expiresAt);
+  if (stored.expiresAt !== undefined && !(expiresMs > nowMs)) return null;
   const card = cardCopy(stored.card, containsProfanity);
   if (!card) return null;
   const shows = sourcesOf(stored);
@@ -621,7 +669,10 @@ async function readSharedCard(db, token, containsProfanity) {
     ]);
   if (!user.exists || restricted || deleting || gone || !live) return null;
 
-  const view = { token, card };
+  // The page draws the website's own copy of the drawing.
+  const { art, ...shown } = card;
+  if (art) shown.artSrc = cardArtSrc(art);
+  const view = { token, card: shown };
   const firstName = firstNameOf(
     profile.exists ? (profile.data() || {}).displayName : null
   );
@@ -635,6 +686,7 @@ async function readSharedCard(db, token, containsProfanity) {
 
 module.exports = {
   SHARED_CARDS,
+  UNSOURCED_CARD_DAYS,
   TOKEN_PATTERN,
   TEMPLATES,
   TEMPLATE_FIGURES,

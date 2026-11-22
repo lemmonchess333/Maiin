@@ -107,6 +107,7 @@ const db = memoryFirestore({
       exerciseCount: 6,
       prCount: 1,
       prExercise: "Bench press",
+      art: "bench-press",
     },
   },
   "sharedCards/demoRunCard00000000001": {

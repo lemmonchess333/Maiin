@@ -1,9 +1,10 @@
 /**
  * A shared post's public page, signed out (App1 Q51): the card, who shared
  * it, a run's map with its ends cut off when the server sent one, "Join
- * Sam on Tropos" with the author's invite code (Soc17 call 3), and nothing
- * that leads further into the app. Anything not shown is one page that
- * never says why, with Get Tropos.
+ * Sam on Tropos" to the App Store, never with an invite code (Soc17 call
+ * 3), and nothing that leads further into the app. Anything not shown is
+ * one page that never says why. Every state's one button is "Join Tropos"
+ * (the owner's layout, 22 Nov 2026).
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -46,7 +47,7 @@ vi.mock("@/components/run/RunMap", () => ({
 }));
 
 import PublicPost from "../PublicPost";
-import { APP_STORE_URL, appInviteUrl } from "@/lib/publicLinks";
+import { APP_STORE_URL } from "@/lib/publicLinks";
 import { logger } from "@/lib/logger";
 import { formatDayMonthYear } from "@/utils/formatters";
 
@@ -63,10 +64,7 @@ const RUN: PublicPostView = {
   paceSecPerKm: 306,
   summary: "Long run: 10.21 km in 52:10 at 5:06 /km.",
   firstName: "Sam",
-  inviteCode: "K7P49M2H",
 };
-
-const JOIN = appInviteUrl("K7P49M2H");
 
 function renderAt(id = "run1") {
   return render(
@@ -93,11 +91,14 @@ afterEach(() => {
 });
 
 describe("a public post", () => {
-  it("shows who shared it, the card and Join Sam on Tropos", async () => {
+  it("names who shared it, shows the card and Join Tropos", async () => {
     load.mockResolvedValue(RUN);
     renderAt();
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Sam’s run" })
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Sam shared a run",
+      })
     ).toBeInTheDocument();
     expect(load).toHaveBeenCalledWith("run1");
     // In the visitor's own day, whatever their time zone (the card's
@@ -111,25 +112,21 @@ describe("a public post", () => {
         name: "Long run: 10.21 km in 52:10 at 5:06 /km.",
       })
     ).toBeInTheDocument();
-    const join = screen.getByRole("link", { name: "Join Sam on Tropos" });
-    expect(join).toHaveAttribute("href", JOIN);
-  });
-
-  it("goes to the App Store when the author has no code to give", async () => {
-    load.mockResolvedValue({ ...RUN, inviteCode: undefined });
-    renderAt();
-    expect(
-      await screen.findByRole("link", { name: "Join Sam on Tropos" })
-    ).toHaveAttribute("href", APP_STORE_URL);
+    // The same words as a card's page, to the App Store, with no code.
+    const join = screen.getByRole("link", { name: "Join Tropos" });
+    expect(join).toHaveAttribute("href", APP_STORE_URL);
   });
 
   it("leads nowhere further into the app: one link, no props or comments", async () => {
     load.mockResolvedValue(RUN);
     renderAt();
-    await screen.findByRole("heading", { level: 1, name: "Sam’s run" });
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Sam shared a run",
+    });
     expect(
       screen.getAllByRole("link").map((a) => a.getAttribute("href"))
-    ).toEqual([JOIN]);
+    ).toEqual([APP_STORE_URL]);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(screen.queryByText(/props|comment/i)).toBeNull();
@@ -148,7 +145,7 @@ describe("a run's map", () => {
     expect(screen.getByText("Start and finish hidden")).toBeInTheDocument();
     // Under the card, before the way to join.
     const card = screen.getByRole("img", { name: RUN.summary });
-    const get = screen.getByRole("link", { name: "Join Sam on Tropos" });
+    const get = screen.getByRole("link", { name: "Join Tropos" });
     expect(
       card.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
@@ -158,7 +155,7 @@ describe("a run's map", () => {
     // Still nothing that leads into the app.
     expect(
       screen.getAllByRole("link").map((a) => a.getAttribute("href"))
-    ).toEqual([JOIN]);
+    ).toEqual([APP_STORE_URL]);
   });
 
   it("draws none when the server sent no route", async () => {
@@ -186,7 +183,7 @@ describe("a run's map", () => {
     // The page itself carries on.
     expect(screen.getByRole("img", { name: RUN.summary })).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Join Sam on Tropos" })
+      screen.getByRole("link", { name: "Join Tropos" })
     ).toBeInTheDocument();
     warn.mockRestore();
     quiet.mockRestore();
@@ -194,7 +191,7 @@ describe("a run's map", () => {
 });
 
 describe("a post that is not shown", () => {
-  it("says only that it isn’t available, with Get Tropos", async () => {
+  it("says only that it isn’t available, with Join Tropos", async () => {
     load.mockResolvedValue(null);
     renderAt();
     expect(
@@ -206,7 +203,7 @@ describe("a post that is not shown", () => {
     expect(
       screen.queryByText(/private|followers|deleted|blocked|restricted/i)
     ).toBeNull();
-    expect(screen.getByRole("link", { name: "Get Tropos" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Join Tropos" })).toHaveAttribute(
       "href",
       APP_STORE_URL
     );
@@ -219,7 +216,10 @@ describe("a read that fails", () => {
     renderAt();
     fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Sam’s run" })
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Sam shared a run",
+      })
     ).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
   });

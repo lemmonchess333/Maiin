@@ -13,9 +13,11 @@
  * - shared with the card's link: the page stays, and the next share from
  *   the same sheet gets a new token, so a page someone was sent is never
  *   overwritten;
- * - cancelled, sent to Instagram (an image with no words), or shared with
- *   another link because the copy was not kept in time: the copy is taken
- *   back once its store has answered, since no one has its address;
+ * - cancelled, downloaded on the web (a file with no words), or shared
+ *   with another link because the copy was not kept in time: the copy is
+ *   taken back once its store has answered, since no one has its address;
+ * - sent to Instagram: nothing is kept. The sheet starts the store only
+ *   once an Instagram handoff is ruled out, since a story carries no words;
  * - refused because the tap had expired: the copy is kept for the next
  *   tap, which then needs no wait, and taken back if the sheet closes.
  *
@@ -115,6 +117,10 @@ type Copied = (typeof COPIED)[number];
 
 /** The card as its page will draw it, as the server keeps it. */
 export type SharedCardCopy = Partial<Pick<ShareCardRenderData, Copied>> & {
+  /** The session's drawing, by its exercise id: the page draws the
+   *  released cut-out the website ships for it, never an address the
+   *  phone sent. */
+  art?: string;
   template: SharedCardTemplate;
   format: ShareCardRenderData["format"];
   background: ShareCardRenderData["background"];
@@ -131,22 +137,27 @@ export interface SharedCardSources {
 }
 
 function isTemplate(value: string): value is SharedCardTemplate {
-  return value in HIDDEN_FIGURES;
+  return Object.hasOwn(HIDDEN_FIGURES, value);
 }
+
+/** An exercise id as the cut-outs name them. */
+const ART_ID = /^[a-z0-9-]{1,60}$/;
 
 /**
  * The copy of a card for its page, or null for a card that has no page (an
  * anniversary's). The figures a toggle hid are left out, and so are the
- * photo, the route's line, the drawing and the name.
+ * photo, the route's line and the name. The drawing goes as `art`, its
+ * exercise id, which the server checks against the released cut-outs.
  */
 export function sharedCardCopy(
-  data: ShareCardRenderData
+  data: ShareCardRenderData,
+  art?: string
 ): SharedCardCopy | null {
   if (!isTemplate(data.template)) return null;
   const toggles: Record<string, readonly string[]> =
     HIDDEN_FIGURES[data.template];
   const hidden = [...(data.hiddenStats ?? [])]
-    .filter((key) => key in toggles)
+    .filter((key) => Object.hasOwn(toggles, key))
     .sort();
   const left = new Set(hidden.flatMap((key) => toggles[key]));
   const copy: SharedCardCopy = {
@@ -162,12 +173,12 @@ export function sharedCardCopy(
     const value = data[key];
     if (value !== undefined && value !== "" && !left.has(key)) out[key] = value;
   }
+  if (art && ART_ID.test(art) && data.template === "lift") copy.art = art;
   return copy;
 }
 
 /** The outcome of one tap on Share, as the sheet records it. */
-export type CardShareOutcome =
-  "shared" | "downloaded" | "cancelled" | "failed" | "unused";
+export type CardShareOutcome = "shared" | "downloaded" | "cancelled" | "failed";
 
 export interface CardLinkDeps {
   /** Keep the copy; true once kept. Never rejects. */
@@ -222,11 +233,13 @@ export function cardLinkSession(deps: CardLinkDeps) {
     }
   }
 
+  /** `tapAt`: when Share was tapped, which the wait is counted from, when
+   *  the store starts later than the tap. */
   function begin(
     copy: SharedCardCopy | null,
-    sources: SharedCardSources
+    sources: SharedCardSources,
+    tapAt: number = now()
   ): CardShare {
-    const tapAt = now();
     if (!copy || !online()) {
       return { link: async (fallback) => fallback, finish: () => {} };
     }
@@ -258,7 +271,7 @@ export function cardLinkSession(deps: CardLinkDeps) {
       finish(outcome) {
         if (finished || mine.token !== token) return;
         finished = true;
-        if (carried && (outcome === "shared" || outcome === "downloaded")) {
+        if (carried && outcome === "shared") {
           // Someone has this address now: its page stays.
           rotate(false);
           return;

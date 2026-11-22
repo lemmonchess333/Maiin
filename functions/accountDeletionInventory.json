@@ -793,7 +793,7 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "reason": "A shared card's stored copy (Soc17 call 1): sharedCards/{token} = { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt }, the figures and words a card showed, read by anyone with its link through sharedCardPage. Written only by the sharedCard callable (functions/lib/sharedCards.js), which checks the deletion lock and reads the freeze in its transaction. The uid sits under a random token, so the users/{uid} and uid-keyed sweeps miss it; deleted by a query on the field. Each copy also goes with the post or session it shows (the delete triggers), and the page refuses an account being deleted.",
+      "reason": "A shared card's stored copy (Soc17 call 1): sharedCards/{token} = { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt, expiresAt }, the figures and words a card showed, read by anyone with its link through sharedCardPage. Written only by the sharedCard callable (functions/lib/sharedCards.js), which checks the deletion lock and reads the freeze in its transaction. The uid sits under a random token, so the users/{uid} and uid-keyed sweeps miss it; deleted by a query on the field. Each copy also goes with the post or session it shows (the delete triggers), one that shows neither by the TTL policy on expiresAt 30 days on, and the page refuses an account being deleted.",
       "testCoverageKey": "smoke::topLevelQuery::sharedCards",
       "testCoverageStatus": "implemented",
       "implementation": "functions/accountDeletion.js"

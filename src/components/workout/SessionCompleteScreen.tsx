@@ -359,8 +359,12 @@ export default function SessionCompleteScreen({
   const prCutout =
     rewardPr && rewardExerciseId ? getFormArtCutout(rewardExerciseId) : null;
   const object =
-    prCutout && rewardPr
-      ? { cutout: prCutout, exerciseName: rewardPr.exercise }
+    prCutout && rewardPr && rewardExerciseId
+      ? {
+          cutout: prCutout,
+          exerciseName: rewardPr.exercise,
+          exerciseId: rewardExerciseId,
+        }
       : leadArt;
   const picture = object ? (
     <img
@@ -833,6 +837,8 @@ export default function SessionCompleteScreen({
                 : undefined,
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
+              // The same drawing on the card's own page (Soc17).
+              artId: object?.exerciseId,
             }}
             /* CIRCLE-SESSION-01, as on the run's finish: a planned
                session, saved, can tell a Circle it was done. Only

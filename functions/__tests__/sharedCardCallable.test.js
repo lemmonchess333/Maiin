@@ -19,6 +19,7 @@ const { sharedCard } = require("../index");
 
 const UID = "uid-shared-card";
 const CONTEXT = { auth: { uid: UID } };
+const VERIFIED = { auth: { uid: UID, token: { email_verified: true } } };
 
 const real = {
   isRateLimited: rateLimiter.isRateLimited,
@@ -69,9 +70,26 @@ describe("sharedCard", () => {
     expect(order).toEqual([]);
   });
 
+  it("refuses a store from an unverified email before any read, and leaves prepare and remove open", async () => {
+    for (const context of [
+      CONTEXT,
+      { auth: { uid: UID, token: { email_verified: false } } },
+    ]) {
+      await expect(
+        sharedCard.run({ action: "store" }, context)
+      ).rejects.toMatchObject({ code: "failed-precondition" });
+    }
+    expect(order).toEqual([]);
+    for (const action of ["prepare", "remove"]) {
+      await expect(sharedCard.run({ action }, CONTEXT)).rejects.toMatchObject({
+        code: "resource-exhausted",
+      });
+    }
+  });
+
   it("limits a store to 20 in 10 minutes and 100 a day, after the lock and the restriction", async () => {
     await expect(
-      sharedCard.run({ action: "store" }, CONTEXT)
+      sharedCard.run({ action: "store" }, VERIFIED)
     ).rejects.toMatchObject({ code: "resource-exhausted" });
     expect(order).toEqual(["lock", "restriction", "limiter:sharedCardStore"]);
     expect(limiterCalls).toEqual([
@@ -90,7 +108,7 @@ describe("sharedCard", () => {
     };
     limiterCalls = [];
     await expect(
-      sharedCard.run({ action: "store" }, CONTEXT)
+      sharedCard.run({ action: "store" }, VERIFIED)
     ).rejects.toMatchObject({ code: "resource-exhausted" });
     expect(limiterCalls.at(-1)).toEqual({
       uid: UID,
@@ -117,7 +135,7 @@ describe("sharedCard", () => {
   it("refuses a restricted account a store and a prepare, and lets it take a copy back", async () => {
     restricted = true;
     for (const action of ["store", "prepare"]) {
-      await expect(sharedCard.run({ action }, CONTEXT)).rejects.toMatchObject({
+      await expect(sharedCard.run({ action }, VERIFIED)).rejects.toMatchObject({
         code: "permission-denied",
       });
     }

@@ -7,7 +7,10 @@ import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { track } from "@/lib/socialAnalytics";
 import { generateShareImage, shareImageFile } from "@/lib/shareCardGenerator";
-import { shareToInstagramStories } from "@/lib/shareCard/instagramShare";
+import {
+  isInstagramShareAvailable,
+  shareToInstagramStories,
+} from "@/lib/shareCard/instagramShare";
 import { buildRoutePath } from "@/lib/shareCard/polyline";
 import {
   TOGGLEABLE_STATS,
@@ -82,6 +85,9 @@ export interface ShareCardSheetData {
   line?: string;
   tone?: FinishTone;
   artSrc?: string;
+  /** The drawing's exercise id (Soc17): a card's page draws the same
+   *  released cut-out from the website, never `artSrc` itself. */
+  artId?: string;
   // LIFT
   totalVolumeKg?: number;
   totalReps?: number;
@@ -310,13 +316,18 @@ export function ShareCardSheet({
     setExporting(true);
     haptic();
     // Kept from the tap, beside the drawing, so its wait is the drawing's.
+    // Where an Instagram story can take the card, it starts only once that
+    // is ruled out: a story carries no words, so it keeps nothing.
+    const tap = { art: data.artId, at: Date.now() };
     const sources: SharedCardSources = {};
     if (data.postId) sources.postId = data.postId;
     if (data.workoutId) sources.workoutId = data.workoutId;
     if (data.runId) sources.runId = data.runId;
-    const card = link
-      ? null
-      : (cardLinks.current?.begin(renderData, sources) ?? null);
+    const begin = () =>
+      link
+        ? null
+        : (cardLinks.current?.begin(renderData, sources, tap) ?? null);
+    let card = isInstagramShareAvailable() ? null : begin();
     try {
       const file = await generateShareImage(captureRef.current, {
         format,
@@ -340,8 +351,6 @@ export function ShareCardSheet({
         asTransparentSticker: background === "transparent",
       });
       if (toIg) {
-        // An image with no words: no one was given the card's address.
-        card?.finish("unused");
         track("share_card_exported", {
           template: data.template,
           format,
@@ -352,6 +361,7 @@ export function ShareCardSheet({
         onOpenChange(false);
         return;
       }
+      card ??= begin();
       const fallback = inviteCode ? appInviteUrl(inviteCode) : undefined;
       const words = card ? await card.link(fallback) : (link ?? fallback);
       const outcome = await shareImageFile(

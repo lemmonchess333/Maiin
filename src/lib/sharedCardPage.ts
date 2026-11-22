@@ -9,7 +9,9 @@
  * there asks the same function for the card alone.
  * `sharedCardPage.cross.test.ts` holds this reader to what the server
  * writes. Any field the server sends that is not one of these is ignored,
- * and the card is drawn without a route, a photo or a drawing.
+ * and the card is drawn without a route or a photo. A lift's drawing is
+ * the website's own copy of a released cut-out, `/form-art/<id>.webp`,
+ * which troposfit.com ships for every card (`CARD_ART_FILES`).
  */
 import type { ShareCardRenderData } from "@/components/share/ShareCardRenderer";
 import type { FinishTone } from "@/lib/finishMoment";
@@ -56,6 +58,9 @@ const WORDS = ["headline", "line", "prExercise", "recapTitle"] as const;
 
 const TONES: readonly FinishTone[] = ["achievement", "lifting", "running"];
 
+/** A drawing the website ships: a released cut-out, on this origin. */
+const ART_SRC = /^\/form-art\/[a-z0-9-]{1,60}\.webp$/;
+
 function num(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
     ? value
@@ -69,7 +74,7 @@ function str(value: unknown, max = 200): string | undefined {
 }
 
 function isTemplate(value: unknown): value is SharedCardTemplate {
-  return typeof value === "string" && value in HIDDEN_FIGURES;
+  return typeof value === "string" && Object.hasOwn(HIDDEN_FIGURES, value);
 }
 
 /** The card's drawing data, or null when it cannot be drawn. */
@@ -83,7 +88,8 @@ function readCard(
   const toggles: Record<string, readonly string[]> = HIDDEN_FIGURES[c.template];
   const hidden = Array.isArray(c.hiddenStats)
     ? c.hiddenStats.filter(
-        (key): key is string => typeof key === "string" && key in toggles
+        (key): key is string =>
+          typeof key === "string" && Object.hasOwn(toggles, key)
       )
     : [];
   const card: ShareCardRenderData = {
@@ -109,6 +115,13 @@ function readCard(
     if (value) card[key] = value;
   }
   if (TONES.includes(c.tone as FinishTone)) card.tone = c.tone as FinishTone;
+  if (
+    c.template === "lift" &&
+    typeof c.artSrc === "string" &&
+    ART_SRC.test(c.artSrc)
+  ) {
+    card.artSrc = c.artSrc;
+  }
   if (Array.isArray(c.splits)) {
     const splits = c.splits.flatMap((s) => {
       const split = (s ?? {}) as Record<string, unknown>;

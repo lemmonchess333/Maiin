@@ -2,12 +2,14 @@
  * `/activity/:activityId` for a signed-out visitor: one shared post,
  * where the link in a shared card's words lands (App1, Q50 and Q51).
  *
- * The post's card, drawn by the share card's own renderer
- * (ShareCardRenderer), under who shared it, then one way on: "Join Sam on
- * Tropos" (Soc17 call 3), with the author's invite code when the server
- * gives one, else to the App Store (`joinTropos.ts`). A post that is not
- * shown names no one, so its button is Get Tropos. The route ends here:
- * no props, no comments, no
+ * In the owner's layout of 22 Nov 2026 (`SharedLanding`, as a shared
+ * card's page): the small lockup, "Sam shared a run" (the author's first
+ * name), the post's card, drawn by the share card's own renderer
+ * (ShareCardRenderer), then one button, "Join Tropos", to the App Store,
+ * and a line about Tropos. Never with the author's invite code: a post's
+ * address is fixed and public, and a code on it would reach a person the
+ * author blocked (Soc15 STATUS lines). The route ends here: no props, no
+ * comments, no
  * profile and no nav. A signed-in visitor at the same address gets the
  * post in the app (ActivityPost.tsx), and on a phone with Tropos the
  * address opens the app.
@@ -30,31 +32,28 @@
  * Signed-out screens are dark and sit on the plain page in one phone-wide
  * column under the lockup, as the welcome and sign-in do (DESIGN_GUIDE
  * §14p); `.ds-auth-shell` pads the page by `--safe-top` and
- * `--safe-bottom`. The card is the hero; the button is the brand's filled
- * one, as Get started is.
+ * `--safe-bottom`. The card is the hero, at most 60% of the screen's
+ * height; the button is the brand's filled one, as Get started is.
  */
 import {
   Component,
   Suspense,
   useEffect,
-  useLayoutEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { useParams } from "react-router-dom";
-import AboutTropos from "@/components/auth/AboutTropos";
-import AuthLockup from "@/components/auth/AuthLockup";
-import Avatar from "@/components/Avatar";
-import ShareCardRenderer from "@/components/share/ShareCardRenderer";
+import {
+  SharedCardFrame,
+  SharedLanding,
+} from "@/components/share/SharedLanding";
 import { Button } from "@/components/ui/Button";
-import { buttonClasses } from "@/components/ui/buttonClasses";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import type { GPSPoint } from "@/lib/gps";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { logger } from "@/lib/logger";
-import { joinTroposHref, joinTroposWords } from "@/lib/joinTropos";
+import { sharedLine } from "@/lib/joinTropos";
 import { APP_STORE_URL } from "@/lib/publicLinks";
 import {
   loadPublicPost,
@@ -62,7 +61,6 @@ import {
   type PublicPostView,
 } from "@/lib/publicPost";
 import type { RouteCoordinate } from "@/lib/routeSegments";
-import { formatDayMonthYear } from "@/utils/formatters";
 
 /* The map's code (MapLibre) is fetched only for a post with a route, after
    the card has painted. A failed fetch leaves the card alone: a reload
@@ -76,9 +74,6 @@ type Read =
   | { status: "ready"; post: PublicPostView }
   | { status: "unavailable" }
   | { status: "error" };
-
-/** The card's drawn size (ShareCardRenderer's square). */
-const CARD_PX = 1080;
 
 export default function PublicPost() {
   const { activityId = "" } = useParams<{ activityId: string }>();
@@ -106,135 +101,50 @@ function PublicPostPage({ activityId }: { activityId: string }) {
     };
   }, [activityId, attempt]);
 
-  return (
-    <div className="ds-auth-shell">
-      <main className="ds-auth-page ds-page-stack">
-        <AuthLockup />
-        {read.status === "ready" ? (
-          <>
-            <PostHeader post={read.post} />
-            <PostCard post={read.post} />
-            {read.post.route && <RouteMap route={read.post.route} />}
-            <AboutTropos />
-          </>
-        ) : read.status === "unavailable" ? (
-          <>
-            <h1 className="text-h2 font-extrabold leading-[1.12] tracking-tight text-foreground text-balance">
-              This post isn’t available
-            </h1>
-            <AboutTropos />
-          </>
-        ) : read.status === "error" ? (
-          <>
-            <div>
-              <h1 className="text-h2 font-extrabold leading-[1.12] tracking-tight text-foreground text-balance">
-                Couldn’t load this post
-              </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Check your connection and try again.
-              </p>
-            </div>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                setRead({ status: "loading" });
-                setAttempt((n) => n + 1);
-              }}
-            >
-              Try again
-            </Button>
-          </>
-        ) : (
-          <div
-            role="status"
-            aria-label="Loading post"
-            className="aspect-square w-full rounded-2xl bg-muted motion-safe:animate-pulse"
-          />
-        )}
-        <a
-          href={
-            read.status === "ready"
-              ? joinTroposHref(read.post.inviteCode)
-              : APP_STORE_URL
-          }
-          className={buttonClasses({ fullWidth: true, size: "md" })}
-        >
-          {read.status === "ready"
-            ? joinTroposWords(read.post.firstName)
-            : "Get Tropos"}
-        </a>
-      </main>
-    </div>
-  );
-}
-
-/** Who shared it, and when. */
-function PostHeader({ post }: { post: PublicPostView }) {
-  return (
-    <header className="flex items-center gap-3 min-w-0">
-      <Avatar
-        photoURL={post.authorPhotoURL}
-        displayName={post.authorName}
-        size="lg"
-      />
-      <div className="min-w-0">
-        <h1 className="text-base font-semibold text-foreground break-words">
-          {`${post.authorName}’s ${post.type === "run" ? "run" : "workout"}`}
-        </h1>
-        {post.createdAt !== undefined && (
-          <p className="text-sm text-muted-foreground">
-            {formatDayMonthYear(new Date(post.createdAt))}
-          </p>
-        )}
-      </div>
-    </header>
-  );
-}
-
-/**
- * The share card's drawing at the column's width. The card is drawn at
- * 1080 px, as it is rasterised, and scaled to fit; to a screen reader it
- * is one picture, named by the post's figures in a sentence.
- */
-function PostCard({ post }: { post: PublicPostView }) {
-  const frame = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-  useLayoutEffect(() => {
-    const el = frame.current;
-    if (!el) return;
-    const measure = () => setWidth(el.clientWidth);
-    measure();
-    const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(measure);
-    observer?.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-  return (
-    <div
-      ref={frame}
-      role="img"
-      aria-label={post.summary}
-      className="relative aspect-square w-full overflow-hidden rounded-2xl card-shadow"
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          width: CARD_PX,
-          height: CARD_PX,
-          transform: `scale(${width / CARD_PX})`,
-          transformOrigin: "top left",
-        }}
+  if (read.status === "ready") {
+    const { post } = read;
+    return (
+      <SharedLanding
+        line={sharedLine(post.firstName, post.type === "run" ? "run" : "lift")}
+        href={APP_STORE_URL}
       >
-        <ShareCardRenderer data={publicPostCard(post)} offscreen={false} />
-      </div>
-    </div>
+        <SharedCardFrame data={publicPostCard(post)} label={post.summary} />
+        {post.route && <RouteMap route={post.route} />}
+      </SharedLanding>
+    );
+  }
+  if (read.status === "unavailable") {
+    return (
+      <SharedLanding title="This post isn’t available" href={APP_STORE_URL} />
+    );
+  }
+  if (read.status === "error") {
+    return (
+      <SharedLanding title="Couldn’t load this post" href={APP_STORE_URL}>
+        <p className="text-sm text-muted-foreground">
+          Check your connection and try again.
+        </p>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            setRead({ status: "loading" });
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Try again
+        </Button>
+      </SharedLanding>
+    );
+  }
+  return (
+    <SharedLanding href={APP_STORE_URL}>
+      <div
+        role="status"
+        aria-label="Loading post"
+        className="aspect-square w-full rounded-2xl bg-muted motion-safe:animate-pulse"
+      />
+    </SharedLanding>
   );
 }
 

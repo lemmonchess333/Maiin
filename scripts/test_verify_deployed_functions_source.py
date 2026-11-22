@@ -156,7 +156,9 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                         .issubset(targets["sharedCard"]))
         self.assertTrue({"lib/sharedCardPage.js", "lib/sharedCards.js", "lib/publicPost.js",
                          "lib/inviteCodes.js"}.issubset(targets["sharedCardPage"]))
-        self.assertIn("lib/inviteCodes.js", targets["publicPostPage"])
+        self.assertIn("lib/cardArt.js", targets["sharedCard"])
+        self.assertIn("lib/cardArt.js", targets["sharedCardPage"])
+        self.assertIn("lib/publicPost.js", targets["publicPostPage"])
         for name in ("onWorkoutDeleted", "onRunDeleted", "onActivityDeleted"):
             with self.subTest(function=name):
                 self.assertIn("lib/sharedCards.js", targets[name])

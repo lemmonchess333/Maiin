@@ -32,11 +32,13 @@
    A run with too little left after the cut, a treadmill or manual run, a
    lift, and a run whose route or zones cannot be read get no map.
 
-   Its one way on (Soc17 call 3) is "Join <first name> on Tropos", with
-   the author's invite code when they have one that is still theirs, so
-   joining from it follows as an invite does (Soc15 call 4). The code is
-   read when the page is opened and never made here: a page view writes
-   nothing.
+   Its page names the author by first name ("Sam shared a run", the
+   owner's layout of 22 Nov 2026) and its one way on is "Join Tropos", to
+   the App Store. Never with the author's invite code: a post's address is
+   fixed and anyone signed out can open it, so a code on it would hand a
+   person the author blocked the code renewed to keep them out (Soc15
+   STATUS lines). A shared card's page carries the code it was shared with
+   (sharedCardPage.js).
 
    Kept out of search (legal audit §3.2): a public run must not be found
    by searching its author's name, so every answer here asks search
@@ -50,7 +52,7 @@ const { isRestricted } = require("./restriction");
 const { isAccountDeleting, isTombstoned } = require("./accountDeletionStatus");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 const { publicRoute } = require("./publicRoute");
-const { firstNameOf, normaliseInviteCode } = require("./inviteCodes");
+const { firstNameOf } = require("./inviteCodes");
 
 /** The production web app, as src/lib/publicLinks.ts names it. */
 const PUBLIC_ORIGIN = "https://troposfit.com";
@@ -175,23 +177,6 @@ async function readRouteSource(userRef, activityId, logger) {
 }
 
 /**
- * The author's invite code for the page's button (Soc17 call 3): the copy
- * on their user document, while `inviteCodes` still gives it to them.
- * Null when they have none, or when it was renewed and the copy is
- * behind. A failed read is null too: the button still leads to Tropos.
- */
-async function authorInviteCode(db, authorId, stored) {
-  const code = normaliseInviteCode(stored);
-  if (!code) return null;
-  try {
-    const snap = await db.collection("inviteCodes").doc(code).get();
-    return snap.exists && (snap.data() || {}).uid === authorId ? code : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * The post as its public page draws it, or null when it is not to be
  * shown. Throws when a read fails, so the caller can tell "not shown"
  * from "could not tell".
@@ -237,8 +222,6 @@ async function readPublicPost(db, activityId, logger) {
   const firstName =
     firstNameOf(shown.displayName) || firstNameOf(post.authorName);
   if (firstName) view.firstName = firstName;
-  const inviteCode = await authorInviteCode(db, authorId, account.inviteCode);
-  if (inviteCode) view.inviteCode = inviteCode;
   const photo = publicPhotoUrl(shown.photoURL);
   if (photo) view.authorPhotoURL = photo;
   const title = text(

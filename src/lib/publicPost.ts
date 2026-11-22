@@ -20,7 +20,6 @@ import type { ShareCardRenderData } from "@/components/share/ShareCardRenderer";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { RouteCoordinate } from "@/lib/routeSegments";
-import { normaliseInviteCode } from "@/lib/inviteCode";
 import { publicPostUrl } from "@/lib/publicLinks";
 import { formatDayMonthYear } from "@/utils/formatters";
 
@@ -33,11 +32,9 @@ export interface PublicPostView {
   type: "run" | "workout";
   authorName: string;
   authorPhotoURL?: string;
-  /** The author's first name, for "Join Sam on Tropos" (Soc17 call 3). */
+  /** The author's first name, for "Sam shared a run" (the owner's layout).
+   *  Never their invite code: a post's address is fixed and public. */
   firstName?: string;
-  /** The author's invite code while it is theirs: joining from the page
-   *  follows as an invite does (Soc17 call 3, Soc15 call 4). */
-  inviteCode?: string;
   /** The post's own title ("Long run", "Push A"). */
   title?: string;
   /** Milliseconds. */
@@ -137,8 +134,6 @@ function readAnswer(
     const value = str(p[key]);
     if (value) view[key] = value;
   }
-  const code = normaliseInviteCode(p.inviteCode);
-  if (code) view.inviteCode = code;
   const numbers = [
     "createdAt",
     "durationSec",

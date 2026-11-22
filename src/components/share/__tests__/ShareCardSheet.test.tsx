@@ -309,4 +309,86 @@ describe("ShareCardSheet, a card's own page (Soc17)", () => {
     );
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it("keeps nothing for a card that goes to an Instagram story", async () => {
+    generateShareImage.mockResolvedValue(file);
+    storeSharedCard.mockResolvedValue(true);
+    const igProvider = vi.fn().mockResolvedValue(true);
+    setNativeInstagramProvider(igProvider);
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={() => {}}
+        data={{ ...runData, runId: "r1" }}
+      />
+    );
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(igProvider).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(track).toHaveBeenCalledWith(
+        "share_card_exported",
+        expect.objectContaining({ destination: "instagram" })
+      )
+    );
+    expect(storeSharedCard).not.toHaveBeenCalled();
+    expect(shareImageFile).not.toHaveBeenCalled();
+  });
+
+  it("keeps the copy once Instagram declines, and ends with the card's page", async () => {
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("shared");
+    storeSharedCard.mockResolvedValue(true);
+    setNativeInstagramProvider(vi.fn().mockResolvedValue(false));
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={() => {}}
+        data={{ ...runData, runId: "r1" }}
+      />
+    );
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(shareImageFile).toHaveBeenCalled());
+    const [token] = storeSharedCard.mock.calls[0];
+    expect(shareImageFile).toHaveBeenCalledWith(
+      file,
+      "My run on Tropos",
+      `https://troposfit.com/card/${token}`
+    );
+  });
+
+  it("sends a lift's drawing as its exercise id", async () => {
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("shared");
+    storeSharedCard.mockResolvedValue(true);
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={() => {}}
+        data={{
+          template: "lift",
+          handle: "Alex",
+          date: "12 Jun 2026",
+          workoutId: "w1",
+          totalVolumeKg: 7470,
+          artSrc: "/form-art/bench-press.webp",
+          artId: "bench-press",
+        }}
+      />
+    );
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(storeSharedCard).toHaveBeenCalled());
+    const [, copy, sources] = storeSharedCard.mock.calls[0];
+    expect(copy).toMatchObject({ template: "lift", art: "bench-press" });
+    expect(copy).not.toHaveProperty("artSrc");
+    expect(sources).toEqual({ workoutId: "w1" });
+  });
 });

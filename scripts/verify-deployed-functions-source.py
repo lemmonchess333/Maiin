@@ -174,16 +174,15 @@ def source_targets():
         "getInviteCode": invite_paths,
         # Soc17: a shared card's page and the share sheet's callable that keeps
         # its copy, with what a copy may hold, the code joining from it uses,
-        # and the word filter its words pass. A post's page carries its
-        # author's code too.
-        "sharedCard": invite_paths + ["lib/sharedCards.js", "lib/documentId.js",
-                                      "profanityFilter.js"],
+        # the drawings a card may name, and the word filter its words pass.
+        "sharedCard": invite_paths + ["lib/sharedCards.js", "lib/cardArt.js",
+                                      "lib/documentId.js", "profanityFilter.js"],
         "sharedCardPage": ["index.js", "package-lock.json", "lib/sharedCardPage.js",
-                           "lib/sharedCards.js", "lib/publicPost.js", "lib/inviteCodes.js",
-                           "lib/restriction.js", "lib/accountDeletionStatus.js",
-                           "profanityFilter.js"],
+                           "lib/sharedCards.js", "lib/cardArt.js", "lib/publicPost.js",
+                           "lib/inviteCodes.js", "lib/restriction.js",
+                           "lib/accountDeletionStatus.js", "profanityFilter.js"],
         "publicPostPage": ["index.js", "package-lock.json", "lib/publicPost.js",
-                           "lib/publicRoute.js", "lib/inviteCodes.js"],
+                           "lib/publicRoute.js"],
         # Soc15 call 3: weekly leagues. The turn settles, forms and notifies;
         # the callable joins and leaves; the session triggers below keep each
         # standing current.
@@ -226,10 +225,12 @@ def source_targets():
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js", "lib/sharedCards.js"]
+                                              "lib/triggerRetry.js", "lib/sharedCards.js",
+                                              "lib/cardArt.js"]
                             + league_lib + pulse_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js", "lib/sharedCards.js"]
+                                              "lib/triggerRetry.js", "lib/sharedCards.js",
+                                              "lib/cardArt.js"]
                         + league_lib + pulse_lib,
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
@@ -238,7 +239,8 @@ def source_targets():
         # A deleted post leaves the feeds, and its map files, photos and the
         # pages of the cards shared from it go with it.
         "onActivityDeleted": ["index.js", "package-lock.json", "lib/socialFanout.js",
-                              "lib/routeMapFiles.js", "lib/postPhotos.js", "lib/sharedCards.js"],
+                              "lib/routeMapFiles.js", "lib/postPhotos.js", "lib/sharedCards.js",
+                              "lib/cardArt.js"],
         "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
         "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
                               "lib/followBackfill.js", "lib/feedIndex.js"],

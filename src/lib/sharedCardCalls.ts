@@ -61,9 +61,14 @@ export async function removeSharedCard(token: string): Promise<void> {
 }
 
 /** One open sheet's card links: `begin` at each Share tap with the card
- *  as drawn, `close` when the sheet closes. */
+ *  as drawn, its drawing's exercise id and when Share was tapped, `close`
+ *  when the sheet closes. */
 export interface SheetCardLinks {
-  begin: (data: ShareCardRenderData, sources: SharedCardSources) => CardShare;
+  begin: (
+    data: ShareCardRenderData,
+    sources: SharedCardSources,
+    tap: { art?: string; at: number }
+  ) => CardShare;
   close: () => void;
 }
 
@@ -73,7 +78,8 @@ export function startCardLinks(): SheetCardLinks {
     remove: removeSharedCard,
   });
   return {
-    begin: (data, sources) => session.begin(sharedCardCopy(data), sources),
+    begin: (data, sources, tap) =>
+      session.begin(sharedCardCopy(data, tap.art), sources, tap.at),
     close: session.close,
   };
 }

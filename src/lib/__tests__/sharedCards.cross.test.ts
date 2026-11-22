@@ -22,9 +22,15 @@ import {
   sharedCardCopy,
 } from "@/lib/sharedCardShare";
 import { SHARED_CARD_DATA_ID, loadSharedCard } from "@/lib/sharedCardPage";
+import { FORM_ART_CUTOUTS } from "@/lib/formArtCutouts.data";
+import {
+  CARD_ART_FILES,
+  websitePublicFiles,
+} from "../../../scripts/website/websiteEntry";
 
 const require = createRequire(import.meta.url);
 const server = require("../../../functions/lib/sharedCards.js");
+const art = require("../../../functions/lib/cardArt.js");
 const page = require("../../../functions/lib/sharedCardPage.js");
 const profanity = require("../../../functions/profanityFilter.js");
 const {
@@ -83,8 +89,27 @@ describe("the sheet and the server agree on what a card keeps", () => {
   });
 
   it("keep the sheet's copy as it was sent", () => {
-    const copy = sharedCardCopy(LIFT);
+    const copy = sharedCardCopy(LIFT, "bench-press");
+    expect(copy?.art).toBe("bench-press");
     expect(server.cardCopy(copy, profanity.containsProfanity)).toEqual(copy);
+  });
+});
+
+describe("a card's drawing is one the website ships", () => {
+  it("the server takes exactly the app's released cut-outs", () => {
+    expect([...art.CARD_ART_IDS].sort()).toEqual(
+      Object.keys(FORM_ART_CUTOUTS).sort()
+    );
+  });
+
+  it("each is shipped to troposfit.com at the address the server names", () => {
+    const shipped = new Set(websitePublicFiles(`${process.cwd()}/public`));
+    for (const id of art.CARD_ART_IDS as string[]) {
+      const src = art.cardArtSrc(id) as string;
+      expect(src, id).toBe(`/${FORM_ART_CUTOUTS[id].src}`);
+      expect(CARD_ART_FILES).toContain(src.slice(1));
+      expect(shipped.has(src.slice(1)), src).toBe(true);
+    }
   });
 });
 
@@ -99,7 +124,7 @@ async function served(query: Record<string, string> = {}) {
     firestore: db,
     uid: "sam",
     token: TOKEN,
-    card: sharedCardCopy(LIFT),
+    card: sharedCardCopy(LIFT, "bench-press"),
     sources: { workoutId: "w1" },
     createdAt: new Date(),
     containsProfanity: profanity.containsProfanity,
@@ -131,7 +156,7 @@ describe("the page reads what the server writes", () => {
     expect(page.CARD_DATA_ELEMENT_ID).toBe(SHARED_CARD_DATA_ID);
   });
 
-  it("draws the card as sent, with the first name in place of the handle", async () => {
+  it("draws the card as sent, its drawing the website's own, with the first name in place of the handle", async () => {
     const html = (await served()) as string;
     document.head.innerHTML = new DOMParser().parseFromString(
       html,
@@ -164,6 +189,7 @@ describe("the page reads what the server writes", () => {
       totalReps: 96,
       exerciseCount: 6,
       durationSec: 2460,
+      artSrc: "/form-art/bench-press.webp",
     });
     // Taken once: a second look asks the server afresh.
     expect(document.getElementById(SHARED_CARD_DATA_ID)).toBeNull();

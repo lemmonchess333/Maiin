@@ -74,6 +74,36 @@ describe("the copy that leaves the phone", () => {
   it("gives an anniversary no page", () => {
     expect(sharedCardCopy({ ...RUN, template: "anniversary" })).toBeNull();
   });
+
+  it("names a lift's drawing by its exercise id, never its address", () => {
+    const lift: ShareCardRenderData = {
+      ...RUN,
+      template: "lift",
+      hiddenStats: new Set(),
+      artSrc: "/Maiin/form-art/bench-press.webp",
+      totalVolumeKg: 7470,
+    };
+    const copy = sharedCardCopy(lift, "bench-press")!;
+    expect(copy.art).toBe("bench-press");
+    expect(JSON.stringify(copy)).not.toContain("/form-art/");
+    expect(sharedCardCopy(lift, "../x")).not.toHaveProperty("art");
+    expect(sharedCardCopy(RUN, "bench-press")).not.toHaveProperty("art");
+  });
+
+  it("reads only a toggle's own keys, never one an object inherits", () => {
+    const copy = sharedCardCopy({
+      ...RUN,
+      hiddenStats: new Set(["constructor", "toString", "pace"]),
+    })!;
+    expect(copy.hiddenStats).toEqual(["pace"]);
+    expect(copy.distanceKm).toBe(10.21);
+    expect(
+      sharedCardCopy({
+        ...RUN,
+        template: "constructor" as ShareCardRenderData["template"],
+      })
+    ).toBeNull();
+  });
 });
 
 const COPY = sharedCardCopy(RUN)!;
@@ -223,12 +253,27 @@ describe("what each share leaves behind", () => {
     expect(removed).toEqual(["token00000000000000001"]);
   });
 
-  it("takes back the copy of a card sent to Instagram, which carries no words", async () => {
+  it("takes back the copy of a card downloaded on the web, a file with no words", async () => {
     const { session, removed } = harness();
     const share = session.begin(COPY, SOURCES);
-    share.finish("unused");
+    await share.link(FALLBACK);
+    share.finish("downloaded");
     await settle();
     expect(removed).toEqual(["token00000000000000001"]);
+  });
+
+  it("counts the wait from the tap when the store starts later", async () => {
+    let keep: (kept: boolean) => void = () => {};
+    const { session, advance } = harness(
+      () => new Promise<boolean>((resolve) => (keep = resolve))
+    );
+    advance(1000);
+    // Tapped at 0, begun at 1000: past the 40 ms wait already.
+    const share = session.begin(COPY, SOURCES, 0);
+    const started = Date.now();
+    await expect(share.link(FALLBACK)).resolves.toBe(FALLBACK);
+    expect(Date.now() - started).toBeLessThan(40);
+    keep(true);
   });
 
   it("tries nothing offline, or for a card with no page", async () => {

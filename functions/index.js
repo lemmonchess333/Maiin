@@ -8880,13 +8880,13 @@ exports.toggleSpacePostLikeCallable = functions
    Runs immediately after the auth check and before any Firestore read,
    so an unverified caller writes nothing, notifies nobody, and cannot
    probe the rate limiter or the block guard. */
-function assertCallerEmailVerified(context) {
+function assertCallerEmailVerified(
+  context,
+  message = "Verify your email to comment."
+) {
   const token = context.auth && context.auth.token;
   if (!token || token.email_verified !== true) {
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      "Verify your email to comment."
-    );
+    throw new functions.https.HttpsError("failed-precondition", message);
   }
 }
 
@@ -9403,9 +9403,12 @@ exports.sharedCardPage = functions
  *   copy back. Open to a restricted account, as deleting its own things is.
  *
  * Signed in, not being deleted; `prepare` and `store` refuse a restricted
- * account (S4e: a card page reaches whoever has the link). Each action has
- * its own limit. A refusal never stops a share: the sheet falls back to
- * the invite link.
+ * account (S4e: a card page reaches whoever has the link). `store` also
+ * needs a verified email, as every other public write does: a card page is
+ * words under a name on troposfit.com, and only a verified address is kept
+ * against a restricted account coming back (restrictedIdentities). Each
+ * action has its own limit. A refusal never stops a share: the sheet falls
+ * back to the invite link.
  */
 exports.sharedCard = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -9419,6 +9422,13 @@ exports.sharedCard = functions
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Unknown action."
+      );
+    }
+    // Before any read, as the comment callables check it.
+    if (action === "store") {
+      assertCallerEmailVerified(
+        context,
+        "Verify your email to share a card’s own page."
       );
     }
     const firestore = admin.firestore();

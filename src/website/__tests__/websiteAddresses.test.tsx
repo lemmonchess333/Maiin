@@ -49,7 +49,6 @@ const RUN: PublicPostView = {
   paceSecPerKm: 306,
   summary: "Long run: 10.21 km in 52:10 at 5:06 /km.",
   firstName: "Sam",
-  inviteCode: "K7P49M2H",
 };
 
 const CARD_TOKEN = "AbCdEfGhIjKlMnOpQrStUv";
@@ -566,13 +565,17 @@ describe("the website's page at each address", () => {
     }
     if (shows?.page === "post") {
       expect(
-        await screen.findByRole("heading", { name: "Sam’s run" })
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "Sam shared a run",
+        })
       ).toBeInTheDocument();
-      // Soc17 call 3: the author's name and their invite code.
-      expect(
-        screen.getByRole("link", { name: "Join Sam on Tropos" })
-      ).toHaveAttribute("href", appInviteUrl("K7P49M2H"));
-      expect(screen.queryByRole("link", { name: "Get Tropos" })).toBeNull();
+      // The author's first name, and never an invite code on a fixed
+      // public address.
+      expect(screen.getByRole("link", { name: "Join Tropos" })).toHaveAttribute(
+        "href",
+        APP_STORE_URL
+      );
       // Kept out of search on the page too, not only by the server's header.
       expect(
         document.head.querySelector('meta[name="robots"]')
@@ -583,16 +586,17 @@ describe("the website's page at each address", () => {
       expect(
         await screen.findByRole("heading", {
           level: 1,
-          name: "Join Sam on Tropos",
+          name: "Sam shared a workout",
         })
       ).toBeInTheDocument();
       expect(
         screen.getByRole("img", { name: CARD.summary })
       ).toBeInTheDocument();
-      // One button, the headline's words, the way an invite goes.
-      expect(
-        screen.getByRole("link", { name: "Join Sam on Tropos" })
-      ).toHaveAttribute("href", appInviteUrl("K7P49M2H"));
+      // One button, the way an invite goes.
+      expect(screen.getByRole("link", { name: "Join Tropos" })).toHaveAttribute(
+        "href",
+        appInviteUrl("K7P49M2H")
+      );
       expect(
         document.head.querySelector('meta[name="robots"]')
       ).toHaveAttribute("content", "noindex");
@@ -605,7 +609,7 @@ describe("the website's page at each address", () => {
           name: "This card isn’t available",
         })
       ).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Get Tropos" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "Join Tropos" })).toHaveAttribute(
         "href",
         APP_STORE_URL
       );

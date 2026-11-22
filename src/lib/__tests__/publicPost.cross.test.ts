@@ -93,7 +93,7 @@ describe("the page reads what the server writes", () => {
   it("names the same block and the same origin", () => {
     expect(server.DATA_ELEMENT_ID).toBe(PUBLIC_POST_DATA_ID);
     expect(server.PUBLIC_ORIGIN).toBe(PUBLIC_APP_ORIGIN);
-    // Safari's banner and Get Tropos name the same app.
+    // Safari's banner and Join Tropos name the same app.
     expect(APP_STORE_URL).toBe(
       `https://apps.apple.com/app/id${server.APP_STORE_ID}`
     );
@@ -137,7 +137,7 @@ describe("the page reads what the server writes", () => {
     expect(card.routePath).toBeUndefined();
   });
 
-  it("reads the author's first name and invite code for the button (Soc17 call 3)", async () => {
+  it("reads the author's first name for the headline and button, never a code (Soc17 call 3)", async () => {
     const firestore = db({});
     firestore.data.set("users/sam", {
       preferredDistanceUnit: "mi",
@@ -153,7 +153,8 @@ describe("the page reads what the server writes", () => {
       vi.fn(async () => ({ ok: true, json: async () => answer }))
     );
     const post = await loadPublicPost("run1");
-    expect(post).toMatchObject({ firstName: "Sam", inviteCode: "K7P49M2H" });
+    expect(post?.firstName).toBe("Sam");
+    expect(post).not.toHaveProperty("inviteCode");
   });
 
   it("asks the server for the figures when the page has no block", async () => {

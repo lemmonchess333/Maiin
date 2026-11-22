@@ -1080,7 +1080,8 @@ service cloud.firestore {
       allow read, write: if false;
     }
     /* A shared card's stored copy (Soc17 call 1): `sharedCards/{token}` =
-       { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt },
+       { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt,
+       expiresAt }, expiresAt only on a card that shows no session or post,
        written only by the sharedCard callable and read only by
        sharedCardPage, both with the Admin SDK (functions/lib/sharedCards.js).
        A client read would let anyone holding a token see its owner's uid,

@@ -188,26 +188,18 @@ describe("who a public post is shown to", () => {
     expect(res.body).toEqual({ id: "run1", available: false });
   });
 
-  it("carries the author's invite code while it is theirs, and never makes one (Soc17 call 3)", async () => {
+  it("names the author's first name for the button, and never their invite code (Soc17 call 3)", async () => {
     const withCode = seed({
       "users/sam": { preferredDistanceUnit: "km", inviteCode: "K7P49M2H" },
       "users/sam/public/profile": { displayName: "Sam Rivers" },
       "inviteCodes/K7P49M2H": { uid: "sam", createdAt: 1 },
     });
-    const shown = await answer(memoryFirestore(withCode), "run1");
-    expect(shown.body.post.firstName).toBe("Sam");
-    expect(shown.body.post.inviteCode).toBe("K7P49M2H");
-
-    const renewed = { ...withCode, "inviteCodes/K7P49M2H": { uid: "bo" } };
-    const after = await answer(memoryFirestore(renewed), "run1");
-    expect(after.body.post).not.toHaveProperty("inviteCode");
-
-    const none = memoryFirestore(seed());
-    const res = await answer(none, "run1");
+    const res = await answer(memoryFirestore(withCode), "run1");
+    expect(res.body.post.firstName).toBe("Sam");
     expect(res.body.post).not.toHaveProperty("inviteCode");
-    expect(
-      [...none.data.keys()].some((k) => k.startsWith("inviteCodes/"))
-    ).toBe(false);
+    expect(JSON.stringify(res.body)).not.toContain("K7P49M2H");
+    const page = await ask(memoryFirestore(withCode), "/activity/run1");
+    expect(page.body).not.toContain("K7P49M2H");
   });
 
   it("answers an address that is no post's the same way", async () => {

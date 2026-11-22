@@ -1,7 +1,8 @@
 /**
- * A shared card's page (Soc17 calls 1 to 3): the sharer's first name, the
- * card as sent with a run's drawn without its line, one button with the
- * headline's words, and one page for every card not shown.
+ * A shared card's page (Soc17 calls 1 and 2, the owner's layout of 22 Nov
+ * 2026): one line naming the sharer by first name, the card as sent with
+ * a run's drawn without its line, one button, "Join Tropos", a line about
+ * Tropos, and one page for every card not shown.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -55,13 +56,13 @@ afterEach(() => {
 });
 
 describe("a shared card's page", () => {
-  it("heads with the sharer's first name and draws a run's card without its line", async () => {
+  it("names the sharer and what they shared, and draws a run's card without its line", async () => {
     load.mockResolvedValue(RUN);
     const { container } = renderAt();
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Join Sam on Tropos",
+        name: "Sam shared a run",
       })
     ).toBeInTheDocument();
     expect(load).toHaveBeenCalledWith(TOKEN);
@@ -69,8 +70,11 @@ describe("a shared card's page", () => {
     expect(container.querySelector("svg path[stroke-linecap]")).toBeNull();
     // Without a code, the one button goes to the App Store.
     const links = screen.getAllByRole("link");
-    expect(links.map((a) => a.textContent)).toEqual(["Join Sam on Tropos"]);
+    expect(links.map((a) => a.textContent)).toEqual(["Join Tropos"]);
     expect(links[0]).toHaveAttribute("href", APP_STORE_URL);
+    expect(
+      screen.getByText("Your training and food, planned together.")
+    ).toBeInTheDocument();
   });
 
   it("says only that a card not shown isn’t available", async () => {
@@ -85,7 +89,7 @@ describe("a shared card's page", () => {
     expect(
       screen.queryByText(/private|deleted|blocked|restricted|Sam/i)
     ).toBeNull();
-    expect(screen.getByRole("link", { name: "Get Tropos" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Join Tropos" })).toHaveAttribute(
       "href",
       APP_STORE_URL
     );
@@ -97,7 +101,7 @@ describe("a shared card's page", () => {
     renderAt();
     fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
     expect(
-      await screen.findByRole("heading", { name: "Join Sam on Tropos" })
+      await screen.findByRole("heading", { name: "Sam shared a run" })
     ).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
     warn.mockRestore();
