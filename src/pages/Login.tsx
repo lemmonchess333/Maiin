@@ -204,7 +204,7 @@ export default function Login() {
           <button
             type="button"
             onClick={startSetup}
-            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
           >
             Get started
           </button>

@@ -138,7 +138,7 @@ export default function TrialOffer() {
     >
       <div className="flex-1 overflow-y-auto min-h-0 pt-8 pb-6 space-y-6">
         <section className="space-y-3" aria-labelledby="trial-offer-heading">
-          <p className="text-sm font-semibold text-lifting-strong">
+          <p className="text-sm font-semibold text-primary">
             {TRIAL_OFFER_COPY.kicker}
           </p>
           <h1
@@ -158,7 +158,7 @@ export default function TrialOffer() {
             {TRIAL_OFFER_COPY.dayOne.map((line) => (
               <li key={line} className="flex items-start gap-2 text-base">
                 <Check
-                  className="size-4 text-lifting-strong mt-1 shrink-0"
+                  className="size-4 text-primary mt-1 shrink-0"
                   strokeWidth={3}
                   aria-hidden="true"
                 />
