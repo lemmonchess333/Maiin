@@ -65,7 +65,7 @@ export default function BackToStartChip({
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs text-white/90 backdrop-blur"
+      className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs text-white/90 backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black"
       role="status"
       aria-label={`${nearDistanceLabel(dist, unit, "to start")}${
         relative != null ? `, bearing ${Math.round(relative)} degrees` : ""

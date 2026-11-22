@@ -10,6 +10,124 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The health-details agreement, in setup and once before the app (Priv1 call 1, 2026-11-21)
+
+Setup asks for the agreement to store health details on its own screen
+before the first body question, and an account set up before the question
+meets the same screen once, before the app, on its next open
+(`Onboarding.tsx` step 8, `HealthConsentRoutes`, `HealthConsentGate`).
+The unit tests and the capture rig drive the web build; only a phone shows
+the gate on an account that really was set up before, the keyboard-free
+layout at the phone's own text size, and the agreement landing with the
+server's date.
+
+- [ ] **An existing account sees the gate once.** Install a TestFlight
+      build with this change over one without it, on an account set up
+      before it. Passing: the first open shows "Your health details" before
+      Home, with I agree and Not now and no scrolling at the default text
+      size; I agree opens Home; closing and reopening the app (and opening
+      it on a second device signed in to the same account) goes straight to
+      Home; Settings › Social & privacy shows "Health details" with
+      "Agreed on" today's date, and its row opens Account at Delete
+      account. In the Firebase console the account's `healthDataConsent`
+      is `{ at: <today>, version: 1 }`.
+- [ ] **A new account sees the step.** Make a new account on the same
+      build. Passing: setup shows "Your health details" after the kit (a
+      lifter) or after the run (a runner), before any body question; Not
+      now says why and offers Go back, Delete my account and Sign out, and
+      Go back returns to I agree; Privacy Policy opens the policy and its
+      Back returns to the question; finishing setup opens Home with no gate,
+      and the account carries `healthDataConsent` dated when Start my plan
+      was tapped.
+- [ ] **An older build is told to update.** On a TestFlight build from
+      before this change, start a new account's setup after the functions
+      deploy. Passing: Start my plan is refused with "Agree to Tropos
+      storing your health details to finish setting up. If setup didn’t
+      ask you, update Tropos and try again." and nothing is saved.
+
+## Share usage analytics turns Google Analytics off (Priv1 call 2, 2026-11-21)
+
+Settings → Social & privacy → Share usage analytics, on by default, is the
+way to object that PECR's analytics exemption asks for. Off drops every
+event in the app at once, switches the native SDK's collection off
+(`setEnabled`, which it keeps across launches), and on the web never loads
+analytics on a device whose last answer was off (`analyticsProvider.ts`,
+`usageAnalytics.ts`). The unit tests mock the plugin and the web SDK; only
+DebugView shows what reaches Google, including the native SDK's own
+automatic events (sessions, screen views), which no unit test can see.
+
+- [ ] **Off on a TestFlight build, nothing in DebugView.** On a debug
+      device (the app launched with `-FIRAnalyticsDebugEnabled`), open
+      GA4 DebugView and use the app until events arrive. Turn Share usage
+      analytics off, then use the app for a few minutes, force-quit it and
+      open it again, signed in and signed out. Passing: DebugView shows
+      nothing more from that device, not even `session_start` or
+      `screen_view` after the relaunch.
+- [ ] **On again, events return.** On the same device, turn it back on and
+      use the app. Passing: events arrive in DebugView again within a
+      minute or two (after a relaunch at the latest: the plugin's notes say
+      the native setting may apply only from the next run).
+- [ ] **It follows the account.** Turn it off on the phone, then sign in
+      to the same account on the web preview with GA configured. Passing:
+      the browser's network panel shows no request to
+      `google-analytics.com` or `googletagmanager.com` once the profile has
+      loaded, and a reload makes none at all.
+
+## Deleted meals go for good after 30 days (F5c, STATUS 2026-11-21)
+
+`purgeSoftDeletedMeals` runs each hour at 45 minutes past (UTC). It deletes
+every meal whose `deletedAt` is 30 days or more ago and whose last write
+reached the server 30 days or more ago, through a collection-group query on
+`meals.deletedAt` (`functions/lib/mealPurge.js`, the index in
+`firestore.indexes.json`). It skips an account being deleted. Recently
+deleted meals says each meal is removed for good 30 days after it was
+deleted and shows the days each one has left. The unit suites run the job
+on the in-memory Firestore, which does not enforce indexes, so only
+production shows the index serving and the job running.
+
+The page counts from `deletedAt` alone; the job counts from the later of
+`deletedAt` and the server's last write to the meal (so a phone clock
+running behind cannot cut the 30 days short). A meal written after it was
+deleted therefore sits at "goes soon" on the page for up to 30 days before
+the job removes it. The one writer that does this at scale is #3465's
+`functions/scripts/purgeLegacyFoodPhotos.js`, which takes `photoUrl` and
+`photoPath` off every meal, soft-deleted ones included: run its `apply`
+after this job's first run (the row below), so the meals already past
+their 30 days go first and the others do not get their 30 days again.
+
+- [ ] **The index is built before the job runs.** Passing: the Deploy
+      production run's Firestore readiness gate
+      (`scripts/verify-firestore-readiness.py`) is green, and Firestore
+      console → Indexes → Single field lists `meals` / `deletedAt` with a
+      collection-group ascending index, Enabled.
+- [ ] **The job ran.** Passing: an hour after the release, Cloud Logging
+      for `purgeSoftDeletedMeals` shows `purgeSoftDeletedMeals.done` with
+      its counts and no `FAILED_PRECONDITION` (a missing index), and
+      Firestore console → `jobRuns/purgeSoftDeletedMeals` has
+      `lastOutcome: "ok"`, `running: false` and a `lastSummary` with
+      `failed: 0`. A run in which any transaction failed is recorded as
+      `lastOutcome: "failed"`, with its counts in `lastError` ("N of M
+      meals failed; purged …"). `more: true` or `stoppedAtTimeLimit: true`
+      on a run after the first means the job is falling behind, not that it
+      failed.
+- [ ] **A meal deleted 31 days ago is gone.** Before the release, open
+      Settings → Account → Recently deleted meals on an account that has a
+      meal deleted more than 30 days ago (nothing purged before this, so an
+      account used since the summer has some), and note one. After the
+      release its row says "goes soon". Passing: after the first run at 45
+      minutes past, that meal's document is gone from `users/{uid}/meals`
+      in Firestore console and the page no longer lists it, while a meal
+      deleted today is still listed with "30 days left". Setting a newer
+      meal's `deletedAt` back in the console does not test this: the job
+      also counts the 30 days from the server's last write to the meal, and
+      that edit is a write. For the same reason, a meal still at "goes
+      soon" an hour after a run was written after it was deleted (the
+      photo-field purge, an edit); it goes 30 days after that write.
+- [ ] **The photo-field purge runs after this job's first run.** Passing:
+      `jobRuns/purgeSoftDeletedMeals` shows a finished run before the
+      `apply` run of "Purge legacy meal photos" (#3465's rows under "Legacy
+      meal photos in Storage"), if both are still to do.
+
 ## A purchase the store has, before Pro is on (2026-11-10)
 
 A purchase that Apple's sheet finished without RevenueCat granting Pro, and
@@ -519,6 +637,28 @@ reading it.
       the flame and swipe through the days. Passing: each day is read once
       as its date and logged, covered or nothing logged, today says
       today, and a day still to come is its date alone.
+
+## The streak against your longest and the next tier (DS5 rule 46, 2026-11-18)
+
+The streak's sheet gains one row under its first line: the next streak
+badge with its art, how many days to it and a bar ("Two Week Wonder in 2
+days", "12 of 14 days"), then the longest ("Longest 21 days, 10 days to
+pass it", or "This is your longest"). A badge already held from a longer
+streak is drawn earned and points at the length instead ("2 days to a
+7-day streak", then "Week Warrior already earned" on its own line). The
+unit suites read the words and the large-text spec measures the sheet; a
+phone shows the badge art at its small size and VoiceOver's reading.
+
+- [ ] **The row reads.** On a TestFlight build, tap the flame. Passing:
+      the row shows with the art beside the words at the standard text
+      size and above them at the largest text sizes on a small phone, the
+      art is sharp and greyed with a purple ring round it until the badge
+      is earned, and the bar is the same purple.
+- [ ] **VoiceOver.** Swipe to the row. Passing: it is one stop, "Two Week
+      Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass
+      it.", and the art and the bar are skipped. With a badge held from a
+      longer streak it reads "2 days to a 7-day streak. 5 of 7 days. Week
+      Warrior already earned. Longest 40 days, 36 days to pass it."
 
 ## A reminder asked in setup, naming the next lift (Mob1 call 3, 2026-10-27)
 
@@ -1759,6 +1899,83 @@ words; these need the operator, a device, or a real trial.
       `docs/app-store/listing.md` ("…removing the content and, where
       needed, disabling the account").
 
+## The emails a person chose (App1 Q55, 2026-11-18)
+
+Affects: setup's last step (the opt-in), Settings → Notifications → Email,
+Settings → Account → Export (email choices), `completeOnboarding`,
+`setEmailConsent`, `hourlyEmailSweep` and its two emails
+(`lib/weeklyReviewEmail.js`, `lib/winBackEmail.js`), `emailUnsubscribe` on
+troposfit.com/email/unsubscribe, the universal-links file, the Privacy
+Policy and the privacy manifest. The weekly review goes on Monday at 08:00
+local; the emails after a break 14 and 30 days after the last session or
+meal, at 08:00 local.
+
+Unit tests cover the record, the sweep's decisions and refusals, the words
+and the unsubscribe link with a fake Resend; these need the operator, a
+device, or a real inbox.
+
+- [ ] **Resend's tracking is off.** Resend → Domains → troposfit.com (and
+      send.troposfit.com): open tracking and click tracking both off. A
+      tracking pixel needs consent of its own (PECR regulation 6), and a
+      rewritten link stops the buttons opening the app. The Privacy Policy
+      does not yet say these emails carry no tracking; add it once this is
+      checked.
+- [ ] **How many a day.** Resend's free plan sends 100 emails a day and
+      3,000 a month across every email, and the password reset and the
+      verification email must still go on a Monday. The sweep sends at most
+      60 of these a UTC day (`DEFAULT_DAILY_BUDGET`) and stops for the day
+      past it; the people left get that week's review only if a later hour
+      of their morning is in the next UTC day. Once more than about 50
+      people have said yes, an owner call: a paid Resend plan (Pro is
+      $20 a month for 50,000 with no daily limit, resend.com/pricing, 18
+      November 2026), then `system/config.emailUpdatesPerDay`
+      (a whole number, in the Firestore console) raised to match. No deploy
+      is needed for the second step.
+- [ ] **Apple's relay.** The trial reminder section's Hide My Email check
+      covers these emails too: same sender, same relay registration.
+- [ ] **The App Store privacy label.** App Store Connect → App Privacy:
+      add "Developer's Advertising or Marketing" to Email Address and Other
+      Usage Data, as `docs/app-store/listing.md` and
+      `ios/App/App/PrivacyInfo.xcprivacy` now say. The emails are
+      marketing in the ICO's reading, and Apple's purpose names "sending
+      marketing communications directly to your users"; the emails after a
+      break are timed by when the person last logged. The weekly review's
+      figures are the person's own, sent to them at their request, so
+      Health and Fitness stay app functionality only (no figure from them
+      reaches Google Analytics since #3452). App Review
+      Guideline 5.1.3 lets fitness data be used, with permission, to help
+      someone manage their health and nothing else: a reviewer may ask, and
+      the answer is the opt-in.
+- [ ] **The sender's details.** PECR regulation 23 asks each email to say
+      who sent it and give an address that answers; each says "Sent by
+      Tropos" with support@troposfit.com. The US (CAN-SPAM) also asks a
+      commercial email for a postal address: set it as
+      `system/config.emailPostalAddress` (a string, in the Firestore
+      console) and the next hour's emails carry it in the footer ("Sent by
+      Tropos, …"); no deploy is needed. If Tropos is a company, its
+      registered name and number belong there too (UK Companies Act).
+- [ ] **The first weekly review.** On the first Monday after this ships,
+      with the opt-in turned on for a test account that logged something
+      the week before: the email arrives at 08:00 local from
+      `RESEND_FROM`, the figures match the review page, "Open your review"
+      opens the review in the iPhone app through the universal link, and
+      `users/{uid}/settings/emailState.weeklyReview.state` reads `sent`.
+      Opened anywhere else (a computer, or a phone without Tropos), the
+      button lands on troposfit.com's Home, which links to the App Store
+      and says that on an iPhone the link goes straight to the app:
+      troposfit.com has served no app since #3436.
+      The `hourlyEmailSweep` run in `jobRuns` counts it as
+      `weeklyReview:sent`.
+- [ ] **The unsubscribe link.** From that email, open the link: the page
+      asks with one button and nothing has changed; tap Unsubscribe: both
+      switches in Settings → Notifications → Email read off, and the export
+      shows the withdrawal "Unsubscribe link". Then Gmail's own Unsubscribe
+      beside the sender's name does the same in one tap (RFC 8058).
+- [ ] **The universal links.** After the Hosting deploy carries the new
+      association file, `/review?from=email` and `/?from=email` open the
+      app on an iPhone that has it (Apple's CDN can take a day to read the
+      new file).
+
 ## The lifting system, Lift4 (2026-10-06, #2593)
 
 Affects: progression, the plan generator, lighter weeks and races
@@ -2409,6 +2626,12 @@ STATUS 2026-10-25 — `storage.rules` now refuses every upload under
 not add to the legacy set; read and delete stay for the owner. The sweep of
 what is already there is still not done.
 
+STATUS 2026-11-21: the owner chose to delete every one ("Delete them
+all"). The app stops reading `photoUrl`, `storage.rules` closes the prefix
+to every client, and `functions/scripts/purgeLegacyFoodPhotos.js` deletes
+the objects and the meal fields. The rows that run it are under "Legacy
+meal photos in Storage (uploaded before Food9)" below.
+
 - [ ] **Public photos can be fetched, not listed (2026-10-25).** Space-post
       and profile photos grant `get`, not `read`, so nobody can list a
       person's folder; a deleted Space post's photo is now deleted with it
@@ -2872,6 +3095,80 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 - [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
 - [x] _(Proven 2026-10-17: functions/accountDeletion.js STORAGE_PREFIX_TEMPLATES includes food-photos/**UID**/; functions/**tests**/accountDeletion.test.js 'continues to next storage prefix when one prefix throws' asserts the 4 prefixes incl. food-photos in order and 'returns the scoped prefixes for the uid'. A failed sweep throws storage-cleanup-incomplete before the Auth delete, so a completed deletion proves it ran. Deployed source verified: run 39063239262 'Verified deployed source: deleteMyAccount, version 250' (accountDeletion.js byte-compared). Note: the executor logs only FAILED prefixes, so the row's 'logs the sweep' line will never appear.)_ Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
+
+### Every one deleted (owner, 2026-11-21: "Delete them all")
+
+Affects: `functions/scripts/purgeLegacyFoodPhotos.js` (new, operator-run,
+from the Actions tab through `.github/workflows/purge-legacy-food-photos.yml`),
+`storage.rules` (the `food-photos/` block is now read and write false, for
+the owner too), `useMeals.ts` (`parseMealDoc` no longer reads `photoUrl`),
+`FoodTimeline.tsx` and `FoodRow.tsx` (the device photo is the only one
+drawn). From 4 July to 18 August 2026 the app uploaded each scanned meal's
+photo to `food-photos/{uid}/{timestamp}.jpg` and wrote `photoUrl` and
+`photoPath` on the meal. The script deletes every object under
+`food-photos/` and takes both fields off every meal, soft-deleted ones
+included. Unit-tested against fakes (`purgeLegacyFoodPhotos.test.js`); it
+has not run on the real project. The storage rules tests need the Storage
+emulator, which CI's `emulator-tests` job runs.
+
+In this order:
+
+- [ ] **The release closes the prefix.** Merge, and let Deploy production
+      finish. Passing: its Storage stage is green, and Firebase console →
+      Storage → Rules shows the `food-photos` block as
+      `allow read, write: if false`.
+- [ ] **Dry run.** Actions tab → "Purge legacy meal photos" → Run
+      workflow, on main, mode `dry-run` (the default), bucket left empty
+      (it uses the app's own, `VITE_FIREBASE_STORAGE_BUCKET`). Passing:
+      the run is green, deletes and writes nothing, and its "Count, or
+      delete" step prints how many objects (and bytes) are under
+      `food-photos/` and how many meals hold `photoUrl` and `photoPath`,
+      and its last line how many of their photo URLs name this bucket,
+      which should be every meal holding `photoUrl`. Read those counts
+      before going on. The run stops, writing nothing, if any meal's photo
+      URL names another bucket (it says which: run again with that one) or
+      cannot be read at all (it says how many). If it fails on a Storage
+      permission (`storage.objects.list`), the service account behind
+      `FIREBASE_SERVICE_ACCOUNT` needs Storage Object Admin on that bucket
+      (Google Cloud console → Cloud Storage → the bucket → Permissions);
+      no new secret. If it says the bucket does not exist, run it again
+      with the bucket Firebase console → Storage shows, without `gs://`.
+- [ ] **Soft delete, before applying.** Google Cloud console → Cloud
+      Storage → the bucket → Protection → Soft delete policy. Cloud
+      Storage's default policy keeps a deleted object restorable for 7
+      days, and an object deleted while the policy is on cannot be
+      removed for good before that time is up, even by turning the policy
+      off afterwards. The policy is the whole bucket's, not a prefix's. If
+      it is on, either let it stand (the photos are truly gone on the apply
+      date plus the retention shown, and that later date is the one to
+      write into CLAUDE.md below), or, if the owner wants them gone at
+      once, turn it off before applying, knowing that profile, Space and
+      post photos in the same bucket lose their window while it is off,
+      and turn it back on after. Passing: the setting and the date the
+      photos are truly gone are written in this row.
+- [ ] **Apply.** Run it again with mode `apply`. It deletes the objects,
+      then takes the fields off the meals, then counts again in the same
+      run and fails unless both counts are 0. This cannot be undone. If a
+      run stops part-way, run `apply` again: what is already gone is not
+      listed or written again.
+- [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
+      `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
+  photo field`; Firebase console → Storage has no `food-photos`
+      folder; and in Firestore console a meal scanned before 18 August
+      2026 has neither `photoUrl` nor `photoPath`. Then write into
+      CLAUDE.md's "Meal photos are device-local" section, where it says
+      "Run in production on: not yet", the apply date and, if soft delete
+      was on, the date the photos are truly gone (the row above). (The
+      same script runs from a terminal with Admin credentials; its header
+      has the command.)
+- [ ] **An older build.** After the purge, a TestFlight build from before
+      this change, on an account with a meal scanned before 18 August 2026. Passing: that meal's row shows our drawing of the food, not a
+      broken picture (the row falls back when its photo fails to load).
+- [ ] **Then the account-deletion sweep can go.** Once the purge has run,
+      `food-photos/__UID__/` in `STORAGE_PREFIX_TEMPLATES`
+      (`functions/accountDeletion.js`) lists an empty prefix on every
+      deletion. Taking it out is optional and needs its test
+      (`accountDeletion.test.js` counts the prefixes) changed with it.
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
@@ -4872,6 +5169,13 @@ of thing a phone's screen and WebKit decide.
       challenge card, over the medal band too), none has both a grey
       outline and the line, a chosen option keeps its coloured outline,
       and in light mode they look as they did.
+- [ ] **A tinted card keeps its fill (2026-11-21).** Open Progress's
+      personal records, and the weekly layout from the lift plan editor.
+      Passing: the Running and Lifting bests cards are cards in both
+      themes (white on light, the card's grey on dark, with the line
+      along the top), the same radius and shadow as the records table
+      beside them, and each day in the weekly layout is a card with its
+      session's faint tint and coloured outline, not a grey wash.
 - [ ] **The tracks read as slots.** On Home, the week's rest days and the
       empty part of each This week bar are darker than the card, and a
       day's colour or a bar's fill stands out more than before. Tap a day:
@@ -4908,14 +5212,26 @@ phone's safe area, its blur and its brightness are for a phone to show.
 - [ ] **Frames.** Scroll a long Social feed quickly. Passing: the bar and
       the page move without stutter. If they stutter, the bar goes back to
       solid with its rim (DS6's named risk).
-- [ ] **Still blurred under Reduce Transparency (follow-up, not a
-      check).** With the setting on, these keep a backdrop blur, since
+- [x] **Still blurred under Reduce Transparency (follow-up, not a
+      check).** With the setting on, these kept a backdrop blur, since
       they predate the attribute: a Space's hero chips (`Space.tsx`,
       `SpacesDirectory.tsx`), a post's comment bar
-      (`ActivityPostComments.tsx`), History's chip row and the run map's
-      chips (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
-      `GhostDeltaChip`, `RunMap.tsx`). Each wants the same solid fallback;
-      tick this when they have it.
+      (`ActivityPostComments.tsx`) and the run map's chips
+      (`RouteFollowChip`, `GpsSignalChip`, `BackToStartChip`,
+      `GhostDeltaChip`, `RunMap.tsx`). Done 2026-11-21 with the
+      `transparency-reduce:` variant, which also reached a run's Back and
+      Replay, Run summary's Back and the plan editors' sticky footers.
+      History's chip row had already gone (Hist5).
+- [ ] **The chips and bars go solid too.** With Reduce Transparency on,
+      open a Space with a cover photo, Spaces' directory, a saved run's
+      map (Back and Replay), Run summary, a post's comments, the lift and
+      run plan editors (scroll so the footer sits over content), and
+      start a run with a route and a previous run to chase. Passing:
+      every chip over a photo or the map is solid black with its words
+      clear, the map's zoom and compass are the card's colour, and the
+      sticky bars are the page's colour, with nothing showing through;
+      off route, the route chip is solid amber. Turned off again without
+      relaunching, they are frosted again.
 
 ## Motion 14 under every animation (2026-11-11)
 
@@ -7176,6 +7492,31 @@ no phone has run it.
       `resolveReport.segment_cleanup_failed` log line means the sweep
       stopped part way: the segment is still gone for everyone, and the
       maker's Delete can't be repeated on it, so finish the sweep by hand.
+
+## Analytics carries no food name and no real address (2026-11-21)
+
+A saved food's id is its name (`chicken_and_rice`), and five pantry events
+sent it to Google Analytics as `favouriteId`. They now send counts only
+(`useCount`, `totalBefore`, `source`, `fromPantry`), and the redaction
+denylist strips any key naming a favourite, a name, a title or a search.
+Unit-tested at `emit` (`Food.pantryAnalytics.test.tsx`); only DebugView
+shows what reaches Google. The app's own events carry a redacted page
+address, but two of gtag's automatic events read the browser's, and only
+the GA4 console turns them off.
+
+- [ ] **After Deploy production, the pantry events in GA4 DebugView.** On a
+      debug device, log a typed meal twice, tap it under Log again, pick it
+      from the typeahead and long-press it away. Passing: each
+      `food_pantry_*` event arrives with no parameter holding the food's
+      name or `favouriteId`. If GA4 has a custom dimension registered for
+      `favouriteId`, archive it.
+- [ ] **Enhanced Measurement is off where it reads the address bar.** In
+      GA4 Admin → Data streams → the web stream → Enhanced measurement,
+      open the settings. Passing: "Page changes based on browser history
+      events" (under Page views) and "Site search" are off. gtag sends
+      those `page_view` and `view_search_results` events itself, from the
+      real address (another person's uid on `/user/:uid`, a typed search in
+      `?q=`), past the redacted page fields `analyticsProvider.ts` sets.
 
 ## Second-review follow-ups: Space photo cap, public post noindex (2026-11-21)
 

@@ -53,6 +53,7 @@ import {
 } from "@/lib/pushNotifications";
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { useAccountUsageAnalytics } from "@/hooks/useAccountUsageAnalytics";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { clampDisplayName } from "@/lib/displayNameLimit";
 import {
@@ -66,6 +67,7 @@ import {
 import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import type { ProChange } from "@/lib/proChange";
+import type { EmailConsentRecord } from "@/lib/emailConsent";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
@@ -208,6 +210,12 @@ export interface UserProfileCore {
     firstSession?: LaunchMilestone;
     week4Return?: LaunchMilestone;
   };
+  /** App1 Q55: the person's answer for each email they can choose (the
+   *  weekly review, and the emails after a break), with when, where and
+   *  to which words. Server-owned: setup, `setEmailConsent` and the
+   *  unsubscribe link write it (`src/lib/emailConsent.ts`). Absent means
+   *  never asked, which is no. */
+  emailConsent?: EmailConsentRecord;
 }
 
 /** One launch milestone: when, which sport, and how many whole days after
@@ -443,6 +451,11 @@ export interface UserProfileSocial {
    *  Privacy → Approve followers. Absent means yes, the default the rules
    *  apply too (`approvesFollowers` in firestore.rules). */
   approveFollowers?: boolean;
+  /** Share usage analytics (Priv1 call 2): Settings → Social & privacy.
+   *  false when the person turned Google Analytics off; absent means on.
+   *  The account's answer wins on each device it signs in on, and the
+   *  device keeps a copy for its next launch (src/lib/usageAnalytics.ts). */
+  usageAnalytics?: boolean;
   /** Whether this person is in the weekly leagues (Soc15 call 3): absent
    *  = never joined, false = left. Server-written by setLeagueSharing,
    *  never by the client. */
@@ -617,6 +630,17 @@ export interface UserProfileOnboarding {
    * firestore.rules allowedUserFields() + profileSanitizer.js + registry.
    */
   trainingWhy?: string;
+  /**
+   * Priv1 call 1: the person's agreement to Tropos storing their health
+   * details, and when they gave it (`src/lib/healthConsent.ts`). Written by
+   * `completeOnboarding` at the end of setup, or by the gate an account set
+   * up before the question meets on its next open. `at` is the server's
+   * time, held as null on this device until a write made offline lands.
+   */
+  healthDataConsent?: {
+    at: { toDate(): Date } | null;
+    version: number;
+  };
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */
@@ -1219,6 +1243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     syncDarkMode(profile?.darkMode ?? true);
   }, [profile?.darkMode]);
+
+  // Share usage analytics (Priv1): the account's answer wins on this device.
+  useAccountUsageAnalytics(profile);
 
   useEffect(() => {
     let isMounted = true;

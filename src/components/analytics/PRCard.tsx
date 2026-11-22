@@ -49,9 +49,13 @@ export default function PRCard({
 
   return (
     <div
-      className="rounded-xl bg-card overflow-hidden dark:card-shadow"
+      className="rounded-2xl bg-card overflow-hidden card-shadow"
       style={{
-        background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)`,
+        /* The tint over the card's own fill: `background` would reset
+           the colour `bg-card` sets, and the card drew as the page with
+           the lit edge round nothing (DS6). Radius and shadow are the
+           personal-records table's beside it (PRsTab). */
+        backgroundImage: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)`,
       }}
     >
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">

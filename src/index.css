@@ -17,6 +17,15 @@
    takes in its padding there, so an exercise's four set rows fit its
    first screen under the header's figures (DS4 pass, 8 November 2026). */
 @custom-variant short (@media (max-height: 640px));
+/* Reduce Transparency (DS6, DESIGN_GUIDE §14o): a frosted chip or bar
+   draws solid. Keyed on the attribute `reducedTransparency.ts` sets on
+   <html>, from the iPhone's setting (WebKit has no
+   `prefers-reduced-transparency`) or the browser's media query, so one
+   variant serves both. Every `backdrop-blur` class carries
+   `transparency-reduce:backdrop-blur-none` and a solid
+   `transparency-reduce:bg-*` beside it (`reducedTransparencyChips.test.ts`).
+   Declared after `dark` so it wins at equal specificity. */
+@custom-variant transparency-reduce (&:where([data-reduced-transparency], [data-reduced-transparency] *));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";

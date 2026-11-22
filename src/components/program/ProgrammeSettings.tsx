@@ -232,8 +232,10 @@ function SettingsOptionCard({
                    PAGE, so in light the description under it (muted, 12px)
                    was 4.23:1 on #e3e2ee, and in dark the selected card sat
                    darker than its neighbours. axe caught it once Settings
-                   listed this editor (Trim1 call 2). */
-                background: `linear-gradient(${accent}14, ${accent}14), hsl(var(--card))`,
+                   listed this editor (Trim1 call 2). An image over the
+                   class's fill, so no shorthand resets it
+                   (inlineBackgroundFill.test.ts). */
+                backgroundImage: `linear-gradient(${accent}14, ${accent}14)`,
                 borderColor: `${accent}45`,
               }
             : undefined
@@ -1231,7 +1233,7 @@ export default function ProgrammeSettings({
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)] transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           <PendingChangesSummary

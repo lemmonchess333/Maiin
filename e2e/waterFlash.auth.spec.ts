@@ -25,6 +25,7 @@ import { openSignUpForm } from "./helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../e2e/helpers/emulator";
+import { restHealthConsent } from "./helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -129,7 +130,7 @@ test.describe("water total never travels backwards mid-tap", () => {
       .waitFor({ state: "visible", timeout: 30_000 });
 
     const res = await fetch(
-      `${DOCS}/users/${await uidByEmail(email)}?updateMask.fieldPaths=onboardingComplete`,
+      `${DOCS}/users/${await uidByEmail(email)}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
       {
         method: "PATCH",
         headers: {
@@ -137,7 +138,11 @@ test.describe("water total never travels backwards mid-tap", () => {
           Authorization: "Bearer owner",
         },
         body: JSON.stringify({
-          fields: { onboardingComplete: { booleanValue: true } },
+          fields: {
+            onboardingComplete: { booleanValue: true },
+            // Agreed to the storing of health details (Priv1 call 1).
+            healthDataConsent: restHealthConsent(),
+          },
         }),
       }
     );

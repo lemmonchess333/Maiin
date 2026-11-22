@@ -36,6 +36,7 @@ import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import BootStallNotice from "@/components/BootStallNotice";
 import ProfileUnavailable from "@/components/ProfileUnavailable";
+import { hasCurrentHealthConsent } from "@/lib/healthConsent";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -136,6 +137,12 @@ const WidgetWaterSync = lazyRetry(() => import("@/components/WidgetWaterSync"));
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
+/* Priv1 call 1: an account set up before setup asked for the agreement to
+   store health details meets it once, before the app. Its own chunk: most
+   opens never load it. */
+const HealthConsentRoutes = lazyRetry(
+  () => import("@/components/healthConsent/HealthConsentRoutes")
+);
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
@@ -696,6 +703,18 @@ function SignedInRoutes({
           />
           <Route path="*" element={<Onboarding />} />
         </Routes>
+      </Suspense>
+    );
+  }
+
+  /* Set up, but without the agreement to store health details: an account
+     from before setup asked (Priv1 call 1). It agrees once, on this open,
+     before the app; HealthConsentRoutes reads the account again first, so
+     an agreement given on another device never flashes the question. */
+  if (!hasCurrentHealthConsent(profile.healthDataConsent)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <HealthConsentRoutes key={user.uid} />
       </Suspense>
     );
   }

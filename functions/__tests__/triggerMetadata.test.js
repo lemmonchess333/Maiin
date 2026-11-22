@@ -575,6 +575,23 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["RESEND_API_KEY"],
   },
+  setEmailConsent: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  hourlyEmailSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: ["RESEND_API_KEY"],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
+  emailUnsubscribe: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   weeklyFellBehindCheck: {
     kind: "schedule",
     maxInstances: 1,
@@ -634,6 +651,16 @@ const EXPECTED = {
     maxInstances: 1,
     secrets: [],
     schedule: "30 * * * *",
+    timeoutSeconds: 540,
+  },
+  // F5c (STATUS 2026-11-21): a soft-deleted meal is removed for good 30
+  // days after it was deleted (lib/mealPurge.js). At quarter to, clear of
+  // the jobs on the hour and the meet-up sweep at half past.
+  purgeSoftDeletedMeals: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "45 * * * *",
     timeoutSeconds: 540,
   },
   // Run27 call 11: the owner renames a Circle.

@@ -62,6 +62,30 @@ describe("which links open a Space (Run27 call 11)", () => {
   });
 });
 
+describe("which links an email opens (App1 Q55)", () => {
+  it.each([
+    ["https://troposfit.com/review?from=email", "/review"],
+    ["https://troposfit.com/?from=email", "/"],
+    ["https://troposfit.com/?utm_source=x&from=email", "/"],
+  ])("opens %s", async (url, route) => {
+    const { nativePostRoute } = await import("../nativePostLinks");
+    expect(nativePostRoute(url)).toBe(route);
+  });
+
+  it.each([
+    // Not an email's: an ordinary link to the review stays on the web.
+    "https://troposfit.com/review",
+    "https://troposfit.com/",
+    "https://troposfit.com/settings?from=email",
+    "https://troposfit.com/email/unsubscribe?u=abc&t=tok&from=email",
+    "https://evil.example/review?from=email",
+    "http://troposfit.com/review?from=email",
+  ])("refuses %s", async (url) => {
+    const { nativePostRoute } = await import("../nativePostLinks");
+    expect(nativePostRoute(url)).toBeNull();
+  });
+});
+
 describe("which links open a post", () => {
   it.each([POST, `${POST}/`, `${POST}?utm_source=messages#top`])(
     "opens %s",

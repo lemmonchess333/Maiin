@@ -63,14 +63,28 @@ import {
   loadOnboardingDraft,
   saveOnboardingDraft,
   clearOnboardingDraft,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
   ONBOARDING_STEP_IDS,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
 import {
+  DELETE_ACCOUNT_ANCHOR,
+  HEALTH_CONSENT_COPY,
+  HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_DATA_CONSENT_VERSION,
+  SIGN_OUT_FAILED,
+  hasCurrentHealthConsent,
+  setupHealthConsent,
+} from "@/lib/healthConsent";
+import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
+import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import {
   buildOnboardingPlan,
   onboardingActivity,
   onboardingFlow,
+  savedPastStep,
 } from "@/lib/onboardingPlan";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -126,6 +140,12 @@ import {
 import { signInMethodOf } from "@/lib/signInMethod";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
+import {
+  CURRENT_EMAIL_CONSENT_WORDING,
+  EMAIL_CONSENT_COPY,
+  EMAIL_UPDATES_LIVE,
+  emailConsentAnswered,
+} from "@/lib/emailConsent";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { raceLegTrimCut } from "@/features/program/programEngine";
@@ -148,7 +168,11 @@ const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
-const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
+/* By stored step number. About you opens on the agreement to store health
+   details (8, Priv1 call 1), then a lifter's limitations (4), then the
+   numbers (5): every question about the person's body comes after it, so
+   the limitations moved here from Your setup. */
+const CHAPTER_FOR_STEP = [0, 1, 2, 1, 3, 3, 4, 4, 3];
 /* The age the calorie estimate shows before a year of birth is given; the
    plan is never made with it, since the step waits for the year. */
 const AGE_BEFORE_ANSWER = 30;
@@ -173,6 +197,7 @@ const STEP_META = [
     "Your plan",
     "Your first week, built from your answers. Change anything before you start.",
   ],
+  [HEALTH_CONSENT_COPY.title, HEALTH_CONSENT_COPY.stored],
 ];
 const GOALS = [
   {
@@ -214,7 +239,7 @@ export default function Onboarding() {
   const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();
   const [draft] = useState(() =>
-    user ? loadOnboardingDraft(user.uid, 7) : null
+    user ? loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP) : null
   );
   const [trainingActivity, setTrainingActivity] = useState<OnboardingActivity>(
     () => onboardingActivity(draft)
@@ -227,16 +252,38 @@ export default function Onboarding() {
   const [askBirthYearAgain] = useState(
     () =>
       !!draft &&
-      draft.step > 5 &&
+      savedPastStep(draft.step, 5) &&
       parseBirthYear(draft.birthYearText ?? "") === null
   );
+  const storedStep =
+    draft?.step === 6
+      ? 7
+      : draft?.step === 2 && draft.runConfirmed === undefined
+        ? 3
+        : (draft?.step ?? 0);
+  /* Priv1 call 1: the agreement to store health details, as given on this
+     step of this setup (the version of the words agreed to). The account
+     carries it once the plan is saved. */
+  const [healthConsentVersion, setHealthConsentVersion] = useState(
+    draft?.healthConsentVersion
+  );
+  const healthConsentGiven = hasCurrentHealthConsent({
+    version: healthConsentVersion,
+  });
+  /* Not now: the step says why the plan needs these details, and every
+     way on. Not kept: setup opens on the agreement again. */
+  const [consentDeclined, setConsentDeclined] = useState(false);
+  /* A draft saved past the agreement without it (setup in progress when
+     the question arrived) opens on it, then goes on through the steps
+     after it, its answers kept. */
+  const [askConsentFirst] = useState(
+    () =>
+      !!draft &&
+      !hasCurrentHealthConsent({ version: draft.healthConsentVersion }) &&
+      flow.indexOf(storedStep) > flow.indexOf(HEALTH_CONSENT_STEP)
+  );
   const [step, setStep] = useState(() => {
-    const storedStep =
-      draft?.step === 6
-        ? 7
-        : draft?.step === 2 && draft.runConfirmed === undefined
-          ? 3
-          : (draft?.step ?? 0);
+    if (askConsentFirst) return HEALTH_CONSENT_STEP;
     if (askBirthYearAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
@@ -249,7 +296,7 @@ export default function Onboarding() {
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
   const [returnToReview, setReturnToReview] = useState(
-    askBirthYearAgain || (draft?.returnToReview ?? false)
+    !askConsentFirst && (askBirthYearAgain || (draft?.returnToReview ?? false))
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -267,6 +314,14 @@ export default function Onboarding() {
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
   const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
+  /* App1 Q55: the email opt-in, off until the person turns it on (§14n
+     (55)), and asked only of an account that has never answered: running
+     setup again does not ask again; Settings → Notifications has the
+     switches. Not kept in the draft, so a setup picked up later asks
+     afresh rather than carry a yes forward. */
+  const askEmail =
+    EMAIL_UPDATES_LIVE && !emailConsentAnswered(profile?.emailConsent);
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -299,7 +354,7 @@ export default function Onboarding() {
      treated as the user's until they supply it: the fields render empty
      and `BodyInputs` reports unanswered as invalid. */
   const [bodyAnswered, setBodyAnswered] = useState(
-    draft?.bodyAnswered ?? Boolean(draft && draft.step > 5)
+    draft?.bodyAnswered ?? Boolean(draft && savedPastStep(draft.step, 5))
   );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
@@ -522,6 +577,7 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     }),
     [
       step,
@@ -569,6 +625,7 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     ]
   );
   useEffect(() => {
@@ -585,6 +642,13 @@ export default function Onboarding() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
   }, [step, trainingActivity]);
+  /* Not now and Go back change the agreement's whole screen: it starts
+     from the top, and its heading takes focus. */
+  useEffect(() => {
+    if (step !== HEALTH_CONSENT_STEP) return;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [step, consentDeclined]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
   /* Goal weight (optional): the target weight owns the nutrition direction
@@ -874,6 +938,7 @@ export default function Onboarding() {
   const answersValid =
     goalConfirmed &&
     validRun &&
+    healthConsentGiven &&
     (!hasLifting || injuries.length > 0) &&
     validBody;
   const canAdvance = [
@@ -885,6 +950,8 @@ export default function Onboarding() {
     validBody,
     true,
     answersValid && displayNameValidation.valid,
+    // The agreement's own button is the answer: I agree always goes on.
+    true,
   ];
   /* The review's button stays live while only the name stands in the way:
      the name sits under the plan, below the fold on a phone, and a button
@@ -898,6 +965,16 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* Where this step sits in its chapter, for a chapter of more than one
+     step in this flow. */
+  const chapterSteps = flow.filter(
+    (id) => CHAPTER_FOR_STEP[id] === CHAPTER_FOR_STEP[step]
+  );
+  const chapterPosition =
+    chapterSteps.length > 1
+      ? `${chapterSteps.indexOf(step) + 1} of ${chapterSteps.length} in this chapter`
+      : null;
+  const declinedHere = step === HEALTH_CONSENT_STEP && consentDeclined;
   /* A step's heading and questions are new elements on each step (keyed
      below), so a step reached by Continue comes in from the right and one
      reached by Back from the left: CSS @starting-style, the browser
@@ -923,10 +1000,16 @@ export default function Onboarding() {
       return;
     }
     if (!canAdvance[step] || pending.current) return;
-    trackLifecycle("onboarding_step_completed", {
-      step: STEP_IDS[step],
-      stepIndex: flow.indexOf(step),
-    });
+    if (step === HEALTH_CONSENT_STEP) {
+      // I agree. Nothing about the answer goes to analytics (Priv1 call
+      // 1): the step's view is the one event it has.
+      setHealthConsentVersion(HEALTH_DATA_CONSENT_VERSION);
+    } else {
+      trackLifecycle("onboarding_step_completed", {
+        step: STEP_IDS[step],
+        stepIndex: flow.indexOf(step),
+      });
+    }
     if (step === 7) {
       void handleFinish();
       return;
@@ -936,7 +1019,8 @@ export default function Onboarding() {
     setReturnToReview(false);
   };
   const handleFinish = async () => {
-    if (!user || pending.current || !canAdvance[7]) return;
+    if (!user || pending.current || !canAdvance[7] || !healthConsentGiven)
+      return;
     pending.current = true;
     const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
@@ -1090,6 +1174,17 @@ export default function Onboarding() {
           weekSchedule: plan.weekSchedule,
           activationJourneyVersion: 2,
           onboardingPlatform: Capacitor.getPlatform(),
+          // Priv1 call 1: the agreement given on its step, which the
+          // server dates and stores, and without which it saves nothing.
+          healthDataConsent: setupHealthConsent(),
+          // A yes to both emails the toggle names, with the words it
+          // showed. Nothing is sent for a no: absent already means no.
+          ...(askEmail && emailOptIn
+            ? {
+                emailOptIn: true,
+                emailWording: CURRENT_EMAIL_CONSENT_WORDING,
+              }
+            : {}),
         });
       try {
         await callCF();
@@ -1367,13 +1462,13 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
-          {((step === 1 && trainingActivity !== "lifting") ||
-            step === 3 ||
-            step === 2 ||
-            step === 4) && (
+        <div
+          key={`heading-${step}${declinedHere ? "-declined" : ""}`}
+          className={cn("space-y-3", stepEnters)}
+        >
+          {chapterPosition && (
             <p className="text-micro text-muted-foreground">
-              {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
+              {chapterPosition}
             </p>
           )}
           <h1
@@ -1381,12 +1476,16 @@ export default function Onboarding() {
             tabIndex={-1}
             className="text-h1 leading-tight tracking-tight font-extrabold focus:outline-none"
           >
-            {STEP_META[step][0]}
+            {declinedHere
+              ? HEALTH_CONSENT_DECLINED_COPY.title
+              : STEP_META[step][0]}
           </h1>
           <p className="text-base text-muted-foreground">
-            {step === 5 && !hasLifting
-              ? "Check these starting values. They help estimate your nutrition targets."
-              : STEP_META[step][1]}
+            {declinedHere
+              ? HEALTH_CONSENT_DECLINED_COPY.body
+              : step === 5 && !hasLifting
+                ? "Check these starting values. They help estimate your nutrition targets."
+                : STEP_META[step][1]}
           </p>
         </div>
         <fieldset
@@ -1914,6 +2013,39 @@ export default function Onboarding() {
               </details>
             </div>
           )}
+          {step === HEALTH_CONSENT_STEP &&
+            (consentDeclined ? (
+              <HealthConsentDeclineActions
+                onBack={() => setConsentDeclined(false)}
+                onDeleteAccount={() =>
+                  navigate(`/settings/account#${DELETE_ACCOUNT_ANCHOR}`)
+                }
+                onSignOut={() =>
+                  void signOut().catch((err: unknown) => {
+                    logger.warn("Onboarding: sign-out failed", err);
+                    toast.error(SIGN_OUT_FAILED);
+                  })
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
+                <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
+                <HealthConsentPolicyLink />
+                {/* No to a question already answered yes takes the yes
+                    back: the plan is saved only with an agreement. */}
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => {
+                    setHealthConsentVersion(undefined);
+                    setConsentDeclined(true);
+                  }}
+                >
+                  {HEALTH_CONSENT_COPY.decline}
+                </Button>
+              </div>
+            ))}
           {step === 4 && (
             <div className="space-y-3">
               <LiftLimitsQuestion injuries={injuries} onChange={setInjuries} />
@@ -2295,6 +2427,27 @@ export default function Onboarding() {
                 deliveryRevision={inviteRevision}
                 disabled={saving}
               />
+              {askEmail && (
+                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                  <div className="min-w-0 flex-1 basis-40 space-y-1">
+                    {/* At 200% text on a 320 px screen the switch drops
+                        under the words rather than squeezing them until a
+                        word breaks mid-way. */}
+                    <p className="text-base font-semibold break-words">
+                      {EMAIL_CONSENT_COPY.setupLabel}
+                    </p>
+                    <p className="text-sm text-muted-foreground break-words">
+                      {EMAIL_CONSENT_COPY.setupDescription}
+                    </p>
+                  </div>
+                  <Toggle
+                    label={EMAIL_CONSENT_COPY.setupLabel}
+                    checked={emailOptIn}
+                    onChange={() => setEmailOptIn((on) => !on)}
+                    disabled={saving}
+                  />
+                </div>
+              )}
               {/* The last thing read before Start my plan, for runners
                   too, who never see the limitation step's copy. */}
               <ExerciseWarning />
@@ -2319,56 +2472,65 @@ export default function Onboarding() {
           button no longer fit side by side, and "Continue" is one word that
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
-      <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-        {step === 7 && (
-          <p className="text-sm text-muted-foreground">
-            Today shows your plan and what to do next. Start when you’re ready.
-          </p>
-        )}
-        <div className="flex gap-3 @max-[15em]:flex-col-reverse">
-          {step !== 0 && (
-            <Button
-              variant="secondary"
-              disabled={saving}
-              leftIcon={<ArrowLeft className="size-4" />}
-              onClick={() => {
-                setSaveError("");
-                setStepMove(-1);
-                setStep(
-                  returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
-                );
-                setReturnToReview(false);
-              }}
-            >
-              Back
-            </Button>
+      {/* Not now's three ways on stand in for the footer: its Back and
+          I agree would be a fourth and fifth. */}
+      {!declinedHere && (
+        <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+          {step === 7 && (
+            <p className="text-sm text-muted-foreground">
+              Today shows your plan and what to do next. Start when you’re
+              ready.
+            </p>
           )}
-          <Button
-            size="lg"
-            className="flex-1"
-            loading={saving}
-            disabled={buttonDisabled}
-            onClick={advance}
-            rightIcon={
-              step === 7 ? (
-                <Check className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )
-            }
-          >
-            {saving
-              ? "Creating your plan…"
-              : step === 7
-                ? saveError
-                  ? "Try again"
-                  : "Start my plan"
-                : returnToReview
-                  ? "Back to review"
-                  : "Continue"}
-          </Button>
-        </div>
-      </footer>
+          <div className="flex gap-3 @max-[15em]:flex-col-reverse">
+            {step !== 0 && (
+              <Button
+                variant="secondary"
+                disabled={saving}
+                leftIcon={<ArrowLeft className="size-4" />}
+                onClick={() => {
+                  setSaveError("");
+                  setStepMove(-1);
+                  setStep(
+                    returnToReview
+                      ? 7
+                      : flow[Math.max(0, flow.indexOf(step) - 1)]
+                  );
+                  setReturnToReview(false);
+                }}
+              >
+                Back
+              </Button>
+            )}
+            <Button
+              size="lg"
+              className="flex-1"
+              loading={saving}
+              disabled={buttonDisabled}
+              onClick={advance}
+              rightIcon={
+                step === 7 ? (
+                  <Check className="size-4" />
+                ) : (
+                  <ChevronRight className="size-4" />
+                )
+              }
+            >
+              {saving
+                ? "Creating your plan…"
+                : step === 7
+                  ? saveError
+                    ? "Try again"
+                    : "Start my plan"
+                  : step === HEALTH_CONSENT_STEP
+                    ? HEALTH_CONSENT_COPY.agree
+                    : returnToReview
+                      ? "Back to review"
+                      : "Continue"}
+            </Button>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

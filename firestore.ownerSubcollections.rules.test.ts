@@ -93,6 +93,44 @@ suite(
         await setDoc(doc(ctx.firestore(), path), data);
       });
 
+    describe("settings/emailState — server writes only (App1 Q55)", () => {
+      // The unsubscribe token every chosen email links with, and what has
+      // been sent. A client that could write it could reset what was sent,
+      // or set its own token; its owner may still read it.
+      const path = `users/${OWNER}/settings/emailState`;
+
+      it("owner reads it, and cannot create, change or erase it", async () => {
+        const ref = doc(asOwner(), path);
+        await assertFails(setDoc(ref, { unsubscribeToken: "x".repeat(43) }));
+        await seed(path, {
+          unsubscribeToken: "T".repeat(43),
+          weeklyReview: { key: "2026-11-09", state: "sent" },
+        });
+        await assertSucceeds(getDoc(ref));
+        await assertFails(updateDoc(ref, { weeklyReview: null }));
+        await assertFails(
+          setDoc(ref, { unsubscribeToken: "y".repeat(43) }, { merge: true })
+        );
+        await assertFails(deleteDoc(ref));
+      });
+
+      it("nobody else reads or writes it", async () => {
+        await seed(path, { unsubscribeToken: "T".repeat(43) });
+        for (const db of [asOther(), asAnon()]) {
+          await assertFails(getDoc(doc(db, path)));
+          await assertFails(setDoc(doc(db, path), { unsubscribeToken: "z" }));
+        }
+      });
+
+      it("the owner's other settings stay theirs to write", async () => {
+        await assertSucceeds(
+          setDoc(doc(asOwner(), `users/${OWNER}/settings/reminders`), {
+            reviewEnabled: true,
+          })
+        );
+      });
+    });
+
     describe.each(["challengeAnnouncement", "challengeReminder"])(
       "%s ledger — server writes only",
       (prefix) => {

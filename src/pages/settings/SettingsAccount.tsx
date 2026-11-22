@@ -10,13 +10,17 @@ import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
  * deleted meals. During setup, and while a deletion is pending, the page
  * is the sign-in and the way out alone.
  */
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
+  HEALTH_CONSENT_STEP,
   loadOnboardingDraft,
+  ONBOARDING_MAX_STEP,
   ONBOARDING_STEP_IDS,
 } from "@/lib/onboardingDraft";
+import { DELETE_ACCOUNT_ANCHOR } from "@/lib/healthConsent";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import SettingsSection from "@/components/settings/SettingsSection";
 import AccountSection from "@/components/settings/AccountSection";
@@ -29,10 +33,15 @@ import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 
 export default function SettingsAccount({
   duringSetup = false,
+  back,
 }: {
   duringSetup?: boolean;
+  /** Where the page's back link goes, when not Settings or setup: the
+   *  health-details agreement an older account meets before the app. */
+  back?: { to: string; label: string };
 }) {
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const { user, profile, signOut } = useAuth();
   const deletion = useAccountDeletionStatus(user?.uid);
   /* The plan and the data belong to a finished account in good standing:
@@ -52,14 +61,29 @@ export default function SettingsAccount({
   const leave = async () => {
     const leaving =
       duringSetup && user && !profile?.onboardingComplete ? user.uid : null;
-    const saved = leaving ? loadOnboardingDraft(leaving, 7)?.step : undefined;
+    const saved = leaving
+      ? loadOnboardingDraft(leaving, ONBOARDING_MAX_STEP)?.step
+      : undefined;
     await signOut();
+    /* Leaving from the health-details agreement says nothing of where:
+       that would tell analytics the person did not agree (Priv1 call 1). */
     if (leaving)
       trackLifecycle(
         "onboarding_abandoned",
-        saved === undefined ? {} : { step: ONBOARDING_STEP_IDS[saved] }
+        saved === undefined || saved === HEALTH_CONSENT_STEP
+          ? {}
+          : { step: ONBOARDING_STEP_IDS[saved] }
       );
   };
+
+  /* A link to Delete account (from the health-details agreement, and from
+     Social & privacy's line about it) lands on it. */
+  useEffect(() => {
+    if (hash !== `#${DELETE_ACCOUNT_ANCHOR}`) return;
+    document
+      .getElementById(DELETE_ACCOUNT_ANCHOR)
+      ?.scrollIntoView?.({ block: "center", behavior: "instant" });
+  }, [hash]);
 
   return (
     <SettingsSection
@@ -68,8 +92,8 @@ export default function SettingsAccount({
         settled ? "Plan, sign-in, your data" : "Email, password, sign out"
       }
       section="account"
-      backTo={duringSetup ? "/" : undefined}
-      backLabel={duringSetup ? "Setup" : undefined}
+      backTo={back?.to ?? (duringSetup ? "/" : undefined)}
+      backLabel={back?.label ?? (duringSetup ? "Setup" : undefined)}
     >
       {settled && (
         <>
@@ -94,7 +118,10 @@ export default function SettingsAccount({
       {settled && (
         <TrackSettingsSectionView section="data_storage">
           <div className="space-y-4">
-            <DataExportSection user={user} />
+            <DataExportSection
+              user={user}
+              emailConsent={profile?.emailConsent}
+            />
             <SettingsGroup title="Recently deleted">
               <SettingsRow
                 icon={Trash2}

@@ -1668,7 +1668,7 @@ export default function RunSummary() {
         <IconButton
           aria-label="Back"
           variant="secondary"
-          className="bg-background/85 backdrop-blur-sm"
+          className="bg-background/85 backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-background!"
           onClick={() => navigate(-1)}
           icon={<ChevronLeft className="size-5" aria-hidden="true" />}
         />

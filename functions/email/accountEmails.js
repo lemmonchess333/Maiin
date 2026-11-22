@@ -37,14 +37,29 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
  *  dependency). `from` is a plain env var so the sender can move from Resend's
  *  test domain (onboarding@resend.dev — sends only to the Resend account
  *  owner) to a verified domain at launch without a code change. `text`, the
- *  plain-text part, is optional; the trial reminder sends one. */
-async function sendViaResend({ to, subject, html, text }) {
+ *  plain-text part, is optional; the trial reminder sends one.
+ *
+ *  `headers` are the email's own (the List-Unsubscribe pair on the emails a
+ *  person chose, App1 Q55), and `idempotencyKey` makes Resend send a
+ *  retried request once: it keeps a key for 24 hours and answers a repeat
+ *  with the first one's result, or 409. A refusal throws an Error carrying
+ *  Resend's `status`, so a caller can tell "too many" (429) from "never"
+ *  (another 4xx) from "no answer". */
+async function sendViaResend({
+  to,
+  subject,
+  html,
+  text,
+  headers,
+  idempotencyKey,
+}) {
   const from = process.env.RESEND_FROM || "Tropos <onboarding@resend.dev>";
   const resp = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
     },
     body: JSON.stringify({
       from,
@@ -52,6 +67,7 @@ async function sendViaResend({ to, subject, html, text }) {
       subject,
       html,
       ...(text ? { text } : {}),
+      ...(headers ? { headers } : {}),
     }),
   });
   if (!resp.ok) {
@@ -60,10 +76,13 @@ async function sendViaResend({ to, subject, html, text }) {
     // name the recipient ("Invalid `to` field: …"): the password-reset
     // callable, which anyone can call, would log every address tried.
     // Addresses are cut here, once, as trialReminders.js cuts its own.
-    throw new Error(
-      `Resend send failed (${resp.status}): ${body
-        .slice(0, 200)
-        .replace(/\S+@\S+/g, "[address]")}`
+    throw Object.assign(
+      new Error(
+        `Resend send failed (${resp.status}): ${body
+          .slice(0, 200)
+          .replace(/\S+@\S+/g, "[address]")}`
+      ),
+      { status: resp.status }
     );
   }
 }
