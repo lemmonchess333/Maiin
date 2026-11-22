@@ -80,6 +80,15 @@ export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
 
+/* A6: setup is answered before there is an account, and its answers wait
+   on the device under this one key until Save your plan makes one. They
+   then move to that account's own key (`adoptSignedOutDraft`). Nothing of
+   them reaches the server before the account exists. */
+const SIGNED_OUT_DRAFT_KEY = "tropos.onboarding.draft.signedOut";
+/** The owner a signed-out draft's envelope echoes: no Firebase uid can be
+ *  this (they are letters and digits), so the cross-check still holds. */
+const SIGNED_OUT_OWNER = "(signed out)";
+
 /* Runtime vocabularies for the unions Onboarding.tsx declares locally.
  * TypeScript keeps these honest at the wire-up: Onboarding assigns
  * `draft.gender` etc. straight into its own typed state, so a value added
@@ -342,16 +351,40 @@ export function isValidDraft(
   );
 }
 
+function envelopeOf(owner: string, draft: OnboardingDraft): DraftEnvelope {
+  return { v: DRAFT_VERSION, uid: owner, savedAt: Date.now(), draft };
+}
+
+/** The draft in a stored envelope, or null when it is not one this owner
+ *  may resume: unparseable, another version, another owner, past its TTL
+ *  or with any invalid field. */
+function draftIn(
+  raw: string,
+  owner: string,
+  maxStep: number
+): OnboardingDraft | null {
+  try {
+    const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
+    if (
+      !envelope ||
+      envelope.v !== DRAFT_VERSION ||
+      envelope.uid !== owner ||
+      typeof envelope.savedAt !== "number" ||
+      Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
+      !isValidDraft(envelope.draft, maxStep)
+    )
+      return null;
+    return envelope.draft;
+  } catch (err) {
+    logger.warn("[OnboardingDraft] load failed", err);
+    return null;
+  }
+}
+
 /** Persist the draft. Best-effort — storage failures never surface. */
 export function saveOnboardingDraft(uid: string, draft: OnboardingDraft): void {
   if (!uid) return;
-  const envelope: DraftEnvelope = {
-    v: DRAFT_VERSION,
-    uid,
-    savedAt: Date.now(),
-    draft,
-  };
-  if (!writeJson(keyFor(uid), envelope)) {
+  if (!writeJson(keyFor(uid), envelopeOf(uid, draft))) {
     logger.warn("[OnboardingDraft] save failed");
   }
 }
@@ -368,29 +401,56 @@ export function loadOnboardingDraft(
   if (!uid) return null;
   const raw = readString(keyFor(uid));
   if (!raw) return null;
-  try {
-    const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
-    if (
-      !envelope ||
-      envelope.v !== DRAFT_VERSION ||
-      envelope.uid !== uid ||
-      typeof envelope.savedAt !== "number" ||
-      Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
-      !isValidDraft(envelope.draft, maxStep)
-    ) {
-      remove(keyFor(uid));
-      return null;
-    }
-    return envelope.draft;
-  } catch (err) {
-    logger.warn("[OnboardingDraft] load failed", err);
-    remove(keyFor(uid));
-    return null;
-  }
+  const draft = draftIn(raw, uid, maxStep);
+  if (!draft) remove(keyFor(uid));
+  return draft;
 }
 
 /** Remove the draft — called once onboarding completes successfully. */
 export function clearOnboardingDraft(uid: string): void {
   if (!uid) return;
   if (!remove(keyFor(uid))) logger.warn("[OnboardingDraft] clear failed");
+}
+
+/** Persist setup's answers given signed out (A6). Best-effort. */
+export function saveSignedOutDraft(draft: OnboardingDraft): void {
+  if (!writeJson(SIGNED_OUT_DRAFT_KEY, envelopeOf(SIGNED_OUT_OWNER, draft))) {
+    logger.warn("[OnboardingDraft] signed-out save failed");
+  }
+}
+
+/** Setup's answers given signed out, held to the same checks as an
+ *  account's draft; one that fails them is removed. */
+export function loadSignedOutDraft(maxStep: number): OnboardingDraft | null {
+  const raw = readString(SIGNED_OUT_DRAFT_KEY);
+  if (!raw) return null;
+  const draft = draftIn(raw, SIGNED_OUT_OWNER, maxStep);
+  if (!draft) remove(SIGNED_OUT_DRAFT_KEY);
+  return draft;
+}
+
+/** Forget setup's signed-out answers: they were moved to an account, the
+ *  account already had a plan, or the person left setup at the agreement. */
+export function clearSignedOutDraft(): void {
+  if (!remove(SIGNED_OUT_DRAFT_KEY))
+    logger.warn("[OnboardingDraft] signed-out clear failed");
+}
+
+/**
+ * The account just made from Save your plan takes the answers given signed
+ * out: they move to its own key and leave the device's, and the account's
+ * draft is returned. With none waiting, the account's own draft (if any).
+ * Safe to call twice: the second call finds them already moved.
+ */
+export function adoptSignedOutDraft(
+  uid: string,
+  maxStep: number
+): OnboardingDraft | null {
+  if (!uid) return null;
+  const waiting = loadSignedOutDraft(maxStep);
+  if (!waiting) return loadOnboardingDraft(uid, maxStep);
+  saveOnboardingDraft(uid, waiting);
+  // The device's copy goes only once the account's has landed.
+  if (loadOnboardingDraft(uid, maxStep)) clearSignedOutDraft();
+  return waiting;
 }

@@ -115,6 +115,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Segment.tsx`                          | `/segment/:segmentId`              | A segment: its line, your best and your efforts, the board of who you follow    |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
+| `TrialOffer.tsx`                       | `/trial-offer`                     | The trial offer that ends setup, then Home; skipped once a trial was had (A6)   |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA                                      |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
 | `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
@@ -133,8 +134,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
 | `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces         |
-| `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                        |
-| `Login.tsx`                            | `*` (fallback)                     | Welcome whenever signed out, then sign-up or sign-in (Email, Google, Apple)     |
+| `Onboarding.tsx`                       | `/setup`, `*` (fallback)           | Setup: signed out at `/setup`, ending on Save your plan (A6); signed in, `*`    |
+| `Login.tsx`                            | `*` (fallback)                     | Welcome whenever signed out (Get started opens setup), then Sign in             |
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |

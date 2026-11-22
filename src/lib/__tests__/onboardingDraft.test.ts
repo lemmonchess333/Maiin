@@ -16,6 +16,10 @@ import {
   saveOnboardingDraft,
   loadOnboardingDraft,
   clearOnboardingDraft,
+  saveSignedOutDraft,
+  loadSignedOutDraft,
+  clearSignedOutDraft,
+  adoptSignedOutDraft,
   isValidDraft,
   DRAFT_SESSION_MINUTES,
   DRAFT_VERSION,
@@ -451,5 +455,65 @@ describe("the health-details agreement", () => {
           MAX_STEP
         )
       ).toBe(false);
+  });
+});
+
+/* A6: setup is answered before there is an account. Its answers wait on
+   the phone under one key, survive a kill and a cold start (the round trip
+   is the remount, as above), and move to the account Save your plan makes. */
+describe("setup answered signed out (A6)", () => {
+  const SIGNED_OUT_KEY = "tropos.onboarding.draft.signedOut";
+
+  it("survives the app being closed: load returns what was saved", () => {
+    const d = makeDraft({ step: 7, healthConsentVersion: 1 });
+    saveSignedOutDraft(d);
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
+    // A cold start reads the same storage again.
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
+  });
+
+  it("is not an account's draft, and an account's is not it", () => {
+    saveSignedOutDraft(makeDraft({ step: 2 }));
+    saveOnboardingDraft(UID_A, makeDraft({ step: 5 }));
+    expect(loadOnboardingDraft(UID_B, MAX_STEP)).toBeNull();
+    expect(loadSignedOutDraft(MAX_STEP)?.step).toBe(2);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)?.step).toBe(5);
+    // An account's envelope written under the signed-out key is refused.
+    localStorage.setItem(SIGNED_OUT_KEY, localStorage.getItem(keyFor(UID_A))!);
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
+    expect(localStorage.getItem(SIGNED_OUT_KEY)).toBeNull();
+  });
+
+  it("moves to the new account, leaving nothing on the phone's key", () => {
+    const d = makeDraft({ step: 7, healthConsentVersion: 1 });
+    saveSignedOutDraft(d);
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)).toEqual(d);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(d);
+    expect(localStorage.getItem(SIGNED_OUT_KEY)).toBeNull();
+    // Twice is the same as once (React draws a first render twice in
+    // development).
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)).toEqual(d);
+  });
+
+  it("over an older draft of the same account, the newer answers win", () => {
+    saveOnboardingDraft(UID_A, makeDraft({ step: 1 }));
+    saveSignedOutDraft(makeDraft({ step: 7 }));
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)?.step).toBe(7);
+  });
+
+  it("with nothing waiting, the account keeps its own draft", () => {
+    saveOnboardingDraft(UID_A, makeDraft({ step: 3 }));
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)?.step).toBe(3);
+  });
+
+  it("expires after the same 14 days, and clears", () => {
+    saveSignedOutDraft(makeDraft());
+    const raw = JSON.parse(localStorage.getItem(SIGNED_OUT_KEY)!);
+    raw.savedAt = Date.now() - DRAFT_TTL_MS - 1;
+    localStorage.setItem(SIGNED_OUT_KEY, JSON.stringify(raw));
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
+    saveSignedOutDraft(makeDraft());
+    clearSignedOutDraft();
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
   });
 });

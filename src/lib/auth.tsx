@@ -1607,7 +1607,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (auth.currentUser?.uid !== uid) return;
       if (profileWritten) setProfile(newProfile);
-      trackLifecycle("signup_completed", { method: "email" });
+      trackLifecycle("account_created", { method: "email" });
       // The verification link goes out now, so it is waiting in the inbox
       // by the time the plan is made; onboarding no longer stops for it.
       // A failed send is not the sign-up's failure: Home's verify notice
@@ -1649,7 +1649,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await writeNewProfileDocs(uid, newProfile);
         if (auth.currentUser?.uid !== uid) return;
         setProfile(newProfile);
-        trackLifecycle("signup_completed", { method });
+        trackLifecycle("account_created", { method });
       } else {
         if (auth.currentUser?.uid !== uid) return;
         const data = profileDoc.data();
