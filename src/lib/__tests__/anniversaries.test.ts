@@ -308,9 +308,66 @@ describe("the words", () => {
   });
 
   it("keep every headline to five words or fewer", () => {
+    for (const kind of ANNIVERSARY_KINDS) {
+      const words = anniversaryWords(kind, null);
+      expect(words.headline.split(/\s+/).length).toBeLessThanOrEqual(5);
+      expect(words.card.headline.split(/\s+/).length).toBeLessThanOrEqual(5);
+    }
+  });
+});
+
+/* Owner, 22 November 2026: a shared card is read by anyone, so it names
+   no one. The reveal keeps "You’ve"; the card says the same fact. */
+describe("the card's words", () => {
+  const flat = (text: string) => text.replace(/\u00a0/g, " ");
+
+  it("say each anniversary without you, since when it began", () => {
+    const card = (kind: (typeof ANNIVERSARY_KINDS)[number]) => {
+      const { headline, line, share } = anniversaryWords(
+        kind,
+        "2025-03-03"
+      ).card;
+      return { headline, line: flat(line), share };
+    };
+    expect(card("sessions50")).toEqual({
+      headline: "50th session",
+      line: "50 sessions on Tropos since 3 Mar 2025. 100 is next.",
+      share: "50th session on Tropos",
+    });
+    expect(card("sessions100")).toEqual({
+      headline: "100th session",
+      line: "100 sessions on Tropos since 3 Mar 2025.",
+      share: "100th session on Tropos",
+    });
+    expect(card("oneYear")).toEqual({
+      headline: "A year of Tropos",
+      line: "Training on Tropos since 3 Mar 2025.",
+      share: "A year of Tropos",
+    });
+    expect(card("km1000")).toEqual({
+      headline: `${group(1000)} km run`,
+      line: `${group(1000)} km run on Tropos since 3 Mar 2025.`,
+      share: `${group(1000)} km run on Tropos`,
+    });
+  });
+
+  it("say each without a start day when there is none", () => {
+    const line = (kind: (typeof ANNIVERSARY_KINDS)[number]) =>
+      flat(anniversaryWords(kind, null).card.line);
+    expect(line("sessions50")).toBe("50 sessions on Tropos. 100 is next.");
+    expect(line("sessions100")).toBe("100 sessions on Tropos.");
+    expect(line("oneYear")).toBe("A year of training on Tropos.");
+    expect(line("km1000")).toBe(`${group(1000)} km run on Tropos.`);
+  });
+
+  it("never say you, and leave the reveal its own words", () => {
     for (const kind of ANNIVERSARY_KINDS)
-      expect(
-        anniversaryWords(kind, null).headline.split(/\s+/).length
-      ).toBeLessThanOrEqual(5);
+      for (const since of ["2025-03-03", null]) {
+        const words = anniversaryWords(kind, since);
+        for (const text of Object.values(words.card))
+          expect(text).not.toMatch(/\byou(r|’ve|'ve)?\b/i);
+        expect(words.line).toMatch(/^You’ve /);
+        expect(words.card.line).not.toBe(words.line);
+      }
   });
 });

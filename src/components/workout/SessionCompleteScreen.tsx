@@ -34,7 +34,9 @@ import {
   finishKicker,
   finishRegister,
   rewardLine,
+  rewardSentence,
   summaryLine,
+  type RewardLineContext,
 } from "@/lib/finishMoment";
 import type { PostMoment } from "@/lib/postMoments";
 import { liftUnitLabel } from "@/lib/liftLoad";
@@ -321,17 +323,28 @@ export default function SessionCompleteScreen({
     : undefined;
   const rewardExerciseId = rewardPrRow?.exerciseId;
   const bestBefore = rewardPrRow?.result.bestBeforeSession;
-  const line = reward
-    ? rewardLine(reward.moment, {
-        sport: "lift",
-        distanceUnit: "km",
-        loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
-        loadUnit: liftUnitLabel(liftUnit),
-        prBefore: bestBefore
-          ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
-          : null,
-      })
-    : null;
+  /* The first screen's line is the reward's one sentence (§14m rule 30),
+     so it stays. A session's only best, when that line already says it
+     and what it beat, is not listed again under it; from two bests the
+     list sums the session up, the one in the line included. */
+  const listedBests =
+    bests.length === 1 && rewardPrRow?.key === bests[0].key ? [] : bests;
+  const lineContext: RewardLineContext = {
+    sport: "lift",
+    distanceUnit: "km",
+    loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
+    loadUnit: liftUnitLabel(liftUnit),
+    prBefore: bestBefore
+      ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
+      : null,
+  };
+  const line = reward ? rewardLine(reward.moment, lineContext) : null;
+  /* The share card's form of it, which names no one ("Rowed …"). */
+  const cardLine = reward
+    ? rewardSentence(
+        rewardLine(reward.moment, { ...lineContext, voice: "card" })
+      )
+    : undefined;
   /* The routine session's one line: a plan's week done, else what comes
      next. Either way it is said once on the screen. */
   const quietLine = saved
@@ -546,7 +559,7 @@ export default function SessionCompleteScreen({
               muscles it worked. The bests land a beat after the screen, a
               little large and settling, and their trophy after them
               (Pol1). */}
-          {bests.length > 0 && (
+          {listedBests.length > 0 && (
             <motion.section
               aria-labelledby="session-new-bests"
               className="space-y-2 origin-top"
@@ -565,11 +578,11 @@ export default function SessionCompleteScreen({
               >
                 New bests
                 <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
-                  {bests.length}
+                  {listedBests.length}
                 </span>
               </SectionHeading>
               <Card padded={false} className="divide-y divide-border">
-                {bests.map(({ key, name, exerciseId, result }) => (
+                {listedBests.map(({ key, name, exerciseId, result }) => (
                   <div key={key} className="flex items-center gap-3 p-3">
                     <ExerciseThumb exerciseId={exerciseId ?? ""} />
                     <div className="min-w-0 flex-1">
@@ -822,9 +835,7 @@ export default function SessionCompleteScreen({
               prExercise: bests[0]?.name,
               durationSec: Math.round(sessionDurationMinutes * 60),
               headline: heading,
-              line: line
-                ? `${line.before}${line.figure}${line.after}`
-                : undefined,
+              line: cardLine,
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
             }}
