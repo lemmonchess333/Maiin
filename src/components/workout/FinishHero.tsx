@@ -190,7 +190,7 @@ export default function FinishHero({
         )}
         <p
           data-finish-figure
-          className="ds-display-figure relative mt-1 text-foreground"
+          className="ds-display-figure ds-display-finish relative mt-1 text-foreground"
           style={
             { "--display-scale": displayScale(figureText) } as CSSProperties
           }

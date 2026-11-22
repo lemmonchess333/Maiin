@@ -359,6 +359,93 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     ).toHaveAttribute("data-lead-drawing", "Bench Press");
   });
 
+  /* The owner, on his phone: the figure read bigger than the session it
+     counts. A finish sets it smaller than the display register's 96 px
+     (`.ds-display-finish`, 64 px on a phone). */
+  it("sets the figure at the finish's own size", () => {
+    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    expect(document.querySelector("[data-finish-figure]")).toHaveClass(
+      "ds-display-figure",
+      "ds-display-finish"
+    );
+  });
+
+  const pr = (exercise: string, weightKg: number, reps = 8) =>
+    ({ kind: "pr", exercise, weightKg, reps }) as const;
+  const row = {
+    ...bench,
+    name: "Barbell Row",
+    exerciseId: "barbell-row",
+    instanceId: "i-row",
+    movementCategory: "horizontal_pull",
+  } as unknown as ProgramExercise;
+  const rowBest = {
+    ...benchBest,
+    weight: 60,
+    previousBest: { weight: 57.5, reps: 8, date: "2026-09-20" },
+    bestBeforeSession: { weight: 57.5, reps: 8, date: "2026-09-20" },
+  } as unknown as SetPR;
+  const twoLifts = {
+    exercises: [bench, row],
+    setLogs: [
+      [{ reps: 8, weight: 80, completed: true, type: "working" as const }],
+      [{ reps: 8, weight: 60, completed: true, type: "working" as const }],
+    ],
+    prResults: new Map([
+      ["Bench Press:8rm", benchBest],
+      ["Barbell Row:8rm", rowBest],
+    ]),
+  };
+
+  it("says a session's one new best once, in the line, not again in a list", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, moments: [pr("Bench Press", 80)] })}
+      />
+    );
+    expect(line()).toHaveTextContent(
+      "You benched 80 kg × 8, a new best by 2.5 kg."
+    );
+    expect(screen.queryByRole("heading", { name: /New bests/ })).toBeNull();
+    expect(screen.queryByText(/Was 77\.5 kg/)).toBeNull();
+    // The badge it earned is still the first thing under the first screen.
+    expect(screen.getByTestId("session-badge")).toBeInTheDocument();
+  });
+
+  it("lists two new bests under the line, the line's own included", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          ...twoLifts,
+          moments: [pr("Bench Press", 80), pr("Barbell Row", 60)],
+        })}
+      />
+    );
+    expect(line()).toHaveTextContent("You benched 80 kg × 8");
+    const heading = screen.getByRole("heading", { name: /New bests/ });
+    expect(heading).toHaveTextContent("2");
+    const list = heading.closest("section")!;
+    expect(list).toHaveTextContent("Bench Press");
+    expect(list).toHaveTextContent("Barbell Row");
+  });
+
+  it("lists the one best when the line is about something else", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          moments: [{ kind: "streak", days: 30 }, pr("Bench Press", 80)],
+        })}
+      />
+    );
+    expect(line()).toHaveTextContent("You’ve trained 30 days in a row.");
+    expect(
+      screen.getByRole("heading", { name: /New bests/ })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Was/)).toHaveTextContent("Was 77.5 kg × 8");
+  });
+
   it("keeps a routine session calm: no light, no confetti, its next session", async () => {
     motionPref.reduce = false;
     render(

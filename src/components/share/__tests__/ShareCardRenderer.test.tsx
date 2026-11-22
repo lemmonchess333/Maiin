@@ -103,17 +103,161 @@ describe("ShareCardRenderer", () => {
     expect(true).toBe(true);
   });
 
-  it("brands with the small mark + handle — NOT an oversized wordmark", () => {
+  /* DESIGN_GUIDE §14p: the lockup at the foot, the mark beside "Tropos"
+     in the figure face, about a quarter of the card's width (the median
+     of the reference apps that sign their cards), with the sharer's name
+     and the date across the same row. */
+  it("signs the card with the lockup at its foot, the name and date across from it", () => {
     render(<ShareCardRenderer data={base} offscreen={false} />);
-    // The corner mark is the brand mark drawn inline, not big text.
-    const mark = document.querySelector("[data-share-mark]")!;
+    const lockup = document.querySelector("[data-share-lockup]") as HTMLElement;
+    const mark = lockup.querySelector("[data-share-mark]")!;
     expect(
       [...mark.querySelectorAll("path")].map((p) => p.getAttribute("d"))
     ).toEqual([MARK_BAR, MARK_STEM]);
-    expect(screen.getByText("Alex")).toBeTruthy();
-    expect(screen.getByText("12 Jun 2026")).toBeTruthy();
-    // The old card's giant "TROPOS" header is gone.
+    expect(mark.getAttribute("height")).toBe("64");
+    expect(mark.querySelector("path")?.getAttribute("fill")).toBe("#7B72E9");
+    const word = screen.getByText("Tropos");
+    expect(lockup).toContainElement(word);
+    expect(word.style.fontFamily).toMatch(/^["']Archivo Variable["']/);
+    expect(word.style.fontWeight).toBe("800");
+    expect(word.style.fontSize).toBe("56px");
+    expect(lockup.style.flexShrink).toBe("0");
+    // One row: the lockup, then the name over the date at its right.
+    const row = lockup.parentElement!;
+    expect(row.style.display).toBe("flex");
+    expect(row.lastElementChild).toHaveTextContent("Alex12 Jun 2026");
+    expect((row.lastElementChild as HTMLElement).style.textAlign).toBe("right");
+    // Never a banner across the top.
     expect(screen.queryByText("TROPOS")).toBeNull();
+  });
+
+  /* A brand's mark is one colour everywhere, and the template's colour is
+     for the person's data (§0 rule 1): a food card's figure is orange, its
+     lockup is not. */
+  it("draws the same lockup on every card: the mark purple, the name white", () => {
+    for (const data of [
+      { template: "nutrition" as const, calories: 2284 },
+      { template: "run" as const, tone: "achievement" as const },
+      { template: "lift" as const, tone: "running" as const },
+    ]) {
+      const { unmount } = render(
+        <ShareCardRenderer
+          data={{ ...base, background: "brand", ...data }}
+          offscreen={false}
+        />
+      );
+      const fills = [
+        ...document.querySelectorAll("[data-share-mark] path"),
+      ].map((p) => p.getAttribute("fill"));
+      expect(fills).toEqual(["#7B72E9", "#7B72E9"]);
+      expect(screen.getByText("Tropos").style.color).toMatch(
+        /^(#ffffff|rgb\(255, 255, 255\))$/
+      );
+      unmount();
+    }
+  });
+
+  it("keeps the lockup's size on a square card, with the card's scale", () => {
+    render(
+      <ShareCardRenderer
+        data={{ ...base, format: "square" }}
+        offscreen={false}
+      />
+    );
+    expect(screen.getByText("Tropos").style.fontSize).toBe(`${56 * 0.82}px`);
+    expect(
+      document.querySelector("[data-share-mark]")?.getAttribute("height")
+    ).toBe(String(64 * 0.82));
+  });
+
+  it("ends a long name in an ellipsis rather than moving the lockup", () => {
+    render(
+      <ShareCardRenderer
+        data={{
+          ...base,
+          handle: "Alexandra Montgomery-Fitzwilliam Hargreaves",
+        }}
+        offscreen={false}
+      />
+    );
+    const name = document.querySelector("[data-share-handle]") as HTMLElement;
+    expect(name.style.textOverflow).toBe("ellipsis");
+    expect(name.style.whiteSpace).toBe("nowrap");
+    expect(name.style.overflow).toBe("hidden");
+    expect((name.parentElement as HTMLElement).style.minWidth).toBe("0px");
+  });
+
+  /* §10: a clear card is laid over a picture the app never sees, so the
+     lockup and the name carry their own dark keyline; a photo card's foot
+     is darker than the rest of its scrim. The keyline is a text shadow and
+     a stroke under the mark, which every engine rasterises. */
+  it("keeps the foot readable on a clear card and on a photo", () => {
+    const foot = (background: ShareBackground) => {
+      const { container, unmount } = render(
+        <ShareCardRenderer
+          data={{ ...base, background, photoUrl: "x.jpg" }}
+          offscreen={false}
+        />
+      );
+      const word = screen.getByText("Tropos");
+      const look = {
+        shadow: word.style.textShadow,
+        nameShadow: (
+          document.querySelector("[data-share-handle]")!
+            .parentElement as HTMLElement
+        ).style.textShadow,
+        markPaths: document.querySelectorAll("[data-share-mark] path").length,
+        footBand: [...container.querySelectorAll("div")].some((d) =>
+          /rgba\(0, ?0, ?0, ?0\.6\) 70%/.test(d.style.background)
+        ),
+      };
+      unmount();
+      return look;
+    };
+    const clear = foot("transparent");
+    expect(clear.shadow).toMatch(/rgba\(0, ?0, ?0, ?0\.85\)/);
+    expect(clear.nameShadow).toMatch(/rgba\(0, ?0, ?0, ?0\.85\)/);
+    expect(clear.markPaths).toBe(4);
+    const brand = foot("brand");
+    expect(brand.shadow).toBe("");
+    expect(brand.markPaths).toBe(2);
+    expect(brand.footBand).toBe(false);
+    expect(foot("photo").footBand).toBe(true);
+  });
+
+  /* The owner: the number was too big on the card. Its hero figure is
+     about 40% of the card's width at five characters, a little less at
+     six, on every card whose figure ran past half of it. */
+  it("sets a wide hero figure at 150 px, and a longer one at 128", () => {
+    const heroSize = (
+      data: Partial<ShareCardRenderData>,
+      text: string | RegExp
+    ) => {
+      const { unmount } = render(
+        <ShareCardRenderer data={{ ...base, ...data }} offscreen={false} />
+      );
+      const size = (screen.getByText(text) as HTMLElement).style.fontSize;
+      unmount();
+      return size;
+    };
+    expect(
+      heroSize({ template: "lift", totalVolumeKg: 2295 }, /^2\D295$/)
+    ).toBe("150px");
+    expect(
+      heroSize({ template: "lift", totalVolumeKg: 12400 }, /^12\D400$/)
+    ).toBe("128px");
+    expect(heroSize({ template: "run", distanceKm: 10.42 }, "10.42")).toBe(
+      "150px"
+    );
+    expect(
+      heroSize({ template: "nutrition", calories: 2284 }, /^2\D284$/)
+    ).toBe("150px");
+    expect(
+      heroSize(
+        { template: "lift", totalVolumeKg: 2295, format: "square" },
+        /^2\D295$/
+      )
+    ).toBe(`${150 * 0.82}px`);
   });
 
   /* DS4 (§0 rules 1 and 2, §14m rules 12-14 and 31): the card wears the

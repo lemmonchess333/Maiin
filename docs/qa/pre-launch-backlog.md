@@ -5387,6 +5387,30 @@ the handover.
 - [ ] **A share card.** Share a run and a medal. Passing: the small mark
       in the card's corner is the T, in the card's colour.
 
+## The finish's figure, the card's lockup (2026-11-22)
+
+Affects: the finish screens' one figure (`.ds-display-finish` in
+`FinishHero`: lift, run and circuit), the share card's hero figure and its
+foot (`ShareCardRenderer`: every template, and so `PublicPost`'s card), and
+the lift finish's New bests list, which leaves out a session's one best
+when the line above it says it. Captured in Chromium from a harness of the
+real components at 393 and 320 px; the share card was never rasterised by
+`html-to-image` in WebKit. This replaces the last row of the DS7 section
+above: the card's mark now sits in the lockup, purple on every card.
+
+- [ ] **The finish on a phone.** Finish a lift with one new best, then one
+      with two. Passing: the total is about half the screen's width, not
+      wider than the drawing above it; with one best the screen says it
+      once, in the gold line, and under it is what comes next; with two,
+      New bests lists both.
+- [ ] **A share card on the phone.** Share the lift as a Story and as a
+      Square on Brand, Dark, Clear and Photo, and post the Clear one over
+      a bright photo in Instagram. Passing: the foot reads "Tropos" beside
+      the purple T, about a quarter of the card wide, with your name and
+      the date at the right; on Clear the T and the words keep a dark edge
+      over the bright photo; on Photo the foot is dark enough to read
+      whatever the photo; a long display name ends in "…".
+
 ## The welcome shows your week, and sign-in a lifter who faces you (DS8, 2026-11-11)
 
 **The welcome rows below are replaced** by "The welcome stands on

@@ -321,6 +321,12 @@ export default function SessionCompleteScreen({
     : undefined;
   const rewardExerciseId = rewardPrRow?.exerciseId;
   const bestBefore = rewardPrRow?.result.bestBeforeSession;
+  /* The first screen's line is the reward's one sentence (§14m rule 30),
+     so it stays. A session's only best, when that line already says it
+     and what it beat, is not listed again under it; from two bests the
+     list sums the session up, the one in the line included. */
+  const listedBests =
+    bests.length === 1 && rewardPrRow?.key === bests[0].key ? [] : bests;
   const line = reward
     ? rewardLine(reward.moment, {
         sport: "lift",
@@ -546,7 +552,7 @@ export default function SessionCompleteScreen({
               muscles it worked. The bests land a beat after the screen, a
               little large and settling, and their trophy after them
               (Pol1). */}
-          {bests.length > 0 && (
+          {listedBests.length > 0 && (
             <motion.section
               aria-labelledby="session-new-bests"
               className="space-y-2 origin-top"
@@ -565,11 +571,11 @@ export default function SessionCompleteScreen({
               >
                 New bests
                 <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
-                  {bests.length}
+                  {listedBests.length}
                 </span>
               </SectionHeading>
               <Card padded={false} className="divide-y divide-border">
-                {bests.map(({ key, name, exerciseId, result }) => (
+                {listedBests.map(({ key, name, exerciseId, result }) => (
                   <div key={key} className="flex items-center gap-3 p-3">
                     <ExerciseThumb exerciseId={exerciseId ?? ""} />
                     <div className="min-w-0 flex-1">
