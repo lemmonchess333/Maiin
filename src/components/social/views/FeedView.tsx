@@ -447,7 +447,7 @@ export default function FeedView({
                   <button
                     type="button"
                     onClick={openPeople}
-                    className="inline-flex min-h-11 items-center font-semibold text-foreground hover:text-foreground/80 transition-colors"
+                    className="inline-flex min-h-11 items-center font-semibold link-standalone hover:text-foreground/80 transition-colors"
                   >
                     Find people
                   </button>

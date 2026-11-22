@@ -221,7 +221,7 @@ function YourWeek({
               <button
                 type="button"
                 onClick={onOpenPhotos}
-                className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-foreground"
+                className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold link-standalone"
               >
                 Progress photos
               </button>

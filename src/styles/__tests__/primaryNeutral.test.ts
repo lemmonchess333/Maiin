@@ -1,16 +1,13 @@
 /**
- * The chrome is neutral, so purple means lifting (DS10 call 1, owner
- * 22 November 2026).
+ * The chrome is neutral, so purple means lifting (DS10 call 1).
  *
  * Selection, links and text buttons, switches, focus rings, icon and
- * callout tints and filled buttons all read `--primary`, so the chrome went
- * neutral by making `--primary` the text colour. This file keeps it there:
- * a later change that puts a hue back into `--primary` would turn every
- * `bg-primary`, `ring-primary` and `text-primary` in the app purple again
- * in one line, which is how purple came to mean "selected", "a link", "Pro"
- * and "lifting" at once. It also holds the places that do not read
- * `--primary` but drew the chrome in a sport's colour: the tab bar's own
- * token, the segmented control's selected fill and the switch.
+ * callout tints and filled buttons all read `--primary`, which is the text
+ * colour. This file keeps it there: a hue put back into `--primary` would
+ * turn every `bg-primary`, `ring-primary` and `text-primary` in the app
+ * purple in one line. It also holds the places that do not read
+ * `--primary`: the tab bar's own token, the segmented control's selected
+ * fill, the switch and the two link classes.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
@@ -88,12 +85,37 @@ describe("one selected state everywhere", () => {
   });
 
   it("every focus ring is solid, so it clears 3:1 in light", () => {
-    // `ring-primary/40` is 2.7:1 on the white card now that the ring is
-    // the text colour; solid it is about 19:1.
+    // `ring-primary/40` would be 2.7:1 on the white card; solid it is
+    // about 19:1.
     const offenders = globSync("src/**/*.tsx")
       .filter((f) => !f.includes("__tests__"))
       .filter((f) => /focus-visible:ring-primary\/\d/.test(read(f)));
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("links", () => {
+  it("one on its own line ends in a chevron; one in a sentence is underlined", () => {
+    const at = (name: string) => {
+      const i = CSS.indexOf(`@utility ${name} {`);
+      expect(i, name).toBeGreaterThan(-1);
+      return CSS.slice(i, CSS.indexOf("\n}\n", i));
+    };
+    const standalone = at("link-standalone");
+    expect(standalone).toContain("color: hsl(var(--foreground));");
+    expect(standalone).toMatch(/&::after[\s\S]*mask:[\s\S]*m9 18 6-6-6-6/);
+    const inline = at("link-inline");
+    expect(inline).toContain("color: hsl(var(--foreground));");
+    expect(inline).toContain("text-decoration-line: underline;");
+  });
+
+  it.each([
+    ["src/components/home/WeeklyReviewEntry.tsx", "link-standalone"],
+    ["src/features/streaks/BadgeShelf.tsx", "link-standalone"],
+    ["src/components/social/views/FeedView.tsx", "link-standalone"],
+    ["src/pages/Login.tsx", "link-inline"],
+  ])("%s takes %s", (file, cls) => {
+    expect(read(file)).toContain(cls);
   });
 });
 

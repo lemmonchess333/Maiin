@@ -2157,6 +2157,12 @@ export default function RunSummary() {
                   }`}
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >
+                  {adherenceLabel === "Planned" && (
+                    <CheckCircle
+                      className="size-4 shrink-0 text-success-strong"
+                      aria-hidden="true"
+                    />
+                  )}
                   {adherenceLabel}
                 </span>
               )}

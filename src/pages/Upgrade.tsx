@@ -398,7 +398,7 @@ export default function Upgrade() {
         >
           {statusBanner.kind === "success" && (
             <CheckCircle2
-              className="size-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0 text-success-strong"
               aria-hidden="true"
             />
           )}

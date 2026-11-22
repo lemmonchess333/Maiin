@@ -14,7 +14,14 @@ import {
   duplicateEmailHint,
   isSignInCancelled,
 } from "@/lib/authErrors";
-import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import BootSteps from "@/components/BootSteps";
 import { isNativePlatform } from "@/lib/platform";
@@ -77,7 +84,7 @@ function takeLoginForm(): { view: View; email: string } | null {
 }
 
 const AGREEMENT_LINK =
-  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium text-foreground underline underline-offset-2 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm";
+  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm";
 
 export default function Login() {
   const {
@@ -376,8 +383,12 @@ export default function Login() {
         {accountDeleted && (
           <div
             role="status"
-            className="p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
+            className="flex items-start gap-2 p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
           >
+            <CheckCircle2
+              className="size-4 mt-0.5 shrink-0 text-success-strong"
+              aria-hidden="true"
+            />
             Your account and all data have been deleted.
           </div>
         )}
@@ -586,7 +597,7 @@ export default function Login() {
               setError("");
             }}
             aria-pressed={isSignUp}
-            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-foreground font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
