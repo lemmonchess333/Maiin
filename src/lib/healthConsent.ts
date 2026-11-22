@@ -111,6 +111,17 @@ export const HEALTH_CONSENT_DECLINED_COPY = {
   signOut: "Sign out",
 } as const;
 
+/** Not now in setup before there is an account (A6): there is nothing to
+ *  sign out of or delete, so the ways on are back to the agreement, or
+ *  leaving setup, which forgets the answers given so far. */
+export const HEALTH_CONSENT_DECLINED_SIGNED_OUT_COPY = {
+  body:
+    "Tropos builds your plan and calorie target from your weight, height, " +
+    "injuries, steps, food and runs, so it can’t work without them. You " +
+    "can go back and agree, or leave setup.",
+  leave: "Leave setup",
+} as const;
+
 /** Said when the gate's agreement could not be saved, or the account not
  *  read again after it. */
 export const HEALTH_CONSENT_SAVE_FAILED =

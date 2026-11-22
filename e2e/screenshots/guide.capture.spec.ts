@@ -2,7 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { createRequire } from "node:module";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { emulatorActive } from "../helpers/emulator";
-import { openSignUpForm } from "../helpers/auth";
+import { openSetup, saveYourPlanWithEmail } from "../helpers/auth";
+import { SETUP, TRIAL_OFFER } from "../../src/test/journeyScreens";
 import { settleImages } from "../helpers/settleImages";
 import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
 
@@ -13,7 +14,7 @@ import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
- * capture rig has no Functions emulator, so "Start my plan" is routed into
+ * capture rig has no Functions emulator, so the plan Save your plan builds is routed into
  * the real `completeOnboarding` handler with a verified emulator token,
  * as run-coaching.capture.spec.ts does for its callable: the account and
  * its plan are written by the code that writes them in production.
@@ -100,14 +101,11 @@ test("a new account meets each hint where it is used, and no walk", async ({
   }, GUIDE_UNDER_AUTOMATION_KEY);
   await realCompleteOnboarding(page);
 
-  // Sign up, and set up a lifting plan with the defaults.
+  // Set up a lifting plan with the defaults, signed out (A6), then save it
+  // with an email account.
   await page.goto("/");
-  await openSignUpForm(page);
+  await openSetup(page);
   const email = `guide-${Date.now()}@tropos.test`;
-  await page.fill("#login-email", email);
-  await page.fill("#login-password", "test-password-123");
-  await page.getByRole("button", { name: /create account/i }).click();
-  await verifySignupEmail(page, email);
   const next = () =>
     page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: /Build muscle/ }).click();
@@ -133,12 +131,18 @@ test("a new account meets each hint where it is used, and no walk", async ({
   await page
     .getByRole("textbox", { name: "Your public display name" })
     .fill("Guide tester");
-  await page
-    .getByRole("button", { name: "Start my plan", exact: true })
-    .click();
+  await page.getByRole("button", { name: SETUP.saveNext, exact: true }).click();
+  await saveYourPlanWithEmail(page, email, "test-password-123");
+  // The plan is built, then the trial offer (Biz1 call 3); Not now goes on.
+  const notNow = page.getByRole("button", {
+    name: TRIAL_OFFER.notNow,
+    exact: true,
+  });
+  await verifySignupEmail(page, email, notNow);
+  await notNow.click();
 
-  // The saved plan opens Today with the training task ready and no tour or
-  // offer in the way.
+  // Not now opens Today with the training task ready and no tour in the
+  // way.
   await expect(
     page.getByRole("heading", { name: "Today", level: 1 })
   ).toBeVisible({ timeout: 30_000 });

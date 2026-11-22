@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
-import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
+import { newAccountAtSetup, signInAsTestUser } from "../helpers/auth";
 /**
  * Analytics tab capture — the "analytics doesn't load" report.
  *
@@ -202,13 +201,7 @@ test.describe("analytics tab screenshots", () => {
     const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    await newAccountAtSetup(page, email, "test-password-123");
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

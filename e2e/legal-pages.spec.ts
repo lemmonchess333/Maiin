@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { openSignInForm, openSignUpForm } from "./helpers/auth";
+import { openSaveYourPlan, openSignInForm } from "./helpers/auth";
 
 test.describe("Legal pages", () => {
   test("privacy policy renders with headings", async ({ page }) => {
@@ -86,7 +86,8 @@ test.describe("Login's agreement line on a small phone", () => {
 
   for (const [screen, open] of [
     ["sign-in", openSignInForm],
-    ["sign-up", openSignUpForm],
+    // Where setup makes the account (A6).
+    ["Save your plan", openSaveYourPlan],
   ] as const) {
     test(`${screen}: the line wraps inside the screen`, async ({ page }) => {
       await page.goto("");
@@ -107,7 +108,7 @@ test.describe("Login's agreement line on a small phone", () => {
   ] as const) {
     test(`its ${name} link opens ${heading} signed out`, async ({ page }) => {
       await page.goto("");
-      await openSignUpForm(page);
+      await openSaveYourPlan(page);
       await page
         .locator("p")
         .filter({ hasText: "By continuing, you agree to the" })

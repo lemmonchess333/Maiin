@@ -80,6 +80,7 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { useAuth } from "@/lib/auth";
+import { takeTrialOfferWebCheckout } from "@/lib/trialOffer";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
@@ -251,6 +252,16 @@ export default function Upgrade() {
         source: "upgrade_page",
         platform,
       });
+    }
+    // A checkout begun from the trial offer that ends setup goes on Home,
+    // as every way off that offer does (A6): the banner's words as a toast.
+    if (user && takeTrialOfferWebCheckout(user.uid)) {
+      const banner = checkoutBanner(checkoutStatus);
+      if (banner?.kind === "success") toast.success(banner.message);
+      else if (banner) toast(banner.message);
+      window.scrollTo(0, 0);
+      navigate("/", { replace: true });
+      return;
     }
     // Strip the query param after one render so a refresh doesn't
     // re-render the banner. Keep the rest of the search params.

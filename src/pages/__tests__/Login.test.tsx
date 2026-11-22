@@ -127,13 +127,44 @@ describe("Login — who sees which screen", () => {
     expect(screens()).toEqual(["welcome"]);
   });
 
-  it("Get started opens the sign-up form", () => {
-    show();
+  /* A6: the account is made at the end of setup, on Save your plan, so
+     Get started opens setup's first question, with no form before it. */
+  it("Get started opens setup, before any account", () => {
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route path="*" element={<Login />} />
+          <Route path="/setup" element={<p>Setup</p>} />
+        </Routes>
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    expect(screen.getByText("Setup")).toBeInTheDocument();
+    expect(screens()).toEqual(["welcome"]);
+  });
+
+  it("Sign in's way for someone with no account opens setup too", () => {
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route path="*" element={<Login />} />
+          <Route path="/setup" element={<p>Setup</p>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.queryByText("Create account")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    expect(screen.getByText("Setup")).toBeInTheDocument();
+  });
+
+  it("sends welcome_viewed once a phone, however often the welcome shows", () => {
+    show();
+    cleanup();
+    show();
     expect(
-      screen.getByRole("heading", { name: "Create your account" })
-    ).toBeInTheDocument();
-    expect(screens()).toEqual(["welcome", "sign_up"]);
+      vi.mocked(track).mock.calls.filter(([e]) => e === "welcome_viewed")
+    ).toEqual([["welcome_viewed", { returningDevice: false }]]);
   });
 
   it("Sign in opens the sign-in form", () => {
@@ -205,23 +236,17 @@ describe("Login — what the signed-out screens show", () => {
     ).toHaveClass("text-stage-foreground");
   });
 
-  it("sign-in and sign-up share one lifter, which is not drawn again on the way across", () => {
+  it("sign-in opens on the lockup and the lifter", () => {
     const { container } = showSignIn();
     expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
-    const lifter = container.querySelector(".signin-figure");
-    expect(lifter).not.toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
-    expect(
-      screen.getByRole("heading", { name: "Create your account" })
-    ).toBeInTheDocument();
-    // The same node: a new one would play its rep from the start.
-    expect(container.querySelector(".signin-figure")).toBe(lifter);
+    expect(container.querySelector(".signin-figure")).not.toBeNull();
   });
 });
 
 /* App Review 1.2: whoever creates an account agrees to the Terms. Every
-   button on the two forms can create one (the email form on Sign up;
-   Apple and Google on either screen, the first time they are used). */
+   button on the form can create one (Apple and Google, the first time they
+   are used); Save your plan's form is held to the same line
+   (`SaveYourPlan.test.tsx`). */
 describe("Login — agreeing to the Terms", () => {
   const AGREEMENT =
     /^By continuing, you agree to the Terms and Privacy Policy\.$/;
@@ -250,12 +275,6 @@ describe("Login — agreeing to the Terms", () => {
       ).toBeTruthy();
     }
   }
-
-  it("is on the sign-up form", () => {
-    show();
-    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
-    expectAgreementUnderEveryButton("Create account");
-  });
 
   it("is on the sign-in form, where Apple and Google can create an account too", () => {
     showSignIn();
@@ -294,15 +313,29 @@ describe("Login — Apple and Google come before the email form (A1)", () => {
     }
   }
 
-  it("on Sign up", () => {
-    show();
-    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
-    expectOrder();
-  });
-
   it("on Sign in", () => {
     showSignIn();
     expectOrder();
+  });
+});
+
+describe("Login — a sign-in from here is not Save your plan's", () => {
+  it("drops a mark left by a Save your plan sign-in that never came back", async () => {
+    // A sign-in sheet opened from Save your plan, then the app was killed.
+    localStorage.setItem(
+      "tropos.setupSave",
+      JSON.stringify({ emailOptIn: false, inviteCode: "", at: Date.now() })
+    );
+    h.signInWithGoogle.mockResolvedValueOnce(undefined);
+    showSignIn();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Continue with Google" })
+      );
+    });
+    // Without the mark, the account that appears drops the answers given
+    // signed out instead of building a plan from someone else's.
+    expect(localStorage.getItem("tropos.setupSave")).toBeNull();
   });
 });
 
@@ -421,7 +454,7 @@ describe("Login — reading the Terms and coming back", () => {
 
   it("keeps the screen and the email, not the password", () => {
     withLegalPages();
-    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "sam@example.com" },
     });
@@ -433,7 +466,7 @@ describe("Login — reading the Terms and coming back", () => {
     expect(JSON.stringify({ ...sessionStorage })).not.toContain("secret-pass");
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(
-      screen.getByRole("heading", { name: "Create your account" })
+      screen.getByRole("heading", { name: "Welcome back" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toHaveValue("sam@example.com");
     expect(screen.getByLabelText("Password")).toHaveValue("");

@@ -41,6 +41,7 @@ import {
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
+import { signedOut as setupSignedOut } from "./setupSave";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { onAppResume } from "./appResume";
@@ -1616,7 +1617,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (auth.currentUser?.uid !== uid) return;
       if (profileWritten) setProfile(newProfile);
-      trackLifecycle("signup_completed", { method: "email" });
+      trackLifecycle("account_created", { method: "email" });
       // The verification link goes out now, so it is waiting in the inbox
       // by the time the plan is made; onboarding no longer stops for it.
       // A failed send is not the sign-up's failure: Home's verify notice
@@ -1658,7 +1659,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await writeNewProfileDocs(uid, newProfile);
         if (auth.currentUser?.uid !== uid) return;
         setProfile(newProfile);
-        trackLifecycle("signup_completed", { method });
+        trackLifecycle("account_created", { method });
       } else {
         if (auth.currentUser?.uid !== uid) return;
         const data = profileDoc.data();
@@ -1833,6 +1834,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // The person chose to leave, so they know where an email change is
     // going; the next person on this device should not be shown it.
     clearEmailChange();
+    // Nor setup's answers given signed out on it, which carry a person's
+    // agreement to store health details (A6).
+    setupSignedOut();
     // Reset to the DARK default so the next user starts dark unless their
     // Firestore profile explicitly says light. (Clearing the stored key lets
     // init.js / the next profile load own the value; the signed-out auth
