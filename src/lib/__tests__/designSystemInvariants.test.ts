@@ -485,7 +485,10 @@ describe("DS ratchets — surface-level drift", () => {
   // second, Home's brand WORDMARK (tracked uppercase); DS3 retired it for
   // a plain "Today" title with the date above it, so the primitive now
   // has no way off the token at all.
-  const OFF_SCALE_H1_BASELINE = 22;
+  // 23 with a shared card's page (Soc17 call 1): one heading at the
+  // signed-out pages' `text-h2`, as a shared post's page sets its own
+  // (DESIGN_GUIDE §14p), whatever the card's state.
+  const OFF_SCALE_H1_BASELINE = 23;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
   // The website's own headline (troposfit.com, App1 Q52): a hero at the
   // website's scale, 36 px on a phone and 56 px at 1440, where the app's

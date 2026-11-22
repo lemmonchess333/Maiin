@@ -1079,6 +1079,18 @@ service cloud.firestore {
     match /inviteCodes/{code} {
       allow read, write: if false;
     }
+    /* A shared card's stored copy (Soc17 call 1): `sharedCards/{token}` =
+       { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt },
+       written only by the sharedCard callable and read only by
+       sharedCardPage, both with the Admin SDK (functions/lib/sharedCards.js).
+       A client read would let anyone holding a token see its owner's uid,
+       and a listable one would hand out every card; a client write would
+       let anyone put words on troposfit.com under a sharer's name. The
+       owner keeps no list of their own either: the sheet's callable takes
+       a copy back. */
+    match /sharedCards/{token} {
+      allow read, write: if false;
+    }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes
        to users/{uid}/performance/{weekKey}). Path was previously named

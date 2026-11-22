@@ -12,6 +12,13 @@
         }
       },
       {
+        "source": "/card/**",
+        "function": {
+          "functionId": "sharedCardPage",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/email/unsubscribe",
         "function": {
           "functionId": "emailUnsubscribe",

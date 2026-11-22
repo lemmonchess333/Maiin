@@ -26,6 +26,28 @@ const publicPostShareLink = vi.fn();
 vi.mock("@/lib/postShareLink", () => ({
   publicPostShareLink: (...a: unknown[]) => publicPostShareLink(...a),
 }));
+// Any other card's own page (Soc17): the `sharedCard` callable, which
+// keeps and takes back a card's copy and gives the invite code for the
+// words when it is not kept. The sheet's own calls run as they are.
+const prepareSharedCards = vi.fn();
+const storeSharedCard = vi.fn();
+const removeSharedCard = vi.fn();
+vi.mock("@/lib/firebase", () => ({ functions: {} }));
+vi.mock("firebase/functions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("firebase/functions")>()),
+  httpsCallable:
+    () =>
+    async ({ action, token, card, sources }: Record<string, unknown>) => {
+      if (action === "prepare")
+        return { data: { code: await prepareSharedCards() } };
+      if (action === "store")
+        return {
+          data: { stored: await storeSharedCard(token, card, sources) },
+        };
+      await removeSharedCard(token);
+      return { data: { removed: true } };
+    },
+}));
 
 import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
 
@@ -53,6 +75,10 @@ beforeEach(() => {
   shareImageFile.mockReset();
   track.mockReset();
   publicPostShareLink.mockReset();
+  prepareSharedCards.mockReset().mockResolvedValue(null);
+  // Not kept unless a test says so: the words keep the front door.
+  storeSharedCard.mockReset().mockResolvedValue(false);
+  removeSharedCard.mockReset().mockResolvedValue(undefined);
   setNativeInstagramProvider(null); // web default: no IG bridge
 });
 afterEach(() => {
@@ -93,7 +119,8 @@ describe("ShareCardSheet — export funnel", () => {
       format: "story",
       background: "brand",
     });
-    // No post: the words end with the front door (no link of its own).
+    // A copy not kept, and no invite code: the words end with the front
+    // door (no link of its own).
     expect(shareImageFile).toHaveBeenCalledWith(
       file,
       expect.stringMatching(/run/i),
@@ -141,6 +168,8 @@ describe("ShareCardSheet — export funnel", () => {
         "https://troposfit.com/activity/post1"
       )
     );
+    // A public post keeps its own page: no copy is kept.
+    expect(storeSharedCard).not.toHaveBeenCalled();
   });
 
   it("with a native IG provider, exports direct to Instagram (destination=instagram), skipping the sheet", async () => {
@@ -201,6 +230,83 @@ describe("ShareCardSheet — export funnel", () => {
       })
     );
     expect(shareImageFile).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+});
+
+describe("ShareCardSheet, a card's own page (Soc17)", () => {
+  const file = new File(["x"], "tropos-story.png", { type: "image/png" });
+
+  it("ends any other card with its own page once its copy is kept", async () => {
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("shared");
+    storeSharedCard.mockResolvedValue(true);
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={() => {}}
+        data={{ ...runData, runId: "r1", points: [] }}
+      />
+    );
+    // The sheet's card links arrive as it opens, before the tap.
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(shareImageFile).toHaveBeenCalled());
+    const [token, copy, sources] = storeSharedCard.mock.calls[0];
+    expect(token).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(sources).toEqual({ runId: "r1" });
+    // The figures as drawn, without the name.
+    expect(copy).toMatchObject({ template: "run", distanceKm: 10.42 });
+    expect(JSON.stringify(copy)).not.toContain("Alex");
+    expect(shareImageFile).toHaveBeenCalledWith(
+      file,
+      "My run on Tropos",
+      `https://troposfit.com/card/${token}`
+    );
+    expect(removeSharedCard).not.toHaveBeenCalled();
+  });
+
+  it("ends with the sharer's invite link when the copy is not kept", async () => {
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("shared");
+    prepareSharedCards.mockResolvedValue("K7P49M2H");
+
+    render(<ShareCardSheet open onOpenChange={() => {}} data={runData} />);
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    await act(async () => {});
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() =>
+      expect(shareImageFile).toHaveBeenCalledWith(
+        file,
+        "My run on Tropos",
+        "https://troposfit.com/?invite=K7P49M2H"
+      )
+    );
+  });
+
+  it("takes the copy back when the share is cancelled", async () => {
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("cancelled");
+    storeSharedCard.mockResolvedValue(true);
+    const onOpenChange = vi.fn();
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={onOpenChange}
+        data={{ ...runData, runId: "r1" }}
+      />
+    );
+    await waitFor(() => expect(prepareSharedCards).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(removeSharedCard).toHaveBeenCalledTimes(1));
+    expect(removeSharedCard).toHaveBeenCalledWith(
+      storeSharedCard.mock.calls[0][0]
+    );
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });

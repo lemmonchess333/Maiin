@@ -137,6 +137,25 @@ describe("the page reads what the server writes", () => {
     expect(card.routePath).toBeUndefined();
   });
 
+  it("reads the author's first name and invite code for the button (Soc17 call 3)", async () => {
+    const firestore = db({});
+    firestore.data.set("users/sam", {
+      preferredDistanceUnit: "mi",
+      inviteCode: "K7P49M2H",
+    });
+    firestore.data.set("users/sam/public/profile", {
+      displayName: "Sam Rivers",
+    });
+    firestore.data.set("inviteCodes/K7P49M2H", { uid: "sam" });
+    const answer = await serve(firestore, { format: "json" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => answer }))
+    );
+    const post = await loadPublicPost("run1");
+    expect(post).toMatchObject({ firstName: "Sam", inviteCode: "K7P49M2H" });
+  });
+
   it("asks the server for the figures when the page has no block", async () => {
     const answer = await serve(db({}), { format: "json" });
     const fetchSpy = vi.fn(async () => ({

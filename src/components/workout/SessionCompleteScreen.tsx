@@ -116,6 +116,9 @@ interface SessionCompleteScreenProps {
   /** The account's first workout though it has run before
    *  (`isFirstOfSport`): rewarded as a first. */
   firstOfSport?: boolean;
+  /** The saved workout's id, once saved: a shared card's page goes with
+   *  it (Soc17 call 1). */
+  savedWorkoutId?: string;
 }
 
 export default function SessionCompleteScreen({
@@ -142,6 +145,7 @@ export default function SessionCompleteScreen({
   onRename,
   moments = null,
   firstOfSport = false,
+  savedWorkoutId,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -815,6 +819,8 @@ export default function SessionCompleteScreen({
               date: finishKicker(undefined, startedAt ?? openedAt),
               // Posted to the feed: the card links to the post while public.
               postId: postedActivityId(share),
+              // Saved: any other card's page goes with the workout (Soc17).
+              workoutId: saved ? savedWorkoutId : undefined,
               totalVolumeKg: totalVolume,
               totalReps,
               exerciseCount: exerciseSummary.length,

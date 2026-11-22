@@ -138,6 +138,7 @@ describe("who a public post is shown to", () => {
         authorPhotoURL: PHOTO,
         unit: "km",
         liftUnit: "kg",
+        firstName: "Sam",
         title: "Long run",
         createdAt: Date.parse("2026-11-12T07:10:00Z"),
         durationSec: 3130,
@@ -185,6 +186,28 @@ describe("who a public post is shown to", () => {
     const res = await answer(memoryFirestore(data), "run1");
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ id: "run1", available: false });
+  });
+
+  it("carries the author's invite code while it is theirs, and never makes one (Soc17 call 3)", async () => {
+    const withCode = seed({
+      "users/sam": { preferredDistanceUnit: "km", inviteCode: "K7P49M2H" },
+      "users/sam/public/profile": { displayName: "Sam Rivers" },
+      "inviteCodes/K7P49M2H": { uid: "sam", createdAt: 1 },
+    });
+    const shown = await answer(memoryFirestore(withCode), "run1");
+    expect(shown.body.post.firstName).toBe("Sam");
+    expect(shown.body.post.inviteCode).toBe("K7P49M2H");
+
+    const renewed = { ...withCode, "inviteCodes/K7P49M2H": { uid: "bo" } };
+    const after = await answer(memoryFirestore(renewed), "run1");
+    expect(after.body.post).not.toHaveProperty("inviteCode");
+
+    const none = memoryFirestore(seed());
+    const res = await answer(none, "run1");
+    expect(res.body.post).not.toHaveProperty("inviteCode");
+    expect(
+      [...none.data.keys()].some((k) => k.startsWith("inviteCodes/"))
+    ).toBe(false);
   });
 
   it("answers an address that is no post's the same way", async () => {

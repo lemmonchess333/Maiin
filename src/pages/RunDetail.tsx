@@ -808,6 +808,8 @@ export default function RunDetail() {
             typeof run.sharedActivityId === "string"
               ? run.sharedActivityId
               : undefined,
+          // Any other card's page goes with the run (Soc17).
+          runId,
           points: sharedPoints,
           distanceKm: run.distance / 1000,
           durationSec: run.duration,

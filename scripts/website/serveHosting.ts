@@ -2,9 +2,12 @@
  * Serves the Hosting build (`dist/`, after `npm run build:hosting`) the way
  * Firebase Hosting answers troposfit.com, for looking at the website in a
  * browser before it deploys: firebase.json's trailing-slash rule, rewrites
- * and headers (`hostingResolve.ts`), and a shared post's address answered
- * by the real `publicPostPage` handler (functions/lib/publicPost.js) over
- * an in-memory Firestore holding one demo post, `/activity/demo-run`.
+ * and headers (`hostingResolve.ts`), and a shared post's and a shared
+ * card's addresses answered by the real `publicPostPage` and
+ * `sharedCardPage` handlers (functions/lib/publicPost.js,
+ * functions/lib/sharedCardPage.js) over an in-memory Firestore holding one
+ * demo post, `/activity/demo-run`, and two demo cards,
+ * `/card/demoLiftCard0000000001` and `/card/demoRunCard00000000001`.
  *
  *   node --import tsx scripts/website/serveHosting.ts [port]
  *
@@ -68,15 +71,67 @@ const { servePublicPost } = require("../../functions/lib/publicPost") as {
     deps: { db: unknown; loadShell: () => Promise<string> }
   ) => Promise<void>;
 };
+const { serveSharedCard } = require("../../functions/lib/sharedCardPage") as {
+  serveSharedCard: typeof servePublicPost;
+};
 const { memoryFirestore } =
   require("../../functions/__tests__/helpers/memoryFirestore.cjs") as {
     memoryFirestore: (seed: Record<string, unknown>) => unknown;
   };
 
-/** One demo post, by a made-up runner. */
+/** One demo post and two demo cards, by a made-up runner. */
 const db = memoryFirestore({
-  "users/demo": { preferredDistanceUnit: "km" },
-  "users/demo/public/profile": { displayName: "Sam" },
+  "users/demo": { preferredDistanceUnit: "km", inviteCode: "K7P49M2H" },
+  "users/demo/public/profile": { displayName: "Sam Rivers" },
+  "users/demo/workouts/w1": { dayName: "Push A" },
+  "users/demo/runs/r1": { distance: 10210 },
+  "inviteCodes/K7P49M2H": { uid: "demo" },
+  "sharedCards/demoLiftCard0000000001": {
+    ownerUid: "demo",
+    workoutId: "w1",
+    inviteCode: "K7P49M2H",
+    card: {
+      template: "lift",
+      format: "story",
+      background: "brand",
+      unit: "km",
+      liftUnit: "kg",
+      date: "22 Nov 2026",
+      hiddenStats: [],
+      headline: "Push A done",
+      line: "Your best bench press: 80 kg, 2.5 kg up on last time.",
+      tone: "achievement",
+      totalVolumeKg: 7470,
+      totalReps: 96,
+      durationSec: 2460,
+      exerciseCount: 6,
+      prCount: 1,
+      prExercise: "Bench press",
+    },
+  },
+  "sharedCards/demoRunCard00000000001": {
+    ownerUid: "demo",
+    runId: "r1",
+    inviteCode: "K7P49M2H",
+    card: {
+      template: "run",
+      format: "square",
+      background: "brand",
+      unit: "km",
+      liftUnit: "kg",
+      date: "21 Nov 2026",
+      hiddenStats: ["elevation"],
+      headline: "Long run",
+      distanceKm: 10.21,
+      durationSec: 3130,
+      paceSecPerKm: 306,
+      splits: [
+        { lap: 1, paceSecPerKm: 312 },
+        { lap: 2, paceSecPerKm: 306 },
+        { lap: 3, paceSecPerKm: 301 },
+      ],
+    },
+  },
   "activities/demo-run": {
     authorId: "demo",
     authorName: "Sam",
@@ -144,7 +199,11 @@ createServer((req, res) => {
         return shim;
       },
     };
-    void servePublicPost(
+    const serve =
+      answer.functionId === "sharedCardPage"
+        ? serveSharedCard
+        : servePublicPost;
+    void serve(
       {
         method: req.method,
         path: url.pathname,

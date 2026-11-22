@@ -3,8 +3,11 @@
  * where the link in a shared card's words lands (App1, Q50 and Q51).
  *
  * The post's card, drawn by the share card's own renderer
- * (ShareCardRenderer), under who shared it, then one way on: Get Tropos,
- * to the App Store. The route ends here: no props, no comments, no
+ * (ShareCardRenderer), under who shared it, then one way on: "Join Sam on
+ * Tropos" (Soc17 call 3), with the author's invite code when the server
+ * gives one, else to the App Store (`joinTropos.ts`). A post that is not
+ * shown names no one, so its button is Get Tropos. The route ends here:
+ * no props, no comments, no
  * profile and no nav. A signed-in visitor at the same address gets the
  * post in the app (ActivityPost.tsx), and on a phone with Tropos the
  * address opens the app.
@@ -27,8 +30,8 @@
  * Signed-out screens are dark and sit on the plain page in one phone-wide
  * column under the lockup, as the welcome and sign-in do (DESIGN_GUIDE
  * §14p); `.ds-auth-shell` pads the page by `--safe-top` and
- * `--safe-bottom`. The card is the hero; Get Tropos is the brand's filled
- * button, as Get started is.
+ * `--safe-bottom`. The card is the hero; the button is the brand's filled
+ * one, as Get started is.
  */
 import {
   Component,
@@ -41,6 +44,7 @@ import {
   type ReactNode,
 } from "react";
 import { useParams } from "react-router-dom";
+import AboutTropos from "@/components/auth/AboutTropos";
 import AuthLockup from "@/components/auth/AuthLockup";
 import Avatar from "@/components/Avatar";
 import ShareCardRenderer from "@/components/share/ShareCardRenderer";
@@ -50,6 +54,7 @@ import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import type { GPSPoint } from "@/lib/gps";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { logger } from "@/lib/logger";
+import { joinTroposHref, joinTroposWords } from "@/lib/joinTropos";
 import { APP_STORE_URL } from "@/lib/publicLinks";
 import {
   loadPublicPost,
@@ -148,10 +153,16 @@ function PublicPostPage({ activityId }: { activityId: string }) {
           />
         )}
         <a
-          href={APP_STORE_URL}
+          href={
+            read.status === "ready"
+              ? joinTroposHref(read.post.inviteCode)
+              : APP_STORE_URL
+          }
           className={buttonClasses({ fullWidth: true, size: "md" })}
         >
-          Get Tropos
+          {read.status === "ready"
+            ? joinTroposWords(read.post.firstName)
+            : "Get Tropos"}
         </a>
       </main>
     </div>
@@ -300,20 +311,5 @@ function RouteMap({ route }: { route: RouteCoordinate[] }) {
         </figcaption>
       </figure>
     </MapGivesWay>
-  );
-}
-
-/** What Tropos is, in the welcome's own words. */
-function AboutTropos() {
-  return (
-    <div>
-      <h2 className="text-lg font-bold leading-snug text-foreground text-balance">
-        Your training and food, planned together
-      </h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Answer a few questions and get a week of training and a daily calorie
-        target that fit you.
-      </p>
-    </div>
   );
 }

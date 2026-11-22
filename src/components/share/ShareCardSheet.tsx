@@ -20,6 +20,9 @@ import ShareCardRenderer, {
   type ShareBackground,
   type ShareCardRenderData,
 } from "@/components/share/ShareCardRenderer";
+import { appInviteUrl } from "@/lib/publicLinks";
+import type { SharedCardSources } from "@/lib/sharedCardShare";
+import type { SheetCardLinks } from "@/lib/sharedCardCalls";
 import type { GPSPoint } from "@/lib/gps";
 import type { FinishTone } from "@/lib/finishMoment";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -41,6 +44,12 @@ import { useLiftUnit } from "@/hooks/useLiftUnit";
  *
  * Funnel: `share_card_opened` on open, `share_card_exported`
  * (template/format/background/outcome) on export.
+ *
+ * The words end with a link (Soc17 call 1): a public post's own page, or
+ * else the card's own unlisted page, whose copy is kept as Share is
+ * tapped (`sharedCardShare.ts`). A card whose copy cannot be kept in time
+ * ends with the sharer's invite link, or the front door without one, and
+ * the share never waits longer than the tap allows.
  */
 
 type StatLabels = Record<string, string>;
@@ -51,8 +60,13 @@ export interface ShareCardSheetData {
   date: string;
   /** The feed post this card is of, when the session has one (App1 Q51).
    *  While the post is public, the card's words end with its own page
-   *  (`publicPostShareLink`); otherwise with the front door. */
+   *  (`publicPostShareLink`); otherwise with the card's (Soc17). */
   postId?: string;
+  /** The saved session the card shows (Soc17 call 1): its page goes when
+   *  the session is deleted. A run or lift card with no session and no
+   *  post gets no page, and ends with the invite link. */
+  workoutId?: string;
+  runId?: string;
   // RUN
   points?: GPSPoint[];
   distanceKm?: number;
@@ -168,6 +182,34 @@ export function ShareCardSheet({
   const link =
     postLink && postLink.postId === data.postId ? postLink.link : undefined;
 
+  // Any other card's page (Soc17 call 1): a token for each sheet, made as
+  // it opens, and the sharer's invite code for the words when a card's
+  // copy cannot be kept. Fetched as the sheet opens, so the sheet itself
+  // carries none of it, and the first call starts the function the Share
+  // tap will use. A tap before it has arrived shares the invite link.
+  const cardLinks = useRef<SheetCardLinks | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    let links: SheetCardLinks | null = null;
+    void import("@/lib/sharedCardCalls")
+      .then((calls) => {
+        if (!live) return;
+        links = calls.startCardLinks();
+        cardLinks.current = links;
+        return calls.prepareSharedCards().then((code) => {
+          if (live && code) setInviteCode(code);
+        });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+      links?.close();
+      if (cardLinks.current === links) cardLinks.current = null;
+    };
+  }, [open]);
+
   // Photo background: read the picked image as a data URL. A same-origin
   // data: URI rasterises cleanly (no cross-origin canvas taint, unlike a
   // remote map tile), and a <input type=file accept=image/*> opens the
@@ -267,6 +309,14 @@ export function ShareCardSheet({
     if (!captureRef.current || exporting) return;
     setExporting(true);
     haptic();
+    // Kept from the tap, beside the drawing, so its wait is the drawing's.
+    const sources: SharedCardSources = {};
+    if (data.postId) sources.postId = data.postId;
+    if (data.workoutId) sources.workoutId = data.workoutId;
+    if (data.runId) sources.runId = data.runId;
+    const card = link
+      ? null
+      : (cardLinks.current?.begin(renderData, sources) ?? null);
     try {
       const file = await generateShareImage(captureRef.current, {
         format,
@@ -290,6 +340,8 @@ export function ShareCardSheet({
         asTransparentSticker: background === "transparent",
       });
       if (toIg) {
+        // An image with no words: no one was given the card's address.
+        card?.finish("unused");
         track("share_card_exported", {
           template: data.template,
           format,
@@ -300,11 +352,15 @@ export function ShareCardSheet({
         onOpenChange(false);
         return;
       }
+      const fallback = inviteCode ? appInviteUrl(inviteCode) : undefined;
+      const words = card ? await card.link(fallback) : (link ?? fallback);
       const outcome = await shareImageFile(
         file,
         `My ${data.template} on Tropos`,
-        link
+        words
       );
+      // Before the sheet closes, which takes back a copy no one was sent.
+      card?.finish(outcome);
       track("share_card_exported", {
         template: data.template,
         format,
@@ -318,6 +374,10 @@ export function ShareCardSheet({
         toast.error("Couldn’t share. Try again.");
       }
     } finally {
+      // No image, or the sheet refused: the copy waits for the next tap,
+      // and goes if the sheet closes first. A share already finished
+      // ignores this.
+      card?.finish("failed");
       setExporting(false);
     }
   };

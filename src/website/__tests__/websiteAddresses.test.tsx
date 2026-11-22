@@ -8,7 +8,8 @@
  * deploys), then through the website's own routes, rendered. A post's
  * address goes to `publicPostPage`, which answers with the website's
  * index.html and the post's figures (functions/lib/publicPost.js), so its
- * page is the website's too.
+ * page is the website's too; a shared card's goes to `sharedCardPage`,
+ * which does the same with the card (functions/lib/sharedCardPage.js).
  *
  * The last block reads the code for every troposfit.com address it builds
  * or names, so an address added later fails here until it is kept.
@@ -20,6 +21,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PublicPostView } from "@/lib/publicPost";
+import type { SharedCardView } from "@/lib/sharedCardPage";
 import {
   hostingHeaders,
   resolveHosting,
@@ -46,11 +48,37 @@ const RUN: PublicPostView = {
   durationSec: 3130,
   paceSecPerKm: 306,
   summary: "Long run: 10.21 km in 52:10 at 5:06 /km.",
+  firstName: "Sam",
+  inviteCode: "K7P49M2H",
+};
+
+const CARD_TOKEN = "AbCdEfGhIjKlMnOpQrStUv";
+const CARD: SharedCardView = {
+  token: CARD_TOKEN,
+  firstName: "Sam",
+  inviteCode: "K7P49M2H",
+  summary: "Push A done: 7,470 kg lifted across 6 exercises.",
+  card: {
+    template: "lift",
+    format: "story",
+    background: "brand",
+    unit: "km",
+    liftUnit: "kg",
+    handle: "Sam",
+    date: "22 Nov 2026",
+    headline: "Push A done",
+    totalVolumeKg: 7470,
+    exerciseCount: 6,
+  },
 };
 
 vi.mock("@/lib/publicPost", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/publicPost")>()),
   loadPublicPost: async (id: string) => (id === "run1" ? RUN : null),
+}));
+vi.mock("@/lib/sharedCardPage", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/sharedCardPage")>()),
+  loadSharedCard: async (token: string) => (token === CARD_TOKEN ? CARD : null),
 }));
 vi.mock("@/website/inviterName", () => ({
   lookupInviterName: async () => "Sam",
@@ -63,6 +91,7 @@ import {
   appInviteUrl,
   publicPostUrl,
   publicSpaceUrl,
+  sharedCardUrl,
 } from "@/lib/publicLinks";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -99,6 +128,7 @@ const files = deployedFiles();
 type Page =
   | { page: "landing"; note?: RegExp; invite?: boolean }
   | { page: "post" }
+  | { page: "card"; available: boolean }
   | { page: "legal"; heading: string }
   | { page: "site"; heading: string }
   | { page: "notFound" };
@@ -116,6 +146,11 @@ const WEBSITE: HostingAnswer = { kind: "file", file: WEBSITE_OUTPUT };
 const POST_FUNCTION: HostingAnswer = {
   kind: "function",
   functionId: "publicPostPage",
+  region: "us-central1",
+};
+const CARD_FUNCTION: HostingAnswer = {
+  kind: "function",
+  functionId: "sharedCardPage",
   region: "us-central1",
 };
 
@@ -227,6 +262,23 @@ const KEPT: Kept[] = [
     address: "/activity/run1?format=json",
     from: "loadPublicPost on the GitHub Pages preview",
     hosting: POST_FUNCTION,
+  },
+  {
+    address: `/card/${CARD_TOKEN}`,
+    from: "sharedCardUrl(token), Soc17: a shared card's words",
+    hosting: CARD_FUNCTION,
+    shows: { page: "card", available: true },
+  },
+  {
+    address: "/card/zYxWvUtSrQpOnMlKjIhGfE",
+    from: "a card since deleted, or a token that was never one",
+    hosting: CARD_FUNCTION,
+    shows: { page: "card", available: false },
+  },
+  {
+    address: `/card/${CARD_TOKEN}?format=json`,
+    from: "loadSharedCard, when the page arrived without its block",
+    hosting: CARD_FUNCTION,
   },
   {
     address: "/space/brighton-marathon",
@@ -516,10 +568,48 @@ describe("the website's page at each address", () => {
       expect(
         await screen.findByRole("heading", { name: "Sam’s run" })
       ).toBeInTheDocument();
+      // Soc17 call 3: the author's name and their invite code.
+      expect(
+        screen.getByRole("link", { name: "Join Sam on Tropos" })
+      ).toHaveAttribute("href", appInviteUrl("K7P49M2H"));
+      expect(screen.queryByRole("link", { name: "Get Tropos" })).toBeNull();
+      // Kept out of search on the page too, not only by the server's header.
+      expect(
+        document.head.querySelector('meta[name="robots"]')
+      ).toHaveAttribute("content", "noindex");
+      return;
+    }
+    if (shows?.page === "card" && shows.available) {
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "Join Sam on Tropos",
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("img", { name: CARD.summary })
+      ).toBeInTheDocument();
+      // One button, the headline's words, the way an invite goes.
+      expect(
+        screen.getByRole("link", { name: "Join Sam on Tropos" })
+      ).toHaveAttribute("href", appInviteUrl("K7P49M2H"));
+      expect(
+        document.head.querySelector('meta[name="robots"]')
+      ).toHaveAttribute("content", "noindex");
+      return;
+    }
+    if (shows?.page === "card") {
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "This card isn’t available",
+        })
+      ).toBeInTheDocument();
       expect(screen.getByRole("link", { name: "Get Tropos" })).toHaveAttribute(
         "href",
         APP_STORE_URL
       );
+      expect(screen.queryByText(/Sam/)).toBeNull();
       return;
     }
     // The App Store page.
@@ -656,6 +746,7 @@ describe("the addresses the code hands out", () => {
     expect(kept).toContain(appInviteUrl("K7P49M2H").slice(origin));
     expect(kept).toContain(publicPostUrl("run1").slice(origin));
     expect(kept).toContain(publicSpaceUrl("brighton-marathon").slice(origin));
+    expect(kept).toContain(sharedCardUrl(CARD_TOKEN).slice(origin));
   });
 
   it("names no troposfit.com address the table does not keep", () => {

@@ -149,6 +149,22 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
         self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
 
+    def test_shared_card_functions_read_back_the_copy_and_its_page(self):
+        targets = verifier.source_targets()
+        self.assertTrue({"lib/sharedCards.js", "lib/inviteCodes.js", "lib/restriction.js",
+                         "lib/accountDeletionLocks.js", "profanityFilter.js"}
+                        .issubset(targets["sharedCard"]))
+        self.assertTrue({"lib/sharedCardPage.js", "lib/sharedCards.js", "lib/publicPost.js",
+                         "lib/inviteCodes.js"}.issubset(targets["sharedCardPage"]))
+        self.assertIn("lib/inviteCodes.js", targets["publicPostPage"])
+        for name in ("onWorkoutDeleted", "onRunDeleted", "onActivityDeleted"):
+            with self.subTest(function=name):
+                self.assertIn("lib/sharedCards.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        for name in ("sharedCard", "sharedCardPage", "publicPostPage"):
+            with self.subTest(function=name):
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_plan_group_counts_read_back_their_one_writer(self):
         targets = verifier.source_targets()
         for name in ("onRaceGoalWritten", "dailyRaceCohortRecount"):

@@ -2360,6 +2360,7 @@ export default function WorkoutSession({
               : undefined
           }
           onLogFood={onLogFood}
+          savedWorkoutId={savedWorkoutId ?? undefined}
         />
         <KeepSwapSheet
           open={keepQuestion.open}

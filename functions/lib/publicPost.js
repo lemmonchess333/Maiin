@@ -32,6 +32,12 @@
    A run with too little left after the cut, a treadmill or manual run, a
    lift, and a run whose route or zones cannot be read get no map.
 
+   Its one way on (Soc17 call 3) is "Join <first name> on Tropos", with
+   the author's invite code when they have one that is still theirs, so
+   joining from it follows as an invite does (Soc15 call 4). The code is
+   read when the page is opened and never made here: a page view writes
+   nothing.
+
    Kept out of search (legal audit §3.2): a public run must not be found
    by searching its author's name, so every answer here asks search
    engines not to index it, the page with a robots tag in its head and
@@ -44,6 +50,7 @@ const { isRestricted } = require("./restriction");
 const { isAccountDeleting, isTombstoned } = require("./accountDeletionStatus");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 const { publicRoute } = require("./publicRoute");
+const { firstNameOf, normaliseInviteCode } = require("./inviteCodes");
 
 /** The production web app, as src/lib/publicLinks.ts names it. */
 const PUBLIC_ORIGIN = "https://troposfit.com";
@@ -168,6 +175,23 @@ async function readRouteSource(userRef, activityId, logger) {
 }
 
 /**
+ * The author's invite code for the page's button (Soc17 call 3): the copy
+ * on their user document, while `inviteCodes` still gives it to them.
+ * Null when they have none, or when it was renewed and the copy is
+ * behind. A failed read is null too: the button still leads to Tropos.
+ */
+async function authorInviteCode(db, authorId, stored) {
+  const code = normaliseInviteCode(stored);
+  if (!code) return null;
+  try {
+    const snap = await db.collection("inviteCodes").doc(code).get();
+    return snap.exists && (snap.data() || {}).uid === authorId ? code : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The post as its public page draws it, or null when it is not to be
  * shown. Throws when a read fails, so the caller can tell "not shown"
  * from "could not tell".
@@ -210,6 +234,11 @@ async function readPublicPost(db, activityId, logger) {
     unit: account.preferredDistanceUnit === "mi" ? "mi" : "km",
     liftUnit: account.liftingWeightUnit === "lbs" ? "lbs" : "kg",
   };
+  const firstName =
+    firstNameOf(shown.displayName) || firstNameOf(post.authorName);
+  if (firstName) view.firstName = firstName;
+  const inviteCode = await authorInviteCode(db, authorId, account.inviteCode);
+  if (inviteCode) view.inviteCode = inviteCode;
   const photo = publicPhotoUrl(shown.photoURL);
   if (photo) view.authorPhotoURL = photo;
   const title = text(
@@ -519,6 +548,14 @@ module.exports = {
   DATA_ELEMENT_ID,
   SECURITY_HEADERS,
   SHELL_TTL_MS,
+  NO_INDEX,
+  ROBOTS_TAG,
+  ROBOTS_META,
+  PREVIEW_META,
+  PREVIEW_IMAGE,
+  escapeAttr,
+  jsonForScript,
+  setHeaders,
   servePublicPost,
   shellLoader,
 };

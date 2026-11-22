@@ -550,6 +550,21 @@ async function deleteAccount({
       );
     }
 
+    // 3b''. The account's shared cards (Soc17 call 1, lib/sharedCards.js):
+    // `sharedCards/{token}` carries the uid under a random token, so
+    // neither sweep reaches it. Deleted, so no card page outlives the
+    // account; the page also refuses an account being deleted.
+    const sharedCardsSnap = await firestore
+      .collection("sharedCards")
+      .where("ownerUid", "==", uid)
+      .get();
+    if (!sharedCardsSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        sharedCardsSnap.docs.map((d) => d.ref)
+      );
+    }
+
     // 3d. Community Spaces (Spc1 PR4) — memberships + authored posts,
     // swept per KNOWN space id (lib/spacesCleanup; bounded config, no
     // collectionGroup blast radius). Failures preserve Auth and the worker

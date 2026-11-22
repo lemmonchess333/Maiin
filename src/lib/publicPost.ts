@@ -20,6 +20,7 @@ import type { ShareCardRenderData } from "@/components/share/ShareCardRenderer";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { RouteCoordinate } from "@/lib/routeSegments";
+import { normaliseInviteCode } from "@/lib/inviteCode";
 import { publicPostUrl } from "@/lib/publicLinks";
 import { formatDayMonthYear } from "@/utils/formatters";
 
@@ -32,6 +33,11 @@ export interface PublicPostView {
   type: "run" | "workout";
   authorName: string;
   authorPhotoURL?: string;
+  /** The author's first name, for "Join Sam on Tropos" (Soc17 call 3). */
+  firstName?: string;
+  /** The author's invite code while it is theirs: joining from the page
+   *  follows as an invite does (Soc17 call 3, Soc15 call 4). */
+  inviteCode?: string;
   /** The post's own title ("Long run", "Push A"). */
   title?: string;
   /** Milliseconds. */
@@ -121,11 +127,18 @@ function readAnswer(
     unit: p.unit === "mi" ? "mi" : "km",
     liftUnit: p.liftUnit === "lbs" ? "lbs" : "kg",
   };
-  const strings = ["authorPhotoURL", "title", "prExercise"] as const;
+  const strings = [
+    "authorPhotoURL",
+    "title",
+    "prExercise",
+    "firstName",
+  ] as const;
   for (const key of strings) {
     const value = str(p[key]);
     if (value) view[key] = value;
   }
+  const code = normaliseInviteCode(p.inviteCode);
+  if (code) view.inviteCode = code;
   const numbers = [
     "createdAt",
     "durationSec",

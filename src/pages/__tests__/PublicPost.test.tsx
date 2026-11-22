@@ -1,8 +1,9 @@
 /**
  * A shared post's public page, signed out (App1 Q51): the card, who shared
- * it, a run's map with its ends cut off when the server sent one, Get
- * Tropos, and nothing that leads further into the app. Anything not shown
- * is one page that never says why.
+ * it, a run's map with its ends cut off when the server sent one, "Join
+ * Sam on Tropos" with the author's invite code (Soc17 call 3), and nothing
+ * that leads further into the app. Anything not shown is one page that
+ * never says why, with Get Tropos.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -45,7 +46,7 @@ vi.mock("@/components/run/RunMap", () => ({
 }));
 
 import PublicPost from "../PublicPost";
-import { APP_STORE_URL } from "@/lib/publicLinks";
+import { APP_STORE_URL, appInviteUrl } from "@/lib/publicLinks";
 import { logger } from "@/lib/logger";
 import { formatDayMonthYear } from "@/utils/formatters";
 
@@ -61,7 +62,11 @@ const RUN: PublicPostView = {
   durationSec: 3130,
   paceSecPerKm: 306,
   summary: "Long run: 10.21 km in 52:10 at 5:06 /km.",
+  firstName: "Sam",
+  inviteCode: "K7P49M2H",
 };
+
+const JOIN = appInviteUrl("K7P49M2H");
 
 function renderAt(id = "run1") {
   return render(
@@ -88,7 +93,7 @@ afterEach(() => {
 });
 
 describe("a public post", () => {
-  it("shows who shared it, the card and Get Tropos", async () => {
+  it("shows who shared it, the card and Join Sam on Tropos", async () => {
     load.mockResolvedValue(RUN);
     renderAt();
     expect(
@@ -106,8 +111,16 @@ describe("a public post", () => {
         name: "Long run: 10.21 km in 52:10 at 5:06 /km.",
       })
     ).toBeInTheDocument();
-    const get = screen.getByRole("link", { name: "Get Tropos" });
-    expect(get).toHaveAttribute("href", APP_STORE_URL);
+    const join = screen.getByRole("link", { name: "Join Sam on Tropos" });
+    expect(join).toHaveAttribute("href", JOIN);
+  });
+
+  it("goes to the App Store when the author has no code to give", async () => {
+    load.mockResolvedValue({ ...RUN, inviteCode: undefined });
+    renderAt();
+    expect(
+      await screen.findByRole("link", { name: "Join Sam on Tropos" })
+    ).toHaveAttribute("href", APP_STORE_URL);
   });
 
   it("leads nowhere further into the app: one link, no props or comments", async () => {
@@ -116,7 +129,7 @@ describe("a public post", () => {
     await screen.findByRole("heading", { level: 1, name: "Sam’s run" });
     expect(
       screen.getAllByRole("link").map((a) => a.getAttribute("href"))
-    ).toEqual([APP_STORE_URL]);
+    ).toEqual([JOIN]);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(screen.queryByText(/props|comment/i)).toBeNull();
@@ -133,9 +146,9 @@ describe("a run's map", () => {
     expect(map).toHaveAttribute("data-interactive", "false");
     expect(map).toHaveAttribute("data-end-markers", "false");
     expect(screen.getByText("Start and finish hidden")).toBeInTheDocument();
-    // Under the card, before Get Tropos.
+    // Under the card, before the way to join.
     const card = screen.getByRole("img", { name: RUN.summary });
-    const get = screen.getByRole("link", { name: "Get Tropos" });
+    const get = screen.getByRole("link", { name: "Join Sam on Tropos" });
     expect(
       card.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
@@ -145,7 +158,7 @@ describe("a run's map", () => {
     // Still nothing that leads into the app.
     expect(
       screen.getAllByRole("link").map((a) => a.getAttribute("href"))
-    ).toEqual([APP_STORE_URL]);
+    ).toEqual([JOIN]);
   });
 
   it("draws none when the server sent no route", async () => {
@@ -173,7 +186,7 @@ describe("a run's map", () => {
     // The page itself carries on.
     expect(screen.getByRole("img", { name: RUN.summary })).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Get Tropos" })
+      screen.getByRole("link", { name: "Join Sam on Tropos" })
     ).toBeInTheDocument();
     warn.mockRestore();
     quiet.mockRestore();
