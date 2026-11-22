@@ -83,7 +83,7 @@ export default function PlanPicker({
                   {plan.label}
                 </p>
                 {plan.savingsLabel ? (
-                  <p className="text-xs font-medium text-success-strong mt-0.5">
+                  <p className="text-xs font-medium text-foreground mt-0.5">
                     {plan.savingsLabel}
                   </p>
                 ) : (

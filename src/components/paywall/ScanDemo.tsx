@@ -793,7 +793,7 @@ function ResultSheet({ live }: { live: boolean }) {
               <>
                 <motion.span
                   className="absolute inset-0 flex items-center justify-center gap-2"
-                  style={{ background: THEME.success }}
+                  style={{ background: "hsl(var(--nutrition-fill))" }}
                   initial={{ opacity: 0 }}
                   {...shown(SAVED, SHEET_DOWN + 0.4, 0.1)}
                 >

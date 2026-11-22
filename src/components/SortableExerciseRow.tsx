@@ -118,7 +118,7 @@ export default function SortableExerciseRow({
       className={cn(
         "relative overflow-hidden transition-colors",
         isDragging && "scale-[1.02] shadow-lg opacity-90",
-        justDropped && "bg-success/10"
+        justDropped && "bg-primary/10"
       )}
     >
       {/* Delete panel behind the card */}

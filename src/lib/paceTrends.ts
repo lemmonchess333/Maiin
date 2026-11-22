@@ -149,7 +149,7 @@ export function calculatePaceTrend(
     return {
       trend: "improving",
       label: "Faster",
-      className: "bg-success/10 text-success-strong",
+      className: "bg-primary/10 text-primary",
     };
   }
 

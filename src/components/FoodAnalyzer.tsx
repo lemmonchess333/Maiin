@@ -13,7 +13,6 @@ import {
   useFoodFavourites,
   type FoodFavourite,
 } from "@/hooks/useFoodFavourites";
-import { THEME } from "@/lib/theme";
 import { RotateCcw, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Drawer } from "vaul";
@@ -1470,8 +1469,9 @@ export default function FoodAnalyzer({
                   allRemoved ||
                   (isBarcode && barcodeServings === null)
                 }
-                /* Saved-state fill from the palette. */
-                style={saved ? { background: THEME.success } : undefined}
+                /* Saved keeps the button's own fill: the tick and the word
+                   say it (DS10 call 4: success green is a tick, not a
+                   fill). */
               >
                 {saved ? (
                   <>

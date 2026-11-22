@@ -376,7 +376,7 @@ export default function Login() {
         {accountDeleted && (
           <div
             role="status"
-            className="p-3 rounded-xl bg-success/10 border border-success/20 text-success-strong text-sm font-medium"
+            className="p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
           >
             Your account and all data have been deleted.
           </div>

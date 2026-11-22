@@ -109,9 +109,7 @@ export default function CompactRestTimer({
           <span
             className={cn(
               "whitespace-nowrap text-xs",
-              done
-                ? "font-semibold text-success-strong"
-                : "text-muted-foreground"
+              done ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >
             {done ? "Rest done" : "Rest"}

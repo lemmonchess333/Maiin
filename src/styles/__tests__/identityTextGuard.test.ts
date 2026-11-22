@@ -256,10 +256,11 @@ const EXPECTED_INLINE_USES = {
   // the same CalendarClock glyph in the same purple. An icon, no text.
   // 2026-11-15: 34 → 33. The training load card's Activity glyph went
   // with that chart (App1 Q16).
-  // 2026-11-22: 33 → 2. DS10 call 1 made the chrome neutral: icon tints,
+  // 2026-11-22: 33 → 1. DS10 call 1 made the chrome neutral: icon tints,
   // the empty states, the invite card, Pro and the notifications take
-  // THEME.chrome.text. The two left are performance's ring (PI3).
-  "THEME.brand": 2,
+  // THEME.chrome.text, and call 4 the bests' empty state. The one left is
+  // the streak's flame (WeekPulseView), the streak's drawn colour.
+  "THEME.brand": 1,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

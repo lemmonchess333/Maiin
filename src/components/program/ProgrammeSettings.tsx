@@ -318,7 +318,7 @@ const EXPERIENCE_OPTIONS: {
     id: "beginner",
     label: "Beginner",
     desc: "0 – 6 months of consistent training",
-    icon: <Target size={20} style={{ color: THEME.success }} />,
+    icon: <Target size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "intermediate",
@@ -356,7 +356,7 @@ const EQUIPMENT_OPTIONS: {
     id: "minimal",
     label: "Minimal",
     desc: "Dumbbells and bodyweight",
-    icon: <User size={20} style={{ color: THEME.success }} />,
+    icon: <User size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "no_equipment",
@@ -376,7 +376,7 @@ const INJURY_OPTIONS: {
     id: "none",
     label: "No injuries",
     desc: "No limitations",
-    icon: <Check size={20} style={{ color: THEME.success }} />,
+    icon: <Check size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "lower_back",

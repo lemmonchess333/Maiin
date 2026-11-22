@@ -47,8 +47,8 @@ export default function PostCompletionKudos({
         <div
           className="mt-3 flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl text-sm font-semibold"
           style={{
-            color: THEME.semantic.positive,
-            background: `${THEME.semantic.positive}12`,
+            color: THEME.chrome.text,
+            background: THEME.chrome.tint,
           }}
         >
           <Check size={16} />

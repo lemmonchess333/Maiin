@@ -132,7 +132,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("improving");
       expect(result.label).toBe("Faster");
-      expect(result.className).toBe("bg-success/10 text-success-strong");
+      expect(result.className).toBe("bg-primary/10 text-primary");
     });
   });
 

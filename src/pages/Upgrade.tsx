@@ -389,8 +389,7 @@ export default function Upgrade() {
           aria-live="polite"
           className={cn(
             "flex items-start gap-3 p-3 rounded-xl",
-            statusBanner.kind === "success" &&
-              "bg-success-bg text-success-foreground",
+            statusBanner.kind === "success" && "bg-muted text-foreground",
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&

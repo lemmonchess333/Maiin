@@ -50,12 +50,12 @@ const TYPE_ICON: Record<
 > = {
   kudos: { Icon: Heart, color: THEME.chrome.text },
   comment: { Icon: MessageCircle, color: THEME.chrome.text },
-  follow: { Icon: UserPlus, color: THEME.semantic.positive },
-  follow_request: { Icon: UserPlus, color: THEME.semantic.positive },
-  follow_accepted: { Icon: UserCheck, color: THEME.semantic.positive },
+  follow: { Icon: UserPlus, color: THEME.chrome.text },
+  follow_request: { Icon: UserPlus, color: THEME.chrome.text },
+  follow_accepted: { Icon: UserCheck, color: THEME.chrome.text },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
   circle_focus_backed: { Icon: Users, color: THEME.chrome.text },
-  circle_milestone: { Icon: Trophy, color: THEME.semantic.positive },
+  circle_milestone: { Icon: Trophy, color: THEME.chrome.text },
   circle_needs_support: { Icon: HeartHandshake, color: THEME.chrome.text },
   circle_joined: { Icon: UserPlus, color: THEME.chrome.text },
   circle_routine_shared: { Icon: ClipboardList, color: THEME.chrome.text },
@@ -66,7 +66,7 @@ const TYPE_ICON: Record<
   // the flame action itself uses.
   space_post_like: { Icon: Flame, color: THEME.running },
   space_post_comment: { Icon: MessageCircle, color: THEME.running },
-  invite_joined: { Icon: UserCheck, color: THEME.semantic.positive },
+  invite_joined: { Icon: UserCheck, color: THEME.chrome.text },
   // Soc15 call 3: the league's result, in the brand purple Social's
   // rewards wear.
   league_result: { Icon: Medal, color: THEME.chrome.text },

@@ -264,7 +264,7 @@ export default function PeriodSummaryCard({
                     className={cn(
                       "block text-xs font-semibold",
                       f.change.direction === "up"
-                        ? "text-success-strong"
+                        ? "text-foreground"
                         : "text-muted-foreground"
                     )}
                   >

@@ -487,7 +487,11 @@ export default function DayActionContent({
                     : null;
                   const isManual = completionKind === "manual";
                   return (
-                    <span className="text-xs font-medium text-success-strong">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                      <Check
+                        className="size-3.5 text-success-strong"
+                        aria-hidden="true"
+                      />
                       {isManual ? "Marked complete" : "Completed"}
                     </span>
                   );
@@ -821,7 +825,11 @@ export default function DayActionContent({
             </div>
             <div className="shrink-0 pt-1">
               {lift.status === "completed" && (
-                <span className="text-xs font-medium text-success-strong">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                  <Check
+                    className="size-3.5 text-success-strong"
+                    aria-hidden="true"
+                  />
                   Completed
                 </span>
               )}
