@@ -9,7 +9,9 @@
  *    plan counts as run keeps no comparison, or a run the plan does not
  *    count keeps one. Both refuse a treadmill run by the same reading
  *    (`isTreadmillRun`, its place or its older type), and both still take
- *    a manual entry.
+ *    a manual entry. The server's reading is one function
+ *    (`functions/lib/runEligibility.js`), which the segment matcher reads
+ *    too.
  * 2. What the report reads. The operator report
  *    (`functions/scripts/report-race-predictions.js`) scores the record the
  *    app saves on the run (`runDocument`); if the shape drifts, the report
@@ -44,6 +46,12 @@ const server = require_("../../../functions/lib/raceDayCompletion") as {
   plannedDistanceFor: (distance: string) => number;
   isStrictRaceRun: (run: unknown, plannedMeters: number) => boolean;
   isTreadmillRun: (run: unknown) => boolean;
+};
+const eligibility = require_("../../../functions/lib/runEligibility") as {
+  isTreadmillRun: (run: unknown) => boolean;
+};
+const segments = require_("../../../functions/lib/segments.js") as {
+  isMatchableRun: (run: unknown) => boolean;
 };
 const report = require_(
   "../../../functions/scripts/report-race-predictions"
@@ -95,12 +103,31 @@ describe("the goal race: the app and the server's race-day rule agree", () => {
   ];
 
   it("reads a treadmill run as the app does", () => {
+    // One server reading: the race-day rule's is the shared one.
+    expect(server.isTreadmillRun).toBe(eligibility.isTreadmillRun);
     for (const kind of [...kinds, { place: "outdoor" }, null])
       expect(server.isTreadmillRun(kind), JSON.stringify(kind)).toBe(
         isTreadmillRun(kind)
       );
     // Anchor: both readings meet a treadmill run.
     expect(kinds.filter((kind) => server.isTreadmillRun(kind))).toHaveLength(2);
+  });
+
+  it("matches segments on no run the app calls a treadmill run", () => {
+    // A saved GPS run that counts, with a trace to match.
+    const gps = {
+      distance: 5000,
+      duration: 1500,
+      points: [
+        { lat: 51.44, lon: -0.15 },
+        { lat: 51.45, lon: -0.15 },
+      ],
+    };
+    for (const kind of kinds)
+      expect(
+        segments.isMatchableRun({ ...gps, ...kind }),
+        JSON.stringify(kind)
+      ).toBe(!isTreadmillRun(kind));
   });
 
   it.each(distances)(

@@ -145,7 +145,10 @@ describe("isStrictRaceRun", () => {
     /* Guards the guard: the tag was dropped, the distance bar was not.
        Without this, "untemplated ⇒ accepted" would pass the test above. */
     expect(
-      isStrictRaceRun(rawRun({ actualTemplateId: null, distance: 9499 }), 10000)
+      isStrictRaceRun(
+        rawRun({ actualTemplateId: null, distance: 9499 }),
+        10000
+      )
     ).toBe(false);
   });
 
@@ -180,10 +183,8 @@ describe("isStrictRaceRun", () => {
     // Every race-type id counts, so adding a race template cannot quietly
     // go unrecognised on the server.
     for (const id of RACE_TEMPLATE_IDS) {
-      expect(
-        isStrictRaceRun(rawRun({ actualTemplateId: id }), 0),
-        `id ${id}`
-      ).toBe(true);
+      expect(isStrictRaceRun(rawRun({ actualTemplateId: id }), 0), `id ${id}`)
+        .toBe(true);
     }
 
     // …and the literal "race" is pinned as a REJECTION, not merely absent.

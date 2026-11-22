@@ -41,6 +41,7 @@
  */
 
 const { isRaceTemplateId } = require("./raceTemplateIds");
+const { isTreadmillRun } = require("./runEligibility");
 
 /** Q1 P4: a race counts as run at ≥95% of the planned distance. */
 const RACE_STRICT_DISTANCE_RATIO = 0.95;
@@ -85,19 +86,6 @@ function plannedDistanceFor(distanceKey) {
 /** Post-race recovery weeks for a race-goal key, or 0 when unknown. */
 function recoveryWeeksFor(distanceKey) {
   return RECOVERY_WEEKS_BY_DISTANCE[distanceKey] || 0;
-}
-
-/**
- * Was this run on a treadmill? Its place says so, or, for a run saved
- * before the treadmill became a place (Pgm8), its type. The server's copy
- * of `isTreadmillRun` in `src/lib/runGuards.ts`, pinned to it by
- * `src/lib/__tests__/racePrediction.cross.test.ts`.
- */
-function isTreadmillRun(savedRun) {
-  return (
-    !!savedRun &&
-    (savedRun.place === "treadmill" || savedRun.activityType === "treadmill")
-  );
 }
 
 /**
