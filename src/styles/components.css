@@ -814,7 +814,8 @@ html.launching [data-brand-mark] {
    component that sets it, FinishHero). 64-96 px, sized by the screen's
    width rather than the text size, so a six-figure number still fits a
    320 px screen at double text; a longer figure steps down
-   (`--display-scale`). Never above the 120 px the register allows. */
+   (`--display-scale`). Never above the 120 px the register allows. A
+   finish sets its figure smaller (`.ds-display-finish`). */
 .ds-display-figure {
   font-family: var(--font-figure);
   font-style: italic;
@@ -832,6 +833,17 @@ html.launching [data-brand-mark] {
    two rows. */
 .ds-display-figure.ds-display-rest {
   font-size: clamp(64px, 18vw, 72px);
+}
+
+/* A finish's one figure (`FinishHero`): 64 px from a 388 px phone up, 54
+   on a 320 px one, below the register's floor only there. A total of
+   five characters ("7,470") then takes about 57% of a 393 px screen, so
+   it leads the screen without reading bigger than the session it counts.
+   It keeps that size at any length and never reads `--display-scale`:
+   seven characters ("123,456") are 260 px at 64 and 220 at 54, inside
+   a 320 px screen's column. */
+.ds-display-figure.ds-display-finish {
+  font-size: clamp(54px, 16.5vw, 64px);
 }
 
 /* The workout's docked cards, frosted (DS6 step 5, DESIGN_GUIDE §14o):

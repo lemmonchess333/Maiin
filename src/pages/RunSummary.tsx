@@ -41,7 +41,13 @@ import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import FinishHero from "@/components/workout/FinishHero";
 import { IconButton } from "@/components/ui/IconButton";
-import { finishKicker, finishRegister, rewardLine } from "@/lib/finishMoment";
+import {
+  finishKicker,
+  finishRegister,
+  rewardLine,
+  rewardSentence,
+  type RewardLineContext,
+} from "@/lib/finishMoment";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
 import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
@@ -1055,20 +1061,29 @@ export default function RunSummary() {
     : null;
   const finishReward =
     finishRegistered?.register === "reward" ? finishRegistered : null;
+  const finishLineContext: RewardLineContext = {
+    sport: "run",
+    distanceUnit: unit,
+    loadIn: (kg) => kg,
+    loadUnit: "kg",
+    fastestBefore:
+      finishReward?.moment.kind === "fastestEffort"
+        ? (finishFacts?.history?.fastestSeconds[finishReward.moment.meters] ??
+          null)
+        : null,
+  };
   const finishLine = finishReward
-    ? rewardLine(finishReward.moment, {
-        sport: "run",
-        distanceUnit: unit,
-        loadIn: (kg) => kg,
-        loadUnit: "kg",
-        fastestBefore:
-          finishReward.moment.kind === "fastestEffort"
-            ? (finishFacts?.history?.fastestSeconds[
-                finishReward.moment.meters
-              ] ?? null)
-            : null,
-      })
+    ? rewardLine(finishReward.moment, finishLineContext)
     : null;
+  /* The share card's form of it, which names no one ("Ran 5K in …"). */
+  const finishCardLine = finishReward
+    ? rewardSentence(
+        rewardLine(finishReward.moment, {
+          ...finishLineContext,
+          voice: "card",
+        })
+      )
+    : undefined;
 
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
@@ -2490,9 +2505,7 @@ export default function RunSummary() {
           runId: savedRunId ?? undefined,
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
-          line: finishLine
-            ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
-            : undefined,
+          line: finishCardLine,
           tone: finishReward?.tone,
           date: runDate.toLocaleDateString("en-GB", {
             day: "numeric",

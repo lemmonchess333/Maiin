@@ -249,6 +249,11 @@ export interface AnniversaryWords {
   /** Kilometres are running's coral; a count or a year the brand's
    *  purple, as a streak's flame is. */
   tone: "lifting" | "running";
+  /** The share card's words: the same fact for anyone who sees the card,
+   *  so they name no one ("50 sessions on Tropos"), where the reveal says
+   *  "You’ve" to the person. `share` goes with the card to the share
+   *  sheet. */
+  card: { headline: string; line: string; share: string };
 }
 
 /** "3 Mar 2025", or nothing for a day that does not parse. */
@@ -273,6 +278,11 @@ export function anniversaryWords(
         unit: "sessions",
         line: `You’ve trained 50 times${sinceWords}. 100 is next.`,
         tone: "lifting",
+        card: {
+          headline: "50th session",
+          line: `50 sessions on Tropos${sinceWords}. 100 is next.`,
+          share: "50th session on Tropos",
+        },
       };
     case "sessions100":
       return {
@@ -282,6 +292,11 @@ export function anniversaryWords(
         unit: "sessions",
         line: `You’ve trained 100 times${sinceWords}.`,
         tone: "lifting",
+        card: {
+          headline: "100th session",
+          line: `100 sessions on Tropos${sinceWords}.`,
+          share: "100th session on Tropos",
+        },
       };
     case "oneYear":
       return {
@@ -293,16 +308,29 @@ export function anniversaryWords(
           ? `You’ve trained with Tropos since ${keepTogether(from)}.`
           : "You’ve trained with Tropos for a year.",
         tone: "lifting",
+        card: {
+          headline: "A year of Tropos",
+          line: from
+            ? `Training on Tropos since ${keepTogether(from)}.`
+            : "A year of training on Tropos.",
+          share: "A year of Tropos",
+        },
       };
     case "km1000": {
       const km = (DISTANCE_ANNIVERSARY_METRES / 1000).toLocaleString();
+      const distance = keepTogether(`${km} km`);
       return {
         kicker: "Anniversary",
         headline: `${km} km run`,
         figure: km,
         unit: "km",
-        line: `You’ve run ${keepTogether(`${km} km`)}${sinceWords}.`,
+        line: `You’ve run ${distance}${sinceWords}.`,
         tone: "running",
+        card: {
+          headline: `${km} km run`,
+          line: `${distance} run on Tropos${sinceWords}.`,
+          share: `${km} km run on Tropos`,
+        },
       };
     }
   }
