@@ -5,8 +5,8 @@
  *
  *   1. Free user + text_ai: BLOCKED at 0 (no AI on the free plan, #1102).
  *   2. Free user + image_ai: BLOCKED at 0 (image-AI is Pro-only).
- *   3. Pro user + image_ai: 100/day server-side cap.
- *   4. Pro user + text_ai: 100/day server-side cap.
+ *   3. Pro user + image_ai: 15/day server-side cap.
+ *   4. Pro user + text_ai: 15/day server-side cap.
  *   5. Counters are SEPARATE — burning text_ai doesn't affect
  *      image_ai (lock pin #7).
  *   6. Window rolls over when the UTC date changes, and only then: the
@@ -81,8 +81,8 @@ describe("checkDailyAiQuota", () => {
       now,
     });
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(100);
-    expect(result.remaining).toBe(99);
+    expect(result.limit).toBe(15);
+    expect(result.remaining).toBe(14);
     expect(result.tier).toBe("pro");
     expect(writes).toHaveLength(1);
     expect(writes[0].data.text_ai).toEqual({ day: "2026-05-25", count: 1 });
@@ -125,11 +125,11 @@ describe("checkDailyAiQuota", () => {
     expect(writes).toHaveLength(0);
   });
 
-  it("Cycle 3: pro user + image_ai allowed up to 100/day", async () => {
+  it("Cycle 3: pro user + image_ai allowed up to 15/day", async () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     const { firestore } = makeFirestoreStub({
       userData: { subscriptionTier: "pro" },
-      usageData: { image_ai: { day: "2026-05-25", count: 99 } },
+      usageData: { image_ai: { day: "2026-05-25", count: 14 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_carol",
@@ -137,16 +137,16 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(100);
+    expect(result.limit).toBe(15);
     expect(result.remaining).toBe(0);
     // The next call would block.
   });
 
-  it("Cycle 3 guard: pro user + image_ai at 100/100 is blocked", async () => {
+  it("Cycle 3 guard: pro user + image_ai at 15/15 is blocked", async () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     const { firestore, writes } = makeFirestoreStub({
       userData: { subscriptionTier: "pro" },
-      usageData: { image_ai: { day: "2026-05-25", count: 100 } },
+      usageData: { image_ai: { day: "2026-05-25", count: 15 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_carol",
@@ -155,15 +155,15 @@ describe("checkDailyAiQuota", () => {
     });
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
-    expect(result.limit).toBe(100);
+    expect(result.limit).toBe(15);
     expect(writes).toHaveLength(0);
   });
 
-  it("Cycle 4: pro user + text_ai uses the 100/day cap", async () => {
+  it("Cycle 4: pro user + text_ai uses the 15/day cap", async () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     const { firestore } = makeFirestoreStub({
       userData: { subscriptionTier: "pro" },
-      usageData: { text_ai: { day: "2026-05-25", count: 50 } },
+      usageData: { text_ai: { day: "2026-05-25", count: 5 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_dave",
@@ -171,8 +171,8 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(100);
-    expect(result.remaining).toBe(49);
+    expect(result.limit).toBe(15);
+    expect(result.remaining).toBe(9);
   });
 
   it("Cycle 5: counters are separate — burning text_ai doesn't touch image_ai", async () => {
@@ -187,7 +187,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(99); // text_ai starts fresh at 0/100
+    expect(result.remaining).toBe(14); // text_ai starts fresh at 0/15
     // The write only mutates text_ai; image_ai field is left alone
     // (merge: true preserves it).
     expect(writes[0].data.text_ai).toBeDefined();
@@ -199,7 +199,7 @@ describe("checkDailyAiQuota", () => {
     // User maxed out yesterday but it's now a fresh day.
     const { firestore } = makeFirestoreStub({
       userData: { subscriptionTier: "pro" },
-      usageData: { text_ai: { day: "2026-05-24", count: 100 } },
+      usageData: { text_ai: { day: "2026-05-24", count: 15 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_frank",
@@ -207,7 +207,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T00:01:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(99);
+    expect(result.remaining).toBe(14);
   });
 
   it("Cycle 6 (UTC day): a zone ahead of UTC does not reset at its own midnight", async () => {
@@ -217,7 +217,7 @@ describe("checkDailyAiQuota", () => {
     expect(quotaDayKey(new Date("2026-05-25T13:00:00Z"))).toBe("2026-05-25");
     const { firestore } = makeFirestoreStub({
       userData: { subscriptionTier: "pro", timezone: "Pacific/Auckland" },
-      usageData: { text_ai: { day: "2026-05-25", count: 100 } },
+      usageData: { text_ai: { day: "2026-05-25", count: 15 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_grace",
@@ -240,7 +240,7 @@ describe("checkDailyAiQuota", () => {
     const scan = (now) =>
       checkDailyAiQuota(db, { uid: "uid_hopper", action: "image_ai", now });
     const noon = new Date("2026-05-25T12:00:00Z");
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 15; i++) {
       expect((await scan(noon)).allowed).toBe(true);
     }
     expect((await scan(noon)).allowed).toBe(false);
@@ -254,11 +254,11 @@ describe("checkDailyAiQuota", () => {
     }
     expect(db.data.get("scanUsage/uid_hopper").image_ai).toEqual({
       day: "2026-05-25",
-      count: 100,
+      count: 15,
     });
     // 00:00 UTC is the one thing that starts a fresh count.
     const next = await scan(new Date("2026-05-26T00:00:00Z"));
-    expect(next).toMatchObject({ allowed: true, remaining: 99 });
+    expect(next).toMatchObject({ allowed: true, remaining: 14 });
     expect(db.data.get("scanUsage/uid_hopper").image_ai).toEqual({
       day: "2026-05-26",
       count: 1,
@@ -301,7 +301,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(100);
+    expect(result.limit).toBe(15);
     expect(result.tier).toBe("pro");
   });
 
@@ -318,7 +318,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(99); // fresh — 1 of 100 used today
+    expect(result.remaining).toBe(14); // fresh — 1 of 15 used today
     // Write adds the new action-keyed field; merge:true means the
     // legacy fields stay until naturally aged out (no migration
     // script needed).
@@ -358,5 +358,110 @@ describe("checkDailyAiQuota", () => {
     expect(result.allowed).toBe(false);
     expect(result.error).toBe("quota-check-failed");
     expect(result.limit).toBe(0); // free fallback
+  });
+});
+
+/* Refunds (the scan given back when the service failed after the charge)
+   are bounded per action per UTC day. A person can make the model fail:
+   a typed list long enough runs the answer past its token limit, and the
+   unreadable answer was refunded every time, so the daily cap stopped
+   bounding the spend. */
+describe("refundDailyAiQuota", () => {
+  const {
+    checkDailyAiQuota,
+    refundDailyAiQuota,
+    failedScanResponse,
+    MAX_REFUNDS_PER_DAY,
+    DAILY_LIMITS,
+  } = require("../lib/aiScanQuota");
+  const NOON = new Date("2026-05-25T12:00:00Z");
+
+  async function failedScan(db, now = NOON) {
+    const charge = await checkDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "text_ai",
+      now,
+    });
+    expect(charge.allowed).toBe(true);
+    return refundDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "text_ai",
+      dayKey: charge.dayKey,
+    });
+  }
+
+  it("gives back a failed scan, a few times a day", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    for (let i = 0; i < MAX_REFUNDS_PER_DAY; i++) {
+      expect(await failedScan(db)).toBe(true);
+    }
+    expect(db.data.get("scanUsage/uid_loop").text_ai).toEqual({
+      day: "2026-05-25",
+      count: 0,
+    });
+  });
+
+  it("keeps the charge once the day's refunds are spent, so the cap holds", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    // Every call fails after its charge, as a cut-short answer does.
+    let calls = 0;
+    let refunded = 0;
+    for (;;) {
+      const charge = await checkDailyAiQuota(db, {
+        uid: "uid_loop",
+        action: "text_ai",
+        now: NOON,
+      });
+      if (!charge.allowed) break;
+      calls++;
+      if (
+        await refundDailyAiQuota(db, {
+          uid: "uid_loop",
+          action: "text_ai",
+          dayKey: charge.dayKey,
+        })
+      )
+        refunded++;
+      expect(calls).toBeLessThan(1000);
+    }
+    expect(refunded).toBe(MAX_REFUNDS_PER_DAY);
+    expect(calls).toBe(DAILY_LIMITS.pro.text_ai + MAX_REFUNDS_PER_DAY);
+  });
+
+  it("starts the day's refunds again with the day, and counts each action alone", async () => {
+    const db = memoryFirestore({
+      "users/uid_loop": { subscriptionTier: "pro" },
+    });
+    for (let i = 0; i < MAX_REFUNDS_PER_DAY; i++) await failedScan(db);
+    expect(await failedScan(db)).toBe(false);
+    expect(await failedScan(db, new Date("2026-05-26T00:00:00Z"))).toBe(true);
+    const photo = await checkDailyAiQuota(db, {
+      uid: "uid_loop",
+      action: "image_ai",
+      now: NOON,
+    });
+    expect(
+      await refundDailyAiQuota(db, {
+        uid: "uid_loop",
+        action: "image_ai",
+        dayKey: photo.dayKey,
+      })
+    ).toBe(true);
+  });
+
+  it("says the scan was not used only when it was given back", () => {
+    expect(failedScanResponse(undefined).body.message).toMatch(
+      /didn't use a scan/
+    );
+    expect(
+      failedScanResponse(undefined, { refunded: false }).body.message
+    ).toBe("Couldn't analyse this. Try again.");
+    expect(failedScanResponse(429, { refunded: false }).body.message).toBe(
+      "Food analysis is busy right now. Try again in a minute."
+    );
   });
 });

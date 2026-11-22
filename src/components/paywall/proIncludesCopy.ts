@@ -1,4 +1,4 @@
-import { DAILY_AI_LIMITS } from "@/lib/subscription";
+import { DAILY_AI_LIMITS } from "@/lib/dailyAiLimits";
 
 /** What Pro includes, in the words the Pro page lists it, both for
  *  someone deciding (under the demo, before Continue) and for a Pro
@@ -18,7 +18,7 @@ export const PRO_INCLUDES: readonly string[] = [
   "Macros that shift with your training",
   "Running paces that speed up as your races and sessions show you’re fitter",
   "Readiness from your sleep and heart rate in Apple Health",
-  "Charts older than 3 months, your training load and your score’s details",
+  "Charts older than 3 months, and your score’s 12-week chart, average and details",
   "Plans for a half marathon or longer, after their first week",
 ];
 

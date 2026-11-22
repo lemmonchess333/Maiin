@@ -51,7 +51,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div
-      className="bg-card rounded-2xl p-6 text-center space-y-3"
+      className="bg-card rounded-2xl p-6 text-center space-y-3 dark:card-shadow"
       role="alert"
       aria-live="assertive"
     >

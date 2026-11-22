@@ -166,7 +166,10 @@ export function computeAdherenceScore(
 
   // Workout adherence (biggest factor)
   if (targetWorkouts > 0) {
-    const totalSessions = agg.liftSessions + agg.runSessions;
+    // A circuit counts as a session done (Circ1 (6)), and for nothing else
+    // in the index. Absent on aggregates written before circuits.
+    const totalSessions =
+      agg.liftSessions + agg.runSessions + (agg.circuitSessions ?? 0);
     const ratio = Math.min(totalSessions / targetWorkouts, 1.2);
     score += ratio * 100;
     factors++;
@@ -446,21 +449,40 @@ export interface PerformanceProfile {
 }
 
 /**
- * The sessions a week is scored against: the lift days plus the run days the
- * person planned, because adherence counts lifts and runs together. A planned
- * 0 is a real answer (a runner plans no lifts), so the goal's default stands
- * in only when nothing at all is planned. `weeklyRunDaysTarget` wins over the
- * legacy `weeklyRunsTarget`, as in `getWeeklyRunTarget`. Mirrors
- * `weeklySessionTarget` in functions/lib/perfScoring.js.
+ * The sessions the person planned a week: the lift days plus the run days.
+ * `weeklyRunDaysTarget` wins over the legacy `weeklyRunsTarget`, as in
+ * `getWeeklyRunTarget`. 0 when nothing is planned.
+ *
+ * Whenever it is above 0 it is the number the score's adherence divided by
+ * (`weeklySessionTarget` below, and the server's, pinned by
+ * performanceLeadLines.cross.test.ts), so the lead can say "3 of 5 planned
+ * sessions" in the score's own terms. At 0 the score used the goal's
+ * default, which nobody planned, so there is no count to say.
  */
-export function weeklySessionTarget(profile: PerformanceProfile): number {
+export function plannedSessionCount(
+  profile: Pick<
+    PerformanceProfile,
+    "weeklyWorkoutsTarget" | "weeklyRunDaysTarget" | "weeklyRunsTarget"
+  >
+): number {
   const count = (v: unknown): number =>
     typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0;
   const runs =
     typeof profile.weeklyRunDaysTarget === "number"
       ? count(profile.weeklyRunDaysTarget)
       : count(profile.weeklyRunsTarget);
-  const planned = count(profile.weeklyWorkoutsTarget) + runs;
+  return count(profile.weeklyWorkoutsTarget) + runs;
+}
+
+/**
+ * The sessions a week is scored against: the lift days plus the run days the
+ * person planned, because adherence counts lifts and runs together. A planned
+ * 0 is a real answer (a runner plans no lifts), so the goal's default stands
+ * in only when nothing at all is planned. Mirrors `weeklySessionTarget` in
+ * functions/lib/perfScoring.js.
+ */
+export function weeklySessionTarget(profile: PerformanceProfile): number {
+  const planned = plannedSessionCount(profile);
   if (planned > 0) return planned;
   return profile.goal === "cut" ? 3 : profile.goal === "lean bulk" ? 5 : 4;
 }

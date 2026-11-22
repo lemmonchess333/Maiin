@@ -57,7 +57,7 @@ export default function InviteCodeEntry({ disabled }: { disabled: boolean }) {
     return (
       <div
         role="status"
-        className="flex items-center gap-3 p-3 rounded-xl bg-card"
+        className="flex items-center gap-3 p-3 rounded-xl bg-card dark:card-shadow"
       >
         <UserCheck
           className="size-5 shrink-0 text-success-strong"

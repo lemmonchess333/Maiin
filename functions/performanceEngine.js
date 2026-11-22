@@ -355,6 +355,21 @@ async function fetchLifetimeData(uid) {
 // ── Aggregation ──────────────────────────────
 
 /**
+ * Whether a saved workout is a circuit (Circ1 (4)): the marker the client
+ * writes and its `workoutCircuit` reads. Only the marker matters here; the
+ * circuit's own fields are the client's to read. The match is exact: a
+ * workout with no marker, or any other value, is a lift.
+ *
+ * Circ1 call 6's v2 ("a planned lift done as a circuit counts as that
+ * lift") will save a planned lift that carries this marker, and this
+ * filter will then leave it out of lift load too. Whether such a lift
+ * keeps its tonnage and hard sets is for v2's own lock to decide here.
+ */
+function isCircuitWorkout(w) {
+  return Boolean(w) && w.format === "circuit";
+}
+
+/**
  * Aggregate raw data within an arbitrary date window [start, end).
  * Returns same shape as the legacy weekly aggregate, plus the
  * inclusive day-count for downstream baseline normalisation.
@@ -388,10 +403,20 @@ function aggregateWindow(
   let liftTonnage = 0;
   let liftHardSets = 0;
   let liftSessions = 0;
+  // A circuit (Circ1 (6)) is a saved workout that counts for adherence
+  // only. Its tonnage is zero and its timed intervals are not hard sets, so
+  // as a lift session it would pull the load score down (70% of it is the
+  // tonnage ratio); and a circuit-only week is not an active lifting week,
+  // so it neither divides the baseline nor opens the deload gate.
+  let circuitSessions = 0;
 
   workouts.forEach((w) => {
     const d = new Date(w.date + "T00:00:00Z");
     if (d < start || d >= end) return;
+    if (isCircuitWorkout(w)) {
+      circuitSessions++;
+      return;
+    }
     liftSessions++;
     activeWeeks.add(Math.floor((d.getTime() - start.getTime()) / WEEK_MS));
     liftTonnage += workoutVolume.workoutVolumeKg(w);
@@ -492,6 +517,7 @@ function aggregateWindow(
     liftTonnage,
     liftHardSets,
     liftSessions,
+    circuitSessions,
     runKm: Math.round(runKm * 10) / 10,
     runLongKm: Math.round(runLongKm * 10) / 10,
     // Sum of each active week's longest run — the baseline divides this by
@@ -984,6 +1010,7 @@ module.exports = {
     currentWindow,
     baselineWindow,
     aggregateWindow,
+    isCircuitWorkout,
     computeBaselineFromAgg,
     computeConfidence,
     computeSignals,

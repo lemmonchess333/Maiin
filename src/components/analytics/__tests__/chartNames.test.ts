@@ -40,7 +40,6 @@ const read = (p: string) => readFileSync(p, "utf8");
  * `components/run/SplitsTable`, which is no Recharts root.)
  */
 const CHARTS: [string, string][] = [
-  ["src/components/analytics/TrainingLoadCard.tsx", "<ComposedChart"],
   ["src/components/analytics/PerformanceIndexChart.tsx", "<AreaChart"],
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
   ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],

@@ -6,7 +6,8 @@
  * ARIA that does not resolve, lists, labels, contrast) on the screens
  * people use and inside the sheets they open.
  *
- * The screens: Home, Food, Train, History and its Lifting page, Social
+ * The screens: Home, Food, Train, a lift's and a run's own page, History
+ * and its Lifting page, Social
  * (Together, again with a challenge's sheet open, and the Explore
  * feed), Settings and six of its sections, a
  * profile, a Space, an exercise, a run, a workout and the Weekly review.
@@ -18,7 +19,8 @@
  * each with its comments sheet, and a Space post that is not there; the
  * In progress strip on Home and Train for a programme workout and for a
  * routine's; and, as other seeded accounts, a runner's welcome back and a
- * Circle's invite code live and expired.
+ * Circle's invite code live and expired. And circuit mode: its picker, a
+ * circuit at work and at rest, its end question and its finish.
  * Everything is measured in the light theme the seeded account keeps and
  * again in dark.
  *
@@ -34,6 +36,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
 import { emulatorActive } from "../helpers/emulator";
 
 test.use({
@@ -250,6 +258,14 @@ test.describe("axe", () => {
     await open(page, "program", page.getByRole("heading", { name: "Train" }));
     await check(page, "train", found);
 
+    // A lift's own page (TrainWk1 call 2): the week's first lift.
+    await open(
+      page,
+      "program/lift/0",
+      page.getByRole("button", { name: "Reorder exercises", exact: true })
+    );
+    await check(page, "lift-session", found);
+
     await open(
       page,
       "history",
@@ -381,14 +397,18 @@ test.describe("axe", () => {
     await close(page);
 
     // A meal's edit sheet, from yesterday's diary (seed:rich logs meals on
-    // the five days up to the one it ran on).
+    // the five days up to the one it ran on). A row is named by what it
+    // shows, then ", edit".
     const yesterday = await page.evaluate(() => {
       const d = new Date();
       d.setDate(d.getDate() - 1);
       const pad = (n: number) => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     });
-    const meal = page.getByRole("button", { name: /^Edit / }).first();
+    const meal = page
+      .locator("[data-food-row]")
+      .getByRole("button", { name: /\bedit$/ })
+      .first();
     await open(page, `food?date=${yesterday}`, meal);
     await meal.click();
     await dialog.waitFor();
@@ -396,7 +416,7 @@ test.describe("axe", () => {
     await check(page, "sheet-meal-edit", found, sheet);
     await close(page);
 
-    const weight = page.getByRole("button", { name: /^Weight / }).first();
+    const weight = page.getByRole("button", { name: /^Weight\b/ }).first();
     await open(page, "", weight);
     await weight.click();
     await dialog.waitFor();
@@ -507,6 +527,41 @@ test.describe("axe", () => {
 
     expect(unaccepted(found)).toEqual([]);
   });
+
+  /* Circuit mode (Circ1): the picker, a circuit at work and at rest, the
+     end question, and the finish of one run to its end, on a clock the
+     spec moves on (helpers/circuit.ts). Nothing is saved. */
+  test("a circuit", async ({ page }) => {
+    test.setTimeout(300_000);
+    const found: Finding[] = [];
+
+    await openCircuit(page);
+    await settle(page, page.getByRole("heading", { name: "Circuit" }));
+    await check(page, "circuit-picker", found);
+
+    await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+    await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+    await check(page, "circuit-work", found);
+    await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+    await check(page, "circuit-rest", found);
+
+    await page.getByRole("button", { name: "End circuit" }).click();
+    const ask = page.getByRole("alertdialog");
+    await sheetReady(page, ask.getByRole("button", { name: "Keep going" }));
+    await check(page, "circuit-end-question", found, '[role="alertdialog"]');
+    await ask.getByRole("button", { name: "Keep going" }).click();
+    await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+    // On past the circuit's 10 minutes: it finishes by itself.
+    await runCircuitClock(page, 600);
+    await page
+      .getByText("How did it feel?")
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(600);
+    await check(page, "circuit-finish", found);
+
+    expect(unaccepted(found)).toEqual([]);
+  });
 });
 
 /* Surfaces only another seeded account reaches: seed:liftreturn's free
@@ -537,6 +592,40 @@ test.describe("axe, other accounts", () => {
       page.locator(sheet).getByText("since your last run", { exact: false })
     );
     await check(page, "sheet-run-return", found, sheet);
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  /* A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's card,
+     as seed:fellbehind's race plan has this week's runs: the day's run, or
+     the week's next one. A week with none left to start has no ⋯. */
+  test("a run's own page", async ({ page }) => {
+    test.setTimeout(120_000);
+    const found: Finding[] = [];
+    await signInAsTestUser(page, {
+      email: "fellbehind-capture@tropos.test",
+      password: "test-password-123",
+    });
+    await page.goto("program?tab=run");
+    const manage = page.getByRole("button", {
+      name: "Manage session",
+      exact: true,
+    });
+    const shown = await manage
+      .waitFor({ state: "visible", timeout: 20_000 })
+      .then(
+        () => true,
+        () => false
+      );
+    if (!shown) {
+      test.info().annotations.push({
+        type: "skipped-surface",
+        description: "run-session: no run left to start this week",
+      });
+      return;
+    }
+    await manage.click();
+    await settle(page, page.getByText("Manage run", { exact: true }));
+    await check(page, "run-session", found);
     expect(unaccepted(found)).toEqual([]);
   });
 

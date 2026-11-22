@@ -131,7 +131,7 @@ export default function CalorieBalanceChart({
   const fade = reduced ? 0 : 0.2;
 
   return (
-    <div className="p-4 rounded-2xl bg-card space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <SectionLabel>Calorie balance</SectionLabel>

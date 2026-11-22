@@ -66,7 +66,16 @@ export const ONBOARDING_STEP_IDS = [
   "about",
   "preview",
   "confirm",
+  // Priv1 call 1: the agreement to store health details, asked before the
+  // first body question. Last here so every other step keeps its number.
+  "health",
 ] as const;
+
+/** The highest stored step number, which a resumed draft may not pass. */
+export const ONBOARDING_MAX_STEP = ONBOARDING_STEP_IDS.length - 1;
+
+/** The step that asks for the agreement to store health details. */
+export const HEALTH_CONSENT_STEP = ONBOARDING_STEP_IDS.indexOf("health");
 export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
@@ -120,12 +129,7 @@ export const DRAFT_RUN_FREQUENCIES = [
   "none",
   "new",
 ] as const;
-export const DRAFT_RUN_MODES = [
-  "freeform",
-  "structured",
-  "race_prep",
-  "starter",
-] as const;
+export const DRAFT_RUN_MODES = ["freeform", "race_prep", "starter"] as const;
 export const DRAFT_RECENT_RACE_DISTANCES = ["5k", "10k"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;
@@ -193,6 +197,9 @@ export interface OnboardingDraft {
   /** "What do you have?" (Lift4 (11)): a barbell and a rack beside a home
    *  gym's or a minimal setup's kit, and small plates. */
   barbellAtHome?: boolean;
+  /** A pull-up bar beside a home gym's, a minimal or a no-equipment
+   *  setup's kit (Lift4 (11)). */
+  pullUpBar?: boolean;
   smallPlates?: boolean;
   /** Lift4 (10): "Lighten leg sessions while your runs build?", asked with
    *  a race. Unanswered, the plan takes yes for Support my running and no
@@ -217,6 +224,11 @@ export interface OnboardingDraft {
    *  once the phone allowed notifications, and its "HH:mm". */
   reminderOn?: boolean;
   reminderTime?: string;
+  /** Priv1 call 1: the version of the health-details wording the person
+   *  agreed to on this step of this setup. Kept on this device only until
+   *  the plan is saved, when `completeOnboarding` stamps the agreement on
+   *  the account. Absent until they agree, and cleared by Not now. */
+  healthConsentVersion?: number;
 }
 
 interface DraftEnvelope {
@@ -303,6 +315,7 @@ export function isValidDraft(
     (d.sessionMinutes === undefined ||
       oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
     (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
+    (d.pullUpBar === undefined || typeof d.pullUpBar === "boolean") &&
     (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
     (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean") &&
     (d.recentRaceDistance === undefined ||
@@ -321,7 +334,11 @@ export function isValidDraft(
     (d.reminderOn === undefined || typeof d.reminderOn === "boolean") &&
     (d.reminderTime === undefined ||
       (typeof d.reminderTime === "string" &&
-        /^\d{2}:\d{2}$/.test(d.reminderTime)))
+        /^\d{2}:\d{2}$/.test(d.reminderTime))) &&
+    (d.healthConsentVersion === undefined ||
+      (typeof d.healthConsentVersion === "number" &&
+        Number.isInteger(d.healthConsentVersion) &&
+        d.healthConsentVersion > 0))
   );
 }
 

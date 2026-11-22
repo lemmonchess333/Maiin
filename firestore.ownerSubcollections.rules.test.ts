@@ -93,6 +93,44 @@ suite(
         await setDoc(doc(ctx.firestore(), path), data);
       });
 
+    describe("settings/emailState — server writes only (App1 Q55)", () => {
+      // The unsubscribe token every chosen email links with, and what has
+      // been sent. A client that could write it could reset what was sent,
+      // or set its own token; its owner may still read it.
+      const path = `users/${OWNER}/settings/emailState`;
+
+      it("owner reads it, and cannot create, change or erase it", async () => {
+        const ref = doc(asOwner(), path);
+        await assertFails(setDoc(ref, { unsubscribeToken: "x".repeat(43) }));
+        await seed(path, {
+          unsubscribeToken: "T".repeat(43),
+          weeklyReview: { key: "2026-11-09", state: "sent" },
+        });
+        await assertSucceeds(getDoc(ref));
+        await assertFails(updateDoc(ref, { weeklyReview: null }));
+        await assertFails(
+          setDoc(ref, { unsubscribeToken: "y".repeat(43) }, { merge: true })
+        );
+        await assertFails(deleteDoc(ref));
+      });
+
+      it("nobody else reads or writes it", async () => {
+        await seed(path, { unsubscribeToken: "T".repeat(43) });
+        for (const db of [asOther(), asAnon()]) {
+          await assertFails(getDoc(doc(db, path)));
+          await assertFails(setDoc(doc(db, path), { unsubscribeToken: "z" }));
+        }
+      });
+
+      it("the owner's other settings stay theirs to write", async () => {
+        await assertSucceeds(
+          setDoc(doc(asOwner(), `users/${OWNER}/settings/reminders`), {
+            reviewEnabled: true,
+          })
+        );
+      });
+    });
+
     describe.each(["challengeAnnouncement", "challengeReminder"])(
       "%s ledger — server writes only",
       (prefix) => {
@@ -144,6 +182,44 @@ suite(
         });
       }
     );
+
+    /* hourlyPropsBundle reads every settings document whose
+       `propsBundleDueAt` has passed, a thousand at a time, oldest first.
+       A thousand such documents under one account kept every real bundle
+       out of that read, so the field is the server's, and so are the
+       bundle and the push budget themselves. */
+    describe("the props bundle and the push budget: server writes only", () => {
+      it.each(["propsBundle", "pushBudget"])(
+        "the owner reads %s and cannot create, change or delete it",
+        async (name) => {
+          const path = `users/${OWNER}/settings/${name}`;
+          const ref = doc(asOwner(), path);
+          await assertFails(setDoc(ref, { entries: [] }));
+          await seed(path, { day: "2026-11-18", count: 1 });
+          await assertSucceeds(getDoc(ref));
+          await assertFails(updateDoc(ref, { count: 0 }));
+          await assertFails(deleteDoc(ref));
+          await assertFails(getDoc(doc(asOther(), path)));
+        }
+      );
+
+      it("no settings document of the owner's may carry a bundle's due time", async () => {
+        const due = new Date(0);
+        for (const name of ["push", "p0", "reminders"]) {
+          await assertFails(
+            setDoc(doc(asOwner(), `users/${OWNER}/settings/${name}`), {
+              propsBundleDueAt: due,
+            })
+          );
+        }
+        const ref = doc(asOwner(), `users/${OWNER}/settings/push`);
+        await assertSucceeds(setDoc(ref, { enabled: true }));
+        await assertFails(updateDoc(ref, { propsBundleDueAt: due }));
+        await assertSucceeds(updateDoc(ref, { enabled: false }));
+        // An ordinary settings document is still the owner's to delete.
+        await assertSucceeds(deleteDoc(ref));
+      });
+    });
 
     describe("owner-only subcollections — owner reads and writes, nobody else", () => {
       const OWNER_WRITABLE = [

@@ -472,7 +472,7 @@ describe("Food — copy an entry to another day", () => {
         </Routes>
       </MemoryRouter>
     );
-    openRow(/^Edit Chicken & rice/);
+    openRow(/^Chicken & rice .*, edit$/);
     fireEvent.click(
       screen.getByRole("button", { name: "Copy to another day" })
     );
@@ -501,7 +501,7 @@ describe("Food — one food of an entry of several", () => {
   it("writes the edited foods, their sum and the name they make", async () => {
     api.meals = [dish()];
     renderFood();
-    openRow(/^Edit Chicken, Rice, Oil/);
+    openRow(/^Chicken, Rice, Oil .*, edit$/);
     fireEvent.change(screen.getByLabelText("Grams of Chicken"), {
       target: { value: "150" },
     });

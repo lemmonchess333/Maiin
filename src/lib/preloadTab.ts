@@ -1,6 +1,11 @@
 const loaders: Record<string, () => Promise<unknown>> = {
   "/": () => import("@/pages/Home"),
-  "/program": () => import("@/pages/Program"),
+  // Train is its page under the route that holds its engine: both at once.
+  "/program": () =>
+    Promise.all([
+      import("@/features/program/ProgramEngineRoute"),
+      import("@/pages/Program"),
+    ]),
   "/food": () => import("@/pages/Food"),
   "/social": () => import("@/pages/Social"),
   "/history": () => import("@/pages/History"),

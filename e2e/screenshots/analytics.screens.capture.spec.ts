@@ -22,6 +22,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { setTestUserTier } from "../helpers/testUserTier";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -77,9 +78,14 @@ async function seedTrainingHistory(uid: string): Promise<void> {
   const now = new Date();
   const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000);
 
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
 
   // `distance` is METRES and `avgPace` is SECONDS PER KM — the units
   // `isVolumeEligible` gates on (>= 50m, >= 30s). The first draft of this
@@ -385,11 +391,15 @@ test.describe("analytics tab screenshots", () => {
       timeout: 30_000,
     });
 
-    /* The overview's cards (DS3): the week's index, the range's summary,
-         the trends and the muscles. The rich seed carries all four; a
+    /* The overview's cards (DS3): the lead (the verdict and the last 7
+         days against the usual week, App1 Q10), the range's summary, the
+         trends and the muscles. The rich seed carries all four; a
          cold-start account has none of them. */
     await expect(
       page.getByRole("heading", { name: "Performance", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("list", { name: "Against your usual week" })
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Last 30 days" })
@@ -404,17 +414,21 @@ test.describe("analytics tab screenshots", () => {
     await settleFullPageHeight(page);
     await shootBoth(page, "analytics-rich");
 
-    /* What the score is made of opens in place under its card (Trim1
-         call 5): the index's chart and the training load among it. */
+    /* The score and what it is made of open in place under the lead
+         (Trim1 call 5, App1 Q10): the score in its ring, then the index's
+         chart. One load model (Q16): no minutes-based training load. */
     await page
       .getByRole("button", { name: "Score details", exact: true })
       .click();
+    await expect(page.getByRole("region", { name: "Your score" })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
-      page.getByRole("heading", { name: "Performance Index" })
+      page.getByRole("heading", { name: "Your score by week" })
     ).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: "Training load" })
-    ).toBeVisible();
+    ).toHaveCount(0);
 
     /* Clipping is VISUAL, so the DOM cannot see it: the tick text is
          present whether or not it is painted, and `getByText("100")`
@@ -426,7 +440,9 @@ test.describe("analytics tab screenshots", () => {
          that clips. An assertion against the card passes on the defect. */
     const card = page
       .locator("div.bg-card")
-      .filter({ has: page.getByRole("heading", { name: "Performance Index" }) })
+      .filter({
+        has: page.getByRole("heading", { name: "Your score by week" }),
+      })
       .first();
     const svg = card.locator("svg").first();
     const tick = svg.locator("text", { hasText: /^100$/ }).first();

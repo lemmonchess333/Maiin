@@ -36,6 +36,7 @@ import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import BootStallNotice from "@/components/BootStallNotice";
 import ProfileUnavailable from "@/components/ProfileUnavailable";
+import { hasCurrentHealthConsent } from "@/lib/healthConsent";
 import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -136,6 +137,12 @@ const WidgetWaterSync = lazyRetry(() => import("@/components/WidgetWaterSync"));
 const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
+/* Priv1 call 1: an account set up before setup asked for the agreement to
+   store health details meets it once, before the app. Its own chunk: most
+   opens never load it. */
+const HealthConsentRoutes = lazyRetry(
+  () => import("@/components/healthConsent/HealthConsentRoutes")
+);
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
@@ -187,7 +194,14 @@ const SettingsHiddenPosts = lazyRetry(
   () => import("@/pages/settings/SettingsHiddenPosts")
 );
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
+// Train and the session pages under it share one programme engine, held
+// by this route (TrainWk1 call 2).
+const ProgramEngineRoute = lazyRetry(
+  () => import("@/features/program/ProgramEngineRoute")
+);
 const Program = lazyRetry(() => import("@/pages/Program"));
+const LiftSession = lazyRetry(() => import("@/pages/LiftSession"));
+const RunSession = lazyRetry(() => import("@/pages/RunSession"));
 const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
@@ -199,6 +213,7 @@ const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
+const Circuit = lazyRetry(() => import("@/pages/Circuit"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 // Soc15 call 3: the weekly league, opened from its card on Social.
@@ -692,6 +707,18 @@ function SignedInRoutes({
     );
   }
 
+  /* Set up, but without the agreement to store health details: an account
+     from before setup asked (Priv1 call 1). It agrees once, on this open,
+     before the app; HealthConsentRoutes reads the account again first, so
+     an agreement given on another device never flashes the question. */
+  if (!hasCurrentHealthConsent(profile.healthDataConsent)) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <HealthConsentRoutes key={user.uid} />
+      </Suspense>
+    );
+  }
+
   return (
     /* HOME-ACCOUNT-01: remount the entire authenticated subtree when the
        account changes, so no provider's cached Firestore state or page-local
@@ -934,14 +961,43 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Train, a lift's page and a run's page, under the
+                            one engine they share (TrainWk1 call 2). Layout
+                            keys the three alike (`layoutKey`), so the engine
+                            stays mounted between them. */}
                         <Route
                           path="/program"
                           element={
                             <RouteErrorBoundary>
-                              <Program />
+                              <ProgramEngineRoute />
                             </RouteErrorBoundary>
                           }
-                        />
+                        >
+                          <Route
+                            index
+                            element={
+                              <RouteErrorBoundary>
+                                <Program />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/lift/:day"
+                            element={
+                              <RouteErrorBoundary>
+                                <LiftSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                          <Route
+                            path="/program/run/:date"
+                            element={
+                              <RouteErrorBoundary>
+                                <RunSession />
+                              </RouteErrorBoundary>
+                            }
+                          />
+                        </Route>
                         <Route
                           path="/program/plan"
                           element={
@@ -1067,6 +1123,15 @@ function SignedInRoutes({
                         element={
                           <RouteErrorBoundary>
                             <Run />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      {/* Circuit mode (Circ1): full screen, as a run is. */}
+                      <Route
+                        path="/circuit"
+                        element={
+                          <RouteErrorBoundary>
+                            <Circuit />
                           </RouteErrorBoundary>
                         }
                       />

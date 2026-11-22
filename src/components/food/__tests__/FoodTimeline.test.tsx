@@ -40,6 +40,16 @@ function meal(id: string, foodName: string, extra: Partial<Meal> = {}): Meal {
   } as Meal;
 }
 
+/** A meal an older build scanned, with the photo's server URL still on it,
+ *  as the document holds it until the purge reaches it. */
+function legacyMeal(id: string, foodName: string, extra: Partial<Meal> = {}) {
+  return {
+    ...meal(id, foodName, extra),
+    photoUrl: `https://example.test/${id}.jpg`,
+    photoPath: `food-photos/me/${id}.jpg`,
+  } as Meal;
+}
+
 function diary(meals: Meal[]) {
   return (
     <FoodTimeline
@@ -52,8 +62,15 @@ function diary(meals: Meal[]) {
   );
 }
 
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/* A row is named by what it shows, the food's name first (WCAG 2.5.3,
+   Label in Name), then ", edit"; its Delete is named "Delete …". */
 const rowFor = (name: string) =>
-  screen.queryByRole("button", { name: `Edit ${name}` });
+  screen.queryByRole("button", {
+    name: new RegExp(`^${escapeRegExp(name)}\\b`),
+  });
 
 beforeEach(() => {
   motionPref.reduce = false;
@@ -129,14 +146,14 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
     }
   );
 
-  it("prefers the first available local photo across the group before a legacy URL", () => {
+  it("uses the first local photo across the group, never a server URL an older build left", () => {
     photos.urls = {
       scanned: "data:image/jpeg;base64,c2Nhbm5lZA==",
       later: "data:image/jpeg;base64,bGF0ZXI=",
     };
     const { container } = render(
       diary([
-        meal("legacy", "Soup", { photoUrl: "https://example.test/soup.jpg" }),
+        legacyMeal("legacy", "Soup"),
         meal("scanned", "Soup"),
         meal("later", "Soup"),
       ])
@@ -149,10 +166,10 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
   });
 
   it("gives every row a picture, its photo or our drawing", () => {
+    photos.urls = { m1: "data:image/jpeg;base64,c2FsbW9u" };
     const { container } = render(
       diary([
         meal("m1", "Salmon", {
-          photoUrl: "https://example.test/salmon.jpg",
           meal: "dinner",
           createdAt: new Date(2026, 9, 11, 19, 30),
         }),
@@ -163,6 +180,24 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
       ])
     );
     expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
+  });
+
+  /* Owner, 2026-11-21: every photo older builds stored on the server is
+     deleted (functions/scripts/purgeLegacyFoodPhotos.js), so the app shows
+     none. Until the purge reaches a meal it still carries the URL, and the
+     row must not draw it, or draw a broken picture once the file is gone. */
+  it("shows no photo for a meal that carries only a server photoUrl", () => {
+    const { container } = render(
+      diary([
+        legacyMeal("m1", "Salmon", { meal: "dinner" }),
+        meal("m2", "Oats", { meal: "breakfast" }),
+      ])
+    );
+    // Anchor: the meal is on the diary, so the missing photo is the rule's.
+    expect(rowFor("Salmon")).not.toBeNull();
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(0);
+    expect(container.innerHTML).not.toContain("example.test");
     expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 
@@ -205,7 +240,7 @@ describe("FoodTimeline — portion identity", () => {
           onEdit={onEdit}
         />
       );
-      const rows = screen.getAllByRole("button", { name: /^Edit Oats(?:,|$)/ });
+      const rows = screen.getAllByRole("button", { name: /^Oats\b/ });
       expect(rows).toHaveLength(2);
       rows.forEach((row) => fireEvent.keyDown(row, { key: "Enter" }));
       expect(
@@ -248,7 +283,10 @@ describe("FoodTimeline — portion identity", () => {
         "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (2 cups)",
       ];
       labels.forEach((label) => {
-        const edit = screen.getByRole("button", { name: `Edit ${label}` });
+        // The row's own words, then the details that tell it apart.
+        const edit = screen.getByRole("button", {
+          name: new RegExp(`^Oats\\b.*, ${escapeRegExp(label)}, edit$`),
+        });
         if (reduce) fireEvent.click(edit);
         else fireEvent.keyDown(edit, { key: "Enter" });
       });
@@ -280,7 +318,7 @@ describe("FoodTimeline — portion identity", () => {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Oats" }), {
+    fireEvent.keyDown(rowFor("Oats")!, {
       key: "Enter",
     });
     expect(onEdit).toHaveBeenCalledWith(

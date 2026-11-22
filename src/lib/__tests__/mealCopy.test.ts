@@ -13,7 +13,7 @@ const source: Meal = {
     { name: "Milk", portionSize: "250 ml", calories: 150, protein: 9, carbs: 13, fat: 5, sugar: 13 }],
   totalCalories: 450, totalProtein: 21, totalCarbs: 63, totalFat: 11,
   totalFiber: 8, totalSugar: 15, totalSodium: 100,
-  photoUrl: "legacy-photo", deletedAt: "old", revisionCount: 4, userEditedFields: ["totalCalories"],
+  deletedAt: "old", revisionCount: 4, userEditedFields: ["totalCalories"],
 };
 
 beforeEach(() => vi.resetAllMocks());
@@ -25,7 +25,6 @@ describe("copying a logged meal", () => {
     expect(result.meal).toBe("breakfast");
     expect(result.items).toEqual(source.items);
     expect(result.totalCalories).toBe(450);
-    expect(result).not.toHaveProperty("photoUrl");
     expect(result).not.toHaveProperty("deletedAt");
     expect(result).not.toHaveProperty("revisionCount");
     expect(result).not.toHaveProperty("userEditedFields");

@@ -379,7 +379,7 @@ describe("FellBehindSheet — opened by the run return", () => {
       fireEvent.click(screen.getByRole("button", { name: /Not now/i }));
       await waitFor(() => expect(onClose).toHaveBeenCalled());
       expect(track).toHaveBeenCalledWith("return_choice", {
-        surface: "run-return",
+        returnSurface: "run-return",
         choice: "skip",
       });
     } finally {

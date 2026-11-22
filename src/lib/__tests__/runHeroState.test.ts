@@ -32,7 +32,7 @@ function runDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
 
 function input(overrides: Partial<RunHeroStateInput> = {}): RunHeroStateInput {
   return {
-    mode: "structured",
+    mode: "starter",
     raceGoal: null,
     phase: null,
     recoveryEndDate: null,
@@ -183,11 +183,11 @@ describe("getRunHeroState", () => {
     ).toBe("race-prep-week");
   });
 
-  it("returns 'structured-today' when structured + today's planned run", () => {
+  it("returns 'structured-today' when a starter plan's run is today", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: runDay({ date: TODAY }),
         })
       )
@@ -198,7 +198,7 @@ describe("getRunHeroState", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: runDay({ date: YESTERDAY }),
         })
       )
@@ -209,7 +209,7 @@ describe("getRunHeroState", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: runDay({ date: TOMORROW }),
         })
       )
@@ -220,7 +220,7 @@ describe("getRunHeroState", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: runDay({ date: "2026-06-05" }),
         })
       )
@@ -231,7 +231,7 @@ describe("getRunHeroState", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: null,
           hasRunDays: true,
         })
@@ -239,11 +239,11 @@ describe("getRunHeroState", () => {
     ).toBe("all-done");
   });
 
-  it("returns 'rest' when structured but no runDays and no nextStartable", () => {
+  it("returns 'rest' when a plan has no runDays and no nextStartable", () => {
     expect(
       getRunHeroState(
         input({
-          mode: "structured",
+          mode: "starter",
           nextStartable: null,
           hasRunDays: false,
         })

@@ -214,7 +214,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
-    case "structured_today":
+    case "rolling_today":
       line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
       break;
     case "rest_day":
@@ -401,10 +401,10 @@ export default function RunSetupModal({
         </div>
 
         {/* Programme context strip — Phase B1. Renders only when the
-            user is on a structured/race_prep plan AND today resolves
-            to one of the four documented states (today's plan, rest
-            day, completed day, elapsed race-prep). Freeform users get
-            no strip — the surface stays clean. */}
+            user is on a plan AND today resolves to one of the five
+            documented states (race prep's or a rolling plan's today,
+            rest day, completed day, elapsed race-prep). Freeform users
+            get no strip — the surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
 
         {routeSection}
@@ -422,7 +422,7 @@ export default function RunSetupModal({
             <button
               type="button"
               onClick={() => setShowChooser(true)}
-              className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
+              className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3 active:scale-[0.98] transition-transform text-left dark:card-shadow dark:border-transparent"
               aria-label={`Selected run type: ${selected.name}. Tap to change.`}
             >
               {/* Run7 Q4 — coral icon container (was purple 10%). The
@@ -464,7 +464,7 @@ export default function RunSetupModal({
             run type: the type above stays the session (a planned run's
             own), and this switch says it is run on a treadmill, with no
             GPS and the distance typed in at the end (TreadmillMode). */}
-        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card">
+        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
           <div className="min-w-0">
             <p className="text-sm text-foreground">On a treadmill</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -697,7 +697,7 @@ export default function RunSetupModal({
                 onClick={() => setShowCustomise((v) => !v)}
                 aria-expanded={showCustomise}
                 aria-controls="interval-customise-panel"
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-medium active:scale-[0.98] transition-transform"
+                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-medium active:scale-[0.98] transition-transform dark:card-shadow dark:border-transparent"
               >
                 <span>Customise</span>
                 {showCustomise ? (
@@ -715,7 +715,7 @@ export default function RunSetupModal({
                     exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           {
@@ -854,7 +854,7 @@ export default function RunSetupModal({
         {config.target.type !== "none" &&
           config.activityType !== "intervals" &&
           !onTreadmill && (
-            <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+            <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
               {config.target.type === "distance" &&
                 (() => {
                   /* Preset chips — selecting a preset populates the
@@ -1264,7 +1264,7 @@ export default function RunSetupModal({
                 .map((setting) => (
                   <div
                     key={setting.key}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card"
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
                   >
                     <span className="text-sm">{setting.label}</span>
                     <Toggle
@@ -1292,7 +1292,7 @@ export default function RunSetupModal({
                       the user's choice. */}
                   {!requiresManualDistance(config) &&
                     config.target.type === "pace" && (
-                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
+                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                         <span className="text-sm">Pace alerts</span>
                         <Toggle
                           checked={config.paceAlerts}
@@ -1303,7 +1303,7 @@ export default function RunSetupModal({
                         />
                       </div>
                     )}
-                  <div className="p-3.5 rounded-xl border border-border/50 bg-card">
+                  <div className="p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
                       <span className="text-xs text-muted-foreground font-mono tabular-nums">
@@ -1418,7 +1418,6 @@ export default function RunSetupModal({
         title="Choose run type"
         description="Pick how you want to record this run."
         hideHeader
-        className="border-t border-border"
       >
         {/* Header is shrink-0 with a faint bottom border so the
                 visual transition between fixed header and scrolling
@@ -1429,7 +1428,7 @@ export default function RunSetupModal({
                 the title on small viewports. */}
         <div className="px-5 pt-3 pb-3 shrink-0 border-b border-border/40">
           <div
-            className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3"
+            className="mx-auto w-10 h-1 rounded-full sheet-handle mb-3"
             aria-hidden="true"
           />
           <h2 className="text-lg font-bold text-foreground">Choose run type</h2>

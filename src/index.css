@@ -17,6 +17,15 @@
    takes in its padding there, so an exercise's four set rows fit its
    first screen under the header's figures (DS4 pass, 8 November 2026). */
 @custom-variant short (@media (max-height: 640px));
+/* Reduce Transparency (DS6, DESIGN_GUIDE §14o): a frosted chip or bar
+   draws solid. Keyed on the attribute `reducedTransparency.ts` sets on
+   <html>, from the iPhone's setting (WebKit has no
+   `prefers-reduced-transparency`) or the browser's media query, so one
+   variant serves both. Every `backdrop-blur` class carries
+   `transparency-reduce:backdrop-blur-none` and a solid
+   `transparency-reduce:bg-*` beside it (`reducedTransparencyChips.test.ts`).
+   Declared after `dark` so it wins at equal specificity. */
+@custom-variant transparency-reduce (&:where([data-reduced-transparency], [data-reduced-transparency] *));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
@@ -430,12 +439,17 @@
   --border: 240 6% 17%; /* #29292E */
   --input-fill: 240 7% 12.5%; /* #1E1E22 */
   --glass-bg: rgba(18, 18, 22, 0.97);
-  --glass-border: rgba(255, 255, 255, 0.07);
+  /* The tab bar's rim on dark: the card's lit edge at the bar's size
+     (DS6, DESIGN_GUIDE §14o), a faint outline all round and a hairline of
+     light along the top. At 7% and 10% the hairline measured 1.37:1
+     against the page in a capture (1.39:1 over the solid fill), where a
+     card's lit edge is about 1.55:1; at 8% and 14% it measured 1.55:1
+     (1.60:1 over the solid fill). */
+  --glass-border: rgba(255, 255, 255, 0.08);
   --surface-solid: #151519;
   /* The direction the inline literal always assumed — correct here only. */
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
-  /* Fainter sheen on dark glass. */
-  --nav-frost-highlight: rgba(255, 255, 255, 0.1);
+  --nav-frost-highlight: rgba(255, 255, 255, 0.14);
   --nav-surface-opacity: 88%;
   --nav-active-foreground: var(--ds-purple-400);
   /* Semantic status colours — dark mode.

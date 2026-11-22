@@ -64,6 +64,8 @@ const draft: OnboardingDraft = {
   experience: "beginner",
   goalConfirmed: true,
   runConfirmed: true,
+  // Agreed on its step (Priv1 call 1).
+  healthConsentVersion: 1,
 };
 
 const show = () => (

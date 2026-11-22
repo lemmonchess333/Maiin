@@ -18,7 +18,8 @@
  *
  * The limits are counted in the year's terms (this year less the year of
  * birth), the same in setup and Settings: a year of birth of this year less
- * 16 or earlier passes, and a later one meets setup's under-16 line; one
+ * 18 or earlier passes, and a later one meets setup's under-18 line (Biz1
+ * call 4; 16 before it); one
  * earlier than this year less 120 is refused (`AGE_YEARS`, the server's
  * range).
  */
@@ -48,7 +49,7 @@ export type BirthYearProblem = "invalid" | "too-young" | "too-old";
 
 /**
  * Why `birthYear` cannot be kept on `today`, or null when it can: a year
- * after this one, under 16 in the year's terms, or over 120.
+ * after this one, under 18 in the year's terms, or over 120.
  */
 export function birthYearProblem(
   birthYear: number,
@@ -62,7 +63,7 @@ export function birthYearProblem(
 }
 
 /** What setup and Settings say about a year of birth they cannot keep. The
- *  under-16 line is setup's age gate, word for word. */
+ *  under-18 line is setup's age gate, word for word. */
 export const BIRTH_YEAR_MESSAGES: Record<BirthYearProblem, string> = {
   invalid: "Check the year you were born.",
   "too-young": `You need to be at least ${AGE_YEARS.min} to use Tropos.`,

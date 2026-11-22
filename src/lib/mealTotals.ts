@@ -33,8 +33,8 @@ export interface MealTotalsInput {
   protein?: number;
   carbs?: number;
   fat?: number;
-  // HOME-MEALS-01: soft-delete marker. Deletion is SOFT (`deletedAt` +
-  // 24h restore window), so a "deleted" meal still exists as a doc.
+  // HOME-MEALS-01: soft-delete marker. Deletion is SOFT (`deletedAt`, kept
+  // 30 days for restore, F5c), so a "deleted" meal still exists as a doc.
   // useMeals filters `!deletedAt` client-side, but Home's useHomeData
   // read today's docs straight from Firestore with no such filter and fed
   // every raw doc here — so soft-deleted meals inflated Home's totals
@@ -83,8 +83,8 @@ function num(v: unknown): number {
 /**
  * HOME-MEALS-01, as an atom rather than a step inside the summer.
  *
- * Deletion is SOFT (`deletedAt` + a 24h restore window), so a "deleted"
- * meal is still a document that a raw Firestore read will hand you.
+ * Deletion is SOFT (`deletedAt`, kept 30 days for restore, F5c), so a
+ * "deleted" meal is still a document that a raw Firestore read will hand you.
  * Truthy `deletedAt` = deleted; `null` (the post-restore value) and
  * absent = active.
  *

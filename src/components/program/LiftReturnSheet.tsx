@@ -64,7 +64,10 @@ export default function LiftReturnSheet({
   const reportChoice = (choice: ReturnChoice) => {
     if (choiceReported.current) return;
     choiceReported.current = true;
-    trackLifecycleEvent("return_choice", { surface: "lift-return", choice });
+    trackLifecycleEvent("return_choice", {
+      returnSurface: "lift-return",
+      choice,
+    });
   };
 
   // The sheet closes itself once a choice resolves (`ChoiceSheet`).
