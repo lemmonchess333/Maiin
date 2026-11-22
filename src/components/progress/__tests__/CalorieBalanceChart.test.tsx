@@ -5,8 +5,11 @@ import { format, subDays } from "date-fns";
 import type { Meal } from "@/hooks/useMeals";
 import { T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 
+const auth = vi.hoisted(() => ({
+  profile: { program: { goal: "recomp" } } as Record<string, unknown>,
+}));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ profile: { program: { goal: "recomp" } } }),
+  useAuth: () => ({ profile: auth.profile }),
 }));
 vi.mock("recharts", () => {
   const Pass = ({ children }: { children: ReactNode }) => <div>{children}</div>;
@@ -319,5 +322,37 @@ describe("calorie balance footer", () => {
     // Today is excluded from the count, so the denominator is one less
     // than the number of days on the chart.
     expect(screen.getByText(`${ENOUGH} / ${charted - 1}`)).toBeInTheDocument();
+  });
+});
+
+/* The maintenance a day is measured against is the formula's when no
+   learned one is given. With no sex stored it read a man's, 166 kcal of
+   BMR above a woman's (rankings spec, 22 November 2026); it takes the
+   midpoint of the two now (owner, the same day). */
+describe("the maintenance with no sex stored", () => {
+  const body = {
+    program: { goal: "recomp" },
+    weightKg: 80,
+    heightCm: 180,
+    age: 25,
+    activityLevel: "moderate",
+  };
+  afterEach(() => {
+    auth.profile = { program: { goal: "recomp" } };
+  });
+  const balance = (sex?: "male" | "female") => {
+    auth.profile = { ...body, ...(sex ? { sex } : {}) };
+    render(<CalorieBalanceChart meals={loggedPast(ENOUGH, 2000)} />);
+    const first = points().find((p) => p.balance !== null)!.balance!;
+    cleanup();
+    return first;
+  };
+
+  it("takes the midpoint BMR, never a man's", () => {
+    // BMR 10*80 + 6.25*180 - 5*25 - 78 = 1722; × 1.55 = 2669; less 2000 eaten.
+    expect(balance()).toBe(669);
+    // A man's 1805 × 1.55 = 2798 and a woman's 1639 × 1.55 = 2540.
+    expect(balance("male")).toBe(798);
+    expect(balance("female")).toBe(540);
   });
 });

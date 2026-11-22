@@ -173,7 +173,8 @@ export function buildGoalWeightPersistPayload(args: {
     profileAge(profile) ?? 25,
     profile.activityLevel ?? "moderate",
     plan.fitnessGoal,
-    profile.sex ?? "male",
+    // None stored takes the midpoint (`tdee.ts`), never male.
+    profile.sex,
     plan.dailyOffset
   );
   /* A manual `customCalorieTarget` replaces the formula target, and the macro

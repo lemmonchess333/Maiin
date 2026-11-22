@@ -12,6 +12,7 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
+import { sexFromAnswer } from "@/lib/sex";
 import {
   MAINTAIN_DEADBAND_KG,
   resolveGoalWeightPlan,
@@ -703,6 +704,9 @@ export default function Onboarding() {
     weightUnit === "lbs"
       ? `${Math.round(kg * 2.20462 * 2) / 2} lb`
       : `${kg} kg`;
+  // Stored only when answered: Prefer not to say stores no sex, and the
+  // maths take the midpoint (`src/lib/sex.ts`).
+  const sex = sexFromAnswer(gender);
   const tdee = useMemo(
     () =>
       calculateTDEE(
@@ -711,10 +715,10 @@ export default function Onboarding() {
         age ?? AGE_BEFORE_ANSWER,
         activityLevel,
         goalPlan.fitnessGoal,
-        gender === "female" ? "female" : "male",
+        sex,
         goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, age, activityLevel, goalPlan, gender]
+    [weightKg, heightCm, age, activityLevel, goalPlan, sex]
   );
   /* Asked of someone who runs already: a new runner has no recent race to
      give. Typed as minutes and seconds, because a phone's number pad has no
@@ -1106,7 +1110,7 @@ export default function Onboarding() {
           : {}),
         onboardingComplete: true,
         // TDEE targets
-        sex: gender === "female" ? "female" : "male",
+        ...(sex ? { sex } : {}),
         activityLevel,
         // The day's carbs and fat are worked out from these two, never
         // stored (App1 Q21).

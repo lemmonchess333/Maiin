@@ -17,26 +17,17 @@ import {
   birthYearProblem,
   parseBirthYear,
 } from "@/lib/age";
+import { isSex, type Sex } from "@/lib/sex";
 
-type Sex = "male" | "female";
-
-/* The sex the calorie maths uses (`sex`), as setup asks it. This was a
-   Gender control writing `gender`, which nothing reads: a change here never
-   reached a target (App1's first settings fault, grill Q22). Gender as an
-   identity field is gone; an account set up before `sex` existed shows its
-   old answer until it picks one, and `gender` is never written. */
+/* The sex the calorie maths uses (`sex`), as setup asks it (App1, grill
+   Q22). Choosing one writes setup's `gender` with it, so the two answers
+   never disagree. With no `sex` stored the maths take the midpoint of the
+   male and female figures (`src/lib/sex.ts`), so the control shows Not set,
+   whatever an older `gender` says. */
 const SEX_OPTIONS: { value: Sex; label: string }[] = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
 ];
-
-function sexShown(profile: UserProfile): Sex | undefined {
-  if (profile.sex) return profile.sex;
-  if (profile.gender === "male" || profile.gender === "female") {
-    return profile.gender;
-  }
-  return undefined;
-}
 
 /* Body metrics are STORED in kg and cm and shown in the unit chosen under
    Units & appearance. These fields showed kg and cm whatever was chosen. */
@@ -140,8 +131,9 @@ export default function ProfileInfoSection({
      before goal weights existed. */
   async function saveSex(next: Sex) {
     if (next === profile.sex) return;
+    const answer = { sex: next, gender: next };
     if (profile.goalWeightKg == null) {
-      await updateProfile({ sex: next });
+      await updateProfile(answer);
       return;
     }
     const currentKg = profile.weightKg || 70;
@@ -151,8 +143,9 @@ export default function ProfileInfoSection({
       targetKg: profile.goalWeightKg,
       rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
     });
-    await updateProfile({ ...payload, sex: next });
+    await updateProfile({ ...payload, ...answer });
   }
+  const sexShown = isSex(profile.sex) ? profile.sex : undefined;
 
   /* The year of birth replaces the age range (App1, grill Q57; the owner
      chose the year over a full date, 13 November 2026), which wrote a
@@ -441,7 +434,7 @@ export default function ProfileInfoSection({
           ariaLabel="Sex for calorie calculation"
           layout="wrap"
           className="mt-1.5"
-          value={sexShown(profile)}
+          value={sexShown}
           onChange={(value) => {
             haptic("light");
             void saveSex(value);
@@ -449,7 +442,9 @@ export default function ProfileInfoSection({
           options={SEX_OPTIONS}
         />
         <p className="mt-1.5 text-xs text-muted-foreground text-pretty">
-          Your calorie and protein targets are worked out from it.
+          {sexShown
+            ? "Your calorie and protein targets are worked out from it."
+            : "Not set. Your calorie target uses the midpoint of the male and female figures."}
         </p>
       </div>
 

@@ -105,14 +105,51 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(checked).toHaveLength(1);
   });
 
-  it("an account with no `sex` shows its old answer, read and never written", () => {
-    const { updateProfile } = renderSection(
-      makeProfile({ sex: undefined, gender: "female" })
-    );
+  /* With no `sex` the maths take the midpoint of the male and female
+     figures (owner, 22 November 2026), so the control says Not set. It
+     showed an older `gender` here while the maths read male. */
+  it("an account with no `sex` shows Not set, whatever its old `gender`", () => {
+    for (const gender of ["female", "male", "unspecified"] as const) {
+      const { updateProfile } = renderSection(
+        makeProfile({ sex: undefined, gender })
+      );
+      const group = screen.getByRole("radiogroup", {
+        name: "Sex for calorie calculation",
+      });
+      expect(
+        group.querySelectorAll('[role="radio"][aria-checked="true"]')
+      ).toHaveLength(0);
+      expect(screen.getByText(/^Not set\./)).toBeInTheDocument();
+      expect(updateProfile).not.toHaveBeenCalled();
+      cleanup();
+    }
+  });
+
+  it("an account with a `sex` does not say Not set", () => {
+    renderSection(makeProfile({ sex: "female", gender: "unspecified" }));
+    expect(screen.queryByText(/^Not set\./)).toBeNull();
     expect(
-      screen.getByRole("radio", { name: "Female" }).getAttribute("aria-checked")
-    ).toBe("true");
-    expect(updateProfile).not.toHaveBeenCalled();
+      screen.getByText(
+        "Your calorie and protein targets are worked out from it."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("choosing a sex where none was set writes `sex` and `gender` together", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({
+        sex: undefined,
+        gender: "unspecified",
+        goalWeightKg: undefined,
+      })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Female" }));
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({
+        sex: "female",
+        gender: "female",
+      })
+    );
   });
 
   it("choosing a sex writes `sex` and the targets worked out with it", async () => {
@@ -129,7 +166,8 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
     const patch = updateProfile.mock.calls[0][0];
     expect(patch.sex).toBe("female");
-    expect(patch).not.toHaveProperty("gender");
+    // Setup's answer moves with it, so the two never disagree.
+    expect(patch.gender).toBe("female");
     expect(typeof patch.targetCalories).toBe("number");
     expect(patch.goalWeightKg).toBe(70);
   });
@@ -153,13 +191,16 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(female ?? Infinity).toBeLessThan(male ?? 0);
   });
 
-  it("with no goal weight, writes only `sex` and leaves the targets", async () => {
+  it("with no goal weight, writes only `sex` and `gender` and leaves the targets", async () => {
     const { updateProfile } = renderSection(
       makeProfile({ sex: "male", goalWeightKg: undefined })
     );
     fireEvent.click(screen.getByRole("radio", { name: "Female" }));
     await waitFor(() =>
-      expect(updateProfile).toHaveBeenCalledWith({ sex: "female" })
+      expect(updateProfile).toHaveBeenCalledWith({
+        sex: "female",
+        gender: "female",
+      })
     );
   });
 

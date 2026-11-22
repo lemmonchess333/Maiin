@@ -11,13 +11,10 @@ import {
   ESSENTIAL_FAT_FLOOR_PER_KG,
   floorTargetCalories,
 } from "./macroConstants";
+import { figureForSex, type Sex } from "./sex";
 
 export type ActivityLevel =
-  | "sedentary"
-  | "light"
-  | "moderate"
-  | "active"
-  | "very_active";
+  "sedentary" | "light" | "moderate" | "active" | "very_active";
 export type FitnessGoal = "cut" | "recomp" | "lean bulk";
 
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
@@ -182,10 +179,18 @@ export function proteinMultiplierForGoal(goal: FitnessGoal): number {
   return GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
 }
 
+/** Mifflin-St Jeor's sex constant. With no sex stored the BMR takes the
+ *  mean of the two, −78 (`figureForSex`; owner, 22 November 2026). */
+export const BMR_SEX_CONSTANT: Readonly<Record<Sex, number>> = {
+  male: 5,
+  female: -161,
+};
+
 /**
  * Calculate BMR using Mifflin-St Jeor equation.
  * Male:   10 × weight(kg) + 6.25 × height(cm) − 5 × age + 5
  * Female: 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161
+ * Unset:  10 × weight(kg) + 6.25 × height(cm) − 5 × age − 78
  */
 export function calculateTDEE(
   weightKg: number,
@@ -193,7 +198,8 @@ export function calculateTDEE(
   age: number,
   activityLevel: ActivityLevel,
   goal: FitnessGoal,
-  sex: "male" | "female" = "male",
+  /** Absent for someone who did not say: the midpoint, never male. */
+  sex?: Sex | null,
   /**
    * Tier 2 — explicit per-day calorie offset from a user-chosen goal-weight
    * rate. When provided, it overrides the per-goal default band
@@ -202,7 +208,7 @@ export function calculateTDEE(
    */
   explicitOffset?: number
 ): TDEEResult {
-  const sexOffset = sex === "female" ? -161 : 5;
+  const sexOffset = figureForSex(BMR_SEX_CONSTANT, sex);
   const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + sexOffset);
   const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 

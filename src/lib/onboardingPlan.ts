@@ -12,6 +12,7 @@ import { resolveOnboardingRunMode } from "./onboardingRunMode";
 import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
 import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
 import { liftUnitForBodyWeight } from "./liftLoad";
+import { sexFromAnswer } from "./sex";
 
 /**
  * The review and the commit consume this SAME result. Every new plan comes
@@ -79,7 +80,8 @@ export function buildOnboardingPlan(
     nutritionPhase,
     experience: draft.experience,
     bodyweightKg: draft.weightKg,
-    sex: draft.gender === "female" ? "female" : "male",
+    // Prefer not to say gives no sex: the first weights take the midpoint.
+    sex: sexFromAnswer(draft.gender),
     liftDays: draft.daysPerWeek,
     sessionMinutes: draft.sessionMinutes,
     barbellAtHome: draft.barbellAtHome,
