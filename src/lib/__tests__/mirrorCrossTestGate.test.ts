@@ -351,6 +351,13 @@ const PINNED: Record<string, string> = {
   // whether a photo or typed meal is sent to Gemini, the server whether
   // analyzeFood / analyzeFoodText answer. One stored answer, read alike.
   "functions/lib/aiConsent.js": "src/lib/__tests__/aiConsent.cross.test.ts",
+  // The agreement to store health details (Priv1 call 1). BOTH copies
+  // run: the client decides whether the app opens on the agreement and
+  // what setup sends, the server whether completeOnboarding saves the
+  // plan. One stored answer, read alike, and the rules' version beside it.
+  "functions/lib/healthConsent.js":
+    "src/lib/__tests__/healthConsent.cross.test.ts",
+
   // The email consent record (App1 Q55). Both copies run: the app's draws
   // the switches and names the words a yes is given to; the server's writes
   // the record and decides, before every send, whether an email may go. A

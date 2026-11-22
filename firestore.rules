@@ -607,6 +607,32 @@ service cloud.firestore {
         || birthYearValid();
     }
 
+    /* healthDataConsent (Priv1 call 1): the person's agreement to Tropos
+       storing their health details, and when they gave it. An account set
+       up before setup asked is asked once on its next open, and agreeing
+       there writes exactly { at: request.time, version: 1 }: the server's
+       time, the wording asked now (src/lib/healthConsent.ts, pinned to the
+       version here by healthConsent.cross.test.ts). Setup's agreement is
+       written by completeOnboarding with the Admin SDK. A create never
+       carries it, and an update cannot remove it, backdate it or store
+       anything else beside it. */
+    function healthDataConsentValid() {
+      let consent = request.resource.data.healthDataConsent;
+      return consent is map
+        && consent.keys().hasOnly(['at', 'version'])
+        && consent.keys().hasAll(['at', 'version'])
+        && consent.at == request.time
+        && consent.version is int
+        && consent.version == 1;
+    }
+
+    function healthDataConsentUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['healthDataConsent'])
+        || ('healthDataConsent' in request.resource.data
+          && healthDataConsentValid());
+    }
+
     /* racePlanFreeWeekUsed (whole-app grill Q85): the account has had the
        free week of a half or full marathon plan, so a later one is Pro from
        its first week. The app writes `true` once (useRacePlanLocked); null
@@ -777,6 +803,11 @@ service cloud.firestore {
         // App1 (Q57): the year of birth the age is worked out from.
         // Value-gated by birthYearValid() above; also in profileSanitizer.js.
         'birthYear',
+        // Priv1 call 1: the agreement to store health details. Value-gated
+        // by healthDataConsentUnchangedOrValid() above, and never on a
+        // create; not in profileSanitizer.js (completeOnboarding writes
+        // setup's from its own argument).
+        'healthDataConsent',
         'targetWaterGlasses', 'customCalorieTarget',
         // Goal-weight editor (#1140) — persisted by the CLIENT (Settings →
         // Goal Weight) + allowed in profileSanitizer.js, but were never added
@@ -857,6 +888,7 @@ service cloud.firestore {
         && raceGoalValid()
         && starterGoalValid()
         && birthYearValid()
+        && !('healthDataConsent' in request.resource.data)
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid()
@@ -869,6 +901,7 @@ service cloud.firestore {
         && raceGoalUnchangedOrValid()
         && starterGoalUnchangedOrValid()
         && birthYearUnchangedOrValid()
+        && healthDataConsentUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid()

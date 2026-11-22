@@ -750,6 +750,7 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const healthConsent = require("./lib/healthConsent");
 
 /* A display name that trips the word filter is refused, as
    failed-precondition so the client can show the sentence
@@ -805,6 +806,7 @@ exports.completeOnboarding = functions
         weekSchedule: rawWeekSchedule,
         activationJourneyVersion,
         onboardingPlatform,
+        healthDataConsent: setupHealthConsent,
       } = data;
       // App1 Q55: setup's email opt-in, outside profileData so the profile
       // sanitiser never carries consent. Ticked, it is a yes to both emails
@@ -855,6 +857,15 @@ exports.completeOnboarding = functions
           "programState is required."
         );
       }
+      // Priv1 call 1: setup asks for the agreement to store health details
+      // before its first body question, and the plan is not saved without
+      // it. The app cannot send a plan without it; a build from before the
+      // question is told to update (lib/healthConsent.js). Checked once the
+      // request's shape is, and before anything is read or written.
+      healthConsent.assertSetupHealthConsent(
+        setupHealthConsent,
+        functions.https.HttpsError
+      );
 
       // Allow-list + per-field sanitise. Unknown fields, off-allowlist
       // photoURL schemes, out-of-range numbers etc. are dropped to
@@ -1015,6 +1026,11 @@ exports.completeOnboarding = functions
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
         const nextProfileData = { ...profileData };
+        // The agreement given in this setup, dated by the server. A retry
+        // records the latest agreement: the person agreed again to finish.
+        nextProfileData.healthDataConsent = healthConsent.healthConsentRecord(
+          admin.firestore.FieldValue.serverTimestamp()
+        );
 
         // The timestamp and journey describe the first successful setup
         // commit. A retry, even from a newer client, must not move the

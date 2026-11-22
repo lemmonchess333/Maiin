@@ -139,3 +139,65 @@ describe("SettingsAccount composition", () => {
     expect(screen.getAllByRole("button", { name: "Sign out" })).toHaveLength(1);
   });
 });
+
+/* Priv1 call 1: the health-details agreement's Delete my account, and
+   Social & privacy's line about it, open this page at Delete account; an
+   account at the agreement gets the whole page (its exports and its plan,
+   before it goes) with a way back to the agreement. */
+describe("SettingsAccount from the health-details agreement", () => {
+  it("lands on Delete account when linked to it", () => {
+    const scrolled = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrolled;
+    try {
+      render(
+        <MemoryRouter initialEntries={["/settings/account#delete-account"]}>
+          <SettingsAccount />
+        </MemoryRouter>
+      );
+      const target = document.getElementById("delete-account");
+      expect(target).toContainElement(
+        screen.getByRole("button", { name: "Delete account" })
+      );
+      expect(scrolled).toHaveBeenCalledTimes(1);
+      expect(scrolled.mock.contexts[0]).toBe(target);
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("does not move without the link", () => {
+    const scrolled = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrolled;
+    try {
+      renderPage();
+      // Anchor: the row it would move to is on the page.
+      expect(
+        screen.getByRole("button", { name: "Delete account" })
+      ).toBeInTheDocument();
+      expect(scrolled).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("goes back to the agreement, with the whole page", () => {
+    render(
+      <MemoryRouter>
+        <SettingsAccount back={{ to: "/", label: "Health details" }} />
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByRole("button", { name: "Back to health details" })
+    ).toBeInTheDocument();
+    // The whole page: its first export and its last row, not a count of
+    // exports that grows with each new one.
+    expect(
+      screen.getByRole("button", { name: "Export workouts" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete account" })
+    ).toBeInTheDocument();
+  });
+});

@@ -630,6 +630,17 @@ export interface UserProfileOnboarding {
    * firestore.rules allowedUserFields() + profileSanitizer.js + registry.
    */
   trainingWhy?: string;
+  /**
+   * Priv1 call 1: the person's agreement to Tropos storing their health
+   * details, and when they gave it (`src/lib/healthConsent.ts`). Written by
+   * `completeOnboarding` at the end of setup, or by the gate an account set
+   * up before the question meets on its next open. `at` is the server's
+   * time, held as null on this device until a write made offline lands.
+   */
+  healthDataConsent?: {
+    at: { toDate(): Date } | null;
+    version: number;
+  };
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */

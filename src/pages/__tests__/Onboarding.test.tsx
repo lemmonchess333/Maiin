@@ -20,8 +20,16 @@ import Onboarding from "../Onboarding";
 import {
   saveOnboardingDraft,
   loadOnboardingDraft,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
   type OnboardingDraft,
 } from "@/lib/onboardingDraft";
+import {
+  DELETE_ACCOUNT_ANCHOR,
+  HEALTH_CONSENT_COPY,
+  HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_DATA_CONSENT_VERSION,
+} from "@/lib/healthConsent";
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
@@ -39,14 +47,16 @@ import {
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
-const { complete, refresh } = vi.hoisted(() => ({
+const { complete, refresh, signOut } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
+  signOut: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "setup-test", email: "test@example.com" },
     refreshProfile: refresh,
+    signOut,
   }),
 }));
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -85,6 +95,8 @@ const draft: OnboardingDraft = {
   goalConfirmed: true,
   runConfirmed: true,
   displayName: "Test athlete",
+  // Agreed on its step (Priv1 call 1).
+  healthConsentVersion: 1,
 };
 function LocationProbe() {
   const location = useLocation();
@@ -92,6 +104,7 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
+      {location.hash}
     </output>
   );
 }
@@ -146,6 +159,8 @@ describe("onboarding chapters and commit", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // The agreement to store health details comes before the limitations.
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "None" }));
     cleanup();
@@ -439,6 +454,11 @@ describe("activity-relevant setup", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // A runner is asked for the agreement before About you's numbers.
+    expect(
+      screen.getByRole("heading", { name: SETUP.healthDetails })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     expect(
       screen.getByRole("heading", { name: "Start with your numbers" })
     ).toBeInTheDocument();
@@ -1669,6 +1689,10 @@ describe("setup, by the names the journeys use", () => {
       expect(button(level)).toBeInTheDocument();
     fireEvent.click(button("Some experience"));
     next();
+    expect(
+      screen.getByRole("heading", { name: SETUP.healthDetails })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
     fireEvent.click(screen.getByRole("button", { name: SETUP.noInjuries }));
     next();
 
@@ -2169,4 +2193,239 @@ describe("body answers through interruptions", () => {
       expect(complete).not.toHaveBeenCalled();
     }
   );
+});
+
+/* Priv1 call 1 (owner, 2026-11-21): setup asks for the agreement to store
+   health details on its own screen with its own button, before the first
+   body question, and the plan is saved with it. Not now says why the plan
+   needs these details and offers every way on. Analytics hears that the
+   step was reached, and nothing of the answer. */
+describe("the agreement to store health details", () => {
+  const healthStep = () =>
+    screen.getByRole("heading", { name: SETUP.healthDetails });
+  const toAgreement = () => {
+    // A lifter: aim, week, kit, then the agreement.
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Get stronger/ }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("button", { name: /Full gym/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+  };
+
+  it("asks before the limitations, in its own words, with its own button", () => {
+    toAgreement();
+    expect(healthStep()).toHaveFocus();
+    // About you opens on it: the agreement, the limitations, the numbers.
+    expect(screen.getByText("About you ·", { exact: false })).toBeVisible();
+    expect(screen.getByText("1 of 3 in this chapter")).toBeInTheDocument();
+    for (const line of [
+      HEALTH_CONSENT_COPY.stored,
+      HEALTH_CONSENT_COPY.use,
+      HEALTH_CONSENT_COPY.withdraw,
+    ])
+      expect(screen.getByText(line)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: SETUP.continue })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Anything to work around?" })
+    ).not.toBeInTheDocument();
+    // The policy can be read before agreeing, from the step itself.
+    expect(
+      screen.getByRole("link", { name: HEALTH_CONSENT_COPY.policy })
+    ).toHaveAttribute("href", "/privacy");
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    expect(
+      screen.getByRole("heading", { name: "Anything to work around?" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 of 3 in this chapter")).toBeInTheDocument();
+    expect(
+      loadOnboardingDraft("setup-test", ONBOARDING_MAX_STEP)
+    ).toMatchObject({
+      step: 4,
+      healthConsentVersion: HEALTH_DATA_CONSENT_VERSION,
+    });
+  });
+
+  it("tells analytics the step was reached, and nothing of the answer", () => {
+    toAgreement();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    const events = vi
+      .mocked(track)
+      .mock.calls.filter(
+        ([, meta]) => (meta as { step?: string } | undefined)?.step === "health"
+      );
+    // Anchored: the step's view was sent, so an empty list is not why
+    // nothing else was.
+    expect(events.map(([name]) => name)).toEqual(["onboarding_step_viewed"]);
+  });
+
+  it("sends the agreement with the plan", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].healthDataConsent).toEqual({
+      version: HEALTH_DATA_CONSENT_VERSION,
+    });
+    // The agreement is the account's, written by the server, never sent
+    // as a profile field.
+    expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
+      "healthDataConsent"
+    );
+  });
+
+  it("says why on Not now, and offers going back, deleting the account and signing out", async () => {
+    toAgreement();
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    const declined = screen.getByRole("heading", {
+      name: HEALTH_CONSENT_DECLINED_COPY.title,
+    });
+    expect(declined).toHaveFocus();
+    expect(
+      screen.getByText(HEALTH_CONSENT_DECLINED_COPY.body)
+    ).toBeInTheDocument();
+    // Its three ways on are the screen's only buttons: no Back, no I agree.
+    expect(
+      screen.queryByRole("button", { name: SETUP.agreeHealth })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Back" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_DECLINED_COPY.signOut })
+    );
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_DECLINED_COPY.back })
+    );
+    expect(healthStep()).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: SETUP.agreeHealth })
+    ).toBeEnabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: HEALTH_CONSENT_DECLINED_COPY.deleteAccount,
+      })
+    );
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      `/settings/account#${DELETE_ACCOUNT_ANCHOR}`
+    );
+    // None of it goes to analytics.
+    expect(
+      vi
+        .mocked(track)
+        .mock.calls.filter(([name]) => name === "onboarding_step_completed")
+        .map(([, meta]) => (meta as { step?: string }).step)
+    ).not.toContain("health");
+  });
+
+  /* Step numbers are ids, not places: the agreement (8) comes before About
+     you (5). A setup left on the agreement, with no year of birth yet (as
+     every setup there has), opened on About you's numbers, past the
+     question that has to come first. */
+  it("reopens a setup left on the agreement on the agreement, before any body question", () => {
+    const {
+      healthConsentVersion: _agreed,
+      bodyAnswered: _body,
+      ...before
+    } = {
+      ...draft,
+      bodyAnswered: undefined,
+    };
+    void _agreed;
+    void _body;
+    saveOnboardingDraft("setup-test", {
+      ...before,
+      step: HEALTH_CONSENT_STEP,
+      birthYearText: "",
+      returnToReview: false,
+      trainingActivity: "lifting",
+    });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: SETUP.agreeHealth })
+    ).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    // The numbers are still the person's to give: none is taken as given.
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: SETUP.weight })).toHaveValue("");
+    expect(screen.getByRole("button", { name: SETUP.continue })).toBeDisabled();
+  });
+
+  it("takes back a yes given before, when Not now is chosen", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      step: HEALTH_CONSENT_STEP,
+      returnToReview: false,
+    });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: HEALTH_CONSENT_COPY.decline })
+    );
+    expect(
+      loadOnboardingDraft("setup-test", ONBOARDING_MAX_STEP)
+        ?.healthConsentVersion
+    ).toBeUndefined();
+  });
+
+  it("opens a setup saved past the agreement without it on the agreement, then goes on with its answers", async () => {
+    const { healthConsentVersion: _agreed, ...before } = draft;
+    void _agreed;
+    saveOnboardingDraft("setup-test", { ...before, step: 7 });
+    open();
+    expect(healthStep()).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    // Not straight back to the review: the steps after the agreement come
+    // next, their answers kept.
+    expect(screen.getByRole("button", { name: "None" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].healthDataConsent).toEqual({
+      version: HEALTH_DATA_CONSENT_VERSION,
+    });
+  });
+
+  it("shows the server's sentence when it refuses a setup without the agreement", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockRejectedValueOnce(
+      Object.assign(
+        new Error(
+          "failed-precondition: Agree to Tropos storing your health details to finish setting up."
+        ),
+        { code: "functions/failed-precondition" }
+      )
+    );
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    expect(
+      await screen.findByText(
+        "Agree to Tropos storing your health details to finish setting up."
+      )
+    ).toBeInTheDocument();
+  });
 });

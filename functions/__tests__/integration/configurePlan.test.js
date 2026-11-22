@@ -399,6 +399,7 @@ suite("configurePlan — emulator integration", () => {
           runPlan: { mode: "race_prep", raceGoal: own },
         }),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -526,6 +527,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: ps,
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )
@@ -551,6 +553,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -609,6 +612,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -635,6 +639,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       );
@@ -693,6 +698,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -736,6 +742,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -765,6 +772,7 @@ suite("completeOnboarding — emulator integration", () => {
       },
       programState: validProgramState(),
       weekSchedule: validWeekSchedule(),
+      healthDataConsent: { version: 1 },
     });
     const actor = { auth: { uid: TEST_UID } };
 
@@ -823,6 +831,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )
@@ -847,6 +856,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )

@@ -10,6 +10,41 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The health-details agreement, in setup and once before the app (Priv1 call 1, 2026-11-21)
+
+Setup asks for the agreement to store health details on its own screen
+before the first body question, and an account set up before the question
+meets the same screen once, before the app, on its next open
+(`Onboarding.tsx` step 8, `HealthConsentRoutes`, `HealthConsentGate`).
+The unit tests and the capture rig drive the web build; only a phone shows
+the gate on an account that really was set up before, the keyboard-free
+layout at the phone's own text size, and the agreement landing with the
+server's date.
+
+- [ ] **An existing account sees the gate once.** Install a TestFlight
+      build with this change over one without it, on an account set up
+      before it. Passing: the first open shows "Your health details" before
+      Home, with I agree and Not now and no scrolling at the default text
+      size; I agree opens Home; closing and reopening the app (and opening
+      it on a second device signed in to the same account) goes straight to
+      Home; Settings › Social & privacy shows "Health details" with
+      "Agreed on" today's date, and its row opens Account at Delete
+      account. In the Firebase console the account's `healthDataConsent`
+      is `{ at: <today>, version: 1 }`.
+- [ ] **A new account sees the step.** Make a new account on the same
+      build. Passing: setup shows "Your health details" after the kit (a
+      lifter) or after the run (a runner), before any body question; Not
+      now says why and offers Go back, Delete my account and Sign out, and
+      Go back returns to I agree; Privacy Policy opens the policy and its
+      Back returns to the question; finishing setup opens Home with no gate,
+      and the account carries `healthDataConsent` dated when Start my plan
+      was tapped.
+- [ ] **An older build is told to update.** On a TestFlight build from
+      before this change, start a new account's setup after the functions
+      deploy. Passing: Start my plan is refused with "Agree to Tropos
+      storing your health details to finish setting up. If setup didn’t
+      ask you, update Tropos and try again." and nothing is saved.
+
 ## Share usage analytics turns Google Analytics off (Priv1 call 2, 2026-11-21)
 
 Settings → Social & privacy → Share usage analytics, on by default, is the

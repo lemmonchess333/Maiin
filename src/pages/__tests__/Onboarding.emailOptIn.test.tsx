@@ -75,6 +75,8 @@ const draft: OnboardingDraft = {
   runConfirmed: true,
   trainingActivity: "lifting",
   displayName: "Test athlete",
+  // Agreed to storing health details (Priv1), or setup reopens on that.
+  healthConsentVersion: 1,
 };
 
 const LABEL = "Email me my weekly review, and a note if I stop";
