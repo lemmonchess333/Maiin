@@ -41,6 +41,14 @@ import { MAX_RACE_CLIMB_M } from "@/features/program/runPlanTiming";
 import { logger } from "@/lib/logger";
 import { readString, remove, writeJson } from "@/lib/localStore";
 import {
+  DRAFT_VERSION,
+  SIGNED_OUT_DRAFT_TTL_MS,
+  SIGNED_OUT_OWNER,
+  forgetSignedOutDraft,
+  readSignedOutDraftRecord,
+  writeSignedOutDraftRecord,
+} from "@/lib/signedOutDraft";
+import {
   VALID_EQUIPMENT,
   VALID_RACE_DISTANCE,
   type Equipment,
@@ -51,8 +59,9 @@ import {
 // draft missing it, so the bump doesn't change the OUTCOME for in-flight
 // drafts — it makes the discard explicit and self-documenting rather than
 // looking like a validation failure, which is what this module's contract
-// says a schema change should do.
-export const DRAFT_VERSION = 2;
+// says a schema change should do. Kept in `signedOutDraft.ts`, which the
+// e2e rig can load.
+export { DRAFT_VERSION };
 
 /** Stable stored step IDs, by the draft's step number: they survive the
  *  chapter redesign (the old preview, 6, merges into the review, 7), and
@@ -81,13 +90,10 @@ export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
 
 /* A6: setup is answered before there is an account, and its answers wait
-   on the device under this one key until Save your plan makes one. They
-   then move to that account's own key (`adoptSignedOutDraft`). Nothing of
-   them reaches the server before the account exists. */
-const SIGNED_OUT_DRAFT_KEY = "tropos.onboarding.draft.signedOut";
-/** The owner a signed-out draft's envelope echoes: no Firebase uid can be
- *  this (they are letters and digits), so the cross-check still holds. */
-const SIGNED_OUT_OWNER = "(signed out)";
+   on the device under one key (`signedOutDraft.ts`) until Save your plan
+   makes one. They then move to that account's own key
+   (`adoptSignedOutDraft`). Nothing of them reaches the server before the
+   account exists. */
 
 /* Runtime vocabularies for the unions Onboarding.tsx declares locally.
  * TypeScript keeps these honest at the wire-up: Onboarding assigns
@@ -361,7 +367,8 @@ function envelopeOf(owner: string, draft: OnboardingDraft): DraftEnvelope {
 function draftIn(
   raw: string,
   owner: string,
-  maxStep: number
+  maxStep: number,
+  ttlMs: number = DRAFT_TTL_MS
 ): OnboardingDraft | null {
   try {
     const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
@@ -370,7 +377,7 @@ function draftIn(
       envelope.v !== DRAFT_VERSION ||
       envelope.uid !== owner ||
       typeof envelope.savedAt !== "number" ||
-      Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
+      Date.now() - envelope.savedAt > ttlMs ||
       !isValidDraft(envelope.draft, maxStep)
     )
       return null;
@@ -414,7 +421,7 @@ export function clearOnboardingDraft(uid: string): void {
 
 /** Persist setup's answers given signed out (A6). Best-effort. */
 export function saveSignedOutDraft(draft: OnboardingDraft): void {
-  if (!writeJson(SIGNED_OUT_DRAFT_KEY, envelopeOf(SIGNED_OUT_OWNER, draft))) {
+  if (!writeSignedOutDraftRecord(envelopeOf(SIGNED_OUT_OWNER, draft))) {
     logger.warn("[OnboardingDraft] signed-out save failed");
   }
 }
@@ -422,17 +429,22 @@ export function saveSignedOutDraft(draft: OnboardingDraft): void {
 /** Setup's answers given signed out, held to the same checks as an
  *  account's draft; one that fails them is removed. */
 export function loadSignedOutDraft(maxStep: number): OnboardingDraft | null {
-  const raw = readString(SIGNED_OUT_DRAFT_KEY);
+  const raw = readSignedOutDraftRecord();
   if (!raw) return null;
-  const draft = draftIn(raw, SIGNED_OUT_OWNER, maxStep);
-  if (!draft) remove(SIGNED_OUT_DRAFT_KEY);
+  const draft = draftIn(
+    raw,
+    SIGNED_OUT_OWNER,
+    maxStep,
+    SIGNED_OUT_DRAFT_TTL_MS
+  );
+  if (!draft) forgetSignedOutDraft();
   return draft;
 }
 
 /** Forget setup's signed-out answers: they were moved to an account, the
  *  account already had a plan, or the person left setup at the agreement. */
 export function clearSignedOutDraft(): void {
-  if (!remove(SIGNED_OUT_DRAFT_KEY))
+  if (!forgetSignedOutDraft())
     logger.warn("[OnboardingDraft] signed-out clear failed");
 }
 

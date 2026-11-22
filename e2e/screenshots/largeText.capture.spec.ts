@@ -560,7 +560,7 @@ test.describe("large text", () => {
         .getByRole("textbox", { name: SETUP.name, exact: true })
         .fill("Large text");
       await page
-        .getByRole("button", { name: SETUP.start, exact: true })
+        .getByRole("button", { name: SETUP.saveNext, exact: true })
         .click();
       await page.waitForTimeout(500);
       await measure(page, "save-your-plan", width, found);

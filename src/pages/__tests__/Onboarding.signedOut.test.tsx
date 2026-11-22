@@ -33,6 +33,7 @@ import {
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
+  __resetSetupVisitForTests,
   readSetupSave,
   startSetupSave,
 } from "@/lib/setupSave";
@@ -129,12 +130,14 @@ const open = (path = "/setup") =>
 
 const route = () => screen.getByLabelText("Current route");
 
-/** Signed out at the review: Start my plan opens Save your plan, whose
- *  ways in are their own chunk. */
+/** Signed out at the review, picked up cold: the agreement is asked again
+ *  and given, the review comes back, and its Continue opens Save your
+ *  plan, whose ways in are their own chunk. */
 async function openSaveYourPlan() {
   saveSignedOutDraft(review);
   open();
-  fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+  fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+  fireEvent.click(screen.getByRole("button", { name: SETUP.saveNext }));
   expect(
     screen.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
   ).toBeInTheDocument();
@@ -146,6 +149,7 @@ beforeAll(async () => {
 });
 beforeEach(() => {
   localStorage.clear();
+  __resetSetupVisitForTests();
   resetFirestore();
   vi.clearAllMocks();
   h.user = null;
@@ -213,15 +217,53 @@ describe("setup before there is an account", () => {
   });
 });
 
+/* The agreement to store health details is a person's,
+   and a phone's signed-out answers can be someone else's by the time setup
+   is opened again. */
+describe("the agreement, on answers picked up cold", () => {
+  it("is asked again, and I agree returns to the review", () => {
+    saveSignedOutDraft(review);
+    open();
+    expect(
+      screen.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+    ).toBeInTheDocument();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)?.healthConsentVersion).toBe(
+      undefined
+    );
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    expect(
+      screen.getByRole("button", { name: SETUP.saveNext })
+    ).toBeInTheDocument();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)?.healthConsentVersion).toBe(
+      1
+    );
+  });
+
+  it("is not asked twice in one open of the app", () => {
+    saveSignedOutDraft(review);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    // Back to the welcome and in again, the app still open.
+    cleanup();
+    open();
+    expect(
+      screen.getByRole("button", { name: SETUP.saveNext })
+    ).toBeInTheDocument();
+  });
+});
+
 describe("Save your plan", () => {
   it("opens from the review in its place, and Back returns to it", async () => {
     await openSaveYourPlan();
     expect(screen.getByText(SAVE_PLAN_COPY.lead)).toBeInTheDocument();
     expect(h.complete).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    // Signed out, the review's button is Continue: the plan comes after
+    // the account.
     expect(
-      screen.getByRole("button", { name: SETUP.start })
+      screen.getByRole("button", { name: SETUP.saveNext })
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: SETUP.start })).toBeNull();
   });
 
   it.each([
@@ -344,6 +386,24 @@ describe("once the account exists", () => {
     signedInFromSave("google");
     await waitFor(() => expect(h.complete).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(route()).toHaveTextContent(/^\/$/));
+  });
+
+  it("Try again after a lost answer builds the plan again, never reads as kept", async () => {
+    // The first call's answer is lost; the server had saved the plan.
+    h.complete.mockRejectedValueOnce({ code: "functions/permission-denied" });
+    signedInFromSave("google");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Try again" })
+      ).toBeInTheDocument()
+    );
+    seedFirestore({ "users/new-google": { onboardingComplete: true } });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(h.complete).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(route()).toHaveTextContent(new RegExp(`^${TRIAL_OFFER_PATH}$`))
+    );
+    expect(toast.success).not.toHaveBeenCalledWith(KEPT_PLAN_NOTICE);
   });
 
   it("a plan that could not be saved stays on the review with Try again", async () => {

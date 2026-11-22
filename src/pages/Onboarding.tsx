@@ -163,6 +163,10 @@ import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
+  noteSetupSent,
+  noteSignedOutAgreement,
+  setupSentThisVisitFor,
+  signedOutAgreementThisVisit,
   cancelSetupSave,
   finishSetupSave,
   keepExistingPlan,
@@ -263,13 +267,26 @@ export default function Onboarding() {
      came from Save your plan (`setupSave`) takes the answers given signed
      out and builds the plan at once. Any other account keeps its own. */
   const [setupSave] = useState(() => (user ? readSetupSave() : null));
-  const [draft] = useState(() =>
-    user
-      ? setupSave
-        ? adoptSignedOutDraft(user.uid, ONBOARDING_MAX_STEP)
-        : loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP)
-      : loadSignedOutDraft(ONBOARDING_MAX_STEP)
-  );
+  /* Signed out, the agreement to store health details is the person's,
+     and the phone may be someone else's by the time setup is opened again:
+     answers picked up cold, not in this open of the app, ask for it again
+     (A6). Adopted under Save your plan's mark, they keep it. */
+  const [{ draft, agreementAskedAgain }] = useState(() => {
+    if (user)
+      return {
+        draft: setupSave
+          ? adoptSignedOutDraft(user.uid, ONBOARDING_MAX_STEP)
+          : loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP),
+        agreementAskedAgain: false,
+      };
+    const kept = loadSignedOutDraft(ONBOARDING_MAX_STEP);
+    if (!kept?.healthConsentVersion || signedOutAgreementThisVisit())
+      return { draft: kept, agreementAskedAgain: false };
+    return {
+      draft: { ...kept, healthConsentVersion: undefined },
+      agreementAskedAgain: true,
+    };
+  });
   /* Signed out, the review's button opens Save your plan in its place. */
   const [saveView, setSaveView] = useState(false);
   /* Not now at the agreement, then Leave setup: the answers are forgotten,
@@ -329,8 +346,11 @@ export default function Onboarding() {
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
+  /* Asked again at the review, I agree goes back to the review. */
   const [returnToReview, setReturnToReview] = useState(
-    !askConsentFirst && (askBirthYearAgain || (draft?.returnToReview ?? false))
+    askConsentFirst
+      ? agreementAskedAgain && draft?.step === 7
+      : askBirthYearAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -1074,6 +1094,7 @@ export default function Onboarding() {
       // I agree. Nothing about the answer goes to analytics (Priv1 call
       // 1): the step's view is the one event it has.
       setHealthConsentVersion(HEALTH_DATA_CONSENT_VERSION);
+      if (!user) noteSignedOutAgreement();
     } else {
       trackLifecycle("onboarding_step_completed", {
         step: STEP_IDS[step],
@@ -1102,8 +1123,13 @@ export default function Onboarding() {
          the account had one, made on another phone or kept in this one's
          cache, so the account is read from the server first. One that has
          a plan keeps it, and the answers here are dropped. */
-      const stored = await getDocFromServer(doc(db, "users", user.uid));
-      if (stored.data()?.onboardingComplete === true) {
+      /* Once this open of the app has asked for the plan, a plan on the
+         account is that one, its answer lost on the way back: Try again
+         builds it again, as before, and nothing reads as kept. */
+      const stored = setupSentThisVisitFor(user.uid)
+        ? null
+        : await getDocFromServer(doc(db, "users", user.uid));
+      if (stored?.data()?.onboardingComplete === true) {
         onboardingCompletedRef.current = true;
         clearOnboardingDraft(user.uid);
         keepExistingPlan();
@@ -1274,6 +1300,7 @@ export default function Onboarding() {
               }
             : {}),
         });
+      noteSetupSent(user.uid);
       try {
         await callCF();
       } catch (err) {
@@ -2633,8 +2660,9 @@ export default function Onboarding() {
           <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
             {step === 7 && (
               <p className="text-sm text-muted-foreground">
-                Today shows your plan and what to do next. Start when you’re
-                ready.
+                {user
+                  ? "Today shows your plan and what to do next. Start when you’re ready."
+                  : "Next, save your plan to an account."}
               </p>
             )}
             <div className="flex gap-3 @max-[15em]:flex-col-reverse">
@@ -2664,7 +2692,7 @@ export default function Onboarding() {
                 disabled={buttonDisabled}
                 onClick={advance}
                 rightIcon={
-                  step === 7 ? (
+                  step === 7 && user ? (
                     <Check className="size-4" />
                   ) : (
                     <ChevronRight className="size-4" />
@@ -2676,7 +2704,11 @@ export default function Onboarding() {
                   : step === 7
                     ? saveError
                       ? "Try again"
-                      : "Start my plan"
+                      : user
+                        ? "Start my plan"
+                        : // Signed out, Save your plan comes next, not
+                          // the plan itself.
+                          "Continue"
                     : step === HEALTH_CONSENT_STEP
                       ? HEALTH_CONSENT_COPY.agree
                       : returnToReview

@@ -229,7 +229,9 @@ test.describe("onboarding screenshots", () => {
     await page
       .getByRole("textbox", { name: SETUP.name, exact: true })
       .fill("Capture tester");
-    await page.getByRole("button", { name: SETUP.start, exact: true }).click();
+    await page
+      .getByRole("button", { name: SETUP.saveNext, exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
     ).toBeVisible();

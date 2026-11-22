@@ -39,7 +39,12 @@ import {
 import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { track } from "@/lib/paywallAnalytics";
 import { trackTrialOfferViewed } from "@/lib/firstRunEvents";
-import { meetsTrialOffer, TRIAL_OFFER_COPY } from "@/lib/trialOffer";
+import {
+  forgetTrialOfferWebCheckout,
+  meetsTrialOffer,
+  noteTrialOfferWebCheckout,
+  TRIAL_OFFER_COPY,
+} from "@/lib/trialOffer";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
 import PlanPicker from "@/components/paywall/PlanPicker";
@@ -91,14 +96,17 @@ export default function TrialOffer() {
 
   const startTrial = async () => {
     track("paywall_cta_clicked", { source: SOURCE, selectedPlan, platform });
+    // The website's checkout returns to /upgrade, which sends it on Home.
+    if (platform === "web") noteTrialOfferWebCheckout(uid);
     const outcome = await startCheckout(selectedPlan, {
       source: SOURCE,
       entryPoint: "upgrade",
       withTrial,
     });
+    if (outcome?.kind !== "redirected") forgetTrialOfferWebCheckout(uid);
     // Nothing began (one already running): stay.
     if (!outcome) return;
-    // The web checkout has the window; it returns to /upgrade.
+    // The web checkout has the window; its return goes Home (Upgrade).
     if (outcome.kind === "redirected") return;
     if (outcome.kind === "pending")
       toast.success(PENDING_MESSAGE[outcome.pending]);
@@ -137,7 +145,8 @@ export default function TrialOffer() {
             id="trial-offer-heading"
             className="text-h1 leading-tight tracking-tight font-extrabold text-balance"
           >
-            {TRIAL_OFFER_COPY.title(withTrial)}
+            {/* Where nothing is on sale, no trial is promised. */}
+            {TRIAL_OFFER_COPY.title(onSale && withTrial)}
           </h1>
           <p className="text-base text-muted-foreground">
             {TRIAL_OFFER_COPY.lead}

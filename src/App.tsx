@@ -45,6 +45,12 @@ import { captureError } from "@/lib/errorReporting";
    so sub-component lazy loads (Soc5 item 10) can share it. */
 import { lazyRetry } from "@/lib/lazyRetry";
 import MinVersionGate from "@/components/MinVersionGate";
+import {
+  KEPT_PLAN_NOTICE,
+  accountAppeared,
+  keepExistingPlan,
+} from "@/lib/setupSave";
+import { toast } from "@/lib/toast";
 
 /* Two root-mounted components that render null until something happens.
    A static import is unconditional, so theirs were the entire reason a
@@ -477,21 +483,19 @@ function AppRoutes() {
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
+  /* A6: an account on the phone that did not come from Save your plan
+     takes none of the answers given signed out, which are another
+     person's, their agreement to store health details among them. */
+  useEffect(() => {
+    if (uid) accountAppeared();
+  }, [uid]);
   /* A6: a sign-in from Save your plan that reached an account with a plan.
      The plan stays, the answers given signed out are dropped, and Home
      says so in one line. Read once the profile is here, so an account
      whose profile could not be read keeps both until it can. */
   const hasPlan = !!profile?.onboardingComplete;
   useEffect(() => {
-    if (!uid || !hasPlan) return;
-    void import("@/lib/setupSave")
-      .then(({ keepExistingPlan, KEPT_PLAN_NOTICE }) => {
-        if (keepExistingPlan())
-          void import("@/lib/toast").then(({ toast }) =>
-            toast.success(KEPT_PLAN_NOTICE)
-          );
-      })
-      .catch(() => {});
+    if (uid && hasPlan && keepExistingPlan()) toast.success(KEPT_PLAN_NOTICE);
   }, [uid, hasPlan]);
   /* App1 Q17: the launch numbers the server keeps (the first session, the
      week-4 return, the first trial and payment) are sent once per account

@@ -6,6 +6,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
   SETUP_SAVE_TTL_MS,
+  accountAppeared,
+  signedOut,
   cancelSetupSave,
   finishSetupSave,
   keepExistingPlan,
@@ -99,5 +101,30 @@ describe("an account that already has a plan keeps it", () => {
     saveSignedOutDraft(draft);
     expect(keepExistingPlan()).toBe(false);
     expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)).toEqual(draft);
+  });
+});
+
+/* Answers given signed out reach no account but the one
+   Save your plan made, and nobody after a sign-out. */
+describe("the phone's signed-out answers, when an account appears", () => {
+  it("are dropped for an account signed in any other way", () => {
+    saveSignedOutDraft(draft);
+    accountAppeared();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)).toBeNull();
+  });
+
+  it("wait for the account Save your plan is making", () => {
+    saveSignedOutDraft(draft);
+    startSetupSave({ emailOptIn: false, inviteCode: "" });
+    accountAppeared();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)).toEqual(draft);
+  });
+
+  it("go, with any mark, on sign-out", () => {
+    saveSignedOutDraft(draft);
+    startSetupSave({ emailOptIn: false, inviteCode: "" });
+    signedOut();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)).toBeNull();
+    expect(readSetupSave()).toBeNull();
   });
 });

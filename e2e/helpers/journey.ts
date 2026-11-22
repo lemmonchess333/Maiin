@@ -339,10 +339,10 @@ async function next(page: Page) {
 }
 
 /**
- * Setup's screens, as a person answers them, then Start my plan. Signed out
- * (`signUp`), Save your plan makes the email account and verifies it as a
- * person does; signed in (an account with no plan yet), the plan is built
- * at once. Either way the real `completeOnboarding` builds it, the trial
+ * Setup's screens, as a person answers them, then the review's button.
+ * Signed out (`signUp`) it is Continue, and Save your plan makes the email
+ * account and verifies it as a person does; signed in (an account with no
+ * plan yet) it is Start my plan, and the plan is built at once. Either way the real `completeOnboarding` builds it, the trial
  * offer follows (Biz1 call 3) and Not now leaves the page on Home, with no
  * tour.
  */
@@ -481,9 +481,10 @@ export async function setUpPlan(
   await page
     .getByRole("textbox", { name: SETUP.name, exact: true })
     .fill("Journey tester");
-  await button(page, SETUP.start).click();
   const notNow = button(page, TRIAL_OFFER.notNow);
   const pending = pendingAccounts.get(page);
+  // Signed out, the review's button leads to Save your plan (A6).
+  await button(page, pending ? SETUP.saveNext : SETUP.start).click();
   if (pending) {
     pendingAccounts.delete(page);
     await saveYourPlanWithEmail(page, pending.email, JOURNEY_PASSWORD);

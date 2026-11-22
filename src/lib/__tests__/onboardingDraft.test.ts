@@ -30,6 +30,11 @@ import {
   type OnboardingDraft,
 } from "../onboardingDraft";
 import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
+import {
+  SIGNED_OUT_DRAFT_KEY,
+  SIGNED_OUT_DRAFT_TTL_MS,
+  SIGNED_OUT_OWNER,
+} from "../signedOutDraft";
 
 const MAX_STEP = ONBOARDING_MAX_STEP; // what Onboarding.tsx loads with
 
@@ -506,10 +511,13 @@ describe("setup answered signed out (A6)", () => {
     expect(adoptSignedOutDraft(UID_A, MAX_STEP)?.step).toBe(3);
   });
 
-  it("expires after the same 14 days, and clears", () => {
+  it("lasts two days, not an account's 14, and clears", () => {
     saveSignedOutDraft(makeDraft());
     const raw = JSON.parse(localStorage.getItem(SIGNED_OUT_KEY)!);
-    raw.savedAt = Date.now() - DRAFT_TTL_MS - 1;
+    raw.savedAt = Date.now() - (SIGNED_OUT_DRAFT_TTL_MS - 60_000);
+    localStorage.setItem(SIGNED_OUT_KEY, JSON.stringify(raw));
+    expect(loadSignedOutDraft(MAX_STEP)).not.toBeNull();
+    raw.savedAt = Date.now() - SIGNED_OUT_DRAFT_TTL_MS - 1;
     localStorage.setItem(SIGNED_OUT_KEY, JSON.stringify(raw));
     expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
     saveSignedOutDraft(makeDraft());
@@ -519,16 +527,16 @@ describe("setup answered signed out (A6)", () => {
 });
 
 /* The e2e rig plants a signed-out draft at the review the way the app
-   stores one (`e2e/helpers/auth.ts`, openSaveYourPlan): this holds its key,
-   its owner and its version to what the app reads. */
+   stores one (`e2e/helpers/auth.ts`, openSaveYourPlan), from the constants
+   of `signedOutDraft.ts`: this holds that form to what the app reads. */
 describe("a signed-out draft planted as the e2e rig plants it", () => {
   it("loads", () => {
     const d = makeDraft({ step: 7 });
     localStorage.setItem(
-      "tropos.onboarding.draft.signedOut",
+      SIGNED_OUT_DRAFT_KEY,
       JSON.stringify({
         v: DRAFT_VERSION,
-        uid: "(signed out)",
+        uid: SIGNED_OUT_OWNER,
         savedAt: Date.now(),
         draft: d,
       })

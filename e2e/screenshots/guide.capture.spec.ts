@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { emulatorActive } from "../helpers/emulator";
 import { openSetup, saveYourPlanWithEmail } from "../helpers/auth";
-import { TRIAL_OFFER } from "../../src/test/journeyScreens";
+import { SETUP, TRIAL_OFFER } from "../../src/test/journeyScreens";
 import { settleImages } from "../helpers/settleImages";
 import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
 
@@ -14,7 +14,7 @@ import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
- * capture rig has no Functions emulator, so "Start my plan" is routed into
+ * capture rig has no Functions emulator, so the plan Save your plan builds is routed into
  * the real `completeOnboarding` handler with a verified emulator token,
  * as run-coaching.capture.spec.ts does for its callable: the account and
  * its plan are written by the code that writes them in production.
@@ -131,9 +131,7 @@ test("a new account meets each hint where it is used, and no walk", async ({
   await page
     .getByRole("textbox", { name: "Your public display name" })
     .fill("Guide tester");
-  await page
-    .getByRole("button", { name: "Start my plan", exact: true })
-    .click();
+  await page.getByRole("button", { name: SETUP.saveNext, exact: true }).click();
   await saveYourPlanWithEmail(page, email, "test-password-123");
   // The plan is built, then the trial offer (Biz1 call 3); Not now goes on.
   const notNow = page.getByRole("button", {

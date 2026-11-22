@@ -27,13 +27,17 @@ export const PRO_INCLUDES: readonly string[] = [
 ];
 
 /** What Pro does from the first day, for the trial offer that ends setup
- *  (A6): the lines of `PRO_INCLUDES` that need no history. The calorie
- *  target adapts from 14 days of weigh-ins and meals (Q87), past a 7-day
- *  trial; paces wait on races and sessions, and old charts on old data. */
+ *  (A6): Pro gates that need no history. The calorie target adapts from 14
+ *  days of weigh-ins and meals (Q87), past a 7-day trial; readiness needs
+ *  7 earlier nights in Apple Health (`MIN_BASELINE_DAYS`, `bodySignals.ts`);
+ *  paces wait on races and sessions, and old charts on old data. A typed
+ *  meal is read by Gemini for Pro alone (`Food.tsx`'s `handleNLParse`,
+ *  the server's `analyzeFoodText`, 15 a day), from the first meal; a free
+ *  account's is read on the phone. */
 export const PRO_FROM_DAY_ONE: readonly string[] = [
   PHOTO_LOGGING,
+  `Meals you type, read by AI, up to ${DAILY_AI_LIMITS.pro.text_ai} a day`,
   TRAINING_MACROS,
-  READINESS,
 ];
 
 /** What stays free, said once under the list on the offer. Each is

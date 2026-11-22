@@ -85,7 +85,7 @@ core flow, an App Review rejection, or wrong data.
    and back buttons, titles) should sit fully below the clock and Dynamic
    Island.
 9. **Email sign-up.** Signed out, tap Get started and answer setup; at the
-   review tap Start my plan, and on Save your plan make an account with a
+   review tap Continue, and on Save your plan make an account with a
    fresh email address you can open on the phone (A6: setup comes before the
    account). The plan should build straight away and the trial offer follow;
    tap Not now. The verification email should arrive meanwhile. Tap its link

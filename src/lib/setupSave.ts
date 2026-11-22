@@ -19,7 +19,7 @@
  * answers are dropped and Home says so in one line.
  */
 import { readString, remove, writeJson } from "@/lib/localStore";
-import { clearSignedOutDraft } from "@/lib/onboardingDraft";
+import { forgetSignedOutDraft } from "@/lib/signedOutDraft";
 
 const SETUP_SAVE_KEY = "tropos.setupSave";
 
@@ -105,6 +105,57 @@ export function finishSetupSave(): void {
 export function keepExistingPlan(): boolean {
   if (!readSetupSave()) return false;
   remove(SETUP_SAVE_KEY);
-  clearSignedOutDraft();
+  forgetSignedOutDraft();
   return true;
+}
+
+/**
+ * An account has appeared on the phone (a sign-in, or a session restored
+ * at launch). Unless it came from Save your plan, the answers given signed
+ * out are someone's who never made this account, and their agreement to
+ * store health details is theirs alone: they go.
+ */
+export function accountAppeared(): void {
+  if (!readSetupSave()) forgetSignedOutDraft();
+}
+
+/** The phone was signed out: nothing signed out waits for the next person. */
+export function signedOut(): void {
+  remove(SETUP_SAVE_KEY);
+  forgetSignedOutDraft();
+}
+
+/* What this open of the app has done in setup. Kept in memory, so an app
+   killed and opened again starts with neither. */
+let agreedSignedOutThisVisit = false;
+const setupSentThisVisit = new Set<string>();
+
+/** I agree was tapped in setup before there was an account. */
+export function noteSignedOutAgreement(): void {
+  agreedSignedOutThisVisit = true;
+}
+
+/** Whether the agreement given signed out was given in this open of the
+ *  app. A draft picked up cold asks for it again: by then the phone may be
+ *  someone else's. */
+export function signedOutAgreementThisVisit(): boolean {
+  return agreedSignedOutThisVisit;
+}
+
+/** `completeOnboarding` was asked to build this account's plan. */
+export function noteSetupSent(uid: string): void {
+  setupSentThisVisit.add(uid);
+}
+
+/** Whether this open of the app has already asked to build this account's
+ *  plan: a plan found on the account then is the one just built, its
+ *  answer lost on the way back, not someone's older plan. */
+export function setupSentThisVisitFor(uid: string): boolean {
+  return setupSentThisVisit.has(uid);
+}
+
+/** Tests only (the `__` marks a test hook): a fresh open of the app. */
+export function __resetSetupVisitForTests(): void {
+  agreedSignedOutThisVisit = false;
+  setupSentThisVisit.clear();
 }

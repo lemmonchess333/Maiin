@@ -14,6 +14,9 @@
  *
  * All go through the analytics layer, so a phone that turned Share usage
  * analytics off sends none of them (`analyticsProvider.ts`, Priv1 call 2).
+ * Each one's once-only flag is set before it is sent, whatever the switch
+ * says, so a phone with analytics off the first time never sends it later
+ * either: a later showing is not the first.
  * Which version of a flow was shown comes from `flowVariant.ts`.
  */
 import { readString, writeString } from "@/lib/localStore";

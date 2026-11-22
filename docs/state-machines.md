@@ -141,7 +141,13 @@ code can hold that it should not, and what would make it explicit.
   has been read). What it can hold: the mark with no answers waiting, when
   the draft could not be kept; setup then starts from its first question
   and the mark lapses within the hour. `handleFinish` reads the account
-  from the server before it writes, so a plan made elsewhere is kept.
+  from the server before it writes, so a plan made elsewhere is kept,
+  unless this open of the app already asked for the plan
+  (`setupSentThisVisitFor`), when Try again builds it again. Answers
+  picked up cold, not in this open of the app, drop their agreement to
+  store health details and ask for it again (`agreementAskedAgain`; at the
+  review, I agree returns there). They last two days, and go on sign-out
+  and when any account appears without the mark (`accountAppeared`).
 - **Explicit form.** One reducer over `OnboardingDraft` and a pure module for
   validity and the payload. Candidate A4.
 

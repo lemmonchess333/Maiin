@@ -21,7 +21,7 @@ the native sign-in sheets at the end of setup, the answers outliving a
 real kill, and a sandbox purchase from the offer.
 
 - [ ] **Sign in with Apple at the end of setup.** On the TestFlight build,
-      signed out, tap Get started, answer setup, tap Start my plan, then
+      signed out, tap Get started, answer setup, tap Continue, then
       Continue with Apple with an Apple ID that has never used Tropos.
       Passing: Apple's sheet opens over Save your plan; after it, "Creating
       your plan…" shows on the review, then the trial offer, with no
@@ -36,9 +36,12 @@ real kill, and a sandbox purchase from the offer.
       console has the old `updatedAt`.
 - [ ] **The answers outlive a kill.** Signed out, answer setup to About you,
       swipe the app away from the app switcher, open it again and tap Get
-      started. Passing: setup opens on the step it was on with every answer
-      kept. Then reach the review, kill the app again, and reopen: Get
-      started opens the review, and its email switch is off (asked afresh).
+      started. Passing: setup opens on "Your health details" (asked again on
+      answers picked up cold), and I agree goes on with every answer kept.
+      Then reach the review, kill the app again, and reopen: Get started
+      asks the agreement again, I agree opens the review, and its email
+      switch is off (asked afresh). Signing in from the welcome instead, or
+      leaving the answers two days, leaves none of them for the next setup.
 - [ ] **The trial from the offer, in sandbox.** With a sandbox Apple ID,
       finish setup to the trial offer. Passing: the yearly plan and its App
       Store price show, with "7 days free, then …" under Start free trial;
@@ -3195,7 +3198,7 @@ In this order:
       listed or written again.
 - [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
       `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
-  photo field`; Firebase console → Storage has no `food-photos`
+photo field`; Firebase console → Storage has no `food-photos`
       folder; and in Firestore console a meal scanned before 18 August
       2026 has neither `photoUrl` nor `photoPath`. Then write into
       CLAUDE.md's "Meal photos are device-local" section, where it says
@@ -7650,7 +7653,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-          name>’s workout on Tropos" (run, day, week) with the card's figures in
+              name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,

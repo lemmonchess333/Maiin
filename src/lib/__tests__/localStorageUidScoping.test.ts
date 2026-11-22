@@ -79,7 +79,7 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos-step-details":
     "a developer's switch that shows the iPhone-only step list (StepDetails) on the web preview too; a device's setting for the preview loop, about no account, and the app only reads it",
   "tropos.onboarding.draft.signedOut":
-    "setup's answers given before there is an account (A6): Save your plan makes the account at setup's end, so they belong to no uid until then; they move to the new account's own key the moment it exists, are dropped when the account already has a plan, and expire with every draft after 14 days",
+    "setup's answers given before there is an account (A6): Save your plan makes the account at setup's end, so they belong to no uid until then; they move to the new account's own key the moment it exists, and are dropped when the account already has a plan, when any other account appears, on sign-out, and after two days (signedOutDraft.ts)",
   "tropos.setupSave":
     "that a sign-in began from Save your plan (A6), written while signed out so the account it makes can take the answers; it lasts an hour, and only a sign-in from that screen sets it, so an account signed in any other way never takes another person's answers",
   "tropos.firstRun.welcomeViewed":

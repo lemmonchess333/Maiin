@@ -18,6 +18,11 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import { TRIAL_DAYS } from "@/lib/proPlans";
 import { PRO_FROM_DAY_ONE } from "@/components/paywall/proIncludesCopy";
+import {
+  readSessionString,
+  removeSessionKey,
+  writeSessionString,
+} from "@/lib/sessionStore";
 
 /** The offer's own page, full screen like setup. */
 export const TRIAL_OFFER_PATH = "/trial-offer";
@@ -48,3 +53,27 @@ export const TRIAL_OFFER_COPY = {
   start: "Start free trial",
   notNow: "Not now",
 } as const;
+
+/* The website's checkout leaves the app and returns to /upgrade, where its
+   Web Purchase Link is set to send it. A checkout begun from the offer is
+   noted for the visit, so the return goes on to Home, as every other way
+   off the offer does. */
+const webCheckoutKey = (uid: string) => `tropos.trialOffer.webCheckout.${uid}`;
+
+/** The offer is sending this account to the website's checkout. */
+export function noteTrialOfferWebCheckout(uid: string): void {
+  writeSessionString(webCheckoutKey(uid), "1");
+}
+
+/** The checkout did not leave the app after all. */
+export function forgetTrialOfferWebCheckout(uid: string): void {
+  removeSessionKey(webCheckoutKey(uid));
+}
+
+/** Back on /upgrade from the website's checkout: whether the offer sent
+ *  it, so the return goes Home. Read once. */
+export function takeTrialOfferWebCheckout(uid: string): boolean {
+  const sent = readSessionString(webCheckoutKey(uid)) === "1";
+  removeSessionKey(webCheckoutKey(uid));
+  return sent;
+}

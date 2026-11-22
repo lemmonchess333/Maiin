@@ -93,6 +93,7 @@ function phone() {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
   window.scrollTo = vi.fn();
   h.profile = {};
   h.onSale = false;
@@ -162,6 +163,10 @@ describe("the trial offer at the end of setup", () => {
 
   it("on the web build, renders with nothing to buy, and Not now still goes Home", async () => {
     show();
+    // Nothing on sale, so no trial is promised.
+    expect(
+      screen.getByRole("heading", { name: "Add Pro to your plan" })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Pro isn’t on sale in this version of the app yet/)
     ).toBeInTheDocument();
@@ -170,6 +175,32 @@ describe("the trial offer at the end of setup", () => {
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: TRIAL_OFFER.notNow }));
     await atHome();
+  });
+
+  it("with the website's checkout, notes the offer so its return goes Home", async () => {
+    h.onSale = true;
+    h.startCheckout.mockResolvedValue({ kind: "redirected", url: "https://x" });
+    show();
+    fireEvent.click(screen.getByRole("button", { name: "Start free trial" }));
+    await waitFor(() => expect(h.startCheckout).toHaveBeenCalled());
+    expect(
+      sessionStorage.getItem("tropos.trialOffer.webCheckout.trial-uid")
+    ).toBe("1");
+    // The window has gone to the checkout: nothing more here.
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      "/trial-offer"
+    );
+  });
+
+  it("with the website's checkout refused, forgets the note and goes Home", async () => {
+    h.onSale = true;
+    h.startCheckout.mockResolvedValue({ kind: "failed", message: "No." });
+    show();
+    fireEvent.click(screen.getByRole("button", { name: "Start free trial" }));
+    await atHome();
+    expect(
+      sessionStorage.getItem("tropos.trialOffer.webCheckout.trial-uid")
+    ).toBeNull();
   });
 
   it("one trial per account: an account that has had one goes Home unshown", async () => {

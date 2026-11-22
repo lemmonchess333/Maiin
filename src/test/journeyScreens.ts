@@ -59,6 +59,9 @@ export const SETUP = {
   birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
+  /** Signed out, the review's button: Save your plan comes next, where
+   *  the account is made (A6). */
+  saveNext: "Continue",
 } as const;
 
 /** Save your plan (A6), where setup makes the account once its questions

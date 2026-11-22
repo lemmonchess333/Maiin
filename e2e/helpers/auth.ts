@@ -28,11 +28,15 @@
  */
 
 import { type Page, expect } from "@playwright/test";
-import { SAVE_PLAN } from "../../src/test/journeyScreens";
+import { SAVE_PLAN, SETUP } from "../../src/test/journeyScreens";
+import type { OnboardingDraft } from "../../src/lib/onboardingDraft";
+/* The draft's key, owner and version from the one module of the draft's
+   that reads no `import.meta.env`, which Playwright's Node has none of. */
 import {
   DRAFT_VERSION,
-  type OnboardingDraft,
-} from "../../src/lib/onboardingDraft";
+  SIGNED_OUT_DRAFT_KEY,
+  SIGNED_OUT_OWNER,
+} from "../../src/lib/signedOutDraft";
 import { emulatorAdmin } from "./realCallables";
 
 export const TEST_USER = {
@@ -61,7 +65,7 @@ export async function openSetup(page: Page): Promise<void> {
  * The draft a person leaves at setup's review, signed out: every answer
  * given and the health-details agreement made. Planted on the phone's own
  * key, as `saveSignedOutDraft` stores it (`onboardingDraft.test.ts` holds
- * the key, the owner and the version this writes to what the app reads).
+ * the planted form to what the app reads).
  */
 export const SIGNED_OUT_REVIEW: OnboardingDraft = {
   step: 7,
@@ -93,15 +97,17 @@ export const SIGNED_OUT_REVIEW: OnboardingDraft = {
 };
 
 /** Signed out, straight to Save your plan: setup's answers planted at its
- *  review, then its Start my plan. For a spec about the screen itself. */
+ *  review, then its Continue. Picked up cold, the answers ask for the
+ *  agreement to store health details again, which this gives, and then
+ *  return to the review. For a spec about the screen itself. */
 export async function openSaveYourPlan(page: Page): Promise<void> {
   await page.addInitScript(
     ([key, record]) => localStorage.setItem(key, record),
     [
-      "tropos.onboarding.draft.signedOut",
+      SIGNED_OUT_DRAFT_KEY,
       JSON.stringify({
         v: DRAFT_VERSION,
-        uid: "(signed out)",
+        uid: SIGNED_OUT_OWNER,
         savedAt: Date.now(),
         draft: SIGNED_OUT_REVIEW,
       }),
@@ -109,7 +115,10 @@ export async function openSaveYourPlan(page: Page): Promise<void> {
   );
   await page.goto("setup");
   await page
-    .getByRole("button", { name: "Start my plan", exact: true })
+    .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+    .click({ timeout: 20_000 });
+  await page
+    .getByRole("button", { name: SETUP.saveNext, exact: true })
     .click({ timeout: 20_000 });
   await expect(
     page.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
