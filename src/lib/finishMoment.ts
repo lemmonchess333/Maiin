@@ -201,7 +201,7 @@ export function rewardLine(
       return {
         before: card ? "Ran " : "You ran ",
         figure: keepTogether(distanceLabel(moment.meters, ctx.distanceUnit)),
-        after: card ? ", a new longest run." : ", your longest run yet.",
+        after: card ? ", the longest run yet." : ", your longest run yet.",
       };
     case "firstDistance":
       return card

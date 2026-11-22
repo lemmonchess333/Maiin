@@ -7,9 +7,10 @@
  * real SessionCompleteScreen with a pull day's fixtures: a reward needs a
  * best to beat, which a fresh account has not got. The reward is taken
  * with one new best, which the line says and the list leaves out, and
- * with two, which the list sums up. The share card is taken as a story
- * and a square on each background, and on a photo of plain white, the
- * brightest ground its foot can meet. The run's come from
+ * with two, which the list sums up, and the summary with a long total
+ * ("12,400", "123,456"), which keeps the finish's size. The share card is
+ * taken as a story and a square on each background, and on a photo of
+ * plain white, the brightest ground its foot can meet. The run's come from
  * real saves on a fresh account: its first run (the reward for a first),
  * a shorter, slower one (the summary) and the same loop faster (a new
  * best: its fastest 1K and 5K).
@@ -174,6 +175,19 @@ test("the lift's reward and summary, and the share card", async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 852 });
   }
 
+  for (const volume of [12400, 123456]) {
+    await page.goto(`dev/finish?state=lift-routine&volume=${volume}`);
+    await expect(
+      page.getByRole("heading", { name: "Pull A done", exact: true })
+    ).toBeVisible({ timeout: 20_000 });
+    await theme(page, true);
+    for (const width of [393, 320]) {
+      await page.setViewportSize({ width, height: 852 });
+      await shoot(page, `finish-lift-${volume}-${width}-dark`);
+    }
+    await page.setViewportSize({ width: 393, height: 852 });
+  }
+
   // With motion: the reward's confetti, a moment after it opens.
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("dev/finish?state=lift-best");
@@ -195,6 +209,7 @@ test("the lift's reward and summary, and the share card", async ({ page }) => {
     ["share-lift-routine", ""],
     ["share-run-best", ""],
     ["share-run-best", "format=square"],
+    ["share-run-best", "best=longest"],
     ["share-lift-best", "photo=white&background=photo"],
   ];
   for (const format of ["story", "square"])

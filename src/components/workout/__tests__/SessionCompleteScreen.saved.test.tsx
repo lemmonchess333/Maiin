@@ -412,6 +412,26 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     expect(screen.getByTestId("session-badge")).toBeInTheDocument();
   });
 
+  it("says a first-ever best once too, with nothing to compare it with", () => {
+    const firstBest = {
+      ...benchBest,
+      previousBest: null,
+      bestBeforeSession: null,
+    } as unknown as SetPR;
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          prResults: new Map([["Bench Press:8rm", firstBest]]),
+          moments: [pr("Bench Press", 80)],
+        })}
+      />
+    );
+    expect(line()).toHaveTextContent("You benched 80 kg × 8, a new best.");
+    expect(screen.queryByRole("heading", { name: /New bests/ })).toBeNull();
+    expect(screen.queryByText(/Was /)).toBeNull();
+  });
+
   /* Owner, 22 November 2026: the card is read by anyone, so its sentence
      names no one; the finish screen keeps "You". */
   it("hands the share card the line without you", async () => {

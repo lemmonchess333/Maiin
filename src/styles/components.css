@@ -820,9 +820,11 @@ html.launching [data-brand-mark] {
    on a 320 px one, below the register's floor only there. A total of
    five characters ("7,470") then takes about 57% of a 393 px screen, so
    it leads the screen without reading bigger than the session it counts.
-   A longer figure still steps down (`--display-scale`). */
+   It keeps that size at any length and never reads `--display-scale`:
+   seven characters ("123,456") are 260 px at 64 and 220 at 54, inside
+   a 320 px screen's column. */
 .ds-display-figure.ds-display-finish {
-  font-size: calc(clamp(54px, 16.5vw, 64px) * var(--display-scale, 1));
+  font-size: clamp(54px, 16.5vw, 64px);
 }
 
 /* The workout's docked cards, frosted (DS6 step 5, DESIGN_GUIDE §14o):

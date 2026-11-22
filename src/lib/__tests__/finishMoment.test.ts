@@ -282,7 +282,7 @@ describe("rewardLine on a share card: the same fact, naming no one", () => {
       )
     ).toBe("Ran 1K in 4:50, a new best.");
     expect(text(rewardLine({ kind: "longestRun", meters: 12400 }, card))).toBe(
-      "Ran 12.4 km, a new longest run."
+      "Ran 12.4 km, the longest run yet."
     );
     expect(
       text(rewardLine({ kind: "firstDistance", meters: 10000 }, card))

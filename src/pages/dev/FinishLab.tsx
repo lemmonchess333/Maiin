@@ -28,7 +28,9 @@ import type {
  * unless `format=square`, on the brand's stage unless `background` names
  * another (`dark`, `transparent`, `photo`); the photo is a welcome
  * photograph, or plain white with `photo=white`, the brightest ground the
- * card's words can meet. The run's registers are captured from real saves
+ * card's words can meet; `best=longest` makes the run's card a longest
+ * run. `volume=` sets a lift's total, for a long figure ("12,400",
+ * "123,456"). The run's registers are captured from real saves
  * (finish-screens.capture.spec.ts).
  */
 
@@ -68,12 +70,23 @@ const set = (weight: number, reps: number) => ({
 });
 
 /* 2,295 kg in all: the mockup's session. */
+const PULL_A_VOLUME = 2295;
 const PULL_A_SETS = [
   [set(35, 8), set(32.5, 8), set(32.5, 8), set(32.5, 8)],
   [set(30, 10), set(30, 10), set(30, 10)],
   [set(7.5, 12), set(7.5, 12), set(7.5, 12)],
   [set(6.5, 10)],
 ];
+
+/* The session's sets for a total of `volume` kg: every load scaled, the
+   reps and the bests as they are. */
+function setsTotalling(volume: number) {
+  if (!(volume > 0 && Number.isFinite(volume))) return PULL_A_SETS;
+  const k = volume / PULL_A_VOLUME;
+  return PULL_A_SETS.map((sets) =>
+    sets.map((s) => ({ ...s, weight: s.weight * k }))
+  );
+}
 
 const ROW_BEST = {
   kind: "best",
@@ -138,14 +151,17 @@ function shareData(
     handle: params.get("handle") ?? "Sam",
     date: "Sat 7 Nov",
   };
-  if (state === "share-run-best")
+  if (state === "share-run-best") {
+    const longest = params.get("best") === "longest";
     return {
       ...common,
       template: "run",
-      headline: "Tempo done",
+      headline: longest ? "Long run done" : "Tempo done",
       line: rewardSentence(
         rewardLine(
-          { kind: "fastestEffort", meters: 5000, seconds: 1450 },
+          longest
+            ? { kind: "longestRun", meters: 12400 }
+            : { kind: "fastestEffort", meters: 5000, seconds: 1450 },
           {
             sport: "run",
             distanceUnit: "km",
@@ -158,11 +174,12 @@ function shareData(
       ),
       tone: "achievement",
       routePath: ROUTE,
-      distanceKm: 5.02,
-      durationSec: 1458,
-      paceSecPerKm: 290,
+      ...(longest
+        ? { distanceKm: 12.4, durationSec: 3906, paceSecPerKm: 315 }
+        : { distanceKm: 5.02, durationSec: 1458, paceSecPerKm: 290 }),
       elevationM: 30,
     };
+  }
   return {
     ...common,
     template: "lift",
@@ -185,7 +202,7 @@ function shareData(
         }
       : {}),
     artSrc: row ? formArtCutoutUrl(row) : undefined,
-    totalVolumeKg: 2295,
+    totalVolumeKg: Number(params.get("volume")) || PULL_A_VOLUME,
     exerciseCount: 4,
     durationSec: 41 * 60,
   };
@@ -224,7 +241,7 @@ export default function FinishLab() {
     <SessionCompleteScreen
       dayName="Pull A"
       exercises={PULL_A}
-      setLogs={PULL_A_SETS}
+      setLogs={setsTotalling(Number(params.get("volume")))}
       firedPRs={new Map()}
       prResults={
         new Map([

@@ -480,20 +480,20 @@ describe("ShareCardRenderer — an anniversary (App1 Q58)", () => {
           background: "brand",
           handle: "Alex",
           date: "14 Nov 2026",
-          headline: "Your 50th session",
+          headline: "50th session",
           figure: "50",
           figureUnit: "sessions",
-          line: "You’ve trained 50 times. 100 is next.",
+          line: "50 sessions on Tropos. 100 is next.",
           tone: "lifting",
         }}
       />
     );
     const text = container.textContent ?? "";
     for (const words of [
-      "Your 50th session",
+      "50th session",
       "50",
       "sessions",
-      "You’ve trained 50 times. 100 is next.",
+      "50 sessions on Tropos. 100 is next.",
       "Alex",
       "14 Nov 2026",
     ])
