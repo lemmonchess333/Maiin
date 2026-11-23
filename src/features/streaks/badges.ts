@@ -345,7 +345,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   // Nutrition
   {
     id: "macro_master",
-    name: "Every macro on target",
+    name: "All macros on target",
     description: "Hit all macros within 5% for a day",
     icon: "target",
     lucideIcon: "Target",
@@ -354,7 +354,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "protein_pro",
-    name: "7 days on protein",
+    name: "7-day protein streak",
     description: "Hit protein target 7 days in a row",
     icon: "beef",
     lucideIcon: "Beef",
@@ -363,7 +363,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "hydration_hero",
-    name: "7 days on water",
+    name: "7-day water streak",
     description: "Hit water target 7 days in a row",
     icon: "droplets",
     lucideIcon: "Droplets",
@@ -372,7 +372,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "meal_prep_master",
-    name: "14 days fully logged",
+    name: "14-day logging streak",
     description: "Log all meals for 14 days straight",
     icon: "utensils-crossed",
     lucideIcon: "UtensilsCrossed",
@@ -410,7 +410,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "triple_threat",
-    name: "Food, lift and run in a day",
+    name: "Every target in one day",
     description: "Hit your food, lift and run targets on the same day",
     icon: "star",
     lucideIcon: "Star",
@@ -419,7 +419,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "ultimate_athlete",
-    name: "15 badges",
+    name: "15 badges earned",
     description: "Earn 15 badges",
     icon: "trophy",
     lucideIcon: "Trophy",
