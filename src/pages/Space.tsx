@@ -62,6 +62,10 @@ import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import {
+  buttonClasses,
+  SECONDARY_ON_CARD_EDGE,
+} from "@/components/ui/buttonClasses";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { haptic } from "@/lib/haptic";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -80,6 +84,7 @@ import {
   type SpaceEventInfo,
 } from "@/features/spaces/spaceDefs";
 import { raceDistanceLabel } from "@/features/spaces/raceBrowse";
+import { raceEntryLink } from "@/features/spaces/raceEntry";
 import {
   raceEventDates,
   formatRaceEventDate,
@@ -138,9 +143,14 @@ const ELEVATION_LABEL: Record<
  * Race event header (races plan PR3) — the event-metadata block for
  * kind === "race" spaces: distance/elevation chips, race day, city,
  * the "Train for this race" CTA (Door 1 — deep-links to the run-plan
- * editor prefilled; Q1's no-inline-edit lock), the official-site
- * link, and the Q10 not-affiliated line. Join stays a separate action
- * below — joining never sets the race.
+ * editor prefilled; Q1's no-inline-edit lock), "Enter this race" to the
+ * organiser's entry page while the race is ahead (Reg1: secondary, since
+ * Train for this race and Join are the page's main actions; it opens in
+ * the system browser, as every target="_blank" link does in the iPhone
+ * app), the official-site link only when there is no entry button (one
+ * link out per race, owner 2026-11-23), and the Q10
+ * not-affiliated line. Join stays a separate action below — joining
+ * never sets the race.
  */
 function RaceEventHeader({
   spaceId,
@@ -167,6 +177,7 @@ function RaceEventHeader({
         : "";
   const raceDay = formatRaceEventDate(event, true);
   const shortDay = formatRaceEventDate(event);
+  const entry = raceEntryLink(event, todayKey);
 
   return (
     <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
@@ -272,15 +283,39 @@ function RaceEventHeader({
         </p>
       )}
 
-      <a
-        href={event.websiteUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between gap-2 min-h-[44px] rounded-xl bg-muted/50 px-3.5 text-sm font-medium text-foreground active:scale-[0.98] transition-transform"
-      >
-        Visit official website
-        <ExternalLink className="size-4 text-muted-foreground" aria-hidden />
-      </a>
+      {entry && (
+        <div className="space-y-1.5">
+          <a
+            href={entry.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Enter this race on the organiser’s website, outside Tropos"
+            className={buttonClasses({
+              variant: "secondary",
+              fullWidth: true,
+              className: cn("gap-2", SECONDARY_ON_CARD_EDGE),
+            })}
+          >
+            Enter this race
+            <ExternalLink className="size-4 shrink-0" aria-hidden />
+          </a>
+          {entry.note && (
+            <p className="text-sm text-muted-foreground">{entry.note}</p>
+          )}
+        </div>
+      )}
+
+      {!entry && (
+        <a
+          href={event.websiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-2 min-h-[44px] rounded-xl bg-muted/50 px-3.5 text-sm font-medium text-foreground active:scale-[0.98] transition-transform"
+        >
+          Visit official website
+          <ExternalLink className="size-4 text-muted-foreground" aria-hidden />
+        </a>
+      )}
 
       <p className="text-micro text-muted-foreground">
         Community space, not affiliated with the event.

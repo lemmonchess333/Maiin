@@ -36,6 +36,11 @@ for (const def of raceSpaceDefs()) {
     countryCode: def.event.countryCode,
     countryFlag: def.event.countryFlag,
     ...(def.event.elevation ? { elevation: def.event.elevation } : {}),
+    // Null, not absent, for a race with no entry link or note: the app
+    // reads null as "take the bundled one away", so a link removed here
+    // goes from builds already on phones as well.
+    entryUrl: def.event.entryUrl ?? null,
+    entryNote: def.event.entryNote ?? null,
   };
 }
 
