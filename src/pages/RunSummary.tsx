@@ -32,6 +32,7 @@ import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
@@ -1870,6 +1871,20 @@ export default function RunSummary() {
               </div>
             </div>
           )}
+
+          {/* The league line (Run30 call 2): mounted before the save, so it
+              reads the group first, and drawn only when the saved run
+              raised your place. */}
+          <LeagueRiseLine
+            className="mx-4 mb-4"
+            stage={
+              saveStatus === "idle" && savedRunId === null
+                ? "before"
+                : saved && savedRunId !== null && !pendingSync
+                  ? "onServer"
+                  : "saving"
+            }
+          />
 
           {/* Post-completion kudos (Phase 2) — after the run is banked, if
               someone the user follows also trained today. Renders nothing
