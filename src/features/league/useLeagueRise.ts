@@ -17,8 +17,9 @@ import { placeRise, type LeagueTier } from "./leagueRules";
  * session's trigger (onWorkoutCreated, onRunCreated) recomputes it as its
  * second step, after the challenges, a few seconds after the save; the
  * window allows a function starting cold. The run finish waits as long
- * for its segment efforts (Run30 call 1), for the same reason: no line
- * lands under someone who has read on. A Tropos heuristic.
+ * for its segment efforts (`FINISH_SEGMENT_WAIT_MS`, Run30 call 1), for
+ * the same reason: no line lands under someone who has read on. A Tropos
+ * heuristic.
  */
 export const LEAGUE_LINE_WAIT_MS = 15_000;
 
