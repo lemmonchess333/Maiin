@@ -136,7 +136,10 @@ export default function ExerciseRowSummary({
 
 /** "60 kg × 12, 12, 10"; "100 kg × 5 · 90 kg × 5, 5" where the weight
  *  changed; "BW × 12, 10" for a bodyweight lift, and "+10 kg × 8, 8" for
- *  one with load added; "45s, 40s" for a hold. */
+ *  one with load added; "45s, 40s" for a hold. Sets of a loaded lift saved
+ *  with no weight are their reps, "10, 10 reps", as the rest band names a
+ *  set with no load: there is no figure to multiply, and a dash standing
+ *  in for one read "— × 10, 10" (DS11 call 2). */
 function LastSetsLine({
   sets,
   timed,
@@ -160,14 +163,18 @@ function LastSetsLine({
             {bodyweight ? "+" : ""}
             {kitLoadIn(group.weightKg, liftUnit, exerciseId)}
           </span>{" "}
-          {liftUnitLabel(liftUnit)}
+          {liftUnitLabel(liftUnit)} × <Numbers values={group.reps} />
         </>
       ) : bodyweight ? (
-        "BW"
+        <>
+          BW × <Numbers values={group.reps} />
+        </>
       ) : (
-        "—"
-      )}{" "}
-      × <Numbers values={group.reps} />
+        <>
+          <Numbers values={group.reps} />
+          {group.reps.length === 1 && group.reps[0] === 1 ? " rep" : " reps"}
+        </>
+      )}
     </Fragment>
   ));
 }
