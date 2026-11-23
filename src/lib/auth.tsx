@@ -1296,6 +1296,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfileReadFailed(false);
         setLoading(true);
       }
+      // The run history the run placings hold is the outgoing account's:
+      // let go of it on a sign-out or a switch, however it came about.
+      // Loaded only then, so it stays off the cold start.
+      if (previousUid !== null && previousUid !== uid) {
+        void import("./runPlacingHistory")
+          .then(({ forgetPlacingHistory }) => forgetPlacingHistory())
+          .catch(() => {});
+      }
       // The Watch bridge can retain an active run, pending controls and raw
       // heart rate while the web view is suspended. Clear those native values
       // before another account is exposed to the React tree. The bridge keeps
