@@ -246,23 +246,34 @@ export default function SessionHero({
             )}
           >
             {picture.motion ? (
-              <HeroMotion
-                sheet={picture.motion}
-                cycles={heroMotionCycles(picture.motion)}
-                className={picture.className}
-              />
+              <>
+                <div aria-hidden="true" className="figure-floor" />
+                <HeroMotion
+                  sheet={picture.motion}
+                  cycles={heroMotionCycles(picture.motion)}
+                  className={picture.className}
+                />
+              </>
             ) : (
-              <img
-                src={picture.src}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                decoding="async"
-                className={cn(
-                  "relative size-full object-contain",
-                  picture.className
-                )}
-              />
+              /* The box hugs the drawing, so the floor under it is under
+                 the feet whatever the drawing's shape. */
+              <div className="relative max-w-full" data-hero-figure>
+                <div aria-hidden="true" className="figure-floor" />
+                <img
+                  src={picture.src}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  decoding="async"
+                  className={cn(
+                    "relative h-auto w-auto max-w-full object-contain",
+                    sport === "lift"
+                      ? "max-h-[240px] @max-[20em]:max-h-[160px]"
+                      : "max-h-[280px] @max-[20em]:max-h-[188px]",
+                    picture.className
+                  )}
+                />
+              </div>
             )}
           </div>
         )}

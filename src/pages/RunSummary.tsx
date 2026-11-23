@@ -39,6 +39,7 @@ import { postedActivityId, type SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
+import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
 import { IconButton } from "@/components/ui/IconButton";
 import {
@@ -1789,7 +1790,7 @@ export default function RunSummary() {
                 }
                 picture={
                   points.length > 1 ? undefined : (
-                    <img
+                    <FinishFigure
                       src={runPoseUrl(
                         runPoseFor(
                           activityType === "tempo" ||
@@ -1799,11 +1800,6 @@ export default function RunSummary() {
                             : undefined
                         )
                       )}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                      decoding="async"
-                      className="h-full max-h-80 w-[min(70%,17rem)] object-contain"
                     />
                   )
                 }

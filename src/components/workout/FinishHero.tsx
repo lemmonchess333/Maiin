@@ -156,8 +156,8 @@ export default function FinishHero({
           className={cn(
             "relative mt-2 flex w-full items-center justify-center",
             fill
-              ? "min-h-[clamp(200px,34svh,300px)] flex-1"
-              : "h-[clamp(200px,34svh,300px)]"
+              ? "min-h-[clamp(240px,40svh,340px)] flex-1"
+              : "h-[clamp(240px,40svh,340px)]"
           )}
         >
           <motion.div

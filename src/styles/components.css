@@ -896,3 +896,31 @@ html.launching [data-brand-mark] {
     rgb(0 0 0 / 0.16) 100%
   );
 }
+
+/* The ground a drawn figure stands on: a short, flat shadow under its
+   feet, so the figure sits on the page instead of floating. */
+.figure-floor {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  z-index: 0;
+  width: 46%;
+  height: 14px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    rgb(0 0 0 / 0.16),
+    rgb(0 0 0 / 0.08) 55%,
+    transparent
+  );
+  pointer-events: none;
+}
+.dark .figure-floor {
+  background: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.09),
+    rgb(255 255 255 / 0.05) 55%,
+    transparent
+  );
+}
