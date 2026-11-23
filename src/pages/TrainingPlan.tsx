@@ -612,13 +612,15 @@ export default function TrainingPlan() {
                                   ? "Before your programme"
                                   : "Rest day"}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {evidencePending || evidenceFailed
-                              ? "Saved sessions are still arriving or need a reload"
-                              : day.beforeStart
-                                ? "Your programme had not started"
-                                : "No activity planned"}
-                          </p>
+                          {(evidencePending ||
+                            evidenceFailed ||
+                            day.beforeStart) && (
+                            <p className="text-xs text-muted-foreground">
+                              {evidencePending || evidenceFailed
+                                ? "Saved sessions are still arriving or need a reload"
+                                : "Your programme had not started"}
+                            </p>
+                          )}
                           {/* Today's rest day can still take a session:
                               an empty workout or a free run. */}
                           {day.isToday &&

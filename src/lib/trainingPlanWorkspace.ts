@@ -156,7 +156,7 @@ export function buildTrainingPlanWorkspace({
               ? "Skipped"
               : isPast
                 ? "Missed"
-                : "Planned · follows your rotation",
+                : "Planned",
         href: "/program?tab=lift",
         completed: false,
         canMove: false,
