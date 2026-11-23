@@ -20,6 +20,7 @@ import {
   BIRTH_YEAR_MESSAGES,
   birthYearProblem,
   parseBirthYear,
+  profileAge,
 } from "@/lib/age";
 import { isSex, type Sex } from "@/lib/sex";
 
@@ -181,6 +182,7 @@ export default function ProfileInfoSection({
      year less 16. An account set up before the year was asked shows the
      field empty, and its old `age` is used until it adds one. */
   const savedYear = profile.birthYear != null ? String(profile.birthYear) : "";
+  const legacyAge = profileAge(profile);
   const [yearText, setYearText] = useState(savedYear);
   const [yearError, setYearError] = useState<string | null>(null);
 
@@ -516,11 +518,13 @@ export default function ProfileInfoSection({
         >
           Your calorie target and heart-rate zones are worked out from it. It’s
           never shown on your profile.
-          {!savedYear && profile.age != null && (
+          {/* The age they use (`profileAge`), never a stored number it
+              does not read as one: a 2 left by the old TDEE field. */}
+          {!savedYear && legacyAge !== undefined && (
             <>
               {" "}
               Until you add it, they use an age of{" "}
-              <span className="font-mono tabular-nums">{profile.age}</span>.
+              <span className="font-mono tabular-nums">{legacyAge}</span>.
             </>
           )}
         </p>

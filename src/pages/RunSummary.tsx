@@ -146,12 +146,8 @@ import {
   clearHeartRateSession,
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
-import {
-  heartRateCoverageBand,
-  maxHrFromAge,
-  summarizeHeartRate,
-} from "@/lib/hrZones";
-import { profileAge } from "@/lib/age";
+import { heartRateCoverageBand, summarizeHeartRate } from "@/lib/hrZones";
+import { profileMaxHr } from "@/lib/maxHeartRate";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
@@ -461,9 +457,9 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
-  // The age the zones' estimate reads: from the year of birth, else an
-  // older account's age (App1, Q57).
-  const ageYears = profileAge(profile);
+  // The max the zones are drawn on: measured, else the age estimate
+  // (`profileMaxHr`, the one reading every zone in the app uses).
+  const { maxHr: profileMax } = profileMaxHr(profile);
   useEffect(() => {
     // Any run with a session: the Watch reads outdoor runs, and a paired
     // Bluetooth sensor any run, the treadmill's too. With no readings the
@@ -474,9 +470,7 @@ export default function RunSummary() {
     void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
       .then(({ samples, activeIntervals }) => {
         if (!active) return;
-        const measuredMax = profile?.maxHeartRate ?? 0;
-        const maxHr =
-          measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
+        const maxHr = profileMax;
         const summary = summarizeHeartRate(
           samples,
           activeIntervals,
@@ -491,13 +485,7 @@ export default function RunSummary() {
     return () => {
       active = false;
     };
-  }, [
-    user?.uid,
-    state?.identity,
-    state?.elapsed,
-    profile?.maxHeartRate,
-    ageYears,
-  ]);
+  }, [user?.uid, state?.identity, state?.elapsed, profileMax]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -1353,9 +1341,7 @@ export default function RunSummary() {
             setSaveStatus("idle");
             return;
           }
-          const measuredMax = profile?.maxHeartRate ?? 0;
-          const maxHr =
-            measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
+          const maxHr = profileMax;
           heartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,

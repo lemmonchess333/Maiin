@@ -11,6 +11,7 @@ import {
 } from "@/components/icons/TabIcons";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useOnScreenKeyboard } from "@/hooks/useOnScreenKeyboard";
 import {
   getQueueLength,
   getFailedWorkoutCompletionCount,
@@ -93,6 +94,20 @@ export default function Layout() {
   // the legal links on a short phone. Its bottom padding goes with it.
   const hideNav =
     location.pathname === "/run" || location.pathname === "/upgrade";
+  /* No tab bar while the phone's keyboard is up either: it rode on the
+     keyboard over the field being typed in (owner's recording, 23
+     November 2026). The page keeps its padding, so nothing jumps, and
+     the bars docked above the tab bar drop onto the keyboard
+     (`--tab-bar-height`, index.css). */
+  const keyboardUp = useOnScreenKeyboard();
+  useEffect(() => {
+    const root = document.documentElement;
+    if (keyboardUp) root.dataset.keyboardUp = "";
+    else delete root.dataset.keyboardUp;
+    return () => {
+      delete root.dataset.keyboardUp;
+    };
+  }, [keyboardUp]);
   const { isOnline, wasOffline } = useOnlineStatus();
   /* The Social tab's dot is the notification tray's unread (App1 Q34):
      someone did something for you. It is the same count Social's bell
@@ -340,7 +355,7 @@ export default function Layout() {
       </main>
 
       {/* Bottom tab bar */}
-      {!hideNav && (
+      {!hideNav && !keyboardUp && (
         <BottomNavigation
           tabs={tabs}
           pathname={location.pathname}

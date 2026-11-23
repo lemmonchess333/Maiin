@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  climbFieldMaxLength,
   climbFieldNote,
   climbFieldText,
   parseClimbField,
@@ -57,5 +58,24 @@ describe("the climb field", () => {
     expect(climbFieldNote({ distance: "50k", climbM: 0, unit: "mi" })).toMatch(
       /^The course’s total climb\. 1.640 ft or more makes a trail plan\.$/
     );
+  });
+});
+
+describe("climbFieldMaxLength", () => {
+  /* The field took twelve digits and ran out of its box (owner's
+     recording, 23 November 2026). It takes as many characters as the
+     largest climb it keeps, written with its thousands comma. */
+  it("holds the largest climb with its comma, in metres and in feet", () => {
+    expect(climbFieldMaxLength("km")).toBe("20,000".length);
+    expect(climbFieldMaxLength("mi")).toBe("65,617".length);
+  });
+
+  it("lets every climb it keeps be typed, and the largest with its comma", () => {
+    for (const unit of ["km", "mi"] as const) {
+      const largest = climbFieldText(MAX_RACE_CLIMB_M, unit);
+      const withComma = Number(largest).toLocaleString("en-GB");
+      expect(withComma.length).toBeLessThanOrEqual(climbFieldMaxLength(unit));
+      expect(parseClimbField(withComma, unit)).not.toBeNull();
+    }
   });
 });

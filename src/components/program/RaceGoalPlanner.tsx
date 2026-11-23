@@ -88,6 +88,9 @@ interface RaceGoalPlannerProps {
   onClimbTextChange: (next: string) => void;
   /** The reader's unit: the climb is typed in metres or feet. */
   unit: DistanceUnit;
+  /** A line under Distance when the distance chosen took the race off the
+   *  plan (`droppedRaceNotice`); null for none. */
+  distanceNotice?: string | null;
 }
 
 function outLabel(
@@ -117,6 +120,7 @@ export default function RaceGoalPlanner({
   climbText,
   onClimbTextChange,
   unit,
+  distanceNotice = null,
 }: RaceGoalPlannerProps) {
   const trainingRaces = upcomingRaces.filter(
     (race) => race.event && isTrainableRaceEvent(race.event)
@@ -157,6 +161,15 @@ export default function RaceGoalPlanner({
           onChange={onDistanceChange}
           labelClassName="text-sm text-muted-foreground"
         />
+        {/* Said where the distance was chosen, as it changes. */}
+        {distanceNotice && (
+          <p
+            role="status"
+            className="text-xs text-muted-foreground text-pretty"
+          >
+            {distanceNotice}
+          </p>
+        )}
       </div>
 
       {/* Trail is the race's climb, at any distance (Run26 (2)). */}

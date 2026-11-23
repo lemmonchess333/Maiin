@@ -71,10 +71,32 @@ export const BIRTH_YEAR_MESSAGES: Record<BirthYearProblem, string> = {
 };
 
 /**
+ * The ages a profile has ever been let keep: 16 until Biz1 call 4 raised
+ * setup's line to 18 (`AGE_YEARS`), up to 120. A stored age outside it is
+ * not an age. Settings' TDEE field wrote `Number(text) || 25` on every
+ * keystroke until 25 October 2026 (#2956), straight to the profile and past
+ * the server's range, so an account could keep a 2 typed on the way to 28.
+ * Read as an age, a 2 put the heart-rate zones on a 207 bpm max (Tanaka for
+ * a two-year-old) while the field beside them suggested 188 (owner's
+ * recording, 23 November 2026).
+ */
+const AGE_EVER_KEPT = { min: 16, max: AGE_YEARS.max } as const;
+
+function keptAge(years: unknown): number | undefined {
+  return typeof years === "number" &&
+    Number.isInteger(years) &&
+    years >= AGE_EVER_KEPT.min &&
+    years <= AGE_EVER_KEPT.max
+    ? years
+    : undefined;
+}
+
+/**
  * The age the calorie maths and the heart-rate zones use: from the year of
  * birth when there is one, else the `age` an older account was given at
- * setup. Undefined when there is neither, and each caller keeps the default
- * it had.
+ * setup. Undefined when there is neither, or when what is stored is not an
+ * age anyone was let keep (`AGE_EVER_KEPT`), and each caller keeps the
+ * default it had.
  */
 export function profileAge(
   profile:
@@ -84,8 +106,8 @@ export function profileAge(
   if (!profile) return undefined;
   const { birthYear } = profile;
   if (typeof birthYear === "number" && Number.isInteger(birthYear)) {
-    const years = ageFromBirthYear(birthYear, today);
-    if (years >= 0) return years;
+    const years = keptAge(ageFromBirthYear(birthYear, today));
+    if (years !== undefined) return years;
   }
-  return profile.age ?? undefined;
+  return keptAge(profile.age);
 }

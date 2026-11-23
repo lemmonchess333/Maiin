@@ -45,6 +45,17 @@ export function parseClimbField(
   return metres <= MAX_RACE_CLIMB_M ? metres : null;
 }
 
+/**
+ * The most characters the field takes: the largest climb it keeps in the
+ * reader's unit, with its thousands comma ("20,000" m, "65,617" ft). The
+ * field took twelve digits and ran out of its box (owner's recording,
+ * 23 November 2026); a longer number is never a climb it keeps.
+ */
+export function climbFieldMaxLength(unit: DistanceUnit): number {
+  const digits = String(Math.round(elevationIn(MAX_RACE_CLIMB_M, unit))).length;
+  return digits + Math.floor((digits - 1) / 3);
+}
+
 /** The climb that makes a race a trail plan, rounded to ten in the
  *  reader's unit: "500 m", "1,640 ft". */
 function trailFrom(distance: RaceDistance, unit: DistanceUnit): string {

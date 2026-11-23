@@ -549,16 +549,25 @@
    iPhone safe-area envs are set; desktop falls back to 0. */
 :root {
   --tab-bar-gap: 8px;
-  --tab-bar-height: calc(
-    64px + var(--tab-bar-gap)
-  ); /* capsule + floating gap */
+  --tab-bar-size: calc(64px + var(--tab-bar-gap)); /* capsule + floating gap */
+  /* What the tab bar takes from the foot of the screen: the bar, or
+     nothing while the keyboard is up and Layout hides it
+     (`useOnScreenKeyboard`). A bar docked above it (a page's save bar, a
+     comment composer) sits on the keyboard then. */
+  --tab-bar-height: var(--tab-bar-size);
   --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* Enough room below scroll content that the bottom tab bar never
      hides the final row. Bottom nav height + home-indicator inset +
      breathing room. */
-  --page-bottom-pad: calc(var(--tab-bar-height) + var(--safe-bottom) + 1rem);
+  /* The bar's size, not its footprint: the page keeps its length while the
+     keyboard is up, so nothing jumps when a field takes focus. */
+  --page-bottom-pad: calc(var(--tab-bar-size) + var(--safe-bottom) + 1rem);
+}
+
+:root[data-keyboard-up] {
+  --tab-bar-height: 0px;
 }
 
 /* Mobile Safari exposes a transparent status-bar area when the app is opened

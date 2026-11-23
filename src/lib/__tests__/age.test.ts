@@ -94,6 +94,22 @@ describe("profileAge", () => {
     expect(profileAge({ birthYear: 1990.5, age: 30 }, today)).toBe(30);
   });
 
+  it("reads no age from a stored one nobody was let keep", () => {
+    // The TDEE field saved each keystroke before #2956, so typing 28 could
+    // leave a 2. Read as an age it gave a 207 bpm max (owner, 23 Nov 2026).
+    expect(profileAge({ age: 2 }, today)).toBeUndefined();
+    expect(profileAge({ age: 0 }, today)).toBeUndefined();
+    expect(profileAge({ age: 253 }, today)).toBeUndefined();
+    expect(profileAge({ age: 28.5 }, today)).toBeUndefined();
+    // 16 and 17 were setup's own until Biz1 call 4 raised the line to 18.
+    expect(profileAge({ age: 16 }, today)).toBe(16);
+  });
+
+  it("reads no age from a year of birth that makes a child, and falls back to a kept age", () => {
+    expect(profileAge({ birthYear: 2024 }, today)).toBeUndefined();
+    expect(profileAge({ birthYear: 2025, age: 30 }, today)).toBe(30);
+  });
+
   it("is undefined with neither, so each caller keeps its default", () => {
     expect(profileAge({}, today)).toBeUndefined();
     expect(profileAge(null, today)).toBeUndefined();

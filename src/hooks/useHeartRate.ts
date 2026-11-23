@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import {
-  maxHrFromAge,
   hrZones,
   zoneForHr,
   type HrZone,
@@ -12,7 +11,7 @@ import {
   type HeartRateSubscription,
 } from "@/lib/heartRateSource";
 import { appendHeartRateSample } from "@/lib/heartRateSession";
-import { profileAge } from "@/lib/age";
+import { profileMaxHr } from "@/lib/maxHeartRate";
 
 export interface HeartRateState {
   /** Effective max HR: user-measured if set, else the age estimate, else 0. */
@@ -55,18 +54,9 @@ export function useHeartRate(
   const { live = false, enabled = false, sessionId = null, uid = null } = opts;
   const { profile } = useAuth();
 
-  const measured = profile?.maxHeartRate ?? null;
-  // From the year of birth, else an older account's age (App1, Q57).
-  const age = profileAge(profile) ?? 0;
-
-  const { maxHr, maxHrSource } = useMemo(() => {
-    if (measured && measured > 0) {
-      return { maxHr: measured, maxHrSource: "measured" as const };
-    }
-    const est = maxHrFromAge(age);
-    if (est > 0) return { maxHr: est, maxHrSource: "estimate" as const };
-    return { maxHr: 0, maxHrSource: "unknown" as const };
-  }, [measured, age]);
+  // Measured, else the age estimate from the one age the app keeps
+  // (`profileMaxHr`), the reading every zone in the app is drawn on.
+  const { maxHr, source: maxHrSource } = profileMaxHr(profile);
 
   const zones = useMemo(() => hrZones(maxHr), [maxHr]);
 
