@@ -1064,7 +1064,10 @@ export interface UpdateProfileOptions {
   throwOnError?: boolean;
   /** Fields taken off the profile in the same write (`deleteField()`), and
    *  off the profile the app holds: Settings › Profile's Not set takes
-   *  `sex` off this way. A protected field is kept unless `allowProtected`. */
+   *  `sex` off this way. A protected field is kept unless `allowProtected`.
+   *  Safe because `updateProfile` writes directly, where the SDK holds the
+   *  sentinel offline; a write routed through `offlineQueue.ts` stores to
+   *  localStorage, where a `deleteField()` sentinel does not survive. */
   remove?: readonly (keyof UserProfile)[];
 }
 
