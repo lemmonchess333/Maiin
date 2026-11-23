@@ -141,10 +141,18 @@ function setVisibility(state: "visible" | "hidden") {
   fireEvent(document, new Event("visibilitychange"));
 }
 
+/* The phone's clock, held still so that only `later` moves it: read live,
+   the milliseconds a slow runner spends between going to the background
+   and the clock's move count as time away, and two hours read as more. */
+let clockNow = 0;
+function holdClock() {
+  clockNow = Date.now();
+  vi.spyOn(Date, "now").mockImplementation(() => clockNow);
+}
+
 /** The phone's clock moved on by `ms`. */
 function later(ms: number) {
-  const now = Date.now() + ms;
-  vi.spyOn(Date, "now").mockReturnValue(now);
+  clockNow += ms;
 }
 
 const agreementHeading = () =>
@@ -280,6 +288,8 @@ describe("the agreement, on answers picked up cold", () => {
    hours in the background, or two days from I agree. Setup on screen then
    asks for it again, as it does for answers picked up cold. */
 describe("the agreement, with the app left open", () => {
+  beforeEach(holdClock);
+
   it("stands after a short time in the background", () => {
     saveSignedOutDraft(review);
     open();

@@ -27,6 +27,7 @@ import {
   ONBOARDING_MAX_STEP,
   type OnboardingDraft,
 } from "../onboardingDraft";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 const draft: OnboardingDraft = {
   step: 7,
@@ -54,10 +55,10 @@ beforeEach(() => {
   localStorage.clear();
   __resetSetupVisitForTests();
 });
-afterEach(() => {
+afterEach(async () => {
   __resetSetupVisitForTests();
   setVisibility("visible");
-  vi.useRealTimers();
+  await restoreRealTimers();
 });
 
 /** The app going to the background, or coming back. */
