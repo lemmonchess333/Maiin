@@ -86,15 +86,6 @@ export function BadgeEarnedContent({
           border: `1.5px solid ${tier}40`,
         }}
       >
-        {/* Tier wash */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at 50% 32%, ${tier}, transparent 70%)`,
-          }}
-        />
-
         {/* Rotating light rays — bloom in on reveal, behind the badge. */}
         <AnimatePresence>
           {revealed && (

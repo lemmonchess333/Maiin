@@ -27,17 +27,6 @@ export interface HeroPicture {
   motion?: HeroMotionSheet | null;
 }
 
-/** A soft glow of the sport's own colour behind the picture, fading into
- *  the page (§14m rule 13: one hue, into its surface). Its strength is per
- *  theme, so light and dark carry the same colour (rule 15): `.hero-glow`
- *  in components.css. A rest day shares the lift's purple; a run glows in
- *  coral, the colour of its runner's lit muscles. */
-const GLOW: Record<HeroSport, string> = {
-  lift: "hero-glow",
-  run: "hero-glow-run",
-  rest: "hero-glow",
-};
-
 const STRONG: Record<HeroSport, string> = {
   lift: "text-lifting-strong",
   run: "text-running-strong",
@@ -90,8 +79,10 @@ function LineMark({ line, sport }: { line: HeroLine; sport: HeroSport }) {
  * the hero names the screen), its focus and minutes, the session's own
  * picture (at least a tenth of the screen), one line with a number and
  * what it is compared with, and the screen's one full-width filled
- * button, which is neutral. It stands open on the page rather than in a
- * card, so it is dressed differently from the cards under it.
+ * button, which is neutral. It stands open on the flat page rather than in
+ * a card, so it is dressed differently from the cards under it, with no
+ * light behind its picture (§14o): its depth is the headline's size and
+ * the drawing's own contrast.
  *
  * `preview` is the area behind the content: a tap anywhere that is not
  * the action opens the session in Train to look it over. It is a sibling
@@ -254,13 +245,6 @@ export default function SessionHero({
                 : "h-[280px] @max-[20em]:h-[188px]"
             )}
           >
-            <div
-              aria-hidden="true"
-              className={cn(
-                "absolute left-1/2 top-1/2 aspect-square w-full max-w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full",
-                GLOW[sport]
-              )}
-            />
             {picture.motion ? (
               <HeroMotion
                 sheet={picture.motion}

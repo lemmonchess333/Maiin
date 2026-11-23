@@ -286,14 +286,15 @@ describe("ShareCardRenderer", () => {
     const run = card({ template: "run" });
     expect(run.route?.toLowerCase()).toBe("#d4637a");
     expect(run.stage).not.toBe("");
-    // One hue, fading out: a radial light of the route's own colour.
-    expect(run.light).toMatch(/^radial-gradient/);
-    expect(run.light.toLowerCase()).not.toContain("7b72e9");
+    // The stage is flat: no light behind the route or the drawing
+    // (DESIGN_GUIDE §14o), whatever the session or its tone.
+    expect(run.light).toBe("");
     const best = card({ template: "run", tone: "achievement" });
     expect(best.route?.toLowerCase()).toBe("#ffd700");
-    expect(card({ template: "lift" }).light.toLowerCase()).not.toContain(
-      "d4637a"
-    );
+    expect(best.light).toBe("");
+    const lift = card({ template: "lift" });
+    expect(lift.stage).toBe(run.stage);
+    expect(lift.light).toBe("");
   });
 
   it("LIFT heads the card with the session done, its drawing and the reward's sentence", () => {

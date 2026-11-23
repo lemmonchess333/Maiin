@@ -371,9 +371,11 @@ function ActivityCard({
   };
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
-     Runs: the GPS trace becomes a glowing scene with the distance
-     numeral overlaid ON the art (so the km cell drops out of the stats
-     strip below — no double-printing). Lifts: the drawing of the
+     Each stands on the card's own flat surface, ruled off from the post
+     under it, with no tint or gradient behind the art (DESIGN_GUIDE
+     §14o). Runs: the GPS trace with the distance numeral in its panel
+     (so the km cell drops out of the stats strip below, no
+     double-printing). Lifts: the drawing of the
      session's lead lift, its working muscles tinted in the drawing, with
      the volume numeral and PR chip overlaid the same way; a post with no
      drawn lift keeps the anatomy figure with its muscles tinted (the
@@ -436,9 +438,6 @@ function ActivityCard({
       content
     );
 
-  const routeHeroBackground = {
-    background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
-  };
   /* The numeral sits under the route, not over it: laid over the
      drawing, a route starting bottom-left put its start ring on it. */
   const routeFooter = showDistanceOverlay && (
@@ -454,18 +453,12 @@ function ActivityCard({
      room above; one without keeps the drawn route at the hero's height. */
   const renderRouteHero = (heightClass: string) =>
     hasRouteMap(activity?.routeMap) ? (
-      <div
-        className="relative border-b border-border/50"
-        style={routeHeroBackground}
-      >
+      <div className="relative border-b border-border/50">
         <RouteMapHero preview={routePreview!} routeMap={activity?.routeMap} />
         {routeFooter && <div className="pt-3">{routeFooter}</div>}
       </div>
     ) : (
-      <div
-        className={`relative ${heightClass} border-b border-border/50`}
-        style={routeHeroBackground}
-      >
+      <div className={`relative ${heightClass} border-b border-border/50`}>
         <RouteScene preview={routePreview!} footer={routeFooter} />
       </div>
     );
@@ -488,10 +481,6 @@ function ActivityCard({
       {prCount} {prCount === 1 ? "best" : "bests"}
     </span>
   );
-
-  const liftHeroBackground = {
-    background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-  };
 
   /* The lead lift's drawing at the right, the numbers at the left: Home's
      Today card, in the feed. Alone, the drawing takes the middle.
@@ -517,10 +506,7 @@ function ActivityCard({
     );
     if (!flanked) {
       return (
-        <div
-          className="relative h-40 border-b border-border/50 overflow-hidden"
-          style={liftHeroBackground}
-        >
+        <div className="relative h-40 border-b border-border/50 overflow-hidden">
           {drawing(
             "absolute inset-y-3 h-[calc(100%-1.5rem)] inset-x-3 w-[calc(100%-1.5rem)] object-bottom"
           )}
@@ -528,10 +514,7 @@ function ActivityCard({
       );
     }
     return (
-      <div
-        className="flex h-40 gap-3 border-b border-border/50 overflow-hidden @max-[12em]:h-auto"
-        style={liftHeroBackground}
-      >
+      <div className="flex h-40 gap-3 border-b border-border/50 overflow-hidden @max-[12em]:h-auto">
         <div className="my-3 ml-4 flex shrink-0 flex-col-reverse items-start gap-2">
           {showVolumeOverlay && renderVolumeFigure("mt-auto")}
           {showPrChip && renderPrChip("mb-auto")}
@@ -558,7 +541,6 @@ function ActivityCard({
             ? "@max-[14em]:h-auto @max-[14em]:flex-col-reverse @max-[14em]:gap-2 @max-[14em]:py-3"
             : ""
         }`}
-        style={liftHeroBackground}
       >
         <div className="my-3 ml-4 flex min-w-max flex-1 items-end @max-[14em]:my-0 @max-[14em]:flex-none @max-[14em]:empty:hidden">
           {showVolumeOverlay && renderVolumeFigure("")}

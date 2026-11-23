@@ -3,20 +3,19 @@ import { Clock } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { challengeSport, SPORT_ACCENT } from "./challengeSport";
 import MedalArt from "./MedalArt";
 import { rowMedalFace } from "./rowMedal";
 import type { Challenge, ChallengeParticipant } from "./useChallenges";
 
 /**
  * A challenge's header (Soc16): the medal it is working toward, at poster
- * size, in a soft light of its sport, beside the time left and its name.
+ * size, on the card's flat surface, beside the time left and its name.
  *
  * No photograph. A challenge's picture is its own medal, as Strava's, Nike
  * Run Club's and Garmin's are: a stock photo of someone else was the same
  * for every person and said nothing of the goal, where the medal carries
- * the goal's figure and the tier it wins. On dark the colour is a glow
- * behind the medal, not a filled band (DESIGN_GUIDE §14m, rule 14).
+ * the goal's figure and the tier it wins. The medal is the colour; there
+ * is no light behind it and no filled band (DESIGN_GUIDE §14o).
  *
  * Returns null for a challenge that awards no medal (the community goal)
  * or sets no tiers, so the caller draws its own header for those.
@@ -47,14 +46,10 @@ export default function ChallengeMedalBand({
   const distanceUnit = useDistanceUnit();
   const face = rowMedalFace(challenge, progress, liftUnit, distanceUnit);
   if (!face) return null;
-  const accent = SPORT_ACCENT[challengeSport(challenge.metric)];
   return (
     <div
       className="relative overflow-hidden border-b border-border/50"
       data-challenge-medal-band=""
-      style={{
-        background: `radial-gradient(circle at ${medalSize / 2 + 16}px 50%, ${accent}38, transparent 65%)`,
-      }}
     >
       {/* The words keep 9em beside the medal, else they drop under it:
           at large text on a narrow phone a column beside it held a word

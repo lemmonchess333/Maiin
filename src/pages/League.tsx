@@ -4,7 +4,6 @@ import { ArrowDown, ArrowUp, ChevronLeft } from "lucide-react";
 import { useAuth, useUid } from "@/lib/auth";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
@@ -223,7 +222,6 @@ function Standings({
   const shown = ranked.filter((s) => s.uid === uid || !blocked.has(s.uid));
   const firstBelowUp = shown.findIndex((s) => s.rank > up);
   const firstDown = shown.findIndex((s) => s.rank > n - down);
-  const metal = LEAGUE_LIGHT[tier];
 
   return (
     <>
@@ -233,13 +231,6 @@ function Standings({
           "relative overflow-hidden"
         )}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 50% 0%, ${metal}4D, transparent 62%)`,
-          }}
-        />
         <div className="relative flex flex-col items-center gap-2 p-4 text-center">
           <TierBadge tier={tier} size={72} />
           <h2 className="text-h2 font-extrabold leading-tight">

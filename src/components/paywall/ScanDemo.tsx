@@ -1103,10 +1103,9 @@ function FoodScreen({ live }: { live: boolean }) {
           </span>
         </div>
         <div className="space-y-2">
-          {/* The wheel on the page, in its one soft light, with Details
-              under it (FoodHeroCard). */}
+          {/* The wheel on the flat page, with Details under it
+              (FoodHeroCard). */}
           <div className="relative flex flex-col items-center">
-            <div className="food-hero-glow pointer-events-none absolute inset-x-[-16px] top-[-38px] h-[340px]" />
             <BeforeAfter
               live={live}
               className="relative w-full"
