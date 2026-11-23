@@ -571,14 +571,18 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   apps do it; it replaces the filled square beside the field of 23 Sep
   2026, and §14 has the count);
   then the diary, a picture on every row. The wheel, the macro bars and
-  the Details sheet's bars are drawn as what is logged in both the left
-  and the logged view (`loggedFill`), on Home's food card too, so a day
-  with nothing logged is a grey track and going over is a second lap
-  whose head stands clear of the first. The usual foods are ranked for
-  the meal being added to. A food logged today flies to the wheel
-  (`FoodLogFlight`, `nextFlight`): 400 ms in the air, the arc growing
-  from 250 ms, 600 ms in all; never on an edit, a delete, another day or
-  under Reduce Motion. The edit sheet's four meals are on the neutral
+  the Details sheet's bars follow the left and logged switch, as
+  MacroFactor's do (`ringFill`; the owner, 23 Nov 2026, reversing Food11
+  call 5), on Home's food card too: the logged view fills with what is
+  logged from a grey track, the left view starts full and empties, and
+  a tap moves the arc between the two while the figure crossfades.
+  Going over is a second lap in both views, whose head stands clear of
+  a full first lap. The week strip stays what was logged. The usual
+  foods are ranked for the meal being added to. A food logged today
+  flies to the end of the wheel's arc in the view shown (`FoodLogFlight`,
+  `nextFlight`): 400 ms in the air, the arc moving from 250 ms, 600 ms
+  in all; never on an edit, a delete, another day or under Reduce
+  Motion. The edit sheet's four meals are on the neutral
   track, and the segmented control has no filled-pill look.
   Measured on the built page (the pull requests carry each step's
   figures): the hero is 39% of the first screen from 92 pt, its figure
@@ -701,7 +705,8 @@ behaviour.
   plain text from the first paint. A switch that changes what a figure
   means, not what it measures (Food's left and logged), never counts: the
   values between are untrue, so the figure and its words swap with a
-  200 ms crossfade (`SwapFade`), the wheel and the macros together. A log
+  200 ms crossfade (`SwapFade`), the wheel and the macros together, while
+  the arc and the bars move to the other view's fill in 350 ms. A log
   still counts.
 - **Entrance:** a page's header and sections take the framer variants in
   `src/components/ui/pageMotion.ts` (`pageItemVariant` inside

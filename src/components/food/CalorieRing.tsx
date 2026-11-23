@@ -2,14 +2,22 @@ import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useRingMoveCause } from "@/hooks/useRingMoveCause";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import SwapFade from "@/components/ui/SwapFade";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
-import { loggedFill, WHEEL_SIZE, WHEEL_STROKE } from "@/lib/calorieRingFill";
+import {
+  overshootFill,
+  ringFill,
+  VIEW_SWITCH_SEC,
+  WHEEL_SIZE,
+  WHEEL_STROKE,
+  type CalorieRingMode,
+} from "@/lib/calorieRingFill";
 import { THEME } from "@/lib/theme";
 
-export type CalorieRingMode = "left" | "eaten";
+export type { CalorieRingMode };
 
 interface CalorieRingProps {
   consumed: number;
@@ -115,17 +123,15 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  /* The arc is what is logged, in both modes (Food11 call 5): it grows
-     as food is logged, and nothing logged is the bare grey track. Only
-     the number and its label follow the left and logged switch
-     (`loggedFill` has the reasons). */
-  const fillRatio = loggedFill(consumed, target);
+  /* The arc follows the left and logged switch, as MacroFactor's does
+     (`ringFill` has the reasons): in the logged view it grows as food is
+     logged, from the bare grey track; in the left view it is full with
+     nothing logged and empties as food is logged. */
+  const fillRatio = ringFill(consumed, target, mode);
   const strokeDashoffset = CIRCUMFERENCE * (1 - fillRatio);
 
   // Overshoot lap, in both modes, capped at one extra lap.
-  const overshoot = isOver ? consumed - target : 0;
-  const overshootRatio =
-    isOver && target > 0 ? Math.min(overshoot / target, 1) : 0;
+  const overshootRatio = overshootFill(consumed, target);
   const overlapOffset = CIRCUMFERENCE * (1 - overshootRatio);
   /* Where the sliver's dot sits: the lap's length along the ring, and the
      gap more. A negative offset moves a dash forward. */
@@ -133,6 +139,21 @@ export default function CalorieRing({
 
   const ringDurationSec = ringDurationMs / 1000;
   const ringDelaySec = ringDelayMs / 1000;
+
+  /* A tap on the switch moves the arc to the other view's fill at once
+     and briskly; food moves it on the page's timing (`useRingMoveCause`). */
+  const arcTransition =
+    useRingMoveCause(mode, consumed, target) === "switch"
+      ? {
+          duration: reduce ? 0 : VIEW_SWITCH_SEC,
+          ease: RING_EASE,
+          delay: 0,
+        }
+      : {
+          duration: reduce ? 0 : ringDurationSec,
+          ease: RING_EASE,
+          delay: reduce ? 0 : ringDelaySec,
+        };
   /* The second lap takes as long as the first and starts a moment after
      it, so going over reads as filled, then past, inside the same log
      moment. It ran 1.5 s from 0.6 s whatever the first lap took, so a
@@ -215,20 +236,19 @@ export default function CalorieRing({
                 strokeDashoffset: settled ? strokeDashoffset : CIRCUMFERENCE,
               }}
               animate={{ strokeDashoffset }}
-              transition={{
-                duration: reduce ? 0 : ringDurationSec,
-                ease: RING_EASE,
-                delay: reduce ? 0 : ringDelaySec,
-              }}
+              transition={arcTransition}
             />
           )}
           {/* Overshoot lap — in BOTH modes when over target, so the
               logged view does not sit at 100% indistinguishable from
-              "hit the target exactly". It starts a moment after the
-              main ring (`lapTransition`). */}
+              "hit the target exactly", and the left view's empty first
+              lap still shows how far over the day is. It starts a moment
+              after the main ring (`lapTransition`). */}
           {/* The sliver ahead of the second lap's head (LAP_GAP). It
-              travels with the head: the same transition. */}
-          {isOver && (
+              travels with the head: the same transition. Only over a
+              full first lap: on the left view's empty one there is
+              nothing to keep the head apart from. */}
+          {isOver && !isLeftMode && (
             <motion.circle
               data-lap-gap=""
               cx={CENTER}
