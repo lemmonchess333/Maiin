@@ -15,18 +15,24 @@ import {
  * Your top three, on the run finish (Run29): the distances this run placed
  * 1st to 3rd at among your own times, each with its disc, its time and
  * your best, and one sentence on a 2nd or 3rd ("Ran 5K in 25:41, your 2nd
- * fastest."). A 1st is the reward above it (`finishMoment`), so it says no
- * sentence here. A distance run for the first time has no row. Nothing for
- * a run that placed nowhere.
+ * fastest."). A finish says one reward sentence (DESIGN_GUIDE rule 30):
+ * when the hero above says one (`rewardAbove`: a first 10K, a streak, the
+ * longest run, a best), the card shows its rows and no sentence of its
+ * own. A 1st is always the reward above it (`finishMoment`). A distance
+ * run for the first time has no row. Nothing for a run that placed
+ * nowhere.
  */
 export default function TopThreeCard({
   placings,
+  rewardAbove = false,
 }: {
   placings: readonly RunPlacing[];
+  /** The hero above already says a reward sentence. */
+  rewardAbove?: boolean;
 }) {
   const headingId = useId();
   if (placings.length === 0) return null;
-  const sentence = placingSentence(placings);
+  const sentence = rewardAbove ? null : placingSentence(placings);
   return (
     <Card
       as="section"
