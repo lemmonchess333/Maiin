@@ -41,6 +41,14 @@ import { MAX_RACE_CLIMB_M } from "@/features/program/runPlanTiming";
 import { logger } from "@/lib/logger";
 import { readString, remove, writeJson } from "@/lib/localStore";
 import {
+  DRAFT_VERSION,
+  SIGNED_OUT_DRAFT_TTL_MS,
+  SIGNED_OUT_OWNER,
+  forgetSignedOutDraft,
+  readSignedOutDraftRecord,
+  writeSignedOutDraftRecord,
+} from "@/lib/signedOutDraft";
+import {
   VALID_EQUIPMENT,
   VALID_RACE_DISTANCE,
   type Equipment,
@@ -51,8 +59,9 @@ import {
 // draft missing it, so the bump doesn't change the OUTCOME for in-flight
 // drafts — it makes the discard explicit and self-documenting rather than
 // looking like a validation failure, which is what this module's contract
-// says a schema change should do.
-export const DRAFT_VERSION = 2;
+// says a schema change should do. Kept in `signedOutDraft.ts`, which the
+// e2e rig can load.
+export { DRAFT_VERSION };
 
 /** Stable stored step IDs, by the draft's step number: they survive the
  *  chapter redesign (the old preview, 6, merges into the review, 7), and
@@ -66,10 +75,25 @@ export const ONBOARDING_STEP_IDS = [
   "about",
   "preview",
   "confirm",
+  // Priv1 call 1: the agreement to store health details, asked before the
+  // first body question. Last here so every other step keeps its number.
+  "health",
 ] as const;
+
+/** The highest stored step number, which a resumed draft may not pass. */
+export const ONBOARDING_MAX_STEP = ONBOARDING_STEP_IDS.length - 1;
+
+/** The step that asks for the agreement to store health details. */
+export const HEALTH_CONSENT_STEP = ONBOARDING_STEP_IDS.indexOf("health");
 export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
+
+/* A6: setup is answered before there is an account, and its answers wait
+   on the device under one key (`signedOutDraft.ts`) until Save your plan
+   makes one. They then move to that account's own key
+   (`adoptSignedOutDraft`). Nothing of them reaches the server before the
+   account exists. */
 
 /* Runtime vocabularies for the unions Onboarding.tsx declares locally.
  * TypeScript keeps these honest at the wire-up: Onboarding assigns
@@ -215,6 +239,11 @@ export interface OnboardingDraft {
    *  once the phone allowed notifications, and its "HH:mm". */
   reminderOn?: boolean;
   reminderTime?: string;
+  /** Priv1 call 1: the version of the health-details wording the person
+   *  agreed to on this step of this setup. Kept on this device only until
+   *  the plan is saved, when `completeOnboarding` stamps the agreement on
+   *  the account. Absent until they agree, and cleared by Not now. */
+  healthConsentVersion?: number;
 }
 
 interface DraftEnvelope {
@@ -320,20 +349,49 @@ export function isValidDraft(
     (d.reminderOn === undefined || typeof d.reminderOn === "boolean") &&
     (d.reminderTime === undefined ||
       (typeof d.reminderTime === "string" &&
-        /^\d{2}:\d{2}$/.test(d.reminderTime)))
+        /^\d{2}:\d{2}$/.test(d.reminderTime))) &&
+    (d.healthConsentVersion === undefined ||
+      (typeof d.healthConsentVersion === "number" &&
+        Number.isInteger(d.healthConsentVersion) &&
+        d.healthConsentVersion > 0))
   );
+}
+
+function envelopeOf(owner: string, draft: OnboardingDraft): DraftEnvelope {
+  return { v: DRAFT_VERSION, uid: owner, savedAt: Date.now(), draft };
+}
+
+/** The draft in a stored envelope, or null when it is not one this owner
+ *  may resume: unparseable, another version, another owner, past its TTL
+ *  or with any invalid field. */
+function draftIn(
+  raw: string,
+  owner: string,
+  maxStep: number,
+  ttlMs: number = DRAFT_TTL_MS
+): OnboardingDraft | null {
+  try {
+    const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
+    if (
+      !envelope ||
+      envelope.v !== DRAFT_VERSION ||
+      envelope.uid !== owner ||
+      typeof envelope.savedAt !== "number" ||
+      Date.now() - envelope.savedAt > ttlMs ||
+      !isValidDraft(envelope.draft, maxStep)
+    )
+      return null;
+    return envelope.draft;
+  } catch (err) {
+    logger.warn("[OnboardingDraft] load failed", err);
+    return null;
+  }
 }
 
 /** Persist the draft. Best-effort — storage failures never surface. */
 export function saveOnboardingDraft(uid: string, draft: OnboardingDraft): void {
   if (!uid) return;
-  const envelope: DraftEnvelope = {
-    v: DRAFT_VERSION,
-    uid,
-    savedAt: Date.now(),
-    draft,
-  };
-  if (!writeJson(keyFor(uid), envelope)) {
+  if (!writeJson(keyFor(uid), envelopeOf(uid, draft))) {
     logger.warn("[OnboardingDraft] save failed");
   }
 }
@@ -350,29 +408,61 @@ export function loadOnboardingDraft(
   if (!uid) return null;
   const raw = readString(keyFor(uid));
   if (!raw) return null;
-  try {
-    const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
-    if (
-      !envelope ||
-      envelope.v !== DRAFT_VERSION ||
-      envelope.uid !== uid ||
-      typeof envelope.savedAt !== "number" ||
-      Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
-      !isValidDraft(envelope.draft, maxStep)
-    ) {
-      remove(keyFor(uid));
-      return null;
-    }
-    return envelope.draft;
-  } catch (err) {
-    logger.warn("[OnboardingDraft] load failed", err);
-    remove(keyFor(uid));
-    return null;
-  }
+  const draft = draftIn(raw, uid, maxStep);
+  if (!draft) remove(keyFor(uid));
+  return draft;
 }
 
 /** Remove the draft — called once onboarding completes successfully. */
 export function clearOnboardingDraft(uid: string): void {
   if (!uid) return;
   if (!remove(keyFor(uid))) logger.warn("[OnboardingDraft] clear failed");
+}
+
+/** Persist setup's answers given signed out (A6). Best-effort. */
+export function saveSignedOutDraft(draft: OnboardingDraft): void {
+  if (!writeSignedOutDraftRecord(envelopeOf(SIGNED_OUT_OWNER, draft))) {
+    logger.warn("[OnboardingDraft] signed-out save failed");
+  }
+}
+
+/** Setup's answers given signed out, held to the same checks as an
+ *  account's draft; one that fails them is removed. */
+export function loadSignedOutDraft(maxStep: number): OnboardingDraft | null {
+  const raw = readSignedOutDraftRecord();
+  if (!raw) return null;
+  const draft = draftIn(
+    raw,
+    SIGNED_OUT_OWNER,
+    maxStep,
+    SIGNED_OUT_DRAFT_TTL_MS
+  );
+  if (!draft) forgetSignedOutDraft();
+  return draft;
+}
+
+/** Forget setup's signed-out answers: they were moved to an account, the
+ *  account already had a plan, or the person left setup at the agreement. */
+export function clearSignedOutDraft(): void {
+  if (!forgetSignedOutDraft())
+    logger.warn("[OnboardingDraft] signed-out clear failed");
+}
+
+/**
+ * The account just made from Save your plan takes the answers given signed
+ * out: they move to its own key and leave the device's, and the account's
+ * draft is returned. With none waiting, the account's own draft (if any).
+ * Safe to call twice: the second call finds them already moved.
+ */
+export function adoptSignedOutDraft(
+  uid: string,
+  maxStep: number
+): OnboardingDraft | null {
+  if (!uid) return null;
+  const waiting = loadSignedOutDraft(maxStep);
+  if (!waiting) return loadOnboardingDraft(uid, maxStep);
+  saveOnboardingDraft(uid, waiting);
+  // The device's copy goes only once the account's has landed.
+  if (loadOnboardingDraft(uid, maxStep)) clearSignedOutDraft();
+  return waiting;
 }

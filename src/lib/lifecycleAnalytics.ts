@@ -42,19 +42,33 @@
  * finish (closed after Apple's sheet, or a trial that turned paid with the
  * app shut) still counts, and counts once.
  *
- * Read the start of the funnel in that order: auth_screen_viewed (welcome,
- * `returningDevice` false) → auth_screen_viewed (sign_up) →
- * signup_completed → the onboarding steps → onboarding_completed. Someone
- * who closes the app part-way shows as the step they reached and nothing
- * after it: a phone does not say an app was closed for good rather than
- * paused, so `onboarding_abandoned` is sent only for the exit the app can
- * see, signing out of setup (A1b pin 4).
+ * Read the start of the funnel in that order (A6, sign-up at the end of
+ * setup): welcome_viewed (once a phone) → setup_started (once a phone) →
+ * the onboarding steps → auth_screen_viewed (save_plan) → account_created
+ * → onboarding_completed → trial_offer_viewed → trial_started.
+ * `auth_screen_viewed` is sent on every showing of a signed-out screen, the
+ * first-run events once (`firstRunEvents.ts`). Someone who closes the app
+ * part-way shows as the step they reached and nothing after it: a phone
+ * does not say an app was closed for good rather than paused, so
+ * `onboarding_abandoned` is sent only for the exit the app can see,
+ * signing out of setup (A1b pin 4).
  */
 import { emit } from "./analyticsClient";
+import type { RunMode } from "@/features/program/runModeResolution";
+import type { GuideHintId } from "./firstGuide";
+import type { ONBOARDING_STEP_IDS, OnboardingDraft } from "./onboardingDraft";
+import type { WatchRunCommandRejection } from "./watchRunBridge";
 
 export type LifecycleEvent =
   | "auth_screen_viewed"
-  | "signup_completed"
+  /** A6's first-run events (`firstRunEvents.ts`): the welcome and setup's
+   *  first question, once a phone, and the trial offer once an account. */
+  | "welcome_viewed"
+  | "setup_started"
+  | "trial_offer_viewed"
+  /** The account is made, with its method: once an account, where its
+   *  profile is first written (`auth.tsx`). Was `signup_completed`. */
+  | "account_created"
   | "email_verified"
   | "onboarding_step_viewed"
   | "onboarding_step_completed"
@@ -135,25 +149,32 @@ export type ReturnChoice =
   | "easy_run";
 
 export interface LifecycleEventMetadata {
-  /** auth_screen_viewed: which signed-out screen was shown. */
-  screen?: "welcome" | "sign_in" | "sign_up";
-  /** auth_screen_viewed: whether an account has signed in on this device
-   *  before. Every signed-out visit opens on the welcome (DS9 STATUS), so
-   *  the funnel's first rung is the welcome with this false. */
+  /** auth_screen_viewed: which signed-out screen was shown. `save_plan` is
+   *  Save your plan, where setup makes the account (A6). */
+  screen?: "welcome" | "sign_in" | "save_plan";
+  /** auth_screen_viewed, welcome_viewed: whether an account has signed in
+   *  on this device before. Every signed-out visit opens on the welcome
+   *  (DS9 STATUS), so the funnel's first rung is the welcome with this
+   *  false. */
   returningDevice?: boolean;
-  /** signup_completed: which auth provider created the account. */
+  /** setup_started: whether an account was signed in when setup began (a
+   *  new Google or Apple account from the welcome's Sign in), or not (A6's
+   *  setup before the account). */
+  signedIn?: boolean;
+  /** account_created: which auth provider created the account. */
   method?: SignupMethod;
   /** onboarding_step_* and onboarding_abandoned: stable step identifier
    *  (non-PII), from ONBOARDING_STEP_IDS. */
-  step?: string;
+  step?: (typeof ONBOARDING_STEP_IDS)[number];
   /** onboarding_step_*: zero-based step position. */
   stepIndex?: number;
-  /** onboarding_completed: chosen goal enum (lose / gain / maintain / perform). */
-  primaryGoal?: string;
+  /** onboarding_completed: the goal picked from setup's list. */
+  primaryGoal?: OnboardingDraft["primaryGoal"];
   /** onboarding_completed: training days per week. */
   daysPerWeek?: number;
-  /** onboarding_completed: resolved run mode (freeform / race_prep). */
-  runMode?: string;
+  /** onboarding_completed: resolved run mode (freeform / race_prep /
+   *  starter). */
+  runMode?: RunMode;
   /** session_started, first_session_saved, week_4_returned: which
    *  discipline. */
   kind?: "lift" | "run";
@@ -191,8 +212,9 @@ export interface LifecycleEventMetadata {
    * read as a regression signal rather than as a metric.
    */
   count?: number;
-  /** return_surface_shown / return_choice: which surface was shown. */
-  surface?: ReturnSurface;
+  /** return_surface_shown / return_choice: which surface was shown. Not
+   *  `surface`: `emit` writes the module's name there, over anything sent. */
+  returnSurface?: ReturnSurface;
   /** return_choice: what the user picked. */
   choice?: ReturnChoice;
   /** checkin_answered: 1-5, "did this week's plan make sense?". */
@@ -203,7 +225,7 @@ export interface LifecycleEventMetadata {
   weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
   weekResetOutcome?: "applied" | "queued";
   /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
-  hint?: string;
+  hint?: GuideHintId;
   /** run_completed: the Watch companion joined the run. Absent otherwise. */
   watchCompanion?: boolean;
   /** run_completed, a Watch run: how much of its moving time the heart rate
@@ -213,8 +235,8 @@ export interface LifecycleEventMetadata {
   watchAction?: "pause" | "resume" | "end";
   /** watch_command_answered: whether the phone applied it. */
   accepted?: boolean;
-  /** watch_command_answered: why not (`WatchRunCommandRejection`). */
-  rejection?: string;
+  /** watch_command_answered: why not. */
+  rejection?: WatchRunCommandRejection;
   /** watch_command_answered: a retransmission, answered with the first
    *  answer and applied no second time. */
   repeated?: boolean;

@@ -546,6 +546,8 @@ function WorkoutDetailContent() {
           date: shortDate,
           // Shared to the feed: the card links to the post while public.
           postId: sharedActivityId ?? undefined,
+          // Any other card's page goes with the workout (Soc17).
+          workoutId,
           totalVolumeKg: tonnage,
           totalReps,
           exerciseCount: exercises.length,

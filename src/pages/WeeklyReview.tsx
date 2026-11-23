@@ -179,7 +179,7 @@ function YourWeek({
             {nutrition.retuned && (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Sparkles
-                  className="size-3.5 text-lifting-strong"
+                  className="size-3.5 text-foreground"
                   aria-hidden="true"
                 />
                 Your expenditure estimate updated this week.
@@ -221,7 +221,7 @@ function YourWeek({
               <button
                 type="button"
                 onClick={onOpenPhotos}
-                className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-lifting-strong"
+                className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold link-standalone"
               >
                 Progress photos
               </button>

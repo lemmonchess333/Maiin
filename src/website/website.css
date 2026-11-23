@@ -138,7 +138,9 @@
 }
 
 /* The light behind a drawing or a screen takes its sport's colour from
-   `data-light` (lifting, running, nutrition, primary). */
+   `data-light` (lifting, running, nutrition, primary). "primary" is the
+   brand's light, the purple of the mark: the app's `--primary` is its
+   neutral chrome, so the website names the purple itself. */
 [data-light="lifting"] {
   --art-light: var(--lifting);
 }
@@ -149,7 +151,7 @@
   --art-light: var(--nutrition);
 }
 [data-light="primary"] {
-  --art-light: var(--primary);
+  --art-light: var(--lifting);
 }
 
 /* ─── Home's hero: the welcome's photographs ──────────────────

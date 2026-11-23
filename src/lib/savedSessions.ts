@@ -90,11 +90,27 @@ export async function fetchSaved<T, W>(
   uid: string,
   window: W
 ): Promise<T[]> {
+  return (await fetchSavedRead(source, uid, window)).items;
+}
+
+/**
+ * `fetchSaved`, saying as well whether any of its queries was answered
+ * from this phone's cache rather than the server: a cached answer can be
+ * missing sessions saved elsewhere.
+ */
+export async function fetchSavedRead<T, W>(
+  source: SavedSessionSource<T, W>,
+  uid: string,
+  window: W
+): Promise<{ items: T[]; fromCache: boolean }> {
   const snapshots = await Promise.all(
     sessionQueries(source, uid, window).map((q) => getDocs(q))
   );
   const loaded = source
     .parseDocs(uniqueSessionDocs(snapshots.map((snap) => snap.docs)))
     .filter((item) => source.inWindow(item, window));
-  return source.withQueued(uid, loaded, window);
+  return {
+    items: source.withQueued(uid, loaded, window),
+    fromCache: snapshots.some((snap) => snap.metadata?.fromCache === true),
+  };
 }

@@ -23,6 +23,7 @@ const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const communityGoal = require("../lib/communityGoal");
 const pulse = require("../lib/pulse");
 const segments = require("../lib/segments");
+const sharedCards = require("../lib/sharedCards");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -90,15 +91,27 @@ beforeEach(() => {
   vi.spyOn(segments, "removeRunEfforts").mockImplementation(async () => {
     reversed.push("segments");
   });
+  // Soc17 call 1: the pages of the cards shared from the session.
+  vi.spyOn(sharedCards, "removeCardsShowing").mockImplementation(async () => {
+    reversed.push("shared cards");
+    return 0;
+  });
 });
 
 /* A run also comes off the community goal and takes its segment efforts
    (Run26 call 3); a workout has neither. Both come off the live pulse
-   (Soc15). */
+   (Soc15), and both take the pages of the cards shared from them (Soc17). */
 const all = (name) =>
   name === "onRunDeleted"
-    ? ["challenges", "community goal", "lifetime", "pulse", "segments"]
-    : ["challenges", "lifetime", "pulse"];
+    ? [
+        "challenges",
+        "community goal",
+        "lifetime",
+        "pulse",
+        "segments",
+        "shared cards",
+      ]
+    : ["challenges", "lifetime", "pulse", "shared cards"];
 const without = (name, step) => all(name).filter((s) => s !== step);
 
 afterEach(() => vi.restoreAllMocks());
@@ -138,7 +151,13 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
         new Error("ABORTED")
       );
       await expect(deliver()).rejects.toThrow(/community goal failed/);
-      expect(reversed).toEqual(["challenges", "lifetime", "pulse", "segments"]);
+      expect(reversed).toEqual([
+        "challenges",
+        "lifetime",
+        "pulse",
+        "segments",
+        "shared cards",
+      ]);
     }
   );
 
@@ -154,6 +173,19 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
         sessionId: _name === "onRunDeleted" ? "r1" : "w1",
         // The event's own time, the same on every redelivery.
         nowMs: Date.parse(NOW),
+      })
+    );
+  });
+
+  it("fails the event when the shared cards' pages cannot be taken, after the others land", async () => {
+    sharedCards.removeCardsShowing.mockRejectedValueOnce(new Error("ABORTED"));
+    await expect(deliver()).rejects.toThrow(/shared cards failed/);
+    expect(reversed).toEqual(without(_name, "shared cards"));
+    expect(sharedCards.removeCardsShowing).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: _name === "onRunDeleted" ? "runId" : "workoutId",
+        id: _name === "onRunDeleted" ? "r1" : "w1",
+        uid: UID,
       })
     );
   });

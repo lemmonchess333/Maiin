@@ -99,6 +99,7 @@ export function nutritionRows({
   showSeries,
   targetCalories,
   targetProtein,
+  proteinColor = THEME.macros.protein,
 }: {
   daysLogged: number;
   avgCalories: number;
@@ -109,6 +110,9 @@ export function nutritionRows({
   showSeries: boolean;
   targetCalories: number;
   targetProtein: number;
+  /** Protein's colour in the theme on screen (`useMacroPalette`): the
+   *  same colour Progress › Food draws it in (DS10 call 3). */
+  proteinColor?: string;
 }): TrendRow[] {
   if (daysLogged === 0) return [];
   const rows: TrendRow[] = [
@@ -141,7 +145,8 @@ export function nutritionRows({
       value: String(Math.round(avgProtein)),
       unit: "g",
       series: showSeries ? proteinSeries : undefined,
-      color: THEME.semantic.nutrition,
+      // Protein is protein's colour, as on its Food page (DS10 call 3).
+      color: proteinColor,
       page: "food",
     });
   }

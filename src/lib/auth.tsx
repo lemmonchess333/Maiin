@@ -41,6 +41,7 @@ import {
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
+import { signedOut as setupSignedOut } from "./setupSave";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { onAppResume } from "./appResume";
@@ -53,6 +54,7 @@ import {
 } from "@/lib/pushNotifications";
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { useAccountUsageAnalytics } from "@/hooks/useAccountUsageAnalytics";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { clampDisplayName } from "@/lib/displayNameLimit";
 import {
@@ -66,6 +68,7 @@ import {
 import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import type { ProChange } from "@/lib/proChange";
+import type { EmailConsentRecord } from "@/lib/emailConsent";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
@@ -208,6 +211,12 @@ export interface UserProfileCore {
     firstSession?: LaunchMilestone;
     week4Return?: LaunchMilestone;
   };
+  /** App1 Q55: the person's answer for each email they can choose (the
+   *  weekly review, and the emails after a break), with when, where and
+   *  to which words. Server-owned: setup, `setEmailConsent` and the
+   *  unsubscribe link write it (`src/lib/emailConsent.ts`). Absent means
+   *  never asked, which is no. */
+  emailConsent?: EmailConsentRecord;
 }
 
 /** One launch milestone: when, which sport, and how many whole days after
@@ -443,6 +452,11 @@ export interface UserProfileSocial {
    *  Privacy → Approve followers. Absent means yes, the default the rules
    *  apply too (`approvesFollowers` in firestore.rules). */
   approveFollowers?: boolean;
+  /** Share usage analytics (Priv1 call 2): Settings → Social & privacy.
+   *  false when the person turned Google Analytics off; absent means on.
+   *  The account's answer wins on each device it signs in on, and the
+   *  device keeps a copy for its next launch (src/lib/usageAnalytics.ts). */
+  usageAnalytics?: boolean;
   /** Whether this person is in the weekly leagues (Soc15 call 3): absent
    *  = never joined, false = left. Server-written by setLeagueSharing,
    *  never by the client. */
@@ -617,6 +631,17 @@ export interface UserProfileOnboarding {
    * firestore.rules allowedUserFields() + profileSanitizer.js + registry.
    */
   trainingWhy?: string;
+  /**
+   * Priv1 call 1: the person's agreement to Tropos storing their health
+   * details, and when they gave it (`src/lib/healthConsent.ts`). Written by
+   * `completeOnboarding` at the end of setup, or by the gate an account set
+   * up before the question meets on its next open. `at` is the server's
+   * time, held as null on this device until a write made offline lands.
+   */
+  healthDataConsent?: {
+    at: { toDate(): Date } | null;
+    version: number;
+  };
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */
@@ -901,7 +926,7 @@ interface AuthContextType {
    */
   updateProfile: (
     data: Partial<UserProfile>,
-    options?: { allowProtected?: boolean; throwOnError?: boolean }
+    options?: UpdateProfileOptions
   ) => Promise<UpdateProfileResult>;
   /**
    * Save answers to "Share sessions automatically?" on the account
@@ -1033,6 +1058,18 @@ const PUBLIC_MIRRORED_FIELDS = [
   "photoURL",
   "athleteType",
 ] as const;
+
+export interface UpdateProfileOptions {
+  allowProtected?: boolean;
+  throwOnError?: boolean;
+  /** Fields taken off the profile in the same write (`deleteField()`), and
+   *  off the profile the app holds: Settings › Profile's Not set takes
+   *  `sex` off this way. A protected field is kept unless `allowProtected`.
+   *  Safe because `updateProfile` writes directly, where the SDK holds the
+   *  sentinel offline; a write routed through `offlineQueue.ts` stores to
+   *  localStorage, where a `deleteField()` sentinel does not survive. */
+  remove?: readonly (keyof UserProfile)[];
+}
 
 /**
  * The meal, workout and streak reminders are scheduled on the device for the
@@ -1220,6 +1257,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     syncDarkMode(profile?.darkMode ?? true);
   }, [profile?.darkMode]);
 
+  // Share usage analytics (Priv1): the account's answer wins on this device.
+  useAccountUsageAnalytics(profile);
+
   useEffect(() => {
     let isMounted = true;
     let stopSubscriptionUpdates = () => {};
@@ -1267,6 +1307,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setProfileReadFailed(false);
         setLoading(true);
+      }
+      // The run history the run placings hold is the outgoing account's:
+      // let go of it on a sign-out or a switch, however it came about.
+      // Loaded only then, so it stays off the cold start.
+      if (previousUid !== null && previousUid !== uid) {
+        void import("./runPlacingHistory")
+          .then(({ forgetPlacingHistory }) => forgetPlacingHistory())
+          .catch(() => {});
       }
       // The Watch bridge can retain an active run, pending controls and raw
       // heart rate while the web view is suspended. Clear those native values
@@ -1580,7 +1628,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (auth.currentUser?.uid !== uid) return;
       if (profileWritten) setProfile(newProfile);
-      trackLifecycle("signup_completed", { method: "email" });
+      trackLifecycle("account_created", { method: "email" });
       // The verification link goes out now, so it is waiting in the inbox
       // by the time the plan is made; onboarding no longer stops for it.
       // A failed send is not the sign-up's failure: Home's verify notice
@@ -1622,7 +1670,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await writeNewProfileDocs(uid, newProfile);
         if (auth.currentUser?.uid !== uid) return;
         setProfile(newProfile);
-        trackLifecycle("signup_completed", { method });
+        trackLifecycle("account_created", { method });
       } else {
         if (auth.currentUser?.uid !== uid) return;
         const data = profileDoc.data();
@@ -1797,6 +1845,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // The person chose to leave, so they know where an email change is
     // going; the next person on this device should not be shown it.
     clearEmailChange();
+    // Nor setup's answers given signed out on it, which carry a person's
+    // agreement to store health details (A6).
+    setupSignedOut();
     // Reset to the DARK default so the next user starts dark unless their
     // Firestore profile explicitly says light. (Clearing the stored key lets
     // init.js / the next profile load own the value; the signed-out auth
@@ -1809,7 +1860,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = useCallback(
     async (
       data: Partial<UserProfile>,
-      options?: { allowProtected?: boolean; throwOnError?: boolean }
+      options?: UpdateProfileOptions
     ): Promise<UpdateProfileResult> => {
       if (!user) return { ok: false, error: new Error("not-authenticated") };
       // Capture the identity this write belongs to; a render-captured callback
@@ -1829,6 +1880,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
         ) as Partial<UserProfile>;
       }
+      const remove = (options?.remove ?? []).filter(
+        (key) =>
+          options?.allowProtected ||
+          !(PROTECTED_FIELDS as readonly string[]).includes(key)
+      );
 
       // If any publicly-mirrored field is in the patch, commit both writes in a
       // single batch so the main user doc and the public projection never drift.
@@ -1837,6 +1893,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (key in writeData) {
           const value = (writeData as Record<string, unknown>)[key];
           publicPatch[key] = value ?? null;
+        } else if (remove.includes(key)) {
+          publicPatch[key] = null;
         }
       }
       /* When displayName is in the patch, also write displayNameLower —
@@ -1856,7 +1914,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // default (most callers want it) — opt-in `throwOnError` for
       // call sites that want to handle the error themselves.
       try {
-        const { doc, writeBatch, setDocGuarded, db } = await firestore();
+        const { doc, writeBatch, setDocGuarded, db, deleteField } =
+          await firestore();
+        const docData =
+          remove.length > 0
+            ? {
+                ...writeData,
+                ...Object.fromEntries(
+                  remove.map((key) => [key, deleteField()])
+                ),
+              }
+            : writeData;
         let write: Promise<void>;
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
@@ -1865,7 +1933,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // free; the batch path has no guarded equivalent, so apply the
           // same firestoreWrite sanitiser (stripUndefined) by hand here.
           const batch = writeBatch(db);
-          batch.set(doc(db, "users", writeUid), stripUndefined(writeData), {
+          batch.set(doc(db, "users", writeUid), stripUndefined(docData), {
             merge: true,
           });
           batch.set(
@@ -1875,7 +1943,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           write = batch.commit();
         } else {
-          write = setDocGuarded(doc(db, "users", writeUid), writeData, {
+          write = setDocGuarded(doc(db, "users", writeUid), docData, {
             merge: true,
           });
         }
@@ -1905,6 +1973,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile((prev) => {
           if (!prev || prev.uid !== writeUid) return prev;
           const updated = { ...prev, ...data };
+          for (const key of remove) delete updated[key];
           if ("darkMode" in data) syncDarkMode(updated.darkMode);
           return updated;
         });

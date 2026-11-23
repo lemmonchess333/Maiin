@@ -47,7 +47,7 @@ export type PaywallSource =
   | "feature_gate"
   | "settings"
   | "adaptive_summary"
-  /** The post-onboarding offer: /upgrade opened by onboarding's save. */
+  /** The trial offer that ends setup (`TrialOffer`, A6 call 2). */
   | "onboarding"
   /** The Food page's photo-logging strip (gated tier). */
   | "food_page"

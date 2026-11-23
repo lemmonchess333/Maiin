@@ -2,7 +2,11 @@ import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { haptic } from "@/lib/haptic";
-import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type {
+  UserProfile,
+  UpdateProfileOptions,
+  UpdateProfileResult,
+} from "@/lib/auth";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
@@ -17,26 +21,23 @@ import {
   birthYearProblem,
   parseBirthYear,
 } from "@/lib/age";
+import { isSex, type Sex } from "@/lib/sex";
 
-type Sex = "male" | "female";
-
-/* The sex the calorie maths uses (`sex`), as setup asks it. This was a
-   Gender control writing `gender`, which nothing reads: a change here never
-   reached a target (App1's first settings fault, grill Q22). Gender as an
-   identity field is gone; an account set up before `sex` existed shows its
-   old answer until it picks one, and `gender` is never written. */
-const SEX_OPTIONS: { value: Sex; label: string }[] = [
+/* The sex the calorie maths uses (`sex`), as setup asks it (App1, grill
+   Q22). Choosing one writes setup's `gender` with it, so the two answers
+   never disagree. With no `sex` stored the maths take the midpoint of the
+   male and female figures (`src/lib/sex.ts`), so the control shows Not set,
+   whatever an older `gender` says. Not set is a choice too, as in Apple
+   Health (owner, 22 November 2026): it takes `sex` off and stores setup's
+   "Prefer not to say" in `gender`, so an answer can be taken back. */
+type SexChoice = Sex | "unset";
+const SEX_OPTIONS: { value: SexChoice; label: string }[] = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
+  { value: "unset", label: "Not set" },
 ];
-
-function sexShown(profile: UserProfile): Sex | undefined {
-  if (profile.sex) return profile.sex;
-  if (profile.gender === "male" || profile.gender === "female") {
-    return profile.gender;
-  }
-  return undefined;
-}
+/** Setup's `gender` for "Prefer not to say" (`DRAFT_GENDERS`). */
+const NO_ANSWER_GENDER = "unspecified";
 
 /* Body metrics are STORED in kg and cm and shown in the unit chosen under
    Units & appearance. These fields showed kg and cm whatever was chosen. */
@@ -62,7 +63,10 @@ interface ProfileInfoSectionProps {
   profile: UserProfile;
   name: string;
   setName: (v: string) => void;
-  updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  updateProfile: (
+    data: Partial<UserProfile>,
+    options?: UpdateProfileOptions
+  ) => Promise<UpdateProfileResult>;
   /** Re-reads the profile once a weight saved here has been written. */
   refreshProfile?: () => Promise<void>;
   /** Set1.2 — skip the AccordionSection shell when rendered inside a
@@ -132,26 +136,38 @@ export default function ProfileInfoSection({
     String(feetInches(savedCm).inches)
   );
 
+  const sexShown: SexChoice = isSex(profile.sex) ? profile.sex : "unset";
   /* A new sex changes the targets, which are stored, so they are worked
      out again with it through the recipe Settings → Nutrition saves
      (`buildGoalWeightPersistPayload`), as a change of age there does. An
      account with no goal weight keeps its targets until it sets one: the
      recipe would read it as maintaining and could undo a cut set up
      before goal weights existed. */
-  async function saveSex(next: Sex) {
-    if (next === profile.sex) return;
+  async function saveSex(next: SexChoice) {
+    if (next === sexShown) return;
+    const sex = next === "unset" ? undefined : next;
+    // One write: Not set takes `sex` off the profile as it sets `gender`.
+    const save = (patch: Partial<UserProfile>) =>
+      sex
+        ? updateProfile({ ...patch, sex, gender: sex })
+        : updateProfile(
+            { ...patch, gender: NO_ANSWER_GENDER },
+            {
+              remove: ["sex"],
+            }
+          );
     if (profile.goalWeightKg == null) {
-      await updateProfile({ sex: next });
+      await save({});
       return;
     }
     const currentKg = profile.weightKg || 70;
     const { payload } = buildGoalWeightPersistPayload({
-      profile: { ...profile, sex: next },
+      profile: { ...profile, sex },
       currentKg,
       targetKg: profile.goalWeightKg,
       rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
     });
-    await updateProfile({ ...payload, sex: next });
+    await save(payload);
   }
 
   /* The year of birth replaces the age range (App1, grill Q57; the owner
@@ -441,7 +457,7 @@ export default function ProfileInfoSection({
           ariaLabel="Sex for calorie calculation"
           layout="wrap"
           className="mt-1.5"
-          value={sexShown(profile)}
+          value={sexShown}
           onChange={(value) => {
             haptic("light");
             void saveSex(value);
@@ -449,7 +465,9 @@ export default function ProfileInfoSection({
           options={SEX_OPTIONS}
         />
         <p className="mt-1.5 text-xs text-muted-foreground text-pretty">
-          Your calorie and protein targets are worked out from it.
+          {sexShown === "unset"
+            ? "Not set. Your targets and first weights sit halfway between the two."
+            : "Your calorie and protein targets are worked out from it."}
         </p>
       </div>
 

@@ -500,7 +500,7 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": true,
-      "nestedSubcollectionsHandledBy": "All user subcollections (meals/workouts/runs/etc) are separate inventory entries and are deleted before this root via Phase F of designConstants.executionOrder. The root doc itself stores profile fields (displayName, photoURL, subscriptionTier, stripeCustomerId, appleOriginalTransactionId, lastActiveAt, onboardingComplete, etc.) \u2014 no nested subcollections OTHER than those already enumerated. Executor must be tolerant of users/{uid} root being missing (NotFound = success) \u2014 see hasNestedSubcollections audit in Chunk 1.1 report.",
+      "nestedSubcollectionsHandledBy": "All user subcollections (meals/workouts/runs/etc) are separate inventory entries and are deleted before this root via Phase F of designConstants.executionOrder. The root doc itself stores profile fields (displayName, photoURL, subscriptionTier, stripeCustomerId, appleOriginalTransactionId, lastActiveAt, onboardingComplete, emailConsent (App1 Q55: the consent record for the weekly review and after-a-break emails, deleted with the doc; nothing about it is kept in any tombstone, and Tropos keeps no Resend contact or audience to remove), etc.) \u2014 no nested subcollections OTHER than those already enumerated. Executor must be tolerant of users/{uid} root being missing (NotFound = success) \u2014 see hasNestedSubcollections audit in Chunk 1.1 report.",
       "reason": "Root user doc \u2014 profile, onboarding state, subscription fields (stripeCustomerId / appleOriginalTransactionId), preferences. Must delete LAST after all subcollections (Phase H in designConstants.executionOrder).",
       "testCoverageKey": "smoke::userRoot",
       "testCoverageStatus": "planned"
@@ -777,6 +777,24 @@
       "hasNestedSubcollections": false,
       "reason": "The account's invite code (Soc15): inviteCodes/{code} = { uid, createdAt, redemptions }, written only by the getInviteCode and redeemInvite callables (functions/lib/inviteCodes.js), each of which refuses an account being deleted. The uid sits under a code id, so the users/{uid} and uid-keyed sweeps miss it; deleted by a query on the field, so the code joins no one to a deleted account. The copy on the user document (`inviteCode`) and the joiner's `invitedAt` go with users/{uid}; the follow edges an invite made go with the follow sweeps.",
       "testCoverageKey": "smoke::topLevelQuery::inviteCodes",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
+      "key": "sharedCardsOwn",
+      "domain": "D_crossUserEdge",
+      "type": "topLevelQueryByField",
+      "path": "sharedCards",
+      "where": ["ownerUid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "userContent",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "reason": "A shared card's stored copy (Soc17 call 1): sharedCards/{token} = { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt, expiresAt }, the figures and words a card showed, read by anyone with its link through sharedCardPage. Written only by the sharedCard callable (functions/lib/sharedCards.js), which checks the deletion lock and reads the freeze in its transaction. The uid sits under a random token, so the users/{uid} and uid-keyed sweeps miss it; deleted by a query on the field. Each copy also goes with the post or session it shows (the delete triggers), one that shows neither by the TTL policy on expiresAt 30 days on, and the page refuses an account being deleted.",
+      "testCoverageKey": "smoke::topLevelQuery::sharedCards",
       "testCoverageStatus": "implemented",
       "implementation": "functions/accountDeletion.js"
     },

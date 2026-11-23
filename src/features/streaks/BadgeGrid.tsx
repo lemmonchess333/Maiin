@@ -161,17 +161,16 @@ export function BadgeGrid() {
       {/* Streak summary. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
-          {/* amberLight is the amber-500 dark-mode step (theme.ts says
-              so) — as light-mode text it measured 2.15:1, under even the
-              3:1 large-text floor. The achievement token is the same
-              celebration register, theme-aware, AA both sides. */}
-          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
+          {/* Gold is for bests only (DS10 call 4): the longest streak is
+              the record, so it is gold, and the current one is the text
+              colour. */}
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
-          <p className="text-3xl font-extrabold font-figure tabular-nums text-primary">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
             {Number.isFinite(longestStreak) ? longestStreak : 0}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Longest streak</p>

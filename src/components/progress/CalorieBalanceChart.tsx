@@ -63,7 +63,8 @@ export default function CalorieBalanceChart({
       profileAge(profile) ?? 30,
       (profile?.activityLevel as ActivityLevel) ?? "moderate",
       "recomp",
-      (profile?.sex as "male" | "female") ?? "male"
+      // None stored takes the midpoint (`tdee.ts`), never male.
+      profile?.sex
     ).tdee;
   const today = format(new Date(), "yyyy-MM-dd");
   const data = useMemo(() => {

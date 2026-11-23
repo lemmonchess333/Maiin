@@ -23,7 +23,7 @@ export default function RunSetupSkeleton() {
         {/* Context-strip placeholder — purple-tinted like the real strip */}
         <div
           className="h-7 rounded-xl motion-safe:animate-pulse"
-          style={{ background: THEME.iconBg }}
+          style={{ background: THEME.chrome.tint }}
           aria-hidden="true"
         />
         {/* Selected-run card placeholder — matches the real card shape */}

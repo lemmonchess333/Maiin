@@ -22,6 +22,7 @@ import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { localDateString } from "../src/lib/dateHelpers";
 import { REVIEW_TEST_USER } from "../e2e/helpers/reviewUser";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 assertEmulatorEnvOrExit();
 
@@ -93,6 +94,9 @@ async function run() {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: true,
+      // Agreed to the storing of health details (Priv1 call 1), so the
+      // account opens on the app rather than on the agreement.
+      healthDataConsent: seededHealthConsent(),
       subscriptionTier: "free",
       targetCalories: 2100,
       targetProtein: 130,

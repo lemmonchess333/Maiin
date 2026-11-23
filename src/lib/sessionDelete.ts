@@ -3,6 +3,7 @@ import { db } from "@/lib/firebase";
 import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { invalidateLiftRecords } from "@/lib/liftRecordsStore";
+import { dropPlacedRun } from "@/lib/runPlacingHistory";
 import {
   planWithoutSession,
   type SavedProgrammeCompletion,
@@ -133,6 +134,8 @@ export async function deleteLoggedSession({
   const session = doc(db, "users", uid, COLLECTION[kind], id);
   if (kind === "run") {
     await deleteDocGuarded(session);
+    // The run no longer ranks the runs after it on their pages.
+    dropPlacedRun(uid, id);
     // The pre-delete attempt may have seen the still-existing server run.
     // Retry once it settles, then keep the durable intent for future retries.
     void reconcilePendingHealthExports(uid)

@@ -12,7 +12,7 @@ const SET_TYPE_CHIP: Record<SetType, string> = {
      four of these. The letter says what the row is; a warm-up is the
      quiet row of the table. */
   warmup: "bg-muted text-muted-foreground",
-  dropset: "bg-primary/10 text-primary-strong",
+  dropset: "bg-lifting/10 text-lifting-strong",
   failure: "bg-destructive/10 text-destructive-strong",
 };
 

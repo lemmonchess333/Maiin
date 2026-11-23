@@ -487,7 +487,11 @@ export default function DayActionContent({
                     : null;
                   const isManual = completionKind === "manual";
                   return (
-                    <span className="text-xs font-medium text-success-strong">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                      <Check
+                        className="size-3.5 text-success-strong"
+                        aria-hidden="true"
+                      />
                       {isManual ? "Marked complete" : "Completed"}
                     </span>
                   );
@@ -692,7 +696,7 @@ export default function DayActionContent({
                       >
                         <CalendarDays
                           className="size-4"
-                          style={{ color: THEME.brand }}
+                          style={{ color: THEME.chrome.text }}
                         />
                         Move to another day
                       </button>
@@ -778,7 +782,10 @@ export default function DayActionContent({
                 }
                 className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
               >
-                <RotateCcw className="size-4" style={{ color: THEME.brand }} />
+                <RotateCcw
+                  className="size-4"
+                  style={{ color: THEME.chrome.text }}
+                />
                 Restore to plan
               </button>
             )}
@@ -818,7 +825,11 @@ export default function DayActionContent({
             </div>
             <div className="shrink-0 pt-1">
               {lift.status === "completed" && (
-                <span className="text-xs font-medium text-success-strong">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                  <Check
+                    className="size-3.5 text-success-strong"
+                    aria-hidden="true"
+                  />
                   Completed
                 </span>
               )}
@@ -854,7 +865,10 @@ export default function DayActionContent({
               onClick={() => void act(() => restoreWorkoutDay(lift.index!))}
               className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <RotateCcw className="size-4" style={{ color: THEME.brand }} />
+              <RotateCcw
+                className="size-4"
+                style={{ color: THEME.chrome.text }}
+              />
               Restore to plan
             </button>
           )}
