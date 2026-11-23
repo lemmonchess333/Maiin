@@ -1585,9 +1585,16 @@ describe("choices with drawings", () => {
     open();
     expect(artOf("Build muscle").img).toMatch(/\/form-art\/db-curl\.webp$/);
     expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
-    expect(artOf("Lose fat").kind).toBe("muscles");
+    // Every goal is a drawn figure: a swing for fat loss, the run card's
+    // runner for running.
+    expect(artOf("Lose fat").img).toMatch(
+      /\/form-art\/kettlebell-swing\.webp$/
+    );
     expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
-    expect(artOf("Support my running").kind).toBe("route");
+    expect(artOf("Support my running").kind).toBe("run");
+    expect(artOf("Support my running").img).toMatch(
+      /\/form-art\/run-easy\.webp$/
+    );
   });
 
   it("draws the kit each setup means, and experience as a level", () => {
