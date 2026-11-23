@@ -1020,6 +1020,10 @@ describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
       /"Your consent, asked before the first one is sent/,
       /"Legitimate interests: knowing how the app is used/,
       /"Legitimate interests: keeping Tropos and the people on it safe\."/,
+      /"Your consent, asked in setup and in Settings > Notifications, off until you turn it on\. We keep when you said yes or no and to which words\./,
+      /"Contract: it is part of the service you asked for when you shared the card\."/,
+      /"Legitimate interests: knowing how many people start Tropos and where they stop, without telling anyone apart\."/,
+      /"Legitimate interests: not sending you reminders you do not want\."/,
     ]) {
       expect(PRIVACY_PROSE).toMatch(basis);
     }
@@ -1041,8 +1045,16 @@ describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
       expect(healthRow).toContain(named);
     }
     expect(PRIVACY_PROSE).toMatch(
-      /"Your health details: weight, height, sex, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health"/
+      /"Your health details: weight, height, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health"/
     );
+    // Sex is not special category data under UK GDPR: it is with the plan,
+    // under contract, and the health row does not name it.
+    expect(healthRow).not.toMatch(/\bsex\b/);
+    expect(PRIVACY_PROSE).toMatch(
+      /"Your account, your plan and logs \(with your sex for the calorie calculation, if you give it\)/
+    );
+    // The consent row for the chosen emails rests on the server's record.
+    expect(FUNCTIONS("emailConsent.js")).toMatch(/givenAt/);
     // The one line that gave everything one basis is gone.
     expect(gdpr).not.toMatch(/provided during account creation/);
     expect(gdpr).toMatch(/Right to object:/);
@@ -1189,12 +1201,11 @@ describe("what shipped after the draft, as the code on main does it", () => {
 
   it("names the first-run events and the launch numbers, and how to turn analytics off", () => {
     const FIRST_RUN = read("../firstRunEvents.ts");
-    for (const event of [
-      "welcome_viewed",
-      "setup_started",
-      "trial_offer_viewed",
-    ]) {
-      expect(FIRST_RUN).toMatch(new RegExp(`track\\("${event}"`));
+    expect(FIRST_RUN).toMatch(/track\("trial_offer_viewed"/);
+    // The welcome and setup's start are the server's counts, never Google's.
+    for (const event of ["welcome_viewed", "setup_started"]) {
+      expect(FIRST_RUN).not.toMatch(new RegExp(`track\\("${event}"`));
+      expect(FIRST_RUN).toMatch(new RegExp(`countSetupStep\\("${event}"\\)`));
     }
     expect(read("../auth.tsx")).toMatch(
       /trackLifecycle\("account_created", \{ method \}\)/
@@ -1209,7 +1220,7 @@ describe("what shipped after the draft, as the code on main does it", () => {
       "3. Data Storage"
     );
     for (const claim of [
-      /the welcome screen seen and setup started \(once on each phone, so these can be sent before you have an account\), your account made and how \(Apple, Google or email\), setup finished, and the trial offer seen\./,
+      /each sent once: your account made and how \(Apple, Google or email\), setup finished, and the trial offer seen\./,
       /your first saved session and whether it was a lift or a run, a session in your fourth week, and your first trial and first paid period, with whether each was bought in the app or on the web\./,
       /with Share usage analytics in Settings &gt; Social &amp; privacy/,
     ]) {
@@ -1314,5 +1325,105 @@ describe("what shipped after the draft, as the code on main does it", () => {
     expect(PRIVACY_PROSE).toMatch(
       /with Google, the photo on your Google account is your profile photo until you change it\./
     );
+  });
+});
+
+/* Google Analytics hears nothing before the health-details agreement, whose
+   line says so (owner, 23 November 2026); before it, the server keeps
+   anonymous daily totals. Each claim the policy makes about that is held to
+   the code that makes it true. */
+describe("nothing goes to Google before the agreement screen", () => {
+  const PROVIDER = collapsed("../analyticsProvider.ts");
+
+  it("the policy says when analytics starts, what is counted before it, and that Google acts only for us", () => {
+    const analytics = policySection(
+      "2. How We Use Your Data",
+      "3. Data Storage"
+    );
+    for (const claim of [
+      /It starts at the health-details agreement in setup, which says so, or when you sign in to an account that has agreed\. Nothing is sent to Google before that screen, and after you sign out nothing is sent until you reach it again or sign in\./,
+      /our own server counts only how many times a day the welcome screen is shown and setup is started, and how many accounts are made: totals with no identifier, sent without reading anything from your phone, which cannot be linked to you and are deleted after about 13 months\./,
+      /Google’s data sharing settings, Google signals and ad personalisation are off for Tropos, so Google uses this data only to give us the analytics\./,
+    ]) {
+      expect(analytics).toMatch(claim);
+    }
+  });
+
+  it("the provider delivers only once the line is met, and sign-out forgets it", () => {
+    expect(PROVIDER).toMatch(
+      /function delivers\(\): boolean \{ return metNotice\(\) && shares\(\); \}/
+    );
+    expect(PROVIDER).toMatch(
+      /function metNotice\(\): boolean \{ return accountMetNotice \|\| noticeShownThisVisit; \}/
+    );
+    // Every event goes through the one gate, and init loads nothing before it.
+    expect(PROVIDER).toMatch(/if \(!deliver\) return;/);
+    expect(PROVIDER).toMatch(/applyWeb\(delivers\(\)\)/);
+    expect(PROVIDER).toMatch(/await applyNative\(delivers\(\)\);/);
+    expect(collapsed("../auth.tsx")).toMatch(/forgetAnalyticsNoticeShown\(\);/);
+  });
+
+  it("the line is met only on the agreement, or by an account that agreed", () => {
+    const callers = sourceFiles("src")
+      .filter((path) => !path.endsWith("/analyticsProvider.ts"))
+      .filter((path) =>
+        /noteAnalyticsNoticeShown\(\)|setAccountMetAnalyticsNotice\(/.test(
+          readFileSync(path, "utf8")
+        )
+      )
+      .map((path) => path.slice(path.indexOf("/src/") + 1))
+      .sort();
+    expect(callers).toEqual([
+      "src/components/healthConsent/HealthConsentGate.tsx",
+      "src/hooks/useAccountUsageAnalytics.ts",
+      "src/pages/Onboarding.tsx",
+    ]);
+    expect(collapsed("../../pages/Onboarding.tsx")).toMatch(
+      /const agreementShown = step === HEALTH_CONSENT_STEP \|\| healthConsentGiven;/
+    );
+    expect(collapsed("../../hooks/useAccountUsageAnalytics.ts")).toMatch(
+      /hasCurrentHealthConsent\(profile\.healthDataConsent\)/
+    );
+    // Both screens carry the line.
+    for (const screen of [
+      "../../pages/Onboarding.tsx",
+      "../../components/healthConsent/HealthConsentGate.tsx",
+    ]) {
+      expect(read(screen)).toMatch(/\{USAGE_ANALYTICS_NOTICE\}/);
+    }
+  });
+
+  it("the iPhone's SDK collects nothing before the line, from a fresh install", () => {
+    const plist = read("../../../ios/App/App/Info.plist").replace(/\s+/g, " ");
+    expect(plist).toMatch(
+      /<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED<\/key> <false\/>/
+    );
+  });
+
+  it("the setup counts read nothing from the phone and keep no identifier", () => {
+    const CLIENT = collapsed("../setupCounts.ts");
+    expect(CLIENT).toMatch(/credentials: "omit"/);
+    expect(CLIENT).toMatch(/body: JSON\.stringify\(\{ step \}\)/);
+    expect(CLIENT).not.toMatch(/localStore|localStorage|httpsCallable|getToken/);
+    const SERVER = FUNCTIONS("setupCounts.js");
+    expect(SERVER).toMatch(
+      /\[step\]: FieldValue\.increment\(1\), updatedAt: FieldValue\.serverTimestamp\(\), expiresAt: setupCountsExpiresAt\(key\),/
+    );
+    expect(SERVER).toMatch(/const KEEP_DAYS = 400;/);
+    expect(FIRESTORE_RULES).toMatch(
+      /match \/setupCounts\/\{dateKey\} \{ allow read, write: if false; \}/
+    );
+  });
+});
+
+describe("section 7: the web checkout is RevenueCat Billing with Stripe", () => {
+  it("names RevenueCat Billing and Stripe, and no other payment processor", () => {
+    const thirdParties = policySection(
+      "7. Third-Party Services",
+      "8. Health & Fitness Data"
+    );
+    expect(thirdParties).toMatch(/runs the checkout on the web \(RevenueCat Billing\)/);
+    expect(thirdParties).toMatch(/takes the payment for Pro bought on the web, through RevenueCat’s checkout\./);
+    expect(PRIVACY_PROSE).not.toMatch(/Paddle|Lemon Squeezy|merchant of record/i);
   });
 });

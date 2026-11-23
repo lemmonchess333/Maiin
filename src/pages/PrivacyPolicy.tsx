@@ -9,18 +9,21 @@ import LegalBack from "@/components/legal/LegalBack";
 /** Why Tropos may use the data for each purpose (UK GDPR Articles 6 and 9),
  *  shown as section 6's table. The health row names the explicit consent
  *  the health data screen asks for (legal audit 3.1, owner's lock Priv1):
- *  in setup, or once on the next open for an account made before it. The
- *  analytics row names the Share usage analytics switch (Priv1). Both are
- *  on main (#3471, #3470). The wording of each basis is the owner's call. */
+ *  in setup, or once on the next open for an account made before it. Sex
+ *  is not special category data under UK GDPR, so it sits with the plan
+ *  (contract), not in the health row. The analytics row names the Share
+ *  usage analytics switch (Priv1). The chosen emails, shared card pages,
+ *  setup counts and reminder answers have their own rows (owner, 23
+ *  November 2026). The wording of each basis is the owner's call. */
 const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
   {
     purpose:
-      "Your account, your plan and logs, recording a run’s route, syncing your devices, showing what you share, segments, challenges and leagues you join, Pro, and emails about your account or a trial ending",
+      "Your account, your plan and logs (with your sex for the calorie calculation, if you give it), recording a run’s route, syncing your devices, showing what you share, segments, challenges and leagues you join, Pro, and emails about your account or a trial ending",
     basis: "Contract: it is the service you signed up for.",
   },
   {
     purpose:
-      "Your health details: weight, height, sex, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health",
+      "Your health details: weight, height, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health",
     basis:
       "Your explicit consent (UK GDPR Article 9(2)(a)), which you give in setup before the questions about your body, or, for an account made before that question was added, the first time you open Tropos after the update. You can withdraw it by deleting your account.",
   },
@@ -32,6 +35,28 @@ const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
   {
     purpose: "Notifications",
     basis: "Your consent, which you give when your phone or browser asks.",
+  },
+  {
+    purpose:
+      "The emails you choose: your weekly review and the emails after a break",
+    basis:
+      "Your consent, asked in setup and in Settings > Notifications, off until you turn it on. We keep when you said yes or no and to which words. You can turn each off at any time, or with the unsubscribe link in any of them.",
+  },
+  {
+    purpose: "The page a shared card’s link opens",
+    basis:
+      "Contract: it is part of the service you asked for when you shared the card.",
+  },
+  {
+    purpose:
+      "Counting how many times a day the welcome screen is shown, setup is started and an account is made, as totals with no identifier",
+    basis:
+      "Legitimate interests: knowing how many people start Tropos and where they stop, without telling anyone apart.",
+  },
+  {
+    purpose:
+      "Noting whether you opened Tropos after a reminder, so one you keep ignoring is turned off",
+    basis: "Legitimate interests: not sending you reminders you do not want.",
   },
   {
     purpose: "Usage analytics, and crash and error reports",
@@ -301,8 +326,9 @@ export default function PrivacyPolicy() {
                   Usage Data and Analytics Identifiers:
                 </strong>{" "}
                 which screens and features you use, and events such as finishing
-                a workout, a run or a scan, tied to an identifier for this
-                installation of the app, not to your account. They carry no
+                a workout, a run or a scan, from the health-details agreement in
+                setup on, tied to an identifier for this installation of the
+                app, not to your account. They carry no
                 figure about your body, food or training. Your account also
                 keeps when you saved your first session, when you trained in
                 your fourth week, and when your first trial and first paid
@@ -397,10 +423,8 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               It also receives a few events about your first days, each sent
-              once: the welcome screen seen and setup started (once on each
-              phone, so these can be sent before you have an account), your
-              account made and how (Apple, Google or email), setup finished, and
-              the trial offer seen. And once for each account, with how many
+              once: your account made and how (Apple, Google or email), setup
+              finished, and the trial offer seen. And once for each account, with how many
               days after setup each came: your first saved session and whether
               it was a lift or a run, a session in your fourth week, and your
               first trial and first paid period, with whether each was bought in
@@ -409,10 +433,28 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               <strong className="text-foreground">
+                When analytics starts.
+              </strong>{" "}
+              Google Analytics, in the iPhone app and on the web, counts how
+              the app is used so we can improve it. It starts at the
+              health-details agreement in setup, which says so, or when you
+              sign in to an account that has agreed. Nothing is sent to Google
+              before that screen, and after you sign out nothing is sent until
+              you reach it again or sign in. Before it, our own server counts
+              only how many times a day the welcome screen is shown and setup
+              is started, and how many accounts are made: totals with no
+              identifier, sent without reading anything from your phone, which
+              cannot be linked to you and are deleted after about 13 months.
+              Google’s data sharing settings, Google signals and ad
+              personalisation are off for Tropos, so Google uses this data only
+              to give us the analytics.
+            </p>
+            <p>
+              <strong className="text-foreground">
                 Turning analytics off.
               </strong>{" "}
-              Usage analytics is on until you turn it off, with Share usage
-              analytics in Settings &gt; Social &amp; privacy. Off, the phone or
+              Usage analytics is on from there until you turn it off, with Share
+              usage analytics in Settings &gt; Social &amp; privacy. Off, the phone or
               browser you are using stops sending anything to Google Analytics
               at once, and your account keeps the choice so your other devices
               follow it once you sign in on them. Crash and error reports are
