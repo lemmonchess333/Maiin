@@ -27,6 +27,8 @@ export interface RunSegmentEffort {
   rank: number;
   /** How many efforts the person has on the segment. */
   of: number;
+  /** Every effort the person has on the segment, this one included. */
+  own: SegmentEffort[];
 }
 
 export interface RunSegmentEfforts {
@@ -44,10 +46,16 @@ const EMPTY: RunSegmentEfforts = { loading: true, failed: false, rows: [] };
  * straight from the finish screen fills in as they land. Each effort comes
  * with its segment and its rank among the person's own efforts there. An
  * effort whose segment has been deleted is left out.
+ *
+ * With `listenMs`, the listen closes that long after it opens, keeping what
+ * it read (and finishing a read a snapshot inside the window began): the
+ * run finish waits for the efforts a bounded time, so no row lands under
+ * the reader minutes later. Without it, it listens while mounted.
  */
 export function useRunSegmentEfforts(
   uid: string | null | undefined,
-  runId: string | null | undefined
+  runId: string | null | undefined,
+  { listenMs }: { listenMs?: number } = {}
 ): RunSegmentEfforts {
   const key = uid && runId ? `${uid}/${runId}` : null;
   const [read, setRead] = useState<{
@@ -105,6 +113,7 @@ export function useRunSegmentEfforts(
                     segment: known.segment,
                     rank: ownRank(effort, own),
                     of: own.length,
+                    own,
                   },
                 ];
               })
@@ -122,11 +131,29 @@ export function useRunSegmentEfforts(
       },
       fail
     );
+    /* The window closes the listen only: a read a snapshot inside it
+       began still lands. */
+    const closeAt =
+      listenMs === undefined
+        ? null
+        : setTimeout(() => {
+            unsubscribe();
+            if (live)
+              setRead((was) =>
+                was?.key === at
+                  ? was
+                  : {
+                      key: at,
+                      value: { loading: false, failed: false, rows: [] },
+                    }
+              );
+          }, listenMs);
     return () => {
       live = false;
+      if (closeAt !== null) clearTimeout(closeAt);
       unsubscribe();
     };
-  }, [uid, runId]);
+  }, [uid, runId, listenMs]);
 
   if (!key) return { loading: false, failed: false, rows: [] };
   return read?.key === key ? read.value : EMPTY;
