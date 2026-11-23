@@ -332,7 +332,7 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     expect(screen.queryByRole("heading", { name: /saved/i })).toBeNull();
   });
 
-  it("makes a new best the reward: its lift in a gold light, and the sentence", () => {
+  it("makes a new best the reward: its lift on the flat page, and the sentence in gold", () => {
     render(
       <SessionCompleteScreen
         {...screenProps({
@@ -344,10 +344,12 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       />
     );
     expect(register()).toBe("reward");
-    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
-      "data-finish-glow",
-      "achievement"
-    );
+    // No light behind the object (DESIGN_GUIDE §14o): the gold is the
+    // line's figure.
+    expect(
+      document.querySelector("[data-finish-object]")!.firstElementChild
+    ).not.toHaveAttribute("aria-hidden");
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
     expect(line()).toHaveTextContent(
       "You benched 80 kg × 8, a new best by 2.5 kg."
     );
@@ -489,7 +491,8 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       <SessionCompleteScreen {...screenProps({ saved: true, moments: [] })} />
     );
     expect(register()).toBe("summary");
-    expect(document.querySelector("[data-finish-glow]")).toBeNull();
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
+    expect(line()!.querySelector("[class*='-strong']")).toBeNull();
     expect(line()).toHaveTextContent("Next: Legs · Squat focus");
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();
@@ -568,13 +571,11 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
         })}
       />
     );
-    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
-      "data-finish-glow",
-      "lifting"
-    );
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
     expect(line()).toHaveTextContent(
       "You’ve trained 7 days in a row. 14 is next."
     );
+    expect(line()!.querySelector(".text-lifting-strong")).not.toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();
   });

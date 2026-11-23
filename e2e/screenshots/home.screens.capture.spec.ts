@@ -287,7 +287,7 @@ test.describe("app screenshots", () => {
     await expect(
       page.getByRole("button", { name: "Show fewer" })
     ).toHaveAttribute("aria-expanded", "true", { timeout: 10000 });
-    await expect(page.getByText("Badges earned")).toBeVisible({
+    await expect(page.getByText("Badges earned", { exact: true })).toBeVisible({
       timeout: 10000,
     });
     await page.waitForTimeout(1600);

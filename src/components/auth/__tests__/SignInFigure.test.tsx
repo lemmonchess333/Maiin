@@ -23,9 +23,14 @@ describe("SignInFigure", () => {
     expect(flipbook?.style.backgroundImage).toContain(sheet!.src);
   });
 
-  it("stands in one light", () => {
+  it("stands on the flat page, with nothing drawn behind the lifter", () => {
     const { container } = render(<SignInFigure />);
-    expect(container.querySelectorAll(".hero-glow")).toHaveLength(1);
+    const figure = container.querySelector(".signin-figure")!;
+    // The flipbook is the box's one child: no light layer under it
+    // (DESIGN_GUIDE §14o).
+    expect(figure.children).toHaveLength(1);
+    expect(figure.firstElementChild).toHaveAttribute("data-hero-motion");
+    expect(container.innerHTML).not.toMatch(/glow|signin-light|radial/);
   });
 });
 

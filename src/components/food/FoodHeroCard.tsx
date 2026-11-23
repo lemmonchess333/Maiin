@@ -112,8 +112,6 @@ export default function FoodHeroCard({
     setWheelCalories(dailyTotals.calories);
   }
 
-  // Celebration state — driven by a log that completes all three macros today
-  const [celebrating, setCelebrating] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   // S2 item 3: the share affordance appears ONLY on a goal-hit day (all
@@ -192,18 +190,15 @@ export default function FoodHeroCard({
     // they don't cascade synchronously inside the effect body.
     let celebrationStartTimer: ReturnType<typeof setTimeout> | undefined;
     let celebrationHapticTimer: ReturnType<typeof setTimeout> | undefined;
-    let celebrationGlowTimer: ReturnType<typeof setTimeout> | undefined;
     let celebrationCaptionTimer: ReturnType<typeof setTimeout> | undefined;
     if (shouldCelebrate) {
       celebrationStartTimer = setTimeout(() => {
-        setCelebrating(true);
         setShowCelebrationCaption(true);
       }, 0);
       celebrationHapticTimer = setTimeout(
         () => haptic("light"),
         LOG_MOMENT_MS + 100
       );
-      celebrationGlowTimer = setTimeout(() => setCelebrating(false), 800);
       celebrationCaptionTimer = setTimeout(
         () => setShowCelebrationCaption(false),
         2200
@@ -214,7 +209,6 @@ export default function FoodHeroCard({
       clearTimeout(logHapticTimer);
       if (celebrationStartTimer) clearTimeout(celebrationStartTimer);
       if (celebrationHapticTimer) clearTimeout(celebrationHapticTimer);
-      if (celebrationGlowTimer) clearTimeout(celebrationGlowTimer);
       if (celebrationCaptionTimer) clearTimeout(celebrationCaptionTimer);
     };
   }, [
@@ -260,20 +254,9 @@ export default function FoodHeroCard({
           264px on the page now, with Details under it. No box: the wheel
           is the shape. */}
       {/* `data-hero` is the screen scorer's mark (`npm run score:screens`),
-          as on Home's session hero: without it the largest block on the
-          screen is the light behind the wheel. */}
+          as on Home's session hero. The wheel stands on the flat page with
+          no light behind it (DESIGN_GUIDE §14o): its arc is the colour. */}
       <div data-hero="" className="relative flex flex-col items-center">
-        {/* One soft light of the food orange behind the wheel, fading into
-            the page (DESIGN_GUIDE §14o; DS4 §14m rule 13: one hue). Faint
-            enough to count as colour in neither theme (`.food-hero-glow`,
-            components.css, which draws it as a 170px circle at this box's
-            centre). The box runs out to the screen's edges and no
-            further: a 340px circle of its own would reach 10px past a
-            320px screen. */}
-        <div
-          aria-hidden="true"
-          className="food-hero-glow pointer-events-none absolute inset-x-[-16px] top-[-38px] h-[340px]"
-        />
         {/* Top left: the goal-hit caption, for the two seconds after the
             day's last goal is met. */}
         <div className="absolute left-0 top-0 max-w-[40%]">
@@ -329,7 +312,6 @@ export default function FoodHeroCard({
             mode={mode}
             onToggleMode={toggleMode}
             trajectoryLabel={trajectoryLabel}
-            glowing={celebrating}
             /* 350 ms and no wait of its own: on a log the page holds the
                wheel for the flight's 250 ms first, so the wheel and the
                macros (600 ms from the log) finish together. */
