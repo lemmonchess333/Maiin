@@ -450,7 +450,7 @@ export default function AdjustWeekSheet({
                   type="button"
                   disabled={busy}
                   onClick={() => pickIntent(i.id)}
-                  className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full min-h-[56px] flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-left active:scale-[0.97] transition-transform disabled:opacity-50 disabled:pointer-events-none chip-edge"
                 >
                   <div className="flex-1 min-w-0">
                     <span className="block text-sm font-semibold text-foreground">
@@ -486,7 +486,7 @@ export default function AdjustWeekSheet({
                 {step.swaps.map((s) => (
                   <li
                     key={String(s.key)}
-                    className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm chip-edge"
                   >
                     <span className="text-muted-foreground line-through">
                       {runTemplateName(s.fromName, unit)}

@@ -71,11 +71,13 @@ export default function StatCard({
       {/* At larger text the unit wraps under the figure rather than
           squeezing it: "1,790 kcal/day" was wider than the card at double
           size, and a figure is never cut. */}
-      <div className="flex flex-wrap items-baseline gap-x-1 min-w-0">
+      {/* A container, so a word value can fit its card: at most text-xl,
+          and no wider than about 13 of its letters across the card. */}
+      <div className="@container flex flex-wrap items-baseline gap-x-1 min-w-0">
         <span
           className={
             valueKind === "text"
-              ? "min-w-0 text-xl font-bold text-foreground leading-tight break-words"
+              ? "min-w-0 text-xl supports-[container-type:inline-size]:text-[length:min(1.25rem,13cqi)] font-bold text-foreground leading-tight break-words"
               : "min-w-0 text-3xl font-extrabold font-figure tabular-nums text-foreground leading-none whitespace-nowrap"
           }
         >

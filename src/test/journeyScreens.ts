@@ -4,7 +4,9 @@
  * renamed button fails in the unit suite in seconds, not weeks into a
  * journey in CI.
  *
- * - Setup's names: `Onboarding.test.tsx` walks setup by them.
+ * - Setup's names: `Onboarding.test.tsx` walks setup by them, the
+ *   health-details agreement's I agree included; Save your plan's and the
+ *   trial offer's: `SaveYourPlan.test.tsx` and `TrialOffer.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -15,6 +17,8 @@
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
  *   title and the tab bar: `journeyScreens.test.tsx`.
+ * - A sport added or removed in Settings: `AddLiftingFlow.test.tsx`,
+ *   `RunPlanSettings.test.tsx` and `ProgrammeSettings.test.tsx`.
  */
 import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -43,6 +47,10 @@ export const SETUP = {
   legTrim: "Lighten leg sessions while your runs build",
   /** "What do you have?" beside a home gym, Minimal and no equipment. */
   pullUpBar: "A pull-up bar",
+  /** Priv1 call 1: the agreement to store health details, asked before
+   *  the first body question (a lifter's limitations, or About you). */
+  healthDetails: "Your health details",
+  agreeHealth: "I agree",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",
@@ -51,6 +59,29 @@ export const SETUP = {
   birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
+  /** Signed out, the review's button: Save your plan comes next, where
+   *  the account is made (A6). */
+  saveNext: "Continue",
+} as const;
+
+/** Save your plan (A6), where setup makes the account once its questions
+ *  are answered: the email form's fields by their labels, its button, and
+ *  the way to sign in instead (`SaveYourPlan.test.tsx`). */
+export const SAVE_PLAN = {
+  heading: "Save your plan",
+  apple: "Continue with Apple",
+  google: "Continue with Google",
+  email: "Email address",
+  password: "Password",
+  create: "Create account",
+  signInInstead: "Sign in",
+} as const;
+
+/** The trial offer that ends setup (A6 call 2): its kicker, and Not now,
+ *  which goes Home (`TrialOffer.test.tsx`). */
+export const TRIAL_OFFER = {
+  kicker: "Your plan is ready",
+  notNow: "Not now",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.
@@ -77,6 +108,23 @@ export const SETUP_OPTIONS = {
 
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =
   (typeof SETUP_OPTIONS)[Question][number];
+
+/** A sport added or removed after setup (TrainWk1 step 6): Lift plan's Add
+ *  lifting (`AddLiftingFlow`, setup's questions under `SETUP`'s names),
+ *  Run plan's Add running, and each editor's Stop and its confirmation
+ *  (`StopSportDialog`). */
+export const SPORT_CHANGE = {
+  liftPlan: "/settings/lift-plan",
+  runPlan: "/settings/run-plan",
+  addLiftingQuestion: "How often will you lift?",
+  addLifting: "Add lifting",
+  addRunningQuestion: "How much do you run now?",
+  addRunning: "Add running",
+  stopLifting: "Stop lifting",
+  stopLiftingAsked: "Stop lifting?",
+  stopRunning: "Stop running",
+  stopRunningAsked: "Stop running?",
+} as const;
 
 /** The workout screen (`WorkoutSession`), from Train's Start workout. */
 export const WORKOUT = {

@@ -26,4 +26,19 @@ function isVolumeEligibleRun(data) {
   return true;
 }
 
-module.exports = { isVolumeEligibleRun };
+/**
+ * Was this run on a treadmill? Its place says so, or, for a run saved
+ * before the treadmill became a place (Pgm8), its type. The server's one
+ * copy of `isTreadmillRun` in `src/lib/runGuards.ts`, read by the race-day
+ * rule (`raceDayCompletion.js`) and the segment matcher (`segments.js`),
+ * and pinned to the client's by `src/lib/__tests__/racePrediction.cross.
+ * test.ts`.
+ */
+function isTreadmillRun(data) {
+  return (
+    !!data &&
+    (data.place === "treadmill" || data.activityType === "treadmill")
+  );
+}
+
+module.exports = { isVolumeEligibleRun, isTreadmillRun };

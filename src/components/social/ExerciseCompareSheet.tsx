@@ -26,12 +26,10 @@ interface Props {
   authorTargetWeightKg: number;
 }
 
-/* Color a delta the same way TrajectoryCard does — green for
-   improvement, coral for regression, muted for matched. */
+/* A delta is neutral, as TrajectoryCard's is: its arrow and sign say which
+   way (DS10: coral means running, green is a tick). Matched is muted. */
 function deltaColor(delta: number) {
-  if (delta > 0) return THEME.success;
-  if (delta < 0) return THEME.running;
-  return "hsl(var(--muted-foreground))";
+  return delta === 0 ? "hsl(var(--muted-foreground))" : THEME.chrome.text;
 }
 
 function formatDate(iso: string): string {
@@ -148,7 +146,10 @@ export default function ExerciseCompareSheet({
             <div
               className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl"
               style={{
-                background: `${deltaColor(delta)}14`,
+                background:
+                  delta === 0
+                    ? "hsl(var(--muted-foreground) / 0.08)"
+                    : THEME.chrome.tint,
                 color: deltaColor(delta),
               }}
             >
@@ -165,7 +166,7 @@ export default function ExerciseCompareSheet({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98]"
+          className="w-full py-3 rounded-xl bg-muted chip-edge text-foreground text-sm font-medium transition-transform active:scale-[0.98]"
         >
           Close
         </button>

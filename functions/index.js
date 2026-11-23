@@ -35,6 +35,7 @@ const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const weeklyRecap = require("./lib/weeklyRecap");
 const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
+const emailConsent = require("./lib/emailConsent");
 const { activationSport } = require("./lib/firstWeekActivation");
 // App1 Q17: the first session and week-4 return, kept once per account.
 const launchMilestones = require("./lib/launchMilestones");
@@ -196,6 +197,9 @@ const spacePostPhoto = require("./lib/spacePostPhoto");
 const routeMapFiles = require("./lib/routeMapFiles");
 // A shared session's photos, deleted with the post (Soc15 call 2).
 const postPhotos = require("./lib/postPhotos");
+// A shared card's stored copy, deleted with the post or session it shows
+// (Soc17 call 1).
+const sharedCards = require("./lib/sharedCards");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -749,6 +753,7 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const healthConsent = require("./lib/healthConsent");
 
 /* A display name that trips the word filter is refused, as
    failed-precondition so the client can show the sentence
@@ -804,7 +809,19 @@ exports.completeOnboarding = functions
         weekSchedule: rawWeekSchedule,
         activationJourneyVersion,
         onboardingPlatform,
+        healthDataConsent: setupHealthConsent,
       } = data;
+      // App1 Q55: setup's email opt-in, outside profileData so the profile
+      // sanitiser never carries consent. Ticked, it is a yes to both emails
+      // the toggle names, recorded below with the server's time; unticked,
+      // nothing is recorded (absent already means no).
+      const emailOptIn = emailConsent.readSetupEmailOptIn(data);
+      if (emailOptIn.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          emailOptIn.error
+        );
+      }
       // Every account takes the one first-week journey (App1, whole-app
       // grill Q27), so the journey is stamped below whatever a client
       // sends. A client from before App1 sends 2 or nothing; anything else
@@ -843,6 +860,15 @@ exports.completeOnboarding = functions
           "programState is required."
         );
       }
+      // Priv1 call 1: setup asks for the agreement to store health details
+      // before its first body question, and the plan is not saved without
+      // it. The app cannot send a plan without it; a build from before the
+      // question is told to update (lib/healthConsent.js). Checked once the
+      // request's shape is, and before anything is read or written.
+      healthConsent.assertSetupHealthConsent(
+        setupHealthConsent,
+        functions.https.HttpsError
+      );
 
       // Allow-list + per-field sanitise. Unknown fields, off-allowlist
       // photoURL schemes, out-of-range numbers etc. are dropped to
@@ -880,13 +906,18 @@ exports.completeOnboarding = functions
       // The age comes as a year of birth (App1, grill Q57), from which it is
       // worked out when it is read, or as `age` from a client still running
       // an older bundle. A year sent is the one asked for, so a year the
-      // sanitiser refused (under 16) fails here as itself. Nothing derived
+      // sanitiser refused (under 18) fails here as itself. Nothing derived
       // from it is stored: the year is the one copy of the fact (Q21).
+      //
+      // `sex` is not required: setup sends it only for an answer of female
+      // or male, and "Prefer not to say" sends none (owner, 22 November
+      // 2026). The app's maths take the midpoint of the two figures for
+      // an account without one (`src/lib/sex.ts`). An older build still
+      // sends `sex: "male"` for that answer, which is kept as sent.
       const requiredFields = [
         "weightKg",
         "heightCm",
         rawProfileData.birthYear != null ? "birthYear" : "age",
-        "sex",
         "activityLevel",
       ];
       for (const field of requiredFields) {
@@ -939,8 +970,8 @@ exports.completeOnboarding = functions
       // any sanitiser-passing values from the input — they're
       // server-managed regardless of what the client sent. The tier is
       // "free" for an account that has none yet; one billing has already
-      // set is left alone below, as configurePlan leaves it, so setup run
-      // again cannot downgrade a Pro account until the next store sync.
+      // set is left alone below, as configurePlan leaves it, so setup
+      // cannot downgrade a Pro account until the next store sync.
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
@@ -1002,29 +1033,56 @@ exports.completeOnboarding = functions
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
-        const nextProfileData = { ...profileData };
-
-        // The timestamp and journey describe the first successful setup
-        // commit. A retry, even from a newer client, must not move the
-        // activation window or restamp an account set up earlier. The
-        // journey stays stamped, always 2, for the activation report and
-        // for app builds from before App1, which read it.
-        const alreadyCompleted = existingData.onboardingComplete === true;
-        if (!alreadyCompleted) {
-          nextProfileData.onboardingCompletedAt =
-            admin.firestore.FieldValue.serverTimestamp();
-          nextProfileData.onboardingSport = activationSport(
-            nextProfileData.athleteType
+        // Setup builds a plan only for an account whose setup is not
+        // finished (A6). The app reads the account before it sends, and
+        // keeps a plan it finds; this holds the rule for a profile copy from
+        // before the plan (made on another phone, or kept in a cache) and
+        // for two phones finishing at once. Read in the transaction, so only
+        // one of two can build. A programme stored beside a profile that
+        // does not say setup finished is rebuilt here, with the flag, so
+        // that account reaches Home instead of being sent back to setup.
+        if (existingData.onboardingComplete === true) {
+          throw new functions.https.HttpsError(
+            "already-exists",
+            "This account already has a plan."
           );
-          // App1 Q17: an account set up from here on has its launch
-          // numbers kept (lib/launchMilestones). Empty until its first
-          // counted session; an older account never gets one, so its next
-          // session is not taken for its first.
-          nextProfileData.launchMilestones = {};
-          nextProfileData.activationJourneyVersion =
-            ONE_ACTIVATION_JOURNEY_VERSION;
-          if (onboardingPlatform) {
-            nextProfileData.onboardingPlatform = onboardingPlatform;
+        }
+        const nextProfileData = { ...profileData };
+        // The agreement given in this setup, dated by the server.
+        nextProfileData.healthDataConsent = healthConsent.healthConsentRecord(
+          admin.firestore.FieldValue.serverTimestamp()
+        );
+
+        // The account's first and only setup: when it finished, the sport
+        // it began with and the journey, which stays stamped, always 2, for
+        // the activation report and for app builds from before App1.
+        nextProfileData.onboardingCompletedAt =
+          admin.firestore.FieldValue.serverTimestamp();
+        nextProfileData.onboardingSport = activationSport(
+          nextProfileData.athleteType
+        );
+        // App1 Q17: an account set up from here on has its launch numbers
+        // kept (lib/launchMilestones). Empty until its first counted
+        // session; an older account never gets one, so its next session is
+        // not taken for its first.
+        nextProfileData.launchMilestones = {};
+        nextProfileData.activationJourneyVersion =
+          ONE_ACTIVATION_JOURNEY_VERSION;
+        if (onboardingPlatform) {
+          nextProfileData.onboardingPlatform = onboardingPlatform;
+        }
+        if (emailOptIn.optIn) {
+          const consent = emailConsent.applyEmailConsent(
+            existingData.emailConsent,
+            { weeklyReview: true, winBack: true },
+            {
+              via: "setup",
+              wording: emailOptIn.wording,
+              at: admin.firestore.FieldValue.serverTimestamp(),
+            }
+          );
+          if (consent.changed.length > 0) {
+            nextProfileData.emailConsent = consent.next;
           }
         }
         if (existing.exists) {
@@ -6271,6 +6329,30 @@ exports.onMealWritten = functions
     return null;
   });
 
+// ── F5c: a soft-deleted meal is removed for good 30
+// days after it was deleted. Each hour, at quarter to, clear of the jobs on
+// the hour and the meet-up sweep at half past. lib/mealPurge.js has the
+// rule, the caps and the account-deletion check; its collection-group index
+// is in firestore.indexes.json. Each meal it deletes fires onMealWritten
+// above, which does nothing for a delete, as for Delete permanently.
+const mealPurge = require("./lib/mealPurge");
+
+exports.purgeSoftDeletedMeals = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("45 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "purgeSoftDeletedMeals", async () => {
+      const summary = await mealPurge.purgeSoftDeletedMeals({
+        firestore: db,
+        toTimestamp: (ms) => admin.firestore.Timestamp.fromMillis(ms),
+        nowMs: Date.now(),
+      });
+      functions.logger.info("purgeSoftDeletedMeals.done", summary);
+      return summary;
+    })
+  );
+
 /** A day's water written (`waterLog/{date}`): hydration_hero. */
 exports.onWaterLogWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -6552,6 +6634,15 @@ exports.onWorkoutDeleted = functions
         nowMs: eventTimeMs(context),
       })
     );
+    // Soc17 call 1: the pages of the cards shared from it.
+    await steps.run("shared cards", () =>
+      sharedCards.removeCardsShowing({
+        firestore: db,
+        field: "workoutId",
+        id: workoutId,
+        uid,
+      })
+    );
     steps.settle();
     console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
     return null;
@@ -6644,6 +6735,15 @@ exports.onRunDeleted = functions
         uid,
         runId,
         nowMs: eventTimeMs(context),
+      })
+    );
+    // Soc17 call 1: the pages of the cards shared from it.
+    await steps.run("shared cards", () =>
+      sharedCards.removeCardsShowing({
+        firestore: db,
+        field: "runId",
+        id: runId,
+        uid,
       })
     );
     steps.settle();
@@ -7419,7 +7519,8 @@ exports.onActivityCreated = functions
  * call 5): its `route-maps/{authorId}/{activityId}/` folder. So do the
  * post's photos (lib/postPhotos.js, Soc15 call 2): its
  * `post-photos/{authorId}/{activityId}/` folder, whatever the post named,
- * since an upload can land and never be named.
+ * since an upload can land and never be named. And so do the pages of the
+ * cards shared from it (lib/sharedCards.js, Soc17 call 1).
  *
  * No account-deletion guard, unlike onWorkoutDeleted / onRunDeleted: those
  * write, and could re-create what the executor erased. This only deletes
@@ -7462,6 +7563,17 @@ exports.onActivityDeleted = functions
       if (photoFolder)
         functions.logger.info("onActivityDeleted.post_photos_removed", {
           activityId,
+        });
+      // Soc17 call 1: the pages of the cards shared from it.
+      const cards = await sharedCards.removeCardsShowing({
+        firestore: admin.firestore(),
+        field: "postId",
+        id: activityId,
+      });
+      if (cards)
+        functions.logger.info("onActivityDeleted.shared_cards_removed", {
+          activityId,
+          cards,
         });
     } catch (err) {
       functions.logger.error("onActivityDeleted.error", {
@@ -7626,6 +7738,11 @@ function queueReason(value) {
   return ["spam", "harassment", "inappropriate", "other"].includes(value)
     ? value
     : "other";
+}
+/** A stored report's category, when it is one the report form offers;
+ *  the queue names it as the alert email does. */
+function queueCategory(value) {
+  return reportTargets.REPORT_CATEGORIES.includes(value) ? value : null;
 }
 
 /**
@@ -8004,6 +8121,11 @@ exports.listPendingReports = functions
           reportedTargetType: nullableString(report.targetType),
           reportedTargetId: nullableString(report.targetId),
           reason: queueReason(report.reason),
+          // What the reporter picked, as the alert email names it: a
+          // sub-reason such as "Child safety" is the triage signal, and
+          // `reason` alone folds it into one of four legacy words.
+          category: queueCategory(report.category),
+          subReason: nullableString(report.subReason),
           details:
             nullableString(report.freeformNote) ||
             nullableString(report.details),
@@ -8023,7 +8145,8 @@ exports.listPendingReports = functions
  * flag takes the reported content out of the app in the same call so
  * a moderator can dismiss + hide in one click: an activity becomes
  * `flagged: true, visibility: 'private'`; a comment (activity or space
- * post) or a space post is deleted. See reportTargets.queueContentHide.
+ * post), a space post or a segment is deleted. See
+ * reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -8066,9 +8189,12 @@ exports.resolveReport = functions
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
     // A hidden space post's likes and comments, swept after the commit.
     let removedSpacePostRef = null;
+    // A removed segment's efforts, board and owner record, swept after it.
+    let removedSegmentId = null;
 
     await firestore.runTransaction(async (transaction) => {
       removedSpacePostRef = null; // a retried attempt starts clean
+      removedSegmentId = null;
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -8151,6 +8277,9 @@ exports.resolveReport = functions
       if (hideActivity && target.targetType === "space_post") {
         removedSpacePostRef = target.targetRef;
       }
+      if (hideActivity && target.targetType === "segment") {
+        removedSegmentId = target.targetId;
+      }
 
       transaction.update(reportRef, {
         status: "resolved",
@@ -8189,6 +8318,24 @@ exports.resolveReport = functions
         await firestore.recursiveDelete(removedSpacePostRef);
       } catch (err) {
         functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
+
+    if (removedSegmentId) {
+      // The segment is gone, so no page opens it, no run is timed on it
+      // and no board is read. The rest of its maker's Delete follows:
+      // everyone's efforts on it, its board and its owner record
+      // (lib/segments.js removeSegment, whose queries cannot run in a
+      // transaction). Best effort, as for a space post: the app leaves out
+      // an effort whose segment is gone, and the maker's account deletion
+      // sweeps an owner record left behind.
+      try {
+        await segments.removeSegment(firestore, removedSegmentId);
+      } catch (err) {
+        functions.logger.warn("resolveReport.segment_cleanup_failed", {
           reportId,
           error: err && err.message,
         });
@@ -8746,13 +8893,13 @@ exports.toggleSpacePostLikeCallable = functions
    Runs immediately after the auth check and before any Firestore read,
    so an unverified caller writes nothing, notifies nobody, and cannot
    probe the rate limiter or the block guard. */
-function assertCallerEmailVerified(context) {
+function assertCallerEmailVerified(
+  context,
+  message = "Verify your email to comment."
+) {
   const token = context.auth && context.auth.token;
   if (!token || token.email_verified !== true) {
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      "Verify your email to comment."
-    );
+    throw new functions.https.HttpsError("failed-precondition", message);
   }
 }
 
@@ -9197,6 +9344,15 @@ exports.sendPasswordResetLinkCallable =
 exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
 
+/* The Settings switches for the two emails a person can choose (App1 Q55):
+   the consent record is written only on the server (lib/emailConsent.js). */
+exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
+/* The emails a person chose, and the unsubscribe link each one carries
+   (App1 Q55): updateEmails.js. */
+const updateEmails = require("./updateEmails");
+exports.hourlyEmailSweep = updateEmails.hourlyEmailSweep;
+exports.emailUnsubscribe = updateEmails.emailUnsubscribe;
+
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)
 // ══════════════════════════════════════════════
@@ -9219,6 +9375,144 @@ exports.publicPostPage = functions
       logger: functions.logger,
     })
   );
+
+// ══════════════════════════════════════════════
+// A shared card's own page (Soc17 calls 1 to 3)
+// ══════════════════════════════════════════════
+//
+// A card that is not of a public post links to /card/<token>: a token the
+// sharer's app made when the share sheet opened. `sharedCard` keeps the
+// card's copy under it just before the share sheet is asked for, and takes
+// it back when the share is cancelled; `sharedCardPage` answers the address
+// with the website's page and the card, read with the Admin SDK. The rules
+// refuse every client read and write of `sharedCards`. lib/sharedCards.js
+// holds what a copy may carry and when it goes.
+const sharedCardPage = require("./lib/sharedCardPage");
+const sharedCardInvites = require("./lib/inviteCodes");
+
+exports.sharedCardPage = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) =>
+    sharedCardPage.serveSharedCard(req, res, {
+      db: admin.firestore(),
+      loadShell: loadPublicPostShell,
+      containsProfanity: profanityFilter.containsProfanity,
+      logger: functions.logger,
+    })
+  );
+
+/**
+ * sharedCard: the share sheet's side of a card's page. One callable, so
+ * the sheet's first call starts the instance its store will need, with
+ * three actions:
+ *
+ * - `prepare` (the sheet opened): the caller's invite code, made the first
+ *   time as getInviteCode makes it, for the words when a card cannot be
+ *   kept. `{ code }`.
+ * - `store` (Share tapped): keep `{ token, card, sources }`, the card as
+ *   drawn and the post or sessions it shows, which must be the caller's.
+ *   `{ stored: true }`.
+ * - `remove` (the share was cancelled, or went with another link): take the
+ *   copy back. Open to a restricted account, as deleting its own things is.
+ *
+ * Signed in, not being deleted; `prepare` and `store` refuse a restricted
+ * account (S4e: a card page reaches whoever has the link). `store` also
+ * needs a verified email, as every other public write does: a card page is
+ * words under a name on troposfit.com, and only a verified address is kept
+ * against a restricted account coming back (restrictedIdentities). Each
+ * action has its own limit. A refusal never stops a share: the sheet falls
+ * back to the invite link.
+ */
+exports.sharedCard = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const action = data && data.action;
+    if (!["prepare", "store", "remove"].includes(action)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unknown action."
+      );
+    }
+    // Before any read, as the comment callables check it.
+    if (action === "store") {
+      assertCallerEmailVerified(
+        context,
+        "Verify your email to share a card’s own page."
+      );
+    }
+    const firestore = admin.firestore();
+    await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
+    const tooMany = () =>
+      new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    if (action === "remove") {
+      if (await isRateLimited(uid, "sharedCardRemove", 60, 600_000)) {
+        throw tooMany();
+      }
+      return sharedCards.removeSharedCard({
+        firestore,
+        uid,
+        token: data.token,
+      });
+    }
+    await restriction.assertNotRestricted(firestore, uid, functions);
+    const inviteCodeFor = async (owner) =>
+      (
+        await sharedCardInvites.getOrCreateInviteCode({
+          firestore,
+          uid: owner,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+      ).code;
+    if (action === "prepare") {
+      if (await isRateLimited(uid, "sharedCardPrepare", 30, 600_000)) {
+        throw tooMany();
+      }
+      try {
+        return { code: await inviteCodeFor(uid) };
+      } catch (err) {
+        functions.logger.warn("sharedCard.prepare_failed", {
+          message: err && err.message,
+        });
+        return { code: null };
+      }
+    }
+    if (
+      (await isRateLimited(uid, "sharedCardStore", 20, 600_000)) ||
+      (await isRateLimited(uid, "sharedCardStoreDay", 100, 86_400_000))
+    ) {
+      throw tooMany();
+    }
+    try {
+      return await sharedCards.storeSharedCard({
+        firestore,
+        uid,
+        token: data.token,
+        card: data.card,
+        sources: data.sources,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        containsProfanity: profanityFilter.containsProfanity,
+        inviteCodeFor,
+        logger: functions.logger,
+      });
+    } catch (err) {
+      if (err instanceof sharedCards.SharedCardError) {
+        throw new functions.https.HttpsError(err.code, err.reason, {
+          reason: err.reason,
+        });
+      }
+      functions.logger.error("sharedCard.store_failed", {
+        message: err && err.message,
+      });
+      throw new functions.https.HttpsError("internal", "Something went wrong.");
+    }
+  });
 
 // ══════════════════════════════════════════════
 // PR-L L4 — weekly fell-behind detection

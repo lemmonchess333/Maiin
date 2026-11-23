@@ -40,6 +40,10 @@ import {
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import type { PlanId } from "@/lib/proPlans";
 import type { ProFeatureKey } from "@/lib/proFeatures";
+import {
+  forgetTrialOfferWebCheckout,
+  noteTrialOfferWebCheckout,
+} from "@/lib/trialOffer";
 
 export interface StartCheckoutOptions {
   /** Analytics dimension (`upgrade_page`, `feature_gate`, etc.). */
@@ -53,6 +57,9 @@ export interface StartCheckoutOptions {
   /** Whether the paywall offered a trial. The trial is the store's own:
    *  App Store Connect's introductory offer, or the web product's. */
   withTrial?: boolean;
+  /** Begun from the trial offer that ends setup: on the web, its return
+   *  (to Upgrade, as every web checkout's is) goes on to Home. */
+  fromTrialOffer?: boolean;
 }
 
 /**
@@ -78,10 +85,12 @@ export interface UseProCheckoutResult {
   /** Set when the store has the purchase and Pro is not on yet: a sentence
    *  to show calmly, never as an error. */
   notice: string | null;
+  /** Resolves with how the purchase ended, or null when none began (one
+   *  already running, or no account). */
   startCheckout: (
     plan: PlanId,
     options?: StartCheckoutOptions
-  ) => Promise<void>;
+  ) => Promise<PurchaseOutcome | null>;
   /** True when the auth context has no user — callers can flip the
    *  CTA label to "Sign in to start Pro" rather than rendering a
    *  disabled button with no explanation. */
@@ -105,7 +114,10 @@ export function useProCheckout(): UseProCheckoutResult {
   }, []);
 
   const startCheckout = useCallback(
-    async (plan: PlanId, options: StartCheckoutOptions = {}) => {
+    async (
+      plan: PlanId,
+      options: StartCheckoutOptions = {}
+    ): Promise<PurchaseOutcome | null> => {
       // Capture plan at submit so a mid-flight selection change
       // can't swap which plan is purchased.
       const submittedPlan = plan;
@@ -116,7 +128,7 @@ export function useProCheckout(): UseProCheckoutResult {
         signedIn: !!user,
       });
       // One purchase at a time.
-      if (started === before) return;
+      if (started === before) return null;
 
       // Auth-less branch. Per the spec we don't disable the CTA —
       // we route the user to sign in. In Tropos, the unauthenticated
@@ -127,7 +139,7 @@ export function useProCheckout(): UseProCheckoutResult {
       // `<Login />` is rendered in place rather than at a /login URL.
       if (!user) {
         toast.error(SIGN_IN_MESSAGE);
-        return;
+        return null;
       }
 
       const platform = isNativeIOS() ? "ios" : "web";
@@ -139,6 +151,13 @@ export function useProCheckout(): UseProCheckoutResult {
       } as const;
 
       track("checkout_started", dimensions);
+      /* The website's checkout returns to Upgrade whatever began it, so
+         each one notes for itself whether that return goes on to Home: a
+         note an earlier checkout left never meets a later one's return. */
+      if (platform === "web") {
+        if (options.fromTrialOffer) noteTrialOfferWebCheckout(user.uid);
+        else forgetTrialOfferWebCheckout(user.uid);
+      }
 
       let outcome: PurchaseOutcome;
       try {
@@ -156,6 +175,8 @@ export function useProCheckout(): UseProCheckoutResult {
         };
       }
       send({ type: "settled", outcome });
+      // Only a checkout that has the window comes back to Upgrade.
+      if (outcome.kind !== "redirected") forgetTrialOfferWebCheckout(user.uid);
 
       switch (outcome.kind) {
         case "cancelled":
@@ -189,6 +210,7 @@ export function useProCheckout(): UseProCheckoutResult {
           // neither surface needs its own refresh race.
           break;
       }
+      return outcome;
     },
     [user, location.pathname, send]
   );

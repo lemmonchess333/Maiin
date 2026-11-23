@@ -5,8 +5,8 @@
  * its own query, its own projection and its own idea of which day a run
  * belongs to. That is how two readers came to order by `createdAt`, a field
  * no saved run has, and read nothing from May to October 2026, and how
- * Lift3's start-date rule reached History and the recap but not the streak,
- * Food's burn or the training-load chart.
+ * Lift3's start-date rule reached History and the recap but not the streak
+ * or Food's burn.
  *
  * This module is the one place that knows the stored shape:
  * - day-window reads combine the stored `date` with the legacy
@@ -35,7 +35,12 @@ import { db } from "./firebase";
 import { logger } from "./logger";
 import { parseLocalDate } from "./dateHelpers";
 import { pendingDocumentWrites } from "./offlineQueue";
-import { fetchSaved, type SavedSessionSource } from "./savedSessions";
+import {
+  fetchSaved,
+  fetchSavedRead,
+  type SavedSessionSource,
+} from "./savedSessions";
+import { holdRunHistory } from "./runPlacingHistory";
 import {
   isRunDateKey,
   readRunExecutionTarget,
@@ -62,6 +67,10 @@ export interface RunSummaryItem {
    *  and the guards read it (`isTreadmillRun`). */
   place?: RunPlace;
   completedAt: Date;
+  /** When the run started, as it saved it (`startedAt`). Absent on a run
+   *  saved without one. Runs are ranked in the order they started
+   *  (`compareRunOrder`). */
+  startedAt?: Date;
   date?: string;
   executionTarget?: RunExecutionTarget | null;
   routeQuality?: string | null;
@@ -231,6 +240,7 @@ function bestEffortsOf(value: unknown): { distance: number; time: number }[] {
 export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   const completedAt = toDate(data.completedAt);
   if (!completedAt) return null;
+  const startedAt = toDate(data.startedAt);
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
   const bestEfforts = bestEffortsOf(data.bestEfforts);
@@ -249,6 +259,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     activityType: data.activityType || "freerun",
     ...(isTreadmillRun(data) ? { place: "treadmill" as const } : {}),
     completedAt,
+    ...(startedAt ? { startedAt } : {}),
     date,
     day: runEvidenceDate({ date, completedAt }),
     executionTarget: readRunExecutionTarget(data),
@@ -453,20 +464,38 @@ export const SAVED_RUNS: SavedSessionSource<SavedRun, RunWindow> = {
 };
 
 /**
+ * Every saved run, and whether the read is the whole history (`known`):
+ * made online and answered by the server. A failed read, or one answered
+ * from this phone's cache, could miss older runs, and a first claimed from
+ * it would call a seasoned runner's half marathon their first (as
+ * `earlierSessions` guards in firstSession.ts). The read is left with the
+ * run placings' held history (`runPlacingHistory.ts`), so a run's page
+ * ranks from it without reading again.
+ */
+async function readWholeHistory(
+  uid: string
+): Promise<{ runs: SavedRun[]; known: boolean }> {
+  const online = typeof navigator === "undefined" || navigator.onLine !== false;
+  const { items, fromCache } = await fetchSavedRead(SAVED_RUNS, uid, {
+    all: true,
+  });
+  const known = online && !fromCache;
+  holdRunHistory(uid, items, known);
+  return { runs: items, known };
+}
+
+/**
  * Every saved run, for a finished run's pace badges and its post's firsts
- * and bests (RunSummary). `known` is whether the read is the whole history:
- * a failed read, or one answered offline from this phone's cache, could
- * miss older runs, and a first claimed from it would call a seasoned
- * runner's half marathon their first (as `earlierSessions` guards in
- * firstSession.ts). The runs are returned either way, for what can use a
- * partial history.
+ * and bests (RunSummary), and for a run's page to place it. `known` is
+ * whether the read is the whole history (`readWholeHistory`). The runs are
+ * returned either way, for what can use a partial history; a failed read
+ * returns none.
  */
 export async function readRunHistory(
   uid: string
 ): Promise<{ runs: SavedRun[]; known: boolean }> {
-  const online = typeof navigator === "undefined" || navigator.onLine !== false;
   try {
-    return { runs: await fetchSavedRuns(uid, { all: true }), known: online };
+    return await readWholeHistory(uid);
   } catch (err) {
     logger.error("[savedRuns] run history not read", err);
     return { runs: [], known: false };
@@ -476,11 +505,13 @@ export async function readRunHistory(
 /**
  * One read of a window, for readers that do not stay subscribed. Runs saved
  * on this phone and not yet synced are included when `uid` is the signed-in
- * account (another account has none queued here).
+ * account (another account has none queued here). A read of every run is
+ * also held for the run placings (`readWholeHistory`).
  */
-export function fetchSavedRuns(
+export async function fetchSavedRuns(
   uid: string,
   window: RunWindow
 ): Promise<SavedRun[]> {
+  if ("all" in window) return (await readWholeHistory(uid)).runs;
   return fetchSaved(SAVED_RUNS, uid, window);
 }

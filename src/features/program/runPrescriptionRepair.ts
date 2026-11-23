@@ -94,6 +94,12 @@ export function repairRunPrescriptions(
       inWeek(day) && (fixedBeginnerRow(day) || isScheduledRaceRunDay(day))
   );
   const available = new Set(starterRunSlots(profile.weekSchedule ?? []));
+  // A layout with no run day has nothing to repair against: it is a
+  // profile behind its plan. Adding running (TrainWk1 step 6) writes the
+  // two together, and the plan can reach the app before the profile does;
+  // read against the old layout, every run of the new plan's week was
+  // pruned and the prune saved.
+  if (available.size === 0) return state;
   const neighbors = rows.filter(
     (day) => fixedBeginnerRow(day) || isScheduledRaceRunDay(day)
   );

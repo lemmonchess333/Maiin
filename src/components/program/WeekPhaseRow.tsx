@@ -16,7 +16,7 @@ interface WeekPhaseRowProps {
    around it (the DeloadBanner's close does the same), so it does not make
    the line taller than its text. */
 const CHEVRON =
-  "relative -my-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground before:absolute before:-inset-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+  "relative -my-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground before:absolute before:-inset-2.5 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 /**
  * Train's week, as the header's line under the title (DS4, §14m rules 17

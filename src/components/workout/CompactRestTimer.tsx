@@ -3,7 +3,6 @@ import "@fontsource-variable/archivo/wdth-italic.css";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
 import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
-import { cardClasses } from "@/components/ui/cardClasses";
 import { cn } from "@/lib/utils";
 
 /** Circumference of the countdown ring (r = 15 in a 36-unit box). */
@@ -38,6 +37,11 @@ export interface RestNextSet {
  * transition on its offset that the global Reduce Motion rule takes back
  * to a step. The figure stays in the text colour: in green at this size
  * it would be the largest colour on the screen.
+ *
+ * The band draws no surface of its own: the dock it sits in gives it one,
+ * the frosted compact card on the element that fades it in
+ * (`WorkoutSession`, DS6), since a fading parent would cut a blur drawn
+ * here off from the list behind it.
  */
 export default function CompactRestTimer({
   seconds,
@@ -58,10 +62,7 @@ export default function CompactRestTimer({
   const elapsed = target > 0 ? Math.min(1, seconds / target) : 1;
   return (
     <div
-      className={cardClasses({
-        size: "compact",
-        className: "@container space-y-2",
-      })}
+      className="@container space-y-2 p-3"
       role="group"
       aria-label="Rest timer"
     >
@@ -101,16 +102,14 @@ export default function CompactRestTimer({
               strokeDashoffset={done ? 0 : RING * elapsed}
               className={cn(
                 "transition-[stroke-dashoffset] duration-1000 ease-linear",
-                done ? "stroke-success" : "stroke-primary"
+                done ? "stroke-success" : "stroke-lifting"
               )}
             />
           </svg>
           <span
             className={cn(
               "whitespace-nowrap text-xs",
-              done
-                ? "font-semibold text-success-strong"
-                : "text-muted-foreground"
+              done ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >
             {done ? "Rest done" : "Rest"}

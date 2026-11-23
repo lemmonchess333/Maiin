@@ -14,7 +14,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useEffect } from "react";
 import { render, screen, act, cleanup, waitFor } from "@testing-library/react";
-import type { UpdateProfileResult, UserProfile } from "../auth";
+import type {
+  UpdateProfileOptions,
+  UpdateProfileResult,
+  UserProfile,
+} from "../auth";
 
 const H = vi.hoisted(() => ({
   mockAuth: { currentUser: null as { uid: string } | null },
@@ -23,7 +27,7 @@ const H = vi.hoisted(() => ({
     | null
     | ((
         p: Partial<UserProfile>,
-        o?: { throwOnError?: boolean }
+        o?: UpdateProfileOptions
       ) => Promise<UpdateProfileResult>),
   setDoc: vi.fn(async (..._args: unknown[]) => {}),
   toastError: vi.fn(),
@@ -93,6 +97,7 @@ vi.mock("@/lib/toast", () => ({
 }));
 
 import { AuthProvider, useAuth } from "../auth";
+import { deleteField } from "firebase/firestore";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
 function Probe() {
@@ -104,6 +109,7 @@ function Probe() {
     <div
       data-testid="s"
       data-max-hr={String(auth.profile?.maxHeartRate ?? "none")}
+      data-sex={auth.profile?.sex ?? "none"}
       data-ready={auth.profile ? "yes" : "no"}
     />
   );
@@ -120,7 +126,7 @@ beforeEach(async () => {
   resetFirestore();
   H.setDoc.mockReset().mockResolvedValue(undefined);
   H.toastError.mockClear();
-  seedFirestore({ "users/A": { email: "A@x.z" } });
+  seedFirestore({ "users/A": { email: "A@x.z", sex: "female" } });
   render(
     <AuthProvider>
       <Probe />
@@ -180,5 +186,50 @@ describe("updateProfile offline", () => {
       ).rejects.toThrow("permission-denied");
     });
     expect(maxHr()).toBe("none");
+  });
+});
+
+/* Settings › Profile's Not set takes `sex` off the profile (owner, 22
+   November 2026). A `deleteField()` handed in as a value would also have
+   landed in the profile the app holds, where every reader would meet it. */
+describe("updateProfile's remove", () => {
+  const sex = () => screen.getByTestId("s").getAttribute("data-sex");
+
+  it("deletes the field in the same write and drops it from the profile held", async () => {
+    expect(sex()).toBe("female");
+    let result: UpdateProfileResult | undefined;
+    await act(async () => {
+      result = await H.update!(
+        { gender: "unspecified" },
+        { remove: ["sex"], throwOnError: true }
+      );
+    });
+    expect(result).toEqual({ ok: true });
+    expect(H.setDoc).toHaveBeenCalledTimes(1);
+    const [, data, options] = H.setDoc.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+      unknown,
+    ];
+    expect(data.gender).toBe("unspecified");
+    expect(data.sex).toEqual(deleteField());
+    expect(options).toEqual({ merge: true });
+    expect(sex()).toBe("none");
+  });
+
+  it("keeps the field when the write is refused", async () => {
+    H.setDoc.mockRejectedValueOnce(new Error("permission-denied"));
+    await act(async () => {
+      await expect(
+        H.update!(
+          { gender: "unspecified" },
+          {
+            remove: ["sex"],
+            throwOnError: true,
+          }
+        )
+      ).rejects.toThrow("permission-denied");
+    });
+    expect(sex()).toBe("female");
   });
 });

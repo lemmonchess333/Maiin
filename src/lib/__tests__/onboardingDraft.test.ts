@@ -16,15 +16,27 @@ import {
   saveOnboardingDraft,
   loadOnboardingDraft,
   clearOnboardingDraft,
+  saveSignedOutDraft,
+  loadSignedOutDraft,
+  clearSignedOutDraft,
+  adoptSignedOutDraft,
   isValidDraft,
   DRAFT_SESSION_MINUTES,
   DRAFT_VERSION,
   DRAFT_TTL_MS,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
+  ONBOARDING_STEP_IDS,
   type OnboardingDraft,
 } from "../onboardingDraft";
 import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
+import {
+  SIGNED_OUT_DRAFT_KEY,
+  SIGNED_OUT_DRAFT_TTL_MS,
+  SIGNED_OUT_OWNER,
+} from "../signedOutDraft";
 
-const MAX_STEP = 7; // TOTAL_STEPS - 1 in Onboarding.tsx
+const MAX_STEP = ONBOARDING_MAX_STEP; // what Onboarding.tsx loads with
 
 const UID_A = "user-aaa";
 const UID_B = "user-bbb";
@@ -168,6 +180,8 @@ describe("strict validation — any bad field rejects the whole draft", () => {
     rejects({ gender: 42 });
     rejects({ ageRange: "9000+" });
     rejects({ runMode: "structured-race" });
+    // The retired structured mode (App1 Q25): no setup offers it.
+    rejects({ runMode: "structured" });
     rejects({ raceDistance: "ultra" });
   });
 
@@ -404,5 +418,129 @@ describe("optional nutrition answers", () => {
     { paceKgPerWeek: NaN },
   ])("rejects malformed optional nutrition metadata: %j", (updates) => {
     expect(isValidDraft({ ...makeDraft(), ...updates }, MAX_STEP)).toBe(false);
+  });
+});
+
+/* Priv1 call 1: the agreement to store health details is its own step,
+   numbered after every older one so their stored numbers and analytics ids
+   hold, and the draft keeps the version agreed to until the plan is saved. */
+describe("the health-details agreement", () => {
+  it("adds its step without renumbering the others", () => {
+    expect(ONBOARDING_STEP_IDS.slice(0, 8)).toEqual([
+      "goal",
+      "days",
+      "equipment",
+      "run",
+      "injuries",
+      "about",
+      "preview",
+      "confirm",
+    ]);
+    expect(ONBOARDING_STEP_IDS[HEALTH_CONSENT_STEP]).toBe("health");
+    expect(MAX_STEP).toBe(HEALTH_CONSENT_STEP);
+  });
+
+  it("resumes on the agreement's own step", () => {
+    const draft = makeDraft({ step: HEALTH_CONSENT_STEP });
+    saveOnboardingDraft(UID_A, draft);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+  });
+
+  it("round-trips the version agreed to, and rejects anything but a whole version", () => {
+    const agreed = makeDraft({ healthConsentVersion: 1 });
+    saveOnboardingDraft(UID_A, agreed);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(agreed);
+    for (const bad of [true, "1", 0, 1.5, null])
+      expect(
+        isValidDraft(
+          {
+            ...makeDraft(),
+            healthConsentVersion: bad,
+          } as unknown as OnboardingDraft,
+          MAX_STEP
+        )
+      ).toBe(false);
+  });
+});
+
+/* A6: setup is answered before there is an account. Its answers wait on
+   the phone under one key, survive a kill and a cold start (the round trip
+   is the remount, as above), and move to the account Save your plan makes. */
+describe("setup answered signed out (A6)", () => {
+  const SIGNED_OUT_KEY = "tropos.onboarding.draft.signedOut";
+
+  it("survives the app being closed: load returns what was saved", () => {
+    const d = makeDraft({ step: 7, healthConsentVersion: 1 });
+    saveSignedOutDraft(d);
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
+    // A cold start reads the same storage again.
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
+  });
+
+  it("is not an account's draft, and an account's is not it", () => {
+    saveSignedOutDraft(makeDraft({ step: 2 }));
+    saveOnboardingDraft(UID_A, makeDraft({ step: 5 }));
+    expect(loadOnboardingDraft(UID_B, MAX_STEP)).toBeNull();
+    expect(loadSignedOutDraft(MAX_STEP)?.step).toBe(2);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)?.step).toBe(5);
+    // An account's envelope written under the signed-out key is refused.
+    localStorage.setItem(SIGNED_OUT_KEY, localStorage.getItem(keyFor(UID_A))!);
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
+    expect(localStorage.getItem(SIGNED_OUT_KEY)).toBeNull();
+  });
+
+  it("moves to the new account, leaving nothing on the phone's key", () => {
+    const d = makeDraft({ step: 7, healthConsentVersion: 1 });
+    saveSignedOutDraft(d);
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)).toEqual(d);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(d);
+    expect(localStorage.getItem(SIGNED_OUT_KEY)).toBeNull();
+    // Twice is the same as once (React draws a first render twice in
+    // development).
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)).toEqual(d);
+  });
+
+  it("over an older draft of the same account, the newer answers win", () => {
+    saveOnboardingDraft(UID_A, makeDraft({ step: 1 }));
+    saveSignedOutDraft(makeDraft({ step: 7 }));
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)?.step).toBe(7);
+  });
+
+  it("with nothing waiting, the account keeps its own draft", () => {
+    saveOnboardingDraft(UID_A, makeDraft({ step: 3 }));
+    expect(adoptSignedOutDraft(UID_A, MAX_STEP)?.step).toBe(3);
+  });
+
+  it("lasts two days, not an account's 14, and clears", () => {
+    saveSignedOutDraft(makeDraft());
+    const raw = JSON.parse(localStorage.getItem(SIGNED_OUT_KEY)!);
+    raw.savedAt = Date.now() - (SIGNED_OUT_DRAFT_TTL_MS - 60_000);
+    localStorage.setItem(SIGNED_OUT_KEY, JSON.stringify(raw));
+    expect(loadSignedOutDraft(MAX_STEP)).not.toBeNull();
+    raw.savedAt = Date.now() - SIGNED_OUT_DRAFT_TTL_MS - 1;
+    localStorage.setItem(SIGNED_OUT_KEY, JSON.stringify(raw));
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
+    saveSignedOutDraft(makeDraft());
+    clearSignedOutDraft();
+    expect(loadSignedOutDraft(MAX_STEP)).toBeNull();
+  });
+});
+
+/* The e2e rig plants a signed-out draft at the review the way the app
+   stores one (`e2e/helpers/auth.ts`, openSaveYourPlan), from the constants
+   of `signedOutDraft.ts`: this holds that form to what the app reads. */
+describe("a signed-out draft planted as the e2e rig plants it", () => {
+  it("loads", () => {
+    const d = makeDraft({ step: 7 });
+    localStorage.setItem(
+      SIGNED_OUT_DRAFT_KEY,
+      JSON.stringify({
+        v: DRAFT_VERSION,
+        uid: SIGNED_OUT_OWNER,
+        savedAt: Date.now(),
+        draft: d,
+      })
+    );
+    expect(loadSignedOutDraft(MAX_STEP)).toEqual(d);
   });
 });

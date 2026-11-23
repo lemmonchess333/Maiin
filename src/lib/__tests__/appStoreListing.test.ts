@@ -196,7 +196,7 @@ describe("App Store listing: claims the code can contradict", () => {
   it("never says unlimited while Pro has a daily cap", () => {
     // The paywall's own "Unlimited AI photo food logging" is the copy
     // this guards against repeating: Pro is capped per day.
-    const cap = read("../subscription.ts").match(
+    const cap = read("../dailyAiLimits.ts").match(
       /pro:\s*\{\s*text_ai:\s*(\d+),\s*image_ai:\s*(\d+)\s*\}/
     );
     expect(cap).not.toBeNull();
@@ -271,6 +271,9 @@ describe("App Store listing: the privacy label and the privacy manifest agree", 
   const PURPOSE_KEY: Record<string, string> = {
     "app functionality": "AppFunctionality",
     analytics: "Analytics",
+    // Apple's "Developer's Advertising or Marketing": the emails a person
+    // can choose (App1 Q55).
+    "developer's advertising or marketing": "DeveloperAdvertising",
   };
 
   /** The listing's "Data linked to you" rows as manifest keys. */

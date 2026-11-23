@@ -249,7 +249,7 @@ export default function PeriodSummaryCard({
                 className={cn(
                   "min-w-0 rounded-lg px-2 py-2 text-left",
                   "active:scale-[0.97] motion-safe:transition-[background-color,scale]",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   selected && "bg-muted"
                 )}
               >
@@ -264,7 +264,7 @@ export default function PeriodSummaryCard({
                     className={cn(
                       "block text-xs font-semibold",
                       f.change.direction === "up"
-                        ? "text-success-strong"
+                        ? "text-foreground"
                         : "text-muted-foreground"
                     )}
                   >

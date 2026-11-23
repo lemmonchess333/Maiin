@@ -7,8 +7,15 @@ import {
   VERB_LABEL,
   EMPTY_STATE_LINE,
   performanceEmptyCopy,
+  scoreWindowLabel,
+  takeMoreLine,
+  USUAL_WEEK_FORMING,
   type VerbState,
 } from "../performanceLine";
+import {
+  isEstablishingBaseline,
+  MAX_LIFETIME_WEEKS,
+} from "../performanceDocFields";
 import type { PerformanceSignals } from "../performanceTypes";
 
 const ZERO_SIGNALS: PerformanceSignals = {
@@ -86,25 +93,88 @@ describe("getVerb — state + label", () => {
   });
 });
 
+/* The lines are about the person, not "load" (CODING_STANDARDS, the
+   measured rules), and whether to ease off is the line under the bars
+   (`takeMoreLine`), so it is not said twice. The recovery line names what
+   the engine's recovery factor is made of, not a score the lead hides. */
 describe("getLine — backing-off state", () => {
-  it("recoveryWeak signal: names the recovery score", () => {
+  it("recoveryWeak signal: what recovery is read from", () => {
     expect(
       getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true })
-    ).toBe("Recovery score is low. Ease off this week");
+    ).toBe("Your recovery reads low from food, weight and sessions");
   });
 
-  it("no recoveryWeak: the load", () => {
-    expect(getLine("backing-off", ZERO_SIGNALS)).toBe(
-      "Load is high. Ease off this week"
+  /* The flag also comes from adherence and from a score held at the top,
+     so "more than your usual week" is said only on the week's own figures
+     (`trainedMoreThanUsual`); performanceLeadLines.cross.test.ts drives
+     each case through the server's scorer. */
+  it("trained more than the usual week: says so", () => {
+    expect(getLine("backing-off", ZERO_SIGNALS, { trainedMore: true })).toBe(
+      "You trained more than your usual week"
     );
+  });
+
+  it("recovery takes precedence over more", () => {
+    expect(
+      getLine(
+        "backing-off",
+        { ...ZERO_SIGNALS, recoveryWeak: true },
+        { trainedMore: true }
+      )
+    ).toBe("Your recovery reads low from food, weight and sessions");
+  });
+
+  it("adherenceWeak and not more: what was off the plan", () => {
+    const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
+    expect(
+      getLine("backing-off", weak, {
+        sessions: { done: 5, planned: 5, foodCounted: true },
+      })
+    ).toBe(
+      "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
+    );
+    expect(getLine("backing-off", weak)).toBe(
+      "Your sessions or food were well off your plan"
+    );
+  });
+
+  it("not more, adherence fine: the sport line Sharpening uses", () => {
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.5 })
+    ).toBe("Lifting volume 50% above your usual week");
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.3 })
+    ).toBe("Running distance 30% above your usual week");
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, bothLoadsStrong: true })
+    ).toBe("Lifting and running both strong");
+    expect(getLine("backing-off", ZERO_SIGNALS)).toBe("A strong 7 days");
+  });
+
+  it("never says to ease off: the line under the bars does", () => {
+    const lines = [
+      getLine("backing-off", ZERO_SIGNALS),
+      getLine("backing-off", ZERO_SIGNALS, { trainedMore: true }),
+      getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true }),
+      getLine("backing-off", { ...ZERO_SIGNALS, adherenceWeak: true }),
+      getLine(
+        "backing-off",
+        { ...ZERO_SIGNALS, adherenceWeak: true },
+        { sessions: { done: 2, planned: 5, foodCounted: true } }
+      ),
+    ];
+    for (const line of lines) expect(line).not.toMatch(/ease off/i);
   });
 });
 
+/* The sharpening lines describe the score's window, which the card names
+   above them ("Last 7 days"), so they no longer end "this week", which
+   means Monday to Sunday (App1 Q13). */
 describe("getLine — sharpening state", () => {
   it("bothLoadsStrong signal: hybrid celebration line", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, bothLoadsStrong: true })
-    ).toBe("Lifting and running both strong this week");
+    ).toBe("Lifting and running both strong");
   });
 
   it("liftAheadOfBaseline > 0.15: cites the percentage", () => {
@@ -130,35 +200,137 @@ describe("getLine — sharpening state", () => {
       liftAheadOfBaseline: 0.2,
       runAheadOfBaseline: 0.3,
     });
-    expect(line).toBe("Lifting and running both strong this week");
+    expect(line).toBe("Lifting and running both strong");
   });
 
-  it("no signals: says what the band means, with no cheer", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("Load is high this week");
+  /* The band is the whole score, so a high one is no proof of more
+     training: at 100% of the usual week the score is 79, high. The
+     comparison is said only on the week's own figures
+     (`trainedMoreThanUsual`, trainedMoreThanUsual.test.ts). */
+  it("no signals: says you trained more only when you did", () => {
+    expect(getLine("sharpening", ZERO_SIGNALS, { trainedMore: true })).toBe(
+      "You trained more than your usual week"
+    );
+    expect(getLine("sharpening", ZERO_SIGNALS, { trainedMore: false })).toBe(
+      "A strong 7 days"
+    );
+    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("A strong 7 days");
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
     expect(
-      getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
-    ).toBe("Load is high this week");
+      getLine(
+        "sharpening",
+        { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 },
+        { trainedMore: true }
+      )
+    ).toBe("You trained more than your usual week");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
-      getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
-    ).toBe("Load is high this week");
+      getLine(
+        "sharpening",
+        { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 },
+        { trainedMore: true }
+      )
+    ).toBe("You trained more than your usual week");
   });
 });
 
+/* Adherence is the sessions against the plan and the food against its
+   targets, averaged (`computeAdherenceScore`). The usual week's session
+   count is in neither, so no Steady line compares sessions with usual. */
 describe("getLine — cruising state", () => {
-  it("adherenceWeak: 'Fewer sessions than usual'", () => {
-    expect(getLine("cruising", { ...ZERO_SIGNALS, adherenceWeak: true })).toBe(
-      "Fewer sessions than usual"
+  const weak = { ...ZERO_SIGNALS, adherenceWeak: true };
+  const sessions = (done: number, planned: number, foodCounted = true) => ({
+    sessions: { done, planned, foodCounted },
+  });
+
+  it("adherenceWeak, every planned session done: the food was off", () => {
+    expect(getLine("cruising", weak, sessions(5, 5))).toBe(
+      "You did 5 of 5 planned sessions in these 7 days. Food was well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(6, 5))).toBe(
+      "You did 6 sessions against 5 planned in these 7 days. Food was well off your targets"
     );
   });
 
-  it("no signals: 'Holding a steady rhythm'", () => {
+  /* With half the plan or more done, the sessions' factor is 50 or more,
+     so adherence under 50 needs the food's under 50 too. Under half, the
+     sessions alone can make it weak, and the food is not known. */
+  it("adherenceWeak, sessions short: the count, and the food only when it must have been off", () => {
+    expect(getLine("cruising", weak, sessions(3, 5))).toBe(
+      "You did 3 of 5 planned sessions in these 7 days. Food was well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(2, 4))).toBe(
+      "You did 2 of 4 planned sessions in these 7 days. Food was well off your targets"
+    );
+    expect(getLine("cruising", weak, sessions(2, 5))).toBe(
+      "You did 2 of 5 planned sessions in these 7 days"
+    );
+    expect(getLine("cruising", weak, sessions(0, 1))).toBe(
+      "You did 0 of 1 planned session in these 7 days"
+    );
+  });
+
+  /* The server counts food only once it is logged on 3 days
+     (`computeAdherenceScore`). Without that, the half-the-plan rule can
+     only be wrong: the plan the count reads has changed since. */
+  it("adherenceWeak, half the plan done, food not counted: the count alone", () => {
+    expect(getLine("cruising", weak, sessions(2, 4, false))).toBe(
+      "You did 2 of 4 planned sessions in these 7 days"
+    );
+    expect(getLine("cruising", weak, sessions(5, 5, false))).toBe(
+      "You did 5 of 5 planned sessions in these 7 days"
+    );
+  });
+
+  it("adherenceWeak with no plan to count against: sessions or food, honestly", () => {
+    expect(getLine("cruising", weak)).toBe(
+      "Your sessions or food were well off your plan"
+    );
+    expect(getLine("cruising", weak, { sessions: null })).toBe(
+      "Your sessions or food were well off your plan"
+    );
+  });
+
+  it("adherence fine, sessions short: the count", () => {
+    expect(getLine("cruising", ZERO_SIGNALS, sessions(3, 5))).toBe(
+      "You did 3 of 5 planned sessions in these 7 days"
+    );
+  });
+
+  it("a sport well above its usual week still leads (LIFT-EV-10)", () => {
+    expect(
+      getLine(
+        "cruising",
+        { ...ZERO_SIGNALS, runAheadOfBaseline: 0.5 },
+        sessions(3, 5)
+      )
+    ).toBe("Running distance 50% above your usual week");
+  });
+
+  it("no signals, the plan's sessions done or no plan: 'Holding a steady rhythm'", () => {
     expect(getLine("cruising", ZERO_SIGNALS)).toBe("Holding a steady rhythm");
+    expect(getLine("cruising", ZERO_SIGNALS, sessions(5, 5))).toBe(
+      "Holding a steady rhythm"
+    );
+  });
+
+  /* The measured words rule: one or two sentences of 15 words or fewer
+     (CODING_STANDARDS). The count and the food are two. */
+  it("keeps each sentence to 15 words or fewer", () => {
+    for (const evidence of [sessions(5, 5), sessions(6, 5), sessions(3, 5)]) {
+      for (const sentence of getLine("cruising", weak, evidence).split(". "))
+        expect(sentence.split(" ").length).toBeLessThanOrEqual(15);
+    }
+  });
+
+  it("never compares sessions with the usual week", () => {
+    for (const evidence of [{}, sessions(5, 5), sessions(2, 5)]) {
+      expect(getLine("cruising", weak, evidence)).not.toMatch(/usual/);
+    }
   });
 });
 
@@ -183,19 +355,20 @@ describe("getLine — building state", () => {
 });
 
 describe("getLine — recovering state", () => {
-  it("daysSinceLastTraining > 7: 'Quiet week. Log when you're back'", () => {
+  /* Under "Last 7 days" a line says 7 days, never "week" (App1 Q13). */
+  it("daysSinceLastTraining > 7: nothing logged in these 7 days", () => {
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 10 })
-    ).toBe("Quiet week. Log when you’re back");
+    ).toBe("Nothing logged in these 7 days. Log when you’re back");
   });
 
-  it("daysSinceLastTraining <= 7: 'Light week. Take it easy'", () => {
+  it("daysSinceLastTraining <= 7: a light 7 days", () => {
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 7 })
-    ).toBe("Light week. Take it easy");
+    ).toBe("A light 7 days, under your usual week");
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 0 })
-    ).toBe("Light week. Take it easy");
+    ).toBe("A light 7 days, under your usual week");
   });
 });
 
@@ -230,7 +403,7 @@ describe("performanceEmptyCopy", () => {
   it("nothing logged: says so, and offers the next step", () => {
     expect(performanceEmptyCopy(false)).toEqual({
       headline: "No sessions logged yet",
-      sub: "Your Performance will appear after your first logged session",
+      sub: "Your last 7 days against your usual week appear after your first session",
       showAction: true,
     });
   });
@@ -238,7 +411,7 @@ describe("performanceEmptyCopy", () => {
   it("a session IS logged: does not claim otherwise, and offers no action", () => {
     expect(performanceEmptyCopy(true)).toEqual({
       headline: "Performance is still catching up",
-      sub: "Your Performance Index appears shortly after a session is saved",
+      sub: "Your last 7 days appear here shortly after a session is saved",
       showAction: false,
     });
   });
@@ -250,7 +423,7 @@ describe("performanceEmptyCopy", () => {
        future copy edit cannot reintroduce the claim. */
     const copy = performanceEmptyCopy(true);
     expect(copy.headline.toLowerCase()).not.toContain("no sessions");
-    expect(copy.sub.toLowerCase()).not.toContain("first logged session");
+    expect(copy.sub.toLowerCase()).not.toContain("first session");
   });
 
   it("the two branches differ in every field", () => {
@@ -307,5 +480,69 @@ describe("the supporting line's shape", () => {
         expect(getLine(state, signals), state).not.toMatch(/\u2014/);
       }
     }
+  });
+});
+
+describe("scoreWindowLabel — the score's window by name (App1 Q13)", () => {
+  // A Thursday, so a Monday-to-Sunday week and the rolling seven differ.
+  const today = new Date(2026, 10, 12, 9, 0);
+
+  it("calls a window ending today or yesterday the last 7 days", () => {
+    expect(scoreWindowLabel("2026-11-12", today)).toBe("Last 7 days");
+    expect(scoreWindowLabel("2026-11-11", today)).toBe("Last 7 days");
+  });
+
+  it("names an older window by its last day", () => {
+    expect(scoreWindowLabel("2026-11-10", today)).toBe("7 days to 10 Nov");
+    expect(scoreWindowLabel("2026-08-02", today)).toBe("7 days to 2 Aug");
+  });
+
+  it("gives that day its year when it is not this year's", () => {
+    expect(scoreWindowLabel("2025-12-28", today)).toBe("7 days to 28 Dec 2025");
+  });
+
+  it("never calls it this week, which means Monday to Sunday", () => {
+    for (const key of ["2026-11-12", "2026-11-09", "2026-10-01"]) {
+      expect(scoreWindowLabel(key, today)).not.toMatch(/this week/i);
+    }
+  });
+});
+
+describe("takeMoreLine — whether you can take more (App1 Q10)", () => {
+  it("says ease off only where the engine does: Backing off", () => {
+    expect(takeMoreLine("backing-off")).toBe(
+      "Ease off this week rather than add more"
+    );
+  });
+
+  it("claims no room the engine never measured: carry on with the plan", () => {
+    for (const state of [
+      "recovering",
+      "building",
+      "cruising",
+      "sharpening",
+    ] as VerbState[]) {
+      const line = takeMoreLine(state);
+      expect(line).toBe("No sign to ease off. Carry on with your plan");
+      expect(line).not.toMatch(/room|more sessions|add more|harder/i);
+    }
+  });
+
+  it("while the baseline forms, says when the usual week will", () => {
+    expect(takeMoreLine(null)).toBe(USUAL_WEEK_FORMING);
+    expect(USUAL_WEEK_FORMING).toBe(
+      "Your usual week forms once you’ve trained in 3 of 4 weeks. Until then, follow your plan"
+    );
+  });
+
+  it("names the numbers the establishing gate really uses", () => {
+    // 3 of 4: below 3 active weeks of the baseline's 4 it is establishing.
+    expect(
+      isEstablishingBaseline({ docsAvailable: 10, lifetimeWeeks: 2 })
+    ).toBe(true);
+    expect(
+      isEstablishingBaseline({ docsAvailable: 10, lifetimeWeeks: 3 })
+    ).toBe(false);
+    expect(MAX_LIFETIME_WEEKS).toBe(4);
   });
 });

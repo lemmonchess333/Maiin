@@ -214,13 +214,13 @@ function ScheduleLayoutSheetBody({
                   className="grid grid-cols-2 gap-2"
                   aria-label="Before and after training days"
                 >
-                  <div className="rounded-2xl border border-border bg-card p-3">
+                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Lift days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.lifts} → {preview.after.lifts}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-border bg-card p-3">
+                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Run days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.runs} → {preview.after.runs}
@@ -229,7 +229,7 @@ function ScheduleLayoutSheetBody({
                 </div>
                 <div className="space-y-2">
                   <SectionLabel as="h3">Changed days</SectionLabel>
-                  <ul className="divide-y divide-border rounded-2xl border border-border bg-card px-3">
+                  <ul className="divide-y divide-border rounded-2xl border border-border bg-card px-3 dark:card-shadow dark:border-transparent">
                     {preview.changes.map((change) => (
                       <li
                         key={change.day}
@@ -324,7 +324,7 @@ function ScheduleLayoutSheetBody({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center"
+                  className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center dark:card-shadow dark:border-transparent"
                 >
                   <p
                     className="text-lg font-extrabold leading-none font-figure tabular-nums"
@@ -364,7 +364,7 @@ function ScheduleLayoutSheetBody({
                     : s.type === "run"
                       ? THEME.running
                       : s.type === "both"
-                        ? THEME.brand
+                        ? THEME.chrome.grey
                         : undefined;
                 const label =
                   s.type === "lift"
@@ -391,7 +391,11 @@ function ScheduleLayoutSheetBody({
                       s.type !== "rest" && color
                         ? {
                             borderColor: `${color}45`,
-                            background: `${color}10`,
+                            /* The session's tint over the card, not in its
+                               place: `background` reset `bg-card` and laid
+                               the tint over the sheet, as ProgrammeSettings'
+                               option card once did. */
+                            backgroundImage: `linear-gradient(${color}10, ${color}10)`,
                           }
                         : undefined
                     }
@@ -412,9 +416,20 @@ function ScheduleLayoutSheetBody({
                     ) : (
                       <div className="size-4 rounded-full bg-muted-foreground/20" />
                     )}
+                    {/* The text step of the session's colour: on the
+                        card under a 6% tint the identity colour itself
+                        is 3.3 to 4.7:1 at this size, the -strong step
+                        5.7:1 or more in both themes (§10). Both's purple
+                        is lifting's, so it takes lifting's step. */}
                     <span
-                      className="text-caption font-bold leading-none"
-                      style={{ color: color || "hsl(var(--muted-foreground))" }}
+                      className={cn(
+                        "text-caption font-bold leading-none",
+                        s.type === "lift" || s.type === "both"
+                          ? "text-lifting-strong"
+                          : s.type === "run"
+                            ? "text-running-strong"
+                            : "text-muted-foreground"
+                      )}
                     >
                       {label}
                     </span>
@@ -483,7 +498,7 @@ function ScheduleLayoutSheetBody({
           {pendingLiftDays !== null && (
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
-              <span className="text-lifting-strong">
+              <span className="text-foreground">
                 {splitLabel(
                   chooseSplit(
                     pendingLiftDays,

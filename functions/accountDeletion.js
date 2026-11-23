@@ -165,11 +165,12 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   "profile-photos/__UID__/",
   // Food diary photos — LEGACY ONLY as of Food9 (2026-08-18). Captures
   // are written to the DEVICE now (src/lib/foodPhotoStore.ts) and never
-  // reach Storage, so nothing new lands under this prefix. It stays
-  // because blobs uploaded before the swap are still there and still
-  // rendered by pre-Food9 meal docs; a deleting user must have them
-  // erased. Do not remove until that legacy sweep has run (tracked in
-  // the CLAUDE.md pre-launch backlog).
+  // reach Storage, so nothing new lands under this prefix, and the app no
+  // longer shows one. Every blob uploaded before the swap is deleted by
+  // functions/scripts/purgeLegacyFoodPhotos.js (owner, 2026-11-21); until
+  // that has run in production, a deleting user's are erased here. Once
+  // it has, the prefix is empty and this costs one list call. Remove it
+  // only after the purge's row in docs/qa/pre-launch-backlog.md is ticked.
   "food-photos/__UID__/",
   // Community Space post photos (Spc1 PR4, src/lib/spacePhotoUpload.ts).
   // The Firestore posts are deleted by the spaces cleanup step (3d);
@@ -546,6 +547,21 @@ async function deleteAccount({
       await deleteRefsInBatches(
         firestore,
         inviteCodesSnap.docs.map((d) => d.ref)
+      );
+    }
+
+    // 3b''. The account's shared cards (Soc17 call 1, lib/sharedCards.js):
+    // `sharedCards/{token}` carries the uid under a random token, so
+    // neither sweep reaches it. Deleted, so no card page outlives the
+    // account; the page also refuses an account being deleted.
+    const sharedCardsSnap = await firestore
+      .collection("sharedCards")
+      .where("ownerUid", "==", uid)
+      .get();
+    if (!sharedCardsSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        sharedCardsSnap.docs.map((d) => d.ref)
       );
     }
 

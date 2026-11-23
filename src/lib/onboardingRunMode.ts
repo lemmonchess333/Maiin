@@ -12,12 +12,9 @@
  * is the Race Goal Planner on the Programme/Training surface, which gives
  * runway feedback the bare onboarding date field can't.
  *
- * No "structured" coercion here — structured is passed through untouched
- * (this helper only governs the race_prep-without-date case), and so is
- * Run9's starter goal, which needs no date.
+ * Run9's starter goal needs no date and is passed through untouched.
  */
-export type OnboardingRunMode =
-  "freeform" | "structured" | "race_prep" | "starter";
+export type OnboardingRunMode = "freeform" | "race_prep" | "starter";
 
 export function resolveOnboardingRunMode(input: {
   runFrequency: string;

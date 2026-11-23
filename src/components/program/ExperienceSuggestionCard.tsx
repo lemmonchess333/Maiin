@@ -74,7 +74,7 @@ export default function ExperienceSuggestionCard({
       </div>
 
       <details className="group mt-1 pl-12">
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-lifting-strong [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
           Read more
           <ChevronDown
             className="size-4 transition-transform group-open:rotate-180"
@@ -88,7 +88,7 @@ export default function ExperienceSuggestionCard({
           {suggestion.evidence.slice(0, 3).map((e) => (
             <div
               key={e.exerciseId}
-              className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2"
+              className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2 chip-edge"
             >
               <span className="text-sm text-foreground truncate">{e.name}</span>
               <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">

@@ -16,6 +16,7 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const routeMapFiles = require("../lib/routeMapFiles");
 const postPhotos = require("../lib/postPhotos");
 const socialFanout = require("../lib/socialFanout");
+const sharedCards = require("../lib/sharedCards");
 const { onActivityDeleted } = require("../index");
 
 const { couldHaveRouteMap, routeMapPrefix, deleteRouteMapFiles } =
@@ -153,12 +154,22 @@ describe("onActivityDeleted — the post's map", () => {
         return "post-photos/author-uid/post-1/";
       }
     );
+    // And the pages of the cards shared from it (Soc17 call 1).
+    vi.spyOn(sharedCards, "removeCardsShowing").mockImplementation(
+      async () => {
+        order.push("cards");
+        return 1;
+      }
+    );
   });
   afterEach(() => vi.restoreAllMocks());
 
   it("hands the deleted post and its id to the cleanup, after the feeds", async () => {
     await onActivityDeleted.run(snap, context);
-    expect(order).toEqual(["feeds", "map", "photos"]);
+    expect(order).toEqual(["feeds", "map", "photos", "cards"]);
+    expect(sharedCards.removeCardsShowing).toHaveBeenCalledWith(
+      expect.objectContaining({ field: "postId", id: "post-1" })
+    );
     const [args] = routeMapFiles.deleteRouteMapFiles.mock.calls[0];
     expect(args.data).toEqual(RUN_POST);
     expect(args.activityId).toBe("post-1");

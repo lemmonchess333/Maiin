@@ -401,36 +401,26 @@ describe("SegmentedControl", () => {
     );
   });
 
-  it.each([
-    ["running", "bg-running-fill"],
-    ["lifting", "bg-lifting-fill"],
-  ] as const)(
-    "%s tone fills the selected segment in its sport's fill step",
-    (tone, fill) => {
-      render(
-        <SegmentedControl
-          options={[
-            { value: "a", label: "A" },
-            { value: "b", label: "B" },
-          ]}
-          value="b"
-          onChange={() => {}}
-          ariaLabel="Sport"
-          tone={tone}
-        />
-      );
-      // The sport colour rides in the fill, under a white label: a coral
-      // or purple label on the grey fill would miss AA.
-      const selected = screen.getByRole("radio", { name: "B" }).className;
-      expect(selected.split(" ")).toEqual(
-        expect.arrayContaining([fill, "text-white"])
-      );
-      expect(selected).not.toContain("bg-segment-selected");
-      expect(screen.getByRole("radio", { name: "A" }).className).not.toContain(
-        fill
-      );
-    }
-  );
+  it("fills the selected segment with the one neutral selected state (DS10)", () => {
+    render(
+      <SegmentedControl
+        options={[
+          { value: "lift", label: "Lift" },
+          { value: "run", label: "Run" },
+        ]}
+        value="run"
+        onChange={() => {}}
+        ariaLabel="Sport"
+      />
+    );
+    // Selected is grey under a white label on every control, the Lift/Run
+    // switch included: purple and coral mean sports, not "selected".
+    const selected = screen.getByRole("radio", { name: "Run" }).className;
+    expect(selected.split(" ")).toEqual(
+      expect.arrayContaining(["bg-segment-selected", "text-white"])
+    );
+    expect(selected).not.toMatch(/\bbg-(running|lifting|primary)/);
+  });
 });
 
 describe("SegmentedControl — the 36pt track (size sm, §14m rule 18)", () => {
@@ -440,7 +430,6 @@ describe("SegmentedControl — the 36pt track (size sm, §14m rule 18)", () => {
         ariaLabel="Train mode"
         value="lift"
         onChange={() => {}}
-        tone="lifting"
         size="sm"
         options={[
           { value: "lift", label: "Lift" },
@@ -463,12 +452,12 @@ describe("SegmentedControl — the 36pt track (size sm, §14m rule 18)", () => {
     expect(group.className).not.toMatch(/(^|\s)bg-muted(\s|$)/);
   });
 
-  it("puts the selected fill on a 32pt pill inside the option, in its tone", () => {
+  it("puts the selected fill on a 32pt pill inside the option, in the neutral fill", () => {
     const { lift, run } = renderSlim();
     const pill = lift.firstElementChild as HTMLElement;
     expect(pill.className).toMatch(/\bh-8\b/);
-    expect(pill.className).toContain("bg-lifting-fill");
-    expect(lift.className).not.toContain("bg-lifting-fill");
+    expect(pill.className).toContain("bg-segment-selected");
+    expect(lift.className).not.toContain("bg-segment-selected");
     expect((run.firstElementChild as HTMLElement).className).not.toMatch(
       /bg-(lifting|running)-fill/
     );

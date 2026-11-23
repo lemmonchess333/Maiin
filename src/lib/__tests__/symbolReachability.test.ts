@@ -205,7 +205,6 @@ const KNOWN_ORPHAN_EXPORTS = [
 
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
-  "src/features/program/run9Migration.ts:migrateRunStateToRun9",
   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
   "src/lib/aiFoodIdentification.ts:isEmptyAiFoodResult",
   "src/lib/analyticsProvider.ts:isAnalyticsActive",
@@ -214,7 +213,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/foodTrajectory.ts:computeTrajectory",
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
-  "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
   "src/lib/shareCard/statToggles.ts:isStatVisible",
 ];
 

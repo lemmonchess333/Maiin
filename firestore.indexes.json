@@ -627,6 +627,24 @@
       ]
     },
     {
+      "collectionGroup": "meals",
+      "fieldPath": "deletedAt",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
       "collectionGroup": "appleSubscriptions",
       "fieldPath": "deletionExpiresAt",
       "ttl": true,
@@ -640,6 +658,12 @@
     },
     {
       "collectionGroup": "pulseCredits",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "sharedCards",
       "fieldPath": "expiresAt",
       "ttl": true,
       "indexes": []

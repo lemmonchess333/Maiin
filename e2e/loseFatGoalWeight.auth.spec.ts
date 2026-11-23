@@ -1,18 +1,19 @@
 import { test, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import { openSignUpForm } from "./helpers/auth";
+import { openSetup, saveYourPlanWithEmail } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
 import { emulatorAdmin, routeRealCallables } from "./helpers/realCallables";
-import { verifySignupEmail } from "./helpers/verifySignupEmail";
+import { SETUP, TRIAL_OFFER } from "../src/test/journeyScreens";
 
 /**
- * Lose fat with a goal weight, from sign-up to Settings → Nutrition.
+ * Lose fat with a goal weight, from setup and Save your plan to Settings →
+ * Nutrition.
  *
  * The unit tests pin each piece: setup commits the goal weight and a
  * negative weekly rate, the goal-weight plan applies the deficit, the
  * profile sanitizer keeps both fields, and the Nutrition section shows a
  * pace and a goal. Nothing followed one account through all of them. Here
- * "Start my plan" runs the real `completeOnboarding` handler, as the
+ * the plan Save your plan builds runs the real `completeOnboarding` handler, as the
  * journeys do, so what Settings reads is what production writes.
  */
 
@@ -48,12 +49,9 @@ test.describe("lose fat with a goal weight", () => {
     const email = `lose-fat-${randomUUID()}@tropos.test`;
     const { auth, db } = emulatorAdmin();
     try {
+      // Setup before the account (A6); Save your plan makes it at the end.
       await page.goto("./");
-      await openSignUpForm(page);
-      await page.fill("#login-email", email);
-      await page.fill("#login-password", "test-password-123");
-      await page.getByRole("button", { name: /create account/i }).click();
-      await verifySignupEmail(page, email);
+      await openSetup(page);
 
       // Setup: Lose fat, a lifting plan with the defaults, 80 kg now.
       const next = () =>
@@ -64,6 +62,10 @@ test.describe("lose fat with a goal weight", () => {
       await page.getByRole("button", { name: /Full gym/ }).click();
       await page.getByRole("button", { name: /New to lifting/ }).click();
       await next();
+      // The agreement to store health details (Priv1 call 1).
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
       await page.getByRole("button", { name: "None", exact: true }).click();
       await next();
       await page
@@ -97,8 +99,13 @@ test.describe("lose fat with a goal weight", () => {
         .getByRole("textbox", { name: "Your public display name" })
         .fill("Goal weight tester");
       await page
-        .getByRole("button", { name: "Start my plan", exact: true })
+        .getByRole("button", { name: SETUP.saveNext, exact: true })
         .click();
+      await saveYourPlanWithEmail(page, email, "test-password-123");
+      // The plan is built, then the trial offer; Not now opens Today.
+      await page
+        .getByRole("button", { name: TRIAL_OFFER.notNow, exact: true })
+        .click({ timeout: 30_000 });
       await expect(
         page.getByRole("heading", { name: "Today", level: 1 })
       ).toBeVisible({ timeout: 30_000 });

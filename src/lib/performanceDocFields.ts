@@ -196,8 +196,16 @@ export function isEstablishingBaseline(input: {
   // month — the common, healthy case — while still reading a returning
   // athlete's second week back (activeWeeks 2) as establishing, which is
   // the divergence this predicate was created to close.
-  return input.docsAvailable < 2 || (input.lifetimeWeeks ?? 0) < 3;
+  return (
+    input.docsAvailable < 2 ||
+    (input.lifetimeWeeks ?? 0) < SETTLED_LIFETIME_WEEKS
+  );
 }
+
+/** Active weeks of the baseline's four that settle it: below this the
+ *  score is still establishing (`isEstablishingBaseline`), and the lead
+ *  says when the usual week forms in this number (`USUAL_WEEK_FORMING`). */
+export const SETTLED_LIFETIME_WEEKS = 3;
 
 /** The maximum `signals.lifetimeWeeks` the engine can emit: the baseline
  *  window is 28 days, so there are only four week buckets to be active

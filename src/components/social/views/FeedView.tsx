@@ -6,13 +6,7 @@ import {
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useUid } from "@/lib/auth";
-import {
-  Fragment,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import {
   MAX_SPACES_IN_FEED,
@@ -26,7 +20,6 @@ import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
 import PulseLine from "@/components/social/PulseLine";
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import TrajectoryCard from "@/components/social/TrajectoryCard";
 import { ActivityCardSkeleton } from "@/components/LoadingSkeleton";
 import { Users, Globe } from "lucide-react";
@@ -37,7 +30,6 @@ import {
   type PersonalTrajectory,
 } from "@/lib/personalTrajectory";
 import { shouldRenderFollowingList } from "@/lib/socialGates";
-import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -133,21 +125,6 @@ export default function FeedView({
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
   );
-  /* App1 Q6: the Spaces source is offered once Tropos has enough people
-     for Spaces, or to someone in one. It stays while either is still being
-     read, so the control does not lose a source under a thumb on a busy
-     Tropos; a quiet Tropos takes it away once both are known. */
-  const enough = useEnoughPeople();
-  const spacesSourceShown =
-    enough !== false || !spacesReady || joinedSpaceIds.length > 0;
-  const feedSources: FeedSubTab[] = spacesSourceShown
-    ? ["following", "communities", "explore"]
-    : ["following", "explore"];
-  /* A link to the Spaces source that is not offered opens Following. */
-  useEffect(() => {
-    if (!spacesSourceShown && feedSubTab === "communities")
-      selectFeedSubTab("following");
-  }, [spacesSourceShown, feedSubTab, selectFeedSubTab]);
   const communitiesFeed = useCommunitiesFeed(
     active && feedSubTab === "communities" && blockedReady && spacesReady,
     joinedSpaceIds
@@ -403,7 +380,6 @@ export default function FeedView({
 
   return (
     <>
-
       {active && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
@@ -426,7 +402,9 @@ export default function FeedView({
                   });
               }}
               onReselect={selectFeedSubTab}
-              options={feedSources.map((source) => ({
+              options={(
+                ["following", "communities", "explore"] as FeedSubTab[]
+              ).map((source) => ({
                 value: source,
                 label: (
                   <span className="relative inline-flex items-center justify-center gap-1">
@@ -469,7 +447,7 @@ export default function FeedView({
                   <button
                     type="button"
                     onClick={openPeople}
-                    className="inline-flex min-h-11 items-center font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+                    className="inline-flex min-h-11 items-center font-semibold link-standalone hover:text-foreground/80 transition-colors"
                   >
                     Find people
                   </button>
@@ -491,7 +469,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCountFailed && (
               <div
                 role="alert"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 dark:card-shadow"
               >
                 <p className="text-small text-muted-foreground">
                   Couldn&rsquo;t load who you follow.
@@ -512,7 +490,6 @@ export default function FeedView({
                 icon={Users}
                 headline="You don’t follow anyone yet"
                 sub="Follow people to see their sessions here."
-                accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
               />
             )}
@@ -599,7 +576,6 @@ export default function FeedView({
                           ? "Posts from the spaces you join appear here."
                           : "When members post in your spaces, their posts appear here."
                       }
-                      accent={THEME.brand}
                       action={{ label: "Browse spaces", onClick: openTogether }}
                     />
                   )}
@@ -728,7 +704,6 @@ export default function FeedView({
                       icon={Globe}
                       headline="Tropos is quiet right now"
                       sub="Your circles don’t need a crowd"
-                      accent={THEME.brand}
                       action={{
                         label: "Open Together",
                         onClick: openTogether,
@@ -744,7 +719,6 @@ export default function FeedView({
                       icon={Users}
                       headline="Nothing from people you follow yet"
                       sub="When they share a session, it shows here."
-                      accent={THEME.brand}
                       action={
                         followingFeedUnlocked
                           ? { label: "Find people", onClick: openPeople }

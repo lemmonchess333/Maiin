@@ -48,7 +48,7 @@ export default function LiftPurpose({
       <button
         type="button"
         onClick={rules.open}
-        className="min-h-11 inline-flex items-center gap-2 rounded-lg text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="min-h-11 inline-flex items-center gap-2 rounded-lg text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <Info className="size-3.5 shrink-0" aria-hidden="true" />
         Why this session

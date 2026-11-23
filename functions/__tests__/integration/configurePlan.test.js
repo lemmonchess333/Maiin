@@ -70,7 +70,7 @@ function validProgramState(overrides = {}) {
         status: "planned",
       },
     ],
-    runPlan: { mode: "structured" },
+    runPlan: { mode: "starter", stage: 1, stageWeekKey: "2026-05-11" },
     ...overrides,
   };
 }
@@ -82,7 +82,7 @@ function validProfileUpdates(overrides = {}) {
     weeklyWorkoutsTarget: 3,
     weeklyRunDaysTarget: 2,
     weeklyRunsTarget: 2,
-    runMode: "structured",
+    runMode: "starter",
     primaryGoal: "hypertrophy",
     ...overrides,
   };
@@ -399,6 +399,7 @@ suite("configurePlan — emulator integration", () => {
           runPlan: { mode: "race_prep", raceGoal: own },
         }),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -526,6 +527,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: ps,
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )
@@ -551,6 +553,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -609,6 +612,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -635,6 +639,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       );
@@ -654,13 +659,15 @@ suite("completeOnboarding — emulator integration", () => {
       longestStreak: 0,
     });
 
-    // One already there keeps what onboarding does not set, and a run
+    // One already there keeps what onboarding does not set, and a setup
     // with no name leaves the name alone.
-    await publicRef.set(
-      { photoURL: "https://lh3.googleusercontent.com/a/x", currentStreak: 5 },
-      { merge: true }
-    );
-    await db.collection("rateLimits").doc(`${TEST_UID}_onboarding`).delete();
+    await clearTestUserState();
+    await publicRef.set({
+      uid: TEST_UID,
+      displayName: "Myles Kennedy",
+      photoURL: "https://lh3.googleusercontent.com/a/x",
+      currentStreak: 5,
+    });
     await onboard({ displayName: undefined });
     expect((await getDocSettled(publicRef)).data()).toMatchObject({
       displayName: "Myles Kennedy",
@@ -693,6 +700,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -736,6 +744,7 @@ suite("completeOnboarding — emulator integration", () => {
         },
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
+        healthDataConsent: { version: 1 },
       },
       { auth: { uid: TEST_UID } }
     );
@@ -751,7 +760,7 @@ suite("completeOnboarding — emulator integration", () => {
     ).toBeLessThan(60_000);
   });
 
-  it("preserves the first timestamp and version across newer and older client retries", async () => {
+  it("refuses a second setup from a newer or older client: the first timestamp and version stay", async () => {
     const userRef = db.collection("users").doc(TEST_UID);
     const request = (version) => ({
       ...(version === undefined ? {} : { activationJourneyVersion: version }),
@@ -765,19 +774,20 @@ suite("completeOnboarding — emulator integration", () => {
       },
       programState: validProgramState(),
       weekSchedule: validWeekSchedule(),
+      healthDataConsent: { version: 1 },
     });
     const actor = { auth: { uid: TEST_UID } };
 
-    // New first: an older retry cannot erase the v2 marker or move its clock.
+    // New first: an older client's second setup is refused, so it cannot
+    // erase the v2 marker or move its clock.
     expect(await completeOnboarding.run(request(2), actor)).toEqual({
       success: true,
       activationJourneyVersion: 2,
     });
     const first = (await getDocSettled(userRef)).data();
-    expect(await completeOnboarding.run(request(), actor)).toEqual({
-      success: true,
-      activationJourneyVersion: 2,
-    });
+    await expect(
+      completeOnboarding.run(request(), actor)
+    ).rejects.toMatchObject({ code: "already-exists" });
     const afterRetry = (await getDocSettled(userRef)).data();
     expect(afterRetry.onboardingCompletedAt.toMillis()).toBe(
       first.onboardingCompletedAt.toMillis()
@@ -785,8 +795,8 @@ suite("completeOnboarding — emulator integration", () => {
     expect(afterRetry.activationJourneyVersion).toBe(2);
 
     // An older client's first commit is stamped too (App1), and an
-    // account set up before, stamped 1 for the comparison group, is not
-    // restamped by a retry: the app reads neither.
+    // account set up before, stamped 1 for the comparison group, is
+    // refused a second setup and keeps its stamp: the app reads neither.
     await clearTestUserState();
     expect(await completeOnboarding.run(request(), actor)).toEqual({
       success: true,
@@ -797,10 +807,9 @@ suite("completeOnboarding — emulator integration", () => {
     );
     await userRef.set({ activationJourneyVersion: 1 }, { merge: true });
     const comparison = (await getDocSettled(userRef)).data();
-    expect(await completeOnboarding.run(request(2), actor)).toEqual({
-      success: true,
-      activationJourneyVersion: 2,
-    });
+    await expect(
+      completeOnboarding.run(request(2), actor)
+    ).rejects.toMatchObject({ code: "already-exists" });
     const comparisonAfterRetry = (await getDocSettled(userRef)).data();
     expect(comparisonAfterRetry.onboardingCompletedAt.toMillis()).toBe(
       comparison.onboardingCompletedAt.toMillis()
@@ -823,6 +832,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )
@@ -847,6 +857,7 @@ suite("completeOnboarding — emulator integration", () => {
           },
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
+          healthDataConsent: { version: 1 },
         },
         { auth: { uid: TEST_UID } }
       )

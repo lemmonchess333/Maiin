@@ -7,11 +7,12 @@ import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
-import { doc, serverTimestamp } from "firebase/firestore";
+import { doc, getDocFromServer, serverTimestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
+import { sexFromAnswer } from "@/lib/sex";
 import {
   MAINTAIN_DEADBAND_KG,
   resolveGoalWeightPlan,
@@ -36,7 +37,6 @@ import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
 import DailyTarget from "@/components/onboarding/DailyTarget";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
-import { noEquipmentPullNote } from "@/features/program/noEquipment";
 import {
   equipmentLabel,
   experienceLabel,
@@ -60,18 +60,36 @@ import {
   raceRunDaysNote,
 } from "@/lib/raceGoalPlanner";
 import {
+  adoptSignedOutDraft,
+  clearSignedOutDraft,
   loadOnboardingDraft,
+  loadSignedOutDraft,
   saveOnboardingDraft,
+  saveSignedOutDraft,
   clearOnboardingDraft,
+  HEALTH_CONSENT_STEP,
+  ONBOARDING_MAX_STEP,
   ONBOARDING_STEP_IDS,
-  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
 import {
+  DELETE_ACCOUNT_ANCHOR,
+  HEALTH_CONSENT_COPY,
+  HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_CONSENT_DECLINED_SIGNED_OUT_COPY,
+  HEALTH_DATA_CONSENT_VERSION,
+  SIGN_OUT_FAILED,
+  hasCurrentHealthConsent,
+  setupHealthConsent,
+} from "@/lib/healthConsent";
+import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
+import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import {
   buildOnboardingPlan,
   onboardingActivity,
   onboardingFlow,
+  savedPastStep,
 } from "@/lib/onboardingPlan";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -79,10 +97,17 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { benchmarkFromRaceTime, manualRunFitness } from "@/lib/runPaces";
 import { finishTimeLabel } from "@/lib/runLabels";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
-import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
+import { Check, ChevronRight, ArrowLeft, UserRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
-import SessionLengthLabel from "@/components/program/SessionLengthLabel";
+import LiftWeekQuestion from "@/components/onboarding/LiftWeekQuestion";
+import LiftKitQuestion from "@/components/onboarding/LiftKitQuestion";
+import LiftLimitsQuestion from "@/components/onboarding/LiftLimitsQuestion";
+import RunLevelQuestion from "@/components/onboarding/RunLevelQuestion";
+import {
+  LIFT_KIT_QUESTION,
+  LIFT_LIMITS_QUESTION,
+} from "@/lib/liftingQuestions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
@@ -109,7 +134,6 @@ import {
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
 import { runDoseLine } from "@/lib/runDose";
-import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
@@ -121,6 +145,12 @@ import {
 import { signInMethodOf } from "@/lib/signInMethod";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
+import {
+  CURRENT_EMAIL_CONSENT_WORDING,
+  EMAIL_CONSENT_COPY,
+  EMAIL_UPDATES_LIVE,
+  emailConsentAnswered,
+} from "@/lib/emailConsent";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { raceLegTrimCut } from "@/features/program/programEngine";
@@ -131,6 +161,25 @@ import {
   snapshotPendingInvite,
 } from "@/lib/pendingInvite";
 import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
+import {
+  KEPT_PLAN_NOTICE,
+  SAVE_PLAN_COPY,
+  forgetSetupSent,
+  noteSetupSent,
+  noteSignedOutAgreement,
+  onSignedOutAgreementLapsed,
+  setupSentThisVisitFor,
+  signedOutAgreementThisVisit,
+  cancelSetupSave,
+  finishSetupSave,
+  keepExistingPlan,
+  readSetupSave,
+  refusedBeforeWriting,
+  refusedForExistingPlan,
+  startSetupSave,
+} from "@/lib/setupSave";
+import { pathAfterSetup } from "@/lib/trialOffer";
+import { trackSetupStarted } from "@/lib/firstRunEvents";
 import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 
 /* The review's reminder row is its own chunk, fetched once setup has
@@ -140,10 +189,19 @@ import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 const loadSetupRacePicker = () =>
   import("@/components/onboarding/SetupRacePicker");
 const SetupRacePicker = lazyRetry(loadSetupRacePicker);
+/* Save your plan (A6) is drawn only signed out, at setup's end, so the
+   ways in are fetched when the review's button is pressed, not by every
+   signed-in setup. */
+const loadSaveYourPlan = () => import("@/components/onboarding/SaveYourPlan");
+const SaveYourPlan = lazyRetry(loadSaveYourPlan);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
-const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
+/* By stored step number. About you opens on the agreement to store health
+   details (8, Priv1 call 1), then a lifter's limitations (4), then the
+   numbers (5): every question about the person's body comes after it, so
+   the limitations moved here from Your setup. */
+const CHAPTER_FOR_STEP = [0, 1, 2, 1, 3, 3, 4, 4, 3];
 /* The age the calorie estimate shows before a year of birth is given; the
    plan is never made with it, since the step waits for the year. */
 const AGE_BEFORE_ANSWER = 30;
@@ -156,15 +214,9 @@ const STEP_META = [
     "Find your starting rhythm",
     "Choose the training you want in your week. You can change this later.",
   ],
-  [
-    "Make the plan fit your setup",
-    "Equipment and experience shape the exercises in your plan.",
-  ],
+  [LIFT_KIT_QUESTION.title, LIFT_KIT_QUESTION.hint],
   ["How does running fit in?", "Keep runs flexible, or work towards a race."],
-  [
-    "Anything to work around?",
-    "Choose any relevant limitations, or select None.",
-  ],
+  [LIFT_LIMITS_QUESTION.title, LIFT_LIMITS_QUESTION.hint],
   [
     "Start with your numbers",
     "These set your nutrition targets and your initial loads.",
@@ -174,6 +226,7 @@ const STEP_META = [
     "Your plan",
     "Your first week, built from your answers. Change anything before you start.",
   ],
+  [HEALTH_CONSENT_COPY.title, HEALTH_CONSENT_COPY.stored],
 ];
 const GOALS = [
   {
@@ -192,7 +245,7 @@ const GOALS = [
     id: "fat_loss",
     label: goalLabel("fat_loss"),
     desc: "Lifting to support your goal. Set nutrition separately.",
-    art: { kind: "muscles", category: "Full Body" },
+    art: { kind: "exercise", id: "kettlebell-swing" },
   },
   {
     id: "general",
@@ -204,7 +257,7 @@ const GOALS = [
     id: "running",
     label: goalLabel("running"),
     desc: "Free running or a race goal, with optional lifting alongside it.",
-    art: { kind: "route", distance: 2 },
+    art: { kind: "run", pose: "run-easy" },
   },
 ] as const;
 
@@ -214,9 +267,36 @@ export default function Onboarding() {
   // distance control says so to a free account.
   const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();
-  const [draft] = useState(() =>
-    user ? loadOnboardingDraft(user.uid, 7) : null
-  );
+  /* A6: setup is answered before there is an account, and Save your plan
+     makes one at its end. Signed in, setup is drawn afresh; a sign-in that
+     came from Save your plan (`setupSave`) takes the answers given signed
+     out and builds the plan at once. Any other account keeps its own. */
+  const [setupSave] = useState(() => (user ? readSetupSave() : null));
+  /* Signed out, the agreement to store health details is the person's,
+     and the phone may be someone else's by the time setup is opened again:
+     answers picked up cold, not in this open of the app, ask for it again
+     (A6). Adopted under Save your plan's mark, they keep it. */
+  const [{ draft, agreementAskedAgain }] = useState(() => {
+    if (user)
+      return {
+        draft: setupSave
+          ? adoptSignedOutDraft(user.uid, ONBOARDING_MAX_STEP)
+          : loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP),
+        agreementAskedAgain: false,
+      };
+    const kept = loadSignedOutDraft(ONBOARDING_MAX_STEP);
+    if (!kept?.healthConsentVersion || signedOutAgreementThisVisit())
+      return { draft: kept, agreementAskedAgain: false };
+    return {
+      draft: { ...kept, healthConsentVersion: undefined },
+      agreementAskedAgain: true,
+    };
+  });
+  /* Signed out, the review's button opens Save your plan in its place. */
+  const [saveView, setSaveView] = useState(false);
+  /* Not now at the agreement, then Leave setup: the answers are forgotten,
+     and nothing writes them again on the way out. */
+  const draftClosedRef = useRef(false);
   const [trainingActivity, setTrainingActivity] = useState<OnboardingActivity>(
     () => onboardingActivity(draft)
   );
@@ -228,16 +308,38 @@ export default function Onboarding() {
   const [askBirthYearAgain] = useState(
     () =>
       !!draft &&
-      draft.step > 5 &&
+      savedPastStep(draft.step, 5) &&
       parseBirthYear(draft.birthYearText ?? "") === null
   );
+  const storedStep =
+    draft?.step === 6
+      ? 7
+      : draft?.step === 2 && draft.runConfirmed === undefined
+        ? 3
+        : (draft?.step ?? 0);
+  /* Priv1 call 1: the agreement to store health details, as given on this
+     step of this setup (the version of the words agreed to). The account
+     carries it once the plan is saved. */
+  const [healthConsentVersion, setHealthConsentVersion] = useState(
+    draft?.healthConsentVersion
+  );
+  const healthConsentGiven = hasCurrentHealthConsent({
+    version: healthConsentVersion,
+  });
+  /* Not now: the step says why the plan needs these details, and every
+     way on. Not kept: setup opens on the agreement again. */
+  const [consentDeclined, setConsentDeclined] = useState(false);
+  /* A draft saved past the agreement without it (setup in progress when
+     the question arrived) opens on it, then goes on through the steps
+     after it, its answers kept. */
+  const [askConsentFirst] = useState(
+    () =>
+      !!draft &&
+      !hasCurrentHealthConsent({ version: draft.healthConsentVersion }) &&
+      flow.indexOf(storedStep) > flow.indexOf(HEALTH_CONSENT_STEP)
+  );
   const [step, setStep] = useState(() => {
-    const storedStep =
-      draft?.step === 6
-        ? 7
-        : draft?.step === 2 && draft.runConfirmed === undefined
-          ? 3
-          : (draft?.step ?? 0);
+    if (askConsentFirst) return HEALTH_CONSENT_STEP;
     if (askBirthYearAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
@@ -249,8 +351,11 @@ export default function Onboarding() {
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
+  /* Asked again at the review, I agree goes back to the review. */
   const [returnToReview, setReturnToReview] = useState(
-    askBirthYearAgain || (draft?.returnToReview ?? false)
+    askConsentFirst
+      ? agreementAskedAgain && draft?.step === 7
+      : askBirthYearAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -267,7 +372,19 @@ export default function Onboarding() {
   const nameRef = useRef<HTMLInputElement>(null);
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
-  const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
+  const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput(
+    setupSave?.inviteCode
+  );
+  /* App1 Q55: the email opt-in, off until the person turns it on (§14n
+     (55)), and asked only of an account that has never answered: running
+     setup again does not ask again; Settings → Notifications has the
+     switches. Not kept in the draft, so a setup picked up later asks
+     afresh rather than carry a yes forward. */
+  const askEmail =
+    EMAIL_UPDATES_LIVE && !emailConsentAnswered(profile?.emailConsent);
+  /* Kept across Save your plan's sign-in (`setupSave`), and nowhere
+     longer. */
+  const [emailOptIn, setEmailOptIn] = useState(setupSave?.emailOptIn ?? false);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -300,7 +417,7 @@ export default function Onboarding() {
      treated as the user's until they supply it: the fields render empty
      and `BodyInputs` reports unanswered as invalid. */
   const [bodyAnswered, setBodyAnswered] = useState(
-    draft?.bodyAnswered ?? Boolean(draft && draft.step > 5)
+    draft?.bodyAnswered ?? Boolean(draft && savedPastStep(draft.step, 5))
   );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
@@ -335,13 +452,6 @@ export default function Onboarding() {
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
     draft?.experience ?? "beginner"
-  );
-  // What a no-equipment plan can't pull, under the bar switch: the level
-  // counts once it's chosen (`noEquipmentPullNote`).
-  const pullNote = noEquipmentPullNote(
-    equipment,
-    pullUpBar,
-    experienceConfirmed ? experience : undefined
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -472,7 +582,7 @@ export default function Onboarding() {
   const trainingWhy = draft?.trainingWhy ?? "";
   const currentDate = useLocalDateKey();
   /* The year of birth, checked in the year's terms (src/lib/age.ts): this
-     year less 16 or earlier passes, and a later year is refused with the
+     year less 18 or earlier passes, and a later year is refused with the
      age gate's line. */
   const birthYear = parseBirthYear(birthYearText);
   const birthYearIssue =
@@ -530,6 +640,7 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     }),
     [
       step,
@@ -577,12 +688,20 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
+      healthConsentVersion,
     ]
   );
   useEffect(() => {
-    if (user && !saving && !onboardingCompletedRef.current)
-      saveOnboardingDraft(user.uid, answers);
+    if (saving || onboardingCompletedRef.current || draftClosedRef.current)
+      return;
+    if (user) saveOnboardingDraft(user.uid, answers);
+    else saveSignedOutDraft(answers);
   }, [user, saving, answers]);
+  // The first time this phone opens setup (A6's first-run events).
+  const signedIn = !!user;
+  useEffect(() => {
+    trackSetupStarted(signedIn);
+  }, [signedIn]);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -593,6 +712,22 @@ export default function Onboarding() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
   }, [step, trainingActivity]);
+  /* Not now and Go back change the agreement's whole screen: it starts
+     from the top, and its heading takes focus. */
+  useEffect(() => {
+    if (step !== HEALTH_CONSENT_STEP) return;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [step, consentDeclined]);
+  /* Signed out at the review, Save your plan is the next screen. */
+  useEffect(() => {
+    if (!user && step === 7) void loadSaveYourPlan().catch(() => {});
+  }, [user, step]);
+  /* Save your plan opens, and closes back to the review, at the top. */
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [saveView]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
   /* Goal weight (optional): the target weight owns the nutrition direction
@@ -648,6 +783,9 @@ export default function Onboarding() {
     weightUnit === "lbs"
       ? `${Math.round(kg * 2.20462 * 2) / 2} lb`
       : `${kg} kg`;
+  // Stored only when answered: Prefer not to say stores no sex, and the
+  // maths take the midpoint (`src/lib/sex.ts`).
+  const sex = sexFromAnswer(gender);
   const tdee = useMemo(
     () =>
       calculateTDEE(
@@ -656,10 +794,10 @@ export default function Onboarding() {
         age ?? AGE_BEFORE_ANSWER,
         activityLevel,
         goalPlan.fitnessGoal,
-        gender === "female" ? "female" : "male",
+        sex,
         goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, age, activityLevel, goalPlan, gender]
+    [weightKg, heightCm, age, activityLevel, goalPlan, sex]
   );
   /* Asked of someone who runs already: a new runner has no recent race to
      give. Typed as minutes and seconds, because a phone's number pad has no
@@ -882,6 +1020,7 @@ export default function Onboarding() {
   const answersValid =
     goalConfirmed &&
     validRun &&
+    healthConsentGiven &&
     (!hasLifting || injuries.length > 0) &&
     validBody;
   const canAdvance = [
@@ -893,6 +1032,8 @@ export default function Onboarding() {
     validBody,
     true,
     answersValid && displayNameValidation.valid,
+    // The agreement's own button is the answer: I agree always goes on.
+    true,
   ];
   /* The review's button stays live while only the name stands in the way:
      the name sits under the plan, below the fold on a phone, and a button
@@ -906,6 +1047,16 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* Where this step sits in its chapter, for a chapter of more than one
+     step in this flow. */
+  const chapterSteps = flow.filter(
+    (id) => CHAPTER_FOR_STEP[id] === CHAPTER_FOR_STEP[step]
+  );
+  const chapterPosition =
+    chapterSteps.length > 1
+      ? `${chapterSteps.indexOf(step) + 1} of ${chapterSteps.length} in this chapter`
+      : null;
+  const declinedHere = step === HEALTH_CONSENT_STEP && consentDeclined;
   /* A step's heading and questions are new elements on each step (keyed
      below), so a step reached by Continue comes in from the right and one
      reached by Back from the left: CSS @starting-style, the browser
@@ -917,6 +1068,44 @@ export default function Onboarding() {
     stepMove > 0 && "starting:[transform:translateX(16px)]",
     stepMove < 0 && "starting:[transform:translateX(-16px)]"
   );
+  const openSaveView = () => {
+    setSaveError("");
+    setStepMove(1);
+    setSaveView(true);
+  };
+  const closeSaveView = () => {
+    setStepMove(-1);
+    setSaveView(false);
+  };
+  /* Signed out, the agreement lapses after two hours in the background or
+     two days from I agree (`setupSave.ts`). Setup on screen then forgets it
+     and asks again, as it does for answers picked up cold: past the
+     agreement, it opens on it, and from the review I agree returns there. */
+  const askAgreementAgain = () => {
+    setHealthConsentVersion(undefined);
+    if (flow.indexOf(step) <= flow.indexOf(HEALTH_CONSENT_STEP)) return;
+    setSaveView(false);
+    setSaveError("");
+    setConsentDeclined(false);
+    setReturnToReview(step === 7);
+    setStepMove(0);
+    setStep(HEALTH_CONSENT_STEP);
+  };
+  const agreementLapsedRef = useRef(askAgreementAgain);
+  useEffect(() => {
+    agreementLapsedRef.current = askAgreementAgain;
+  });
+  useEffect(() => {
+    if (user) return;
+    return onSignedOutAgreementLapsed(() => agreementLapsedRef.current());
+  }, [user]);
+  /* Leave setup from Not now at the agreement, before there is an account:
+     the answers given so far are forgotten. */
+  const leaveSetup = () => {
+    draftClosedRef.current = true;
+    clearSignedOutDraft();
+    navigate("/", { replace: true });
+  };
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
@@ -931,12 +1120,21 @@ export default function Onboarding() {
       return;
     }
     if (!canAdvance[step] || pending.current) return;
-    trackLifecycle("onboarding_step_completed", {
-      step: STEP_IDS[step],
-      stepIndex: flow.indexOf(step),
-    });
+    if (step === HEALTH_CONSENT_STEP) {
+      // I agree. Nothing about the answer goes to analytics (Priv1 call
+      // 1): the step's view is the one event it has.
+      setHealthConsentVersion(HEALTH_DATA_CONSENT_VERSION);
+      if (!user) noteSignedOutAgreement();
+    } else {
+      trackLifecycle("onboarding_step_completed", {
+        step: STEP_IDS[step],
+        stepIndex: flow.indexOf(step),
+      });
+    }
     if (step === 7) {
-      void handleFinish();
+      if (user) void handleFinish();
+      // A lapsed agreement is asked for again, in place of Save your plan.
+      else if (signedOutAgreementThisVisit()) openSaveView();
       return;
     }
     setStepMove(1);
@@ -944,12 +1142,41 @@ export default function Onboarding() {
     setReturnToReview(false);
   };
   const handleFinish = async () => {
-    if (!user || pending.current || !canAdvance[7]) return;
+    if (!user || pending.current || !canAdvance[7] || !healthConsentGiven)
+      return;
     pending.current = true;
     const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
     setSaveError("");
+    /* An account that has a plan keeps it, and the answers here are
+       dropped. */
+    const keepPlan = async () => {
+      onboardingCompletedRef.current = true;
+      clearOnboardingDraft(user.uid);
+      keepExistingPlan();
+      toast.success(KEPT_PLAN_NOTICE);
+      navigate("/", { replace: true });
+      await refreshProfile();
+    };
     try {
+      /* Finishing setup replaces the programme, so it never runs over a
+         plan (A6), and `completeOnboarding` refuses one. The profile this
+         screen holds can be a copy from before the account had one, made on
+         another phone or kept in this one's cache, so the account is read
+         from the server first. */
+      /* Once this open of the app has asked for the plan, a plan on the
+         account is that one, its answer lost on the way back: Try again
+         carries on as if the answer had come, and nothing reads as kept. */
+      const sentBefore = setupSentThisVisitFor(user.uid);
+      const stored = sentBefore
+        ? null
+        : await getDocFromServer(doc(db, "users", user.uid));
+      if (stored?.data()?.onboardingComplete === true) {
+        await keepPlan();
+        return;
+      }
+      // The answers are this account's now; nothing waits for another.
+      finishSetupSave();
       const profileData: Record<string, unknown> = {
         displayName: displayNameValidation.trimmed,
         // Dark is the app default (see public/init.js + auth.tsx).
@@ -1031,7 +1258,7 @@ export default function Onboarding() {
           : {}),
         onboardingComplete: true,
         // TDEE targets
-        sex: gender === "female" ? "female" : "male",
+        ...(sex ? { sex } : {}),
         activityLevel,
         // The day's carbs and fat are worked out from these two, never
         // stored (App1 Q21).
@@ -1098,34 +1325,76 @@ export default function Onboarding() {
           weekSchedule: plan.weekSchedule,
           activationJourneyVersion: 2,
           onboardingPlatform: Capacitor.getPlatform(),
+          // Priv1 call 1: the agreement given on its step, which the
+          // server dates and stores, and without which it saves nothing.
+          healthDataConsent: setupHealthConsent(),
+          // A yes to both emails the toggle names, with the words it
+          // showed. Nothing is sent for a no: absent already means no.
+          ...(askEmail && emailOptIn
+            ? {
+                emailOptIn: true,
+                emailWording: CURRENT_EMAIL_CONSENT_WORDING,
+              }
+            : {}),
         });
-      try {
-        await callCF();
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        const msg = (err as { message?: string })?.message || "";
-        // The CF has no minInstances, so the first call after idle
-        // cold-starts and can exceed the client SDK's wait window. That
-        // surfaces as `internal`, but ALSO as `deadline-exceeded` /
-        // `unavailable` depending on where the timeout bites — all three
-        // are transient cold-start signals a warm retry fixes. (The old
-        // check only caught `internal`, so a cold start that timed out as
-        // deadline-exceeded fell straight through to the error toast.)
-        const isTransient =
-          code === "functions/internal" ||
-          code === "internal" ||
-          code === "functions/deadline-exceeded" ||
-          code === "deadline-exceeded" ||
-          code === "functions/unavailable" ||
-          code === "unavailable" ||
-          msg.toUpperCase().includes("INTERNAL");
-        if (!isTransient) throw err;
-        await new Promise((r) => setTimeout(r, 1200));
-        await callCF();
+      /* "kept" when the server found a plan on the account that this open
+         of the app did not ask for: another phone's, which stays. One a
+         call from this open asked for (a Try again, or the retry below
+         after a timeout) is the plan that call built, its answer lost. */
+      const sendPlan = async (): Promise<"built" | "kept"> => {
+        try {
+          await callCF();
+          return "built";
+        } catch (err) {
+          if (refusedForExistingPlan(err)) return sentBefore ? "built" : "kept";
+          const code = (err as { code?: string })?.code;
+          const msg = (err as { message?: string })?.message || "";
+          // The CF has no minInstances, so the first call after idle
+          // cold-starts and can exceed the client SDK's wait window. That
+          // surfaces as `internal`, but ALSO as `deadline-exceeded` /
+          // `unavailable` depending on where the timeout bites — all three
+          // are transient cold-start signals a warm retry fixes. (The old
+          // check only caught `internal`, so a cold start that timed out as
+          // deadline-exceeded fell straight through to the error toast.)
+          const isTransient =
+            code === "functions/internal" ||
+            code === "internal" ||
+            code === "functions/deadline-exceeded" ||
+            code === "deadline-exceeded" ||
+            code === "functions/unavailable" ||
+            code === "unavailable" ||
+            msg.toUpperCase().includes("INTERNAL");
+          if (!isTransient) {
+            // Refused with nothing written, and no earlier ask from this
+            // open whose answer was lost: this open has built no plan, so a
+            // plan on the account at Try again is another phone's.
+            if (!sentBefore && refusedBeforeWriting(err))
+              forgetSetupSent(user.uid);
+            throw err;
+          }
+          await new Promise((r) => setTimeout(r, 1200));
+          try {
+            await callCF();
+          } catch (retryErr) {
+            if (!refusedForExistingPlan(retryErr)) throw retryErr;
+          }
+          return "built";
+        }
+      };
+      noteSetupSent(user.uid);
+      if ((await sendPlan()) === "kept") {
+        await keepPlan();
+        return;
       }
 
       onboardingCompletedRef.current = true;
       clearOnboardingDraft(user.uid);
+
+      /* Where setup ends: the trial offer, or Home for an account that
+         cannot take a trial (Biz1 call 3, A6). Before the profile is read
+         again, so the signed-in app opens there and never draws Home on
+         the way. */
+      navigate(pathAfterSetup(profile), { replace: true });
 
       // Data is saved server-side (the CF flipped onboardingComplete=true
       // and wrote the chosen experience/plan fields via the Admin SDK).
@@ -1214,10 +1483,6 @@ export default function Onboarding() {
         daysPerWeek,
         runMode: effectiveRunMode,
       });
-
-      // Setup ends on Today, for every account (App1, whole-app grill
-      // Q27): the plan and what to do next, with no offer between.
-      navigate("/", { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -1243,6 +1508,23 @@ export default function Onboarding() {
       setSaving(false);
     }
   };
+  /* A6: setup drawn again under the account Save your plan just made. The
+     plan is built at once from the answers, as the review's button would
+     build it, once the word filter has read the name. Answers that no
+     longer pass (a race date gone by) leave the review to say why. */
+  const finishRef = useRef(handleFinish);
+  useEffect(() => {
+    finishRef.current = handleFinish;
+  });
+  const autoBuildRef = useRef(!!setupSave && !!draft);
+  const nameChecked =
+    displayNameValidation.valid || displayNameValidation.problem !== null;
+  useEffect(() => {
+    if (!autoBuildRef.current || !user || !nameChecked) return;
+    autoBuildRef.current = false;
+    if (step === 7 && answersValid && displayNameValidation.valid)
+      void finishRef.current();
+  }, [user, nameChecked, step, answersValid, displayNameValidation.valid]);
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
@@ -1337,11 +1619,21 @@ export default function Onboarding() {
     >
       <header className="shrink-0 py-3 space-y-3">
         <div className="flex justify-between items-center text-sm">
-          <IconButton
-            aria-label="Account settings"
-            onClick={() => navigate("/settings/account")}
-            icon={<UserRound aria-hidden="true" />}
-          />
+          {user ? (
+            <IconButton
+              aria-label="Account settings"
+              onClick={() => navigate("/settings/account")}
+              icon={<UserRound aria-hidden="true" />}
+            />
+          ) : (
+            /* Before there is an account (A6): back to the welcome. The
+               answers stay on the phone, and Get started picks them up. */
+            <IconButton
+              aria-label="Close setup"
+              onClick={() => navigate("/")}
+              icon={<X aria-hidden="true" />}
+            />
+          )}
           <span className="text-muted-foreground">
             {chapters[chapter]} ·{" "}
             <span className="font-mono tabular-nums">
@@ -1375,13 +1667,13 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
-          {((step === 1 && trainingActivity !== "lifting") ||
-            step === 3 ||
-            step === 2 ||
-            step === 4) && (
+        <div
+          key={`heading-${step}${declinedHere ? "-declined" : ""}${saveView ? "-save" : ""}`}
+          className={cn("space-y-3", stepEnters)}
+        >
+          {chapterPosition && (
             <p className="text-micro text-muted-foreground">
-              {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
+              {chapterPosition}
             </p>
           )}
           <h1
@@ -1389,17 +1681,43 @@ export default function Onboarding() {
             tabIndex={-1}
             className="text-h1 leading-tight tracking-tight font-extrabold focus:outline-none"
           >
-            {STEP_META[step][0]}
+            {saveView
+              ? SAVE_PLAN_COPY.title
+              : declinedHere
+                ? HEALTH_CONSENT_DECLINED_COPY.title
+                : STEP_META[step][0]}
           </h1>
           <p className="text-base text-muted-foreground">
-            {step === 5 && !hasLifting
-              ? "Check these starting values. They help estimate your nutrition targets."
-              : STEP_META[step][1]}
+            {saveView
+              ? SAVE_PLAN_COPY.lead
+              : declinedHere
+                ? user
+                  ? HEALTH_CONSENT_DECLINED_COPY.body
+                  : HEALTH_CONSENT_DECLINED_SIGNED_OUT_COPY.body
+                : step === 5 && !hasLifting
+                  ? "Check these starting values. They help estimate your nutrition targets."
+                  : STEP_META[step][1]}
           </p>
         </div>
+        {saveView && (
+          <div key="save-your-plan" className={stepEnters}>
+            <Suspense fallback={null}>
+              <SaveYourPlan
+                onStart={() =>
+                  startSetupSave({
+                    emailOptIn: askEmail && emailOptIn,
+                    inviteCode,
+                  })
+                }
+                onStopped={cancelSetupSave}
+              />
+            </Suspense>
+          </div>
+        )}
         <fieldset
           key={`questions-${step}`}
           disabled={saving}
+          hidden={saveView}
           className={cn("min-w-0 space-y-5", stepEnters)}
         >
           <legend className="sr-only">{chapters[chapter]}</legend>
@@ -1463,38 +1781,13 @@ export default function Onboarding() {
                     setRunConfirmed(false);
                   }
                 }}
-                tone={trainingActivity === "running" ? "running" : "lifting"}
               />
               {hasLifting && (
-                <SegmentedControl<Exclude<OnboardingDraft["daysPerWeek"], 0>>
-                  ariaLabel="Lift sessions per week"
-                  value={liftDaysPreference}
-                  options={([2, 3, 4, 5, 6] as const).map((n) => ({
-                    value: n,
-                    label: (
-                      <span className="font-figure tabular-nums text-xl">
-                        {n}
-                      </span>
-                    ),
-                  }))}
-                  onChange={setDaysPerWeek}
-                  tone="lifting"
-                  className="py-2"
-                />
-              )}
-              {hasLifting && (
-                <SegmentedControl<
-                  NonNullable<OnboardingDraft["sessionMinutes"]>
-                >
-                  ariaLabel="Minutes per lift session"
-                  value={sessionMinutes}
-                  options={DRAFT_SESSION_MINUTES.map((n) => ({
-                    value: n,
-                    label: <SessionLengthLabel minutes={n} />,
-                  }))}
-                  onChange={setSessionMinutes}
-                  tone="lifting"
-                  className="@container"
+                <LiftWeekQuestion
+                  days={liftDaysPreference}
+                  onDaysChange={setDaysPerWeek}
+                  minutes={sessionMinutes}
+                  onMinutesChange={setSessionMinutes}
                 />
               )}
               <p className="text-sm text-muted-foreground">
@@ -1518,64 +1811,34 @@ export default function Onboarding() {
           {step === 3 && (
             <div className="space-y-5">
               <div className="space-y-3">
-                {(
-                  [
-                    {
-                      id: "new",
-                      label: "New to running",
-                      desc: "Starting out, or coming back after a long gap.",
-                      distance: 1,
-                    },
-                    {
-                      id: "occasional",
-                      label: "Occasional runner",
-                      desc: "Usually one or two runs a week.",
-                      distance: 2,
-                    },
-                    {
-                      id: "regular",
-                      label: "Regular runner",
-                      desc: "Usually three or more runs a week.",
-                      distance: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={runConfirmed && runFrequency === option.id}
-                    tone="running"
-                    /* A route that grows with the running: one footprint
-                       icon three times over said nothing about which. */
-                    icon={
-                      <ChoiceArt
-                        art={{ kind: "route", distance: option.distance }}
-                      />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                    onSelect={() => {
-                      setRunConfirmed(true);
-                      setRunFrequency(option.id);
-                      // Run9: New to running starts on the 30-minute goal;
-                      // the other plans stay a tap away.
-                      if (option.id === "new") setRunMode("starter");
-                      /* This lands on the RACE-PREP plan only. Freeform
-                         is a substrate with no scheduled runs (Run9a), so
-                         its weekly target is 0 whichever tier is picked —
-                         pinned in Onboarding.test.tsx. The beginner tier
-                         earns its place on the default path by letting
-                         someone starting out say so, instead of filing
-                         themselves under "occasional runner"; it does not
-                         change a freeform plan, and reading it as a
-                         freeform scheduling lever is reading it wrong.
-                         Two a week when a race IS set: a race plan needs
-                         at least two run days (Pgm7 A7). */
-                      setWeeklyRunDays(
-                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
-                      );
-                    }}
-                  />
-                ))}
+                <RunLevelQuestion
+                  value={
+                    runConfirmed && runFrequency !== "none"
+                      ? runFrequency
+                      : null
+                  }
+                  onChange={(level) => {
+                    setRunConfirmed(true);
+                    setRunFrequency(level);
+                    // Run9: New to running starts on the 30-minute goal;
+                    // the other plans stay a tap away.
+                    if (level === "new") setRunMode("starter");
+                    /* This lands on the RACE-PREP plan only. Freeform is a
+                       substrate with no scheduled runs (Run9a), so its
+                       weekly target is 0 whichever tier is picked — pinned
+                       in Onboarding.test.tsx. The beginner tier earns its
+                       place on the default path by letting someone
+                       starting out say so, instead of filing themselves
+                       under "occasional runner"; it does not change a
+                       freeform plan, and reading it as a freeform
+                       scheduling lever is reading it wrong. Two a week
+                       when a race IS set: a race plan needs at least two
+                       run days (Pgm7 A7). */
+                    setWeeklyRunDays(
+                      level === "regular" ? 3 : MIN_RACE_RUN_DAYS
+                    );
+                  }}
+                />
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
@@ -1583,7 +1846,6 @@ export default function Onboarding() {
                     "freeform" | "race_prep" | "starter" | "rolling"
                   >
                     ariaLabel="Running plan"
-                    tone="running"
                     layout="wrap"
                     value={runMode}
                     onChange={setRunMode}
@@ -1608,7 +1870,6 @@ export default function Onboarding() {
                         <p className="text-sm">Runs per week</p>
                         <SegmentedControl<"2" | "3">
                           ariaLabel="Runs per week"
-                          tone="running"
                           value={starterRunDays <= 2 ? "2" : "3"}
                           onChange={(next) => setStarterRunDays(Number(next))}
                           options={[
@@ -1670,7 +1931,6 @@ export default function Onboarding() {
                       </label>
                       <SegmentedControl<RoadRaceDistance>
                         ariaLabel="Race distance"
-                        tone="running"
                         value={
                           isRoadDistance(raceDistance) ? raceDistance : null
                         }
@@ -1701,7 +1961,6 @@ export default function Onboarding() {
                         <p className="text-sm">Race or on your own</p>
                         <SegmentedControl<RaceGoalEntry | "">
                           ariaLabel="Race or on your own"
-                          tone="running"
                           layout="wrap"
                           value={raceEntry ?? ""}
                           onChange={(next) => {
@@ -1833,7 +2092,6 @@ export default function Onboarding() {
                           NonNullable<OnboardingDraft["recentRaceDistance"]>
                         >
                           ariaLabel="Recent race distance"
-                          tone="running"
                           className="w-36 max-w-full shrink-0"
                           value={recentRaceDistance}
                           onChange={setRecentRaceDistance}
@@ -1921,171 +2179,27 @@ export default function Onboarding() {
           )}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Equipment access</h2>
-                {(
-                  [
-                    {
-                      id: "full_gym",
-                      label: "Full gym",
-                      desc: "Barbells, dumbbells, cables and machines.",
-                      art: "chest-press-machine",
-                    },
-                    {
-                      id: "home_gym",
-                      label: "Home gym",
-                      desc: "Dumbbells and a bench.",
-                      art: "incline-db-press",
-                    },
-                    {
-                      id: "minimal",
-                      label: "Minimal",
-                      desc: "Dumbbells and your bodyweight.",
-                      art: "goblet-squat",
-                    },
-                    {
-                      id: "no_equipment",
-                      label: "No equipment",
-                      desc: "Just your bodyweight, on the floor.",
-                      art: "bodyweight-squat",
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={equipmentConfirmed && equipment === option.id}
-                    onSelect={() => {
-                      setEquipmentConfirmed(true);
-                      // A setup chosen anew starts from its own bar answer.
-                      if (option.id !== equipment)
-                        setPullUpBar(pullUpBarWhenChosen(option.id));
-                      setEquipment(option.id);
-                    }}
-                    /* The kit each setup means, drawn: a machine, dumbbells
-                       on a bench, a dumbbell alone, no equipment at all. */
-                    icon={
-                      <ChoiceArt art={{ kind: "exercise", id: option.art }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
-              {/* With no equipment the one thing to add is a doorway bar:
-                  there are no plates to make small. */}
-              {equipmentConfirmed &&
-                (takesSmallPlates(equipment) || takesPullUpBar(equipment)) && (
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-semibold">
-                        What do you have?
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Optional. The plan uses what you have.
-                      </p>
-                    </div>
-                    {takesBarbellAtHome(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            A barbell and a rack
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Squats, deadlifts and presses with the bar.
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={barbellAtHome}
-                          label="A barbell and a rack"
-                          className="ml-3"
-                          onChange={() => setBarbellAtHome((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {takesPullUpBar(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            A pull-up bar
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            A doorway bar works. Pull-ups and chin-ups.
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={pullUpBar}
-                          label="A pull-up bar"
-                          className="ml-3"
-                          onChange={() => setPullUpBar((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {takesSmallPlates(equipment) && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-foreground">
-                            Small plates
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {smallPlatesHint(liftUnit)}
-                          </p>
-                        </div>
-                        <Toggle
-                          checked={smallPlates}
-                          label="Small plates"
-                          className="ml-3"
-                          onChange={() => setSmallPlates((v) => !v)}
-                        />
-                      </div>
-                    )}
-                    {/* What a no-equipment plan can't train, under its bar
-                      switch, once, where the setup is chosen. */}
-                    {pullNote && (
-                      <p className="text-sm text-muted-foreground">
-                        {pullNote}
-                      </p>
-                    )}
-                  </div>
-                )}
-              <div className="space-y-3">
-                <h2 className="text-base font-semibold">Lifting experience</h2>
-                {(
-                  [
-                    {
-                      id: "beginner",
-                      label: "New to lifting",
-                      desc: "Up to six months of consistent training.",
-                      level: 1,
-                    },
-                    {
-                      id: "intermediate",
-                      label: "Some experience",
-                      desc: "Six months to two years.",
-                      level: 2,
-                    },
-                    {
-                      id: "advanced",
-                      label: "Experienced",
-                      desc: "More than two years of consistent training.",
-                      level: 3,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    selected={experienceConfirmed && experience === option.id}
-                    onSelect={() => {
-                      setExperienceConfirmed(true);
-                      setExperience(option.id);
-                    }}
-                    icon={
-                      <ChoiceArt art={{ kind: "level", level: option.level }} />
-                    }
-                    label={option.label}
-                    desc={option.desc}
-                  />
-                ))}
-              </div>
+              <LiftKitQuestion
+                equipment={equipment}
+                equipmentConfirmed={equipmentConfirmed}
+                onEquipmentChange={(next) => {
+                  setEquipmentConfirmed(true);
+                  setEquipment(next);
+                }}
+                barbellAtHome={barbellAtHome}
+                onBarbellAtHomeChange={setBarbellAtHome}
+                pullUpBar={pullUpBar}
+                onPullUpBarChange={setPullUpBar}
+                smallPlates={smallPlates}
+                onSmallPlatesChange={setSmallPlates}
+                liftUnit={liftUnit}
+                experience={experience}
+                experienceConfirmed={experienceConfirmed}
+                onExperienceChange={(next) => {
+                  setExperienceConfirmed(true);
+                  setExperience(next);
+                }}
+              />
               {/* What the kit just chosen builds (FV3): the first lift and
                   its first exercises, which change as the kit does. */}
               {equipmentConfirmed && (
@@ -2120,34 +2234,49 @@ export default function Onboarding() {
               </details>
             </div>
           )}
-          {step === 4 && (
-            <div className="space-y-3">
-              {[
-                { id: "none", label: "None" },
-                { id: "lower_back", label: "Lower back" },
-                { id: "shoulder", label: "Shoulder" },
-                { id: "knee", label: "Knee" },
-                { id: "elbow", label: "Elbow" },
-                { id: "wrist", label: "Wrist" },
-              ].map((option) => (
-                <OptionCard
-                  key={option.id}
-                  selected={injuries.includes(option.id)}
-                  label={option.label}
-                  onSelect={() =>
-                    setInjuries((previous) =>
-                      option.id === "none"
-                        ? ["none"]
-                        : previous.includes(option.id)
-                          ? previous.filter((id) => id !== option.id)
-                          : [
-                              ...previous.filter((id) => id !== "none"),
-                              option.id,
-                            ]
-                    )
+          {step === HEALTH_CONSENT_STEP &&
+            (consentDeclined ? (
+              user ? (
+                <HealthConsentDeclineActions
+                  onBack={() => setConsentDeclined(false)}
+                  onDeleteAccount={() =>
+                    navigate(`/settings/account#${DELETE_ACCOUNT_ANCHOR}`)
+                  }
+                  onSignOut={() =>
+                    void signOut().catch((err: unknown) => {
+                      logger.warn("Onboarding: sign-out failed", err);
+                      toast.error(SIGN_OUT_FAILED);
+                    })
                   }
                 />
-              ))}
+              ) : (
+                <HealthConsentDeclineActions
+                  onBack={() => setConsentDeclined(false)}
+                  onLeaveSetup={leaveSetup}
+                />
+              )
+            ) : (
+              <div className="space-y-4">
+                <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
+                <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
+                <HealthConsentPolicyLink />
+                {/* No to a question already answered yes takes the yes
+                    back: the plan is saved only with an agreement. */}
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => {
+                    setHealthConsentVersion(undefined);
+                    setConsentDeclined(true);
+                  }}
+                >
+                  {HEALTH_CONSENT_COPY.decline}
+                </Button>
+              </div>
+            ))}
+          {step === 4 && (
+            <div className="space-y-3">
+              <LiftLimitsQuestion injuries={injuries} onChange={setInjuries} />
               {/* What the limitations just chosen changed (FV3), live.
                   Limitations stay editable in Settings. */}
               {injuries.some((id) => id !== "none") && (
@@ -2321,7 +2450,6 @@ export default function Onboarding() {
                       ),
                     }))}
                     onChange={setPaceKgPerWeek}
-                    tone="lifting"
                   />
                 )}
                 {goalPlan.direction !== "maintain" && !goalWeightNotBelow && (
@@ -2526,6 +2654,27 @@ export default function Onboarding() {
                 deliveryRevision={inviteRevision}
                 disabled={saving}
               />
+              {askEmail && (
+                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                  <div className="min-w-0 flex-1 basis-40 space-y-1">
+                    {/* At 200% text on a 320 px screen the switch drops
+                        under the words rather than squeezing them until a
+                        word breaks mid-way. */}
+                    <p className="text-base font-semibold break-words">
+                      {EMAIL_CONSENT_COPY.setupLabel}
+                    </p>
+                    <p className="text-sm text-muted-foreground break-words">
+                      {EMAIL_CONSENT_COPY.setupDescription}
+                    </p>
+                  </div>
+                  <Toggle
+                    label={EMAIL_CONSENT_COPY.setupLabel}
+                    checked={emailOptIn}
+                    onChange={() => setEmailOptIn((on) => !on)}
+                    disabled={saving}
+                  />
+                </div>
+              )}
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.
@@ -2547,56 +2696,83 @@ export default function Onboarding() {
           button no longer fit side by side, and "Continue" is one word that
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
-      <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-        {step === 7 && (
-          <p className="text-sm text-muted-foreground">
-            Today shows your plan and what to do next. Start when you’re ready.
-          </p>
-        )}
-        <div className="flex gap-3 @max-[15em]:flex-col-reverse">
-          {step !== 0 && (
-            <Button
-              variant="secondary"
-              disabled={saving}
-              leftIcon={<ArrowLeft className="size-4" />}
-              onClick={() => {
-                setSaveError("");
-                setStepMove(-1);
-                setStep(
-                  returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
-                );
-                setReturnToReview(false);
-              }}
-            >
-              Back
-            </Button>
-          )}
+      {/* Not now's three ways on stand in for the footer: its Back and
+          I agree would be a fourth and fifth. */}
+      {saveView ? (
+        <footer className="shrink-0 border-t border-border pt-4">
           <Button
-            size="lg"
-            className="flex-1"
-            loading={saving}
-            disabled={buttonDisabled}
-            onClick={advance}
-            rightIcon={
-              step === 7 ? (
-                <Check className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )
-            }
+            variant="secondary"
+            fullWidth
+            leftIcon={<ArrowLeft className="size-4" />}
+            onClick={closeSaveView}
           >
-            {saving
-              ? "Creating your plan…"
-              : step === 7
-                ? saveError
-                  ? "Try again"
-                  : "Start my plan"
-                : returnToReview
-                  ? "Back to review"
-                  : "Continue"}
+            Back
           </Button>
-        </div>
-      </footer>
+        </footer>
+      ) : (
+        !declinedHere && (
+          <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+            {step === 7 && (
+              <p className="text-sm text-muted-foreground">
+                {user
+                  ? "Today shows your plan and what to do next. Start when you’re ready."
+                  : "Next, save your plan to an account."}
+              </p>
+            )}
+            <div className="flex gap-3 @max-[15em]:flex-col-reverse">
+              {step !== 0 && (
+                <Button
+                  variant="secondary"
+                  disabled={saving}
+                  leftIcon={<ArrowLeft className="size-4" />}
+                  onClick={() => {
+                    setSaveError("");
+                    setStepMove(-1);
+                    setStep(
+                      returnToReview
+                        ? 7
+                        : flow[Math.max(0, flow.indexOf(step) - 1)]
+                    );
+                    setReturnToReview(false);
+                  }}
+                >
+                  Back
+                </Button>
+              )}
+              <Button
+                size="lg"
+                className="flex-1"
+                loading={saving}
+                disabled={buttonDisabled}
+                onClick={advance}
+                rightIcon={
+                  step === 7 && user ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <ChevronRight className="size-4" />
+                  )
+                }
+              >
+                {saving
+                  ? "Creating your plan…"
+                  : step === 7
+                    ? saveError
+                      ? "Try again"
+                      : user
+                        ? "Start my plan"
+                        : // Signed out, Save your plan comes next, not
+                          // the plan itself.
+                          "Continue"
+                    : step === HEALTH_CONSENT_STEP
+                      ? HEALTH_CONSENT_COPY.agree
+                      : returnToReview
+                        ? "Back to review"
+                        : "Continue"}
+              </Button>
+            </div>
+          </footer>
+        )
+      )}
     </div>
   );
 }

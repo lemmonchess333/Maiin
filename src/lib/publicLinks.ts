@@ -5,12 +5,13 @@
  * Never `window.location.origin`. In the iPhone app that is
  * `capacitor://localhost`, which opens nothing anywhere else, and on the
  * GitHub Pages preview it drops the `/Maiin/` base the app is served
- * under. Every shared link names the production web app instead, the
- * origin the server's Stripe allow-list also requires
- * (`functions/index.js`).
+ * under. Every shared link names troposfit.com instead, the origin the
+ * server's Stripe allow-list also requires (`functions/index.js`). Since
+ * App1 Q52 that origin is the website, which points to the App Store and
+ * keeps answering every address below (src/website).
  */
 
-/** The production web app's origin. */
+/** troposfit.com: the website, and the address every shared link names. */
 export const PUBLIC_APP_ORIGIN = "https://troposfit.com";
 
 /** Tropos on the App Store (Apple ID 6762416918, docs/app-store/listing.md).
@@ -23,9 +24,10 @@ export const APP_STORE_URL = "https://apps.apple.com/app/id6762416918";
  *  keeps it from the first page it opens (`pendingInvite.ts`). */
 export const INVITE_PARAM = "invite";
 
-/** The link an invite shares: the app's front door, which signs a new
- *  person up or a returning one in. With a person's code (Soc15) it
- *  carries who sent it, so joining from it follows both ways. */
+/** The link an invite shares: the iPhone app opens it, and without the
+ *  app the website shows the code to copy before installing. With a
+ *  person's code (Soc15) it carries who sent it, so joining from it
+ *  follows both ways. */
 export function appInviteUrl(code?: string): string {
   return code
     ? `${PUBLIC_APP_ORIGIN}/?${INVITE_PARAM}=${encodeURIComponent(code)}`
@@ -40,19 +42,29 @@ export function publicPostUrl(activityId: string): string {
   return `${PUBLIC_APP_ORIGIN}/activity/${encodeURIComponent(activityId)}`;
 }
 
+/** A shared card's own page (Soc17 call 1): any card that is not of a
+ *  public post. The token is 128 random bits the share sheet made
+ *  (`newSharedCardToken`), so the address can be found only by someone
+ *  it was sent to. Hosting sends it to `sharedCardPage`
+ *  (functions/lib/sharedCardPage.js); the iPhone app does not open it. */
+export function sharedCardUrl(token: string): string {
+  return `${PUBLIC_APP_ORIGIN}/card/${encodeURIComponent(token)}`;
+}
+
 /** A Space's own address (Run27 call 11): the Space in the app, the same
  *  path as the in-app route, so the iPhone app opens it as it is once the
- *  universal-links file names it, and the web app's sign-in leads to it
- *  for anyone else. */
+ *  universal-links file names it. For anyone else troposfit.com's page
+ *  points to the App Store (App1 Q52, src/website). */
 export function publicSpaceUrl(spaceId: string): string {
   return `${PUBLIC_APP_ORIGIN}/space/${encodeURIComponent(spaceId)}`;
 }
 
 /** A shared card's words with the way back to Tropos after them. A card
  *  reaches people who do not have the app, and until 13 Nov 2026 it was
- *  an image and words with nowhere to go (owner, Q69). The address is the
- *  front door every other shared link uses, or a public post's own page
- *  when the card is of one (`publicPostUrl`, Q51). */
+ *  an image and words with nowhere to go (owner, Q69). The address is a
+ *  public post's own page when the card is of one (`publicPostUrl`, Q51),
+ *  the card's own page otherwise (`sharedCardUrl`, Soc17), and when that
+ *  could not be kept the sharer's invite link or the front door. */
 export function withAppLink(
   text: string,
   link: string = PUBLIC_APP_ORIGIN

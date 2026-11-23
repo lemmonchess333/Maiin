@@ -186,6 +186,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     retired: "a copy of the Auth address nothing read",
   },
+  // App1 Q55: consent to the two emails, written only by the server
+  // (completeOnboarding, setEmailConsent and the unsubscribe link) with its
+  // own time, so the record proves a yes the person gave. A client that
+  // could write it could backdate one (functions/lib/emailConsent.js).
+  { field: "emailConsent", sanitized: false, serverOnly: true },
   {
     field: "enableRolloverCalories",
     sanitized: false,
@@ -206,6 +211,12 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   },
   { field: "goalWeightKg", sanitized: true },
   { field: "hasUsedTrial", sanitized: false, serverOnly: true },
+  // Priv1 call 1: the agreement to store health details, `{ at, version }`.
+  // Written by completeOnboarding from its own `healthDataConsent`
+  // argument (never through the sanitiser) and by the gate an older
+  // account meets, which firestore.rules hold to exactly
+  // `{ at: request.time, version: 1 }` (`healthDataConsentValid`).
+  { field: "healthDataConsent", sanitized: false },
   { field: "heightCm", sanitized: true },
   { field: "hideSharedRouteEnds", sanitized: true },
   { field: "hideWeightNumber", sanitized: true },
@@ -353,6 +364,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     retired: "a write time only the RevenueCat sync stamped, never read",
   },
+  // Priv1 call 2: Settings → Social & privacy → Share usage analytics,
+  // false when off. Value-gated in firestore.rules (`usageAnalyticsValid`).
+  { field: "usageAnalytics", sanitized: false },
   { field: "weekSchedule", sanitized: true },
   { field: "weekScheduleVersion", sanitized: true },
   { field: "weeklyMealsTarget", sanitized: true },

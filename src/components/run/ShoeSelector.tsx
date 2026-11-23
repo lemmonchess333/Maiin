@@ -30,7 +30,7 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
       <button
         type="button"
         onClick={() => navigate("/settings/shoes")}
-        className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
+        className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform dark:card-shadow dark:border-transparent"
       >
         <Footprints className="size-4 text-muted-foreground shrink-0" />
         {/* "Add shoes" goes under the words when they cannot keep 8em

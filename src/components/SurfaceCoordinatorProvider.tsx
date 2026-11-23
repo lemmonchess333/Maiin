@@ -122,7 +122,7 @@ export function SurfaceCoordinatorProvider({
     reported.current = state.active;
     if (state.active) {
       trackLifecycleEvent("return_surface_shown", {
-        surface: state.active as ReturnSurface,
+        returnSurface: state.active as ReturnSurface,
       });
       // A blocking surface that lands during a finish is part of the
       // pile-up, not just a return surface. No-op outside that window.

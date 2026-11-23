@@ -1,0 +1,414 @@
+/* troposfit.com's own layout (the website’s design, #3428). The app's tokens,
+   fonts and components come from src/index.css; this file holds only
+   what a page wider than a phone needs: the column, the sections, the
+   heroes and the header. The website is dark, as the app's signed-out
+   screens are (DESIGN_GUIDE §14p). */
+
+/* ─── The column ──────────────────────────────────────────────
+   72rem wide at most, with the app's 16px side margin on a phone and
+   32px from a tablet up. */
+.site-container {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+@media (min-width: 768px) {
+  .site-container {
+    padding-inline: 32px;
+  }
+}
+
+/* A section's space above and below: about 64px on a phone, 96px wide. */
+.site-section {
+  padding-block: 64px;
+}
+@media (min-width: 1024px) {
+  .site-section {
+    padding-block: 96px;
+  }
+}
+.site-section + .site-section {
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+/* ─── Type ────────────────────────────────────────────────────
+   The app's scale: a page's headline at the hero size (36px) on a phone,
+   56px on a wide screen, where a phone's 36px reads as small print; a
+   section's at the h1 size (31px), 40px wide. Body text is 17px, 19px
+   wide. Two faces, as in the app. */
+.site-h1 {
+  font-size: var(--ds-text-hero);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+.site-h2 {
+  font-size: var(--ds-text-h1);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+.site-lede {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+@media (min-width: 1024px) {
+  .site-h1 {
+    font-size: 3.5rem;
+  }
+  .site-h2 {
+    font-size: 2.5rem;
+  }
+  .site-lede {
+    font-size: 1.1875rem;
+  }
+}
+/* A kicker over a headline: the sport's strong step, 14px semibold. */
+.site-kicker {
+  font-size: var(--ds-text-small);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* ─── The header ──────────────────────────────────────────────
+   The lockup, the pages and the way to the App Store. It sits on the
+   page, or over Home's photographs (`data-over-photo`), where it takes
+   the stage's fixed light colours. Below 768px the pages fold into a
+   menu, a <details> so it opens without any script. */
+.site-header {
+  position: relative;
+  z-index: 20;
+  color: hsl(var(--foreground));
+}
+.site-header[data-over-photo="true"] {
+  position: absolute;
+  inset: 0 0 auto 0;
+  color: hsl(var(--stage-foreground));
+}
+.site-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding-top: var(--safe-top);
+}
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 12px;
+  border-radius: 12px;
+  font-size: var(--ds-text-small);
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.8;
+  transition: opacity 150ms ease;
+}
+.site-nav-link:hover,
+.site-nav-link[aria-current="page"] {
+  opacity: 1;
+}
+.site-nav-link[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+.site-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.site-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.site-menu-panel {
+  position: absolute;
+  inset: calc(var(--safe-top) + 64px) 16px auto 16px;
+  padding: 8px;
+  border-radius: 16px;
+  background: hsl(var(--stage-raised));
+  color: hsl(var(--stage-foreground));
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / 0.08),
+    0 16px 40px hsl(0 0% 0% / 0.5);
+}
+
+/* The light behind a drawing or a screen takes its sport's colour from
+   `data-light` (lifting, running, nutrition, primary). "primary" is the
+   brand's light, the purple of the mark: the app's `--primary` is its
+   neutral chrome, so the website names the purple itself. */
+[data-light="lifting"] {
+  --art-light: var(--lifting);
+}
+[data-light="running"] {
+  --art-light: var(--running);
+}
+[data-light="nutrition"] {
+  --art-light: var(--nutrition);
+}
+[data-light="primary"] {
+  --art-light: var(--lifting);
+}
+
+/* ─── Home's hero: the welcome's photographs ──────────────────
+   A phone sees the welcome itself: one photograph at a time filling the
+   screen, fading to the next (WelcomePhotos), with the words at the foot.
+   From 768px the photographs stand side by side across the width, three,
+   then all five from 1200px, still and full height, because a single
+   9:19.5 photograph stretched across a wide screen would show a band of
+   someone's chest. The words keep the foot, on a ground that darkens
+   from the middle of the screen down. */
+.home-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: hsl(var(--stage));
+  color: hsl(var(--stage-foreground));
+  color-scheme: dark;
+  overflow: hidden;
+}
+.home-hero .welcome-photos {
+  z-index: -2;
+}
+.home-hero-strip {
+  display: none;
+}
+@media (min-width: 768px) {
+  .home-hero {
+    min-height: min(100svh, 920px);
+  }
+  .home-hero .welcome-photos {
+    display: none;
+  }
+  .home-hero-strip {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    background: hsl(var(--stage));
+  }
+  .home-hero-strip > :nth-child(n + 4) {
+    display: none;
+  }
+}
+@media (min-width: 1200px) {
+  .home-hero-strip {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .home-hero-strip > :nth-child(n + 4) {
+    display: block;
+  }
+}
+.home-hero-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.45) 0,
+      rgb(0 0 0 / 0) calc(var(--safe-top) + 120px)
+    ),
+    linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.9) 0,
+      rgb(0 0 0 / 0.72) 30%,
+      rgb(0 0 0 / 0) 62%
+    );
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to right,
+      rgb(0 0 0 / 0.72) 0,
+      rgb(0 0 0 / 0.5) 34%,
+      rgb(0 0 0 / 0) 62%
+    );
+    pointer-events: none;
+  }
+}
+.home-hero-copy {
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}
+.home-hero-copy h1 {
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.45);
+}
+@media (min-width: 1024px) {
+  .home-hero-copy {
+    padding-bottom: 72px;
+  }
+}
+
+/* ─── A page's hero: our own drawing in one light ─────────────
+   Lifting, Running and Food open on the app's own drawing of the sport,
+   standing in one soft light of its colour (DESIGN_GUIDE §14o), not a
+   photograph. `--art-light` is the sport's token. */
+.art-hero-picture {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-width: 30rem;
+  width: 100%;
+  margin-inline: auto;
+}
+.art-hero-picture::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--art-light) / 0.32),
+    hsl(var(--art-light) / 0.1) 55%,
+    transparent
+  );
+}
+.art-hero-picture img {
+  position: absolute;
+  inset: 7%;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
+/* The same light behind an app screen or a photograph in a hero. */
+.art-hero-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding-block: 16px;
+}
+.art-hero-frame::before {
+  content: "";
+  position: absolute;
+  inset: -6% -10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--art-light) / 0.26),
+    transparent
+  );
+}
+.art-hero-frame > * {
+  position: relative;
+}
+/* On a phone the hero's picture gives up its lower part so the badge
+   stays in the first screen: a screen shows its top, a photograph its
+   middle. */
+@media (max-width: 767px) {
+  .art-hero-frame > * {
+    max-height: 34svh;
+  }
+  .art-hero-frame .app-screen {
+    max-width: 16rem;
+  }
+}
+
+/* ─── An app screen ───────────────────────────────────────────
+   A capture of the app as it runs, with its corners rounded as a phone's
+   screen is and a lit edge, and no drawn phone around it: Apple allows
+   its own device images only as it supplies them. */
+.app-screen {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+  margin-inline: auto;
+  border-radius: 32px;
+  overflow: hidden;
+  background: hsl(var(--card));
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / 0.1),
+    0 1px 0 0 hsl(0 0% 100% / 0.14) inset,
+    0 30px 60px -20px hsl(0 0% 0% / 0.7);
+}
+@media (min-width: 1024px) {
+  .app-screen {
+    max-width: 24rem;
+  }
+}
+.app-screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A sport card on Home: its drawing in its light at the top. */
+.sport-card-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 12rem;
+}
+.sport-card-art::before {
+  content: "";
+  position: absolute;
+  inset: 0 12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--art-light) / 0.3),
+    transparent
+  );
+}
+.sport-card-art {
+  overflow: hidden;
+}
+.sport-card-art img {
+  position: relative;
+  height: 11rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+/* Food's drawings are 192 px squares, so three stand together at 88 px
+   rather than one blown up past its own size. */
+.sport-card-art-trio {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sport-card-art-trio img {
+  height: 88px;
+  width: 88px;
+}
+
+/* The QR code beside the badge: shown from 1024px, where the visitor is
+   most likely on a computer and their phone is in their pocket. */
+.site-qr {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .site-qr {
+    display: flex;
+  }
+}
+
+/* A shared post arrives as Home's HTML with the post's data in its head
+   (functions/lib/publicPost.js). Home's drawing stays hidden until the
+   post's page replaces it, which takes the `data-page` mark away. */
+html:has(#tropos-public-post) #root[data-page] {
+  visibility: hidden;
+}

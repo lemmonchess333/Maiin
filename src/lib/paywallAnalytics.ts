@@ -37,6 +37,9 @@ export type PaywallEvent =
   | "checkout_success_returned"
   | "checkout_cancelled_returned"
   | "restore_purchases_clicked"
+  /** The iPhone paywall could not get the App Store's prices, so it showed
+   *  none and offered to try again (`useProPlanPrices`). */
+  | "paywall_prices_failed"
   | "manage_subscription_clicked";
 
 export type PaywallSource =
@@ -44,7 +47,7 @@ export type PaywallSource =
   | "feature_gate"
   | "settings"
   | "adaptive_summary"
-  /** The post-onboarding offer: /upgrade opened by onboarding's save. */
+  /** The trial offer that ends setup (`TrialOffer`, A6 call 2). */
   | "onboarding"
   /** The Food page's photo-logging strip (gated tier). */
   | "food_page"

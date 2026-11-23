@@ -64,7 +64,9 @@ export function getCardColour(
   const glowIntensity = Math.max(0, Math.min(1, (pi - 45) / 55));
   return {
     hue: THEME.brand,
-    textHue: "hsl(var(--primary-strong))",
+    // The purple text step: PI3 holds the ring purple, and the verb is in
+    // the ring's colour. `--primary-strong` is the neutral chrome (DS10).
+    textHue: "hsl(var(--lifting-strong))",
     glowIntensity,
   };
 }

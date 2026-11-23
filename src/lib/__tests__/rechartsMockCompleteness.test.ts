@@ -79,8 +79,8 @@ function mockedSymbols(src: string): string[] {
   }
   if (end === -1) return [];
   /* Comments come out BEFORE the split. These factories annotate their
-     keys — the `TrainingLoadAxis` mock explains why Line and Tooltip are
-     stubs right above them — and a block comment sitting in front of
+     keys (a mock may say why a key is a stub right above it), and a
+     block comment sitting in front of
      a key makes the segment start with `/`, so the key regex misses and
      the symbol reads as absent. That is how this guard's first run
      reported a missing `Cell` that was there all along: a checker whose
@@ -181,8 +181,9 @@ describe("a wholesale recharts mock exports what its component imports", () => {
   it("is looking at something", () => {
     /* A glob or a regex that matched nothing would make every assertion
        below vacuously true, which is the failure this file exists to
-       stop one level down. */
-    expect(found.length).toBeGreaterThanOrEqual(5);
+       stop one level down. 5 → 4: the minutes-based training load
+       chart's suites went with it (App1 Q16). */
+    expect(found.length).toBeGreaterThanOrEqual(4);
     expect(found.map((c) => c.test)).toContain(
       "src/components/analytics/__tests__/piAxisRoom.test.tsx"
     );

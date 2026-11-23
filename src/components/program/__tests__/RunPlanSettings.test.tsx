@@ -21,6 +21,7 @@ import type { UserProfile } from "@/lib/auth";
 import type { RunSummaryItem } from "@/hooks/useRunningStats";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import { SETUP_OPTIONS, SPORT_CHANGE } from "@/test/journeyScreens";
 
 /**
  * Run-Split contract, rebuilt for RUN-EV-02 (owner decision, P0): the
@@ -104,8 +105,12 @@ const RACE_TARGET_DATE = (() => {
   return localDateString(d);
 })();
 
+/** Someone who lifts and runs freely (setup's Both, free running): the
+ *  person whose run plan this suite edits. Someone with no running on
+ *  their plan meets Add running first (the "Add running" block below). */
 const baseProfile = {
   runMode: "freeform",
+  runFrequency: "occasional",
   weeklyWorkoutsTarget: 4,
   primaryGoal: "hypertrophy",
   experience: "intermediate",
@@ -538,7 +543,7 @@ describe("RunPlanSettings", () => {
     expect(distance).toHaveAccessibleDescription(/^42\.2 km · \d+\+ weeks$/);
   });
 
-  it("draws the plan's two knobs in the running colour", () => {
+  it("draws the plan's two knobs in the one neutral selected state (DS10)", () => {
     renderPage(baseProfile);
     pickRacePrep();
     for (const name of ["Long-run volume", "Plan intensity"]) {
@@ -547,7 +552,7 @@ describe("RunPlanSettings", () => {
         group.querySelectorAll('[aria-checked="true"]')
       );
       expect(selected).toHaveLength(1);
-      expect(selected[0].className, name).toContain("bg-running-fill");
+      expect(selected[0].className, name).toContain("bg-segment-selected");
     }
   });
 
@@ -1532,8 +1537,9 @@ describe("RunPlanSettings", () => {
   });
 });
 
-/* Run9's starter goal in Settings → Run plan: offered to someone who runs
-   only, to anyone new to running and to anyone on it; chosen, it begins
+/* Run9's starter goal in Settings → Run plan: offered to anyone adding
+   running, to someone who runs only, to anyone new to running and to anyone
+   on it (`starterOfferedTo`); chosen, it begins
    today and clears a race goal; left for a race, it ends, kept with the
    stage reached. Every change goes through configurePlan, which writes the
    goal whole (functions/lib/raceGoalWrite.js). */
@@ -1687,5 +1693,191 @@ describe("RunPlanSettings — the 30-minute goal", () => {
       startedOn: "2026-09-07",
       stage: 9,
     });
+  });
+});
+
+/* TrainWk1 step 6: running added after setup, and taken off. Someone with no
+   running on their plan answers setup's running question, then chooses on
+   the same cards, the starter goal among them; the save writes the plan and
+   the running level, never the athlete type. Stop running takes the run
+   days off and nothing logged, refused while a race goal is set or when
+   running is the plan's one sport. */
+describe("RunPlanSettings — adding and stopping running", () => {
+  const today = () => localDateString(new Date());
+  /** Lifts Monday, Wednesday and Friday; no running on the plan. */
+  const liftsOnly = [
+    "rest",
+    "lift",
+    "rest",
+    "lift",
+    "rest",
+    "lift",
+    "rest",
+  ].map((type, day) => ({ day, type }));
+  const lifter = {
+    ...baseProfile,
+    athleteType: "Lifter",
+    runFrequency: "none",
+    weeklyWorkoutsTarget: 3,
+    weeklyRunDaysTarget: 0,
+    weekSchedule: liftsOnly,
+  } as unknown as UserProfile;
+
+  beforeEach(() => {
+    configureSpy.mockClear();
+    localStorage.clear();
+  });
+
+  it("asks how much the person runs before anything else, with nothing to save", () => {
+    renderPage(lifter);
+    expect(
+      screen.getByRole("heading", { name: SPORT_CHANGE.addRunningQuestion })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("radiogroup", { name: "Running goal" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: SPORT_CHANGE.addRunning })
+    ).not.toBeInTheDocument();
+    // Nothing to stop: running isn't on the plan.
+    expect(
+      screen.queryByRole("button", { name: "Stop running" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("New to running opens on the 30-minute goal and adds it, with the level", async () => {
+    renderPage(lifter);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: new RegExp(`^${SETUP_OPTIONS.runners[0]}`),
+      })
+    );
+    expect(
+      screen.getByRole("radio", { name: "30 minutes without stopping" })
+    ).toBeChecked();
+    fireEvent.click(
+      await screen.findByRole("button", { name: SPORT_CHANGE.addRunning })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates).toMatchObject({
+      runFrequency: "new",
+      runMode: "starter",
+      starterGoal: { startedOn: today() },
+    });
+    expect(payload.profileUpdates).not.toHaveProperty("athleteType");
+    expect(payload.programState.runPlan).toMatchObject({ mode: "starter" });
+    // The lift days keep their days; the runs go round them.
+    liftsOnly.forEach((day, i) => {
+      if (day.type === "lift")
+        expect(["lift", "both"]).toContain(payload.weekSchedule[i].type);
+    });
+    expect(
+      payload.weekSchedule.filter((d) => d.type === "run" || d.type === "both")
+    ).toHaveLength(2);
+  });
+
+  it("another level opens on No race, and adds running with no run days", async () => {
+    renderPage(lifter);
+    fireEvent.click(screen.getByRole("button", { name: /^Regular runner/ }));
+    expect(screen.getByRole("radio", { name: /^No race/ })).toBeChecked();
+    // The starter goal is there to choose: adding running is who it is for.
+    expect(
+      screen.getByRole("radio", { name: "30 minutes without stopping" })
+    ).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: SPORT_CHANGE.addRunning })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates).toMatchObject({
+      runFrequency: "regular",
+      runMode: "freeform",
+    });
+    expect(payload.programState.runDays).toEqual([]);
+    expect(payload.weekSchedule.map((d) => d.type)).toEqual(
+      liftsOnly.map((d) => d.type)
+    );
+  });
+
+  it("stops running after one confirmation that says what stays", async () => {
+    const refresh = renderPage({
+      ...baseProfile,
+      nonRaceGoal: { kind: "runs", target: 3 },
+    } as unknown as UserProfile).refreshProfile;
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopRunning })
+    );
+    const dialog = screen.getByRole("alertdialog", {
+      name: SPORT_CHANGE.stopRunningAsked,
+    });
+    expect(
+      within(dialog).getByText(
+        "Your saved runs, routes and bests stay in Progress."
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/Your weekly running goal ends\./)
+    ).toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Stop running" })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates).toMatchObject({
+      runFrequency: "none",
+      nonRaceGoal: null,
+      runMode: "freeform",
+      weeklyRunDaysTarget: 0,
+    });
+    expect(payload.profileUpdates).not.toHaveProperty("athleteType");
+    expect(payload.programState.runDays).toEqual([]);
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
+  it("holds Stop running while a race goal is set, and says why", () => {
+    renderPage({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+    } as unknown as UserProfile);
+    expect(
+      screen.getByText(
+        "You’re training for a race. To stop running, choose No race first."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Stop running" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("says why running stays when it is the plan's one sport, once Stop running is tried", () => {
+    renderPage({
+      ...baseProfile,
+      weeklyWorkoutsTarget: 0,
+    } as unknown as UserProfile);
+    const sentence =
+      "Your plan is running only. To stop running, add lifting first.";
+    // Not said before it is asked.
+    expect(screen.queryByText(sentence)).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: SPORT_CHANGE.stopRunning })
+    );
+    expect(screen.getByText(sentence)).toBeInTheDocument();
+    expect(screen.getByText(sentence).closest("[role=status]")).not.toBeNull();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("?goal=weekly opens on No race with a weekly goal counting runs", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=weekly");
+    expect(screen.getByRole("radio", { name: /^No race/ })).toBeChecked();
+    expect(
+      screen.getByRole("combobox", { name: "Weekly running goal" })
+    ).toHaveValue("runs");
+    expect(
+      screen.getByRole("spinbutton", { name: "Runs per week" })
+    ).toHaveValue(3);
   });
 });

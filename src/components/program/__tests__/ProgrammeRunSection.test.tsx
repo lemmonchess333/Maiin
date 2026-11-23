@@ -62,6 +62,12 @@ import type { LayoffClass } from "@/features/program/layoffDetection";
 // regardless of the real clock.
 const TODAY_KEY = localDateString(new Date());
 const TODAY_DOW = new Date().getDay();
+/** A starter plan this week: a plan with run days and no race. */
+const STARTER_PLAN = {
+  mode: "starter" as const,
+  stage: 1,
+  stageWeekKey: localWeekKey(parseLocalDate(TODAY_KEY)),
+};
 
 // A1c cleanup — the "Change plan" link now deeplinks to
 // /settings/training instead of opening the legacy ConfigurePlanModal.
@@ -523,15 +529,15 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (structured)", () => {
+  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (starter)", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
         profile={profile}
         programState={makeProgramState([makeRunDay()], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -939,6 +945,29 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
   });
 
+  /* TrainWk1 call 2: a session opens its own page. The card's ⋯ opened
+     the day's sheet; it opens the run's page, which holds the same
+     actions, and nothing of the sheet is left on the tab. */
+  it("opens the run's own page from the card's ⋯", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Manage session" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(`/program/run/${TODAY_KEY}`);
+    expect(screen.queryByText("Manage run")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("draws the runner on the run card, the fast stride for a tempo", () => {
     const runnerOnCard = () =>
       screen
@@ -1253,7 +1282,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
 
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
@@ -1267,7 +1296,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
               dayIndex: TODAY_DOW,
             }),
           ],
-          { runPlan: { mode: "structured" } }
+          { runPlan: STARTER_PLAN }
         )}
       />
     );
@@ -1320,7 +1349,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     // as "Next ·" and "all runs done" never fired. The claim-aware nextStartable
     // must treat it as complete.
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     const claimedDay = makeRunDay({
       status: "planned",
       date: TODAY_KEY,
@@ -1341,7 +1370,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         {...props}
         profile={profile}
         programState={makeProgramState([claimedDay], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -1363,9 +1392,9 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     renderWith(
       <ProgrammeRunSection
         {...commonProps()}
-        profile={makeProfile({ runMode: "structured", raceGoal: undefined })}
+        profile={makeProfile({ runMode: "starter", raceGoal: undefined })}
         programState={makeProgramState([claimedDay], {
-          runPlan: { mode: "structured" },
+          runPlan: STARTER_PLAN,
         })}
       />
     );
@@ -1376,13 +1405,13 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
 
   it("renders 'Configure your runs' CTA for non-freeform users with runsTarget=0 and no race goal", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "starter", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
         profile={profile}
         runsTarget={0}
-        programState={makeProgramState([], { runPlan: { mode: "structured" } })}
+        programState={makeProgramState([], { runPlan: STARTER_PLAN })}
       />
     );
     expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
@@ -1522,7 +1551,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
   it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
     const props = commonProps();
     const profile = makeProfile({
-      runMode: "structured",
+      runMode: "starter",
       raceGoal: undefined,
       weeklyRunDaysTarget: 0,
     });

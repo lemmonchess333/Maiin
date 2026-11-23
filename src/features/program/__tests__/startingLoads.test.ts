@@ -14,9 +14,12 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
+/* A man's figures unless a test says otherwise: with no sex stored the
+   seed takes the midpoint factor and cap, pinned in its own describe. */
 const ctx = (over: Partial<StartingLoadContext> = {}): StartingLoadContext => ({
   bodyweightKg: 80,
   experience: "beginner",
+  sex: "male",
   ...over,
 });
 
@@ -109,6 +112,45 @@ describe("startingWeightForCategory", () => {
     expect(
       startingWeightForCategory("knee_dominant", ctx({ bodyweightKg: 80 }))
     ).toBe(55);
+  });
+
+  /* No sex stored ("Prefer not to say", or an account that never said)
+     read as male: a 166 kcal higher BMR and a man's first weights (rankings
+     spec, 22 November 2026). It now takes the mean of the male and female
+     figures: a factor of 0.875 and a cap of 80 kg (owner, the same day). */
+  it("takes the midpoint factor and cap when no sex is stored", () => {
+    const unset = ctx({ sex: undefined });
+    // 80 × 0.45 × 0.875 = 31.5 → 32.5 (a man 35, a woman 70 × 0.45 × 0.75 → 22.5)
+    expect(startingWeightForCategory("horizontal_push", unset)).toBe(32.5);
+    // 80 × 0.7 × 0.875 = 49 → 50 (a man 55, a woman 37.5)
+    expect(startingWeightForCategory("knee_dominant", unset)).toBe(50);
+    // 80 × 0.85 × 0.875 = 59.5 → 60 (a man 67.5, a woman 45)
+    expect(startingWeightForCategory("hip_dominant", unset)).toBe(60);
+    for (const category of [
+      "horizontal_push",
+      "knee_dominant",
+      "hip_dominant",
+    ] as const) {
+      const none = startingWeightForCategory(category, unset);
+      expect(none).toBeLessThan(startingWeightForCategory(category, ctx()));
+      expect(none).toBeGreaterThan(
+        startingWeightForCategory(category, ctx({ sex: "female" }))
+      );
+    }
+    // Any other value reads as none, never as male.
+    expect(
+      startingWeightForCategory("knee_dominant", ctx({ sex: "unspecified" }))
+    ).toBe(50);
+  });
+
+  it("caps the bodyweight at 80 kg when no sex is stored", () => {
+    const at = (bodyweightKg: number) =>
+      startingWeightForCategory(
+        "knee_dominant",
+        ctx({ sex: undefined, bodyweightKg })
+      );
+    expect(at(150)).toBe(at(80));
+    expect(at(79)).toBeLessThan(at(80));
   });
 
   it("returns 0 when bodyweight is missing/invalid", () => {
@@ -695,7 +737,7 @@ describe("a start on the equipment's own weights", () => {
           "intermediate",
           "advanced",
         ] as const)
-          for (const sex of ["male", "female"])
+          for (const sex of ["male", "female", undefined])
             for (const reps of [6, 10, 15]) {
               const w = startingWeightForExercise(
                 e.id,
@@ -743,7 +785,7 @@ describe("a start on the equipment's own weights", () => {
         "intermediate",
         "advanced",
       ] as const)
-        for (const gender of ["male", "female"] as const)
+        for (const gender of ["male", "female", "unspecified"] as const)
           for (const equipment of ["full_gym", "home_gym"] as const)
             for (const weightKg of [55, 80, 110]) {
               const plan = buildOnboardingPlan(

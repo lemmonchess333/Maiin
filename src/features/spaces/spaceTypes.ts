@@ -65,6 +65,9 @@ export interface SpacePostActivitySnapshot {
    *  session's first exercise with a drawing. Absent on older posts, which
    *  keep the muscle figure. */
   leadExerciseId?: string;
+  /** A circuit (Circ1): its `exerciseCount` counts its moves, and the card
+   *  says so. Absent on a lift and on every post from before circuits. */
+  circuit?: true;
 }
 
 export interface SpacePostDoc {

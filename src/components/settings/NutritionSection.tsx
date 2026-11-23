@@ -29,6 +29,7 @@ import {
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { LOW_CARB_G, restDaySplit } from "@/lib/phaseNutrition";
+import MacroSwatch from "@/components/food/MacroSwatch";
 
 interface NutritionSectionProps {
   profile: UserProfile;
@@ -87,11 +88,10 @@ export default function NutritionSection({
 }: NutritionSectionProps) {
   /** The age as typed, while the field is being edited. */
   const [ageDraft, setAgeDraft] = useState<string | null>(null);
-  // Contrast-safe macro colours from the shared palette — protein=pink,
-  // carbs=gold, fat=sage everywhere else in the app. These tiles were
-  // previously mis-coloured (protein blue / carbs amber / fat pink) with
-  // raw Tailwind palette classes that also broke the token invariant.
-  const { text: macroText } = useMacroPalette();
+  // The macros' colours from the shared palette, as everywhere else in the
+  // app: each figure in the text colour, its macro's swatch beside its
+  // name (DS10 call 3).
+  const { accent: macroAccent, text: macroText } = useMacroPalette();
 
   /* #calorie-targets is this explanation's address. Home's "How targets
      work" tip linked here until the first-visit guide (FV1) took its
@@ -291,8 +291,8 @@ export default function NutritionSection({
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                     activityLevel === key
-                      ? "bg-primary/10 text-lifting-strong font-medium"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
+                      ? "bg-primary/10 text-foreground font-medium"
+                      : "bg-muted chip-edge text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {label}
@@ -304,13 +304,13 @@ export default function NutritionSection({
 
         {/* TDEE Results */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-muted rounded-lg p-3 text-center">
+          <div className="bg-muted rounded-lg p-3 text-center chip-edge">
             <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.bmr}
             </p>
             <p className="text-xs text-muted-foreground">BMR</p>
           </div>
-          <div className="bg-muted rounded-lg p-3 text-center">
+          <div className="bg-muted rounded-lg p-3 text-center chip-edge">
             <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.tdee}
             </p>
@@ -320,7 +320,7 @@ export default function NutritionSection({
       </AccordionSection>
 
       {/* Goal weight — owns the nutrition direction (target vs current → phase) */}
-      <div className="bg-card rounded-2xl p-4 space-y-3">
+      <div className="bg-card rounded-2xl p-4 space-y-3 dark:card-shadow">
         <div className="flex items-center gap-3">
           <Target className="size-5 text-primary" />
           <div>
@@ -344,7 +344,7 @@ export default function NutritionSection({
               haptic("light");
               adjustGoalWeight(-1);
             }}
-            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
+            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform chip-edge dark:border-transparent"
           >
             <Minus className="size-4" />
           </button>
@@ -363,7 +363,7 @@ export default function NutritionSection({
               haptic("light");
               adjustGoalWeight(1);
             }}
-            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
+            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform chip-edge dark:border-transparent"
           >
             <Plus className="size-4" />
           </button>
@@ -481,7 +481,7 @@ export default function NutritionSection({
                 initial={{ opacity: 0.5, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="text-sm font-bold text-lifting-strong"
+                className="text-sm font-bold text-foreground"
               >
                 {formatCalories(tdee.targetCalories)} {CALORIE_UNIT}
               </motion.span>
@@ -547,7 +547,10 @@ export default function NutritionSection({
               >
                 {split.protein} g
               </p>
-              <p className="text-xs text-muted-foreground">protein</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.protein} />
+                protein
+              </p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
@@ -562,7 +565,10 @@ export default function NutritionSection({
               >
                 {split.carbs} g
               </p>
-              <p className="text-xs text-muted-foreground">carbs</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.carbs} />
+                carbs
+              </p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
@@ -577,7 +583,10 @@ export default function NutritionSection({
               >
                 {split.fat} g
               </p>
-              <p className="text-xs text-muted-foreground">fat</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.fat} />
+                fat
+              </p>
             </motion.div>
           </div>
 
@@ -665,7 +674,7 @@ export default function NutritionSection({
           completed workouts are never added back (no eat-back) — there's
           nothing to toggle. This read-only note explains the model in place
           of the old switch. */}
-      <div className="bg-card rounded-2xl p-4">
+      <div className="bg-card rounded-2xl p-4 dark:card-shadow">
         <div className="flex items-center gap-3 min-w-0">
           <Flame className="size-5 text-primary shrink-0" />
           <div className="text-left min-w-0">

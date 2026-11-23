@@ -1,8 +1,9 @@
 /**
  * Journeys: one person, through weeks of the real app, in a few minutes.
  *
- * test-infrastructure-audit §4(b) is the design. A journey signs up through
- * the real form and sets up through the real setup screens, with the
+ * test-infrastructure-audit §4(b) is the design. A journey sets up through
+ * the real setup screens and makes its account on the real Save your plan
+ * at their end (A6), with the
  * callables answered by their real handlers (`realCallables.ts`). Each
  * simulated day moves the page's clock and this process's together with the
  * app open, as a phone brings the app back the next morning, and the app
@@ -25,7 +26,7 @@
  * it isn't).
  */
 import { expect, type Page } from "@playwright/test";
-import { openSignUpForm } from "./auth";
+import { openSetup, saveYourPlanWithEmail } from "./auth";
 import { emulatorAdmin, routeRealCallables } from "./realCallables";
 import { realNow, setNodeClock } from "./nodeClock";
 import { verifySignupEmail } from "./verifySignupEmail";
@@ -39,6 +40,7 @@ import {
   HOME,
   SETUP,
   TABS,
+  TRIAL_OFFER,
   type SetupOption,
   type TabName,
 } from "../../src/test/journeyScreens";
@@ -249,22 +251,29 @@ export async function openJourney(page: Page, day: string): Promise<void> {
 }
 
 export interface JourneyAccount {
+  /** Empty until Save your plan has made the account, at the end of
+   *  `setUpPlan`. */
   uid: string;
   email: string;
 }
 
-/** A new account through the sign-up form, its email verified as a person
- *  verifies it. Leaves the page on setup's first screen. */
+/** The account each page's setup will make on Save your plan. */
+const pendingAccounts = new WeakMap<Page, JourneyAccount>();
+
+/**
+ * A new person at the welcome, into setup's first question (A6: setup comes
+ * before the account). The account is made by `setUpPlan`, on Save your
+ * plan with this email address, which then fills in the returned uid.
+ */
 export async function signUp(page: Page, tag: string): Promise<JourneyAccount> {
   await page.goto("/");
-  await openSignUpForm(page);
-  const email = `journey-${tag}-${Date.now()}@tropos.test`;
-  await page.fill("#login-email", email);
-  await page.fill("#login-password", JOURNEY_PASSWORD);
-  await page.getByRole("button", { name: /create account/i }).click();
-  await verifySignupEmail(page, email);
-  const { uid } = await emulatorAdmin().auth.getUserByEmail(email);
-  return { uid, email };
+  await openSetup(page);
+  const account = {
+    uid: "",
+    email: `journey-${tag}-${Date.now()}@tropos.test`,
+  };
+  pendingAccounts.set(page, account);
+  return account;
 }
 
 /** The account and everything under it, gone, the page having left the
@@ -330,9 +339,12 @@ async function next(page: Page) {
 }
 
 /**
- * Setup's screens, as a person answers them, then Start my plan (answered by
- * the real `completeOnboarding`). Leaves the page on Home, which setup ends
- * on for every account (App1), with no offer or tour between.
+ * Setup's screens, as a person answers them, then the review's button.
+ * Signed out (`signUp`) it is Continue, and Save your plan makes the email
+ * account and verifies it as a person does; signed in (an account with no
+ * plan yet) it is Start my plan, and the plan is built at once. Either way the real `completeOnboarding` builds it, the trial
+ * offer follows (Biz1 call 3) and Not now leaves the page on Home, with no
+ * tour.
  */
 export async function setUpPlan(
   page: Page,
@@ -432,6 +444,16 @@ export async function setUpPlan(
       new RegExp(`^${answers.experience ?? "Some experience"}`)
     ).click();
     await next(page);
+  }
+
+  // Priv1 call 1: the agreement to store health details, on its own
+  // screen before the first body question.
+  await expect(
+    page.getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+  ).toBeVisible();
+  await button(page, SETUP.agreeHealth).click();
+
+  if (answers.activity !== "Running") {
     await button(page, SETUP.noInjuries).click();
     await next(page);
   }
@@ -459,7 +481,19 @@ export async function setUpPlan(
   await page
     .getByRole("textbox", { name: SETUP.name, exact: true })
     .fill("Journey tester");
-  await button(page, SETUP.start).click();
+  const notNow = button(page, TRIAL_OFFER.notNow);
+  const pending = pendingAccounts.get(page);
+  // Signed out, the review's button leads to Save your plan (A6).
+  await button(page, pending ? SETUP.saveNext : SETUP.start).click();
+  if (pending) {
+    pendingAccounts.delete(page);
+    await saveYourPlanWithEmail(page, pending.email, JOURNEY_PASSWORD);
+    await verifySignupEmail(page, pending.email, notNow);
+    pending.uid = (
+      await emulatorAdmin().auth.getUserByEmail(pending.email)
+    ).uid;
+  }
+  await notNow.click({ timeout: 30_000 });
   await expect(
     page.getByRole("heading", { name: HOME.heading, level: 1 })
   ).toBeVisible({

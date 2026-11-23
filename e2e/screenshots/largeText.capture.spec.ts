@@ -7,13 +7,16 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food, its meal menu and its manual entry and edit
+ * on a Monday, and the overview's Score details open for a Pro account),
+ * Food, its meal menu and its manual entry and edit
  * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
  * workout, a run before, during and after, the exercise, run and workout
- * detail pages, the Weekly review, sign-up, setup and the Pro page. The
+ * detail pages, the Weekly review, sign-up, setup (with the health-details
+ * agreement, and its Not now) and the Pro page, and the same agreement as
+ * an account set up before it meets it, before the app. The
  * sheets: the weight log,
  * the streak's days, Social's notifications and a run's share and
  * rename sheets,
@@ -26,6 +29,8 @@
  * in both sheets that show it; and the In progress strip on Home and on
  * Train, for a programme workout and for a saved routine's; and an empty
  * workout's review, with the sheets that say when it started and name it.
+ * And circuit mode: its picker, a circuit at work and at rest, its end
+ * question and its finish.
  *
  * And the training plan's week and all sessions: the plan page, its week
  * reset (as opened, and after a week that felt like a bit much) with the
@@ -45,16 +50,23 @@
  */
 import { test, expect, type Page } from "@playwright/test";
 import {
-  openSignUpForm,
+  openSetup,
   openSignInForm,
+  saveYourPlanWithEmail,
   signInAsTestUser,
 } from "../helpers/auth";
 import { setTestUserTier } from "../helpers/testUserTier";
 import { emulatorActive } from "../helpers/emulator";
-import { SETUP } from "../../src/test/journeyScreens";
+import { SETUP, TRIAL_OFFER } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
+import { finishSetupWithoutHealthConsent } from "../helpers/healthConsent";
 
 const WIDTHS = [393, 320] as const;
 const SCALES = [135, 200] as const;
@@ -245,6 +257,14 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading", { name: "Train" }));
       await measure(page, "train", width, found);
 
+      // A lift's own page (TrainWk1 call 2): the week's first lift.
+      await page.goto("program/lift/0");
+      await ready(
+        page,
+        page.getByRole("button", { name: "Reorder exercises", exact: true })
+      );
+      await measure(page, "lift-session", width, found);
+
       for (const view of ["", "lifting", "running", "body", "food"]) {
         await page.goto(view ? `history?view=${view}` : "history");
         await ready(page, nav);
@@ -364,6 +384,28 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
+    /* Progress's Score details, open (App1 Q10): the score in its ring,
+       its window and its change, the 12-week chart, the breakdown with
+       the food logged and the 12-week average. They are Pro (Q84), so
+       the account is Pro for the pass, and the lead above them, whose
+       verdict steps down to the card's width, is measured with them. */
+    test(`Progress's Score details at ${width}px`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await setTestUserTier("pro");
+      const found: string[] = [];
+      try {
+        await signInAsTestUser(page);
+        await page.goto("history?score=details");
+        await ready(page, page.getByRole("region", { name: "Your score" }));
+        await measure(page, "history-score-details", width, found);
+      } finally {
+        await setTestUserTier("free");
+      }
+
+      expect(found).toEqual([]);
+    });
+
     test(`a workout and a run at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
@@ -422,7 +464,9 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
-    test(`sign-up, setup and Pro at ${width}px`, async ({ page }) => {
+    test(`sign-in, setup, Save your plan and the trial offer at ${width}px`, async ({
+      page,
+    }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
       const found: string[] = [];
@@ -444,22 +488,10 @@ test.describe("large text", () => {
       await openSignInForm(page);
       await page.waitForTimeout(500);
       await measure(page, "sign-in", width, found);
+      // Setup before the account (A6).
       await page.goto("/");
-      await openSignUpForm(page);
-      await page.waitForTimeout(500);
-      await measure(page, "sign-up", width, found);
-
+      await openSetup(page);
       const email = `e2e-large-text-${width}-${Date.now()}@tropos.test`;
-      await page.fill("#login-email", email);
-      await page.fill("#login-password", "test-password-123");
-      await page
-        .getByRole("button", { name: /create account/i })
-        .click({ timeout: 8000 });
-      await verifySignupEmail(page, email);
-
-      await page
-        .getByRole("button", { name: /build muscle/i })
-        .waitFor({ state: "visible", timeout: 30_000 });
       await measure(page, "setup-goal", width, found);
       await page.getByRole("button", { name: /build muscle/i }).click();
       await next();
@@ -495,6 +527,20 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /full gym/i }).click();
       await page.getByRole("button", { name: /some experience/i }).click();
       await next();
+      // Priv1 call 1: the agreement to store health details, as asked and
+      // as Not now leaves it.
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 8000 });
+      await measure(page, "setup-health", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "setup-health-declined", width, found);
+      await page.getByRole("button", { name: "Go back", exact: true }).click();
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
+      await page.waitForTimeout(500);
       await measure(page, "setup-limitations", width, found);
       await page.getByRole("button", { name: "None", exact: true }).click();
       await next();
@@ -506,6 +552,52 @@ test.describe("large text", () => {
         .fill("1995");
       await next();
       await measure(page, "setup-summary", width, found);
+
+      // Save your plan, where the account is made; the capture rig runs no
+      // Functions, so the plan it then builds is refused, and the review
+      // says so with Try again.
+      await page
+        .getByRole("textbox", { name: SETUP.name, exact: true })
+        .fill("Large text");
+      await page
+        .getByRole("button", { name: SETUP.saveNext, exact: true })
+        .click();
+      await page.waitForTimeout(500);
+      await measure(page, "save-your-plan", width, found);
+      await saveYourPlanWithEmail(page, email, "test-password-123");
+      await page
+        .getByRole("button", { name: /^(Try again|Not now)$/ })
+        .first()
+        .waitFor({ timeout: 30_000 });
+
+      // The same agreement for an account set up before setup asked: one
+      // screen before the app, on its next open.
+      await finishSetupWithoutHealthConsent(email);
+      await page.goto("/");
+      await page
+        .getByRole("heading", { name: SETUP.healthDetails, level: 1 })
+        .waitFor({ timeout: 30_000 });
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate", width, found);
+      await page.getByRole("button", { name: "Not now", exact: true }).click();
+      await page.waitForTimeout(500);
+      await measure(page, "health-gate-declined", width, found);
+
+      // The trial offer that ends setup (A6 call 2), once the account has
+      // agreed; on the web build it has nothing to sell.
+      await page.getByRole("button", { name: "Go back", exact: true }).click();
+      await page
+        .getByRole("button", { name: SETUP.agreeHealth, exact: true })
+        .click();
+      await page
+        .getByRole("navigation", { name: /main navigation/i })
+        .waitFor({ timeout: 30_000 });
+      await page.goto("trial-offer");
+      await page
+        .getByText(TRIAL_OFFER.kicker, { exact: true })
+        .waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(500);
+      await measure(page, "trial-offer", width, found);
 
       expect(found).toEqual([]);
     });
@@ -1004,6 +1096,30 @@ test.describe("large text", () => {
         });
       }
 
+      // A run's own page (TrainWk1 call 2), from the ⋯ on the Run tab's
+      // card: the day's run, or the week's next one. A week with none
+      // left to start has no ⋯; the plan page above still measured.
+      await page.goto("program?tab=run");
+      const manage = page.getByRole("button", {
+        name: "Manage session",
+        exact: true,
+      });
+      if (
+        await manage.waitFor({ state: "visible", timeout: 20_000 }).then(
+          () => true,
+          () => false
+        )
+      ) {
+        await manage.click();
+        await ready(page, page.getByText("Manage run", { exact: true }));
+        await measure(page, "run-session", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "run-session: no run left to start this week",
+        });
+      }
+
       expect(found).toEqual([]);
     });
 
@@ -1192,6 +1308,44 @@ test.describe("large text", () => {
         .waitFor({ timeout: 10_000 });
       await page.waitForTimeout(600);
       await measure(page, "rename-sheet", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* Circuit mode (Circ1), on a clock the spec moves on
+       (helpers/circuit.ts). Nothing is saved. */
+    test(`a circuit at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await openCircuit(page);
+      await ready(page, page.getByRole("heading", { name: "Circuit" }));
+      await measure(page, "circuit-picker", width, found);
+
+      await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+      await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+      await measure(page, "circuit-work", width, found);
+      await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+      await measure(page, "circuit-rest", width, found);
+
+      await page.getByRole("button", { name: "End circuit" }).click();
+      const ask = page.getByRole("alertdialog");
+      const keepGoing = ask.getByRole("button", { name: "Keep going" });
+      await keepGoing.waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-end-question", width, found);
+      await keepGoing.click();
+      await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+      // On past the circuit's 10 minutes: it finishes by itself.
+      await runCircuitClock(page, 600);
+      await page
+        .getByText("How did it feel?")
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-finish", width, found);
 
       expect(found).toEqual([]);
     });

@@ -32,10 +32,10 @@ describe("AI scan quota — client DAILY_AI_LIMITS ↔ server DAILY_LIMITS parit
 
   // Pin the actual locked values too, so a same-direction edit on BOTH copies
   // (which the equality test alone would pass) still surfaces in review.
-  it("pins the locked F1b tiers/actions", () => {
+  it("pins the locked tiers/actions (F1b, with Biz1's 15 a day)", () => {
     expect(DAILY_AI_LIMITS).toEqual({
       free: { text_ai: 0, image_ai: 0 },
-      pro: { text_ai: 100, image_ai: 100 },
+      pro: { text_ai: 15, image_ai: 15 },
     });
   });
 

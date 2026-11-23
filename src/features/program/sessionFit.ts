@@ -76,6 +76,9 @@ export function sessionLengthOption(
 const ESTABLISHED: StartingLoadContext = {
   bodyweightKg: 80,
   experience: "intermediate",
+  // A man's figures, the heaviest of the starts: a reference for pricing
+  // warm-ups, not a person, so no sex stored never lightens it.
+  sex: "male",
 };
 
 /** The established lifter's load for a lift (`ESTABLISHED`). */

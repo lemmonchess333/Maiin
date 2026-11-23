@@ -525,7 +525,7 @@ function EditServingsSheet({
       hideHeader
     >
       <div className="flex justify-center pt-3 pb-1">
-        <div className="w-10 h-1 rounded-full bg-border" />
+        <div className="w-10 h-1 rounded-full sheet-handle" />
       </div>
       {/* The form scrolls inside the sheet's height cap, and Cancel and
           Save stay pinned under it. The cap is 85% of the screen, and the
@@ -862,18 +862,18 @@ function EditServingsSheet({
                 </span>
               )}
               {mealChanged && pickedMeal && (
-                <span className="ml-2 text-lifting-strong">
+                <span className="ml-2 text-foreground">
                   → {MEAL_LABELS[pickedMeal]}
                 </span>
               )}
               {nameChanged && (
-                <span className="ml-2 text-lifting-strong">renamed</span>
+                <span className="ml-2 text-foreground">renamed</span>
               )}
               {macrosChanged && (
-                <span className="ml-2 text-lifting-strong">macros updated</span>
+                <span className="ml-2 text-foreground">macros updated</span>
               )}
               {itemsChanged && (
-                <span className="ml-2 text-lifting-strong">items updated</span>
+                <span className="ml-2 text-foreground">items updated</span>
               )}
             </span>
           )}

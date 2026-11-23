@@ -93,7 +93,7 @@ Food
 
 Progress
 • Analytics for lifting, running, body and food, with personal records and a map of the muscles you've trained.
-• A weekly performance score from 0 to 100, and a review of each week.
+• Your last 7 days of lifting and running against your usual week, a score from 0 to 100, and a review of each week.
 • Progress photos, streaks and badges.
 • Steps from Apple Health on Home.
 
@@ -109,6 +109,7 @@ Tropos Pro
 • A calorie target that adapts to what you log and how your weight moves.
 • Protein, carbs and fat that shift with each day's training.
 • Pace targets that move with your recent runs.
+• Your score's 12-week chart, average and details, and charts older than 3 months.
 
 Pro is a monthly or yearly subscription, with a 7-day free trial for new subscribers. Payment is taken from your Apple Account when the trial ends, or when you subscribe if there is no trial. It renews automatically unless you cancel at least 24 hours before the end of the current period. Manage or cancel it in your Apple Account settings.
 
@@ -120,8 +121,8 @@ What the description leaves out on purpose, because the app can't do it
 yet: phone notifications for social activity (iPhone gets reminders only,
 `isRemotePushOffered` in `src/lib/pushNotifications.ts`), live heart rate
 or Apple Watch (`src/lib/heartRateSource.ts`), lock-screen Live
-Activities, and "unlimited" anything: Pro allows 100 photo scans and 100
-typed-meal reads a day (`DAILY_AI_LIMITS`, `src/lib/subscription.ts`). It
+Activities, and "unlimited" anything: Pro allows 15 photo scans and 15
+typed-meal reads a day (`DAILY_AI_LIMITS`, `src/lib/dailyAiLimits.ts`). It
 also doesn't promise recording with the screen locked until a device run
 has proved it (`docs/run-background-gps.md`).
 
@@ -155,22 +156,22 @@ lifting,strength,training,plan,marathon,hybrid,5k,10k,half,macro,counter,food,lo
 Apple's questionnaire as it stands since 2025, with the answer for each
 question and the reason.
 
-| Question                                                   | Answer    | Why                                                                                                              |
-| ---------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| Parental controls                                          | No        |                                                                                                                  |
-| Age assurance                                              | No        | Setup asks for an age range and turns away anyone under 16 (`src/pages/Onboarding.tsx`), but nothing verifies it |
-| Unrestricted web access                                    | No        | Outside links open in Safari                                                                                     |
-| User-generated content                                     | Yes       | Posts, comments, Space posts with photos, profile photos                                                         |
-| Messaging and chat                                         | Yes       | No private messages, but Apple's definition includes public posting and comments                                 |
-| Advertising                                                | No        |                                                                                                                  |
-| Social media                                               | Yes       | A feed with props, comments and sharing. This places the app at 13+ at least                                     |
-| Health or wellness topics                                  | Yes       | Calorie tracking and exercise plans                                                                              |
-| Medical or treatment information                           | None      | Injury limits only change which exercises are chosen; the app gives no treatment advice                          |
-| Alcohol, tobacco or drug use or references                 | None      | The food search includes drinks such as beer and wine for logging; the app doesn't depict or encourage them      |
-| Profanity, sexual content, violence, horror, mature themes | None      |                                                                                                                  |
-| Gambling, simulated gambling, contests, loot boxes         | No / None | Challenges and leaderboards carry no prizes                                                                      |
+| Question                                                   | Answer    | Why                                                                                                         |
+| ---------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
+| Parental controls                                          | No        |                                                                                                             |
+| Age assurance                                              | No        | Setup asks for a year of birth and turns away anyone under 18 (`src/lib/age.ts`), but nothing verifies it   |
+| Unrestricted web access                                    | No        | Outside links open in Safari                                                                                |
+| User-generated content                                     | Yes       | Posts, comments, Space posts with photos, profile photos                                                    |
+| Messaging and chat                                         | Yes       | No private messages, but Apple's definition includes public posting and comments                            |
+| Advertising                                                | No        |                                                                                                             |
+| Social media                                               | Yes       | A feed with props, comments and sharing. This places the app at 13+ at least                                |
+| Health or wellness topics                                  | Yes       | Calorie tracking and exercise plans                                                                         |
+| Medical or treatment information                           | None      | Injury limits only change which exercises are chosen; the app gives no treatment advice                     |
+| Alcohol, tobacco or drug use or references                 | None      | The food search includes drinks such as beer and wine for logging; the app doesn't depict or encourage them |
+| Profanity, sexual content, violence, horror, mature themes | None      |                                                                                                             |
+| Gambling, simulated gambling, contests, loot boxes         | No / None | Challenges and leaderboards carry no prizes                                                                 |
 
-Then raise the rating to **16+**, the minimum age in the Terms (section 2)
+Then raise the rating to **18+**, the minimum age in the Terms (section 2)
 and at setup. Apple allows a higher rating than the questionnaire gives.
 
 ## App Privacy
@@ -186,24 +187,24 @@ The analytics plugin still links Google's ad-ID support by default; see
 
 ### Data linked to you
 
-| Category         | Data type             | Purposes                     | What it is                                                                                                                                                       |
-| ---------------- | --------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Contact info     | Name                  | App functionality            | The display name, shown to other people on posts and the profile                                                                                                 |
-| Contact info     | Email address         | App functionality            | Sign-in, and the verification and password-reset emails (sent through Resend)                                                                                    |
-| Health & fitness | Health                | App functionality            | Weight, height, sex, age range, goal weight, injury limits, max heart rate, the food diary and calorie targets. None of it reaches Google Analytics              |
-| Health & fitness | Fitness               | App functionality            | Workouts, runs, the training plan, records, streaks and badges. No figure from them reaches Google Analytics; that a session was finished is Product interaction |
-| Location         | Precise location      | App functionality            | Run routes, privacy zones and saved routes                                                                                                                       |
-| Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                              |
-| User content     | Photos or videos      | App functionality            | Profile, progress and Space post photos. Meal photos are analysed by Google and not kept on any server                                                           |
-| User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, reports and meal descriptions                                                                                       |
-| Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                   |
-| Identifiers      | Device ID             | Analytics                    | Google Analytics' app-instance ID                                                                                                                                |
-| Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                          |
-| Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                       |
-| Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                       |
-| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)    |
-| Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                       |
-| Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                           |
+| Category         | Data type             | Purposes                                                           | What it is                                                                                                                                                           |
+| ---------------- | --------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contact info     | Name                  | App functionality                                                  | The display name, shown to other people on posts and the profile                                                                                                     |
+| Contact info     | Email address         | App functionality, developer's advertising or marketing            | Sign-in, and the verification and password-reset emails (sent through Resend); for someone who chose them, the weekly review and the emails after a break (App1 Q55) |
+| Health & fitness | Health                | App functionality                                                  | Weight, height, sex, age range, goal weight, injury limits, max heart rate, the food diary and calorie targets. None of it reaches Google Analytics                  |
+| Health & fitness | Fitness               | App functionality                                                  | Workouts, runs, the training plan, records, streaks and badges. No figure from them reaches Google Analytics; that a session was finished is Product interaction     |
+| Location         | Precise location      | App functionality                                                  | Run routes, privacy zones and saved routes                                                                                                                           |
+| Location         | Coarse location       | Analytics                                                          | The city and country Google Analytics works out from the IP address                                                                                                  |
+| User content     | Photos or videos      | App functionality                                                  | Profile, progress and Space post photos. Meal photos are analysed by Google and not kept on any server                                                               |
+| User content     | Other user content    | App functionality                                                  | Posts, comments, captions, notes, check-ins, reports and meal descriptions                                                                                           |
+| Identifiers      | User ID               | App functionality                                                  | The account ID, which is also the customer ID RevenueCat holds                                                                                                       |
+| Identifiers      | Device ID             | Analytics                                                          | Google Analytics' app-instance ID                                                                                                                                    |
+| Purchases        | Purchase history      | App functionality                                                  | Subscription status, product and expiry                                                                                                                              |
+| Usage data       | Product interaction   | App functionality, analytics                                       | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                           |
+| Usage data       | Other usage data      | App functionality, analytics, developer's advertising or marketing | Last active time, AI scan counts, settings                                                                                                                           |
+| Diagnostics      | Crash data            | App functionality                                                  | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)        |
+| Diagnostics      | Performance data      | Analytics                                                          | Screen load times sent to Google Analytics                                                                                                                           |
+| Diagnostics      | Other diagnostic data | App functionality                                                  | Error reports with the device model and system version                                                                                                               |
 
 Google Analytics data carries no account ID (the code never calls
 `setUserId`), so "not linked" is defensible for the coarse location, device
@@ -300,7 +301,8 @@ your choice in App Store Connect.
 | Reference name     | Tropos Pro Monthly                               | Tropos Pro Yearly             |
 | Product ID         | `com.tropos.app.pro.monthly`                     | `com.tropos.app.pro.yearly`   |
 | Duration           | 1 month                                          | 1 year                        |
-| Price (UK)         | £3.99                                            | £34.99                        |
+| Price (UK)         | £6.99                                            | £39.99                        |
+| Price (US)         | $7.99                                            | $49.99                        |
 | Introductory offer | Free, 1 week, new subscribers                    | Free, 1 week, new subscribers |
 | Review screenshot  | The paywall's plan screen, from the iPhone build | The same                      |
 
