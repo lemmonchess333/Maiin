@@ -340,23 +340,51 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
   });
 });
 
-describe("WaterCard — it reports what you logged, not a score", () => {
+describe("WaterCard — the amount, against the day's target", () => {
   /* The card used to render "4.5 / 2 L ✓" and speak "… of 2 litres.
-     Target reached." Owner call, from a device screenshot: drop the
-     target framing entirely — "they don't even say out of two litres,
-     they just say you're logging it… let people log it."
-
-     So these pin ABSENCE. That is the point: the tick and the
-     denominator are exactly the kind of thing that creeps back in a
-     later polish pass, and a test that only checked the new string
-     would not notice one returning beside it. */
-  it("shows the amount with its own unit, and no target", () => {
+     Target reached." An owner call from a device dropped the target
+     ("let people log it"); the owner's recording of 23 Nov 2026 asked for
+     it back, in the house number style the calorie wheel uses ("kcal left
+     of 3,400"). What stays out is the score: no slash, no tick, no cheer
+     past the target. */
+  it("says the amount of the target, with no slash", () => {
     const { container } = render(
-      <WaterCard compact ml={4500} targetMl={2000} onLog={vi.fn()} />
+      <WaterCard compact ml={1500} targetMl={2500} onLog={vi.fn()} />
     );
-    expect(container.textContent).toContain("4.5");
-    expect(container.textContent).toContain("L");
+    expect(container.querySelector("[data-water-target]")?.textContent).toBe(
+      "of 2.5 L"
+    );
     expect(container.textContent).not.toMatch(/\/\s*2/);
+    expect(
+      screen.getByRole("button", { name: /add water/i })
+    ).toHaveAccessibleName(/^Water 1\.5 L of 2\.5 L\b/);
+  });
+
+  it("says the target is reached once it is met, and from then on", () => {
+    for (const ml of [2000, 7250]) {
+      const { container, unmount } = render(
+        <WaterCard compact ml={ml} targetMl={2000} onLog={vi.fn()} />
+      );
+      expect(
+        container.querySelector("[data-water-target]")?.textContent,
+        `${ml} ml`
+      ).toBe("· 2 L reached");
+      expect(
+        screen.getByRole("button", { name: /add water/i }),
+        `${ml} ml`
+      ).toHaveAccessibleName(/^Water [\d.]+ L, 2 L reached\b/);
+      unmount();
+    }
+  });
+
+  it("states the target on an empty day, at zero", () => {
+    const { container } = render(
+      <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
+    );
+    expect(container.textContent).toContain("0");
+    expect(container.querySelector("[data-water-target]")?.textContent).toBe(
+      "of 2 L"
+    );
   });
 
   it("keeps millilitres in millilitres", () => {
@@ -382,19 +410,7 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     expect(body).not.toHaveAccessibleName(/1 litres/i);
   });
 
-  it("says nothing about a target, at any amount", () => {
-    for (const ml of [0, 1750, 2000, 7250]) {
-      const { unmount } = render(
-        <WaterCard compact ml={ml} targetMl={2000} onLog={vi.fn()} />
-      );
-      const body = screen.getByRole("button", { name: /add water/i });
-      expect(body, `${ml} ml`).not.toHaveAccessibleName(/target reached/i);
-      expect(body, `${ml} ml`).not.toHaveAccessibleName(/of 2 litres/i);
-      unmount();
-    }
-  });
-
-  it("renders no completion tick once the old target is passed", () => {
+  it("renders no completion tick once the target is passed", () => {
     /* Anchored on a positive first: the reading must still RENDER at
        7.25 L. Asserting only that no tick exists would pass just as
        well if the whole numeral had vanished. */
@@ -432,7 +448,7 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     );
     const status = document.querySelector('[role="status"]') as HTMLElement;
     expect(status).toBeTruthy();
-    expect(status.textContent).toMatch(/Water 2 litres logged\./);
+    expect(status.textContent).toMatch(/Water 2 litres\. 2 litres reached\./);
   });
 
   it("a refused log leaves no announcement pending", () => {

@@ -6042,10 +6042,14 @@ phone has drawn it.
 - [ ] **Week 1 free.** A free account sets up a half marathon. Passing: the
       plan's first week (and any lead-in days) start as usual from Home and
       Train; setup and Run plan say the plan is Pro after its first week.
-- [ ] **Week 2 on.** The same account in its second week. Passing: Home's run
-      card reads "Your half marathon plan continues with Pro" with Try Pro
-      free (or See Pro); Train's Start says the same; Start free run on Train
-      still records a run.
+- [ ] **Week 2 on.** The same account in its second week. Passing: Home's
+      stack leaves the planned run out (under a lift there is no "Also
+      today"; on a day with no lift the hero is a free run, which starts);
+      Train's Start reads "Your half marathon plan continues with Pro" with
+      Try Pro free (or See Pro); Start free run on Train still records a run.
+      (Changed 23 Nov 2026: Home offered the locked run with a lock and Pro
+      in Start's place; the owner's recording asked that Home offer only
+      what can be started.)
 - [ ] **After the trial starts.** Passing: Start comes back on Home and Train
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
@@ -7763,7 +7767,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-              name>’s workout on Tropos" (run, day, week) with the card's figures in
+                  name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,

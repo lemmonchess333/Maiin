@@ -24,6 +24,7 @@ import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { trainingKind } from "@/lib/trainingKind";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { lockedPlanRunStarts } from "@/lib/racePlanAccess";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
@@ -74,7 +75,11 @@ import type { StoredRunSummary } from "@/lib/runResumeStorage";
  *  - on a lifting day, the workout the week lays on it (to do, or done
  *    today), where it opens and its muscle groups;
  *  - on a run day, the planned run, whether it is done, and whether it is a
- *    new person's first;
+ *    new person's first. A planned run the person cannot start, on a half,
+ *    marathon or ultra plan past its free week (`runPlanLocked`, Q85), is
+ *    not today's: Home offers only what can be started, and the Pro offer
+ *    stays on Train, where the plan is. Without a lift that day, a free run
+ *    is offered in its place, which every account can record;
  *  - on a rest day, what the card offers instead: a new lifter's first
  *    workout, a run for someone who runs freely, a new person's first meal,
  *    or tomorrow's session;
@@ -118,6 +123,10 @@ export interface TodaySessionInput {
    *  and sessions: which lift each day holds. Home's strip and day card
    *  read the same one. */
   week: WeekLayout;
+  /** A half, marathon or ultra plan past its free first week
+   *  (`useRacePlanLocked`): its planned sessions do not start, the race
+   *  itself does. Absent reads as not locked. */
+  runPlanLocked?: boolean;
   /** The sessions under way on this phone (`useSessionsInFlight`). Absent
    *  reads as none. */
   inFlight?: {
@@ -336,14 +345,24 @@ export function todaySession(input: TodaySessionInput): TodaySession {
   // Before the week's runs are written (free running), the usual layout's
   // run days are run days.
   const pattern = resolved.scheduleType;
+  // A planned session on a locked plan that would offer Pro in Start's
+  // place is left out; one already done or skipped says so as before.
+  const plannedRun = resolved.run.runDay;
+  const lockedRun =
+    input.runPlanLocked === true &&
+    plannedRun !== null &&
+    planRunLocked(plannedRun) &&
+    !resolved.run.isCompleted &&
+    isScheduledRunStartable(getScheduledRunStatus(plannedRun));
   const running =
-    resolved.run.runDay !== null ||
-    (!runsWrittenForWeek(
-      programState?.runDays,
-      currentWeekKey,
-      currentWeekKey
-    ) &&
-      (pattern === "run" || pattern === "both"));
+    !lockedRun &&
+    (resolved.run.runDay !== null ||
+      (!runsWrittenForWeek(
+        programState?.runDays,
+        currentWeekKey,
+        currentWeekKey
+      ) &&
+        (pattern === "run" || pattern === "both")));
   const type: DayType =
     lifting && running ? "both" : lifting ? "lift" : running ? "run" : "rest";
 
@@ -391,17 +410,19 @@ export function todaySession(input: TodaySessionInput): TodaySession {
         }
       : null,
     rest:
-      type === "rest"
-        ? restDayOffer(input, {
-            // A new person's first workout is ready any day, so a rest day
-            // asks the lifting day's question.
-            firstWorkout: getActivationFraming({
-              ...framingInput,
-              todayType: "lift",
-            }).firstWorkout,
-            firstMeal: framing.firstMeal,
-          })
-        : null,
+      type === "rest" && lockedRun
+        ? { kind: "free-run", startTarget: runStartTarget(null) }
+        : type === "rest"
+          ? restDayOffer(input, {
+              // A new person's first workout is ready any day, so a rest day
+              // asks the lifting day's question.
+              firstWorkout: getActivationFraming({
+                ...framingInput,
+                todayType: "lift",
+              }).firstWorkout,
+              firstMeal: framing.firstMeal,
+            })
+          : null,
     ...(profile?.primaryGoal === "running" && { runFirst: true }),
     next: nextSessionAhead(input, NEXT_SESSION_DAYS),
   });
@@ -747,6 +768,13 @@ function runNameAndPace(
         )
       : null,
   };
+}
+
+/** Whether a planned run waits on Pro when its plan is locked: every
+ *  planned session but the race itself (`lockedPlanRunStarts`). */
+function planRunLocked(runDay: ScheduledRunDay | null): boolean {
+  const template = templateOfRunDay(runDay);
+  return !!template && !lockedPlanRunStarts(template.type);
 }
 
 /** The session a run day holds, its override included. */

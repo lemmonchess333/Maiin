@@ -7,6 +7,7 @@ import { joinedProgress } from "./joinedProgress";
 import SportIconTile from "./SportIconTile";
 import MedalArt from "./MedalArt";
 import { rowMedalFace } from "./rowMedal";
+import { OUT_OF_REACH_LINE } from "./challengeReach";
 import {
   getTimeRemaining,
   type Challenge,
@@ -20,17 +21,24 @@ import {
  * challenge, where its board and Leave are.
  *
  * Reads the progress the challenges hook already holds; it adds no read.
+ *
+ * One whose first goal can no longer be reached in the days left
+ * (`outOfReach`) keeps its progress and bar, and says so in place of the
+ * countdown: nothing on it asks for a day that cannot count.
  */
 export default function JoinedChallengeRow({
   challenge,
   progress,
   onOpen,
   showTimeLeft = false,
+  outOfReach = false,
 }: {
   challenge: Challenge;
   progress: ChallengeParticipant;
   onOpen: () => void;
   showTimeLeft?: boolean;
+  /** Its first goal needs more days than are left (`useChallengeReach`). */
+  outOfReach?: boolean;
 }) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
@@ -41,7 +49,11 @@ export default function JoinedChallengeRow({
     liftUnit,
     distanceUnit
   );
-  const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
+  const timeLeft = outOfReach
+    ? OUT_OF_REACH_LINE
+    : showTimeLeft
+      ? getTimeRemaining(challenge.endDate)
+      : "";
   const medal = rowMedalFace(challenge, progress, liftUnit, distanceUnit);
 
   return (

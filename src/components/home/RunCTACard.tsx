@@ -1,12 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { withPlannedRest } from "@/lib/intervalRest";
 import { localDateString } from "@/lib/dateHelpers";
-import { Lock, Play } from "lucide-react";
-import { track as trackPaywall } from "@/lib/paywallAnalytics";
-import {
-  RACE_PLAN_UPGRADE_PATH,
-  lockedPlanRunStarts,
-} from "@/lib/racePlanAccess";
+import { Play } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { unlockSpeech } from "@/lib/speechUnlock";
@@ -42,7 +37,9 @@ import { isHeatAdjustable } from "@/lib/heatAdjustment";
  * runner is its picture, as the lift hero draws its lead lift: the fast
  * stride for a tempo, intervals or a race (`runPoseFor`). A free run has
  * no plan to put in numbers, so its line is the week's distance, which
- * Home reads and words (`freeRunHeroLine`).
+ * Home reads and words (`freeRunHeroLine`). A planned session on a race
+ * plan past its free week never reaches it: `todaySession` leaves it out of
+ * Home's stack, and Train keeps the Pro offer (Q85).
  */
 export default function RunCTACard({
   todayRun,
@@ -57,7 +54,6 @@ export default function RunCTACard({
   intervalPaceSPerKm = null,
   freeLine = null,
   variant = "hero",
-  planLocked = null,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -82,10 +78,6 @@ export default function RunCTACard({
   /** A free run's line (`freeRunHeroLine`): this week's distance against
    *  last week's. Drawn only where no planned run is named. */
   freeLine?: HeroLine | null;
-  /** The half, marathon or ultra plan has passed its free first week
-   *  (whole-app grill Q85, Run27 (18)): the button offers Pro instead of
-   *  Start, with its words. The race itself still starts. */
-  planLocked?: { cta: string; raceName: string } | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
 }) {
@@ -117,42 +109,25 @@ export default function RunCTACard({
      kicker's beside the date, and the reasons are Train's ("Why this
      run"). */
   const meta = tmpl && dose ? dose.split(" · ") : [];
-  /* Q85: past the plan's free first week a planned session offers Pro;
-     the race itself still starts, and so does a free run. */
-  const locked = !!planLocked && !!tmpl && !lockedPlanRunStarts(tmpl.type);
-  const line: HeroLine | null = locked
-    ? {
-        title: `Your ${planLocked?.raceName ?? "race"} plan continues with Pro`,
-        detail:
-          "After your free week, the plan is part of Pro. Runs you record stay free.",
-        mark: "run",
-      }
-    : tmpl
-      ? runHeroLine(
-          withPlannedRest(tmpl, intervalPaceSPerKm),
-          easyPaceSPerKm,
-          unit
-        )
-      : freeLine;
+  const line: HeroLine | null = tmpl
+    ? runHeroLine(
+        withPlannedRest(tmpl, intervalPaceSPerKm),
+        easyPaceSPerKm,
+        unit
+      )
+    : freeLine;
 
   /* A planned run to start today reads the weather now, so the run page
      finds it known and, on a hot day, shows the run's card with its heat
      offer instead of starting (startOnArrival) without a wait. The hero
      itself says nothing of it. */
-  const readsWeather =
-    startable && !inProgress && !locked && isHeatAdjustable(tmpl?.type);
+  const readsWeather = startable && !inProgress && isHeatAdjustable(tmpl?.type);
   useEffect(
     function () {
       if (readsWeather) void getCurrentWeather();
     },
     [readsWeather]
   );
-
-  const offerPro = function () {
-    haptic();
-    trackPaywall("paywall_cta_clicked", { source: "race_plan" });
-    navigate(RACE_PLAN_UPGRADE_PATH);
-  };
 
   const start = function () {
     // The run starts as the Run page opens, so the voice cues are
@@ -179,19 +154,6 @@ export default function RunCTACard({
           navigate(inProgress.resumeTarget);
         }}
       />
-    ) : startable && locked ? (
-      <Button
-        variant={variant === "hero" ? "neutral" : "sport-tinted"}
-        className={
-          variant === "hero"
-            ? "pointer-events-auto w-full text-base"
-            : "pointer-events-auto shrink-0"
-        }
-        onClick={offerPro}
-      >
-        <Lock className="size-4" aria-hidden="true" />
-        {planLocked?.cta}
-      </Button>
     ) : startable ? (
       variant === "hero" ? (
         /* The screen's one full-width filled button is neutral (DS4,

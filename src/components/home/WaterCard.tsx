@@ -16,7 +16,9 @@ import {
   formatWaterVolume,
   splitWaterVolume,
   waterProgress,
+  waterTargetWords,
 } from "@/lib/waterUnits";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import type { WaterDrink } from "@/lib/waterActions";
 import { lazyRetry } from "@/lib/lazyRetry";
 
@@ -164,7 +166,8 @@ export default function WaterCard({
      `hydration_hero` (badges.ts) had already awarded the day on
      `ml >= target`. Two surfaces disagreeing about the same day is the
      defect, not the rounding. */
-  const met = targetMl > 0 && ml >= targetMl;
+  const against = waterTargetWords(ml, targetMl);
+  const met = against?.met ?? false;
   /* Initialised to the CURRENT value: Home remounts
      on every navigation back, so a ref seeded false would replay the
      completion haptic several times a day. */
@@ -173,17 +176,38 @@ export default function WaterCard({
   /* ONE sentence, two readers — the button's accessible name and the
      live region both take it, so they cannot drift apart. Past the
      target it carries the only thing that still varies on this card. */
-  /* Just what has been logged. The card used to read "… of 2 litres.
-     Target reached." — the same out-of-N framing the visible number
-     dropped, and a screen reader should not be told about a goal the
-     screen no longer shows. */
-  const reading = `Water ${spokenVolume(ml)} logged.`;
+  /* What has been logged against the day's target, as the screen says it
+     ("1.5 L of 2 L", "3 L · 2 L reached"; `waterTargetWords`). The card
+     dropped the target once (owner, from a device: "let people log it");
+     the owner's 23 Nov 2026 recording asked for it back, as Food's wheel
+     prints its target beside its number (Food11 call 2). Past the target
+     it says so and nothing more. */
+  const spokenTarget = against
+    ? against.met
+      ? `. ${spokenVolume(targetMl)} reached`
+      : ` of ${spokenVolume(targetMl)}`
+    : " logged";
+  const reading = `Water ${spokenVolume(ml)}${spokenTarget}.`;
   /* A body button's name is the words drawn on it, in order ("Water
      500 ml, Tap + for 250 ml"), then what a tap does: Voice Control is
      spoken to with what is on the screen (WCAG 2.5.3, Label in Name).
      The meta line is drawn only on a day with water and while it is not
      the way back. */
-  const shownReading = `Water ${formatWaterVolume(ml)}`;
+  const shownReading = `Water ${formatWaterVolume(ml)}${
+    against ? `${against.met ? "," : ""} ${against.words}` : ""
+  }`;
+  /* The target after the amount, in the unit's register: it moves to a
+     line of its own, whole, when the tile is too narrow for both. */
+  const targetWords = against && (
+    <span
+      data-water-target=""
+      className="inline-block font-sans text-sm font-medium leading-tight"
+      style={{ color: "hsl(var(--muted-foreground))" }}
+    >
+      {against.met && <span aria-hidden="true">· </span>}
+      <InlineNumerals>{against.words}</InlineNumerals>
+    </span>
+  );
   const compactShown =
     hasWater && !showUndo
       ? `${shownReading}, Tap + for ${formatWaterVolume(servingMl)}`
@@ -378,7 +402,15 @@ export default function WaterCard({
           )}
           icon={<Plus className="size-4" />}
         />
-        <div className="relative z-10 flex flex-col flex-1">
+        {/* Under 9em the plus sits at the tile's foot. With water in the
+            tile the words above it (the amount, the target, the step) can
+            run that far at larger text, so the foot is kept for the plus. */}
+        <div
+          className={cn(
+            "relative z-10 flex flex-col flex-1",
+            hasWater && "@max-[9em]:pb-11"
+          )}
+        >
           {/* Card body opens the size sheet (choose a container). */}
           {/* Focus ring + 0.97 press mirror the peer tile's button
               (WeightTile.tsx). This button had NO
@@ -430,7 +462,8 @@ export default function WaterCard({
               >
                 {" "}
                 {splitWaterVolume(ml).unit}
-              </span>
+              </span>{" "}
+              {targetWords}
             </p>{" "}
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
@@ -584,7 +617,8 @@ export default function WaterCard({
               >
                 {" "}
                 {splitWaterVolume(ml).unit}
-              </span>
+              </span>{" "}
+              {targetWords}
             </p>
           </div>
         </button>

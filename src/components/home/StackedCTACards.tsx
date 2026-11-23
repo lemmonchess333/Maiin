@@ -46,7 +46,6 @@ export default function StackedCTACards({
   liftUnit = "kg",
   freeRunLine = null,
   liftReadiness = null,
-  runPlanLocked = null,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
@@ -61,9 +60,6 @@ export default function StackedCTACards({
   /** Readiness for the lift hero (`useTodayReadiness`); the compact card
    *  under a run hero shows none. */
   liftReadiness?: ComponentProps<typeof LiftCTACard>["readiness"];
-  /** The half, marathon or ultra plan is past its free first week (Q85):
-   *  today's planned run offers Pro (`RunCTACard`). */
-  runPlanLocked?: ComponentProps<typeof RunCTACard>["planLocked"];
 }) {
   const { lift, run, rest } = session;
   // On a day with both, the run leads when running is the person's aim,
@@ -85,7 +81,6 @@ export default function StackedCTACards({
         intervalPaceSPerKm={run.intervalPaceSPerKm}
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
-        planLocked={runPlanLocked}
       />
     </motion.div>
   );

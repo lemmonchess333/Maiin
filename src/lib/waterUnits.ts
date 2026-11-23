@@ -107,6 +107,24 @@ export function waterProgress(ml: number, targetMl: number): number {
 }
 
 /**
+ * The day's water against its target, in the words Home's tile and Food's
+ * row put after the amount: "of 2.5 L" below the target, "2.5 L reached"
+ * once it is met. Met is a plain `ml >= target`, the tile's `met` and
+ * `hydration_hero`'s rule, never a band, so the words, the full glass and
+ * the badge agree about the same day. Past the target it says so and
+ * nothing more: no tick and no cheer. Null with no target to state.
+ */
+export function waterTargetWords(
+  ml: number,
+  targetMl: number
+): { met: boolean; words: string } | null {
+  if (!(targetMl > 0)) return null;
+  const target = formatWaterVolume(targetMl);
+  const met = ml >= targetMl;
+  return { met, words: met ? `${target} reached` : `of ${target}` };
+}
+
+/**
  * Compact volume label. Sub-litre reads in ml ("250 ml", "750 ml");
  * ≥1 L reads in litres with trailing zeros trimmed ("1 L", "1.25 L",
  * "2.5 L"). Container sizes stay in ml where that's how people think;
