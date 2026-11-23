@@ -6,7 +6,7 @@
  * device. The renderer is fully inline-styled + has no runtime imports,
  * so it SSRs cleanly here and screenshots with no app CSS needed.
  *
- * Note: web fonts (Archivo / Plus Jakarta) aren't loaded in this bare
+ * Note: web fonts (Archivo / Barlow) aren't loaded in this bare
  * page, so numerals fall back to the system sans — this rig verifies
  * LAYOUT, colour, route-line and hierarchy, not exact glyphs. `photo`
  * mode is excluded (it's a per-user image overlay, nothing to fixture).

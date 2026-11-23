@@ -351,7 +351,7 @@ describe("ExerciseRowSummary — one row's words", () => {
   it("sets the numbers in the lines as the words are: one face, one weight", () => {
     /* The owner's Train screenshot: "3 sets × 8 reps · 52.5 kg" and
        "Last: 52.5 kg × 10, 10, 10" read as misaligned, Archivo digits
-       heavier and taller than the Plus Jakarta Sans words beside them.
+       heavier and taller than the text face's words beside them.
        A number inside a line of text is the inline tier (DESIGN_GUIDE
        §4): `font-mono`, the text face with tabular digits, inheriting
        the line's weight. So no number span carries the figure face or a

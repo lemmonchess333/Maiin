@@ -24,6 +24,7 @@ import {
   basemapCreditText,
   basemapStyle,
   burnBasemapCredit,
+  loadBasemapCreditFace,
 } from "@/lib/basemap";
 import type { RouteCoordinate } from "@/lib/routeSegments";
 import {
@@ -149,7 +150,7 @@ function drawRoute(
 }
 
 /** The map's canvas with the credit drawn in, as a JPEG. */
-function encodeImage(
+async function encodeImage(
   map: maplibregl.Map,
   theme: RouteMapTheme
 ): Promise<Blob | null> {
@@ -158,8 +159,9 @@ function encodeImage(
   out.width = source.width;
   out.height = source.height;
   const ctx = out.getContext("2d");
-  if (!ctx) return Promise.resolve(null);
+  if (!ctx) return null;
   ctx.drawImage(source, 0, 0);
+  await loadBasemapCreditFace();
   burnBasemapCredit(ctx, basemapCreditText(map), {
     width: out.width,
     height: out.height,

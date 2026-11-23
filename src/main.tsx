@@ -1,15 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-// Self-hosted fonts (was Google Fonts CDN). Variable wght axis, latin
-// subset fetched on demand via unicode-range. Bundled by Vite (hashed,
+// Self-hosted fonts (was Google Fonts CDN), bundled by Vite (hashed,
 // same-origin) so the service worker's stale-while-revalidate caches
 // them for offline, and no third-party request leaks the user's IP to
-// Google on every load. @font-face families: "Plus Jakarta Sans Variable"
-// (text, and numbers inside a line of text) / "Archivo Variable" (figures
-// that stand on their own — the brand-bake-off numeral face; see
+// Google on every load. Each subset is fetched on demand via
+// unicode-range. @font-face families: "Barlow" (text, and numbers inside
+// a line of text; five static weights with size-adjust, declared in
+// styles/barlow.css) / "Archivo Variable" (figures that stand on their
+// own — the brand-bake-off numeral face; see
 // docs/visual-audit/bakeoff/DECISION.md). Referenced via the
 // --font-display / --font-mono / --font-figure tokens in index.css.
-import "@fontsource-variable/plus-jakarta-sans/index.css";
+import "./styles/barlow.css";
 import "@fontsource-variable/archivo/wght.css";
 import "./index.css";
 import App from "./App.tsx";

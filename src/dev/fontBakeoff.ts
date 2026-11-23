@@ -10,8 +10,8 @@
  * questions the isolated samples can't answer.
  *
  * Combos:
- *   control      → no override (Plus Jakarta Sans + JetBrains Mono)
- *   archivo-num  → numbers → Archivo; text stays Plus Jakarta Sans
+ *   control      → no override (the app's own faces)
+ *   archivo-num  → numbers → Archivo; text stays the text face
  *   archivo-all  → numbers AND text → Archivo (single-family)
  */
 import "@fontsource-variable/archivo/standard.css";
@@ -33,8 +33,8 @@ export function initFontBakeoff() {
   let css = `.font-mono { font-feature-settings: "tnum" 1; font-variant-numeric: tabular-nums; }`;
 
   if (combo === "archivo-all") {
-    // Display text uses var(--font-display); the <body> rule hardcodes
-    // Plus Jakarta Sans, so override both.
+    // Display text uses var(--font-display); the <body> rule names the
+    // text face itself, so override both.
     root.style.setProperty("--font-display", ARCHIVO);
     css += `\nbody { font-family: ${ARCHIVO}; }`;
   }

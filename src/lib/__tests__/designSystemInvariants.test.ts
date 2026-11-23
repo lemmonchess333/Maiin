@@ -197,10 +197,10 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
 
 describe("D15 · DS invariant — numbers take one of the two number tiers", () => {
   /* Two tiers (DESIGN_GUIDE §0 rule 3, §4). A number inside a line of
-     text is `font-mono`: the text face, Plus Jakarta Sans, with tabular
+     text is `font-mono`: the text face, Barlow, with tabular
      figures, at the weight of the words beside it. A figure that stands
      on its own at display size is `font-figure`: Archivo, also tabular.
-     The owner's call: Archivo digits inside a Jakarta sentence ("3 sets
+     The owner's call: Archivo digits inside a sentence of words ("3 sets
      × 8 reps · 52.5 kg") have their own x-height and cap height and
      look heavier, so the line read as misaligned.
 
@@ -233,7 +233,7 @@ describe("D15 · DS invariant — numbers take one of the two number tiers", () 
   }
 
   it("an inline number is the text face; a figure is Archivo", () => {
-    expect(firstFamily("display")).toBe("Plus Jakarta Sans Variable");
+    expect(firstFamily("display")).toBe("Barlow");
     // `font-mono` means "a number", not a monospace face: inside a line
     // of text it is the words' own face.
     expect(firstFamily("mono")).toBe(firstFamily("display"));

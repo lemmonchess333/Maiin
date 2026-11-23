@@ -38,7 +38,7 @@ import {
 } from "../progressPhotoShare";
 import { THEME } from "@/lib/theme";
 
-const FONT = '600 34px "Plus Jakarta Sans", system-ui, sans-serif';
+const FONT = '600 34px "Barlow", system-ui, sans-serif';
 
 interface Drawn {
   op: "fillRect" | "drawImage" | "fillText";

@@ -188,7 +188,7 @@ with Reduce Motion on so the welcome's photographs hold still.
 
 - **Dark, as the signed-out app is** (§14p): the page `#0E0E11`, cards
   `#17171B` with their lit edge (`card-shadow`, §14o), the app's tokens and its
-  two faces, Plus Jakarta Sans for words and Archivo for the wordmark and the
+  two faces, Barlow for words and Archivo for the wordmark and the
   few figures.
 - **The lockup** in the header and footer: the mark at 26 px in brand purple
   beside "Tropos" in Archivo 800 (§14p, DS8 call 3).

@@ -100,7 +100,7 @@ export async function comparisonImage(
   ctx.fillStyle = THEME.bg;
   ctx.fillRect(0, 0, width, height);
 
-  const font = `600 ${fontPx}px "Plus Jakarta Sans", system-ui, sans-serif`;
+  const font = `600 ${fontPx}px "Barlow", system-ui, sans-serif`;
   // The app's own face, once loaded; the fallbacks otherwise.
   try {
     await document.fonts?.load(font);

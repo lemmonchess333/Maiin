@@ -186,6 +186,11 @@ DECISION.md`). The pair is now Plus Jakarta Sans (text) + Archivo (numbers).
 Any further change to the _display/body_ face (Jakarta) stays deferred —
 re-evaluate post-launch once real users weigh in.
 
+**STATUS 23 November 2026:** the text half is decided too. Barlow replaces
+Plus Jakarta Sans (owner, DS11 call 4; DESIGN_GUIDE §14c), so the pair is
+Barlow (text) and Archivo (figures). The rest of this entry is the record
+of the earlier experiment.
+
 **Context:** Pre-launch audit of typography flagged Plus Jakarta Sans as
 "fine but generic" — it's become the 2024–25 default for consumer apps
 (alongside Inter). Not bad, but not distinctive. The immediate cleanup

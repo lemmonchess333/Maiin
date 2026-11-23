@@ -16,7 +16,7 @@ import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 // The app's two faces and its styles, as src/main.tsx loads them.
-import "@fontsource-variable/plus-jakarta-sans/index.css";
+import "@/styles/barlow.css";
 import "@fontsource-variable/archivo/wght.css";
 import "@/index.css";
 import "@/website/website.css";

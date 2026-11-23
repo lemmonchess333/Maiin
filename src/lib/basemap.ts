@@ -125,6 +125,22 @@ export function basemapCreditText(
   return /OpenStreetMap/.test(credit) ? credit : BASEMAP_CREDIT;
 }
 
+/** The credit's face on an image: the app's text face, at weight 500. */
+const CREDIT_FACE = '"Barlow", -apple-system, system-ui, sans-serif';
+
+/**
+ * Load the credit's face before an image's credit is drawn, so a canvas
+ * never draws it in the fallback. A face that will not load leaves the
+ * fallback, which still reads.
+ */
+export async function loadBasemapCreditFace(): Promise<void> {
+  try {
+    await document.fonts?.load(`500 9px ${CREDIT_FACE}`);
+  } catch {
+    // Drawn in a fallback face.
+  }
+}
+
 /**
  * Draw the credit into the bottom-right corner of an image made from a
  * map: small type on a pill of the map's own ground, as the live control
@@ -155,7 +171,7 @@ export function burnBasemapCredit(
   const padX = 5 * scale;
   const padY = 3 * scale;
   const inset = 4 * scale;
-  ctx.font = `500 ${fontPx}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`;
+  ctx.font = `500 ${fontPx}px ${CREDIT_FACE}`;
   ctx.textBaseline = "middle";
   const textWidth = Math.min(
     ctx.measureText(credit).width,

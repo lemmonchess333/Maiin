@@ -151,16 +151,18 @@
          (indexPreconnect.test.ts), so it only cost a connection. -->
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
-    <!-- Plus Jakarta Sans (text) + Archivo (stand-alone figures — replaced JetBrains Mono
-         in the brand bake-off) are self-hosted (no Google Fonts CDN). The
-         @fontsource-variable/* packages are imported in
-         src/main.tsx and bundled by Vite as hashed, same-origin .woff2
-         assets; @font-face is emitted with the "… Variable" family names
-         referenced in src/index.css. Self-hosting removes the third-party
-         request that leaked the user's IP to Google on every load and lets
-         the service worker cache the fonts for offline. Variable wght axis
-         (400–800 used today), latin subset fetched on demand via
-         unicode-range. -->
+    <!-- Barlow (text) + Archivo (stand-alone figures, which replaced
+         JetBrains Mono in the brand bake-off) are self-hosted (no Google
+         Fonts CDN). Barlow's five static weights (400 to 800) are declared
+         in src/styles/barlow.css from @fontsource/barlow's files, with
+         size-adjust; Archivo's variable face comes from
+         @fontsource-variable/archivo. Both are imported in src/main.tsx
+         and bundled by Vite as hashed, same-origin .woff2 assets.
+         Self-hosting removes the third-party request that leaked the
+         user's IP to Google on every load and lets the service worker
+         cache the fonts for offline. Each subset is fetched on demand via
+         unicode-range; the Latin files are preloaded
+         (scripts/first-paint-fonts.ts). -->
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="%BASE_URL%manifest.json" />

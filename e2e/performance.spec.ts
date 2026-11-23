@@ -48,9 +48,9 @@ test.describe("Performance & resilience", () => {
   });
 
   test("fonts are self-hosted and load successfully", async ({ page }) => {
-    // Fonts moved off the Google Fonts CDN to bundled @fontsource-variable
+    // Fonts moved off the Google Fonts CDN to bundled @fontsource
     // packages. Assert the inverse of the old test: nothing should ever hit
-    // Google's font origins, and the self-hosted variable face should still
+    // Google's font origins, and the self-hosted text face should still
     // be registered and usable.
     const cdnRequests: string[] = [];
     page.on("request", (req) => {
@@ -70,7 +70,7 @@ test.describe("Performance & resilience", () => {
 
     const displayFontReady = await page.evaluate(async () => {
       await document.fonts.ready;
-      return document.fonts.check('700 16px "Plus Jakarta Sans Variable"');
+      return document.fonts.check('700 16px "Barlow"');
     });
     expect(displayFontReady).toBe(true);
   });

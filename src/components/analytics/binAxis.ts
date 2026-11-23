@@ -25,8 +25,10 @@ import type { SummaryGranularity } from "@/lib/periodSummary";
 
 /**
  * The longest word under a chart, in em of the card: the current bar's
- * name, in the semibold it is drawn in at `text-xs`, measured in Plus
- * Jakarta Sans. Every other label is narrower: "Sept", "2025", "Wed".
+ * name, in the semibold it is drawn in at `text-xs`, measured in the
+ * text face before Barlow (Plus Jakarta Sans). Barlow at its 106% sets
+ * these words about 4% narrower, so the widths still hold, with room.
+ * Every other label is narrower: "Sept", "2025", "Wed".
  */
 export const LONGEST_LABEL_WORD_EM: Record<SummaryGranularity, number> = {
   daily: 2.2, // "Today"

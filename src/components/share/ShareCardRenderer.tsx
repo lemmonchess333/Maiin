@@ -73,8 +73,7 @@ const STAGE = THEME.bg;
 /** The card's words, white on its dark stage. */
 const INK = "#ffffff";
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
-const JAKARTA =
-  "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
+const TEXT_FACE = "'Barlow', ui-sans-serif, system-ui, sans-serif";
 
 export interface ShareCardRenderData {
   /**
@@ -449,7 +448,7 @@ function Hero({
       </div>
       <div
         style={{
-          fontFamily: JAKARTA,
+          fontFamily: TEXT_FACE,
           fontWeight: 600,
           ...(display
             ? { fontSize: 40 * scale }
@@ -475,7 +474,7 @@ function Headline({ text, scale }: { text: string; scale: number }) {
       style={{
         alignSelf: "center",
         textAlign: "center",
-        fontFamily: JAKARTA,
+        fontFamily: TEXT_FACE,
         fontWeight: 700,
         fontSize: 58 * scale,
         lineHeight: 1.15,
@@ -503,7 +502,7 @@ function RewardSentence({
         alignSelf: "center",
         textAlign: "center",
         maxWidth: 840 * scale,
-        fontFamily: JAKARTA,
+        fontFamily: TEXT_FACE,
         fontWeight: 700,
         fontSize: 44 * scale,
         lineHeight: 1.3,
@@ -545,7 +544,7 @@ function Stat({
       </div>
       <div
         style={{
-          fontFamily: JAKARTA,
+          fontFamily: TEXT_FACE,
           fontWeight: 600,
           textTransform: "uppercase",
           letterSpacing: 2 * scale,
@@ -590,7 +589,7 @@ function ShareCardRenderer({
     flexDirection: "column",
     padding: 80 * scale,
     color: "#ffffff",
-    fontFamily: JAKARTA,
+    fontFamily: TEXT_FACE,
     ...bgStyle(data.background, data.template, meaning),
   };
 
@@ -758,7 +757,7 @@ function RecapTemplate({
       <div
         style={{
           alignSelf: "center",
-          fontFamily: JAKARTA,
+          fontFamily: TEXT_FACE,
           fontWeight: 700,
           textTransform: "uppercase",
           letterSpacing: 6 * scale,
