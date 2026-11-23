@@ -90,7 +90,9 @@ export default function LiftBoardSection({
                 <BoardRowItem
                   key={row.uid}
                   row={row}
-                  place={i + 1}
+                  /* "1" of 1 is no place: yours alone on it has none
+                     (owner, 23 Nov 2026). From two rows, each is numbered. */
+                  place={rows.length > 1 ? i + 1 : null}
                   detail={detailOf(row.reps, row.day)}
                   figure={formatKitLoad(row.weightKg, liftUnit, exerciseId)}
                   selfPhoto={profile?.photoURL ?? undefined}

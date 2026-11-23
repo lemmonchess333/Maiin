@@ -216,7 +216,8 @@ function workoutLiftBests(data) {
 function workoutBoardMayHaveChanged(before, after) {
   const b = before || {};
   const a = after || {};
-  if ((b.sharedActivityId || null) !== (a.sharedActivityId || null)) return true;
+  if ((b.sharedActivityId || null) !== (a.sharedActivityId || null))
+    return true;
   if (sourceActivityDateKey(b) !== sourceActivityDateKey(a)) return true;
   const key = (data) =>
     JSON.stringify(
@@ -248,10 +249,15 @@ function postMayMoveBoards(before, after) {
  * had, in one transaction that reads the account's deletion state and the
  * workout, then recomputes the lifter's entry on every lift it had or has.
  * Called by onWorkoutCreated and onWorkoutUpdated; safe to run again.
+ * `refresh: false` leaves the entries to the caller (the backfill, which
+ * recomputes each lift once after all of a lifter's workouts).
  *
  * @returns {Promise<{ exerciseIds: string[] }>}
  */
-async function syncWorkoutEfforts(db, { uid, workoutId, nowMs = Date.now() }) {
+async function syncWorkoutEfforts(
+  db,
+  { uid, workoutId, nowMs = Date.now(), refresh = true }
+) {
   if (!uid || !isDocumentId(workoutId)) return { exerciseIds: [] };
   const workoutRef = db
     .collection("users")
@@ -288,8 +294,9 @@ async function syncWorkoutEfforts(db, { uid, workoutId, nowMs = Date.now() }) {
       if (!written.has(doc.id)) tx.delete(doc.ref);
     return [...ids].filter(isBoardLift);
   });
-  for (const exerciseId of touched)
-    await refreshBoardEntry(db, uid, exerciseId, { nowMs });
+  if (refresh)
+    for (const exerciseId of touched)
+      await refreshBoardEntry(db, uid, exerciseId, { nowMs });
   return { exerciseIds: touched };
 }
 
@@ -297,7 +304,10 @@ async function syncWorkoutEfforts(db, { uid, workoutId, nowMs = Date.now() }) {
  * Deletes a deleted workout's efforts and recomputes the boards they were
  * on. Called by onWorkoutDeleted.
  */
-async function removeWorkoutEfforts(db, { uid, workoutId, nowMs = Date.now() }) {
+async function removeWorkoutEfforts(
+  db,
+  { uid, workoutId, nowMs = Date.now() }
+) {
   if (!uid || !isDocumentId(workoutId)) return { removed: 0 };
   const snap = await efforts(db, uid).where("workoutId", "==", workoutId).get();
   const exerciseIds = [
@@ -403,7 +413,12 @@ function boardOrder(a, b) {
  * are now: the heaviest one from a workout shared with followers or
  * everyone, or no entry at all.
  */
-async function refreshBoardEntry(db, uid, exerciseId, { nowMs = Date.now() } = {}) {
+async function refreshBoardEntry(
+  db,
+  uid,
+  exerciseId,
+  { nowMs = Date.now() } = {}
+) {
   if (!uid || !isBoardLift(exerciseId)) return { written: false };
   const entryRef = boardCol(db, exerciseId).doc(uid);
   return db.runTransaction(async (tx) => {
@@ -421,7 +436,13 @@ async function refreshBoardEntry(db, uid, exerciseId, { nowMs = Date.now() } = {
     const posts = new Map();
     let best = null;
     for (const effort of ranked) {
-      const activityId = await shownPostOf(tx, db, uid, effort.workoutId, posts);
+      const activityId = await shownPostOf(
+        tx,
+        db,
+        uid,
+        effort.workoutId,
+        posts
+      );
       if (!activityId) continue;
       best = { effort, activityId };
       break;
@@ -465,7 +486,10 @@ async function countOf(query) {
 async function readLiftBoard(db, { viewerUid, exerciseId }) {
   if (!viewerUid || !isBoardLift(exerciseId)) return null;
   const board = boardCol(db, exerciseId);
-  const following = db.collection("following").doc(viewerUid).collection("users");
+  const following = db
+    .collection("following")
+    .doc(viewerUid)
+    .collection("users");
   const [followingCount, boardCount] = await Promise.all([
     countOf(following),
     countOf(board),
@@ -505,24 +529,32 @@ async function readLiftBoard(db, { viewerUid, exerciseId }) {
 
   const uids = rows.map((r) => r.uid);
   const each = (path) => db.getAll(...uids.map((u) => db.doc(path(u))));
-  const [viewerBlocks, blockedViewer, restricted, deleting, tombstones, profiles, posts] =
-    await Promise.all([
-      db.collection("blocks").doc(viewerUid).collection("users").get(),
-      each((u) => `blocks/${u}/users/${viewerUid}`),
-      each((u) => `globalRestrictedUids/${u}`),
-      each((u) => `accountDeletionRequests/${u}`),
-      each((u) => `deletedAccounts/${u}`),
-      each((u) => `users/${u}/public/profile`),
-      db.getAll(
-        ...rows.map((r) => db.collection("activities").doc(r.activityId))
-      ),
-    ]);
+  const [
+    viewerBlocks,
+    blockedViewer,
+    restricted,
+    deleting,
+    tombstones,
+    profiles,
+    posts,
+  ] = await Promise.all([
+    db.collection("blocks").doc(viewerUid).collection("users").get(),
+    each((u) => `blocks/${u}/users/${viewerUid}`),
+    each((u) => `globalRestrictedUids/${u}`),
+    each((u) => `accountDeletionRequests/${u}`),
+    each((u) => `deletedAccounts/${u}`),
+    each((u) => `users/${u}/public/profile`),
+    db.getAll(
+      ...rows.map((r) => db.collection("activities").doc(r.activityId))
+    ),
+  ]);
   const blocked = new Set(viewerBlocks.docs.map((d) => d.id));
   const shown = [];
   rows.forEach((row, i) => {
     if (blocked.has(row.uid) || blockedViewer[i].exists) return;
     if (restricted[i].exists || !profiles[i].exists) return;
-    if (deleting[i].exists && isStatusActive(deleting[i].data()?.status)) return;
+    if (deleting[i].exists && isStatusActive(deleting[i].data()?.status))
+      return;
     if (tombstones[i].exists && isTombstoneLive(tombstones[i].data())) return;
     const post = posts[i].exists ? posts[i].data() : null;
     if (
@@ -544,6 +576,86 @@ async function readLiftBoard(db, { viewerUid, exerciseId }) {
   });
   shown.sort(boardOrder);
   return { entries: shown.slice(0, BOARD_MAX_ROWS) };
+}
+
+/* ───────────── The one-off backfill ───────────── */
+
+const BACKFILL_PAGE = 200;
+
+/**
+ * Every account's workouts saved before the triggers were deployed, put
+ * through the triggers' own steps (functions/scripts/backfill-lift-boards.js).
+ * With `apply`, each workout's efforts are written as onWorkoutCreated
+ * writes them (`syncWorkoutEfforts`), then each lift the lifter has done is
+ * recomputed once (`refreshBoardEntry`), so who reaches a board is decided
+ * exactly as it is for a workout saved today. Without it nothing is
+ * written, and the totals say what would be read: accounts, workouts,
+ * workouts with a barbell lift, and lifters with a barbell lift in a
+ * workout linked to a post (an upper bound on the entries: the post's
+ * visibility is read only when writing).
+ *
+ * Safe to run again and beside the live triggers: every write recomputes
+ * from the documents as they are, and an account being deleted is
+ * skipped by the deletion read in each transaction.
+ */
+async function backfillLiftBoards(
+  db,
+  {
+    apply = false,
+    nowMs = Date.now(),
+    // admin.firestore.FieldPath.documentId; the bare name works as well.
+    documentId = () => "__name__",
+    pageSize = BACKFILL_PAGE,
+  } = {}
+) {
+  const totals = {
+    dryRun: !apply,
+    accounts: 0,
+    workouts: 0,
+    liftWorkouts: 0,
+    sharedLifters: 0,
+    entriesWritten: 0,
+  };
+  const users = db.collection("users");
+  let last = null;
+  for (;;) {
+    let page = users.orderBy(documentId()).limit(pageSize);
+    if (last) page = page.startAfter(last);
+    const snap = await page.get();
+    for (const user of snap.docs) {
+      totals.accounts += 1;
+      const workouts = await users.doc(user.id).collection("workouts").get();
+      const lifts = new Set();
+      let shared = false;
+      for (const workout of workouts.docs) {
+        totals.workouts += 1;
+        if (!isDocumentId(workout.id)) continue;
+        const data = workout.data() || {};
+        const bests = workoutLiftBests(data);
+        if (bests.size === 0) continue;
+        totals.liftWorkouts += 1;
+        if (isDocumentId(data.sharedActivityId)) shared = true;
+        if (!apply) continue;
+        const { exerciseIds } = await syncWorkoutEfforts(db, {
+          uid: user.id,
+          workoutId: workout.id,
+          nowMs,
+          refresh: false,
+        });
+        for (const id of exerciseIds) lifts.add(id);
+      }
+      if (shared) totals.sharedLifters += 1;
+      for (const exerciseId of lifts) {
+        const { written } = await refreshBoardEntry(db, user.id, exerciseId, {
+          nowMs,
+        });
+        if (written) totals.entriesWritten += 1;
+      }
+    }
+    if (snap.docs.length < pageSize) break;
+    last = snap.docs[snap.docs.length - 1];
+  }
+  return totals;
 }
 
 /* ───────────── Account deletion ───────────── */
@@ -597,4 +709,5 @@ module.exports = {
   refreshBoardEntry,
   readLiftBoard,
   removeLiftBoardTracesForUser,
+  backfillLiftBoards,
 };

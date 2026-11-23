@@ -1218,6 +1218,15 @@ deploy and two real accounts can confirm the rest.
       Indexes → Single field, the exemption for `lifters.uid` (collection
       group) reads Enabled: without it an account's deletion fails on its
       sweep.
+- [ ] **The workouts saved before it, backfilled once.** After the row
+      above passes (the functions deployed and `lifters.uid` Enabled), run
+      `node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb`
+      with a service account: a dry run, which writes nothing and prints
+      the accounts, workouts and lifters it read. Then the same with
+      `apply` added. Passing: it ends with `"dryRun": false` and an
+      `entriesWritten` count, and a second `apply` run changes nothing
+      (it is safe beside the live triggers). Put the date here:
+      not yet.
 - [ ] **A board seen from two accounts.** Account B follows A (accepted).
       A logs Bench Press and shares the workout with followers. Passing, on
       B's Bench Press page, Leaderboard: A's row with A's heaviest set, in

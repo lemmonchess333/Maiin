@@ -431,3 +431,77 @@ describe("who sees a board", () => {
     expect(await board(VIEWER, "__proto__")).toBeNull();
   });
 });
+
+describe("the one-off backfill", () => {
+  const backfill = (options) =>
+    liftBoards.backfillLiftBoards(db, { pageSize: 2, nowMs: 5, ...options });
+
+  beforeEach(() => {
+    for (const uid of [LIFTER, OTHER, VIEWER, STRANGER])
+      seed(`users/${uid}`, { displayName: uid });
+    // Saved before the triggers: no efforts, no entries.
+    seedWorkout(LIFTER, "a", [bench(set(100, 3))], { visibility: "followers" });
+    seedWorkout(LIFTER, "b", [bench(set(130, 1))]);
+    seedWorkout(LIFTER, "c", [{ exerciseId: SQUAT, sets: [set(150, 2)] }], {
+      visibility: "private",
+    });
+    seedWorkout(OTHER, "d", [bench(set(90, 5))], { visibility: "public" });
+    seedWorkout(OTHER, "e", [
+      { exerciseId: "dumbbell-press", sets: [set(30, 8)] },
+    ]);
+  });
+
+  it("writes nothing on a dry run, and says what it read", async () => {
+    const before = [...db.data.keys()].sort();
+    expect(await backfill()).toEqual({
+      dryRun: true,
+      accounts: 4,
+      workouts: 5,
+      liftWorkouts: 4,
+      sharedLifters: 2,
+      entriesWritten: 0,
+    });
+    expect([...db.data.keys()].sort()).toEqual(before);
+  });
+
+  it("writes what the triggers would have: every effort, and entries only from shared posts", async () => {
+    const totals = await backfill({ apply: true });
+    expect(totals).toMatchObject({ dryRun: false, entriesWritten: 2 });
+    expect(
+      effortsOf(LIFTER)
+        .map((e) => e.workoutId)
+        .sort()
+    ).toEqual(["a", "b", "c"]);
+    // The heavier bench was never shared, and the squat was shared privately.
+    expect(entry(BENCH, LIFTER)).toMatchObject({
+      weightKg: 100,
+      workoutId: "a",
+    });
+    expect(entry(SQUAT, LIFTER)).toBeUndefined();
+    expect(entry(BENCH, OTHER)).toMatchObject({ weightKg: 90 });
+    // The same as a workout saved through the trigger's own step.
+    const viaBackfill = entry(BENCH, LIFTER);
+    db.data.delete(`liftBoards/${BENCH}/lifters/${LIFTER}`);
+    await liftBoards.syncWorkoutEfforts(db, {
+      uid: LIFTER,
+      workoutId: "a",
+      nowMs: 5,
+    });
+    expect(entry(BENCH, LIFTER)).toEqual(viaBackfill);
+  });
+
+  it("writes the same on a second run", async () => {
+    await backfill({ apply: true });
+    const first = new Map(db.data);
+    await backfill({ apply: true });
+    expect(new Map(db.data)).toEqual(first);
+  });
+
+  it("writes nothing for an account being deleted", async () => {
+    seed(`accountDeletionRequests/${LIFTER}`, { status: "running" });
+    await backfill({ apply: true });
+    expect(effortsOf(LIFTER)).toEqual([]);
+    expect(entry(BENCH, LIFTER)).toBeUndefined();
+    expect(entry(BENCH, OTHER)).toBeDefined();
+  });
+});

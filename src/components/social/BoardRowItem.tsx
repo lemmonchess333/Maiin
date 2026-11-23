@@ -16,7 +16,8 @@ export interface BoardRowPerson {
 /**
  * One row of a board of the people you follow: a segment's (Run26 call 3)
  * and a lift's (Run30 call 3). The place is a plain number, never a medal
- * or a crown; your own row is tinted and marked current.
+ * or a crown, and none at all where a board has no place to give (yours
+ * alone on it); your own row is tinted and marked current.
  */
 export default function BoardRowItem({
   row,
@@ -27,7 +28,8 @@ export default function BoardRowItem({
   selfInitial,
 }: {
   row: BoardRowPerson;
-  place: number;
+  /** The row's place, or null to show none. */
+  place: number | null;
   /** The line under the name: a day, or reps and a day. */
   detail: string;
   /** The figure the board ranks by, at the row's end. */
@@ -37,9 +39,11 @@ export default function BoardRowItem({
 }) {
   const body = (
     <>
-      <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">
-        {place}
-      </span>
+      {place !== null && (
+        <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">
+          {place}
+        </span>
+      )}
       {row.self ? (
         <Avatar
           photoURL={selfPhoto}

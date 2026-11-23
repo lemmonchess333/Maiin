@@ -196,7 +196,10 @@ describe("an exercise's Leaderboard", () => {
     renderAt("Bench Press");
     openBoard();
     const list = await screen.findByRole("list", { name: "Bench Press board" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(1);
+    // Yours alone on it: no place, since "1" of 1 is none.
+    expect(rows[0].textContent).toMatch(/^\D*You3 reps · 1 Oct 2026100 kg$/);
     expect(
       screen.getByText(
         "When people you follow share a workout with Bench Press, their heaviest set shows here."
