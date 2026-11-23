@@ -54,7 +54,9 @@ import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
-import TopThreeCard from "../components/run/TopThreeCard";
+import RunResultsCard from "../components/run/RunResultsCard";
+import { useRunSegmentEfforts } from "@/hooks/useRunSegmentEfforts";
+import { FINISH_SEGMENT_WAIT_MS, segmentPlacings } from "@/lib/segments";
 import {
   runPlacings,
   type PlacedRun,
@@ -767,6 +769,33 @@ export default function RunSummary() {
     () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
+  /* The run's segment results (Run30 call 1). The server times a saved run
+     on its segments a few seconds after the run reaches it (onRunCreated),
+     so the finish listens for them, from the moment this screen's save is
+     on the server and the phone is online, for FINISH_SEGMENT_WAIT_MS, and
+     shows nothing until they arrive. A run saved offline is listened for
+     once it syncs; a run that never syncs while the screen is open shows
+     none. The first time the conditions hold is kept (React's adjust state
+     during render), so going offline after does not drop rows that came. */
+  const [segmentsFor, setSegmentsFor] = useState<string | null>(null);
+  if (
+    segmentsFor === null &&
+    finishFacts !== null &&
+    savedRunId !== null &&
+    saveStatus === "saved" &&
+    isOnline &&
+    !pendingSync &&
+    (state?.points.length ?? 0) > 1
+  )
+    setSegmentsFor(savedRunId);
+  const segmentEfforts = useRunSegmentEfforts(user?.uid, segmentsFor, {
+    listenMs: FINISH_SEGMENT_WAIT_MS,
+  });
+  const segmentResults = useMemo(
+    () => segmentPlacings(segmentEfforts.rows),
+    [segmentEfforts.rows]
+  );
+
   // Keep the run's clock independently of the coordinates privacy zones cut.
   const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
   /* The date the run goes out of the app under (the share card, a GPX's
@@ -1834,17 +1863,23 @@ export default function RunSummary() {
               splits and climb, and what the runner adds to it. */}
           <div className="h-6" aria-hidden="true" />
 
-          {/* Your top three (Run29): under the reward, the distances this
-              run placed 1st to 3rd at, quiet; a new best is the reward
-              above. Under a reward's sentence it says none of its own. */}
-          {finishFacts && finishFacts.placings.length > 0 && (
-            <div className="mx-4 mb-4">
-              <TopThreeCard
-                placings={finishFacts.placings}
-                rewardAbove={finishLine !== null}
-              />
-            </div>
-          )}
+          {/* Results, as Strava's: under the reward, the distances this
+              run placed 1st to 3rd at (Run29), then its segments that
+              placed (Run30 call 1), which join it when the server has
+              timed them. A new best at a distance is the reward above.
+              Under a reward's sentence it says none of its own. */}
+          {finishFacts &&
+            (finishFacts.placings.length > 0 || segmentResults.length > 0) && (
+              <div className="mx-4 mb-4">
+                <RunResultsCard
+                  placings={finishFacts.placings}
+                  segments={segmentResults}
+                  runId={savedRunId}
+                  unit={unit}
+                  rewardAbove={finishLine !== null}
+                />
+              </div>
+            )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (

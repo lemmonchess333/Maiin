@@ -182,8 +182,10 @@ export function placeLabel(place: Place): string {
 }
 
 /** A row's comparison: "best 25:10" for a 2nd or 3rd, "New best" for a
- *  1st. */
-export function placingGap(placing: RunPlacing): string {
+ *  1st. A segment's row says it the same way. */
+export function placingGap(
+  placing: Pick<RunPlacing, "place" | "bestSeconds">
+): string {
   return placing.place === 1
     ? "New best"
     : `best ${formatClock(placing.bestSeconds)}`;

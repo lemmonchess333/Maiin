@@ -96,6 +96,37 @@ describe("checkEntryLink", () => {
     expect(r?.status !== "ok" && r?.reason).toContain("www.letsdothis.com");
   });
 
+  it("follows a plain-http hop on the race's own host", async () => {
+    const r = await checkEntryLink(
+      race("https://www.testmarathon.co.uk/enter"),
+      site({
+        "https://www.testmarathon.co.uk/enter": [
+          301,
+          { location: "http://www.testmarathon.co.uk/enter/" },
+        ],
+        "http://www.testmarathon.co.uk/enter/": [
+          301,
+          { location: "https://www.testmarathon.co.uk/enter/" },
+        ],
+        "https://www.testmarathon.co.uk/enter/": [200, {}],
+      })
+    );
+    expect(r).toMatchObject({ status: "ok" });
+  });
+
+  it("still fails a plain-http hop to another host", async () => {
+    const r = await checkEntryLink(
+      race("https://www.testmarathon.co.uk/enter"),
+      site({
+        "https://www.testmarathon.co.uk/enter": [
+          302,
+          { location: "http://www.letsdothis.com/gb/e/1" },
+        ],
+      })
+    );
+    expect(r).toMatchObject({ status: "broken" });
+  });
+
   it("follows a redirect to a domain the organiser also runs", async () => {
     const r = await checkEntryLink(
       race("https://www.testmarathon.co.uk/enter", {
