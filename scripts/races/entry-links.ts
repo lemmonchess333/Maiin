@@ -110,7 +110,11 @@ export async function checkEntryLink(
       const location = res.headers.get("location");
       if (!location) return broken(`${res.status} redirect with no Location`);
       const next = new URL(location, url).toString();
-      if (!isOfficialRaceUrl(next, event))
+      // Some organisers bounce through plain http on their own host
+      // (Tokyo, Nov 2026). That is the organiser's page, not a broken
+      // link, so the hop is judged by its host alone. The stored link
+      // itself must still be https (checked above).
+      if (!isOfficialRaceUrl(next.replace(/^http:/, "https:"), event))
         return broken(
           `Redirects off the race’s domains, to ${new URL(next).host}`
         );
