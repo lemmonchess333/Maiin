@@ -12,6 +12,7 @@ import { addLocalDays, localDateString, parseLocalDate } from "../dateHelpers";
 import { getExerciseById } from "../exercises";
 import type { Workout, WorkoutExercise } from "../savedWorkouts";
 import { formatDayMonth } from "@/utils/formatters";
+import { runPlacings } from "../runPlacings";
 
 /**
  * Analytics' figures, called with sessions, a range and a join day. Every
@@ -574,6 +575,16 @@ describe("runRecordRows", () => {
         date: formatDayMonth(parseLocalDate(key(3))),
         isNew: true,
         runId: "recent",
+        // Your top three (Run29): the 2nd under it, a row of its own.
+        runnersUp: [
+          {
+            place: 2,
+            label: "1K",
+            value: "5:00",
+            date: formatDayMonth(parseLocalDate(key(40))),
+            runId: "old",
+          },
+        ],
       },
       {
         label: "Fastest 5K",
@@ -581,6 +592,15 @@ describe("runRecordRows", () => {
         date: formatDayMonth(parseLocalDate(key(3))),
         isNew: true,
         runId: "recent",
+        runnersUp: [
+          {
+            place: 2,
+            label: "5K",
+            value: "25:00",
+            date: formatDayMonth(parseLocalDate(key(40))),
+            runId: "old",
+          },
+        ],
       },
       {
         label: "Fastest 10K",
@@ -603,6 +623,79 @@ describe("runRecordRows", () => {
     expect(records.indoor.some((r) => r.label.startsWith("Fastest"))).toBe(
       false
     );
+  });
+
+  it("lists your 2nd and 3rd fastest under a Fastest row, all-time only (Run29)", () => {
+    const fiveK = (time: number) => [{ distance: 5000, time }];
+    const records = rows([
+      run("a", { daysAgo: 20, km: 5, pace: 310, bestEfforts: fiveK(1550) }),
+      run("b", { daysAgo: 15, km: 5, pace: 300, bestEfforts: fiveK(1500) }),
+      // Level with a: the earlier keeps the place.
+      run("c", { daysAgo: 10, km: 5, pace: 310, bestEfforts: fiveK(1550) }),
+      run("d", { daysAgo: 5, km: 5, pace: 320, bestEfforts: fiveK(1600) }),
+      // A treadmill 5K is faster and places nowhere.
+      run("t", {
+        daysAgo: 2,
+        km: 5,
+        pace: 250,
+        place: "treadmill",
+        bestEfforts: fiveK(1250),
+      }),
+    ]);
+    const fastest = row(records.lifetime, "Fastest 5K");
+    expect(fastest?.runId).toBe("b");
+    expect(
+      fastest?.runnersUp?.map((up) => [up.place, up.runId, up.value])
+    ).toEqual([
+      [2, "a", "25:50"],
+      [3, "c", "25:50"],
+    ]);
+    expect(row(records.recent30d, "Fastest 5K")?.runnersUp).toBeUndefined();
+    // One 5K is a Fastest row with nothing under it.
+    expect(
+      row(
+        rows([
+          run("x", { daysAgo: 4, km: 5, pace: 300, bestEfforts: fiveK(1500) }),
+        ]).lifetime,
+        "Fastest 5K"
+      )?.runnersUp
+    ).toBeUndefined();
+  });
+
+  it("gives a tie at the fastest to the earlier run, fed newest first (Run29)", () => {
+    const fiveK = (time: number) => [{ distance: 5000, time }];
+    const older = run("older", {
+      daysAgo: 20,
+      km: 5,
+      pace: 300,
+      bestEfforts: fiveK(1500),
+    });
+    const newer = run("newer", {
+      daysAgo: 10,
+      km: 5,
+      pace: 300,
+      bestEfforts: fiveK(1500),
+    });
+    const slow = run("slow", {
+      daysAgo: 5,
+      km: 5,
+      pace: 320,
+      bestEfforts: fiveK(1600),
+    });
+    // Newest first, as a live read hands them: the order must not decide.
+    const fastest = row(rows([slow, newer, older]).lifetime, "Fastest 5K");
+    expect(fastest?.runId).toBe("older");
+    expect(fastest?.runnersUp?.map((up) => [up.place, up.runId])).toEqual([
+      [2, "newer"],
+      [3, "slow"],
+    ]);
+    // The later run's page says the same: its 2nd best.
+    expect(
+      runPlacings(
+        { ...newer, place: null },
+        [slow, newer, older].map((r) => ({ ...r, place: null }))
+      )[0]?.place
+    ).toBe(2);
   });
 
   it("says New on a recent fastest time only when it is the fastest ever", () => {

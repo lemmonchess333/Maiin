@@ -107,6 +107,7 @@ const TARGET_LABELS = Object.freeze({
   user: "A profile",
   space_post: "A post in a space",
   space_post_comment: "A comment on a space post",
+  segment: "A segment",
 });
 
 /** The inbox for alerts: the plain env var MODERATION_ALERT_EMAIL, or the

@@ -438,7 +438,7 @@ export default function TrainingBlockCard({
                     "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition active:scale-[0.97]",
                     focus === g
                       ? "bg-primary/10 border border-primary/40"
-                      : "bg-muted border border-transparent"
+                      : "bg-muted chip-edge border border-transparent"
                   )}
                 >
                   <span className="text-sm font-semibold text-foreground text-left">
@@ -520,7 +520,7 @@ export default function TrainingBlockCard({
                       "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                       pace === p.value
                         ? "bg-primary/10 border border-primary/40"
-                        : "bg-muted border border-transparent"
+                        : "bg-muted chip-edge border border-transparent"
                     )}
                   >
                     <p className="text-sm font-semibold text-foreground">
@@ -702,7 +702,7 @@ export default function TrainingBlockCard({
                             ~{formatOneRepMaxRange(a.endE1rm!, liftUnit)}
                           </span>
                           {gain > 0 && (
-                            <span className="ml-1.5 font-mono tabular-nums text-success-strong">
+                            <span className="ml-1.5 font-mono tabular-nums text-foreground">
                               +{formatLoad(gain, liftUnit)}
                             </span>
                           )}

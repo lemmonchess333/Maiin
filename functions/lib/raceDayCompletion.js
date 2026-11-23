@@ -41,6 +41,7 @@
  */
 
 const { isRaceTemplateId } = require("./raceTemplateIds");
+const { isTreadmillRun } = require("./runEligibility");
 
 /** Q1 P4: a race counts as run at ≥95% of the planned distance. */
 const RACE_STRICT_DISTANCE_RATIO = 0.95;
@@ -99,6 +100,10 @@ function recoveryWeeksFor(distanceKey) {
  *
  *   1. not `isInvalid` / `savedAnyway` — a "Save anyway" on a borked
  *      GPS trace the user explicitly flagged must never clear a no-show;
+ *   1b. not on a treadmill (`isTreadmillRun`): a treadmill's distance is
+ *      typed in and its run stays indoors, so a treadmill run on race day
+ *      is a run, not the race. A manual entry, from someone who raced
+ *      without their phone, still counts;
  *   2. `distance` is a number;
  *   3. `plannedDistanceMeters <= 0` → nothing to measure against, so the
  *      race-type `actualTemplateId` is the only evidence left and IS
@@ -144,6 +149,7 @@ function isStrictRaceRun(savedRun, plannedDistanceMeters) {
   if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
     return false;
   }
+  if (isTreadmillRun(savedRun)) return false;
   if (typeof savedRun.distance !== "number") return false;
   if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
     // No planned distance to measure against, so the template tag is the
@@ -177,6 +183,7 @@ module.exports = {
   RECOVERY_WEEKS_BY_DISTANCE,
   plannedDistanceFor,
   recoveryWeeksFor,
+  isTreadmillRun,
   isStrictRaceRun,
   hasStrictRaceMatch,
 };

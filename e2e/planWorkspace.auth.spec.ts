@@ -8,6 +8,7 @@ import { resetNodeClock } from "./helpers/nodeClock";
 import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { settleImages } from "./helpers/settleImages";
+import { seededHealthConsent } from "./helpers/healthConsent";
 
 const PASSWORD = "test-password-123";
 
@@ -122,6 +123,8 @@ test("reviews a run move while preserving actual history, lift rotation and usua
         timezone: "UTC",
         timeZone: "UTC",
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1).
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "pro",
         darkMode: true,
         createdAt: Timestamp.fromDate(

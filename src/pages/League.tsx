@@ -1,11 +1,9 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, ChevronLeft } from "lucide-react";
 import { useAuth, useUid } from "@/lib/auth";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { roomShown } from "@/lib/enoughPeople";
 import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/Avatar";
@@ -16,17 +14,18 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import LeagueJoin from "@/features/league/LeagueJoin";
+import LeagueJoinedBar from "@/features/league/LeagueJoinedBar";
 import TierBadge from "@/features/league/TierBadge";
 import {
   countdownLine,
   leagueCardState,
   lockedLine,
   sessionsLine,
+  showsJoinedCount,
   type RankedStanding,
 } from "@/features/league/league";
 import {
   demotionCount,
-  GROUP_MIN,
   promotionCount,
   tierName,
 } from "@/features/league/leagueRules";
@@ -42,9 +41,9 @@ import { useLeagueJoin } from "@/features/league/useLeagueJoin";
  * every social surface (`useBlockedUsers`); the places still count
  * everyone, so the numbers can skip one.
  *
- * Until Tropos has enough people to fill a league (App1 Q6), someone who
- * has not joined is not offered one here either: an old link brings them
- * back to Together.
+ * Before groups are made (App1 Q6, `src/lib/fillingUp.ts`) the page says
+ * what the league starts at and how many are in so far, and someone who
+ * has not joined can join here.
  */
 export default function League() {
   const uid = useUid();
@@ -54,7 +53,6 @@ export default function League() {
   const { blocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const sharing = useLeagueJoin(league.reload);
-  const enough = useEnoughPeople();
   const optedIn = profile?.leagueOptIn === true;
   const [confirmLeave, setConfirmLeave] = useState(false);
   // The countdown moves on the minute.
@@ -63,9 +61,6 @@ export default function League() {
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
-
-  if (!optedIn && enough === false)
-    return <Navigate to="/social?tab=together" replace />;
 
   const leave = (
     <Button
@@ -79,13 +74,13 @@ export default function League() {
   );
 
   let body: ReactNode;
-  if (!uid || league.loading || !roomShown(optedIn, enough)) {
+  if (!uid || league.loading) {
     body = (
       <ul aria-label="Loading the league" className="space-y-2">
         {[0, 1, 2, 3].map((i) => (
           <li
             key={i}
-            className="flex items-center gap-3 rounded-xl bg-card p-3"
+            className="flex items-center gap-3 rounded-xl bg-card p-3 dark:card-shadow"
           >
             <Skeleton className="size-6 rounded-full" />
             <Skeleton className="size-9 rounded-full" />
@@ -144,6 +139,9 @@ export default function League() {
                 ? lockedLine(state.joined, state.needed)
                 : "Your group starts on Monday."}
             </p>
+            {locked && showsJoinedCount(state.joined) && (
+              <LeagueJoinedBar joined={state.joined} needed={state.needed} />
+            )}
             <p className="text-xs text-muted-foreground text-pretty">
               Groups of about 20 are made each Monday from people who trained in
               the last 14 days. You score on the sessions you do against your
@@ -187,13 +185,7 @@ export default function League() {
       <ConfirmDialog
         open={confirmLeave}
         title="Leave the league?"
-        description={
-          /* At small numbers Social offers no league to join (App1 Q6),
-             so the way back is not promised. */
-          enough
-            ? "Your row comes out of this week’s group now, and you won’t be placed in the next one. You can join again from Social, starting in Bronze."
-            : `Your row comes out of this week’s group now, and you won’t be placed in the next one. Social offers the league again once ${GROUP_MIN} people are training on Tropos.`
-        }
+        description="Your row comes out of this week’s group now, and you won’t be placed in the next one. You can join again from Social, starting in Bronze."
         confirmLabel="Leave"
         destructive
         onConfirm={() => {
@@ -309,7 +301,7 @@ function ZoneLine({ kind, count }: { kind: "up" | "down"; count: number }) {
       aria-label={label}
       className={cn(
         "flex items-center gap-2 py-1 text-xs font-semibold",
-        kind === "up" ? "text-success-strong" : "text-muted-foreground"
+        kind === "up" ? "text-foreground" : "text-muted-foreground"
       )}
     >
       {/* The rules give way before the words do: at large text on a
@@ -347,7 +339,9 @@ function StandingRow({
       aria-current={self ? "true" : undefined}
       className={cn(
         "flex flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-        self ? "border border-primary/25 bg-primary/10" : "bg-card"
+        self
+          ? "border border-primary/25 bg-primary/10"
+          : "bg-card dark:card-shadow"
       )}
     >
       <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">

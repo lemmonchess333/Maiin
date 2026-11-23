@@ -31,7 +31,7 @@ function BadgeGridSkeleton() {
         {SUMMARY_LABELS.map((label) => (
           <div
             key={label}
-            className="p-3 rounded-xl bg-card border border-border/50"
+            className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent"
           >
             <Skeleton className="mx-auto h-9 w-10" />
             <p className="text-xs text-muted-foreground mt-1">{label}</p>
@@ -122,7 +122,7 @@ export function BadgeGrid() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 overflow-hidden"
+          className="relative flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 overflow-hidden dark:card-shadow dark:border-transparent"
           style={{
             backgroundImage: `radial-gradient(circle at 16% 30%, ${nextColor}14, transparent 60%)`,
           }}
@@ -160,23 +160,22 @@ export function BadgeGrid() {
 
       {/* Streak summary. */}
       <div className="grid grid-cols-3 gap-3 text-center">
-        <div className="p-3 rounded-xl bg-card border border-border/50">
-          {/* amberLight is the amber-500 dark-mode step (theme.ts says
-              so) — as light-mode text it measured 2.15:1, under even the
-              3:1 large-text floor. The achievement token is the same
-              celebration register, theme-aware, AA both sides. */}
-          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
+        <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
+          {/* Gold is for bests only (DS10 call 4): the longest streak is
+              the record, so it is gold, and the current one is the text
+              colour. */}
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current streak</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-figure tabular-nums text-primary">
+        <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
             {Number.isFinite(longestStreak) ? longestStreak : 0}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Longest streak</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50">
+        <div className="p-3 rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
           <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {earnedBadges.length}
           </p>
@@ -238,7 +237,7 @@ export function BadgeGrid() {
                        — the row's most scannable element — at three
                        different heights across peers. Growing the name block
                        instead pins every footer to the same baseline. */
-                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center flex flex-col"
+                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center flex flex-col dark:card-shadow dark:border-transparent"
                     /* No card-level tier wash. It used to paint
                        `radial-gradient(circle at 50% 18%, <tier>1a, transparent 65%)`
                        on every earned card, from when the medals were pale

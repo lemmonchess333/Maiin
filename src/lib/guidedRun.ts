@@ -47,7 +47,8 @@ const SEGMENT_COLORS: Record<SegmentType, string> = {
   easy: "#22b558",
   moderate: "#3b7ee6",
   hard: "#e04040",
-  recovery: THEME.brand,
+  // Grey, not the brand purple: purple means lifting (DS10).
+  recovery: THEME.chrome.grey,
   cooldown: "#06a8c8",
 };
 

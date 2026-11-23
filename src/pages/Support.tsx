@@ -1,5 +1,6 @@
-import { ArrowLeft, Mail } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { Mail } from "lucide-react";
+import { Link } from "react-router-dom";
+import LegalBack from "@/components/legal/LegalBack";
 
 declare const __APP_VERSION__: string;
 
@@ -12,7 +13,6 @@ declare const __APP_VERSION__: string;
  * Static, no auth, mirrors the PrivacyPolicy/TermsOfService shell.
  */
 export default function Support() {
-  const navigate = useNavigate();
   const version =
     typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const mailto = `mailto:support@troposfit.com?subject=${encodeURIComponent(
@@ -20,16 +20,9 @@ export default function Support() {
   )}`;
 
   return (
-    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
+    <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </button>
+        <LegalBack />
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">Support</h1>
@@ -61,7 +54,7 @@ export default function Support() {
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
               <li>What you were doing when it happened</li>
               <li>What you expected vs. what you saw (screenshots help)</li>
-              <li>Your device and whether you use the app or the website</li>
+              <li>Your iPhone model and its iOS version</li>
               <li>The email address on your Tropos account</li>
             </ul>
           </section>
@@ -75,8 +68,8 @@ export default function Support() {
               <span className="text-foreground font-medium">
                 Forgot password
               </span>{" "}
-              on the sign-in screen — it works for Google and Apple accounts too
-              (it emails you a link that sets a password). Still stuck? Email us
+              on the sign-in screen. It works for Google and Apple accounts too:
+              it emails you a link that sets a password. Still stuck? Email us
               from the address on your account.
             </p>
           </section>
@@ -97,6 +90,6 @@ export default function Support() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -259,7 +259,7 @@ function ExerciseFormContent({
       {/* Muscle diagram — the hero only when there's no demo to show, so we
           never stack two body silhouettes. */}
       {!hasLocalGuide && !hasAnimation && (
-        <div className="bg-muted rounded-2xl p-5 mt-4">
+        <div className="bg-muted rounded-2xl p-5 mt-4 chip-edge">
           <div
             style={{
               display: "flex",
@@ -492,7 +492,7 @@ function ExerciseFormContent({
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
               aria-expanded={showInstructions}
-              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting-strong"
+              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-foreground"
             >
               {showInstructions ? (
                 <>

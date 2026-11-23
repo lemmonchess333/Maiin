@@ -42,7 +42,7 @@ export default function SubscriptionCard() {
         haptic();
         navigate("/upgrade?from=settings");
       }}
-      className="w-full flex items-center justify-between p-4 rounded-2xl bg-card transition-transform motion-safe:active:scale-[0.99]"
+      className="w-full flex items-center justify-between p-4 rounded-2xl bg-card transition-transform motion-safe:active:scale-[0.99] dark:card-shadow"
     >
       <div className="flex items-center gap-3">
         <Crown className="size-5 text-primary" />

@@ -22,6 +22,7 @@ import { clampPct } from "@/lib/percentageHelpers";
 import { resolveMicroTargets, type MicroKind } from "@/lib/microTargets";
 import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -217,6 +218,7 @@ export default function HeroDrillDownSheet({
      SIBLING of the hero card, so there was no prop path to thread — which
      is why the divergence existed at all. */
   const mode = useCalorieRingMode();
+  const { accent: macroAccent } = useMacroPalette();
   const target = dailyTargets.finalTarget;
   const remaining = target - dailyTotals.calories;
   const consumedPct = clampPct(dailyTotals.calories, target);
@@ -315,7 +317,7 @@ export default function HeroDrillDownSheet({
                   Fuel for today’s training
                 </p>
                 {!isPro && (
-                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-lifting-strong">
+                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-foreground">
                     <Lock className="size-3.5" aria-hidden="true" />
                     Pro
                   </span>
@@ -400,21 +402,21 @@ export default function HeroDrillDownSheet({
               label="Protein"
               consumed={dailyTotals.protein}
               target={dailyTargets.protein}
-              color={THEME.macros.protein}
+              color={macroAccent.protein}
               mode={mode}
             />
             <MacroRow
               label="Carbs"
               consumed={dailyTotals.carbs}
               target={dailyTargets.carbs}
-              color={THEME.macros.carbs}
+              color={macroAccent.carbs}
               mode={mode}
             />
             <MacroRow
               label="Fat"
               consumed={dailyTotals.fat}
               target={dailyTargets.fat}
-              color={THEME.macros.fat}
+              color={macroAccent.fat}
               mode={mode}
             />
           </section>

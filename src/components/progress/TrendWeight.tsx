@@ -51,7 +51,7 @@ export function TrendWeight() {
     const entry = entries[0];
     const d = parseLocalDate(entry.date);
     return (
-      <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
+      <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2 dark:card-shadow">
         <SectionLabel>Weight trend</SectionLabel>
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
@@ -80,7 +80,7 @@ export function TrendWeight() {
      SectionLabel and a real figure to show); this branch had nothing. */
   if (data.length < 3) {
     return (
-      <div className="p-4 rounded-2xl bg-card">
+      <div className="p-4 rounded-2xl bg-card dark:card-shadow">
         <EmptyState
           compact
           icon={Scale}
@@ -174,18 +174,16 @@ export function TrendWeight() {
   })();
 
   return (
-    <div className="p-4 rounded-2xl bg-card space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       <div className="flex items-center justify-between">
         <SectionLabel>Weight trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
-            <span className="text-lifting-strong font-bold">
-              {hiddenHeadline}
-            </span>
+            <span className="text-foreground font-bold">{hiddenHeadline}</span>
           ) : trendDisplay != null ? (
             <>
               Trending at{" "}
-              <span className="text-lifting-strong font-bold font-mono tabular-nums">
+              <span className="text-foreground font-bold font-mono tabular-nums">
                 {trendDisplay} {unit}
               </span>
               {goalDiff != null && (

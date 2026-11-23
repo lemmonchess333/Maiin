@@ -69,6 +69,8 @@ vi.mock("@/lib/shareComposer", () => ({
 
 import WorkoutFeedShareSheet from "../WorkoutFeedShareSheet";
 import type { Workout } from "@/hooks/useWorkouts";
+import { circuitWorkoutFields } from "@/lib/circuitCompletion";
+import { builtInCircuit } from "@/features/circuit/builtInCircuits";
 
 const WORKOUT = {
   id: "programme-abc",
@@ -90,14 +92,18 @@ const WORKOUT = {
   ],
 } as unknown as Workout;
 
-function renderSheet(onShared = vi.fn()) {
+function renderSheet(
+  onShared = vi.fn(),
+  workout: Workout = WORKOUT,
+  title = "Push — Chest Focus"
+) {
   render(
     <WorkoutFeedShareSheet
       open
       onOpenChange={vi.fn()}
       uid="u1"
-      workout={WORKOUT}
-      title="Push — Chest Focus"
+      workout={workout}
+      title={title}
       onShared={onShared}
     />
   );
@@ -152,6 +158,51 @@ describe("WorkoutFeedShareSheet", () => {
         targetWeightKg: 60,
       },
     ]);
+  });
+
+  it("posts a circuit (Circ1) as its own post: rounds, interval and moves", async () => {
+    const circuit = builtInCircuit({ kit: "minimal", minutes: 20 });
+    const saved = {
+      id: "free-c1",
+      ...circuitWorkoutFields({
+        uid: "u1",
+        completionId: "c1",
+        startedAt: new Date(2026, 7, 1, 7).getTime(),
+        circuit,
+        outcome: {
+          intervalsDone: 18,
+          roundsDone: 3,
+          workSecondsDone: 720,
+          activeSeconds: 1100,
+          finished: false,
+        },
+        bodyweightKg: 70,
+      }),
+    } as unknown as Workout;
+    renderSheet(vi.fn(), saved, circuit.name);
+    // The sheet's preview says what the post will.
+    expect(screen.getByText("18 min · 3 rounds · 5 moves")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /share to followers/i })
+    );
+
+    await waitFor(() => expect(postActivityMock).toHaveBeenCalledTimes(1));
+    const post = postActivityMock.mock.calls[0][0];
+    expect(post).toMatchObject({
+      type: "workout",
+      workoutName: "20-minute circuit",
+      exerciseCount: 5,
+      duration: 1100,
+      circuit: {
+        rounds: 3,
+        workSeconds: 40,
+        restSeconds: 20,
+        moves: circuit.moves.map((move) => move.exerciseId),
+      },
+    });
+    expect(post).not.toHaveProperty("exercises");
+    expect(post).not.toHaveProperty("totalVolume");
   });
 
   it("never routes through compose() — that would obey the stored default", async () => {

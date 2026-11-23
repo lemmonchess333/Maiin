@@ -22,7 +22,9 @@ import {
   liftPostLeadArt,
   liftPostRowDone,
   liftPostRows,
+  type LiftPostRow,
 } from "../../lib/liftPost";
+import { circuitPostOf } from "../../lib/circuitPost";
 import { generatedDayType } from "@/lib/liftDayLabel";
 import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -298,17 +300,32 @@ function ActivityCard({
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
   const chips = commentQuickChips(feedItem.type);
 
+  /* A circuit (Circ1) posts no exercise rows: its rounds, interval and
+     moves come under `circuit`, and its moves are drawn as the rows are,
+     by name. An app from before circuits draws the same post as a workout
+     with a count of exercises and its minutes. */
+  const circuit = isRun ? null : circuitPostOf(activity?.circuit);
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
-  const exercises = liftPostRows(activity?.exercises, liftUnit);
+  const exercises: LiftPostRow[] = circuit
+    ? circuit.moves.map((move) => ({
+        name: move.name,
+        summary: "",
+        structured: null,
+      }))
+    : liftPostRows(activity?.exercises, liftUnit);
   const shownExercises = allExercises
     ? exercises
     : exercises.slice(0, FEED_EXERCISE_ROWS);
   const moreExercises = exercises.length - shownExercises.length;
   /* The exercises done, as the post's page lists them: a stored count can
      include one with no set done. */
-  const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  const exerciseCount = circuit
+    ? circuit.moves.length
+    : activity
+      ? liftPostExerciseCount(activity)
+      : 0;
   /* The count says something only where the rows don't: when the card
      lists every exercise, "3 exercises" under three rows repeats them. */
   const showExerciseCount =
@@ -317,14 +334,28 @@ function ActivityCard({
      summary drawn in its place): a Push day's post is titled "Push"
      already. */
   const titleKey = (activityTitle || feedItem.summary)?.trim().toLowerCase();
-  const muscleLabels = Array.from(
-    new Set(
-      ((activity?.muscleGroups as string[] | undefined) ?? []).map(
-        movementCategoryLabel
-      )
-    )
-  ).filter((label) => label.trim().toLowerCase() !== titleKey);
+  const muscleLabels = circuit
+    ? [`${circuit.workSeconds} s on, ${circuit.restSeconds} s off`]
+    : Array.from(
+        new Set(
+          ((activity?.muscleGroups as string[] | undefined) ?? []).map(
+            movementCategoryLabel
+          )
+        )
+      ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
+  /* A circuit leads with its rounds, as a lift with its volume. One ended
+     before a whole round leads with its minutes, never "0 rounds", and
+     the minutes are not said twice. */
+  const circuitMinutesLead = !!circuit && circuit.rounds === 0;
+  const circuitLead = circuit
+    ? circuitMinutesLead
+      ? { value: Math.round((activity?.duration ?? 0) / 60), label: "min" }
+      : {
+          value: circuit.rounds,
+          label: circuit.rounds === 1 ? "round" : "rounds",
+        }
+    : null;
   /* What happened to the author in the session (Soc15): read whole, so a
      malformed or older post draws none. */
   const moments = postMomentsOf(activity?.moments);
@@ -358,7 +389,9 @@ function ActivityCard({
   const muscleCategories =
     (activity?.muscleGroups as string[] | undefined) ?? [];
   const leadArt =
-    !isRun && !isHybrid ? liftPostLeadArt(activity?.exercises) : null;
+    !isRun && !isHybrid
+      ? liftPostLeadArt(circuit ? circuit.moves : activity?.exercises)
+      : null;
   const showMuscleHero =
     !leadArt && !isRun && !isHybrid && hasMuscleFigure(muscleCategories);
   const showLiftHero = !!leadArt || showMuscleHero;
@@ -375,6 +408,7 @@ function ActivityCard({
   /* What the lift's numbers link holds: a link with nothing in it would
      be an empty stop for a screen reader. */
   const hasLiftStats =
+    !!circuit ||
     muscleLabels.length > 0 ||
     (!showVolumeOverlay && (activity?.totalVolume ?? 0) > 0) ||
     showExerciseCount ||
@@ -777,7 +811,13 @@ function ActivityCard({
                   </span>{" "}
                   more{" "}
                   <span className="sr-only">
-                    {moreExercises === 1 ? "exercise" : "exercises"}
+                    {circuit
+                      ? moreExercises === 1
+                        ? "move"
+                        : "moves"
+                      : moreExercises === 1
+                        ? "exercise"
+                        : "exercises"}
                   </span>
                 </span>
               </Link>
@@ -827,13 +867,30 @@ function ActivityCard({
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
+          {/* A circuit's lead figure stands where a lift's volume does. */}
+          {circuitLead && (
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting whitespace-nowrap">
+                {circuitLead.value}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {circuitLead.label}
+              </SectionLabel>
+            </div>
+          )}
           {showExerciseCount && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
-                {exerciseCount === 1 ? "exercise" : "exercises"}
+                {circuit
+                  ? exerciseCount === 1
+                    ? "move"
+                    : "moves"
+                  : exerciseCount === 1
+                    ? "exercise"
+                    : "exercises"}
               </SectionLabel>
             </div>
           )}
@@ -850,8 +907,9 @@ function ActivityCard({
               </SectionLabel>
             </div>
           )}
-          {/* A hybrid card's run stats above already carry the time. */}
-          {!isHybrid && (activity.duration ?? 0) > 0 && (
+          {/* A hybrid card's run stats above already carry the time, and
+              a circuit that leads with its minutes has said them. */}
+          {!isHybrid && !circuitMinutesLead && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
@@ -991,8 +1049,10 @@ function ActivityCard({
                     className={`grid size-10 shrink-0 place-items-center rounded-xl ${
                       lines.tone === "best"
                         ? "bg-achievement/15 text-achievement"
-                        : lines.tone === "sport" && isRun
-                          ? "bg-running/15 text-running-strong"
+                        : lines.tone === "sport"
+                          ? isRun
+                            ? "bg-running/15 text-running-strong"
+                            : "bg-lifting/12 text-lifting-strong"
                           : "bg-primary/15 text-primary"
                     }`}
                   >
@@ -1050,16 +1110,16 @@ function ActivityCard({
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1"
             style={{
-              background: `${THEME.brand}10`,
-              border: `1px solid ${THEME.brand}25`,
+              background: THEME.chrome.tint,
+              border: "1px solid hsl(var(--foreground) / 0.15)",
             }}
           >
             <Target
               className="size-4 shrink-0"
-              style={{ color: THEME.brand }}
+              style={{ color: THEME.chrome.text }}
             />
-            {/* Text on the -strong step — brand is 3.87:1 as 12px text on
-                the light card; the Target icon keeps the identity. */}
+            {/* The milestone is chrome, so its words and its Target icon
+                are the text colour (DS10). */}
             <p
               className="min-w-0 max-w-full break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}
@@ -1209,7 +1269,7 @@ function ActivityCard({
 
         {/* Kudos list popup */}
         {showKudosList && (
-          <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
+          <div className="mt-2 p-3 rounded-xl bg-muted space-y-2 chip-edge">
             <SectionLabel>Props from</SectionLabel>
             {kudosLoading ? (
               <div className="flex items-center justify-center py-2">

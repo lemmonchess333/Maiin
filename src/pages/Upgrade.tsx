@@ -69,6 +69,7 @@ import {
   manageSubscription,
 } from "@/lib/purchaseProvider";
 import ProNotOnSale from "@/components/paywall/ProNotOnSale";
+import PlanPricesPending from "@/components/paywall/PlanPricesPending";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialDetails from "@/components/TrialDetails";
 import { runningTrial } from "@/lib/subscriptionTrial";
@@ -79,6 +80,7 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { useAuth } from "@/lib/auth";
+import { takeTrialOfferWebCheckout } from "@/lib/trialOffer";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
@@ -183,11 +185,16 @@ export default function Upgrade() {
   const [beat, setBeat] = useState<Beat>("offer");
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
-  // Apple-localized prices on the RC build; hardcoded proPlans fallback
-  // elsewhere (IAP slice 3, #1099). Every price on the page is read from
-  // these plans, never looked up by id, so it is all in one currency.
-  const plans = useProPlanPrices();
-  const selected = findPlan(plans, selectedPlan);
+  // The App Store's prices on the RC build, and no price until they come;
+  // the pound plans on the web (IAP slice 3, #1099; Guideline 3.1.2).
+  // Every price on the page is read from these plans, never looked up by
+  // id, so it is all in one currency.
+  const {
+    plans,
+    failed: pricesFailed,
+    retry: retryPrices,
+  } = useProPlanPrices(user?.uid);
+  const selected = plans ? findPlan(plans, selectedPlan) : null;
   const withTrial = offersTrial(
     accountTrialEligible,
     storeTrialEligibility,
@@ -219,6 +226,15 @@ export default function Upgrade() {
     track("paywall_viewed", { source, platform });
   }, [source, platform]);
 
+  // A store outage would otherwise read as a paywall nobody tapped.
+  useEffect(() => {
+    if (pricesFailed) track("paywall_prices_failed", { source, platform });
+  }, [pricesFailed, source, platform]);
+
+  // The plans beat prints the prices; without them it would be a header
+  // and nothing else, so the page shows the offer, which says why.
+  const shownBeat: Beat = plans ? beat : "offer";
+
   // Checkout round-trip status. The web checkout returns here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
   // the analytics event, and clear the query so a reload doesn't
@@ -236,6 +252,16 @@ export default function Upgrade() {
         source: "upgrade_page",
         platform,
       });
+    }
+    // A checkout begun from the trial offer that ends setup goes on Home,
+    // as every way off that offer does (A6): the banner's words as a toast.
+    if (user && takeTrialOfferWebCheckout(user.uid)) {
+      const banner = checkoutBanner(checkoutStatus);
+      if (banner?.kind === "success") toast.success(banner.message);
+      else if (banner) toast(banner.message);
+      window.scrollTo(0, 0);
+      navigate("/", { replace: true });
+      return;
     }
     // Strip the query param after one render so a refresh doesn't
     // re-render the banner. Keep the rest of the search params.
@@ -343,11 +369,11 @@ export default function Upgrade() {
     <div className="space-y-4">
       {/* Header: back on the plans beat, close on the offer beat. */}
       <header className="flex items-center justify-between min-h-11">
-        {beat === "plans" ? (
+        {shownBeat === "plans" ? (
           <button
             onClick={() => setBeat("offer")}
             type="button"
-            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Back to the Pro overview"
           >
             <ArrowLeft className="size-5 text-foreground" />
@@ -360,7 +386,7 @@ export default function Upgrade() {
         <button
           onClick={leave}
           type="button"
-          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label="Close"
         >
           <X className="size-5 text-muted-foreground" />
@@ -374,8 +400,7 @@ export default function Upgrade() {
           aria-live="polite"
           className={cn(
             "flex items-start gap-3 p-3 rounded-xl",
-            statusBanner.kind === "success" &&
-              "bg-success-bg text-success-foreground",
+            statusBanner.kind === "success" && "bg-muted text-foreground",
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&
@@ -384,7 +409,7 @@ export default function Upgrade() {
         >
           {statusBanner.kind === "success" && (
             <CheckCircle2
-              className="size-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0 text-success-strong"
               aria-hidden="true"
             />
           )}
@@ -477,7 +502,7 @@ export default function Upgrade() {
               "w-full flex items-center justify-center gap-2 min-h-[44px] mt-1 rounded-xl",
               "bg-muted text-foreground text-sm font-semibold",
               "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:opacity-60 disabled:cursor-not-allowed"
             )}
           >
@@ -514,7 +539,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 1: the offer ─────────────────────────────────────── */}
-      {canBuy && beat === "offer" && (
+      {canBuy && shownBeat === "offer" && (
         <section className="space-y-4" aria-labelledby="pro-offer-heading">
           <div className="text-center space-y-2 pt-2">
             <h1
@@ -568,6 +593,8 @@ export default function Upgrade() {
               until the person picks another on the plans beat. */}
           {!onSale ? (
             <ProNotOnSale />
+          ) : !plans || !selected ? (
+            <PlanPricesPending failed={pricesFailed} onRetry={retryPrices} />
           ) : withTrial ? (
             <div className="space-y-1 text-center">
               <p className="text-base font-bold text-foreground text-balance">
@@ -592,7 +619,7 @@ export default function Upgrade() {
           <div className="space-y-2">
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
-            {onSale && (
+            {onSale && plans && (
               <Button
                 variant="neutral"
                 size="lg"
@@ -612,7 +639,9 @@ export default function Upgrade() {
             </Button>
           </div>
 
-          {onSale && (
+          {/* Renewal terms belong under a price: with none yet there is
+              nothing for them to qualify. */}
+          {onSale && plans && (
             <p className="text-micro text-muted-foreground text-center leading-snug">
               {withTrial
                 ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
@@ -624,7 +653,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
-      {canBuy && onSale && beat === "plans" && (
+      {canBuy && onSale && plans && selected && shownBeat === "plans" && (
         <section className="space-y-4" aria-labelledby="pro-plans-heading">
           <div className="space-y-1">
             <h1

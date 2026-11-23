@@ -36,6 +36,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
+import { leadPlan } from "@/lib/performanceWeekBreakdown";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -74,6 +75,7 @@ import {
 } from "@/components/analytics/goDeeperLines";
 import { currentWeightRate } from "@/utils/weightTrend";
 import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import {
   nutritionRows,
   predictionRow,
@@ -97,8 +99,6 @@ import AnalyticsGoDeeper, {
   type AnalyticsPage,
 } from "@/components/analytics/AnalyticsGoDeeper";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
-import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
-import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { distanceLabel } from "@/lib/runLabels";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -403,9 +403,11 @@ export default function History() {
     tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
     (typeof window !== "undefined" &&
       PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
-  /* Q84: the score's details (the training load among them) and the
-     ranges older than 3 months are Pro. A free account's link to either
-     lands on what it has: the headline score, 3 months. */
+  /* Q84: the score's details (its card and ring, its 12-week chart and
+     average, what it is made of) and the ranges older than 3 months are
+     Pro. The 0–100 number itself is free, small on the lead (the owner,
+     18 November 2026). A free account's link to either lands on what it
+     has: the lead, with its verdict and number, and 3 months. */
   const { isPro } = useSubscription();
   const navigate = useNavigate();
   const openHistoryPro = useCallback(() => {
@@ -643,12 +645,6 @@ export default function History() {
   // Lifetime totals below need EVERY workout, not just the newest 50.
   const { workouts, loading: workoutsLoading } = useWorkouts({
     coverage: "complete",
-  });
-  // Training-load curve feed — self-fetching (needs warmup history beyond
-  // the visible range, so it can't reuse the range-scoped runs above), and
-  // only while the score's details, which draw it, are open.
-  const trainingLoad = useTrainingLoadSeries(rangeDays, {
-    enabled: filter === "analytics" && view === "overview" && scoreOpen,
   });
   const uid = useUid();
   const {
@@ -1112,6 +1108,7 @@ export default function History() {
   );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
   const targetProtein = effectiveTargets.protein ?? 0;
+  const { accent: macroAccent } = useMacroPalette();
   const trendRows = useMemo(() => {
     const rows: TrendRow[] = [];
     const weight = weightRow({
@@ -1131,6 +1128,7 @@ export default function History() {
         showSeries: nutrition.showSparklines,
         targetCalories,
         targetProtein,
+        proteinColor: macroAccent.protein,
       })
     );
     const fitness = profile?.runFitness ?? null;
@@ -1142,6 +1140,7 @@ export default function History() {
     if (prediction) rows.push(prediction);
     return rows;
   }, [
+    macroAccent.protein,
     bodyweight.points,
     range,
     profile?.preferredWeightUnit,
@@ -1294,15 +1293,16 @@ export default function History() {
             )}
 
             {/* Hist6: Performance pinned to the top, range-independent
-                ("this week"). The range below scopes only the history
-                under it, so changing it never moves the index. Trim1
-                call 5: this is the one place the score is shown, and
-                what it is made of opens in place under "Score details",
-                the training load among it, which carries the range in
-                its own card as it did on the Performance page.
-                Suppressed in cold-start: the "Your first week starts
-                here" card below stands in until the first session is
-                logged. */}
+                (the last 7 days). The range below scopes only the
+                history under it, so changing it never moves the lead.
+                App1 Q10: the lead is the verdict and the last 7 days
+                against the usual week, with the 0–100 number small
+                beside the window, free (the owner, 18 November 2026).
+                Its details, opened in place under "Score details", are
+                Pro (Q84), and Progress is the one page that shows the
+                score (Q12). Suppressed in cold-start:
+                the "Your first week starts here" card below stands in
+                until the first session is logged. */}
             {filter === "analytics" &&
               view === "overview" &&
               !isAnalyticsColdStart && (
@@ -1319,18 +1319,11 @@ export default function History() {
                     detailsOpen={scoreOpen}
                     onToggleDetails={setScoreOpen}
                     detailsLocked={!isPro}
-                  >
-                    <SectionErrorBoundary sectionName="training-load">
-                      <TrainingLoadCard
-                        points={trainingLoad.points}
-                        loading={trainingLoad.loading}
-                        failed={trainingLoad.failed}
-                        onRetry={trainingLoad.refresh}
-                        guardrails={trainingLoad.guardrails}
-                        range={{ selected: timeRange, onChange: setTimeRange }}
-                      />
-                    </SectionErrorBoundary>
-                  </PerformanceSection>
+                    /* The plan the score's adherence counted against
+                       and this week's own count, so the lead says "3 of
+                       5 planned sessions" only when the two agree. */
+                    plan={leadPlan(profile, weekPulse)}
+                  />
                 </SectionErrorBoundary>
               )}
 
@@ -1421,7 +1414,6 @@ export default function History() {
                 <ArrivalFade {...overviewArrival}>
                   <EmptyState
                     icon={LineChart}
-                    accent={THEME.brand}
                     /* Day one is a starting line (DS4 words rules): the
                        first step, and what fills. The rules' rewrite of
                        "No analytics yet". */
@@ -1910,7 +1902,7 @@ export default function History() {
                             ? nutrition.proteinSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.protein}
+                        accentColor={macroAccent.protein}
                       />
                     </div>
                     <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
@@ -1936,7 +1928,7 @@ export default function History() {
                             ? nutrition.carbsSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.carbs}
+                        accentColor={macroAccent.carbs}
                       />
                       <StatCard
                         label="Fat"
@@ -1957,7 +1949,7 @@ export default function History() {
                             ? nutrition.fatSparkline
                             : undefined
                         }
-                        accentColor={THEME.macros.fat}
+                        accentColor={macroAccent.fat}
                       />
                     </div>
 

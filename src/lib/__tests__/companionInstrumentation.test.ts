@@ -70,8 +70,11 @@ describe("B0 event names", () => {
   it("training-loop events keep their wire names", () => {
     trackLifecycle("session_started", { kind: "run", offPlan: true });
     trackLifecycle("completion_surfaces", { count: 1 });
-    trackLifecycle("return_surface_shown", { surface: "fell-behind" });
-    trackLifecycle("return_choice", { surface: "fell-behind", choice: "skip" });
+    trackLifecycle("return_surface_shown", { returnSurface: "fell-behind" });
+    trackLifecycle("return_choice", {
+      returnSurface: "fell-behind",
+      choice: "skip",
+    });
     trackLifecycle("checkin_answered", { clarity: 4, ease: 5 });
     expect(emitSpy.mock.calls.map((c) => c[1])).toEqual([
       "session_started",
@@ -103,7 +106,7 @@ describe("B0 payloads carry no user-authored text", () => {
     kind: "run",
     offPlan: true,
     count: 1,
-    surface: "fell-behind",
+    returnSurface: "fell-behind",
     choice: "skip",
     clarity: 4,
     ease: 5,
@@ -115,7 +118,7 @@ describe("B0 payloads carry no user-authored text", () => {
       path: ["usual", "typeahead", "copy", "nl", "manual", "barcode", "photo"],
       unit: ["kg", "lbs", "st"],
       kind: ["lift", "run"],
-      surface: ["trial-expired", "fell-behind", "badge", "priming"],
+      returnSurface: ["trial-expired", "fell-behind", "badge", "priming"],
       choice: [
         "dismissed",
         "realign",

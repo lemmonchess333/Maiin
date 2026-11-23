@@ -40,7 +40,7 @@ import { isNativePlatform } from "@/lib/platform";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 
 const ROW =
-  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted chip-edge";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
 
 /** Apple Health choices remain independent: steps, Watch HR, and export.
@@ -313,7 +313,7 @@ export default function HealthSection({
         <SectionHeading size="compact">Steps</SectionHeading>
         {pending && <Skeleton className="h-[4.5rem] w-full rounded-lg" />}
         {!pending && status === "unavailable" && (
-          <div className="p-4 rounded-lg bg-muted">
+          <div className="p-4 rounded-lg bg-muted chip-edge">
             <p className="text-sm text-foreground">Not available here</p>
             <p className="text-xs text-muted-foreground">
               Step tracking uses Apple Health, available in the Tropos iOS app.
@@ -509,7 +509,7 @@ export default function HealthSection({
             </>
           )}
           {showPendingExports && (
-            <div className="p-3 rounded-lg bg-muted space-y-2">
+            <div className="p-3 rounded-lg bg-muted space-y-2 chip-edge">
               <p className="text-sm font-medium text-foreground">
                 {pendingExports} Apple Health{" "}
                 {pendingExports === 1 ? "update" : "updates"} pending
@@ -539,7 +539,7 @@ export default function HealthSection({
       )}
 
       {CONNECTED_TRAINING_RELEASED && failed && (
-        <div className="p-3 rounded-lg bg-muted space-y-2">
+        <div className="p-3 rounded-lg bg-muted space-y-2 chip-edge">
           <p className="text-sm text-foreground">
             Couldn’t load your connected training choices.
           </p>

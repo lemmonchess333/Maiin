@@ -10,6 +10,7 @@ import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import type { ProgramState } from "./programTypes";
 import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
 import { isRollingGoal, type RollingGoal } from "./rollingPlan";
+import { isRetiredRunMode } from "./runModeResolution";
 
 /**
  * The upkeep the programme engine does by itself, asked as questions of a
@@ -44,15 +45,15 @@ export function raceAwaitsItsEnding(
   );
 }
 
-/** The run plans this build makes (`race_prep`, `starter`, `rolling`) or
- *  retires (`structured`). A plan of any other kind was written by a newer
- *  build, and this build leaves it exactly as it is: rolling, refreshing or
- *  rebuilding it here would clear it, since every one of those paths reads
- *  a plan it does not know as free running. */
-const RUN_PLAN_MODES_THIS_BUILD_KNOWS: readonly string[] = [
+/** The run plans this build makes (`race_prep`, `starter`, `rolling`). It
+ *  also knows the retired `structured` one (`isRetiredRunMode`, App1 Q25),
+ *  which it reads as free running. A plan of any other kind was written by a
+ *  newer build, and this build leaves it exactly as it is: rolling,
+ *  refreshing or rebuilding it here would clear it, since every one of those
+ *  paths reads a plan it does not know as free running. */
+const RUN_PLAN_MODES_THIS_BUILD_MAKES: readonly string[] = [
   "race_prep",
   "starter",
-  "structured",
   "rolling",
 ];
 
@@ -62,7 +63,9 @@ export function isRunPlanFromNewerBuild(runPlan: unknown): boolean {
       ? (runPlan as { mode?: unknown }).mode
       : undefined;
   return (
-    typeof mode === "string" && !RUN_PLAN_MODES_THIS_BUILD_KNOWS.includes(mode)
+    typeof mode === "string" &&
+    !RUN_PLAN_MODES_THIS_BUILD_MAKES.includes(mode) &&
+    !isRetiredRunMode(mode)
   );
 }
 

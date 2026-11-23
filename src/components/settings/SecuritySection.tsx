@@ -174,8 +174,11 @@ export default function SecuritySection({
               }
               trailing={
                 emailVerified ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
-                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-foreground">
+                    <CheckCircle2
+                      className="size-3.5 text-success-strong"
+                      aria-hidden="true"
+                    />
                     Verified
                   </span>
                 ) : (
@@ -202,7 +205,7 @@ export default function SecuritySection({
         </SettingsGroup>
 
         {user.email && !emailVerified && (
-          <div className="rounded-xl bg-card p-3 space-y-2">
+          <div className="rounded-xl bg-card p-3 space-y-2 dark:card-shadow">
             <p className="text-sm text-muted-foreground">
               Verify your email to post or comment. You can keep logging
               workouts and meals, and manage or delete your account while

@@ -166,7 +166,11 @@ export default function RunMap({
         source: "target-route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": THEME.brand,
+          // The route to follow is the chrome's colour, not a sport's
+          // (DS10 call 1): purple means lifting, and this is a run.
+          "line-color": darkMode
+            ? THEME.chrome.line.dark
+            : THEME.chrome.line.light,
           "line-width": 6,
           "line-opacity": 0.45,
           "line-dasharray": [2, 1.5],
@@ -263,7 +267,7 @@ export default function RunMap({
         source: "segment-pick",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": darkMode ? THEME.bg : THEME.purpleRamp[50],
+          "line-color": darkMode ? THEME.bg : "#FFFFFF",
           "line-width": 11,
           "line-opacity": 0.9,
         },
@@ -273,7 +277,12 @@ export default function RunMap({
         type: "line",
         source: "segment-pick",
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": THEME.brand, "line-width": 6 },
+        paint: {
+          "line-color": darkMode
+            ? THEME.chrome.line.dark
+            : THEME.chrome.line.light,
+          "line-width": 6,
+        },
       });
     };
     map.on("load", onLoad);
@@ -542,7 +551,7 @@ export default function RunMap({
         replayIndex === undefined
       ) {
         const el = document.createElement("div");
-        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.danger};border:2px solid white;`;
+        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.running};border:2px solid white;`;
         endMarkerRef.current = new maplibregl.Marker({ element: el })
           .setLngLat([
             points[points.length - 1].lon,
@@ -690,13 +699,13 @@ export default function RunMap({
             aria-label="Zoom in"
             icon={<Plus />}
             onClick={() => mapRef.current?.zoomIn()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label="Zoom out"
             icon={<Minus />}
             onClick={() => mapRef.current?.zoomOut()}
-            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
           />
           <IconButton
             aria-label={
@@ -706,8 +715,8 @@ export default function RunMap({
             onClick={toggleHeadingUp}
             className={
               headingUp
-                ? "bg-running-fill text-white shadow-sm"
-                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
             }
           />
           {showRecenter && (
@@ -715,7 +724,7 @@ export default function RunMap({
               aria-label="Recenter map on your location"
               icon={<LocateFixed />}
               onClick={recenter}
-              className="bg-running-fill text-white shadow-sm"
+              className="bg-primary text-primary-foreground shadow-sm"
             />
           )}
         </div>
@@ -740,7 +749,7 @@ export default function RunMap({
         // status the long copy points to. Wide-first. The query is in rem,
         // not em: a container query's em is the container's own 12px, so
         // 20em never matched.
-        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black">
           <span className="@max-[20rem]:hidden">
             Map tiles unavailable. Check your connection. GPS status is shown
             separately.

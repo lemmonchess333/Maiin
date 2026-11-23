@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
 import LeaderboardRow from "@/components/social/LeaderboardRow";
 import { useAuth } from "@/lib/auth";
+import { PEOPLE_COUNT_MIN_VISIBLE, roomPeople } from "@/lib/fillingUp";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { finalDayLine, inFinalDay } from "./challengeEditions";
 import ChallengeMedalBand from "./ChallengeMedalBand";
+import ChallengePeople from "./ChallengePeople";
 import { countMyWeekLifts } from "./myWeekLifts";
 import { challengeHasMedal } from "./rowMedal";
 import {
@@ -38,6 +40,10 @@ const TOP_SHOWN = 3;
  * is the one weekly ranking. Like `ChallengeCard`, the card shows its
  * leaders only to someone who has joined and has a session in, so the
  * figures have something to be read against.
+ *
+ * Under its name, who is in it (`ChallengePeople`): "12 joined", or
+ * "Filling up" while fewer than 3 have joined (App1 Q6), since the card is
+ * offered from a person's first day however few people are on Tropos.
  *
  * `leads`: its action is the page's one filled button, unless the page
  * has a Start a circle card, which takes that place (no Circle yet).
@@ -114,12 +120,12 @@ export default function WeeklyChallengeCard({
 
   if (!hasChallenges) {
     return (
-      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${THEME.brand}14` }}
+          style={{ background: THEME.chrome.tint }}
         >
-          <Trophy size={16} style={{ color: THEME.brand }} />
+          <Trophy size={16} style={{ color: THEME.chrome.text }} />
         </div>
         <p className="text-sm font-semibold text-foreground">
           No active challenges
@@ -149,6 +155,11 @@ export default function WeeklyChallengeCard({
      the name again. */
   const medal = !!weekly && challengeHasMedal(weekly);
   const showTitle = !(medal && weekly && title === weekly.name);
+  /* Who is in it says nothing while the count is unknown, so the band is
+     given no line for it then: a line it was given would be drawn empty. */
+  const hasPeople =
+    !!weekly &&
+    roomPeople(weekly.participantCount, PEOPLE_COUNT_MIN_VISIBLE) !== null;
   /* Leading, the action is the page's one filled button, and neutral
      (Soc16, §0 rule 12): white on dark, the colour left to the medal and
      the progress. */
@@ -166,6 +177,11 @@ export default function WeeklyChallengeCard({
           challenge={weekly}
           progress={progress}
           timeLeft={timeLeft}
+          meta={
+            hasPeople ? (
+              <ChallengePeople count={weekly.participantCount} />
+            ) : undefined
+          }
         />
       )}
       <div className="p-4">
@@ -180,13 +196,13 @@ export default function WeeklyChallengeCard({
               style={{
                 background: goalMet
                   ? `${THEME.semantic.positive}14`
-                  : `${THEME.brand}14`,
+                  : THEME.chrome.tint,
               }}
             >
               <Trophy
                 size={18}
                 style={{
-                  color: goalMet ? THEME.semantic.positive : THEME.brand,
+                  color: goalMet ? THEME.semantic.positive : THEME.chrome.text,
                 }}
               />
             </div>
@@ -208,6 +224,13 @@ export default function WeeklyChallengeCard({
               >
                 {sub}
               </p>
+              {/* Without a medal band, who is in it sits under the line. */}
+              {!medal && weekly && (
+                <ChallengePeople
+                  count={weekly.participantCount}
+                  className="mt-1 text-xs text-muted-foreground"
+                />
+              )}
             </div>
             {timeLeft && !medal && (
               <span className="text-caption text-muted-foreground shrink-0 mt-0.5">

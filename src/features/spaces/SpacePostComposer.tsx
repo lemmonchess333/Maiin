@@ -38,6 +38,7 @@ import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 import { recentSessionDay, type RecentSession } from "./useRecentSessions";
 import { spacePostSnapshot } from "./spacePostSnapshot";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 import { distanceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -50,6 +51,9 @@ function attachableLabel(a: RecentSession, unit: DistanceUnit): string {
   if (a.kind === "run") {
     return `${distanceLabel(a.run.distance, unit)} run`;
   }
+  // A circuit (Circ1) has no exercises: its name says what it was.
+  const circuit = workoutCircuit(a.workout);
+  if (circuit) return `Workout · ${circuit.name}`;
   const names = a.workout.exercises
     .slice(0, 2)
     .map((e) => e.exerciseName)

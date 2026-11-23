@@ -62,7 +62,7 @@ export default function WeekResetCard({
             />
           ) : (
             <CheckCircle2
-              className="mt-0.5 size-5 shrink-0 text-lifting-strong"
+              className="mt-0.5 size-5 shrink-0 text-foreground"
               aria-hidden="true"
             />
           )}
@@ -99,7 +99,7 @@ export default function WeekResetCard({
     <Card as="section" size="compact" aria-label="Make this week fit">
       <div className="flex items-start gap-3">
         <CalendarDays
-          className="mt-0.5 size-5 shrink-0 text-lifting-strong"
+          className="mt-0.5 size-5 shrink-0 text-foreground"
           aria-hidden="true"
         />
         <div className="min-w-0">

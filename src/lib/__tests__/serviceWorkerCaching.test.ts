@@ -295,6 +295,23 @@ describe("public/sw.js caching (executed)", () => {
     );
   });
 
+  it("leaves the unsubscribe page to the browser: never kept, never the shell (App1 Q55)", async () => {
+    const sw = worker();
+    sw.net.pages.set(new URL(`${BASE}food`, ORIGIN).href, page("<app>"));
+    await sw.get(`${BASE}food`, "navigate");
+    const link = `${BASE}email/unsubscribe?u=abc&t=${"T".repeat(43)}`;
+    sw.net.pages.set(new URL(link, ORIGIN).href, page("<unsubscribe>"));
+    // Not taken: the browser fetches it itself.
+    expect(await sw.get(link, "navigate")).toBeNull();
+    const kept = [...sw.store.values()].flatMap((entries) => [
+      ...entries.values(),
+    ]);
+    expect(kept.map((r) => r.body)).not.toContain("<unsubscribe>");
+    sw.net.online = false;
+    // Anchor: the shell the app kept is still the app.
+    expect((await sw.get(`${BASE}program`, "navigate"))?.body).toBe("<app>");
+  });
+
   it("names its cache by the build, so a deploy's activate removes the last one's", async () => {
     const before = worker("build-a");
     await before.lifecycle("install");

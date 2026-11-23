@@ -108,6 +108,9 @@ import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import { smallPlatesHint } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
+import { sportChange, sportChangeRefusal } from "@/lib/sportChange";
+import { localDateString } from "@/lib/dateHelpers";
+import StopSportDialog from "./StopSportDialog";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
@@ -184,7 +187,6 @@ interface SettingsOptionCardProps {
   desc?: string;
   disabled?: boolean;
   index?: number;
-  accent?: string;
 }
 
 function SettingsOptionCard({
@@ -195,7 +197,6 @@ function SettingsOptionCard({
   desc,
   disabled,
   index = 0,
-  accent = THEME.brand,
 }: SettingsOptionCardProps) {
   // The card is a container so its picture can give way at larger text,
   // as setup's OptionCard does: under 15em the icon tile left a word like
@@ -213,22 +214,26 @@ function SettingsOptionCard({
         transition={{ duration: 0.18, delay: index * 0.025 }}
         className={cn(
           "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-          selected ? "border-transparent" : "border-border/70",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98] dark:card-shadow",
+          selected
+            ? "border-transparent"
+            : "border-border/70 dark:border-transparent",
           disabled && "opacity-35 pointer-events-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
         style={
           selected
             ? {
                 /* The tint lies over the card, not in place of it. A bare
-                   `${accent}14` replaced `bg-card` with a wash over the
+                   tint replaced `bg-card` with a wash over the
                    PAGE, so in light the description under it (muted, 12px)
                    was 4.23:1 on #e3e2ee, and in dark the selected card sat
                    darker than its neighbours. axe caught it once Settings
-                   listed this editor (Trim1 call 2). */
-                background: `linear-gradient(${accent}14, ${accent}14), hsl(var(--card))`,
-                borderColor: `${accent}45`,
+                   listed this editor (Trim1 call 2). An image over the
+                   class's fill, so no shorthand resets it
+                   (inlineBackgroundFill.test.ts). */
+                backgroundImage: `linear-gradient(${THEME.chrome.tint}, ${THEME.chrome.tint})`,
+                borderColor: "hsl(var(--foreground) / 0.45)",
               }
             : undefined
         }
@@ -249,18 +254,19 @@ function SettingsOptionCard({
           ) : null}
         </span>
         {selected && !disabled ? (
-          <Check className="size-4 shrink-0" style={{ color: accent }} />
+          <Check
+            className="size-4 shrink-0"
+            style={{ color: THEME.chrome.text }}
+          />
         ) : null}
       </motion.button>
     </div>
   );
 }
 
-// Each focus card gets a distinct GLYPH for scannability, but all keep the
-// purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Support my running" is lifting that
-// complements runs, NOT run scheduling). So per sport-coding, purple is
-// correct; only the icon varies. Do not recolour these to coral.
+// Each focus card gets a distinct GLYPH for scannability. The glyph and the
+// selection are the chrome's colour (DS10 call 1): a selected card is
+// neutral on every screen, and the page is the lift plan already.
 const FOCUS_OPTIONS: {
   id: PrimaryGoal;
   label: string;
@@ -271,13 +277,13 @@ const FOCUS_OPTIONS: {
     id: "hypertrophy",
     label: "Build muscle",
     desc: "Higher reps, more volume",
-    icon: <BicepsFlexed size={18} style={{ color: THEME.brand }} />,
+    icon: <BicepsFlexed size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "strength",
     label: "Get stronger",
     desc: "Lower reps, heavier compounds",
-    icon: <Dumbbell size={18} style={{ color: THEME.brand }} />,
+    icon: <Dumbbell size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "fat_loss",
@@ -286,19 +292,19 @@ const FOCUS_OPTIONS: {
     // high-rep "conditioning" work: the lifting keeps strength and muscle
     // while the calorie deficit does the fat loss (Lift4 (4)).
     desc: "Keeps your strength and muscle as you lose fat",
-    icon: <Flame size={18} style={{ color: THEME.brand }} />,
+    icon: <Flame size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "general",
     label: "General fitness",
     desc: "Balanced general training",
-    icon: <Heart size={18} style={{ color: THEME.brand }} />,
+    icon: <Heart size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "running",
     label: "Support my running",
     desc: "Lifting that complements your runs",
-    icon: <Footprints size={18} style={{ color: THEME.brand }} />,
+    icon: <Footprints size={18} style={{ color: THEME.chrome.text }} />,
   },
 ];
 
@@ -312,13 +318,13 @@ const EXPERIENCE_OPTIONS: {
     id: "beginner",
     label: "Beginner",
     desc: "0 – 6 months of consistent training",
-    icon: <Target size={20} style={{ color: THEME.success }} />,
+    icon: <Target size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "intermediate",
     label: "Intermediate",
     desc: "6 months – 2 years of training",
-    icon: <Award size={20} style={{ color: THEME.brand }} />,
+    icon: <Award size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "advanced",
@@ -338,19 +344,19 @@ const EQUIPMENT_OPTIONS: {
     id: "full_gym",
     label: "Full gym",
     desc: "Barbells, dumbbells, cables, machines",
-    icon: <Warehouse size={20} className="text-lifting" />,
+    icon: <Warehouse size={20} className="text-foreground" />,
   },
   {
     id: "home_gym",
     label: "Home gym",
     desc: "Dumbbells, bench",
-    icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
+    icon: <Dumbbell size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "minimal",
     label: "Minimal",
     desc: "Dumbbells and bodyweight",
-    icon: <User size={20} style={{ color: THEME.success }} />,
+    icon: <User size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "no_equipment",
@@ -370,7 +376,7 @@ const INJURY_OPTIONS: {
     id: "none",
     label: "No injuries",
     desc: "No limitations",
-    icon: <Check size={20} style={{ color: THEME.success }} />,
+    icon: <Check size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "lower_back",
@@ -404,7 +410,6 @@ const INJURY_OPTIONS: {
   },
 ];
 
-// Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
   recentLayoff = "none",
   recentRuns,
@@ -455,6 +460,20 @@ export default function ProgrammeSettings({
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Stop lifting (TrainWk1 step 6): its own confirmation, and why it can't
+  // be done when it can't (the last sport, a training block running).
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const stopRefused = sportChangeRefusal(
+    profile,
+    programState,
+    "remove_lifting"
+  );
+  /* Lifting as the plan's one sport is said when Stop lifting is tried,
+     not before: the foot of the page is no place to tell someone what to
+     add. A training block is said up front: it is the plan's own state. */
+  const [stopTried, setStopTried] = useState(false);
+  const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
 
   const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
@@ -640,6 +659,62 @@ export default function ProgrammeSettings({
     }
   }
 
+  /** Takes lifting off the plan: its lift days go, and everything logged
+   *  stays (`sportChange`'s `remove_lifting`). */
+  async function stopLifting() {
+    if (stopping || readiness !== "ready") return;
+    const change = sportChange(
+      {
+        profile,
+        programState,
+        today: localDateString(new Date()),
+        recentLayoff,
+        recentRuns,
+      },
+      { kind: "remove_lifting" }
+    );
+    if (!change.ok) {
+      setConfirmStop(false);
+      toast.error(change.sentence);
+      return;
+    }
+    setStopping(true);
+    try {
+      const plan = buildPlan(change.input);
+      Object.assign(plan.profileUpdates, change.patch);
+      await configureLiftPlan(plan, profile, programState);
+      setConfirmStop(false);
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved; reload rather than invite a second try (as Save changes).
+        logger.warn(
+          "[ProgrammeSettings] lifting stopped but profile refresh failed; reloading",
+          refreshErr
+        );
+        toast.success("Lifting stopped");
+        window.location.reload();
+        return;
+      }
+      toast.success("Lifting stopped");
+      onSaved?.();
+    } catch (err) {
+      logger.error("[ProgrammeSettings] stop lifting failed:", err);
+      const rejection = planSaveRejection(
+        err,
+        "Your programme changed. Reopen settings to review the latest plan before saving."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setStopping(false);
+    }
+  }
+
   async function applyReset() {
     // As applyRebuild: a reset made while the programme loads was built
     // from no programme at all.
@@ -820,7 +895,7 @@ export default function ProgrammeSettings({
                engine took ownership. Days, experience, equipment and
                injuries stay editable below, so an injury or an equipment
                change never costs the user their block. */
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm dark:card-shadow dark:border-transparent">
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-bold leading-tight">
                   {focusLabel(activeBlockFocus)}
@@ -839,7 +914,6 @@ export default function ProgrammeSettings({
                   onSelect={() => setPrimaryGoal(opt.id)}
                   index={i}
                   icon={opt.icon}
-                  accent={THEME.brand}
                   label={opt.label}
                   desc={opt.desc}
                 />
@@ -904,7 +978,7 @@ export default function ProgrammeSettings({
             the exercise editor, not a split toggle. */}
         <div>
           <GroupHeading>Split</GroupHeading>
-          <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
             <p className="text-sm font-medium text-foreground">
               {currentSplitLabel}
             </p>
@@ -932,7 +1006,7 @@ export default function ProgrammeSettings({
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
-        <div className="rounded-xl bg-muted px-3 py-2.5">
+        <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
           {/* "Edit days" drops under the counts when the two no longer
               fit side by side (larger text), rather than squeezing them. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -975,7 +1049,7 @@ export default function ProgrammeSettings({
             <button
               type="button"
               onClick={onOpenWeeklyLayout}
-              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
+              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-foreground transition-transform active:scale-[0.97]"
             >
               Edit days &rarr;
             </button>
@@ -1111,6 +1185,34 @@ export default function ProgrammeSettings({
 
       {afterForm}
 
+      {/* Stop lifting (TrainWk1 step 6; the Train grill's Q33): lifting off
+          the plan, as Run plan's Stop running takes running off. Refused
+          with the reason when it would leave no sport, or while a training
+          block runs. */}
+      {stopHeld ? (
+        <p className="px-1 text-xs text-muted-foreground">
+          {stopHeld.sentence}
+        </p>
+      ) : (
+        <SettingsGroup
+          footer={
+            <span role="status">
+              {stopTried && stopRefused
+                ? stopRefused.sentence
+                : "Your saved workouts and best lifts stay. Your plan’s lift days go."}
+            </span>
+          }
+        >
+          <SettingsRow
+            tone="destructive"
+            label="Stop lifting"
+            onClick={() =>
+              stopRefused ? setStopTried(true) : setConfirmStop(true)
+            }
+          />
+        </SettingsGroup>
+      )}
+
       {/* Reset programme. It was the foot of Settings → Programme, a page
           that edited nothing; this editor is where the programme is set
           now (Trim1 call 2). */}
@@ -1127,7 +1229,7 @@ export default function ProgrammeSettings({
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)] transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           <PendingChangesSummary
@@ -1150,7 +1252,7 @@ export default function ProgrammeSettings({
               // the primitive.
               "rounded-2xl py-3.5 font-bold disabled:opacity-60",
               (!dirty || saving || !programReady) &&
-                "bg-muted text-muted-foreground opacity-60"
+                "bg-muted chip-edge text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}
@@ -1159,6 +1261,14 @@ export default function ProgrammeSettings({
       )}
 
       {confirmModal}
+      <StopSportDialog
+        sport="lifting"
+        open={confirmStop}
+        busy={stopping}
+        ready={programReady}
+        onCancel={() => setConfirmStop(false)}
+        onConfirm={() => void stopLifting()}
+      />
     </div>
   );
 }

@@ -8,11 +8,27 @@ import { cn } from "@/lib/utils";
  * place the app writes its own name large. Its colour is the line's, so
  * the welcome can set it on its photographs.
  */
-export default function AuthLockup({ className }: { className?: string }) {
+export default function AuthLockup({
+  className,
+  small = false,
+}: {
+  className?: string;
+  /** The shared pages' size (owner, 22 Nov 2026): the card under it
+   *  carries the lockup too, so the page's own is the small one. */
+  small?: boolean;
+}) {
   return (
-    <p className={cn("flex items-center gap-2.5 text-foreground", className)}>
-      <BrandMark className="h-[26px]" />
-      <span className="ds-wordmark">Tropos</span>
+    <p
+      className={cn(
+        "flex items-center text-foreground",
+        small ? "gap-1.5" : "gap-2.5",
+        className
+      )}
+    >
+      <BrandMark className={small ? "h-4" : "h-[26px]"} />
+      <span className={small ? "ds-wordmark ds-wordmark-small" : "ds-wordmark"}>
+        Tropos
+      </span>
     </p>
   );
 }

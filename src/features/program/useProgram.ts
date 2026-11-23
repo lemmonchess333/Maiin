@@ -456,17 +456,6 @@ export function useProgram() {
         }
       }
 
-      // Run9 (3a): `structured` run mode is retired. A legacy structured user
-      // is migrated to freeform INLINE here — not via a separate effect — so
-      // the migration can't race the runDays generation below (the load effect
-      // is the one place that generates run days). `effectiveRunMode` makes the
-      // rest of this load behave as freeform immediately; the persisted
-      // runMode write is fire-and-forget (idempotent: once freeform, the next
-      // load skips this). The orphaned structured runDays/runPlan are wiped in
-      // the existing-doc branch below.
-      const effectiveRunMode =
-        profile.runMode === "structured" ? "freeform" : profile.runMode;
-
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
 
       // Cache-first paint. Firestore persistence is enabled (firebase.ts),
@@ -512,10 +501,7 @@ export function useProgram() {
         const thisWeek = localWeekKey();
         const weekSchedule = profile.weekSchedule ?? [];
         const runTarget = getWeeklyRunTarget(profile) || 3;
-        if (profile.runMode === "structured") {
-          next = { ...next, runDays: [] };
-          delete next.runPlan;
-        } else if (starterWeekNeedsBuilding(next, profile)) {
+        if (starterWeekNeedsBuilding(next, profile)) {
           // A starter goal just begun: its first week, from today, at the
           // first stage. Its later weeks are the rollover's.
           next = {
@@ -573,18 +559,9 @@ export function useProgram() {
         }
         next = repairRunPrescriptions(next, profile, today);
         if (cancelled || auth.currentUser?.uid !== user.uid) return;
-        if (!sameStoredValue(next, raw) || profile.runMode === "structured") {
+        if (!sameStoredValue(next, raw)) {
           try {
-            next = await commitProgramTransition(
-              db,
-              user.uid,
-              raw,
-              next,
-              profile.runMode === "structured"
-                ? { base: profile, patch: { runMode: "freeform" } }
-                : undefined
-            );
-            if (profile.runMode === "structured") await refreshProfile?.();
+            next = await commitProgramTransition(db, user.uid, raw, next);
           } catch (error) {
             if (!(error instanceof ProgrammeConflictError)) throw error;
             // A user action won the race. Paint that state; never retry an old
@@ -625,22 +602,22 @@ export function useProgram() {
           },
           // Run27 (19): an ultra's back-to-back day, kept as the long
           // run's is.
-          weekendHoldsBackToBacks(effectiveRunMode, profile.raceGoal)
+          weekendHoldsBackToBacks(profile.runMode, profile.raceGoal)
         );
 
-        // Generate run schedule only for an active race plan. PR-0b-ii: V2
-        // writers. Run9 (3a): `structured` is retired — freeform (incl. a
-        // migrated structured user) gets no auto-assigned runDays.
+        // Generate run schedule only for an active race plan or a starter
+        // goal. PR-0b-ii: V2 writers. Free running gets no auto-assigned
+        // runDays.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (effectiveRunMode === "starter") {
+        if (profile.runMode === "starter") {
           // A starter goal's first week, from today, at the first stage.
           ({ runDays, runPlan } = starterWeekFrom({
             weekSchedule: profile.weekSchedule ?? [],
             stage: 1,
             today: localDateString(),
           }));
-        } else if (effectiveRunMode === "race_prep" && profile.raceGoal) {
+        } else if (profile.runMode === "race_prep" && profile.raceGoal) {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
@@ -696,12 +673,8 @@ export function useProgram() {
             db,
             user.uid,
             null,
-            initial,
-            profile.runMode === "structured"
-              ? { base: profile, patch: { runMode: "freeform" } }
-              : undefined
+            initial
           );
-          if (profile.runMode === "structured") await refreshProfile?.();
           if (!cancelled) setProgramState(saved);
         } catch (error) {
           if (!(error instanceof ProgrammeConflictError)) throw error;

@@ -60,8 +60,11 @@ function useFinishConfetti(tone: FinishTone | null, on: boolean) {
 export type FinishFigure =
   { to: number; format: (n: number) => string } | { value: string };
 
-/** A figure longer than five characters steps down, so "12,345" fits a
- *  320 px screen in the wide cut. */
+/** The display register's step down for a figure longer than five
+ *  characters (`--display-scale`, read by `.ds-display-figure`'s own
+ *  56-96 px). The finish's size (`.ds-display-finish`) does not read it:
+ *  a seven-character total fits a 320 px screen at 54 px, so a long
+ *  figure keeps the finish's 64 px on a phone. */
 function displayScale(text: string): number {
   return text.length <= 5 ? 1 : text.length === 6 ? 0.86 : 0.74;
 }
@@ -190,7 +193,7 @@ export default function FinishHero({
         )}
         <p
           data-finish-figure
-          className="ds-display-figure relative mt-1 text-foreground"
+          className="ds-display-figure ds-display-finish relative mt-1 text-foreground"
           style={
             { "--display-scale": displayScale(figureText) } as CSSProperties
           }

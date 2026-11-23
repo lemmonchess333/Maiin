@@ -16,8 +16,9 @@
  * Pinned invariants, per prefix:
  *   - default deny for any unmatched path
  *   - progress-photos/{uid}: OWNER-only read/write/delete
- *   - food-photos/{uid}:     no uploads at all (Food9: meal photos stay on
- *                            the device); OWNER-only read/delete of legacy ones
+ *   - food-photos/{uid}:     closed to every client, the owner included
+ *                            (Food9: meal photos stay on the device; the
+ *                            legacy ones are purged with the Admin SDK)
  *   - space-photos/{uid},
  *     profile-photos/{uid}:  owner-only write/delete, ANY-authenticated get,
  *                            and NOBODY may list a folder
@@ -31,7 +32,8 @@
  *                            ANY-authenticated get, no list
  *   - MIME allowlist is closed-set (jpeg/png/webp) — svg+xml (XSS
  *     carrier) and gif must be rejected
- *   - size caps: 10MB progress/food, 5MB profile
+ *   - size caps: 10MB progress, 7MB space (the most Vision can screen),
+ *     5MB profile
  */
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import {
@@ -88,8 +90,12 @@ const GIF = { contentType: "image/gif" };
 const smallBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // JPEG magic
 /** Just over the 5MB profile cap; also used under the 10MB caps. */
 const sixMB = new Uint8Array(6 * 1024 * 1024);
-/** Just over the 10MB progress/food cap. */
+/** Just over the 10MB progress cap. */
 const elevenMB = new Uint8Array(11 * 1024 * 1024);
+/** Exactly the 7MB space cap (the rule is `<`). */
+const sevenMB = new Uint8Array(7 * 1024 * 1024);
+/** One byte under the 7MB space cap. */
+const justUnderSevenMB = new Uint8Array(7 * 1024 * 1024 - 1);
 
 let env: RulesTestEnvironment;
 
@@ -203,32 +209,34 @@ suite("storage.rules", () => {
     });
   });
 
-  describe("food-photos/{uid} — legacy, owner read and delete only", () => {
+  describe("food-photos/{uid}: legacy, closed to every client", () => {
     const path = `food-photos/${OWNER}/123.jpg`;
+    const folder = `food-photos/${OWNER}`;
 
     // Food9: a meal photo is kept on the device and never uploaded, so the
-    // prefix takes no uploads, the owner's included. A photo uploaded
-    // before Food9 stays readable, for the old diary row, and deletable.
+    // prefix takes no uploads, the owner's included.
     it("nobody can upload, the owner included", async () => {
       await assertFails(
         uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
       );
     });
 
-    it("the owner can still read and delete a legacy photo", async () => {
+    // Owner, 2026-11-21: every photo older builds stored goes
+    // (functions/scripts/purgeLegacyFoodPhotos.js), and the app no longer
+    // shows one, so not even the owner reads, lists or deletes one.
+    it("nobody can read, list or delete a legacy photo, the owner included", async () => {
       await env.withSecurityRulesDisabled(async (ctx) => {
         await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
       });
-      await assertSucceeds(getBytes(ref(authed(OWNER), path)));
-      await assertSucceeds(deleteObject(ref(authed(OWNER), path)));
-    });
-
-    it("cross-user and unauthenticated access is denied", async () => {
+      // Anchor: the object is there, so each refusal below is the rule's.
       await env.withSecurityRulesDisabled(async (ctx) => {
-        await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
+        await assertSucceeds(getBytes(ref(ctx.storage(), path)));
       });
-      await assertFails(getBytes(ref(authed(OTHER), path)));
-      await assertFails(getBytes(ref(anon(), path)));
+      for (const who of [authed(OWNER), authed(OTHER), anon()]) {
+        await assertFails(getBytes(ref(who, path)));
+        await assertFails(listAll(ref(who, folder)));
+        await assertFails(deleteObject(ref(who, path)));
+      }
       await assertFails(
         uploadBytes(ref(authed(OTHER), path), smallBytes, JPEG)
       );
@@ -271,11 +279,21 @@ suite("storage.rules", () => {
       await assertFails(deleteObject(ref(authed(OTHER), path)));
     });
 
-    it("rejects SVG/GIF and the over-10MB size", async () => {
+    it("rejects SVG/GIF", async () => {
       await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, SVG));
       await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, GIF));
+    });
+
+    // Every space photo is screened by Vision, whose request (base64
+    // included) is at most 10MB: a photo over about 7.86MB could never be
+    // screened and was deleted on arrival, so the rule refuses it at
+    // upload (functions/__tests__/photoScreen.test.js reads this cap).
+    it("refuses a photo of 7MB or more, which Vision could not screen", async () => {
       await assertFails(uploadBytes(ref(authed(OWNER), path), elevenMB, JPEG));
-      await assertSucceeds(uploadBytes(ref(authed(OWNER), path), sixMB, JPEG));
+      await assertFails(uploadBytes(ref(authed(OWNER), path), sevenMB, JPEG));
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), path), justUnderSevenMB, JPEG)
+      );
     });
   });
 
@@ -692,16 +710,15 @@ suite("storage.rules", () => {
       "pending_auth_deletion",
       "operator_review",
     ];
-    // `ownerUploads: false` — food-photos takes no uploads in any state
-    // (Food9), so only its delete follows the freeze.
+    // food-photos is not here: no client reads, writes or deletes there in
+    // any state (owner, 2026-11-21), so the freeze has nothing to add.
     const PREFIXES = [
-      { name: "progress-photos", ownerReadOnly: true, ownerUploads: true },
-      { name: "food-photos", ownerReadOnly: true, ownerUploads: false },
-      { name: "space-photos", ownerReadOnly: false, ownerUploads: true },
-      { name: "profile-photos", ownerReadOnly: false, ownerUploads: true },
+      { name: "progress-photos", ownerReadOnly: true },
+      { name: "space-photos", ownerReadOnly: false },
+      { name: "profile-photos", ownerReadOnly: false },
     ];
 
-    for (const { name, ownerReadOnly, ownerUploads } of PREFIXES) {
+    for (const { name, ownerReadOnly } of PREFIXES) {
       const path = `${name}/${OWNER}/frozen.jpg`;
 
       it(`${name}: an existing object stays readable but the owner cannot re-upload or delete during an active deletion`, async (ctx) => {
@@ -745,18 +762,9 @@ suite("storage.rules", () => {
           await env.clearFirestore();
           await env.clearStorage();
           await seedDeletionRequest(status);
-          if (ownerUploads) {
-            await assertSucceeds(
-              uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
-            );
-          } else {
-            await assertFails(
-              uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
-            );
-            await env.withSecurityRulesDisabled(async (c) => {
-              await uploadBytes(ref(c.storage(), path), smallBytes, JPEG);
-            });
-          }
+          await assertSucceeds(
+            uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+          );
           await assertSucceeds(deleteObject(ref(authed(OWNER), path)));
         }
       }, 30_000);

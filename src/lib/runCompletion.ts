@@ -107,8 +107,9 @@ function startOf(run: FinishedRun, now: Date): Date {
   return first ? new Date(first) : now;
 }
 
-/** When the run started: its identity's start, else its first point. */
-function runStart(run: FinishedRun, now: Date): Date {
+/** When the run started: its identity's start, else its first point. The
+ *  saved run's `startedAt`, which runs are ranked by (`compareRunOrder`). */
+export function runStart(run: FinishedRun, now: Date = new Date()): Date {
   return run.identity ? new Date(run.identity.startedAt) : startOf(run, now);
 }
 

@@ -72,9 +72,19 @@ async function createTrialCheckoutSession({
     // whether or not the flag was stamped at the time (profiles granted
     // before completeOnboarding started stamping it carry only the
     // expiry). The owner's decision is one trial per account, total.
+    //
+    // So has one who took a trial through RevenueCat, on the App Store or
+    // the website: those record it as `subscriptionTrial` (lib/
+    // trialReminder.js) and as the first trial in `activationBillingFirsts`
+    // (lib/activationBilling.js), and never set `hasUsedTrial`. Read only
+    // `hasUsedTrial`, this dormant checkout gave each of them a second
+    // seven days.
+    const firsts = data.activationBillingFirsts;
     const alreadyUsed =
       data.hasUsedTrial === true ||
-      (typeof data.trialExpiresAt === "string" && data.trialExpiresAt.length > 0);
+      (typeof data.trialExpiresAt === "string" && data.trialExpiresAt.length > 0) ||
+      (data.subscriptionTrial != null && typeof data.subscriptionTrial === "object") ||
+      Boolean(firsts && typeof firsts === "object" && firsts.trial);
     if (alreadyUsed) return false;
 
     // Race-safe consumption of the trial slot. Even if the user

@@ -31,15 +31,18 @@ export function calcDayBalance(
   };
 }
 
+/**
+ * A day's bar: the food orange when the day went the goal's way, the
+ * muted grey when it did not. Above or below the line says deficit or
+ * surplus. Neither is an error or a success, so neither is red or green
+ * (DS10 call 4), and the bars sit apart from the fat bar on Progress ›
+ * Food.
+ */
 export function getBalanceColor(
   balance: number,
   goal: string | undefined
 ): string {
   const isDeficit = balance >= 0;
-
-  if (goal === "lean bulk") {
-    return isDeficit ? THEME.warning : THEME.success;
-  }
-  // cut, recomp, or default
-  return isDeficit ? THEME.success : THEME.danger;
+  const towardGoal = goal === "lean bulk" ? !isDeficit : isDeficit;
+  return towardGoal ? THEME.semantic.nutrition : THEME.chrome.grey;
 }

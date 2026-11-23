@@ -3,7 +3,6 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { suggestionReason } from "@/components/social/suggestionReason";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import RestrictedNotice from "../RestrictedNotice";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -15,7 +14,6 @@ import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
 import { Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -63,10 +61,6 @@ export default function PeopleView({
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
   );
-  /* App1 Q6: while Tropos is too quiet for Spaces, none is offered here
-     either, to someone who joined none. */
-  const enough = useEnoughPeople();
-  const offersSpaces = enough !== false || joinedSpaceIds.length > 0;
 
   const {
     people: suggestedPeople,
@@ -281,7 +275,7 @@ export default function PeopleView({
              materially improves follow-back conversion. */
                 <div
                   key={u.uid}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card dark:card-shadow"
                 >
                   <Link
                     to={`/user/${u.uid}`}
@@ -354,7 +348,7 @@ export default function PeopleView({
             )}
           </div>
           {suggestionsPending && suggestedPeople.length === 0 ? (
-            <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+            <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center dark:card-shadow dark:border-transparent">
               <Spinner
                 size="sm"
                 variant="muted"
@@ -367,25 +361,21 @@ export default function PeopleView({
                lower on this tab. Action routes to Together, where
                Circles and Spaces are the joinable groups (crews
                retired 2026-07-20). */
-            <div className="rounded-xl bg-card border border-border/50">
+            <div className="rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
               <HexEmptyState
                 icon={Users}
-                accent={THEME.brand}
                 headline="No suggestions yet"
                 sub={
                   /* Someone already in a space has done what the first
                      line asks; tell them where suggestions come from. */
-                  !offersSpaces
-                    ? "Follow people to start seeing suggestions."
-                    : joinedSpaceIds.length > 0
-                      ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
-                      : "Follow people or join a space to start seeing suggestions."
+                  joinedSpaceIds.length > 0
+                    ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+                    : "Follow people or join a space to start seeing suggestions."
                 }
-                action={
-                  offersSpaces
-                    ? { label: "Browse spaces", onClick: openTogether }
-                    : undefined
-                }
+                action={{
+                  label: "Browse spaces",
+                  onClick: openTogether,
+                }}
               />
             </div>
           ) : (
@@ -393,7 +383,7 @@ export default function PeopleView({
               {suggestedPeople.map((p) => (
                 <div
                   key={p.uid}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card dark:card-shadow"
                 >
                   <BlockAwareAvatar
                     uid={p.uid}

@@ -130,6 +130,20 @@ describe("countsAsSession", () => {
     );
     expect(countsAsSession("swim", RUN)).toBe(false);
   });
+
+  it("counts a circuit that ran 7 minutes, as the streak does (Circ1 (6))", () => {
+    const circuit = (activeSeconds) => ({
+      format: "circuit",
+      exercises: [],
+      circuit: { activeSeconds },
+    });
+    expect(countsAsSession("lift", circuit(420))).toBe(true);
+    expect(countsAsSession("lift", circuit(1200))).toBe(true);
+    expect(countsAsSession("lift", circuit(419))).toBe(false);
+    expect(countsAsSession("lift", { format: "circuit", exercises: [] })).toBe(
+      false
+    );
+  });
 });
 
 /** The profile in a transaction, as the trigger's Admin SDK sees it. */
@@ -234,14 +248,14 @@ describe("wiring", () => {
     }
   });
 
-  it("setup stamps the map on the first completion only", () => {
+  it("setup stamps the map only once it has refused an account with a plan", () => {
     const onboarding = slice("completeOnboarding");
-    const gate = onboarding.indexOf("if (!alreadyCompleted) {");
+    const refusal = onboarding.indexOf('"already-exists"');
     const stamp = onboarding.indexOf("nextProfileData.launchMilestones = {};");
-    expect(gate).toBeGreaterThan(-1);
-    expect(stamp).toBeGreaterThan(gate);
+    expect(refusal).toBeGreaterThan(-1);
+    expect(stamp).toBeGreaterThan(refusal);
     expect(stamp).toBeLessThan(
-      onboarding.indexOf("if (existing.exists)", gate)
+      onboarding.indexOf("if (existing.exists)", refusal)
     );
   });
 });

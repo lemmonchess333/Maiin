@@ -64,6 +64,12 @@ performance.
 (running-evidence §6.2), never `trainingLoad.ts`. No copy may turn form into a
 prediction ("you'll be fresh by Friday"). No code change.
 
+STATUS 2026-11-15: the card and its model are gone. App1 Q16 (13 November)
+kept one load model in Score details, the score's own (the week against the
+usual week), so `trainingLoad.ts`, its chart and its two warnings were
+removed on `claude/app1-score-one-place`. This answer's constants stand for
+the record; the virtual athlete never read them.
+
 ### A3. The one line for a stretched rep range
 
 **Question.** When the next weight is more than about 15% heavier, Lift4 (6)
@@ -201,6 +207,10 @@ feeds no prescription, which is the shape running-evidence §8 asks for. The
 evidence argues against the ratio as a risk score, and this line isn't one.
 The run plan's progression check is the single-run guard (Phase 5b), not the
 ratio.
+
+STATUS 2026-11-21: the line is gone, with the card and `trainingLoad.ts` (A2's
+STATUS: App1 Q16 kept one load model in Score details). The app draws no ACWR
+line; the run plan's progression check is still the single-run guard.
 
 ### A11. The signed-out specs that run in no CI job
 

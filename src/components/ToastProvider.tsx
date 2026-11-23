@@ -9,17 +9,59 @@ export function ToastProvider() {
   return (
     <>
       <style>{`
-        /* Modern toast — clean card surface, no cream-accent throwback.
-           Uses the same tokens as the rest of the app’s cards so the
-           toast reads as part of the design system, not a third-party
-           overlay. */
+        /* A toast floats over the page and goes, so it is glass (DS6
+           step 4, DESIGN_GUIDE §14o): the card's colour over a static blur
+           of what is behind it. The fill keeps enough of the card that the
+           grey line holds AA with no blur at all, over the worst thing
+           that can pass behind, with a margin: 94% on light over black
+           (4.77:1; at 92% it was 4.56:1, at 90% 4.35:1) and 90% on dark
+           over white (5.28:1; at 85% it was 4.42:1), the fills the
+           workout's docked cards use. On
+           dark the edge is the card's lit edge, a hairline of light along
+           the top and a faint outline, in place of the grey border. The
+           blur is written out, never through a variable (WebKit ignores
+           one in -webkit-backdrop-filter), and sonner moves the toast
+           itself, so no fading ancestor cuts the blur off. */
         [data-sonner-toast] {
-          background: hsl(var(--card)) !important;
+          background: hsl(var(--card) / 0.94) !important;
           border: 1px solid hsl(var(--border)) !important;
           color: hsl(var(--foreground)) !important;
           border-radius: 14px !important;
           padding: 12px 16px !important;
           box-shadow: var(--ds-shadow-elevated) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(1.3) !important;
+          backdrop-filter: blur(24px) saturate(1.3) !important;
+        }
+        .dark [data-sonner-toast] {
+          background: hsl(var(--card) / 0.9) !important;
+          border-color: transparent !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            var(--ds-shadow-elevated) !important;
+        }
+        /* Solid where the blur cannot be drawn, and under Reduce
+           Transparency: the media query where a browser has it, the
+           attribute the app sets from the phone's own setting where it
+           does not (WebKit; #3398's reducedTransparency module sets it). */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+          [data-sonner-toast],
+          .dark [data-sonner-toast] {
+            background: hsl(var(--card)) !important;
+          }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+          [data-sonner-toast],
+          .dark [data-sonner-toast] {
+            background: hsl(var(--card)) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+          }
+        }
+        :root[data-reduced-transparency] [data-sonner-toast] {
+          background: hsl(var(--card)) !important;
+          -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;
         }
         /* A toast with BOTH an action and a cancel ("Retry" + "Log
            manually" on the Food page’s failed-search toast) at phone width:
@@ -72,8 +114,8 @@ export function ToastProvider() {
         }
         /* Action button — sonner’s default is an unstyled near-black pill
            that reads as a third-party artefact (the "Refresh" button on the
-           update toast). Restyle to the app’s primary CTA language:
-           brand-strong fill (the AA text-on-colour step), pill radius,
+           update toast). Restyle to the app’s filled button: the text
+           colour filled with the page's colour on it, pill radius,
            semibold. 36px matches the Button primitive’s sm size (the
            sanctioned inline-control height). */
         [data-sonner-toast] [data-button] {

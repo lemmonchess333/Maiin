@@ -201,6 +201,35 @@ service cloud.firestore {
         );
     }
 
+    /* One move on a circuit post (Circ1, src/lib/circuitPost.ts): an
+       exercise id, a slug the app names from its catalogue, so a move
+       never carries typed words. */
+    function isCircuitMoveId(m) {
+      return m is string && m.matches('^[a-z0-9-]{1,60}$');
+    }
+
+    /* A circuit post's moves: one round's, 1 to 12, each an exercise id.
+       The rules have no loop, so each slot is checked by index, as a
+       post's moments are. circuitPost.test.ts holds every move a circuit
+       can post to the pattern above. */
+    function validCircuitMoves(moves) {
+      return moves is list
+        && moves.size() >= 1
+        && moves.size() <= 12
+        && isCircuitMoveId(moves[0])
+        && (moves.size() < 2 || isCircuitMoveId(moves[1]))
+        && (moves.size() < 3 || isCircuitMoveId(moves[2]))
+        && (moves.size() < 4 || isCircuitMoveId(moves[3]))
+        && (moves.size() < 5 || isCircuitMoveId(moves[4]))
+        && (moves.size() < 6 || isCircuitMoveId(moves[5]))
+        && (moves.size() < 7 || isCircuitMoveId(moves[6]))
+        && (moves.size() < 8 || isCircuitMoveId(moves[7]))
+        && (moves.size() < 9 || isCircuitMoveId(moves[8]))
+        && (moves.size() < 10 || isCircuitMoveId(moves[9]))
+        && (moves.size() < 11 || isCircuitMoveId(moves[10]))
+        && (moves.size() < 12 || isCircuitMoveId(moves[11]));
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -273,6 +302,22 @@ service cloud.firestore {
       return !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['approveFollowers'])
         || approveFollowersValid();
+    }
+
+    /* usageAnalytics is a boolean when present (Settings → Social &
+       privacy → Share usage analytics, Priv1 call 2): false when the person
+       turned Google Analytics off. Absent, or a null like the other
+       switches', means on. */
+    function usageAnalyticsValid() {
+      return !('usageAnalytics' in request.resource.data)
+        || request.resource.data.usageAnalytics == null
+        || request.resource.data.usageAnalytics is bool;
+    }
+
+    function usageAnalyticsUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['usageAnalytics'])
+        || usageAnalyticsValid();
     }
 
     /* Photo URL value gate — shared by every field a client writes that
@@ -538,7 +583,8 @@ service cloud.firestore {
        born, which their age is worked out from for calories and
        heart-rate zones. Settings → Profile writes it; setup sends it
        through completeOnboarding. A whole year from this year less 120 to
-       this year less 16. The young end takes one year more, here and in
+       this year less 18 (Biz1 call 4; 16 before it). The young end takes
+       one year more, here and in
        profileSanitizer.js's cleanBirthYear only: request.time is UTC, and
        at New Year a person's own year can already be the next one, which
        the app (holding the exact limit) counts on. `null` passes, as for
@@ -550,7 +596,7 @@ service cloud.firestore {
         || v == null
         || (
           v is int
-          && v <= request.time.year() - 15
+          && v <= request.time.year() - 17
           && v >= request.time.year() - 120
         );
     }
@@ -559,6 +605,32 @@ service cloud.firestore {
       return !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['birthYear'])
         || birthYearValid();
+    }
+
+    /* healthDataConsent (Priv1 call 1): the person's agreement to Tropos
+       storing their health details, and when they gave it. An account set
+       up before setup asked is asked once on its next open, and agreeing
+       there writes exactly { at: request.time, version: 1 }: the server's
+       time, the wording asked now (src/lib/healthConsent.ts, pinned to the
+       version here by healthConsent.cross.test.ts). Setup's agreement is
+       written by completeOnboarding with the Admin SDK. A create never
+       carries it, and an update cannot remove it, backdate it or store
+       anything else beside it. */
+    function healthDataConsentValid() {
+      let consent = request.resource.data.healthDataConsent;
+      return consent is map
+        && consent.keys().hasOnly(['at', 'version'])
+        && consent.keys().hasAll(['at', 'version'])
+        && consent.at == request.time
+        && consent.version is int
+        && consent.version == 1;
+    }
+
+    function healthDataConsentUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['healthDataConsent'])
+        || ('healthDataConsent' in request.resource.data
+          && healthDataConsentValid());
     }
 
     /* racePlanFreeWeekUsed (whole-app grill Q85): the account has had the
@@ -678,6 +750,10 @@ service cloud.firestore {
         // Polish2 call 4: whether each follower waits to be accepted.
         // Value-gated by approveFollowersValid() above.
         'approveFollowers',
+        // Priv1 call 2: Share usage analytics, false when off. Value-gated
+        // by usageAnalyticsValid() above; client-only, never through the
+        // sanitiser.
+        'usageAnalytics',
         // #984 "Hide the number" anti-anxiety toggle — written client-side via
         // updateProfile (Settings → toggleHideWeightNumber) AND set by the
         // onboarding CF (in profileSanitizer). It was in the sanitiser + the
@@ -727,6 +803,11 @@ service cloud.firestore {
         // App1 (Q57): the year of birth the age is worked out from.
         // Value-gated by birthYearValid() above; also in profileSanitizer.js.
         'birthYear',
+        // Priv1 call 1: the agreement to store health details. Value-gated
+        // by healthDataConsentUnchangedOrValid() above, and never on a
+        // create; not in profileSanitizer.js (completeOnboarding writes
+        // setup's from its own argument).
+        'healthDataConsent',
         'targetWaterGlasses', 'customCalorieTarget',
         // Goal-weight editor (#1140) — persisted by the CLIENT (Settings →
         // Goal Weight) + allowed in profileSanitizer.js, but were never added
@@ -807,9 +888,11 @@ service cloud.firestore {
         && raceGoalValid()
         && starterGoalValid()
         && birthYearValid()
+        && !('healthDataConsent' in request.resource.data)
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid()
+        && usageAnalyticsValid()
         && racePlanFreeWeekUsedValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
@@ -818,9 +901,11 @@ service cloud.firestore {
         && raceGoalUnchangedOrValid()
         && starterGoalUnchangedOrValid()
         && birthYearUnchangedOrValid()
+        && healthDataConsentUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid()
+        && usageAnalyticsUnchangedOrValid()
         && racePlanFreeWeekUsedUnchangedOrValid();
       // No client delete. Account deletion runs on the server with the
       // Admin SDK (deleteMyAccount), and nothing in the app deletes this
@@ -893,12 +978,15 @@ service cloud.firestore {
       // first, and leaves alone one that is not a bundle: a thousand
       // documents under one account with a due time in 1970 filled every
       // hour's read, and nobody's props were pushed again.
+      // `emailState` is server-owned too (App1 Q55): the unsubscribe token
+      // every chosen email links with, and what has been sent. Its owner may
+      // read it; a client that could write it could reset what was sent.
       allow delete: if isOwnerAndNotDeleting(uid)
         && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
-        && !(doc in ['propsBundle', 'pushBudget']);
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState']);
       allow create, update: if isOwnerAndNotDeleting(uid)
         && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$')
-        && !(doc in ['propsBundle', 'pushBudget'])
+        && !(doc in ['propsBundle', 'pushBudget', 'emailState'])
         && !('propsBundleDueAt' in request.resource.data);
     }
     match /users/{uid}/foodFavourites/{doc} {
@@ -989,6 +1077,19 @@ service cloud.firestore {
        owner sees their own on their user document (`inviteCode`, which no
        client may write). */
     match /inviteCodes/{code} {
+      allow read, write: if false;
+    }
+    /* A shared card's stored copy (Soc17 call 1): `sharedCards/{token}` =
+       { ownerUid, postId | workoutId | runId, card, inviteCode, createdAt,
+       expiresAt }, expiresAt only on a card that shows no session or post,
+       written only by the sharedCard callable and read only by
+       sharedCardPage, both with the Admin SDK (functions/lib/sharedCards.js).
+       A client read would let anyone holding a token see its owner's uid,
+       and a listable one would hand out every card; a client write would
+       let anyone put words on troposfit.com under a sharer's name. The
+       owner keeps no list of their own either: the sheet's callable takes
+       a copy back. */
+    match /sharedCards/{token} {
       allow read, write: if false;
     }
     /* Performance data — written ONLY by Cloud Functions
@@ -1350,7 +1451,8 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'routeMap', 'caption', 'moments'
+          'routePreview', 'routeMap', 'caption', 'moments',
+          'circuit'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -1422,6 +1524,29 @@ service cloud.firestore {
                   || validPostMoment(request.resource.data.moments[1]))
               && (request.resource.data.moments.size() < 3
                   || validPostMoment(request.resource.data.moments[2])))
+        )
+        // A circuit (Circ1): a workout post's rounds, its interval and one
+        // round's moves, as exercise ids the app names from its catalogue.
+        // Whole numbers in a plausible range, each move an id
+        // (validCircuitMoves), and no field more.
+        && (
+          !('circuit' in request.resource.data.keys())
+          || (request.resource.data.type == 'workout'
+              && request.resource.data.circuit is map
+              && request.resource.data.circuit.keys().hasOnly(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.keys().hasAll(
+                   ['rounds', 'workSeconds', 'restSeconds', 'moves'])
+              && request.resource.data.circuit.rounds is int
+              && request.resource.data.circuit.rounds >= 0
+              && request.resource.data.circuit.rounds <= 50
+              && request.resource.data.circuit.workSeconds is int
+              && request.resource.data.circuit.workSeconds >= 1
+              && request.resource.data.circuit.workSeconds <= 600
+              && request.resource.data.circuit.restSeconds is int
+              && request.resource.data.circuit.restSeconds >= 0
+              && request.resource.data.circuit.restSeconds <= 600
+              && validCircuitMoves(request.resource.data.circuit.moves))
         )
         && (
           !('prHit' in request.resource.data.keys())
@@ -2023,7 +2148,8 @@ service cloud.firestore {
                 && request.resource.data.activity.keys().hasOnly([
                      'type', 'distance', 'avgPace', 'duration',
                      'elevationGain', 'routePreview', 'totalVolume',
-                     'exerciseCount', 'muscleGroups', 'leadExerciseId'
+                     'exerciseCount', 'muscleGroups', 'leadExerciseId',
+                     'circuit'
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
@@ -2059,6 +2185,13 @@ service cloud.firestore {
                   !('leadExerciseId' in request.resource.data.activity)
                   || (request.resource.data.activity.leadExerciseId is string
                       && request.resource.data.activity.leadExerciseId.size() <= 200)
+                )
+                // A circuit (Circ1): a workout's mark that its count is of
+                // moves. Only ever true.
+                && (
+                  !('circuit' in request.resource.data.activity)
+                  || (request.resource.data.activity.circuit == true
+                      && request.resource.data.activity.type == 'workout')
                 ))
           )
           // The server's time, as the composer sends it: the Space's

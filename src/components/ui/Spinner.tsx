@@ -19,7 +19,7 @@
  *   - lg   32px — full-page / hero / lazy-route fallback.
  *
  * Variants:
- *   - primary  text-lifting-strong (purple brand) — DEFAULT.
+ *   - primary  text-primary, the text colour (DS10: chrome is neutral) — DEFAULT.
  *   - inverse  text-white  — used on the dark run-screen surfaces.
  *   - muted    text-muted-foreground — when the spinner sits in a
  *              muted context and shouldn't compete with primary
