@@ -45,29 +45,31 @@ function renderLift(over: Record<string, unknown> = {}) {
       navigate={vi.fn()}
       {...liftTargets(2)}
       isStartable
+      lastSetsOf={() => undefined}
       {...over}
     />
   );
 }
 
 describe("the lift card's line against last time", () => {
-  /* After a save the day holds next time's load and this session as
-     "last time" (applySessionProgression). */
+  /* After a save the day holds next time's load, and the saved session
+     is last time (`lastSetsOf`, as Train's "Last:" line reads it). */
   const progressed = {
     ...workout,
     exercises: [
       {
         name: "Barbell row",
+        exerciseId: "barbell-row",
         sets: 3,
         reps: 8,
         weight: 37.5,
-        lastPerformance: { weight: 35, reps: 8 },
       },
     ],
   };
+  const rowedAt35 = () => [8, 8, 8].map((reps) => ({ weightKg: 35, reps }));
 
   it("is drawn for a day still to train", () => {
-    renderLift({ nextWorkout: progressed, unit: "kg" });
+    renderLift({ nextWorkout: progressed, unit: "kg", lastSetsOf: rowedAt35 });
     expect(screen.getByText(/more than last time/)).toBeInTheDocument();
   });
 
@@ -78,6 +80,7 @@ describe("the lift card's line against last time", () => {
       nextWorkout: { ...progressed, completed: true },
       status: "completed",
       unit: "kg",
+      lastSetsOf: rowedAt35,
     });
     expect(screen.queryByText(/than last time/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Barbell row 37/)).not.toBeInTheDocument();
