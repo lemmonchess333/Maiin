@@ -1464,6 +1464,42 @@
       "testCoverageKey": "unit::segments.removeSegmentTracesForUser.entries",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/segments.js"
+    },
+    {
+      "key": "userLiftEfforts",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/liftEfforts",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "A workout's heaviest set of each barbell lift (functions/lib/liftBoards.js, Run30 call 3): the lift, the workout, the weight, the reps and the day. Server-written only by the workout triggers, which read the deletion freeze in the transaction that writes; no client reads or writes it. In USER_SUBCOLLECTIONS.",
+      "testCoverageKey": "smoke::userSubcollections::liftEfforts",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
+      "key": "liftBoardEntries",
+      "domain": "E_fanout",
+      "type": "collectionGroupByField",
+      "collectionGroup": "lifters",
+      "where": ["uid", "==", "{uid}"],
+      "pathFilter": "liftBoards/*/lifters",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "userContent",
+      "strategy": "deleteCollectionGroupInBatches",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "The account's heaviest shown set on each barbell lift it has done (liftBoards/{exerciseId}/lifters/{uid}): the weight, the reps, the day, the workout and its post. Server-only; written by refreshBoardEntry, which reads the deletion freeze in its transaction. Queried by lifters.uid across all lifts and path-filtered (collection-group index in firestore.indexes.json).",
+      "testCoverageKey": "unit::liftBoards.removeLiftBoardTracesForUser.entries",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/liftBoards.js"
     }
   ],
   "excluded": [

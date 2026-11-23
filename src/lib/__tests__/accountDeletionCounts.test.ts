@@ -63,7 +63,9 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // Run27 call 11 bumped to 78 — a Space's members' sessions and its week:
 // spaceSessionRows and userSpaceWeeks.
 // Soc17 call 1 bumped to 79: sharedCardsOwn, a shared card's copy.
-export const EXPECTED_INCLUDED_COUNT = 79;
+// Run30 call 3 bumped to 81: lift boards, userLiftEfforts and
+// liftBoardEntries.
+export const EXPECTED_INCLUDED_COUNT = 81;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

@@ -1202,6 +1202,31 @@ trigger runs in production and the two apps agree.
       Firebase console, `blockedBy/{B}/users/{A}` exists. Unblock on A, and
       both ways come back (follows do not: blocking ended them).
 
+## Lift boards: the heaviest set of who you follow (Run30 call 3, 2026-11-23)
+
+Every saved workout's heaviest set of each barbell lift is recorded
+(`onWorkoutCreated`, `functions/lib/liftBoards.js`), and a barbell lift's
+page has a Leaderboard of the people you follow, from workouts they shared,
+across no block and never a restricted account's. The unit, rules and
+emulator suites cover the board's privacy and the deletion sweep; only a
+deploy and two real accounts can confirm the rest.
+
+- [ ] **The functions and index deployed.** After Deploy production runs
+      for this change, `getLiftBoard` and `onLiftPostWritten` are in the
+      Firebase console's function list and the release's source read-back
+      passed for them and the three workout triggers. In Firestore →
+      Indexes → Single field, the exemption for `lifters.uid` (collection
+      group) reads Enabled: without it an account's deletion fails on its
+      sweep.
+- [ ] **A board seen from two accounts.** Account B follows A (accepted).
+      A logs Bench Press and shares the workout with followers. Passing, on
+      B's Bench Press page, Leaderboard: A's row with A's heaviest set, in
+      B's unit, and B's own row placed by weight. Then on A: make the post
+      private (B's board drops A), block B (B sees nothing of A). An
+      account that does not follow A never sees A's row; with nobody on it,
+      B's tab shows B's best, the line and Invite a friend, which opens
+      People.
+
 ## Segments: timing runs, and who sees a board (Run26 call 3, 2026-11-14)
 
 Every saved GPS run is timed on the segments it ran (`onRunCreated`,
