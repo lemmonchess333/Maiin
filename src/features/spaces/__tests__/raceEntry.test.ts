@@ -110,7 +110,6 @@ describe("raceEntryLink", () => {
     expect(raceEntryLink(event, "2027-04-18")).toEqual({
       url: "https://www.example-marathon.com/enter",
       note: "Entry is by ballot.",
-      isWebsite: false,
     });
   });
 
@@ -128,12 +127,5 @@ describe("raceEntryLink", () => {
         "2027-01-01"
       )
     ).toBeNull();
-  });
-
-  it("says when the entry page is the website itself", () => {
-    expect(
-      raceEntryLink({ ...event, entryUrl: event.websiteUrl }, "2027-01-01")
-        ?.isWebsite
-    ).toBe(true);
   });
 });

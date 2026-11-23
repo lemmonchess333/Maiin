@@ -56,9 +56,6 @@ export function isOfficialRaceUrl(
 export interface RaceEntryLink {
   url: string;
   note: string | null;
-  /** The entry page is the website's own page, so the page shows one
-   *  link to it, not two. */
-  isWebsite: boolean;
 }
 
 /**
@@ -77,6 +74,5 @@ export function raceEntryLink(
   return {
     url,
     note: event.entryNote ?? null,
-    isWebsite: url === event.websiteUrl,
   };
 }

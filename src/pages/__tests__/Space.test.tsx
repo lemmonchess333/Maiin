@@ -204,8 +204,7 @@ describe("Space page", () => {
     expect(await screen.findByText(/km ultra/)).toHaveTextContent(
       "100 km ultra"
     );
-    // The organiser takes entries on the race's own page, so the page
-    // links to it once, as the entry button (Reg1).
+    // A race with an entry link links out once, as the entry button.
     const enter = screen.getByRole("link", { name: /^Enter this race/ });
     expect(enter).toHaveAttribute(
       "href",
@@ -445,12 +444,11 @@ it("sends a runner to the organiser's entry page, outside the app, beside the we
   expect(enter).toHaveAttribute("target", "_blank");
   expect(enter).toHaveAttribute("rel", "noopener noreferrer");
   expect(screen.getByText("Entry is by ballot.")).toBeInTheDocument();
+  // One link out per race (owner 2026-11-23): the entry button stands in
+  // for the official site, even when the two are different pages.
   expect(
-    screen.getByRole("link", { name: "Visit official website" })
-  ).toHaveAttribute(
-    "href",
-    "https://www.londonmarathonevents.co.uk/london-marathon"
-  );
+    screen.queryByRole("link", { name: "Visit official website" })
+  ).not.toBeInTheDocument();
 });
 
 it("offers no entry button for a race with no entry link", async () => {

@@ -147,7 +147,8 @@ const ELEVATION_LABEL: Record<
  * organiser's entry page while the race is ahead (Reg1: secondary, since
  * Train for this race and Join are the page's main actions; it opens in
  * the system browser, as every target="_blank" link does in the iPhone
- * app), the official-site link when that is another page, and the Q10
+ * app), the official-site link only when there is no entry button (one
+ * link out per race, owner 2026-11-23), and the Q10
  * not-affiliated line. Join stays a separate action below — joining
  * never sets the race.
  */
@@ -304,7 +305,7 @@ function RaceEventHeader({
         </div>
       )}
 
-      {!entry?.isWebsite && (
+      {!entry && (
         <a
           href={event.websiteUrl}
           target="_blank"
