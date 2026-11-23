@@ -187,7 +187,8 @@ describe("ProModal — plan radiogroup", () => {
     renderModal({ onClose: () => {} });
     const cta = screen.getByRole("button", { name: "Start Pro — £39.99/yr" });
     // It was a purple-to-teal gradient (2026-09-29).
-    expect(cta.className).toContain("bg-primary-strong");
+    // The app's filled button is the text colour (DS10).
+    expect(cta.className).toContain("bg-foreground");
     expect(cta.getAttribute("style") ?? "").not.toMatch(/gradient/);
   });
 

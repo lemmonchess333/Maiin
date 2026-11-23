@@ -133,18 +133,18 @@ export default function InviteFriendCard({
     <div
       className="p-3 rounded-2xl border space-y-3"
       style={{
-        background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
-        borderColor: `${THEME.brand}33`,
+        background: `linear-gradient(135deg, hsl(var(--foreground) / 0.09), hsl(var(--foreground) / 0.03))`,
+        borderColor: "hsl(var(--foreground) / 0.2)",
       }}
     >
       <div className="flex items-start gap-3">
         <div
           className="size-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: `${THEME.brand}25` }}
+          style={{ background: "hsl(var(--foreground) / 0.14)" }}
         >
           <Share
             className="size-4"
-            style={{ color: THEME.brand }}
+            style={{ color: THEME.chrome.text }}
             aria-hidden="true"
           />
         </div>

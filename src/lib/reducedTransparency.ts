@@ -12,9 +12,11 @@
  * from the media query, where a browser supports it. Either way the
  * answer is one attribute on <html>, `data-reduced-transparency`, which
  * frosted surfaces' solid fallbacks select on beside the media query: the
- * tab bar and the status bar's scrim here, the toasts and the workout's
- * docked cards in their own changes (#3416, #3426). The other blurred
- * chips (a Space's hero, the map's) are listed in the pre-launch backlog.
+ * tab bar and the status bar's scrim, the toasts and the workout's docked
+ * cards in the stylesheet, and every Tailwind `backdrop-blur` through the
+ * `transparency-reduce:` variant in `src/index.css` (a Space's hero chips,
+ * the run map's chips and controls, the sticky bars), which
+ * `reducedTransparencyChips.test.ts` holds to.
  *
  * An older app build without the plugin leaves the attribute off: the
  * surfaces stay frosted, as they were.

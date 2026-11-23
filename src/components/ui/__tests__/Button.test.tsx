@@ -57,9 +57,14 @@ describe("Button — base contract", () => {
 });
 
 describe("Button — variants", () => {
-  it("primary uses bg-primary-strong (the WCAG-AA filled brand colour)", () => {
+  it("primary is the neutral button, the text colour filled (DS10)", () => {
     render(<Button variant="primary">Go</Button>);
-    expect(screen.getByRole("button").className).toContain("bg-primary-strong");
+    const primary = screen.getByRole("button").className;
+    expect(primary).toContain("bg-foreground text-background");
+    render(<Button variant="neutral">Save</Button>);
+    expect(screen.getByRole("button", { name: "Save" }).className).toBe(
+      primary.replace("Go", "Save")
+    );
   });
 
   it("destructive uses the Sprint 0 bg-destructive token (NOT a hardcoded red)", () => {

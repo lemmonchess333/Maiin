@@ -292,7 +292,7 @@ export default function ShareComposerSheet() {
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="size-4 rounded border-border accent-[var(--ds-purple-500)]"
+            className="size-4 rounded border-border accent-primary"
           />
           <span className="text-xs text-muted-foreground">
             {REMEMBER_LABEL[state.type]}

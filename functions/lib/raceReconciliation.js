@@ -360,6 +360,7 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
   // Gates 2b–4 — one predicate, shared with the reconciliation sweep:
   //   2b. reject invalid / "Save anyway" runs (a borked GPS trace the
   //       user explicitly flagged must not trip recovery entry);
+  //   2c. reject a treadmill run, whose distance is typed in;
   //   3.  saved run must be race-templated (`actualTemplateId` — the
   //       raw-doc field RunSummary writes);
   //   4.  saved run must clear the ≥95% planned-distance bar, with the

@@ -35,11 +35,12 @@ function elevationLabelCompact(metres: number, unit: DistanceUnit) {
  * ShareCardRenderer (SOCIAL S1, PR2) — the pixel-perfect, offscreen DOM
  * surface that html-to-image rasterises into a share image.
  *
- * Design constraints (DESIGN_GUIDE §branding is binding):
- *  - Archivo numerals are the typographic HERO (the big stat number).
- *  - Branding is the SMALL brand mark in a corner + the user's handle —
- *    NEVER an oversized wordmark (this replaces the old ShareCard's giant
- *    "TROPOS" header, which violated that rule).
+ * Design constraints:
+ *  - Archivo numerals are the typographic HERO (the big stat number),
+ *    about half the card's width at most.
+ *  - Branding is the §14p lockup at the foot, the mark beside "Tropos",
+ *    about a quarter of the card's width, with the sharer's name and the
+ *    date across from it. Never a banner across the top.
  *  - Closed palette: RUN = coral (#D4637A), LIFT = purple (#7B72E9),
  *    HYBRID = the purple→coral gradient (the differentiator no competitor
  *    has).
@@ -235,19 +236,168 @@ function fmtVolume(kg?: number, liftUnit: LiftUnit = "kg"): string {
   return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
 }
 
-/** The brand mark, small, drawn inline (capture-safe). */
-function ShareMark({ size, color }: { size: number; color: string }) {
+/** The card's hero figure, in px of the 1080 px card: a five-character
+ *  figure ("2,295") is about 40% of the card's width, a six-character
+ *  one steps down. The finish screen's figure keeps the same share of the
+ *  phone (`.ds-display-finish`). */
+function heroFigureSize(value: string): number {
+  return value.length > 5 ? 128 : 150;
+}
+
+/** The mark's box is 524 by 518 (`MARK_VIEWBOX`): its width at a height. */
+const MARK_ASPECT = 524 / 518;
+
+/** A dark keyline behind what the lockup draws on a clear card, which is
+ *  laid over a picture the app never sees: written as text shadows and as
+ *  a stroke under the mark, never a CSS filter, so the rasteriser draws it
+ *  in every engine. `width` is the keyline's, in card px. */
+const HALO = "rgba(0,0,0,0.85)";
+function haloShadow(width: number): string {
+  // Unblurred copies of the words in eight directions at two radii make
+  // an edge the words keep over white; a soft fall eases it into the
+  // picture.
+  const ring = [width / 2, width].flatMap((r) =>
+    [0, 1, 2, 3, 4, 5, 6, 7].map((step) => {
+      const angle = (step * Math.PI) / 4;
+      const x = Math.round(r * Math.cos(angle) * 10) / 10;
+      const y = Math.round(r * Math.sin(angle) * 10) / 10;
+      return `${x}px ${y}px 0 ${HALO}`;
+    })
+  );
+  return [...ring, `0 0 ${width * 4}px rgba(0,0,0,0.4)`].join(", ");
+}
+
+/** The brand mark, drawn inline (capture-safe), sized by its height as
+ *  `BrandMark` is. */
+function ShareMark({
+  height,
+  color,
+  halo = false,
+}: {
+  height: number;
+  color: string;
+  halo?: boolean;
+}) {
   return (
     <svg
       viewBox={MARK_VIEWBOX}
-      width={size}
-      height={size}
+      width={height * MARK_ASPECT}
+      height={height}
       aria-hidden
       data-share-mark=""
+      style={{ overflow: "visible", flexShrink: 0 }}
     >
-      <path d={MARK_BAR} fill={color} fillOpacity={0.9} />
-      <path d={MARK_STEM} fill={color} fillOpacity={0.9} />
+      {halo &&
+        [MARK_BAR, MARK_STEM].map((d) => (
+          <path
+            key={d}
+            d={d}
+            fill={HALO}
+            stroke={HALO}
+            strokeWidth={48}
+            strokeLinejoin="round"
+          />
+        ))}
+      <path d={MARK_BAR} fill={color} />
+      <path d={MARK_STEM} fill={color} />
     </svg>
+  );
+}
+
+/** The card's foot (DESIGN_GUIDE §14p): the lockup at the left, the mark
+ *  in brand purple beside "Tropos" in white, in the figure face at its
+ *  heaviest, as `AuthLockup` sets it, a logo at a fixed size; the
+ *  sharer's name and the date at the right of the same row. A long name
+ *  ends in an ellipsis and never moves the lockup. The lockup is the same
+ *  on every card: the template's colour is for the person's data (§0
+ *  rule 1), and a brand's mark is one colour everywhere. */
+function CardFoot({
+  handle,
+  date,
+  scale,
+  halo,
+}: {
+  handle: string;
+  date: string;
+  scale: number;
+  halo: boolean;
+}) {
+  // The mark's stroke (48 of its 518 units) leaves 3 px outside it at
+  // 64 px, the width the word's keyline takes; the smaller words take 2.
+  const wordShadow = halo ? haloShadow(3 * scale) : undefined;
+  const footShadow = halo ? haloShadow(2 * scale) : undefined;
+  return (
+    <div
+      style={{
+        marginTop: "auto",
+        paddingTop: 32 * scale,
+        display: "flex",
+        alignItems: "center",
+        gap: 32 * scale,
+      }}
+    >
+      <div
+        data-share-lockup=""
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 24 * scale,
+          flexShrink: 0,
+        }}
+      >
+        <ShareMark height={64 * scale} color={LIFT_PURPLE} halo={halo} />
+        <span
+          style={{
+            fontFamily: ARCHIVO,
+            fontWeight: 800,
+            fontSize: 56 * scale,
+            lineHeight: 1,
+            letterSpacing: "-0.01em",
+            color: INK,
+            textShadow: wordShadow,
+          }}
+        >
+          Tropos
+        </span>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          textAlign: "right",
+          textShadow: footShadow,
+        }}
+      >
+        <span
+          data-share-handle=""
+          style={{
+            maxWidth: "100%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontWeight: 700,
+            fontSize: 30 * scale,
+            lineHeight: 1.25,
+            color: INK,
+          }}
+        >
+          {handle}
+        </span>
+        <span
+          style={{
+            whiteSpace: "nowrap",
+            fontSize: 24 * scale,
+            lineHeight: 1.25,
+            color: halo ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.5)",
+          }}
+        >
+          {date}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -260,6 +410,7 @@ function Hero({
   label,
   color,
   scale,
+  size = 220,
   display = false,
 }: {
   value: string;
@@ -267,6 +418,9 @@ function Hero({
   label: string;
   color: string;
   scale: number;
+  /** The figure's size on a story card; a figure as wide as half the
+   *  card takes `heroFigureSize`. */
+  size?: number;
   display?: boolean;
 }) {
   return (
@@ -277,7 +431,7 @@ function Hero({
           fontWeight: display ? 900 : 800,
           ...(display ? { fontStyle: "italic", fontStretch: "125%" } : {}),
           fontVariantNumeric: "tabular-nums",
-          fontSize: (display && value.length > 5 ? 180 : 220) * scale,
+          fontSize: size * scale,
           lineHeight: 0.92,
           color,
           display: "flex",
@@ -465,6 +619,20 @@ function ShareCardRenderer({
                 "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.75) 100%)",
             }}
           />
+          {/* Deeper under the foot, so the lockup and the date hold their
+              contrast over the brightest photo: plain white measures the
+              mark at 3:1 or more and the words at 4.5:1 or more. */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 320 * scale,
+              background:
+                "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 70%)",
+            }}
+          />
         </>
       )}
 
@@ -512,30 +680,12 @@ function ShareCardRenderer({
           <AnniversaryTemplate data={data} accent={meaning} scale={scale} />
         )}
 
-        {/* Footer: small brand mark + handle + date (the ONLY branding) */}
-        <div
-          style={{
-            marginTop: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 16 * scale,
-          }}
-        >
-          <ShareMark size={44 * scale} color={accent} />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontWeight: 700, fontSize: 30 * scale }}>
-              {data.handle}
-            </span>
-            <span
-              style={{
-                fontSize: 24 * scale,
-                color: "rgba(255,255,255,0.5)",
-              }}
-            >
-              {data.date}
-            </span>
-          </div>
-        </div>
+        <CardFoot
+          handle={data.handle}
+          date={data.date}
+          scale={scale}
+          halo={data.background === "transparent"}
+        />
       </div>
     </div>
   );
@@ -571,6 +721,7 @@ function AnniversaryTemplate({
           label={data.figureUnit ?? ""}
           color={accent}
           scale={scale}
+          size={heroFigureSize(data.figure)}
           display
         />
       )}
@@ -669,6 +820,7 @@ function RunTemplate({
   scale: number;
   show: (k: string) => boolean;
 }) {
+  const distance = distanceValue((data.distanceKm ?? 0) * 1000, data.unit, 2);
   return (
     <div
       style={{
@@ -723,10 +875,11 @@ function RunTemplate({
         {data.headline && <Headline text={data.headline} scale={scale} />}
         {show("distance") && (
           <Hero
-            value={distanceValue((data.distanceKm ?? 0) * 1000, data.unit, 2)}
+            value={distance}
             label={spokenDistanceUnit(data.unit, 2)}
             color="#ffffff"
             scale={scale}
+            size={heroFigureSize(distance)}
             display
           />
         )}
@@ -813,6 +966,7 @@ function LiftTemplate({
     data.totalReps ?? 0,
     liftUnit
   );
+  const figure = Math.round(work.to).toLocaleString("en-GB");
   // "in 41 min", as the finish screen's caption says it.
   const time =
     show("duration") && data.durationSec
@@ -852,10 +1006,11 @@ function LiftTemplate({
       {data.headline && <Headline text={data.headline} scale={scale} />}
       {show("volume") && (
         <Hero
-          value={Math.round(work.to).toLocaleString("en-GB")}
+          value={figure}
           label={`${work.unit}${time}`}
           color="#ffffff"
           scale={scale}
+          size={heroFigureSize(figure)}
           display
         />
       )}
@@ -1011,6 +1166,7 @@ function NutritionTemplate({
     `${Math.round(data.carbs ?? 0)}C`,
     `${Math.round(data.fat ?? 0)}F`,
   ].join("  ·  ");
+  const calories = Math.round(data.calories ?? 0).toLocaleString();
   return (
     <div
       style={{
@@ -1023,7 +1179,8 @@ function NutritionTemplate({
     >
       {show("calories") && (
         <Hero
-          value={Math.round(data.calories ?? 0).toLocaleString()}
+          value={calories}
+          size={heroFigureSize(calories)}
           label={
             data.calorieTarget
               ? `of ${Math.round(data.calorieTarget).toLocaleString()} ${CALORIE_UNIT}`

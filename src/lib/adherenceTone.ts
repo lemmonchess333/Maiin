@@ -22,7 +22,8 @@ export interface AdherenceTone {
  * trusted until logging is more consistent; for a consistent logger it is
  * quiet reassurance. So the tone scales with the number:
  *
- *   >= 80  green  — the data below is reliable
+ *   >= 80  text   — the data below is reliable (the text colour on the
+ *                   chrome's tint: green is a tick, DS10 call 4)
  *   >= 50  muted  — the data below is decent
  *    < 50  amber  — the averages below are under-sampled
  *
@@ -34,8 +35,8 @@ export interface AdherenceTone {
 export function adherenceTone(adherence: number): AdherenceTone {
   if (adherence >= 80)
     return {
-      color: "hsl(var(--success-strong))",
-      bg: `${THEME.success}1A`,
+      color: "hsl(var(--foreground))",
+      bg: THEME.chrome.tint,
     };
   if (adherence >= 50)
     return { color: "hsl(var(--muted-foreground))", bg: "transparent" };

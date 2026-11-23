@@ -7,16 +7,16 @@
  * minimum touch targets had drifted apart.
  *
  * Variants:
- *   - primary       filled brand colour (uses --primary-strong for AA contrast)
+ *   - primary       the same button as `neutral`: the text colour filled,
+ *                   the page's colour on it (DS10)
  *   - secondary     tinted on muted surface
  *   - destructive   filled --destructive (Sprint 0 token)
  *   - ghost         transparent with hover tint
  *   - outline       transparent with border
- *   - sport         coral-solid run CTA (Start/Go) — pairs with brand
- *                   purple `primary` for the 5-tier hierarchy from
- *                   Run7 Q4. Use whenever the action's discipline is
- *                   running (`/run`, "Start", "Go"). For lifting CTAs
- *                   continue using `primary` (brand purple = lift).
+ *   - sport         coral-solid run CTA (Start/Go) from Run7 Q4's
+ *                   hierarchy. Use whenever the action's discipline is
+ *                   running (`/run`, "Start", "Go"). A lift's own quieter
+ *                   action is `lifting-tinted`.
  *   - sport-tinted  coral-tinted run destructive (Skip-style) — used
  *                   when the action is sport-discipline AND non-
  *                   critical destructive (e.g. "Skip recovery early").

@@ -823,7 +823,6 @@ export default function RunSetupModal({
                   radiogroup primitive with tokens + keyboard nav. */}
             <SegmentedControl
               ariaLabel="Run goal"
-              tone="running"
               value={config.target.type}
               onChange={(type) =>
                 updateConfig({

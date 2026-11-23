@@ -213,7 +213,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/foodTrajectory.ts:computeTrajectory",
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
-  "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
   "src/lib/shareCard/statToggles.ts:isStatVisible",
 ];
 

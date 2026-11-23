@@ -19,8 +19,9 @@
  *
  * A run is the goal race by the server's rule for "was this race run"
  * (`functions/lib/raceDayCompletion.js`, `isStrictRaceRun`, the one that
- * starts the recovery weeks): saved on the race's date, valid, and at least
- * 95% of the race distance, however it was started. `racePrediction.cross.
+ * starts the recovery weeks): saved on the race's date, valid, not on a
+ * treadmill, and at least 95% of the race distance, however it was
+ * started. `racePrediction.cross.
  * test.ts` holds the two to one answer, and holds the operator report
  * (`functions/scripts/report-race-predictions.js`) to the shape written
  * here.
@@ -34,6 +35,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import { finishTimeLabel } from "@/lib/runLabels";
+import { isTreadmillRun } from "@/lib/runGuards";
 import {
   paceTableFromFitness,
   predictedRaceTimesFromFitness,
@@ -254,13 +256,19 @@ export interface GoalRaceRunFacts {
   distance?: number | null;
   isInvalid?: boolean | null;
   savedAnyway?: boolean | null;
+  /** Where it was run and its type, as `isTreadmillRun` reads them. */
+  place?: string | null;
+  activityType?: string | null;
 }
 
 /**
- * Whether a run was the goal race: on its date, valid, and at least 95% of
- * its distance, as the server decides it when it starts the recovery weeks.
- * How the run was started does not matter: a runner who taps Start run on
- * the start line ran the race.
+ * Whether a run was the goal race: on its date, valid, not on a treadmill,
+ * and at least 95% of its distance, as the server decides it when it starts
+ * the recovery weeks. How the run was started does not matter: a runner who
+ * taps Start run on the start line ran the race. A treadmill's distance is
+ * typed in and its run stays indoors, so it is a run on race day, not the
+ * race. A manual entry still counts: someone who raced without their phone
+ * types in the race.
  */
 export function isGoalRaceRun(
   run: GoalRaceRunFacts,
@@ -269,6 +277,7 @@ export function isGoalRaceRun(
   if (!goal || !isGoalRaceDistance(goal.distance)) return false;
   if (!run.date || run.date !== goal.targetDate) return false;
   if (run.isInvalid === true || run.savedAnyway === true) return false;
+  if (isTreadmillRun(run)) return false;
   if (typeof run.distance !== "number" || !Number.isFinite(run.distance))
     return false;
   return (

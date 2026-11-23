@@ -1234,7 +1234,6 @@ export default function RunPlanSettings({
                 <SectionHeading size="compact">Runs per week</SectionHeading>
                 <SegmentedControl<"2" | "3">
                   ariaLabel="Runs per week"
-                  tone="running"
                   value={weeklyRunDays <= 2 ? "2" : "3"}
                   onChange={(next) => {
                     haptic();
@@ -1466,7 +1465,6 @@ export default function RunPlanSettings({
                   value={runVolume}
                   onChange={(v) => setRunVolume(v as RunVolumePreset)}
                   ariaLabel="Long-run volume"
-                  tone="running"
                 />
               </div>
               <div className="space-y-2">
@@ -1485,7 +1483,6 @@ export default function RunPlanSettings({
                   value={runDifficulty}
                   onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
                   ariaLabel="Plan intensity"
-                  tone="running"
                 />
               </div>
               {/* Lift4 (10): the race-setup answer on the leg trim, changeable
@@ -1550,7 +1547,7 @@ export default function RunPlanSettings({
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           {loadFailed && (

@@ -473,33 +473,10 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
         ratio,
         `--primary is ${ratio.toFixed(2)}:1 against --muted in ${theme}. ` +
           `That edge is the slider's only state indication, so it needs ` +
-          `3:1 (WCAG 1.4.11). --primary-strong measures 2.87:1 here, which ` +
-          `is why the track does not use it.`
+          `3:1 (WCAG 1.4.11).`
       ).toBeGreaterThanOrEqual(AA_LARGE);
     }
   );
-
-  it("records why --primary-strong is NOT the track fill", () => {
-    // The executable form of the comment above. On the DS2 groove
-    // `-strong` measured 2.87:1 in dark, under the floor. DS3's deeper
-    // groove lifts it to about 3.2:1, but `--primary` still has the
-    // larger margin in dark, the default theme. If that ever flips, this
-    // fails and the choice can be revisited.
-    const dark = darkBlock();
-    const groove = hslToRgb(...readHsl(dark, "muted"));
-    const strong = contrast(
-      hslToRgb(...readHsl(dark, "primary-strong")),
-      groove
-    );
-    const primary = contrast(hslToRgb(...readHsl(dark, "primary")), groove);
-    expect(
-      primary,
-      `--primary is ${primary.toFixed(2)}:1 and --primary-strong ` +
-        `${strong.toFixed(2)}:1 against the dark groove. The track uses ` +
-        `--primary because it has the larger margin; if -strong now does, ` +
-        `the index.css comment explaining the choice is stale.`
-    ).toBeGreaterThan(strong);
-  });
 });
 
 /**
@@ -797,8 +774,10 @@ describe("small secondary text on a tint", () => {
     ["light", lightBlock],
     ["dark", darkBlock],
   ] as const)(
-    "brand words on a brand /10 chip take --lifting-strong, not --primary-strong (%s)",
+    "words on a /10 chip of the chrome read at AA (%s, DS10)",
     (_n, block) => {
+      // The chrome's chip is the text colour at 10% with the text colour on
+      // it: a neutral tint, far over 4.5:1 in both themes.
       const b = block();
       const bg = over(
         hslToRgb(...readHsl(b, "primary")),
@@ -807,13 +786,7 @@ describe("small secondary text on a tint", () => {
       );
       expect(
         contrast(hslToRgb(...readHsl(b, "primary-strong")), bg)
-      ).toBeLessThan(AA_NORMAL);
-      expect(
-        contrast(hslToRgb(...readHsl(b, "lifting-strong")), bg)
       ).toBeGreaterThanOrEqual(AA_NORMAL);
-      expect(readFile("src/components/share/ShareCardSheet.tsx")).not.toMatch(
-        /bg-primary\/10 text-primary-strong/
-      );
     }
   );
 });
@@ -821,7 +794,11 @@ describe("small secondary text on a tint", () => {
 describe("medal ranks — the numeral is text, the metal is a marker", () => {
   // The weekly challenge card draws its leaders with this row since
   // Trim1 call 3(a); its own copy of the markup, pinned here too, went.
-  it.each(["src/components/social/LeaderboardRow.tsx"])(
+  // A run's top-three disc (Run29) is drawn the same way.
+  it.each([
+    "src/components/social/LeaderboardRow.tsx",
+    "src/components/run/PlaceDisc.tsx",
+  ])(
     "%s never colours the rank numeral with a medal",
     (path) => {
       const src = readFile(path);
