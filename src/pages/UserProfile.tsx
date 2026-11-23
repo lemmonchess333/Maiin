@@ -350,9 +350,6 @@ function ProfileContent({
 
       {isOwnProfile ? (
         <div className="space-y-2">
-          <p className="text-small text-muted-foreground">
-            This is how your profile looks to other people.
-          </p>
           <Link
             to="/settings/profile"
             className={buttonClasses({ variant: "secondary", fullWidth: true })}
@@ -539,7 +536,7 @@ function ProfileContent({
               <EmptyState
                 icon={Users}
                 headline="Nothing shared yet"
-                sub="Sessions you share show here and in your followers’ feeds."
+                sub="Share a session and it shows here."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             ) : (

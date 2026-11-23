@@ -90,7 +90,7 @@ describe("MomentumCheckinCard", () => {
     expect(record.dismissed).toBeUndefined();
 
     // Read-back replaces the questions with the contextual action.
-    expect(await screen.findByText(/Checked in — A bit much/)).toBeVisible();
+    expect(await screen.findByText(/Checked in: A bit much/)).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Make this week fit" })
     ).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe("MomentumCheckinCard", () => {
       createdAt: 1,
     });
     renderCard();
-    expect(await screen.findByText(/Checked in — Too light/)).toBeVisible();
+    expect(await screen.findByText(/Checked in: Too light/)).toBeVisible();
     expect(screen.queryByText(/How did this week’s plan feel\?/)).toBeNull();
     expect(
       screen.getByRole("button", { name: "Review this week’s plan" })
@@ -230,7 +230,7 @@ describe("MomentumCheckinCard — a save that does not land", () => {
     deferWrites();
     try {
       fireEvent.click(screen.getByText("Save check-in"));
-      expect(await screen.findByText(/Checked in — A bit much/)).toBeVisible();
+      expect(await screen.findByText(/Checked in: A bit much/)).toBeVisible();
       expect(toast.error).not.toHaveBeenCalled();
     } finally {
       setOnline(true);

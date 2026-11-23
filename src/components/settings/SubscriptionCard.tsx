@@ -32,7 +32,7 @@ export default function SubscriptionCard() {
           : `Pro until ${trialEnds}`
         : "All Pro features"
       : isInTrial
-        ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
+        ? `Pro trial · ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
         : "See what Pro adds";
 
   return (

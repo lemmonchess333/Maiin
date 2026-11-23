@@ -76,7 +76,7 @@ export default function SecuritySection({
     setSendingVerify(true);
     try {
       await sendVerificationEmail();
-      toast.success("Verification email sent — check your inbox");
+      toast.success("Verification email sent. Check your inbox");
     } catch (err) {
       logger.error("[SecuritySection] resend verification failed", err);
       toast.error(resendVerificationErrorMessage(err));
@@ -89,7 +89,7 @@ export default function SecuritySection({
     setCheckingVerify(true);
     try {
       if (await recheck()) toast.success("Email verified");
-      else toast.error("Not verified yet — tap the link in the email first");
+      else toast.error("Not verified yet. Tap the link in the email first");
     } catch (err) {
       logger.error("[SecuritySection] verification check failed", err);
       toast.error(
@@ -307,7 +307,7 @@ export default function SecuritySection({
         open={dialog === "email"}
         onClose={busy ? () => {} : closeDialog}
         title="Change email"
-        description="We’ll send a confirmation link to the new address — your sign-in email changes once you tap it."
+        description="We’ll send a link to the new address. Your sign-in email changes once you tap it."
       >
         <div className="space-y-3">
           <input

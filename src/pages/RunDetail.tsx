@@ -369,7 +369,7 @@ export default function RunDetail() {
       source: "run",
     });
     toast[ok ? "success" : "error"](
-      ok ? "Route saved — find it in run setup" : "Couldn’t save route"
+      ok ? "Route saved. Find it in run setup" : "Couldn’t save route"
     );
   };
 

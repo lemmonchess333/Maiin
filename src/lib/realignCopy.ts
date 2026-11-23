@@ -38,11 +38,11 @@ export function realignResultMessage(input: {
       // "finish-safely"/"train safely" phrasing implied a safety promise).
       // "No quality sessions", not "no hard sessions": hard is the effort
       // word only (Run21 (4)).
-      return `Not enough weeks for a full ${dist} build — switched to a mostly-easy plan: all easy runs, no quality sessions. Aim to finish strong, not to PR.`;
+      return `Not enough weeks for a full ${dist} build, so your plan is now mostly-easy: all easy runs, no quality sessions. Aim to finish strong, not to PR.`;
     case "compressible":
-      return `Plan realigned — ${input.totalWeeks} weeks to your ${dist}. It’s a tighter build, so expect fewer easy weeks.`;
+      return `Plan realigned: ${input.totalWeeks} weeks to your ${dist}. It’s a tighter build, so expect fewer easy weeks.`;
     case "healthy":
     default:
-      return `Plan realigned to today — ${input.totalWeeks} weeks to your ${dist}.`;
+      return `Plan realigned to today: ${input.totalWeeks} weeks to your ${dist}.`;
   }
 }

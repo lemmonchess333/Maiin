@@ -1,5 +1,6 @@
 import { useId } from "react";
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
@@ -85,13 +86,9 @@ export default function CircuitFinish({
           confetti={tone !== null}
           picture={
             cutout ? (
-              <img
+              <FinishFigure
                 src={formArtCutoutUrl(cutout)}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                decoding="async"
-                className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
+                className="exercise-drawing"
               />
             ) : undefined
           }

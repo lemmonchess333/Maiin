@@ -522,7 +522,7 @@ describe("RunSummary — the week's runs are counted once", () => {
       weekday: "long",
     });
     expect(
-      await screen.findByText(new RegExp(`^Next run: .* — ${weekday}$`))
+      await screen.findByText(new RegExp(`^Next run: .* · ${weekday}$`))
     ).toBeInTheDocument();
   });
 

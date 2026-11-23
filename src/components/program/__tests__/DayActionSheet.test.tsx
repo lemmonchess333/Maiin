@@ -1317,9 +1317,9 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
     // the two race-aware variants do.
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/DNF — Started but didn’t finish/i)
+      screen.getByText(/DNF: started but didn’t finish/i)
     ).toBeInTheDocument();
-    expect(screen.getByText(/DNS — Didn’t start/i)).toBeInTheDocument();
+    expect(screen.getByText(/DNS: didn’t start/i)).toBeInTheDocument();
   });
 
   it("race-day DNF + DNS buttons both call skipRunDay with the runDay id", () => {
@@ -1339,7 +1339,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/DNF — Started but didn’t finish/i));
+    fireEvent.click(screen.getByText(/DNF: started but didn’t finish/i));
     expect(callbacks.skipRunDay).toHaveBeenCalledWith(runDay.id);
 
     cleanup();
@@ -1355,7 +1355,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/DNS — Didn’t start/i));
+    fireEvent.click(screen.getByText(/DNS: didn’t start/i));
     expect(callbacks.skipRunDay).toHaveBeenCalledTimes(2);
     expect(callbacks.skipRunDay).toHaveBeenLastCalledWith(runDay.id);
   });
@@ -1711,7 +1711,7 @@ describe("DayActionSheet — RUN-RACE-GUARD-01 (race identity immutable)", () =>
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(true);
     expect(select.getAttribute("aria-label")).toMatch(/template locked/i);
-    expect(screen.getByText(/template is locked/i)).toBeInTheDocument();
+    expect(screen.getByText(/keeps its template/i)).toBeInTheDocument();
     expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 

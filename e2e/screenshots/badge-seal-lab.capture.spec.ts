@@ -59,7 +59,7 @@ test("badge seal — four tiers sealed, then the bronze one broken open", async 
   await page.waitForTimeout(700);
   await shoot(page, "badge-seal-cracked-2-light");
   await seal.click();
-  await expect(bronze.getByText("First Step")).toBeVisible();
+  await expect(bronze.getByText("First log")).toBeVisible();
   await page.waitForTimeout(1200);
   await shoot(page, "badge-seal-open-light");
 });

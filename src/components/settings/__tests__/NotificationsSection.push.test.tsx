@@ -371,7 +371,7 @@ describe("NotificationsSection — badges and monthly challenges", () => {
       screen.getByRole("switch", { name: "Toggle Monthly challenges push" })
     ).toHaveAttribute("aria-checked", "false");
     expect(
-      screen.getByText(/One alert near the start of each month/)
+      screen.getByText(/Near the start of each month/)
     ).toBeInTheDocument();
     expect(state.request).not.toHaveBeenCalled();
     expect(state.localRequest).not.toHaveBeenCalled();
@@ -405,7 +405,7 @@ describe("NotificationsSection — badges and monthly challenges", () => {
     });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     expect(
-      screen.getByText(/for joined monthly goals still in progress/)
+      screen.getByText(/In the last three days of one you joined/)
     ).toBeInTheDocument();
     fireEvent.click(toggle);
     await waitFor(() =>

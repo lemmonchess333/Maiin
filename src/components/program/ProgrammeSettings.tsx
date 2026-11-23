@@ -792,7 +792,7 @@ export default function ProgrammeSettings({
               {confirmReset
                 ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in Progress."
                 : focusChangedSameFrequency
-                  ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
+                  ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps. Weights come down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                   : programmePreservationNote({
                       liftDaysChanged,
                       weekNumber: programState?.weekNumber,
@@ -901,7 +901,7 @@ export default function ProgrammeSettings({
                   {focusLabel(activeBlockFocus)}
                 </span>
                 <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                  Set by your training block — change it there.
+                  Set by your training block.
                 </span>
               </span>
             </div>
@@ -969,7 +969,7 @@ export default function ProgrammeSettings({
             className="@container"
           />
           <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
-            Your sessions are built to fit this, warm-ups and rests included.
+            Warm-ups and rests included.
           </p>
         </div>
 
@@ -1151,8 +1151,7 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Auto progression</p>
               <p className="text-xs text-muted-foreground">
-                Raises the weight or reps when you hit the target reps. Off,
-                your next session keeps the weight you lifted.
+                Raises the weight or reps when you hit the target reps.
               </p>
             </div>
             <Toggle

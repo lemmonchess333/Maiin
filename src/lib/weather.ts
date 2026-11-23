@@ -206,13 +206,13 @@ export function getRunningTip(
   // Rain
   if (weatherCode >= 61 && weatherCode <= 65) {
     return activityType === "intervals"
-      ? "Wet track — watch your footing on turns"
-      : "Rainy — wear a light shell, avoid cotton";
+      ? "Wet track, so watch your footing on turns"
+      : "Rainy. Wear a light shell, not cotton";
   }
 
   // Snow
   if (weatherCode >= 71 && weatherCode <= 75) {
-    return "Snowy — trail shoes and shorter stride for grip";
+    return "Snowy. Trail shoes and a shorter stride for grip";
   }
 
   // Thunderstorm
@@ -222,7 +222,7 @@ export function getRunningTip(
 
   // Windy
   if (windSpeed >= 30) {
-    return "Very windy — start into the wind, finish with it behind you";
+    return "Very windy. Start into the wind and finish with it behind you";
   }
   if (windSpeed >= 20) {
     return "Windy, so expect a slower pace for the same effort";
@@ -230,10 +230,10 @@ export function getRunningTip(
 
   // Cold
   if (temperature <= 0) {
-    return "Freezing — layer up, gloves are a must, warm up indoors";
+    return "Freezing. Layer up, wear gloves and warm up indoors";
   }
   if (temperature <= 5) {
-    return "Cold — extra warm-up time, breathe through your nose";
+    return "Cold. Warm up for longer and breathe through your nose";
   }
 
   // Perfect conditions

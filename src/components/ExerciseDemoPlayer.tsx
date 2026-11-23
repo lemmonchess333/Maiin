@@ -153,7 +153,7 @@ export default function ExerciseDemoPlayer({
           <figure key={src} className="rounded-2xl overflow-hidden bg-muted">
             <img
               src={src}
-              alt={`${name} — ${i === 0 ? "start position" : "finish position"}`}
+              alt={`${name}, ${i === 0 ? "start position" : "finish position"}`}
               loading="lazy"
               onError={() => onImgError(src)}
               className="w-full h-auto aspect-square object-cover"

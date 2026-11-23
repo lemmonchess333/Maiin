@@ -55,7 +55,7 @@ describe("someone else's profile", () => {
       within(section)
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toEqual(["First Step", "Week Warrior"]);
+    ).toEqual(["First log", "7 days in a row"]);
     expect(screen.queryByRole("button")).toBeNull();
   });
 
@@ -89,11 +89,9 @@ describe("your own profile", () => {
     const onToggle = vi.fn();
     shelf({ isOwn: true, open: true, onToggle });
     expect(await screen.findByTestId("badge-collection")).toBeTruthy();
-    // The page shows your profile as others see it; this part they do not.
+    // Others see the earned shelf; the whole collection is the owner's.
     expect(
-      screen.getByText(
-        "Only you see this. Other people see the badges you have earned."
-      )
+      screen.getByText("Others see only the badges you’ve earned.")
     ).toBeTruthy();
     // The collection holds every badge: the newest are not listed twice.
     expect(screen.queryByRole("list", { name: "Recent badges" })).toBeNull();

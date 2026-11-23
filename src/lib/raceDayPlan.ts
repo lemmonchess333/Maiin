@@ -182,24 +182,24 @@ export function buildRaceDayPlan(input: {
     paceSource = "target";
     planTimeS = target;
     note =
-      "Opens ~2% easier than goal pace and closes faster — the negative split (a Tropos heuristic, not a promise).";
+      "Opens about 2% easier than goal pace and closes faster: a negative split (a Tropos estimate, not a promise).";
   } else if (target && targetIsLongShot && predicted) {
     paceSource = "fitness";
     planTimeS = predicted;
     note =
-      "Your goal reads well beyond your recent running, so the splits pace what that running implies — chasing a long shot from the gun is the classic blow-up.";
+      "Your goal is well beyond your recent running, so the splits pace what that running suggests.";
   } else if (target) {
     // Long-shot flag without a prediction can't happen (the flag needs a
     // benchmark), so this branch is target-with-no-benchmark.
     paceSource = "target";
     planTimeS = target;
     note =
-      "Opens ~2% easier than goal pace and closes faster — the negative split (a Tropos heuristic, not a promise).";
+      "Opens about 2% easier than goal pace and closes faster: a negative split (a Tropos estimate, not a promise).";
   } else {
     paceSource = "fitness";
     planTimeS = predicted!;
     note =
-      "Paced from what your recent running implies — set a goal time in the race plan to pace a target.";
+      "Paced from your recent running. Set a goal time in the race plan to pace a target.";
   }
 
   // A/B tiers: the distinct candidate times, fastest first, each labelled

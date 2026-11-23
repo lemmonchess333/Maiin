@@ -462,7 +462,7 @@ test.describe("axe", () => {
     const sheet = '[role="dialog"]';
     const dialog = page.locator(sheet).first();
 
-    const props = page.getByRole("button", { name: /props — show list$/ });
+    const props = page.getByRole("button", { name: /props, show list$/ });
     await open(page, "activity/rich-feed-push", props);
     await props.click();
     await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });

@@ -31,7 +31,7 @@ export function levelSuggestionCopy(
         "Your main lifts have stopped moving up from session to session.",
       body:
         "These lifts have stalled through real missed reps AND a load " +
-        "reset — the classic end of session-to-session progress, not just " +
+        "reset: the usual end of session-to-session progress, not just " +
         "a week that needed to be easy. Your exercises stay as they are. " +
         `Intermediate gives your main lifts ${ranged ? "a range of reps, and heavier and lighter days" : "heavier and lighter days"}, ` +
         "brings a lighter week every fourth week when you lift three or " +
@@ -39,7 +39,7 @@ export function levelSuggestionCopy(
       basis:
         "Based only on your logged sessions: a reset and honest misses are " +
         "already in this window, and you’re not in a cut. Advanced is " +
-        "never suggested automatically — that’s a years-of-training " +
+        "never suggested automatically. That’s a years-of-training " +
         "judgement, and it stays yours.",
     };
   }

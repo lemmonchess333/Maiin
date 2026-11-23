@@ -202,7 +202,7 @@ describe("FellBehindSheet — detrained register", () => {
     ).toBeInTheDocument();
     // The body promises exactly what the detrained regen branch produces.
     expect(
-      screen.getByText(/ease you back in — easy running first/i)
+      screen.getByText(/eases you back in with easy running first/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Rebuild my plan/i })
@@ -224,7 +224,7 @@ describe("FellBehindSheet — detrained register", () => {
   it("non-race detrained users get the ease-back line, not the static-target line", () => {
     setup({ recentLayoff: "detrained", raceModeActive: false });
     expect(
-      screen.getByText(/a couple of short, easy runs is the win/i)
+      screen.getByText(/a couple of short, easy runs this week/i)
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/Your weekly target stays the same/i)
@@ -276,7 +276,7 @@ describe("FellBehindSheet — a race out of reach", () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/ease you back in — easy running first/i)
+      screen.queryByText(/eases you back in with easy running first/i)
     ).not.toBeInTheDocument();
   });
 

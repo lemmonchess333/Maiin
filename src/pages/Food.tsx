@@ -1866,7 +1866,7 @@ export default function Food() {
       toast.success(
         navigator.onLine
           ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
-          : "Saved on this phone — syncs when you’re back online",
+          : "Saved on this phone. Syncs when you’re back online",
         {
           duration: 5000,
           action: {

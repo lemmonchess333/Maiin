@@ -371,5 +371,5 @@ export function programmePreservationNote(args: {
   const level = args.levelChanged
     ? " Your main lifts take the targets for your new level."
     : "";
-  return `We’ll update your plan with these settings and keep your current workouts — including any exercises you’ve customised.${refit}${level} ${week}, your history, and logged sessions stay.`;
+  return `We’ll update your plan with these settings and keep your current workouts, including any exercises you’ve customised.${refit}${level} ${week}, your history, and logged sessions stay.`;
 }

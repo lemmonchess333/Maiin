@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { getFormArtCutout } from "@/lib/formArtCutouts";
+import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
 import {
   finishKicker,
@@ -362,7 +363,7 @@ export default function SessionCompleteScreen({
     sessionVariant === "easier_today"
       ? "Easier session. Your regular plan stays in place."
       : sessionVariant === "time_budget"
-        ? "Session prepared for your usual time. Your full programme stays in place."
+        ? "Session prepared for your usual time."
         : sessionVariant
           ? `Express ${sessionVariant === "express45" ? "45" : "30"}: the essentials, done.`
           : null;
@@ -380,14 +381,10 @@ export default function SessionCompleteScreen({
         }
       : leadArt;
   const picture = object ? (
-    <img
+    <FinishFigure
       src={formArtCutoutUrl(object.cutout)}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      decoding="async"
-      data-lead-drawing={object.exerciseName}
-      className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
+      leadDrawing={object.exerciseName}
+      className="exercise-drawing"
     />
   ) : hasMuscleFigure(muscleCategories) ? (
     <MiniMuscleFigure

@@ -459,7 +459,7 @@ function AccountSectionContent({
         open={showAppleWarning}
         onClose={() => setShowAppleWarning(false)}
         title="Cancel your App Store subscription first"
-        description="Tropos can’t cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
+        description="Tropos can’t cancel your iOS subscription for you, because Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
         role="alertdialog"
       >
         {/* All three on the primitive. They were three bespoke class

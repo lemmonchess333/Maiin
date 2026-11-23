@@ -161,7 +161,7 @@ export default function TrajectoryCard({
           {thisWeek.sessions === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-3">
               {lastWeek.sessions > 0
-                ? "Start your week — beat last week"
+                ? "Start your week. Beat last week"
                 : "Start your week with your first workout or run"}
             </p>
           )}

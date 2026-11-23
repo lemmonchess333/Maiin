@@ -139,7 +139,7 @@ export function notifyMealsLogged(
   toast.success(
     navigator.onLine
       ? message
-      : "Saved on this phone — syncs when you’re back online",
+      : "Saved on this phone. Syncs when you’re back online",
     {
       duration: 5000,
       action: {

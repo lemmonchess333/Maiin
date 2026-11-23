@@ -49,9 +49,7 @@ export default function FastestKilometresCard({
         <h2 className="text-base font-bold text-foreground">
           Fastest kilometres
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Your quickest 1, 5 and 10 km within a run. {subtitle}.
-        </p>
+        <p className="text-sm text-muted-foreground">{subtitle}.</p>
       </div>
       <ul className="-mx-2">
         {rows.map(({ km, inRange, allTime }) => {

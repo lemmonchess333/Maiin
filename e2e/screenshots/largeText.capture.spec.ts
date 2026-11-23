@@ -886,7 +886,7 @@ test.describe("large text", () => {
       const dialog = page.getByRole("dialog").first();
 
       await page.goto("activity/rich-feed-push");
-      const props = page.getByRole("button", { name: /props — show list$/ });
+      const props = page.getByRole("button", { name: /props, show list$/ });
       await ready(page, props);
       await props.click();
       await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
@@ -1275,7 +1275,7 @@ test.describe("large text", () => {
         .getByRole("checkbox", { name: "Push-Ups", exact: true })
         .first()
         .click();
-      await page.getByRole("button", { name: /Add to workout$/ }).click();
+      await page.getByRole("button", { name: /^Add \d+ exercises?$/ }).click();
       for (let i = 0; i < 4; i++) {
         const next = page.getByRole("button", { name: /^Complete / }).first();
         await next.waitFor({ timeout: 20_000 });

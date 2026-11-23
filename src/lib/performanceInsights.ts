@@ -84,7 +84,7 @@ const LOAD_TEMPLATES: Record<ScoreBand, PerformanceInsight[]> = {
     {
       source: "load",
       headline: "Light week",
-      body: "Training volume dipped. Consistency matters more than peak weeks — pick one workout to anchor next week.",
+      body: "You trained less than usual. Pick one workout to anchor next week.",
     },
     {
       source: "load",
@@ -258,7 +258,7 @@ const DELOAD_TEMPLATES: PerformanceInsight[] = [
   {
     source: "deload",
     headline: "Step-back week",
-    body: "This is a planned step back. Use it — easy sessions + sleep are the work.",
+    body: "A planned step back. Easy sessions and sleep are the work.",
   },
 ];
 

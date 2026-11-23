@@ -42,7 +42,7 @@ export default function VerifyEmailNotice({
     setSending(true);
     try {
       await sendVerificationEmail();
-      toast.success("Verification email sent — check your inbox");
+      toast.success("Verification email sent. Check your inbox");
     } catch (err) {
       logger.error("[VerifyEmailNotice] resend failed", err);
       toast.error(resendVerificationErrorMessage(err));
@@ -56,7 +56,7 @@ export default function VerifyEmailNotice({
     try {
       const verified = await onRecheck();
       if (verified) toast.success("Email verified");
-      else toast.error("Not verified yet — tap the link in the email first");
+      else toast.error("Not verified yet. Tap the link in the email first");
     } catch (err) {
       logger.error("[VerifyEmailNotice] verification check failed", err);
       toast.error(
@@ -74,9 +74,7 @@ export default function VerifyEmailNotice({
           className="size-4 shrink-0 mt-0.5 text-muted-foreground"
           aria-hidden="true"
         />
-        <span>
-          Verify your email to {action} — check your inbox for the link.
-        </span>
+        <span>Verify your email to {action}. The link is in your inbox.</span>
       </p>
       <div className="flex gap-2">
         <Button

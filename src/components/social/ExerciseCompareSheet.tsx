@@ -121,7 +121,7 @@ export default function ExerciseCompareSheet({
           <div className="rounded-xl bg-muted/50 px-3.5 py-3">
             <SectionLabel>Your best</SectionLabel>
             <p className="text-sm text-muted-foreground mt-1">
-              No record yet — log this exercise to start tracking.
+              Log this exercise to see your record here.
             </p>
           </div>
         )}

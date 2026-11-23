@@ -36,7 +36,7 @@ export default function LiveActivitiesGroup() {
     <SettingsGroup title="Lock Screen">
       <SettingsRow
         label="Live Activities"
-        description="Your run or workout on the Lock Screen and in the Dynamic Island while it’s going"
+        description="Your run or workout while it’s going"
         trailing={
           <Toggle label="Live Activities" checked={on} onChange={flip} />
         }

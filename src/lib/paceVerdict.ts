@@ -110,8 +110,8 @@ export function resolvePaceVerdict(args: {
     return {
       tone: "on",
       line: band
-        ? `Right on target — ${actual}, inside ${target}.`
-        : `Right on target — ${actual} against a ${target} goal.`,
+        ? `Right on target: ${actual}, inside ${target}.`
+        : `Right on target: ${actual} against a ${target} goal.`,
       speaks: false,
     };
   }

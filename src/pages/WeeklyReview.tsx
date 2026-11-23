@@ -509,8 +509,7 @@ export default function WeeklyReview() {
                 A quiet week
               </h2>
               <p className="mt-3 text-base text-muted-foreground">
-                Nothing logged last week — it happens. The week ahead is a fresh
-                start.
+                Nothing logged last week. The week ahead is a fresh start.
               </p>
               <div className="mt-auto pt-8">
                 <Button variant="secondary" fullWidth onClick={next}>

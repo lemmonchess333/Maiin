@@ -458,8 +458,8 @@ export default function FeedView({
                 what it is and how Following fills; the posts follow. */}
             {feedSubTab === "explore" && followingCount === 0 && (
               <p className="mb-3 text-small text-muted-foreground">
-                Sessions people shared publicly. Follow anyone to see theirs
-                under Following.
+                Sessions shared publicly. Follow someone to see theirs under
+                Following.
               </p>
             )}
 

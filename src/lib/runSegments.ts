@@ -556,9 +556,9 @@ export function segmentsFromTempo(
         : `${min(seconds)} min tempo${pace}`,
       instruction: atGoal
         ? opts?.marathonBand
-          ? "Marathon pace — hold the rhythm"
-          : "Your goal race pace — hold the rhythm"
-        : "Comfortably hard — hold the rhythm",
+          ? "Marathon pace. Hold the rhythm"
+          : "Your goal race pace. Hold the rhythm"
+        : "Comfortably hard. Hold the rhythm",
       target: { kind: "duration", seconds },
       ...(paceTarget ? { paceTarget } : {}),
       ...(atGoal ? { pacePinned: true } : {}),
@@ -579,8 +579,8 @@ export function segmentsFromTempo(
             ? "Marathon pace. Settle into your race rhythm."
             : "Goal race pace. Settle into your race rhythm."
         : shape.workSecs.length > 1
-          ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard — settle into the rhythm.`
-          : "Tempo. Comfortably hard — settle into the rhythm.",
+          ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard. Settle into the rhythm.`
+          : "Tempo. Comfortably hard. Settle into the rhythm.",
     });
   });
   out.push({
@@ -672,7 +672,7 @@ export function segmentsFromEasyWithStrides(
       label: `Easy ${min(easySec)} min`,
       instruction: "Conversational pace",
       target: { kind: "duration", seconds: easySec },
-      cue: "Easy running. Conversational pace — strides at the end.",
+      cue: "Easy running. Conversational pace, with strides at the end.",
       eyebrow: EFFORT_EYEBROW.easy,
     },
   ];
@@ -680,7 +680,7 @@ export function segmentsFromEasyWithStrides(
     out.push({
       type: "hard",
       label: `Stride ${rep} of ${strides.reps}`,
-      instruction: "Relaxed fast — smooth, not sprinting",
+      instruction: "Relaxed fast. Smooth, not sprinting",
       target: { kind: "duration", seconds: strides.workSeconds },
       rep,
       totalReps: strides.reps,
@@ -743,23 +743,23 @@ export function segmentsFromLongWithRacePace(
     {
       type: "easy",
       label: `Easy ${easyLabel} ${u}`,
-      instruction: "Conversational pace — race pace comes at the end",
+      instruction: "Conversational pace. Race pace comes at the end",
       target: { kind: "distance", meters: Math.round(easyKm * 1000) },
-      cue: "Easy running. Settle in — the race-pace block comes at the end.",
+      cue: "Easy running. Settle in. The race-pace block comes at the end.",
       eyebrow: EFFORT_EYEBROW.easy,
     },
     {
       type: "moderate",
       label: `${blockLabel} ${u} @ ${paceLabel} ${paceUnitLabel(unit)}`,
       instruction: marathonBand
-        ? "Marathon pace — strong to the finish"
-        : "Your goal race pace — strong to the finish",
+        ? "Marathon pace. Strong to the finish"
+        : "Your goal race pace. Strong to the finish",
       target: { kind: "distance", meters: Math.round(blockKm * 1000) },
       paceTarget: goalPaceS,
       pacePinned: true,
       effort: `${blockKm}K @ ${named}`,
       eyebrow: "RACE PACE",
-      cue: `Race-pace block. ${blockKm} kilometres at ${marathonBand ? "marathon pace" : "your goal pace"} — strong to the finish.`,
+      cue: `Race-pace block. ${blockKm} kilometres at ${marathonBand ? "marathon pace" : "your goal pace"}. Strong to the finish.`,
     },
   ];
 }

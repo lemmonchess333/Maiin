@@ -8,7 +8,7 @@ import { STREAK_TIERS, standingLines, streakStanding } from "../streakStanding";
 const none = new Set<string>();
 
 describe("the streak's tiers", () => {
-  it("are the streak badges from 3 days to 365, shortest first, without First Step", () => {
+  it("are the streak badges from 3 days to 365, shortest first, without First log", () => {
     expect(STREAK_TIERS.map((t) => t.threshold)).toEqual([
       3, 7, 14, 30, 60, 100, 365,
     ]);
@@ -39,7 +39,7 @@ describe("streakStanding", () => {
   });
 
   it("follows the current streak, and says when its badge is already held", () => {
-    // Longest 40, five days into a new one: two days from Week Warrior,
+    // Longest 40, five days into a new one: two days from 7 days in a row,
     // held since the long one, not 55 days from the next badge to earn.
     const held = new Set(["three_day", "week_warrior", "two_week"]);
     const s = streakStanding(5, 40, held);
@@ -82,7 +82,7 @@ describe("the band's words", () => {
 
   it("names the badge ahead and the days to it, then the longest", () => {
     expect(words(12, 21)).toEqual({
-      title: "Two Week Wonder in 2 days",
+      title: "2 days to a 14-day streak",
       progress: "12 of 14 days",
       held: null,
       best: "Longest 21 days, 10 days to pass it",
@@ -90,10 +90,10 @@ describe("the band's words", () => {
   });
 
   it("says one day, never one days", () => {
-    expect(words(13, 13).title).toBe("Two Week Wonder in 1 day");
+    expect(words(13, 13).title).toBe("1 day to a 14-day streak");
     expect(words(20, 21).best).toBe("Longest 21 days, 2 days to pass it");
     expect(words(20, 20, []).best).toBe("This is your longest");
-    expect(words(2, 2).title).toBe("Getting Started in 1 day");
+    expect(words(2, 2).title).toBe("1 day to a 3-day streak");
     expect(words(0, 1).best).toBe("Longest 1 day, 2 days to pass it");
   });
 
@@ -101,7 +101,7 @@ describe("the band's words", () => {
     expect(words(5, 40, ["three_day", "week_warrior"])).toEqual({
       title: "2 days to a 7-day streak",
       progress: "5 of 7 days",
-      held: "Week Warrior already earned",
+      held: "7 days in a row already earned",
       best: "Longest 40 days, 36 days to pass it",
     });
   });
@@ -124,7 +124,7 @@ describe("the band's words", () => {
 
   it("with no streak and no record, says nothing of a longest", () => {
     expect(words(0, 0)).toEqual({
-      title: "Getting Started in 3 days",
+      title: "3 days to a 3-day streak",
       progress: "0 of 3 days",
       held: null,
       best: null,

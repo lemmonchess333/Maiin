@@ -107,7 +107,7 @@ export default function IntervalStepShell({
         <p className="text-xs mt-1 text-white/70">
           {manualDistance
             ? "Finish the run and enter the distance covered to save it."
-            : "Cruise home at whatever feels good — then finish the run to save it."}
+            : "Cruise home at an easy effort, then finish the run to save it."}
         </p>
       </div>
     );
@@ -237,7 +237,7 @@ export default function IntervalStepShell({
                   </span>
                 </>
               ) : (
-                "Last step — bring it home."
+                "Last step. Bring it home."
               )}
             </p>
             <button

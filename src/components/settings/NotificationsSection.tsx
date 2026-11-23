@@ -62,15 +62,11 @@ const LABEL = "min-w-[min(100%,8em)] flex-1";
  *  copy, so each is one switch that needs push. */
 const PUSH_ONLY_ROWS: readonly [PushOnlyType, string, string | null][] = [
   ["badge", "Badge unlocked", null],
-  [
-    "challenges",
-    "Monthly challenges",
-    "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
-  ],
+  ["challenges", "Monthly challenges", "Near the start of each month"],
   [
     "challengeReminders",
     "Monthly challenge reminders",
-    "One reminder in the final three days, around 09:00 in your time zone, for joined monthly goals still in progress.",
+    "In the last three days of one you joined",
   ],
 ];
 
@@ -435,9 +431,6 @@ export default function NotificationsSection({
         <div className={ROW}>
           <div className={LABEL}>
             <p className="text-sm text-foreground">Meals</p>
-            <p className="text-xs text-muted-foreground">
-              When it’s time to eat
-            </p>
           </div>
           <Toggle
             className="ml-auto"
@@ -530,9 +523,6 @@ export default function NotificationsSection({
         <div className={ROW}>
           <div className={LABEL}>
             <p className="text-sm text-foreground">Workouts</p>
-            <p className="text-xs text-muted-foreground">
-              On the days you train
-            </p>
           </div>
           <Toggle
             className="ml-auto"
@@ -600,9 +590,7 @@ export default function NotificationsSection({
           <div className={ROW}>
             <div className={LABEL}>
               <p className="text-sm text-foreground">Weekly review</p>
-              <p className="text-xs text-muted-foreground">
-                Monday at 09:00, when last week’s review is ready
-              </p>
+              <p className="text-xs text-muted-foreground">Monday at 09:00</p>
             </div>
             <Toggle
               className="ml-auto"
