@@ -216,7 +216,9 @@ export default function DeloadBanner({
           <div
             className="@container p-4 rounded-xl relative"
             style={{
-              background: (deloadActive ? THEME.success : THEME.warning) + "14",
+              background: deloadActive
+                ? THEME.chrome.tint
+                : THEME.warning + "14",
             }}
             role="region"
             aria-label={deloadActive ? active.title : "Lighter week suggested"}

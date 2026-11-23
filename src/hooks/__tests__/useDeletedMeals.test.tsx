@@ -91,11 +91,18 @@ describe("useDeletedMeals", () => {
     expect(result.current.deletedMeals).toEqual([]);
   });
 
-  it("keeps older deletions recoverable until explicitly restored or removed", async () => {
+  it("lists a meal past its 30 days until the server's purge removes it", async () => {
+    /* F5c (STATUS 2026-11-21): a meal is removed for good 30 days after it
+       was deleted, by the hourly `purgeSoftDeletedMeals`
+       (functions/lib/mealPurge.js), which deletes the document. The list
+       applies no cutoff of its own: a meal whose 30 days are up and that
+       the job has not reached yet is still stored and still restorable,
+       so it is still shown. The day each row names is pinned to the job's
+       by `mealPurge.cross.test.ts`. */
     seedFirestore({
       "users/u1/meals/expired": meal({
         foodName: "Long gone",
-        deletedAt: ago(30 * DAY),
+        deletedAt: ago(31 * DAY),
       }),
       "users/u1/meals/fresh": meal({
         foodName: "Still here",
@@ -110,7 +117,7 @@ describe("useDeletedMeals", () => {
     ]);
   });
 
-  it("does not introduce a lower retention cutoff for stored timestamps", async () => {
+  it("applies no lower cutoff of its own to a stored timestamp", async () => {
     seedFirestore({
       "users/u1/meals/legacy": meal({
         foodName: "Legacy deletion",

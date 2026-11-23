@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
+import { FORM_ART_CUTOUTS } from "../../src/lib/formArtCutouts.data";
 
 /**
  * The Firebase Hosting build is the website, not the app (App1 Q52, owner
@@ -16,10 +17,11 @@ import type { Plugin } from "vite";
  *
  * Nor does the app's `public/` folder ship whole: only what the website
  * and its kept addresses use (`WEBSITE_PUBLIC_DIRS`, `WEBSITE_PUBLIC_ART`),
+ * the exercise cut-outs a shared card's page draws (`CARD_ART_FILES`),
  * and the worker
  * that retires the app's service worker at both of its addresses
- * (`RETIRED_WORKER_PATHS`, scripts/website/retired-sw.js). The exercise
- * pictures, badges, medals and the rest stay with the app.
+ * (`RETIRED_WORKER_PATHS`, scripts/website/retired-sw.js). The form
+ * guide's frames, badges, medals and the rest stay with the app.
  */
 export const WEBSITE_HTML = "website.html";
 
@@ -44,8 +46,9 @@ export const RETIRED_WORKER_SOURCE = "scripts/website/retired-sw.js";
 
 /** Single files of `public/` the website's own pages draw: the app's
  *  drawings of a lift, a runner and food, and one challenge's medals.
- *  Their folders stay with the app (form-art alone is 20 MB);
- *  prerender.test.tsx holds every picture a page names to this list. */
+ *  Their folders stay with the app (form-art alone is 20 MB, its motion
+ *  frames among it); prerender.test.tsx holds every picture a page names
+ *  to this list. */
 export const WEBSITE_PUBLIC_ART = [
   "form-art/overhead-press.webp",
   "form-art/run-fast.webp",
@@ -69,6 +72,15 @@ export const WEBSITE_PUBLIC_ART = [
   "medals/active-days-gold.webp",
 ] as const;
 
+/** Every drawing a shared card's page can draw (Soc17): the released
+ *  exercise cut-outs, about 3 MB in all, one fetched per page. A card
+ *  names its drawing by exercise id, which the server checks against the
+ *  same list (functions/lib/cardArt.js, pinned to FORM_ART_CUTOUTS by
+ *  sharedCards.cross.test.ts), so each id a card can carry is shipped. */
+export const CARD_ART_FILES: readonly string[] = [
+  ...new Set(Object.values(FORM_ART_CUTOUTS).map((cutout) => cutout.src)),
+].sort();
+
 /** The files of `public/` the website ships, relative to it. */
 export function websitePublicFiles(publicDir: string): string[] {
   const files: string[] = [];
@@ -81,7 +93,10 @@ export function websitePublicFiles(publicDir: string): string[] {
     }
   };
   for (const dir of WEBSITE_PUBLIC_DIRS) walk(path.join(publicDir, dir), dir);
-  for (const file of WEBSITE_PUBLIC_ART) {
+  for (const file of new Set<string>([
+    ...WEBSITE_PUBLIC_ART,
+    ...CARD_ART_FILES,
+  ])) {
     statSync(path.join(publicDir, file));
     files.push(file);
   }

@@ -217,6 +217,12 @@ const PINNED: Record<string, string> = {
   // (src/lib/gps.ts) and isOutdoorGpsRun (src/lib/runGuards.ts), which the
   // same cross-test holds to the app's.
   "functions/lib/publicRoute.js": "src/lib/__tests__/publicPost.cross.test.ts",
+  // A shared card's page (Soc17 call 1): the server writes the card into
+  // the page and src/lib/sharedCardPage.ts reads it. A basename pair; the
+  // cross-test feeds the sheet's copy to the server and the server's page
+  // to the reader.
+  "functions/lib/sharedCardPage.js":
+    "src/lib/__tests__/sharedCards.cross.test.ts",
   // Run26 call 3: a segment's stretch rule and name refusals, which the
   // maker says before asking. A basename pair with src/lib/segments.ts;
   // the cross-test drives segments.js and segmentGeometry.js both.
@@ -323,6 +329,10 @@ const PINNED: Record<string, string> = {
   // for every meals reader, the server for the PI adherence pass.
   "functions/lib/mealDocs.js":
     "src/lib/__tests__/mealActiveSingleSource.test.ts",
+  // F5c's 30 days. Both copies run: the server's purge deletes the meal,
+  // and Recently deleted meals says how long each one has left. A basename
+  // pair with src/lib/mealPurge.ts; the cross-test runs the real job.
+  "functions/lib/mealPurge.js": "src/lib/__tests__/mealPurge.cross.test.ts",
   // Effective subscription tier. The SERVER copy is the one that spends
   // money (Vertex scan quota, adherence target); the client
   // copy decides what is offered. Invisible to this gate until 2026-08-22 —
@@ -347,6 +357,23 @@ const PINNED: Record<string, string> = {
   // whether a photo or typed meal is sent to Gemini, the server whether
   // analyzeFood / analyzeFoodText answer. One stored answer, read alike.
   "functions/lib/aiConsent.js": "src/lib/__tests__/aiConsent.cross.test.ts",
+  // The agreement to store health details (Priv1 call 1). BOTH copies
+  // run: the client decides whether the app opens on the agreement and
+  // what setup sends, the server whether completeOnboarding saves the
+  // plan. One stored answer, read alike, and the rules' version beside it.
+  "functions/lib/healthConsent.js":
+    "src/lib/__tests__/healthConsent.cross.test.ts",
+
+  // The email consent record (App1 Q55). Both copies run: the app's draws
+  // the switches and names the words a yes is given to; the server's writes
+  // the record and decides, before every send, whether an email may go. A
+  // basename pair with src/lib/emailConsent.ts.
+  "functions/lib/emailConsent.js":
+    "src/lib/__tests__/emailConsent.cross.test.ts",
+  // The weekly review email's food days and week dates (App1 Q55), so the
+  // email never says a number or a week the review page contradicts.
+  "functions/lib/weeklyReviewEmail.js":
+    "src/lib/__tests__/weeklyReviewEmail.cross.test.ts",
   // MET Norway's weather symbols as the WMO codes src/lib/weather.ts reads
   // for the strip's icon and the pre-run tips. Not a copy of client logic,
   // but an agreement both sides must keep: a code the client does not know

@@ -39,8 +39,8 @@ const MEDALLION = 184;
  * streak's kind. The headline names it in five words or fewer, the
  * sentence says what, how much and since when. Share hands a square
  * card of it to the share sheet (`ShareCardRenderer`'s anniversary card,
- * through `shareCardGenerator`, as the medal's Share does); Done, Escape
- * and back close it.
+ * through `shareCardGenerator`, as the medal's Share does), in the card's
+ * own words, which name no one; Done, Escape and back close it.
  *
  * Under Reduce Motion the medallion fades in where it stays and the rays
  * hold still. Focus is held inside and starts on the headline.
@@ -64,7 +64,7 @@ export default function AnniversaryReveal({
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   const words = anniversaryWords(anniversary.kind, anniversary.since);
-  const colour = words.tone === "running" ? THEME.running : THEME.brand;
+  const colour = words.tone === "running" ? THEME.running : THEME.lifting;
 
   useBackDismiss(true, onDone);
 
@@ -97,12 +97,12 @@ export default function AnniversaryReveal({
         toast.error("Couldn’t create the share image. Try again.");
         return;
       }
-      const outcome = await shareImageFile(file, `${words.headline} on Tropos`);
+      const outcome = await shareImageFile(file, words.card.share);
       if (outcome === "failed") toast.error("Couldn’t share. Try again.");
     } finally {
       setSharing(false);
     }
-  }, [sharing, words.headline]);
+  }, [sharing, words.card.share]);
 
   return (
     <motion.div
@@ -244,8 +244,8 @@ export default function AnniversaryReveal({
           background: "brand",
           handle: profile?.displayName ?? "",
           date: formatDayMonthYear(parseLocalDate(anniversary.day)),
-          headline: words.headline,
-          line: words.line,
+          headline: words.card.headline,
+          line: words.card.line,
           tone: words.tone,
           figure: words.figure,
           figureUnit: words.unit,

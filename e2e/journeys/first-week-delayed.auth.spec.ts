@@ -2,12 +2,13 @@
 import { test, expect } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import {
+  JOURNEY_PASSWORD,
   deleteAccount,
   openJourney,
   setUpPlan,
-  signUp,
   type JourneyAccount,
 } from "../helpers/journey";
+import { newAccountAtSetup } from "../helpers/auth";
 import { emulatorAdmin } from "../helpers/realCallables";
 import { resetNodeClock } from "../helpers/nodeClock";
 
@@ -22,7 +23,13 @@ test("setup days after sign-up still opens on first-week day one", async ({
     // account date is moved back after sign-up, before onboarding commits.
     const today = new Date().toISOString().slice(0, 10);
     await openJourney(page, today);
-    account = await signUp(page, "first-week-delayed");
+    // An account made before its setup, as one from the welcome's Sign in
+    // with Apple or Google is (A6 makes an email account at setup's end).
+    const email = `journey-first-week-delayed-${Date.now()}@tropos.test`;
+    account = {
+      uid: await newAccountAtSetup(page, email, JOURNEY_PASSWORD),
+      email,
+    };
     const { db, Timestamp } = emulatorAdmin();
     const profileRef = db.doc(`users/${account.uid}`);
     await profileRef.update({

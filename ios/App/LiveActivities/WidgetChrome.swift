@@ -21,8 +21,10 @@ enum Palette {
     static let foodDeep = Color(rgb: 0xA34B08)
     /// THEME.semantic.hydration, teal: the food widget's water.
     static let water = Color(rgb: 0x52A3BD)
-    /// THEME.macros.protein, the pink Food draws protein in (Food7).
-    static let protein = Color(rgb: 0xEC4899)
+    /// Protein's colour as Food draws it (DS10 call 3): MACROS_LIGHT's
+    /// fuchsia by day, THEME.macros.protein's orchid by night. The night
+    /// value is under 3:1 on white.
+    static let protein = Color(light: 0xA21CAF, dark: 0xEC8AF5)
     /// THEME.purpleRamp 600 and 400: the streak flame's body, from its
     /// base to its tip, as the app's flame draws its first tiers.
     static let flameBase = Color(rgb: 0x6560C8)

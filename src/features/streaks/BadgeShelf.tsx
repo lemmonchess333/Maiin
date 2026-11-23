@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Suspense, useEffect, useRef } from "react";
 import { Trophy } from "lucide-react";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -86,11 +87,12 @@ export default function BadgeShelf({
             <Button
               variant="ghost"
               size="sm"
-              /* `lifting-strong`, not `primary-strong`: at this size
-                 the latter is 4.42:1 on the light page and 3.86:1 on the
-                 dark one, under the 4.5:1 small text needs (axe caught
-                 it here; the medals' link had the same class). */
-              className="-mr-2 min-h-[44px] text-lifting-strong"
+              /* See all opens the rest in place, so it ends in a
+                 chevron; Show fewer closes them and takes none. */
+              className={cn(
+                "-mr-2 min-h-[44px]",
+                showAll ? "text-foreground" : "link-standalone"
+              )}
               aria-expanded={showAll}
               onClick={() => onToggle?.(!showAll)}
             >

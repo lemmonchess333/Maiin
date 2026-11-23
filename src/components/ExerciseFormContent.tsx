@@ -492,7 +492,7 @@ function ExerciseFormContent({
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
               aria-expanded={showInstructions}
-              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting-strong"
+              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-foreground"
             >
               {showInstructions ? (
                 <>

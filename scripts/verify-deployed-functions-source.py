@@ -109,8 +109,19 @@ def source_targets():
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
-        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
+        # Priv1 call 1: setup is refused without the health-details agreement.
+        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js",
+                               "lib/emailConsent.js", "lib/healthConsent.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
+        # App1 Q55: the email switches, and the consent record they write.
+        "setEmailConsent": ["index.js", "email/emailConsent.js", "lib/emailConsent.js"],
+        # The emails a person chose and the link that stops them (App1 Q55).
+        "hourlyEmailSweep": ["index.js", "updateEmails.js", "lib/emailConsent.js",
+                             "lib/weeklyReviewEmail.js", "lib/winBackEmail.js",
+                             "lib/updateEmailLayout.js", "lib/emailUnsubscribe.js",
+                             "email/accountEmails.js"],
+        "emailUnsubscribe": ["index.js", "updateEmails.js", "lib/emailUnsubscribe.js",
+                             "lib/emailConsent.js"],
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
@@ -152,10 +163,26 @@ def source_targets():
                               "lib/socialFanout.js", "lib/notificationPreferences.js",
                               "lib/blockGuard.js", "lib/deletionTransactionGuard.js",
                               "lib/restriction.js", "lib/jobRuns.js", "profanityFilter.js"],
+        # F5c: deletes each meal 30 days after it was deleted, reading the
+        # account's deletion freeze in the same transaction.
+        "purgeSoftDeletedMeals": ["index.js", "package-lock.json", "lib/mealPurge.js",
+                                  "lib/deletionTransactionGuard.js",
+                                  "lib/accountDeletionStatus.js", "lib/jobRuns.js"],
         # Soc15 invites: the one writer of follows both ways from a code, and
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],
         "getInviteCode": invite_paths,
+        # Soc17: a shared card's page and the share sheet's callable that keeps
+        # its copy, with what a copy may hold, the code joining from it uses,
+        # the drawings a card may name, and the word filter its words pass.
+        "sharedCard": invite_paths + ["lib/sharedCards.js", "lib/cardArt.js",
+                                      "lib/documentId.js", "profanityFilter.js"],
+        "sharedCardPage": ["index.js", "package-lock.json", "lib/sharedCardPage.js",
+                           "lib/sharedCards.js", "lib/cardArt.js", "lib/publicPost.js",
+                           "lib/inviteCodes.js", "lib/restriction.js",
+                           "lib/accountDeletionStatus.js", "profanityFilter.js"],
+        "publicPostPage": ["index.js", "package-lock.json", "lib/publicPost.js",
+                           "lib/publicRoute.js"],
         # Soc15 call 3: weekly leagues. The turn settles, forms and notifies;
         # the callable joins and leaves; the session triggers below keep each
         # standing current.
@@ -198,16 +225,22 @@ def source_targets():
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
+                                              "lib/triggerRetry.js", "lib/sharedCards.js",
+                                              "lib/cardArt.js"]
+                            + league_lib + pulse_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
+                                              "lib/triggerRetry.js", "lib/sharedCards.js",
+                                              "lib/cardArt.js"]
+                        + league_lib + pulse_lib,
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
                               "lib/discoveryHidden.js"],
-        # A deleted post leaves the feeds, and its map files and photos go with it.
+        # A deleted post leaves the feeds, and its map files, photos and the
+        # pages of the cards shared from it go with it.
         "onActivityDeleted": ["index.js", "package-lock.json", "lib/socialFanout.js",
-                              "lib/routeMapFiles.js", "lib/postPhotos.js"],
+                              "lib/routeMapFiles.js", "lib/postPhotos.js", "lib/sharedCards.js",
+                              "lib/cardArt.js"],
         "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
         "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
                               "lib/followBackfill.js", "lib/feedIndex.js"],

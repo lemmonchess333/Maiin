@@ -19,7 +19,8 @@ export const WEBSITE_PAGE_MODULES = {
   terms: () => import("@/pages/TermsOfService"),
   support: () => import("@/pages/Support"),
   post: () => import("@/pages/PublicPost"),
+  card: () => import("@/website/pages/SharedCard"),
 } satisfies Record<
-  Exclude<SitePageKey, "home"> | "post",
+  Exclude<SitePageKey, "home"> | "post" | "card",
   () => Promise<unknown>
 >;

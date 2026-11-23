@@ -110,6 +110,12 @@ export default function Home() {
                 Get Tropos on your iPhone to open this Space.
               </p>
             )}
+            {note === "fromEmail" && (
+              <p className="p-3 rounded-xl bg-stage-raised text-sm font-semibold">
+                Opened on your iPhone, this link goes straight to the Tropos
+                app.
+              </p>
+            )}
             <p className="site-kicker text-stage-muted">For iPhone</p>
             <SiteHeadline id="home-title">
               Your training and food, planned together

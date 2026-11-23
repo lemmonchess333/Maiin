@@ -11,7 +11,7 @@ describe("getSegmentColor", () => {
       easy: "#22b558",
       moderate: "#3b7ee6",
       hard: "#e04040",
-      recovery: "#7B72E9",
+      recovery: "#A1A1AA",
       cooldown: "#06a8c8",
     };
 

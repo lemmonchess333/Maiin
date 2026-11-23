@@ -109,7 +109,7 @@ describe("moments on the feed card", () => {
     expect(tiles).toEqual(["milestone", "best", "milestone"]);
   });
 
-  it("draws a first session in its sport's colour: coral on a run", () => {
+  it("draws a first session in its sport's colour: coral on a run, purple on a lift", () => {
     const tile = (type: "run" | "workout") => {
       const { container, unmount } = render(
         <MemoryRouter>
@@ -125,7 +125,7 @@ describe("moments on the feed card", () => {
     };
     expect(tile("run")).toContain("text-running-strong");
     expect(tile("run")).not.toContain("text-primary");
-    expect(tile("workout")).toContain("text-primary");
+    expect(tile("workout")).toContain("text-lifting-strong");
   });
 
   it("reads a lift's PR in the reader's load unit", () => {

@@ -1,7 +1,6 @@
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
-import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
+import { newAccountAtSetup, signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 
 test.use({ viewport: { width: 375, height: 852 } });
@@ -59,13 +58,10 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   page,
 }) => {
   test.setTimeout(120_000);
-  await page.goto("/");
-  await openSignUpForm(page);
+  // An account with no plan yet, as a new Google or Apple account is: its
+  // setup builds the plan from Start my plan, which this test refuses.
   const email = `designer-${Date.now()}@tropos.test`;
-  await page.fill("#login-email", email);
-  await page.fill("#login-password", "test-password-123");
-  await page.getByRole("button", { name: /create account/i }).click();
-  await verifySignupEmail(page, email);
+  await newAccountAtSetup(page, email, "test-password-123");
   const next = () =>
     page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(
@@ -92,6 +88,8 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   await page.getByRole("button", { name: /Full gym/ }).click();
   await page.getByRole("button", { name: /New to lifting/ }).click();
   await next();
+  // The agreement to store health details (Priv1 call 1).
+  await page.getByRole("button", { name: "I agree", exact: true }).click();
   await page.getByRole("button", { name: "None", exact: true }).click();
   await next();
   await page.getByRole("radio", { name: "lb", exact: true }).click();

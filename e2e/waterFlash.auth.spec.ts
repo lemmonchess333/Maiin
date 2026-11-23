@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "./helpers/verifySignupEmail";
-import { openSignUpForm } from "./helpers/auth";
+import { newAccountAtSetup } from "./helpers/auth";
 /**
  * The water total must never travel backwards while you are adding.
  *
@@ -25,6 +24,7 @@ import { openSignUpForm } from "./helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../e2e/helpers/emulator";
+import { restHealthConsent } from "./helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -117,19 +117,13 @@ test.describe("water total never travels backwards mid-tap", () => {
     const email = `waterflash-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    await newAccountAtSetup(page, email, "test-password-123");
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });
 
     const res = await fetch(
-      `${DOCS}/users/${await uidByEmail(email)}?updateMask.fieldPaths=onboardingComplete`,
+      `${DOCS}/users/${await uidByEmail(email)}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
       {
         method: "PATCH",
         headers: {
@@ -137,7 +131,11 @@ test.describe("water total never travels backwards mid-tap", () => {
           Authorization: "Bearer owner",
         },
         body: JSON.stringify({
-          fields: { onboardingComplete: { booleanValue: true } },
+          fields: {
+            onboardingComplete: { booleanValue: true },
+            // Agreed to the storing of health details (Priv1 call 1).
+            healthDataConsent: restHealthConsent(),
+          },
         }),
       }
     );

@@ -249,6 +249,32 @@ describe("the goal race", () => {
     expect(isGoalRaceRun({ ...race, date: null }, goal)).toBe(false);
     expect(isGoalRaceRun(race, null)).toBe(false);
   });
+
+  /* A treadmill distance is typed in, so a treadmill run on race day ended
+     the plan and kept a prediction comparison it had no part in (rankings
+     spec, 22 November 2026). A manual entry still counts: someone who
+     raced without their phone types the race in. */
+  it("is not a treadmill run on race day, by its place or its older type", () => {
+    expect(isGoalRaceRun({ ...race, place: "treadmill" }, goal)).toBe(false);
+    expect(
+      isGoalRaceRun({ ...race, place: "treadmill", activityType: "race" }, goal)
+    ).toBe(false);
+    // Saved before the treadmill became a place (Pgm8).
+    expect(isGoalRaceRun({ ...race, activityType: "treadmill" }, goal)).toBe(
+      false
+    );
+  });
+
+  it("is a manual entry, or a race run outdoors, that went the distance", () => {
+    expect(isGoalRaceRun({ ...race, activityType: "manual" }, goal)).toBe(true);
+    expect(
+      isGoalRaceRun({ ...race, activityType: "race", place: null }, goal)
+    ).toBe(true);
+    // A manual entry short of the distance is still not the race.
+    expect(
+      isGoalRaceRun({ ...race, activityType: "manual", distance: 9000 }, goal)
+    ).toBe(false);
+  });
 });
 
 describe("what the race run keeps", () => {

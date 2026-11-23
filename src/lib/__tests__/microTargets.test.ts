@@ -10,7 +10,9 @@ describe("resolveMicroTargets", () => {
     expect(t.find((m) => m.key === "sodium")?.kind).toBe("limit");
   });
 
-  it("varies fiber goal by sex, defaulting to 30 when unknown", () => {
+  // With no sex stored the goal is the midpoint of 38 and 25 (owner, 22
+  // November 2026; `figureForSex`), 31.5 rounded as sugar is. It was 30.
+  it("varies fiber goal by sex, the midpoint, 32, when unknown", () => {
     expect(
       resolveMicroTargets("male").find((m) => m.key === "fiber")?.target
     ).toBe(38);
@@ -19,7 +21,7 @@ describe("resolveMicroTargets", () => {
     ).toBe(25);
     expect(
       resolveMicroTargets(undefined).find((m) => m.key === "fiber")?.target
-    ).toBe(30);
+    ).toBe(32);
   });
 
   it("uses a fixed sodium reference + a 2000-cal sugar fallback when no calorie target", () => {

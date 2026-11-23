@@ -15,6 +15,7 @@
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { seededHealthConsent } from "../e2e/helpers/healthConsent";
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? "demo-tropos";
 
@@ -122,6 +123,9 @@ async function run() {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1), so the
+        // account opens on the app rather than on the agreement.
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "free",
         program: { goal: "recomp", currentPhase: "base" },
         targetCalories: 2400,

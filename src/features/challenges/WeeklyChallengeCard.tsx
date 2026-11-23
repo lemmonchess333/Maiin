@@ -123,9 +123,9 @@ export default function WeeklyChallengeCard({
       <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${THEME.brand}14` }}
+          style={{ background: THEME.chrome.tint }}
         >
-          <Trophy size={16} style={{ color: THEME.brand }} />
+          <Trophy size={16} style={{ color: THEME.chrome.text }} />
         </div>
         <p className="text-sm font-semibold text-foreground">
           No active challenges
@@ -196,13 +196,13 @@ export default function WeeklyChallengeCard({
               style={{
                 background: goalMet
                   ? `${THEME.semantic.positive}14`
-                  : `${THEME.brand}14`,
+                  : THEME.chrome.tint,
               }}
             >
               <Trophy
                 size={18}
                 style={{
-                  color: goalMet ? THEME.semantic.positive : THEME.brand,
+                  color: goalMet ? THEME.semantic.positive : THEME.chrome.text,
                 }}
               />
             </div>

@@ -1,7 +1,9 @@
 import { useId } from "react";
 import { Card } from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
+import PlaceDisc from "@/components/run/PlaceDisc";
 import { finishTimeLabel } from "@/lib/runLabels";
+import { placeWords, type RunPlacing } from "@/lib/runPlacings";
 
 /** One best effort, as `detectBestEfforts` returns it. */
 export interface BestEffort {
@@ -20,11 +22,17 @@ export interface BestEffort {
  *
  * Times use the result format (`finishTimeLabel`): a 10K over the hour
  * reads "1:02:30", never "62:30".
+ *
+ * On a saved run's page an effort that placed 1st to 3rd among the runs
+ * before it carries its disc and its place in the segment card's words
+ * ("Your 2nd best"; Run29).
  */
 export default function BestEffortsCard({
   efforts,
+  placings = [],
 }: {
   efforts: readonly BestEffort[];
+  placings?: readonly RunPlacing[];
 }) {
   const headingId = useId();
   if (efforts.length === 0) return null;
@@ -34,19 +42,30 @@ export default function BestEffortsCard({
         Best efforts
       </SectionHeading>
       <dl>
-        {efforts.map((effort) => (
-          <div
-            key={effort.label}
-            className="flex items-baseline justify-between gap-3 py-1.5"
-          >
-            <dt className="text-sm font-semibold text-running-strong">
-              {effort.label}
-            </dt>
-            <dd className="text-base font-bold font-mono tabular-nums text-foreground">
-              {finishTimeLabel(effort.time)}
-            </dd>
-          </div>
-        ))}
+        {efforts.map((effort) => {
+          const placing = placings.find((p) => p.meters === effort.distance);
+          return (
+            <div
+              key={effort.label}
+              className="flex items-center justify-between gap-3 py-1.5"
+            >
+              <dt className="flex items-center gap-2 text-sm font-semibold text-running-strong">
+                {placing && <PlaceDisc place={placing.place} decorative />}
+                {effort.label}
+              </dt>
+              <dd className="text-right">
+                <span className="block text-base font-bold font-mono tabular-nums text-foreground">
+                  {finishTimeLabel(effort.time)}
+                </span>
+                {placing && (
+                  <span className="block text-xs text-muted-foreground">
+                    {placeWords(placing.place)}
+                  </span>
+                )}
+              </dd>
+            </div>
+          );
+        })}
       </dl>
     </Card>
   );
