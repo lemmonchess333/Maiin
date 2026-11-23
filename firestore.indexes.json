@@ -663,6 +663,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "setupCounts",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "sharedCards",
       "fieldPath": "expiresAt",
       "ttl": true,

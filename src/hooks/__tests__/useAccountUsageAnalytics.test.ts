@@ -9,7 +9,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 const setUsageAnalytics = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/analyticsProvider", () => ({ setUsageAnalytics }));
+const setAccountMetAnalyticsNotice = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analyticsProvider", () => ({
+  setUsageAnalytics,
+  setAccountMetAnalyticsNotice,
+}));
 
 import { useAccountUsageAnalytics } from "../useAccountUsageAnalytics";
 
@@ -17,6 +21,7 @@ type Profile = Parameters<typeof useAccountUsageAnalytics>[0];
 
 beforeEach(() => {
   setUsageAnalytics.mockReset();
+  setAccountMetAnalyticsNotice.mockReset();
 });
 
 describe("useAccountUsageAnalytics", () => {
@@ -52,5 +57,23 @@ describe("useAccountUsageAnalytics", () => {
     rerender({ profile: { usageAnalytics: false } });
     rerender({ profile: {} });
     expect(setUsageAnalytics.mock.calls).toEqual([[true], [false], [true]]);
+  });
+
+  /* The analytics line sits on the health-details agreement, so an account
+     that carries the agreement met it; one without, or no account, has not
+     (owner, 23 November 2026). */
+  it("says the account met the analytics line only once it carries the agreement", () => {
+    const { rerender } = renderHook(
+      ({ profile }: { profile: Profile }) => useAccountUsageAnalytics(profile),
+      { initialProps: { profile: null as Profile } }
+    );
+    rerender({ profile: {} });
+    rerender({ profile: { healthDataConsent: { at: null, version: 1 } } });
+    rerender({ profile: null });
+    expect(setAccountMetAnalyticsNotice.mock.calls).toEqual([
+      [false],
+      [true],
+      [false],
+    ]);
   });
 });

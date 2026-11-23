@@ -4,6 +4,9 @@
  * and on the web. On by default. Since 5 February 2026 PECR lets analytics
  * used only to improve the service run without asking first, provided the
  * person is told and has a simple, free way to object; this is that way.
+ * They are told on the health-details agreement (`USAGE_ANALYTICS_NOTICE`),
+ * and nothing goes to Google before they have seen it (owner, 23 November
+ * 2026; `analyticsProvider.ts`).
  *
  * The answer lives in two places, and this module holds the rules for both:
  *
@@ -37,6 +40,13 @@ export const USAGE_ANALYTICS_DESCRIPTION =
   "Sends how you use the app and your plan choices to Google Analytics, " +
   "tied to this device, not your account. No names, and not what you log, " +
   "only how often.";
+
+/** The line on the health-details agreement, in setup and on its own
+ *  screen, that tells the person before anything goes to Google: what is
+ *  counted, why, and how to turn it off. The owner's words to approve. */
+export const USAGE_ANALYTICS_NOTICE =
+  "Tropos counts how the app is used with Google Analytics, to improve it. " +
+  "You can turn this off in Settings › Social & privacy.";
 
 /** The account's answer: on unless it says false. */
 export function accountSharesUsageAnalytics(profile: {

@@ -2562,6 +2562,14 @@ service cloud.firestore {
        no client may, since every client could move it. Each person's
        credits (users/{uid}/pulseCredits) have no rule: no client reads or
        writes them, the owner included. */
+    /* Setup counts (functions/lib/setupCounts.js): a day's totals of the
+       welcome shown, setup started and accounts made, with no identifier.
+       Written only by countSetupStep and onAuthUserCreated; read in the
+       console, never by the app. */
+    match /setupCounts/{dateKey} {
+      allow read, write: if false;
+    }
+
     match /pulse/{dateKey} {
       allow read: if request.auth != null;
       allow write: if false;

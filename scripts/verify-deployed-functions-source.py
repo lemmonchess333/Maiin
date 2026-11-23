@@ -181,6 +181,9 @@ def source_targets():
                            "lib/sharedCards.js", "lib/cardArt.js", "lib/publicPost.js",
                            "lib/inviteCodes.js", "lib/restriction.js",
                            "lib/accountDeletionStatus.js", "profanityFilter.js"],
+        # The setup counts: a day's totals with no identifier, written by the
+        # one endpoint the signed-out welcome reaches.
+        "countSetupStep": ["index.js", "package-lock.json", "lib/setupCounts.js"],
         "publicPostPage": ["index.js", "package-lock.json", "lib/publicPost.js",
                            "lib/publicRoute.js"],
         # Soc15 call 3: weekly leagues. The turn settles, forms and notifies;

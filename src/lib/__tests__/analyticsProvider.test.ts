@@ -5,10 +5,15 @@
  *   - web: configured (measurementId) + browser-supported (isSupported)
  *   - native: the @capacitor-firebase/analytics plugin loads + enables
  * These tests pin each gate so a regression can't silently start (or stop)
- * delivering events on either platform. The last block is the person's own
- * gate, Share usage analytics (Priv1 call 2).
+ * delivering events on either platform. The last blocks are the person's
+ * own gates: nothing before the analytics line on the health-details
+ * agreement (owner, 23 November 2026), and Share usage analytics (Priv1
+ * call 2). Every test but the line's own starts after the line was shown.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { capacitorPlugin } from "@/test/capacitorPlugin";
 import { readString, remove, writeString } from "@/lib/localStore";
 import { USAGE_ANALYTICS_OFF_KEY } from "@/lib/usageAnalytics";
@@ -51,6 +56,13 @@ vi.mock("@capacitor-firebase/analytics", () => ({
   }),
 }));
 
+/** The provider, fresh, on a visit that has shown the analytics line. */
+async function loadAfterNotice() {
+  const mod = await import("../analyticsProvider");
+  mod.noteAnalyticsNoticeShown();
+  return mod;
+}
+
 const FAKE_APP = {} as Parameters<
   typeof import("../analyticsProvider").initAnalytics
 >[0];
@@ -75,7 +87,7 @@ beforeEach(() => {
 
 describe("analyticsProvider", () => {
   it("logAnalyticsEvent is a no-op before init (never throws, no delivery)", async () => {
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     expect(() => mod.logAnalyticsEvent("x", {})).not.toThrow();
     expect(mod.isAnalyticsActive()).toBe(false);
     expect(mod.getAnalyticsStatus()).toBe("uninitialised");
@@ -84,7 +96,7 @@ describe("analyticsProvider", () => {
 
   it("stays a no-op when no measurementId is configured (web)", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await new Promise((r) => setTimeout(r));
     expect(mod.isAnalyticsActive()).toBe(false);
@@ -94,7 +106,7 @@ describe("analyticsProvider", () => {
   it("stays a no-op when isSupported() is false (web)", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     isSupported.mockResolvedValue(false);
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() =>
       expect(mod.getAnalyticsStatus()).toBe("unsupported")
@@ -105,7 +117,7 @@ describe("analyticsProvider", () => {
 
   it("activates on web + configured + supported, then delivers events", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
     expect(mod.getAnalyticsStatus()).toBe("active");
@@ -129,7 +141,7 @@ describe("analyticsProvider", () => {
   it("activates on native via the Capacitor plugin, then delivers events", async () => {
     isNativePlatform.mockReturnValue(true);
     // No measurementId needed on native — the plist drives it.
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
     expect(mod.getAnalyticsStatus()).toBe("active");
@@ -150,7 +162,7 @@ describe("analyticsProvider", () => {
   it("native init failure (e.g. missing plist) → error status, stays a no-op", async () => {
     isNativePlatform.mockReturnValue(true);
     nativeSetEnabled.mockRejectedValue(new Error("no plist"));
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.getAnalyticsStatus()).toBe("error"));
     expect(mod.isAnalyticsActive()).toBe(false);
@@ -159,7 +171,7 @@ describe("analyticsProvider", () => {
 
   it("settles once init has an answer: true only when delivering", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const active = await import("../analyticsProvider");
+    const active = await loadAfterNotice();
     active.initAnalytics(FAKE_APP);
     await expect(active.analyticsSettled()).resolves.toBe(true);
     expect(active.isAnalyticsActive()).toBe(true);
@@ -174,7 +186,7 @@ describe("analyticsProvider", () => {
     ]) {
       vi.resetModules();
       arrange();
-      const mod = await import("../analyticsProvider");
+      const mod = await loadAfterNotice();
       mod.initAnalytics(FAKE_APP);
       await expect(mod.analyticsSettled()).resolves.toBe(false);
       expect(mod.isAnalyticsActive()).toBe(false);
@@ -183,7 +195,7 @@ describe("analyticsProvider", () => {
 
   it("init is idempotent (second call does not re-init)", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
     mod.initAnalytics(FAKE_APP);
@@ -199,7 +211,7 @@ describe("analyticsProvider — the page address on web", () => {
   it("sends no automatic page view, and starts with a redacted address", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     window.history.replaceState(null, "", `${base}user/their-uid-123`);
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
 
@@ -211,7 +223,7 @@ describe("analyticsProvider — the page address on web", () => {
 
   it("gives each event the route it was sent from, without ids or a search", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
 
@@ -232,7 +244,7 @@ describe("analyticsProvider — the page address on web", () => {
 
   it("names the app as the page's title, not the tab's (a rest counts down there)", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
 
@@ -264,7 +276,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
   it("a device that turned it off sends nothing and loads no web analytics at launch", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     deviceSaidOff();
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(false);
     expect(mod.getAnalyticsStatus()).toBe("off");
@@ -278,7 +290,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
   it("on iPhone, a device that turned it off keeps the native SDK off from launch", async () => {
     isNativePlatform.mockReturnValue(true);
     deviceSaidOff();
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(false);
     expect(mod.getAnalyticsStatus()).toBe("off");
@@ -290,7 +302,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
 
   it("on the web, off stops collection and every event, and on starts both again", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
 
@@ -321,7 +333,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
   it("on the web, turned on after a launch with it off, starts analytics then", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     deviceSaidOff();
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(false);
     expect(initializeAnalytics).not.toHaveBeenCalled();
@@ -335,7 +347,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
 
   it("on iPhone, off and on again switch the native SDK in the order tapped", async () => {
     isNativePlatform.mockReturnValue(true);
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
 
@@ -359,7 +371,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
 
   it("off stops the next event at once, before the plugin has answered", async () => {
     isNativePlatform.mockReturnValue(true);
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
 
@@ -386,7 +398,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
   it("an on overtaken by an off lets nothing through while the off is applied", async () => {
     isNativePlatform.mockReturnValue(true);
     deviceSaidOff();
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(false);
 
@@ -411,7 +423,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
 
   it("on the web, an on overtaken by an off never starts gtag collecting again", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
 
@@ -436,7 +448,7 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
           answerSupported = resolve;
         })
     );
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(isSupported).toHaveBeenCalledTimes(1));
 
@@ -451,12 +463,90 @@ describe("analyticsProvider: Share usage analytics (Priv1)", () => {
 
   it("the same answer twice changes nothing on the device's SDK", async () => {
     isNativePlatform.mockReturnValue(true);
-    const mod = await import("../analyticsProvider");
+    const mod = await loadAfterNotice();
     mod.initAnalytics(FAKE_APP);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
 
     mod.setUsageAnalytics(true);
     await expect(mod.analyticsSettled()).resolves.toBe(true);
     expect(nativeSetEnabled).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* Nothing reaches Google before the person has met the analytics line on
+   the health-details agreement (owner, 23 November 2026): no event, on the
+   web no SDK loaded, and on the iPhone the native SDK off from launch. The
+   welcome and setup's first question are counted on Tropos's own server
+   instead (setupCounts.ts). */
+describe("analyticsProvider: nothing before the analytics line", () => {
+  it("on the web, loads nothing and sends nothing until the line is shown", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("before-notice");
+    mod.logAnalyticsEvent("auth_screen_viewed", { surface: "lifecycle" });
+    expect(isSupported).not.toHaveBeenCalled();
+    expect(initializeAnalytics).not.toHaveBeenCalled();
+    expect(logEvent).not.toHaveBeenCalled();
+
+    mod.noteAnalyticsNoticeShown();
+    await expect(mod.analyticsSettled()).resolves.toBe(true);
+    expect(initializeAnalytics).toHaveBeenCalledTimes(1);
+  });
+
+  it("on iPhone, keeps the native SDK off until the line is shown", async () => {
+    isNativePlatform.mockReturnValue(true);
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(nativeSetEnabled.mock.calls).toEqual([[{ enabled: false }]]);
+    mod.logAnalyticsEvent("auth_screen_viewed", { surface: "lifecycle" });
+    expect(nativeLogEvent).not.toHaveBeenCalled();
+
+    mod.noteAnalyticsNoticeShown();
+    await expect(mod.analyticsSettled()).resolves.toBe(true);
+    expect(nativeSetEnabled).toHaveBeenLastCalledWith({ enabled: true });
+  });
+
+  it("an account carrying the agreement met the line; signing out forgets it", async () => {
+    isNativePlatform.mockReturnValue(true);
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    mod.setAccountMetAnalyticsNotice(true);
+    await expect(mod.analyticsSettled()).resolves.toBe(true);
+
+    mod.forgetAnalyticsNoticeShown();
+    mod.logAnalyticsEvent("auth_screen_viewed", { surface: "lifecycle" });
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("before-notice");
+    expect(nativeSetEnabled).toHaveBeenLastCalledWith({ enabled: false });
+    expect(nativeLogEvent).not.toHaveBeenCalled();
+  });
+
+  it("the line does not override Share usage analytics turned off", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    writeString(USAGE_ANALYTICS_OFF_KEY, "1");
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    mod.noteAnalyticsNoticeShown();
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("off");
+    expect(initializeAnalytics).not.toHaveBeenCalled();
+  });
+
+  it("on iPhone, the native SDK collects nothing from a fresh install's first launch", () => {
+    const plist = readFileSync(
+      resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../../../ios/App/App/Info.plist"
+      ),
+      "utf8"
+    );
+    expect(plist).toMatch(
+      /<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED<\/key>\s*<false\/>/
+    );
+    // Deactivated would be for good: the line could never turn it on.
+    expect(plist).not.toMatch(/FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED/);
   });
 });

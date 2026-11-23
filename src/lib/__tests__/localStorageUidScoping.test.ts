@@ -82,10 +82,6 @@ const DEVICE_SCOPED: Record<string, string> = {
     "setup's answers given before there is an account (A6): Save your plan makes the account at setup's end, so they belong to no uid until then; they move to the new account's own key the moment it exists, and are dropped when the account already has a plan, when any other account appears, on sign-out, and after two days (signedOutDraft.ts)",
   "tropos.setupSave":
     "that a sign-in began from Save your plan (A6), written while signed out so the account it makes can take the answers; it lasts an hour, and only a sign-in from that screen sets it, so an account signed in any other way never takes another person's answers",
-  "tropos.firstRun.welcomeViewed":
-    "the first-run event that the welcome was seen (A6), sent once a phone because no account exists on the welcome",
-  "tropos.firstRun.setupStarted":
-    "the first-run event that setup was opened (A6), sent once a phone because setup now starts before any account",
   "tropos.pendingInvite":
     "an invite link's code, kept from the signed-out welcome screen through sign-up and setup, before there is an account to scope it to; it expires after the 14 days an account may use one and is cleared once used or refused",
   "tropos.reminderFires.v1":

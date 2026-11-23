@@ -85,6 +85,8 @@ import {
 } from "@/lib/healthConsent";
 import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
 import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
 import {
   buildOnboardingPlan,
   onboardingActivity,
@@ -691,11 +693,18 @@ export default function Onboarding() {
     if (user) saveOnboardingDraft(user.uid, answers);
     else saveSignedOutDraft(answers);
   }, [user, saving, answers]);
-  // The first time this phone opens setup (A6's first-run events).
-  const signedIn = !!user;
+  /* Google Analytics hears nothing before the agreement, whose line says
+     what it counts and how to turn it off: from its showing on, or from a
+     draft that already carries the agreement, it may run. */
+  const agreementShown = step === HEALTH_CONSENT_STEP || healthConsentGiven;
   useEffect(() => {
-    trackSetupStarted(signedIn);
-  }, [signedIn]);
+    if (agreementShown) noteAnalyticsNoticeShown();
+  }, [agreementShown]);
+  // Setup opened (A6's first-run events): counted on Tropos's server,
+  // never sent to Google, once a launch.
+  useEffect(() => {
+    trackSetupStarted();
+  }, []);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -2250,6 +2259,9 @@ export default function Onboarding() {
                 <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
                 <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
                 <HealthConsentPolicyLink />
+                <p className="text-sm text-muted-foreground">
+                  {USAGE_ANALYTICS_NOTICE}
+                </p>
                 {/* No to a question already answered yes takes the yes
                     back: the plan is saved only with an agreement. */}
                 <Button

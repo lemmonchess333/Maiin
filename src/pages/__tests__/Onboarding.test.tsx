@@ -52,6 +52,8 @@ const { complete, refresh, signOut } = vi.hoisted(() => ({
   refresh: vi.fn().mockResolvedValue(undefined),
   signOut: vi.fn().mockResolvedValue(undefined),
 }));
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "setup-test", email: "test@example.com" },
@@ -66,6 +68,10 @@ vi.mock("@/lib/firestoreWrite", () => ({
   setDocGuarded: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/analyticsProvider", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/analyticsProvider")>()),
+  noteAnalyticsNoticeShown: vi.fn(),
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 /* A race date about seven months ahead, from the clock: a literal here
@@ -2229,6 +2235,18 @@ describe("the agreement to store health details", () => {
     fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
     fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
   };
+
+  /* Google Analytics hears nothing before this step, whose line says what
+     it counts and how to turn it off (owner, 23 November 2026). */
+  it("carries the analytics line, and lets analytics run only from here", () => {
+    vi.mocked(noteAnalyticsNoticeShown).mockClear();
+    open();
+    expect(noteAnalyticsNoticeShown).not.toHaveBeenCalled();
+    cleanup();
+    toAgreement();
+    expect(screen.getByText(USAGE_ANALYTICS_NOTICE)).toBeInTheDocument();
+    expect(noteAnalyticsNoticeShown).toHaveBeenCalled();
+  });
 
   it("asks before the limitations, in its own words, with its own button", () => {
     toAgreement();
