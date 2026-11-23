@@ -25,6 +25,7 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import { formatRepTarget } from "@/features/program/repTarget";
 import { getExerciseById } from "@/lib/exercises";
 import { runStripLabel } from "@/lib/runProgrammeViewModel";
+import { liftWeekDayNames } from "@/lib/liftDayLabel";
 
 /** Setup's screens (`Onboarding`). */
 export const SETUP = {
@@ -214,6 +215,28 @@ export const TRAIN = {
    *  (`EmptyWorkoutEntry.test.tsx`). */
   emptyWorkout: "Empty workout",
 } as const;
+
+/** A session's card (`SessionCommandCard`) is a region named by its
+ *  eyebrow and its title, "Up next: Long 12K": found by the title, which
+ *  ends the name. */
+export function sessionCardName(title: string): RegExp {
+  return new RegExp(`: ${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+}
+
+/** Your plan (`TrainingPlan`): the next lift's card, headed by the day's
+ *  name as Train shows it in its week, and started by its button. */
+export const PLAN = {
+  startNextLift: "Start workout",
+} as const;
+
+/** A plan day's name as Train and Your plan show it ("Full Body A"),
+ *  never its stored name. */
+export function shownLiftDayName(
+  week: readonly string[],
+  index: number
+): string {
+  return liftWeekDayNames(week)[index];
+}
 
 /** A run's name on Train's run week, from its template: the function
  *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
