@@ -120,12 +120,11 @@ function bestSetE1rm(
 }
 
 function verdictFor(consistency: number, isEmpty: boolean): string {
-  if (isEmpty)
-    return "A quiet block — it happens. The next one is a fresh start.";
+  if (isEmpty) return "A quiet block. The next one is a fresh start.";
   if (consistency >= 0.85) return "You showed up. That was the whole job.";
   if (consistency >= 0.5)
-    return "A solid block — more sessions landed than not.";
-  return "Some weeks got away — the work you did still counts.";
+    return "A solid block. More sessions done than missed.";
+  return "Some weeks got away. The work you did still counts.";
 }
 
 /**

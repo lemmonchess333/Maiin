@@ -41,25 +41,20 @@ export default function TrajectoryCard({
   const distanceUnit = useDistanceUnit();
   const sessionsUnit = (n: number) => (n === 1 ? "session" : "sessions");
 
-  // Colour the delta: green = ahead, coral = behind, muted grey = level.
+  // The delta is neutral: its arrow and sign say which way (DS10: coral
+  // means running, green is a tick). Level is the muted grey.
   const deltaColor =
-    delta > 0
-      ? THEME.success
-      : delta < 0
-        ? THEME.running
-        : "hsl(var(--muted-foreground))";
+    delta === 0 ? "hsl(var(--muted-foreground))" : THEME.chrome.text;
 
   const deltaBg =
-    delta === 0
-      ? "hsl(var(--muted-foreground) / 0.08)"
-      : (delta > 0 ? THEME.success : THEME.running) + "14";
+    delta === 0 ? "hsl(var(--muted-foreground) / 0.08)" : THEME.chrome.tint;
 
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
       <div className="flex items-center gap-2 mb-3">
-        <Zap className="size-5" style={{ color: THEME.brand }} />
+        <Zap className="size-5" style={{ color: THEME.chrome.text }} />
         <div className="flex-1">
           <h3 className="text-base font-bold">Your trajectory</h3>
         </div>
@@ -84,7 +79,7 @@ export default function TrajectoryCard({
           <div className="flex flex-wrap items-baseline gap-3 mb-3">
             <span
               className="text-3xl font-figure tabular-nums font-extrabold"
-              style={{ color: THEME.brand }}
+              style={{ color: THEME.chrome.text }}
             >
               {thisWeek.sessions}
             </span>
@@ -166,7 +161,7 @@ export default function TrajectoryCard({
           {thisWeek.sessions === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-3">
               {lastWeek.sessions > 0
-                ? "Start your week — beat last week"
+                ? "Start your week. Beat last week"
                 : "Start your week with your first workout or run"}
             </p>
           )}

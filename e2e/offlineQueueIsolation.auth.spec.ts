@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "./helpers/verifySignupEmail";
-import { openSignInForm, openSignUpForm } from "./helpers/auth";
+import { newAccountAtSetup, openSignInForm } from "./helpers/auth";
 /**
  * PR #820 — offline-queue uid isolation, end-to-end on the real app
  * (the two-account "device test" row in the pre-launch QA backlog).
@@ -76,6 +75,7 @@ import { openSignInForm, openSignUpForm } from "./helpers/auth";
  */
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { emulatorActive } from "./helpers/emulator";
+import { restHealthConsent } from "./helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -157,7 +157,7 @@ async function completeOnboardingDirect(
   displayName: string
 ): Promise<void> {
   const res = await fetch(
-    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName`,
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName&updateMask.fieldPaths=healthDataConsent`,
     {
       method: "PATCH",
       headers: {
@@ -168,6 +168,8 @@ async function completeOnboardingDirect(
         fields: {
           onboardingComplete: { booleanValue: true },
           displayName: { stringValue: displayName },
+          // Agreed to the storing of health details (Priv1 call 1).
+          healthDataConsent: restHealthConsent(),
         },
       }),
     }
@@ -250,13 +252,7 @@ async function mintOnboardedAccount(
 ): Promise<string> {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await openSignUpForm(page);
-  await page.fill("#login-email", email);
-  await page.fill("#login-password", PASSWORD);
-  await page
-    .getByRole("button", { name: /create account/i })
-    .click({ timeout: 8_000 });
-  await verifySignupEmail(page, email);
+  await newAccountAtSetup(page, email, PASSWORD);
   // Onboarding step 0 confirms the account + profile doc exist.
   await page
     .getByRole("button", { name: /build muscle/i })
@@ -376,7 +372,7 @@ async function logMealViaComposer(
     });
   } else {
     await expect(
-      page.getByText(/Saved on this phone — syncs when/)
+      page.getByText(/Saved on this phone\. Syncs when/)
     ).toBeVisible({
       timeout: 15_000,
     });
@@ -464,7 +460,9 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     ).toBeVisible();
     await expect(page.getByText("Saved", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("Saved locally — will sync when online.", { exact: true })
+      page.getByText("Saved on this phone. Syncs when you’re back online.", {
+        exact: true,
+      })
     ).toBeVisible();
     await expect(
       page.getByText("We’ve kept this run on your account.", { exact: true })

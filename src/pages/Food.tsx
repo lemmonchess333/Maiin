@@ -1785,7 +1785,6 @@ export default function Food() {
       return next;
     });
     trackFoodEvent("food_pantry_chip_removed", {
-      favouriteId,
       useCount: captured.useCount,
     });
 
@@ -1851,12 +1850,11 @@ export default function Food() {
       return false;
     }
     if (!uid || quickAdding || !quickAddGuard.begin()) return false;
-    /* Telemetry — emit BEFORE the save so we capture taps that
-       fail mid-write too. favouriteId is undefined for recents /
-       seeded defaults, which is meaningful — dashboards can split
-       "tapped a curated chip" vs "tapped a fallback chip". */
+    /* Telemetry, emitted BEFORE the save so taps that fail mid-write
+       count too. `fromPantry` splits "tapped a saved food" from "tapped
+       a recent". Never the favourite's id: it is the food's name. */
     trackFoodEvent("food_pantry_chip_tapped", {
-      favouriteId: meal.favouriteId,
+      fromPantry: meal.favouriteId !== undefined,
     });
     setQuickAdding(meal.name);
     try {
@@ -1868,7 +1866,7 @@ export default function Food() {
       toast.success(
         navigator.onLine
           ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
-          : "Saved on this phone — syncs when you’re back online",
+          : "Saved on this phone. Syncs when you’re back online",
         {
           duration: 5000,
           action: {
@@ -1914,7 +1912,6 @@ export default function Food() {
     fav: (typeof pantrySuggestions)[number]
   ) => {
     trackFoodEvent("food_pantry_typeahead_selected", {
-      favouriteId: fav.id,
       useCount: fav.useCount,
     });
     const saved = await handleQuickMealAdd({

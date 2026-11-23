@@ -30,7 +30,6 @@ import {
   type PersonalTrajectory,
 } from "@/lib/personalTrajectory";
 import { shouldRenderFollowingList } from "@/lib/socialGates";
-import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -448,7 +447,7 @@ export default function FeedView({
                   <button
                     type="button"
                     onClick={openPeople}
-                    className="inline-flex min-h-11 items-center font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+                    className="inline-flex min-h-11 items-center font-semibold link-standalone hover:text-foreground/80 transition-colors"
                   >
                     Find people
                   </button>
@@ -459,8 +458,8 @@ export default function FeedView({
                 what it is and how Following fills; the posts follow. */}
             {feedSubTab === "explore" && followingCount === 0 && (
               <p className="mb-3 text-small text-muted-foreground">
-                Sessions people shared publicly. Follow anyone to see theirs
-                under Following.
+                Sessions shared publicly. Follow someone to see theirs under
+                Following.
               </p>
             )}
 
@@ -491,7 +490,6 @@ export default function FeedView({
                 icon={Users}
                 headline="You don’t follow anyone yet"
                 sub="Follow people to see their sessions here."
-                accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
               />
             )}
@@ -578,7 +576,6 @@ export default function FeedView({
                           ? "Posts from the spaces you join appear here."
                           : "When members post in your spaces, their posts appear here."
                       }
-                      accent={THEME.brand}
                       action={{ label: "Browse spaces", onClick: openTogether }}
                     />
                   )}
@@ -707,7 +704,6 @@ export default function FeedView({
                       icon={Globe}
                       headline="Tropos is quiet right now"
                       sub="Your circles don’t need a crowd"
-                      accent={THEME.brand}
                       action={{
                         label: "Open Together",
                         onClick: openTogether,
@@ -723,7 +719,6 @@ export default function FeedView({
                       icon={Users}
                       headline="Nothing from people you follow yet"
                       sub="When they share a session, it shows here."
-                      accent={THEME.brand}
                       action={
                         followingFeedUnlocked
                           ? { label: "Find people", onClick: openPeople }

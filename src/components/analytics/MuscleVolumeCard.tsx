@@ -71,7 +71,7 @@ export default function MuscleVolumeCard({
         <p className="text-sm text-muted-foreground">
           {weeks === 1
             ? "Your last full week"
-            : `A week, averaged over ${weeks} full weeks`}
+            : `Weekly average, ${weeks} weeks`}
           . Your focus: {focus}.
         </p>
       </div>

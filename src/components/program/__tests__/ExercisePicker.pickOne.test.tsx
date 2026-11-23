@@ -1,7 +1,7 @@
 /**
  * ExercisePicker for a swap or a replace (`pickAction`): one exercise,
  * picked by its row's circle, which does the action at once. Without it,
- * "Swap for today" read "1 exercise selected — Add to workout", and
+ * "Swap for today" read "Add 1 exercise", and
  * ticking two swapped twice; then a bar repeated the action, a fourth tap
  * on every swap. The row's body still opens the exercise.
  */

@@ -41,7 +41,7 @@ describe("SessionCommandCard", () => {
     expect(screen.getByRole("region")).toHaveTextContent("15km steady state");
     // Static facts read as one quiet line, "15 km · Long", with real spaces
     // (so a screen reader hears two items, not "15 kmLong").
-    const card = screen.getByRole("region", { name: /Up next — Long 15K/ });
+    const card = screen.getByRole("region", { name: /Up next: Long 15K/ });
     expect(card).toHaveTextContent("15 km · Long");
     // No enclosed pill chrome around metadata: a pill is a selection or a
     // state, and these are neither.
@@ -187,7 +187,7 @@ describe("SessionCommandCard — the picture at the right (DS3)", () => {
     // Anchored: the figure is drawn, and the card is named by its day.
     expect(container.querySelector("svg polygon")).not.toBeNull();
     expect(
-      screen.getByRole("region", { name: "Up next — Pull A" })
+      screen.getByRole("region", { name: "Up next: Pull A" })
     ).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
   });

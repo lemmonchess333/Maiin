@@ -5,7 +5,6 @@ import { Check } from "lucide-react";
 import { useUid } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
 import {
   saveRoutine,
   isExternalRoutineSource,
@@ -215,7 +214,7 @@ export default function SaveRoutineSheet({
           </div>
           {external && (
             <p className="text-xs text-muted-foreground">
-              Saves the structure only — your own history sets the weights.
+              Saves the exercises only. Your own history sets the weights.
             </p>
           )}
         </div>
@@ -234,14 +233,18 @@ export default function SaveRoutineSheet({
             onClick={handleSave}
             disabled={saving || saved || !name.trim()}
             aria-live="polite"
-            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5"
-            style={{
-              backgroundColor: saved ? THEME.success : THEME.brandStrong,
-            }}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5 ${
+              saved
+                ? "bg-muted text-foreground chip-edge"
+                : "bg-primary text-primary-foreground"
+            }`}
           >
             {saved ? (
               <>
-                <Check className="size-4" />
+                <Check
+                  className="size-4 text-success-strong"
+                  aria-hidden="true"
+                />
                 Saved
               </>
             ) : saving ? (

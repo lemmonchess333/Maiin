@@ -6,9 +6,9 @@ import {
 } from "@/hooks/useCalorieRingMode";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
-import { THEME } from "@/lib/theme";
 import MacroColumn from "./MacroColumn";
 import { LOG_MOMENT_MS } from "./logMoment";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 const LOG_MOMENT_SEC = LOG_MOMENT_MS / 1000;
 
@@ -59,6 +59,7 @@ export default function FoodMacroRow({
      carbs with no goal to count against (Nutr3); the wheel's card says
      so in words. */
   const noGoal = dailyTargets.targetInfeasible;
+  const { accent } = useMacroPalette();
   const shared = {
     size: "row",
     mode,
@@ -77,7 +78,7 @@ export default function FoodMacroRow({
           consumed={dailyTotals.protein}
           target={noGoal ? 0 : dailyTargets.protein}
           label="Protein"
-          color={THEME.macros.protein}
+          color={accent.protein}
         />
         <MacroColumn
           {...shared}
@@ -86,7 +87,7 @@ export default function FoodMacroRow({
           consumed={dailyTotals.carbs}
           target={noGoal ? 0 : dailyTargets.carbs}
           label="Carbs"
-          color={THEME.macros.carbs}
+          color={accent.carbs}
         />
         <MacroColumn
           {...shared}
@@ -95,7 +96,7 @@ export default function FoodMacroRow({
           consumed={dailyTotals.fat}
           target={dailyTargets.fat}
           label="Fat"
-          color={THEME.macros.fat}
+          color={accent.fat}
         />
       </div>
     </div>

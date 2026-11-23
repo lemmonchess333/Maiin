@@ -42,13 +42,15 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
 // Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
-// Z5 max coral-red. Below-Z1 / unknown falls back to the muted stat colour.
+// Z5 max raspberry (`THEME.hrZoneMax`: not the running coral, not the error
+// red). The colour is the dot beside "HR Zn"; the bpm is in the stat colour,
+// as the raspberry is under 4.5:1 as words on the stats pill.
 const ZONE_COLOR: Record<ZoneNumber, string> = {
   1: THEME.teal,
   2: THEME.success,
   3: THEME.amberLight,
   4: THEME.warning,
-  5: THEME.danger,
+  5: THEME.hrZoneMax,
 };
 
 interface RunBottomSheetProps {
@@ -352,8 +354,7 @@ export default function RunBottomSheet({
   bpm = null,
   hrZone = null,
 }: RunBottomSheetProps) {
-  const hrColor =
-    hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
+  const zoneColour = hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : null;
   const unit = useDistanceUnit();
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
@@ -743,7 +744,7 @@ export default function RunBottomSheet({
                       style={{
                         fontSize: 18,
                         fontWeight: 600,
-                        color: hrColor,
+                        color: "rgba(255,255,255,0.65)",
                         fontVariantNumeric: "tabular-nums",
                         fontFamily: "var(--font-figure)",
                       }}
@@ -754,9 +755,26 @@ export default function RunBottomSheet({
                       style={{
                         ...HUD_CAPTION,
                         marginTop: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
                       }}
                     >
-                      {hrZone && hrZone >= 1 ? `HR Z${hrZone}` : "HR"}
+                      {zoneColour && (
+                        <span
+                          aria-hidden="true"
+                          data-testid="hr-zone-dot"
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: 5,
+                            flexShrink: 0,
+                            background: zoneColour,
+                          }}
+                        />
+                      )}
+                      {zoneColour ? `HR Z${hrZone}` : "HR"}
                     </p>
                   </div>
                 </>

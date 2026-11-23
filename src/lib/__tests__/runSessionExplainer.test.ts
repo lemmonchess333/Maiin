@@ -146,7 +146,7 @@ describe("runSessionExplainer", () => {
         templateId: "run_walk_6",
         ...ctx,
       });
-      expect(line).toMatch(/^The last run-walk — what the weeks before/);
+      expect(line).toMatch(/^The last run-walk: what the weeks before/);
       expect(line).not.toMatch(/walks between/);
     }
   });
@@ -227,9 +227,9 @@ describe("the build names the quality sessions only in a week that holds one", (
 
   it("and give a reason true of any week when it doesn't, or isn't known", () => {
     for (const holds of [false, undefined]) {
-      expect(easy(holds)).toMatch(/^Easy day — /);
+      expect(easy(holds)).toMatch(/^Easy day: /);
       expect(easy(holds)).not.toMatch(/quality|hard days/);
-      expect(long(holds)).toMatch(/^The week’s anchor run — /);
+      expect(long(holds)).toMatch(/^The week’s anchor run: /);
       expect(long(holds)).not.toMatch(/quality/);
     }
   });
@@ -417,7 +417,7 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
     expect(
       runSessionExplainer({ ...tempo, currentWeek: 7, racePace: "tempo" })
     ).toBe(
-      "Taper — a short block at race pace keeps the rhythm sharp while the volume drops."
+      "Taper: a short block at race pace keeps the rhythm sharp while the volume drops."
     );
   });
 
@@ -431,7 +431,7 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
   // runs' reason, "easy and short on purpose", for a comfortably hard run.
   it("a plain tempo in the taper isn't called easy", () => {
     expect(runSessionExplainer({ ...tempo, currentWeek: 7 })).toBe(
-      "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops."
+      "Taper: a short tempo keeps the legs used to a comfortably hard effort while the volume drops."
     );
   });
 });

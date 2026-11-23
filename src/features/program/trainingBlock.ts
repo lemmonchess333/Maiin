@@ -128,7 +128,7 @@ export const BLOCK_PRESETS: Array<{
   {
     value: "consistency_reset",
     label: "Consistency Reset",
-    description: "Rebuild the habit — showing up is the whole goal.",
+    description: "Rebuild the habit. Showing up is the goal.",
   },
   {
     value: "return_to_training",

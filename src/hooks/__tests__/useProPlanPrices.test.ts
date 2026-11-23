@@ -5,7 +5,7 @@
  * What it must never do is put a pound figure beside a price in another
  * currency. It used to swap in Apple's price STRING and keep everything
  * else, so a US storefront read "$39.99/year" over "≈ £0.67/wk", the CTA
- * said "Start Pro — £34.99/yr" (it looked the price up by id), and a plan
+ * said "Start Pro · £34.99/yr" (it looked the price up by id), and a plan
  * missing from the offering stayed in pounds beside one in dollars. Nor may
  * the iPhone print the pound plans while it waits for the App Store, or
  * after the store didn't answer (launch audit, 2026-11-18): no price until
@@ -92,7 +92,7 @@ describe("useProPlanPrices", () => {
     expect(findPlan(plans, "yearly").price).toBe("$39.99");
     expect(findPlan(plans, "monthly").price).toBe("$4.99");
     expect(getCheckoutCtaLabel(findPlan(plans, "yearly"))).toBe(
-      "Start Pro — $39.99/yr"
+      "Start Pro · $39.99/yr"
     );
     expect(getInlinePriceSummary(plans)).toBe("$4.99 a month or $39.99 a year");
     for (const plan of plans) {

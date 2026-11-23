@@ -29,7 +29,7 @@ export default function EmptyWorkoutEntry() {
       >
         <span
           className="size-[36px] shrink-0 rounded-lg flex items-center justify-center"
-          style={{ background: `${THEME.brand}14` }}
+          style={{ background: `${THEME.lifting}14` }}
           aria-hidden="true"
         >
           <Plus className="size-[16px] text-lifting-strong" />
@@ -42,7 +42,7 @@ export default function EmptyWorkoutEntry() {
             Empty workout
           </span>{" "}
           <span className="block text-xs text-muted-foreground">
-            Add exercises as you go. Your plan stays as it is.
+            Add exercises as you go.
           </span>
         </span>
         <ChevronRight

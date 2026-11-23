@@ -77,7 +77,7 @@ export default function ActivityPostComments({
           px, so in px too. In rem it grew with the text and ran the field
           and Send past the screen. */}
       <div
-        className="sticky z-20 -mx-[16px] bg-background/95 backdrop-blur"
+        className="sticky z-20 -mx-[16px] bg-background/95 backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-background"
         style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
       >
         <CommentComposer

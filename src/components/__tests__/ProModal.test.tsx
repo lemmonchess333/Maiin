@@ -99,7 +99,7 @@ beforeEach(() => {
   canSellMock.mockReset();
   canSellMock.mockReturnValue(true);
   // Sub1a P1 — default profile to a post-trial user so the
-  // plan-priced "Start Pro — £X" CTA is the rendered baseline.
+  // plan-priced "Start Pro · £X" CTA is the rendered baseline.
   // Pre-#P1 tests in this file all expect the priced CTA. Trial-
   // eligibility cycles explicitly set `hasUsedTrial: false` or
   // `null` to cover the trial path.
@@ -141,7 +141,7 @@ describe("ProModal — visible copy (no white-on-white regression)", () => {
         `Log meals from a photo, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day. No manual searching.`
       )
     ).toBeInTheDocument();
-    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(100);
+    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(15);
     expect(container.ownerDocument.body.textContent).not.toMatch(/unlimited/i);
   });
 });
@@ -176,18 +176,19 @@ describe("ProModal — plan radiogroup", () => {
 
   it("CTA copy updates to reflect the selected plan's price", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText("Start Pro — £39.99/yr")).toBeTruthy();
+    expect(screen.getByText("Start Pro · £39.99/yr")).toBeTruthy();
     const radios = screen.getAllByRole("radio");
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
-    expect(screen.getByText("Start Pro — £6.99/mo")).toBeTruthy();
+    expect(screen.getByText("Start Pro · £6.99/mo")).toBeTruthy();
   });
 
   it("draws checkout as the app's primary button, not a gradient", () => {
     renderModal({ onClose: () => {} });
-    const cta = screen.getByRole("button", { name: "Start Pro — £39.99/yr" });
+    const cta = screen.getByRole("button", { name: "Start Pro · £39.99/yr" });
     // It was a purple-to-teal gradient (2026-09-29).
-    expect(cta.className).toContain("bg-primary-strong");
+    // The app's filled button is the text colour (DS10).
+    expect(cta.className).toContain("bg-foreground");
     expect(cta.getAttribute("style") ?? "").not.toMatch(/gradient/);
   });
 
@@ -217,7 +218,7 @@ describe("ProModal — initialPlan", () => {
     const yearly = radios.find((r) => r.textContent?.includes("Yearly"));
     expect(monthly?.getAttribute("aria-checked")).toBe("true");
     expect(yearly?.getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByText("Start Pro — £6.99/mo")).toBeTruthy();
+    expect(screen.getByText("Start Pro · £6.99/mo")).toBeTruthy();
   });
 
   it("opens with Yearly pre-selected when initialPlan='yearly'", () => {
@@ -229,7 +230,7 @@ describe("ProModal — initialPlan", () => {
 
   it("falls back to DEFAULT_PLAN (yearly) when initialPlan is omitted", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText("Start Pro — £39.99/yr")).toBeTruthy();
+    expect(screen.getByText("Start Pro · £39.99/yr")).toBeTruthy();
   });
 });
 
@@ -373,7 +374,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
       name: "How your free trial works",
     });
     expect(timeline.textContent).toContain(
-      "Day 7 — Your subscription starts at £39.99 a year unless you’ve cancelled."
+      "Day 7: Your subscription starts at £39.99 a year unless you’ve cancelled."
     );
   });
 
@@ -388,9 +389,9 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
       .getAllByRole("listitem")
       .map((li) => li.textContent);
     expect(steps).toEqual([
-      expect.stringMatching(/^Today — /),
-      "Day 6 — Last day to cancel, by the time of day you started the trial.",
-      expect.stringMatching(/^Day 7 — Your subscription starts at /),
+      expect.stringMatching(/^Today: /),
+      "Day 6: Last day to cancel, by the time of day you started the trial.",
+      expect.stringMatching(/^Day 7: Your subscription starts at /),
     ]);
     expect(steps.join(" ")).not.toMatch(/any time before then/);
   });
@@ -417,7 +418,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     expect(screen.queryByRole("button", { name: /free trial/i })).toBeNull();
   });
 
-  it("Cycle 6: user with hasUsedTrial=true sees standard 'Start Pro — £X/mo' CTA (no trial language)", () => {
+  it("Cycle 6: user with hasUsedTrial=true sees standard 'Start Pro · £X/mo' CTA (no trial language)", () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: true });
     renderModal({ onClose: () => {} });
     const ctaButton = screen.getByRole("button", { name: /Start Pro/ });
@@ -487,7 +488,7 @@ describe("ProModal — restore purchases visibility", () => {
     const onClose = vi.fn();
     renderModal({ onClose });
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn’t on sale in this version of the app yet."
+      "Pro isn’t on sale in this version yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: /Start/ })).toBeNull();

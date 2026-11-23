@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -108,10 +108,9 @@ export default function ContextualTipBanner({
               <Link
                 to={ctaHref}
                 onClick={() => haptic("light")}
-                className="inline-flex items-center gap-0.5 mt-1 -mb-1 min-h-[44px] text-xs font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+                className="inline-flex items-center mt-1 -mb-1 min-h-[44px] text-xs font-semibold link-standalone hover:text-foreground/80 transition-colors"
               >
                 {ctaLabel}
-                <ChevronRight aria-hidden="true" className="size-3" />
               </Link>
             </div>
             <button

@@ -385,7 +385,7 @@ export default function MacroColumn({
         `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}`
       }
       className={cn(
-        "min-w-0 flex-1 flex flex-col bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg",
+        "min-w-0 flex-1 flex flex-col bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg",
         row
           ? "w-full min-h-[44px] items-stretch justify-center text-left"
           : "items-center text-center"

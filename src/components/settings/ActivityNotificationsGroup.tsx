@@ -30,8 +30,8 @@ const ROWS: {
   label: string;
   description?: string;
 }[] = [
-  { category: "kudos", label: "Props", description: "On your sessions" },
-  { category: "comments", label: "Comments", description: "On your sessions" },
+  { category: "kudos", label: "Props" },
+  { category: "comments", label: "Comments" },
   {
     category: "follows",
     label: "New followers",
@@ -55,12 +55,12 @@ const ROWS: {
   {
     category: "invites",
     label: "Invites",
-    description: "When someone joins from your invite",
+    description: "When someone joins from it",
   },
   {
     category: "leagues",
     label: "Leagues",
-    description: "Your result each Monday, if you’ve joined",
+    description: "Your result each Monday",
   },
 ];
 

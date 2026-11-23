@@ -92,4 +92,65 @@ describe("claimMapFor", () => {
       legacyCompleted: false,
     });
   });
+
+  /* A treadmill run on race day is not the race (rankings spec, 22 November
+     2026). The server refuses it (`isStrictRaceRun`), and no client write
+     marks a race done (a race day takes no mark by hand), so the race day
+     stays planned and the no-show sweep records it as missed. The claim map
+     ticked it from a treadmill run that went 70% of the distance, so Train
+     showed a race done that the server called missed. */
+  it("leaves the race day to a treadmill run started from its slot, as a missed race", () => {
+    const days = [runDay("race", "2027-03-28", "10k_race", "race")];
+    const fromTheSlot = {
+      distance: 10_050,
+      avgPace: 300,
+      templateId: "10k_race",
+      activityType: "race",
+    };
+    for (const treadmill of [
+      { place: "treadmill" as const },
+      // Saved before the treadmill became a place (Pgm8).
+      { activityType: "treadmill", place: "treadmill" as const },
+    ]) {
+      const claims = claimMapFor(
+        days,
+        claimableRuns([
+          run("r1", "2027-03-28", { ...fromTheSlot, ...treadmill }),
+        ]),
+        {},
+        "2027-03-28"
+      );
+      expect(claims.get("race")).toEqual({
+        claimedSavedRunId: undefined,
+        manualCompleted: false,
+        legacyCompleted: false,
+      });
+    }
+    // The same run outdoors, or typed in by someone who raced without
+    // their phone, is the race.
+    for (const outdoors of [{}, { activityType: "manual" }]) {
+      const claims = claimMapFor(
+        days,
+        claimableRuns([
+          run("r1", "2027-03-28", { ...fromTheSlot, ...outdoors }),
+        ]),
+        {},
+        "2027-03-28"
+      );
+      expect(claims.get("race")?.claimedSavedRunId).toBe("r1");
+    }
+  });
+
+  it("still fills an ordinary day with a treadmill run", () => {
+    const days = [runDay("d1", "2027-03-25", "easy_30", "easy")];
+    const claims = claimMapFor(
+      days,
+      claimableRuns([
+        run("r1", "2027-03-25", { activityType: "easy", place: "treadmill" }),
+      ]),
+      {},
+      "2027-03-25"
+    );
+    expect(claims.get("d1")?.claimedSavedRunId).toBe("r1");
+  });
 });

@@ -292,7 +292,7 @@ export default function ShareComposerSheet() {
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="size-4 rounded border-border accent-[var(--ds-purple-500)]"
+            className="size-4 rounded border-border accent-primary"
           />
           <span className="text-xs text-muted-foreground">
             {REMEMBER_LABEL[state.type]}
@@ -306,8 +306,7 @@ export default function ShareComposerSheet() {
 
         {!isOnline && (
           <p className="text-caption text-muted-foreground text-center">
-            You’re offline — your post will be queued and shared when you’re
-            back online.
+            You’re offline. Your post shares when you’re back online.
           </p>
         )}
       </div>

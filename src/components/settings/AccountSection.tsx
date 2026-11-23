@@ -25,6 +25,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 import { isAppleRelayEmail } from "@/lib/appleRelay";
+import { DELETE_ACCOUNT_ANCHOR } from "@/lib/healthConsent";
 
 /** Apple manage-subscriptions deep-link. Works on iOS (opens
  *  Settings → Apple ID → Subscriptions) and on web (opens the
@@ -424,7 +425,7 @@ function AccountSectionContent({
             It had become a filled red button, the boldest thing on the
             page; the confirm steps behind it are unchanged. (Account
             Deletion: App Store Guideline 5.1.1(v).) */}
-        <div className="pt-6">
+        <div id={DELETE_ACCOUNT_ANCHOR} className="pt-6">
           <SettingsGroup>
             <SettingsRow
               tone="destructive"
@@ -458,7 +459,7 @@ function AccountSectionContent({
         open={showAppleWarning}
         onClose={() => setShowAppleWarning(false)}
         title="Cancel your App Store subscription first"
-        description="Tropos can’t cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
+        description="Tropos can’t cancel your iOS subscription for you, because Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
         role="alertdialog"
       >
         {/* All three on the primitive. They were three bespoke class

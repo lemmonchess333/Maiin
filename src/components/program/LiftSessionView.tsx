@@ -816,7 +816,7 @@ export default function LiftSessionView({
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Recommended — {easierRecommendation.reason}
+                    Recommended: {easierRecommendation.reason}
                   </p>
                 </button>
               )}
@@ -997,7 +997,7 @@ export default function LiftSessionView({
                       setAddPickerDayIndex(idx);
                       setShowAddPicker(true);
                     }}
-                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-semibold text-sm dark:card-shadow"
+                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-foreground font-semibold text-sm dark:card-shadow"
                   >
                     <Plus className="size-4" /> Add exercise
                   </button>

@@ -22,38 +22,41 @@ above and will drift; the file and the names are the durable part.
 These have one type or one graph that names the states. Keep new work on them
 inside that type.
 
-| Flow                     | Where                                                                                        | States                                                                                                                                                   |
-| ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)  | waiting, countdown (3-2-1, Run27 (1)), acquiring ("Finding GPS": a fix within 20 m), active, paused, finished                                            |
-| Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                | running, stopping (a stop window open), paused, setting off (GPS over a still phone: 2.5 m/s held 2 s)                                                   |
-| Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                           | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`)                                     |
-| Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                       | server-owned                                                                                                                                             |
-| Health export receipt    | `firestore.rules` (`healthWorkoutExports`), `src/lib/healthWorkoutExport.ts` (`ExportState`) | attempted, exported, pending-delete; the rules refuse any other move                                                                                     |
-| Run save                 | `src/lib/runGuards.ts` (`SaveStatus`)                                                        | idle, saving, saved, error                                                                                                                               |
-| Follow control           | `src/hooks/useFollowState.ts` (`FollowState`)                                                | following, requested, not-following                                                                                                                      |
-| AI consent               | `src/lib/aiConsent.ts` (`AiConsentStatus`)                                                   | unasked, allowed, off                                                                                                                                    |
-| Sign-in screen           | `src/pages/Login.tsx` (`View`, `LoadingAction`)                                              | typed views and one busy action                                                                                                                          |
-| Steps connection         | `src/hooks/useSteps.ts` (`StepsStatus`)                                                      | unavailable, unprompted, connected, ambiguous                                                                                                            |
-| A session document       | `src/hooks/useSessionDoc.ts` (`SessionDocStatus`)                                            | loading, ready, missing, failed                                                                                                                          |
-| Someone's profile        | `src/hooks/useUserProfileData.ts` (`ProfileStatus`)                                          | loading, missing, error, ready                                                                                                                           |
-| Your own profile at boot | `src/lib/auth.tsx` (`ProfileLoad`), since this pass                                          | loading, ready, missing, failed                                                                                                                          |
-| A training block         | `src/features/program/trainingBlock.ts` (`BlockStatus`)                                      | active, completed, abandoned                                                                                                                             |
-| A scheduled run          | `src/features/program/programTypes.ts` (`ScheduledRunStatus`)                                | planned, skipped, race_no_show                                                                                                                           |
-| A lift day               | `src/features/program/liftDayStatus.ts` (`LiftDayStatus`)                                    | today, upcoming, completed, skipped, missed                                                                                                              |
-| A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                                                       |
-| Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                                                       |
-| Heart rate sensor        | `src/lib/heartRateSensorBridge.ts` (`SensorConnection`, `SensorAuthorization`)               | idle, connecting, connected; Bluetooth not asked, allowed, denied, restricted; native owns the moves                                                     |
-| A circuit session        | `src/features/circuit/circuitSession.ts` (`CircuitPhase`, `stepCircuitSession`)              | picking, running, paused, ending (the 7-minute question), finish, discarding (the discard question), saving, saved, discarded                            |
-| A circuit's history      | `src/pages/Circuit.tsx` (`CircuitHistory`)                                                   | reading, unknown (failed or too slow), read; a late read stands in for unknown until one is chosen                                                       |
-| A reminder's delivery    | `src/lib/reminderChoices.ts` (`ReminderDelivery`), and the server's copy (App1 Q26)          | off, local, push: the phone or the server sends it, never both                                                                                           |
-| A week-ahead offer       | `src/components/review/WeekAheadEnding.tsx` (`OfferStatus`)                                  | open, busy, done, undoing; one offer under way at a time                                                                                                 |
-| Finishing a lift         | `src/lib/liftFinish.ts` (`LiftFinish`), since App1 Q20                                       | logging, review, saving, queued, synced, needs attention; `src/components/WorkoutSession.tsx` draws `liftFinishView`                                     |
-| Checkout                 | `src/lib/checkoutFlow.ts` (`CheckoutState`, `PurchaseOutcome`), since App1 Q20               | idle, sign-in needed, buying, waiting, failed; a purchase comes to bought, redirected, cancelled, pending or failed                                      |
-| A reminder's attention   | `src/lib/reminderAttention.ts` (`AttentionCount`), and the server's half (App1 Q62)          | on with 0, 1 or 2 ignored running; quiet (off, `{kind}QuietAt`); said on Home (`{kind}QuietShown`); on again from 0                                      |
-| Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                                                    |
-| Making a segment         | `src/components/run/SegmentMaker.tsx` (`MakerState`)                                         | picking, saving, refused; closed is RunDetail's (`segmentRange` null)                                                                                    |
-| A segment's page         | `src/hooks/useSegment.ts` (`SegmentStatus`, `BoardStatus`)                                   | loading, ready, missing, failed; its board loading, ready, failed                                                                                        |
-| A sport added, removed   | `src/components/program/AddLiftingFlow.tsx` (`AddLiftingStep`), `src/lib/sportChange.ts`     | week, kit, limits, saving (after the saved workouts are read); a removal asked once, saved or refused (`SportRefusal`), the last sport's only once tried |
+| Flow                     | Where                                                                                                                                  | States                                                                                                                                                                                                                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)                                            | waiting, countdown (3-2-1, Run27 (1)), acquiring ("Finding GPS": a fix within 20 m), active, paused, finished                                                                                                                                                                   |
+| Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                                                          | running, stopping (a stop window open), paused, setting off (GPS over a still phone: 2.5 m/s held 2 s)                                                                                                                                                                          |
+| Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                                                                     | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`)                                                                                                                                                            |
+| Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                                                                 | server-owned                                                                                                                                                                                                                                                                    |
+| Health export receipt    | `firestore.rules` (`healthWorkoutExports`), `src/lib/healthWorkoutExport.ts` (`ExportState`)                                           | attempted, exported, pending-delete; the rules refuse any other move                                                                                                                                                                                                            |
+| Run save                 | `src/lib/runGuards.ts` (`SaveStatus`)                                                                                                  | idle, saving, saved, error                                                                                                                                                                                                                                                      |
+| Follow control           | `src/hooks/useFollowState.ts` (`FollowState`)                                                                                          | following, requested, not-following                                                                                                                                                                                                                                             |
+| AI consent               | `src/lib/aiConsent.ts` (`AiConsentStatus`)                                                                                             | unasked, allowed, off                                                                                                                                                                                                                                                           |
+| Sign-in screen           | `src/pages/Login.tsx` (`View`), `src/components/auth/AccountForm.tsx` (`AccountFormMode`)                                              | welcome or sign-in (Get started opens setup, A6); the form makes an account or signs in, one busy action at a time                                                                                                                                                              |
+| Setup before the account | `src/lib/setupSave.ts` (`SetupSave`), `src/lib/onboardingDraft.ts` (`OnboardingDraft`)                                                 | signed out at `/setup` (the answers on the phone), Save your plan, signing in (the mark set), then signed in: the answers taken and the plan built, or an existing plan kept (A6)                                                                                               |
+| Steps connection         | `src/hooks/useSteps.ts` (`StepsStatus`)                                                                                                | unavailable, unprompted, connected, ambiguous                                                                                                                                                                                                                                   |
+| A session document       | `src/hooks/useSessionDoc.ts` (`SessionDocStatus`)                                                                                      | loading, ready, missing, failed                                                                                                                                                                                                                                                 |
+| Someone's profile        | `src/hooks/useUserProfileData.ts` (`ProfileStatus`)                                                                                    | loading, missing, error, ready                                                                                                                                                                                                                                                  |
+| Your own profile at boot | `src/lib/auth.tsx` (`ProfileLoad`), since this pass                                                                                    | loading, ready, missing, failed                                                                                                                                                                                                                                                 |
+| A training block         | `src/features/program/trainingBlock.ts` (`BlockStatus`)                                                                                | active, completed, abandoned                                                                                                                                                                                                                                                    |
+| A scheduled run          | `src/features/program/programTypes.ts` (`ScheduledRunStatus`)                                                                          | planned, skipped, race_no_show                                                                                                                                                                                                                                                  |
+| A lift day               | `src/features/program/liftDayStatus.ts` (`LiftDayStatus`)                                                                              | today, upcoming, completed, skipped, missed                                                                                                                                                                                                                                     |
+| A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                                                                   | seven named states                                                                                                                                                                                                                                                              |
+| Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                                                                   | idle, granted, denied, unavailable                                                                                                                                                                                                                                              |
+| Heart rate sensor        | `src/lib/heartRateSensorBridge.ts` (`SensorConnection`, `SensorAuthorization`)                                                         | idle, connecting, connected; Bluetooth not asked, allowed, denied, restricted; native owns the moves                                                                                                                                                                            |
+| A circuit session        | `src/features/circuit/circuitSession.ts` (`CircuitPhase`, `stepCircuitSession`)                                                        | picking, running, paused, ending (the 7-minute question), finish, discarding (the discard question), saving, saved, discarded                                                                                                                                                   |
+| A circuit's history      | `src/pages/Circuit.tsx` (`CircuitHistory`)                                                                                             | reading, unknown (failed or too slow), read; a late read stands in for unknown until one is chosen                                                                                                                                                                              |
+| A reminder's delivery    | `src/lib/reminderChoices.ts` (`ReminderDelivery`), and the server's copy (App1 Q26)                                                    | off, local, push: the phone or the server sends it, never both                                                                                                                                                                                                                  |
+| A week-ahead offer       | `src/components/review/WeekAheadEnding.tsx` (`OfferStatus`)                                                                            | open, busy, done, undoing; one offer under way at a time                                                                                                                                                                                                                        |
+| Finishing a lift         | `src/lib/liftFinish.ts` (`LiftFinish`), since App1 Q20                                                                                 | logging, review, saving, queued, synced, needs attention; `src/components/WorkoutSession.tsx` draws `liftFinishView`                                                                                                                                                            |
+| Checkout                 | `src/lib/checkoutFlow.ts` (`CheckoutState`, `PurchaseOutcome`), since App1 Q20                                                         | idle, sign-in needed, buying, waiting, failed; a purchase comes to bought, redirected, cancelled, pending or failed                                                                                                                                                             |
+| A reminder's attention   | `src/lib/reminderAttention.ts` (`AttentionCount`), and the server's half (App1 Q62)                                                    | on with 0, 1 or 2 ignored running; quiet (off, `{kind}QuietAt`); said on Home (`{kind}QuietShown`); on again from 0                                                                                                                                                             |
+| Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)                                                         | none, hot, extreme; then offered, adjusted or swapped                                                                                                                                                                                                                           |
+| Making a segment         | `src/components/run/SegmentMaker.tsx` (`MakerState`)                                                                                   | picking, saving, refused; closed is RunDetail's (`segmentRange` null)                                                                                                                                                                                                           |
+| A segment's page         | `src/hooks/useSegment.ts` (`SegmentStatus`, `BoardStatus`)                                                                             | loading, ready, missing, failed; its board loading, ready, failed                                                                                                                                                                                                               |
+| A sport added, removed   | `src/components/program/AddLiftingFlow.tsx` (`AddLiftingStep`), `src/lib/sportChange.ts`                                               | week, kit, limits, saving (after the saved workouts are read); a removal asked once, saved or refused (`SportRefusal`), the last sport's only once tried                                                                                                                        |
+| Health-details agreement | `src/components/healthConsent/HealthConsentGate.tsx` (`HealthConsentGateView`), `src/components/healthConsent/HealthConsentRoutes.tsx` | before it, checking (the account read again); then asking, saving (the write waits at most 8 s, then counts as made on the device; a re-read without it says so), declined (Not now: back, Delete my account, Sign out); the app once the account carries the agreement (Priv1) |
+| Usage analytics          | `src/lib/analyticsProvider.ts` (`AnalyticsStatus`), `src/lib/usageAnalytics.ts`                                                        | uninitialised, pending, active, off, unconfigured, unsupported, error; off is the device's kept answer at launch, then the account's (Priv1)                                                                                                                                    |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.
@@ -115,6 +118,42 @@ code can hold that it should not, and what would make it explicit.
   flags, 49 `useState` in all.
 - **Can hold.** A step that is not in the current flow after the activity
   changes; `saving` and the `pending` ref disagreeing.
+- **Since 21 November 2026 (Priv1 call 1).** The agreement to store health
+  details is step 8 (`HEALTH_CONSENT_STEP`, id `health`), before the first
+  body question: after the kit for a lifter, after the run for a runner,
+  opening About you, which the limitations (4) joined so no body question
+  sits before it. Two more pieces: `healthConsentVersion` (the version
+  agreed to, kept in the draft until the plan is saved) and
+  `consentDeclined` (Not now's view, which hides the footer and is never
+  saved). A draft saved past the step without the agreement opens on it
+  and goes on through the steps after it. What it can hold:
+  `consentDeclined` with the agreement already given, for a moment, since
+  Not now clears the version in the same tap; the plan is saved only with
+  the version present (`answersValid`, and `completeOnboarding` refuses
+  without it).
+- **Since 22 November 2026 (A6).** Setup runs signed out too, at `/setup`,
+  its draft under the phone's own key until an account exists. Three more
+  pieces: `saveView` (Save your plan in the review's place, never saved, so
+  a setup opened again shows the review and asks the email question
+  afresh), `setupSave` (the mark a sign-in from Save your plan leaves,
+  `src/lib/setupSave.ts`, read once as setup is drawn under the new
+  account) and `autoBuildRef` (the build that mark starts, once the name
+  has been read). What it can hold: the mark with no answers waiting, when
+  the draft could not be kept; setup then starts from its first question
+  and the mark lapses within the hour. `handleFinish` reads the account
+  from the server before it writes, so a plan made elsewhere is kept,
+  unless this open of the app already asked for the plan
+  (`setupSentThisVisitFor`), when Try again sends it again.
+  `completeOnboarding` refuses an account with a plan (`already-exists`):
+  after a call from this open of the app that is the plan that call built,
+  its answer lost, and setup carries on; otherwise the plan is kept. Answers
+  picked up cold, not in this open of the app, drop their agreement to
+  store health details and ask for it again (`agreementAskedAgain`; at the
+  review, I agree returns there), and so does setup left open two days
+  after I agree or two hours in the background
+  (`onSignedOutAgreementLapsed`), from the step it is on. They last two
+  days, and go on sign-out and when any account appears without the mark
+  (`accountAppeared`).
 - **Explicit form.** One reducer over `OnboardingDraft` and a pure module for
   validity and the payload. Candidate A4.
 
@@ -171,6 +210,48 @@ null` used to mean both "this account has no profile yet" and "the profile
   the copy the device already has, or shows a retry screen when it has none.
 - **The run timer** refuses a second pause and a resume while running.
 - **Queued writes** retry on return to the foreground.
+
+## What Priv1 call 1 changed (21 November 2026)
+
+- **A new gate between setup and the app.** `src/App.tsx` routes a signed-in
+  account four ways: a pending deletion, `ProfileUnavailable` (`failed`),
+  setup (no finished profile), and now, for a finished profile with no
+  current `healthDataConsent` (`src/lib/healthConsent.ts`), the agreement's
+  own routes before the app. Those read the account once more before
+  asking, so a device holding a copy from before the person agreed on
+  another device shows a spinner, not the question, and Account (with
+  Delete account) is the one other page they reach. It is not a
+  `ProfileLoad` state: the profile is `ready`, and the gate reads a field
+  of it.
+
+## What A6 changed (22 November 2026)
+
+- **Setup before the account.** A signed-out person can now be in setup:
+  `src/App.tsx`'s signed-out routes add `/setup`, which draws `Onboarding`
+  with no account, its answers kept under the phone's own key
+  (`saveSignedOutDraft`). The review's button opens Save your plan, where
+  Apple, Google or email makes the account; a sign-in from there leaves a
+  mark (`src/lib/setupSave.ts`), and the signed-in routes, unchanged in
+  shape, draw setup again under the new account, which takes the answers
+  (`adoptSignedOutDraft`) and builds the plan. A pending deletion,
+  `ProfileUnavailable` and the agreement's gate stand as they were for a
+  signed-in account.
+- **An existing plan is never replaced.** Three places see it: the app
+  (`AppRoutes`), when the account's profile already carries
+  `onboardingComplete`; `handleFinish`, which reads the account from the
+  server before writing, for a device whose copy is older; and
+  `completeOnboarding`, which refuses in its transaction an account with
+  `onboardingComplete`, for two phones at once. Each drops the answers and
+  says so on Home (`KEPT_PLAN_NOTICE`). A programme stored without
+  `onboardingComplete` is not a plan to keep: setup rebuilds it and sets
+  the flag, so the account leaves setup. A refusal from the server is
+  "kept" unless this open of the app sent setup and its answer is unknown
+  (`setupSentThisVisitFor`); a refusal that wrote nothing
+  (`refusedBeforeWriting`) does not count as sent.
+- **The trial offer.** Once the plan is built, setup goes to
+  `/trial-offer` (`src/pages/TrialOffer.tsx`) for an account that can take
+  a trial, before Home; every way off it goes Home, a purchase through
+  `CheckoutState` as before.
 
 ## What App1 Q20 changed (13 November 2026)
 

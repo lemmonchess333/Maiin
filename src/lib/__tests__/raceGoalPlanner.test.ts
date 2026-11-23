@@ -665,7 +665,7 @@ describe("getRaceGoalPlannerState — the words for a race too close", () => {
     });
     expect(s.status).toBe("below-floor");
     expect(s.statusDescription).toBe(
-      "Your longest run now is about 12 km. By race day the plan’s long run gets to 6 km, and a marathon is 42.2 km. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions."
+      "Your longest run now is about 12 km. By race day the plan’s long run gets to 6 km, and a marathon is 42.2 km. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan: easy running only, no quality sessions."
     );
   });
 

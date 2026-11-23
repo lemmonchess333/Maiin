@@ -28,6 +28,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   HOME,
   LIFT_WEEK_BANNER,
+  PLAN,
   RUN_ABOUT,
   RUN_RECOVERY,
   TABS,
@@ -35,6 +36,8 @@ import {
   WORKOUT,
   runWeekLabel,
   runWeekTabName,
+  sessionCardName,
+  shownLiftDayName,
   trainRowText,
 } from "../journeyScreens";
 
@@ -194,6 +197,40 @@ describe("Train's start, as the journeys press it", () => {
     );
     screen.getByRole("button", { name: WORKOUT.start }).click();
     expect(start).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Your plan's next lift, as the journeys find and start it", () => {
+  it("is a card named by its title, started by its button, headed by the shown name", () => {
+    const page = readFileSync(
+      resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../../pages/TrainingPlan.tsx"
+      ),
+      "utf8"
+    );
+    expect(page).toContain(`? "${PLAN.startNextLift}"`);
+    render(
+      <SessionCommandCard
+        sport="run"
+        eyebrow="Up next · Sat 12 Sep"
+        title="Long 12K (x)"
+        meta={["12 km"]}
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: sessionCardName("Long 12K (x)") })
+    ).toBeTruthy();
+    expect(
+      shownLiftDayName(
+        [
+          "Full Body \u2014 Squat Focus",
+          "Full Body \u2014 Deadlift Focus",
+          "Full Body \u2014 Posterior Focus",
+        ],
+        1
+      )
+    ).toBe("Full Body B");
   });
 });
 

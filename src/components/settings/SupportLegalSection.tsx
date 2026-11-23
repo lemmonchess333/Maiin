@@ -32,7 +32,7 @@ function buildSupportMailto(): string {
     `App version: ${version}`,
     `Device: ${ua}`,
   ].join("\n");
-  const subject = `Tropos support — v${version}`;
+  const subject = `Tropos support, v${version}`;
   return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -51,7 +51,7 @@ function buildModerationMailto(): string {
     "---",
     `App version: ${version}`,
   ].join("\n");
-  const subject = `Tropos moderation report — v${version}`;
+  const subject = `Tropos moderation report, v${version}`;
   return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 

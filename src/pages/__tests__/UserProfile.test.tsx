@@ -244,7 +244,7 @@ describe("someone else's profile", () => {
       within(list)
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toEqual(["Week Warrior", "First PR", "10K Club", "First 5K"]);
+    ).toEqual(["7 days in a row", "First PR", "First 10K", "First 5K"]);
     // The old page printed each badge's icon NAME ("trophy", "flame").
     expect(screen.queryByText(/^(trophy|target|flame|footprints)$/)).toBeNull();
   });
@@ -556,8 +556,8 @@ describe("your own profile", () => {
       await screen.findByRole("heading", { level: 1, name: "Alice A" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText("This is how your profile looks to other people.")
-    ).toBeInTheDocument();
+      screen.queryByText("This is how your profile looks to other people.")
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit profile" })).toHaveAttribute(
       "href",
       "/settings/profile"
@@ -630,8 +630,8 @@ describe("your own profile", () => {
       // As the streaks provider stores it: a list, unearned ones too.
       "users/alice/streaks/data": {
         badges: [
-          { id: "first_step", name: "First Step", earnedAt: "2026-01-01" },
-          { id: "three_day", name: "Getting Started", earnedAt: null },
+          { id: "first_step", name: "First log", earnedAt: "2026-01-01" },
+          { id: "three_day", name: "3 days in a row", earnedAt: null },
         ],
       },
     });
@@ -651,8 +651,8 @@ describe("your own profile", () => {
       // As the streaks provider stores it: a list, unearned ones too.
       "users/alice/streaks/data": {
         badges: [
-          { id: "first_step", name: "First Step", earnedAt: "2026-01-01" },
-          { id: "three_day", name: "Getting Started", earnedAt: null },
+          { id: "first_step", name: "First log", earnedAt: "2026-01-01" },
+          { id: "three_day", name: "3 days in a row", earnedAt: null },
         ],
       },
     });
@@ -665,7 +665,7 @@ describe("your own profile", () => {
       within(list)
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toEqual(["First Step"]);
+    ).toEqual(["First log"]);
     // One shelf: badges, then medals.
     const badges = screen.getByRole("heading", { name: "Badges" });
     const medals = await screen.findByRole("heading", { name: "Medals" });

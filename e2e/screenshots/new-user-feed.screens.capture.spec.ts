@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
-import { openSignUpForm } from "../helpers/auth";
+import { newAccountAtSetup } from "../helpers/auth";
 /**
  * A new person's Social feed, light + dark: the state every launch user
  * sees first, filmed as a genuinely fresh account.
@@ -18,6 +17,7 @@ import { openSignUpForm } from "../helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -52,7 +52,7 @@ async function uidByEmail(email: string): Promise<string> {
 
 async function completeOnboardingDirect(uid: string): Promise<void> {
   const res = await fetch(
-    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName`,
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=displayName&updateMask.fieldPaths=healthDataConsent`,
     {
       method: "PATCH",
       headers: {
@@ -63,6 +63,8 @@ async function completeOnboardingDirect(uid: string): Promise<void> {
         fields: {
           onboardingComplete: { booleanValue: true },
           displayName: { stringValue: "New Tester" },
+          // Agreed to the storing of health details (Priv1 call 1).
+          healthDataConsent: restHealthConsent(),
         },
       }),
     }
@@ -110,13 +112,7 @@ test.describe("new person's feed screenshots", () => {
     const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    await newAccountAtSetup(page, email, "test-password-123");
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });
@@ -139,9 +135,9 @@ test.describe("new person's feed screenshots", () => {
 
     // Following nobody, the feed opens on Explore with one line on how
     // Following fills — and real posts under it, not prompts.
-    await expect(
-      page.getByText(/Sessions people shared publicly/i)
-    ).toBeVisible({ timeout: 25_000 });
+    await expect(page.getByText(/Sessions shared publicly/i)).toBeVisible({
+      timeout: 25_000,
+    });
     await expect(page.getByText("Maya Chen").first()).toBeVisible({
       timeout: 25_000,
     });

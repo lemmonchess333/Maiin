@@ -135,7 +135,7 @@ it("asks someone in no space to join one, and someone in a space where suggestio
   renderPeople(true);
   expect(
     screen.getByText(
-      "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+      "Suggestions come from your spaces and the people you follow."
     )
   ).toBeInTheDocument();
 });

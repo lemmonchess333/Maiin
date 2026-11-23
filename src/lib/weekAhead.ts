@@ -28,6 +28,7 @@ import {
   runsWrittenForWeek,
 } from "./trainingResolver";
 import { trainingWeek } from "./trainingWeek";
+import { liftWeekDayNames } from "./liftDayLabel";
 
 export interface WeekAheadDay {
   /** "yyyy-MM-dd". */
@@ -64,12 +65,20 @@ function liftOrder(
 ): string[] {
   const next = nextUpIndex(programState);
   if (!programState || next < 0 || !count) return [];
-  const rest = programState.workouts.filter(
-    (workout, index) => index !== next && !workout.completed && !workout.skipped
+  // Each lift by its on-screen name in the week ("Full Body A"), never
+  // its stored one.
+  const names = liftWeekDayNames(
+    programState.workouts.map((workout) => workout.dayName)
   );
-  return [programState.workouts[next], ...rest]
+  const rest = programState.workouts
+    .map((workout, index) => ({ workout, index }))
+    .filter(
+      ({ workout, index }) =>
+        index !== next && !workout.completed && !workout.skipped
+    );
+  return [{ index: next }, ...rest]
     .slice(0, count)
-    .map((workout) => workout.dayName);
+    .map(({ index }) => names[index]);
 }
 
 /** Train's Run tab line, for a plan that has a position to state. */

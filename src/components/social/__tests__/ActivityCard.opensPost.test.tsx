@@ -133,7 +133,7 @@ describe("a feed card opens its post", () => {
     renderCard(run());
     for (const name of [
       "Give props",
-      /props — show list/,
+      /props, show list/,
       "View comments",
       "More options",
     ]) {

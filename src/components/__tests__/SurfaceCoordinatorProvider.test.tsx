@@ -42,6 +42,29 @@ describe("SurfaceCoordinatorProvider", () => {
     expect(screen.getByTestId("priming")).toHaveTextContent("idle");
   });
 
+  it("reports which return surface won, and the event arrives saying so", async () => {
+    // Caught at the provider, after `emit` has added its own `surface`
+    // ("lifecycle"): the return surface has to travel under another name.
+    const provider = await import("@/lib/analyticsProvider");
+    const sent = vi
+      .spyOn(provider, "logAnalyticsEvent")
+      .mockImplementation(() => {});
+    try {
+      render(
+        <SurfaceCoordinatorProvider>
+          <Surface id="fell-behind" priority={30} eligible />
+        </SurfaceCoordinatorProvider>
+      );
+      settle();
+      expect(sent).toHaveBeenCalledWith("return_surface_shown", {
+        returnSurface: "fell-behind",
+        surface: "lifecycle",
+      });
+    } finally {
+      sent.mockRestore();
+    }
+  });
+
   it("suppresses the badge under fell-behind AND fires its onDrop (celebration dropped)", () => {
     const onDrop = vi.fn();
     render(

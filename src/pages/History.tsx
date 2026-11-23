@@ -36,6 +36,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
+import { leadPlan } from "@/lib/performanceWeekBreakdown";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -74,6 +75,7 @@ import {
 } from "@/components/analytics/goDeeperLines";
 import { currentWeightRate } from "@/utils/weightTrend";
 import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import {
   nutritionRows,
   predictionRow,
@@ -89,7 +91,7 @@ import {
 } from "@/lib/periodSummary";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { predictedRaceTimesFromFitness } from "@/lib/runPaces";
-import StatCard from "@/components/analytics/StatCard";
+import FoodAverages from "@/components/analytics/FoodAverages";
 import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
 import AnalyticsGoDeeper, {
@@ -164,7 +166,6 @@ const MacroDistribution = lazyRetry(
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
 );
-import Card from "@/components/ui/Card";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
@@ -293,14 +294,6 @@ function FilterPills({
     />
   );
 }
-
-// Convert a "now vs. previous period" pair into the shape StatCard's
-// `delta` prop expects. Rule: prev === 0 → no delta (can't compute a
-// percent change from zero); abs-change < 1% → treated as no movement
-/* buildDelta moved to `@/lib/deltaFormat` so the percentage-delta
-   contract (null on non-finite / non-positive previous / sub-1%
-   noise) can be reused by other "vs previous period" surfaces and
-   tested in isolation. */
 
 /**
  * "runs", "runs and meals", "runs, workouts and meals".
@@ -782,7 +775,7 @@ export default function History() {
     minDisplayMs: 600,
   });
 
-  /* The nutrition StatCards' "target N" reference line.
+  /* The nutrition averages' "target N" reference line.
    *
    * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
    * and by nothing since. The goal-weight recipe
@@ -1106,6 +1099,7 @@ export default function History() {
   );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
   const targetProtein = effectiveTargets.protein ?? 0;
+  const { accent: macroAccent } = useMacroPalette();
   const trendRows = useMemo(() => {
     const rows: TrendRow[] = [];
     const weight = weightRow({
@@ -1125,6 +1119,7 @@ export default function History() {
         showSeries: nutrition.showSparklines,
         targetCalories,
         targetProtein,
+        proteinColor: macroAccent.protein,
       })
     );
     const fitness = profile?.runFitness ?? null;
@@ -1136,6 +1131,7 @@ export default function History() {
     if (prediction) rows.push(prediction);
     return rows;
   }, [
+    macroAccent.protein,
     bodyweight.points,
     range,
     profile?.preferredWeightUnit,
@@ -1314,6 +1310,10 @@ export default function History() {
                     detailsOpen={scoreOpen}
                     onToggleDetails={setScoreOpen}
                     detailsLocked={!isPro}
+                    /* The plan the score's adherence counted against
+                       and this week's own count, so the lead says "3 of
+                       5 planned sessions" only when the two agree. */
+                    plan={leadPlan(profile, weekPulse)}
                   />
                 </SectionErrorBoundary>
               )}
@@ -1384,8 +1384,7 @@ export default function History() {
                     Still loading your {formatSourceList(stalledSources)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    This is taking longer than it should. Your data is safe —
-                    the connection to it has stalled.
+                    This is taking longer than it should. Your data is safe.
                   </p>
                   <Button
                     variant="secondary"
@@ -1405,7 +1404,6 @@ export default function History() {
                 <ArrivalFade {...overviewArrival}>
                   <EmptyState
                     icon={LineChart}
-                    accent={THEME.brand}
                     /* Day one is a starting line (DS4 words rules): the
                        first step, and what fills. The rules' rewrite of
                        "No analytics yet". */
@@ -1503,8 +1501,7 @@ export default function History() {
                       Couldn’t load your runs
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Your runs are safe — this was a problem reading them, not
-                      a problem with your data.
+                      Your runs are safe. Tropos couldn’t read them just now.
                     </p>
                     <Button
                       variant="sport-tinted"
@@ -1623,10 +1620,7 @@ export default function History() {
                 </SectionHeading>
                 {workoutsLoading ? (
                   <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Skeleton className="h-24 w-full rounded-xl" />
-                      <Skeleton className="h-24 w-full rounded-xl" />
-                    </div>
+                    <Skeleton className="h-24 w-full rounded-xl" />
                     <ChartSkeleton />
                   </div>
                 ) : renderLiftingEmptyNote ? (
@@ -1763,10 +1757,7 @@ export default function History() {
                 </SectionHeading>
                 {mealsLoading ? (
                   <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Skeleton className="h-24 w-full rounded-xl" />
-                      <Skeleton className="h-24 w-full rounded-xl" />
-                    </div>
+                    <Skeleton className="h-24 w-full rounded-xl" />
                     <ChartSkeleton />
                   </div>
                 ) : renderNutritionEmptyNote ? (
@@ -1833,6 +1824,86 @@ export default function History() {
                         reliable.
                       </p>
                     )}
+                    {/* Calories lead, the macros follow as rows. The
+                        line and the change are left out when the range
+                        is too thin for them (`nutritionFigures`). */}
+                    <FoodAverages
+                      lead={{
+                        key: "calories",
+                        label: "Avg calories",
+                        value: nutrition.avgCalories.toLocaleString(),
+                        unit: "kcal/day",
+                        delta: nutrition.showDelta
+                          ? buildDelta(
+                              nutrition.avgCalories,
+                              nutrition.prevAvgCalories
+                            )
+                          : null,
+                        target: macroTargets?.calories
+                          ? `target ${macroTargets.calories.toLocaleString()} ${CALORIE_UNIT}`
+                          : undefined,
+                        sparkline: nutrition.showSparklines
+                          ? nutrition.caloriesSparkline
+                          : undefined,
+                        lineColor: THEME.semantic.nutrition,
+                      }}
+                      rows={[
+                        {
+                          key: "protein",
+                          label: "Protein",
+                          value: nutrition.avgProtein.toString(),
+                          unit: "g/day",
+                          delta: nutrition.showDelta
+                            ? buildDelta(
+                                nutrition.avgProtein,
+                                nutrition.prevAvgProtein
+                              )
+                            : null,
+                          target: macroTargets?.protein
+                            ? `target ${macroTargets.protein}g`
+                            : undefined,
+                          sparkline: nutrition.showSparklines
+                            ? nutrition.proteinSparkline
+                            : undefined,
+                          lineColor: macroAccent.protein,
+                        },
+                        {
+                          key: "carbs",
+                          label: "Carbs",
+                          value: nutrition.avgCarbs.toString(),
+                          unit: "g/day",
+                          delta: nutrition.showDelta
+                            ? buildDelta(
+                                nutrition.avgCarbs,
+                                nutrition.prevAvgCarbs
+                              )
+                            : null,
+                          target: macroTargets?.carbs
+                            ? `target ${macroTargets.carbs}g`
+                            : undefined,
+                          sparkline: nutrition.showSparklines
+                            ? nutrition.carbsSparkline
+                            : undefined,
+                          lineColor: macroAccent.carbs,
+                        },
+                        {
+                          key: "fat",
+                          label: "Fat",
+                          value: nutrition.avgFat.toString(),
+                          unit: "g/day",
+                          delta: nutrition.showDelta
+                            ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat)
+                            : null,
+                          target: macroTargets?.fat
+                            ? `target ${macroTargets.fat}g`
+                            : undefined,
+                          sparkline: nutrition.showSparklines
+                            ? nutrition.fatSparkline
+                            : undefined,
+                          lineColor: macroAccent.fat,
+                        },
+                      ]}
+                    />
                     {foodDaysSettled && (
                       <SectionErrorBoundary sectionName="food-days">
                         <FoodDaysCard
@@ -1841,109 +1912,6 @@ export default function History() {
                         />
                       </SectionErrorBoundary>
                     )}
-                    {/* The stat pairs go one per row under 17.5em of page
-                        (larger text): at 1.35× on a 393pt phone "1,790" was
-                        already wider than half of it. Wide-first. */}
-                    {/* Top row: calories + protein. Sparkline + delta both
-                  conditionally suppressed when sample is too thin (see
-                  showSparklines / showDelta in `nutritionFigures`). */}
-                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
-                      <StatCard
-                        label="Avg calories"
-                        value={nutrition.avgCalories.toLocaleString()}
-                        unit="kcal/day"
-                        delta={
-                          nutrition.showDelta
-                            ? buildDelta(
-                                nutrition.avgCalories,
-                                nutrition.prevAvgCalories
-                              )
-                            : null
-                        }
-                        target={
-                          macroTargets?.calories
-                            ? `target ${macroTargets.calories.toLocaleString()} ${CALORIE_UNIT}`
-                            : undefined
-                        }
-                        sparklineData={
-                          nutrition.showSparklines
-                            ? nutrition.caloriesSparkline
-                            : undefined
-                        }
-                        accentColor={THEME.semantic.nutrition}
-                      />
-                      <StatCard
-                        label="Protein"
-                        value={nutrition.avgProtein.toString()}
-                        unit="g/day"
-                        delta={
-                          nutrition.showDelta
-                            ? buildDelta(
-                                nutrition.avgProtein,
-                                nutrition.prevAvgProtein
-                              )
-                            : null
-                        }
-                        target={
-                          macroTargets?.protein
-                            ? `target ${macroTargets.protein}g`
-                            : undefined
-                        }
-                        sparklineData={
-                          nutrition.showSparklines
-                            ? nutrition.proteinSparkline
-                            : undefined
-                        }
-                        accentColor={THEME.macros.protein}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
-                      <StatCard
-                        label="Carbs"
-                        value={nutrition.avgCarbs.toString()}
-                        unit="g/day"
-                        delta={
-                          nutrition.showDelta
-                            ? buildDelta(
-                                nutrition.avgCarbs,
-                                nutrition.prevAvgCarbs
-                              )
-                            : null
-                        }
-                        target={
-                          macroTargets?.carbs
-                            ? `target ${macroTargets.carbs}g`
-                            : undefined
-                        }
-                        sparklineData={
-                          nutrition.showSparklines
-                            ? nutrition.carbsSparkline
-                            : undefined
-                        }
-                        accentColor={THEME.macros.carbs}
-                      />
-                      <StatCard
-                        label="Fat"
-                        value={nutrition.avgFat.toString()}
-                        unit="g/day"
-                        delta={
-                          nutrition.showDelta
-                            ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat)
-                            : null
-                        }
-                        target={
-                          macroTargets?.fat
-                            ? `target ${macroTargets.fat}g`
-                            : undefined
-                        }
-                        sparklineData={
-                          nutrition.showSparklines
-                            ? nutrition.fatSparkline
-                            : undefined
-                        }
-                        accentColor={THEME.macros.fat}
-                      />
-                    </div>
 
                     <MacroDistribution
                       protein={nutrition.avgProtein}
@@ -1976,70 +1944,60 @@ export default function History() {
                   className="space-y-2"
                 >
                   <SectionHeading>Lifetime</SectionHeading>
-                  {/* Three peer tiles, one unit treatment. The runs tile
-                      used to push its `km` down into the caption ("km ·
-                      1 runs") while the lifting tile beside it carried
-                      `kg` inline on the figure — so the same information
-                      sat in two different places in one row, and the runs
-                      caption opened on a dangling unit that only parsed if
-                      you read upward. Unit inline on the figure, caption
-                      as a plain descriptor, for all three. The unit span
-                      also dropped from 700 to font-medium: at 700 beside
-                      an 800 figure it was the weight-mixing DESIGN_GUIDE
-                      bars, and `text-sm font-medium` is what the Home
-                      weight tile already uses for exactly this role.
-                      Three across while 17em allows (a 320px phone at the
+                  {/* One line of three figures on the page, each with its
+                      unit on the figure and a plain caption under it.
+                      Side by side while 17em allows (a 320px phone at the
                       designed size), stacked below: at larger text
                       "115.2k kg" was wider than a third. */}
                   <div className="@container">
-                    <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
-                      <Card size="compact" className="text-center">
-                        <Footprints className="size-4 mx-auto mb-1.5 text-running" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {/* In the reader's unit: it read "km" to everyone. */}
+                    <dl className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-x-4 gap-y-3">
+                      <div>
+                        <dt className="sr-only">Distance run</dt>
+                        <dd className="text-lg font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {/* In the reader's unit. */}
                           {abbreviateK(
                             distanceIn(lifetimeTotals.runKm * 1000, unit)
                           )}{" "}
-                          <span className="text-xs font-medium">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {distanceUnitLabel(unit)}
                           </span>
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
+                        </dd>
+                        <dd className="text-caption text-muted-foreground mt-0.5">
                           {lifetimeTotals.runCount}{" "}
                           {lifetimeTotals.runCount === 1 ? "run" : "runs"}
-                        </p>
-                      </Card>
-                      <Card size="compact" className="text-center">
-                        <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="sr-only">Weight lifted</dt>
+                        <dd className="text-lg font-extrabold font-mono tabular-nums text-foreground leading-tight">
                           {lifetimeVolume.value}
                           {lifetimeVolume.unit && " "}
                           {lifetimeVolume.unit && (
-                            <span className="text-xs font-medium">
+                            <span className="text-xs font-medium text-muted-foreground">
                               {lifetimeVolume.unit}
                             </span>
                           )}
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
+                        </dd>
+                        <dd className="text-caption text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
-                          {/* "lifts", as the tile beside it says "runs":
+                          {/* "lifts", as the figure beside it says "runs":
                               the range card's "sessions" counts both. */}
                           {lifetimeTotals.liftCount === 1 ? "lift" : "lifts"}
-                        </p>
-                      </Card>
-                      <Card size="compact" className="text-center">
-                        <UtensilsCrossed className="size-4 mx-auto mb-1.5 text-nutrition-strong" />
-                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="sr-only">Food</dt>
+                        <dd className="text-lg font-extrabold font-mono tabular-nums text-foreground leading-tight">
                           {lifetimeTotals.daysLogged.toLocaleString()}{" "}
-                          <span className="text-xs font-medium">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
                           </span>
-                        </p>
-                        <p className="text-caption text-muted-foreground mt-0.5">
+                        </dd>
+                        <dd className="text-caption text-muted-foreground mt-0.5">
                           logged
-                        </p>
-                      </Card>
-                    </div>
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
                 </section>
               )}

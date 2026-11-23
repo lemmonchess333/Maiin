@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
-import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
+import { newAccountAtSetup, signInAsTestUser } from "../helpers/auth";
 /**
  * Analytics tab capture — the "analytics doesn't load" report.
  *
@@ -22,6 +21,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { setTestUserTier } from "../helpers/testUserTier";
+import { restHealthConsent } from "../helpers/healthConsent";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -77,9 +77,14 @@ async function seedTrainingHistory(uid: string): Promise<void> {
   const now = new Date();
   const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000);
 
-  await patch(`users/${uid}?updateMask.fieldPaths=onboardingComplete`, {
-    onboardingComplete: { booleanValue: true },
-  });
+  await patch(
+    `users/${uid}?updateMask.fieldPaths=onboardingComplete&updateMask.fieldPaths=healthDataConsent`,
+    {
+      onboardingComplete: { booleanValue: true },
+      // Agreed to the storing of health details (Priv1 call 1).
+      healthDataConsent: restHealthConsent(),
+    }
+  );
 
   // `distance` is METRES and `avgPace` is SECONDS PER KM — the units
   // `isVolumeEligible` gates on (>= 50m, >= 30s). The first draft of this
@@ -196,13 +201,7 @@ test.describe("analytics tab screenshots", () => {
     const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    await newAccountAtSetup(page, email, "test-password-123");
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

@@ -199,7 +199,7 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   only on the device that took it
                 </strong>
-                ; we do not store it on our servers. It is deleted automatically
+                . We do not store it on our servers. It is deleted automatically
                 after 90 days. See section 7 for the detail.
               </li>
               <li>
@@ -315,6 +315,11 @@ export default function PrivacyPolicy() {
               </li>
               <li>Send account emails, such as a password reset</li>
               <li>
+                If you choose them, email you your weekly review on Mondays, and
+                one email at 2 weeks and one at a month if you stop logging (we
+                ask in setup, off until you turn it on)
+              </li>
+              <li>
                 Understand how the app is used and fix what breaks (analytics,
                 and crash and error reports)
               </li>
@@ -357,7 +362,7 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">New progress photos</strong>{" "}
               are additionally encrypted on your device (AES-GCM-256) before
-              upload, so they are not stored as plain image files: anyone
+              upload, so they are not stored as plain image files. Anyone
               browsing raw storage sees ciphertext rather than pictures.
             </p>
             <p>
@@ -576,8 +581,12 @@ export default function PrivacyPolicy() {
                   Right to withdraw consent:
                 </strong>{" "}
                 You can withdraw your consent to your health details by deleting
-                your account, and withdraw it for AI food analysis by turning it
-                off in Settings &gt; Social &amp; privacy.
+                your account, withdraw it for AI food analysis by turning it off
+                in Settings &gt; Social &amp; privacy, and for the weekly review
+                and the emails after a break by turning them off in Settings
+                &gt; Notifications or with the unsubscribe link in any of them.
+                We keep when you said yes or no to each, and to which words,
+                with your account.
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
@@ -724,10 +733,11 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Resend:</strong> sends
                 account emails, such as verifying your email address or
-                resetting your password, and the reminder before a free trial
-                turns into a paid subscription. It receives your email address
-                and the email. It also carries the alert Tropos gets when
-                someone makes a report: the reason, what kind of thing was
+                resetting your password, the reminder before a free trial turns
+                into a paid subscription, and, if you choose them, your weekly
+                review and the emails after a break. It receives your email
+                address and the email. It also carries the alert Tropos gets
+                when someone makes a report: the reason, what kind of thing was
                 reported and any note the person reporting wrote, which can
                 quote what they reported.
               </li>
@@ -760,8 +770,8 @@ export default function PrivacyPolicy() {
                 start point plus a handful of nearby points we compute from it
                 and your chosen distance) were sent from our server to Mapbox’s
                 Directions service to calculate a walking route. We sent only
-                those coordinates, never your name, account details, saved
-                routes, or run history, and did not separately log the request
+                those coordinates (never your name, account details, saved
+                routes, or run history) and did not separately log the request
                 coordinates. When you chose Save &amp; follow, the returned
                 route geometry was saved privately to your account.
               </li>
@@ -810,9 +820,12 @@ export default function PrivacyPolicy() {
             <p>
               Tropos keeps the health and fitness data you log, including body
               weight, nutrition, workouts and GPS running data, to provide your
-              fitness tracking. It is never used for advertising or marketing,
-              and never sold. None of it is sent to Google Analytics (section
-              2).
+              fitness tracking. It is never used for advertising and never sold.
+              If you choose them, your weekly review email carries your week’s
+              sessions and food days, and the emails after a break go when you
+              have not logged anything for 2 weeks and for a month (section 2).
+              None of it is sent to Google Analytics, which receives no figure
+              about your body, food or training and never your name (section 2).
             </p>
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you

@@ -194,7 +194,7 @@ export default function FellBehindSheet({
   const reportChoice = (choice: ReturnChoice) => {
     if (choiceReported.current) return;
     choiceReported.current = true;
-    trackLifecycleEvent("return_choice", { surface, choice });
+    trackLifecycleEvent("return_choice", { returnSurface: surface, choice });
   };
 
   const raceChoices: Choice[] = raceModeActive
@@ -293,8 +293,8 @@ export default function FellBehindSheet({
             ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
             : detrained
               ? raceModeActive
-                ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
-                : "Ease back in — a couple of short, easy runs is the win this week."
+                ? "Your plan eases you back in with easy running first. Your race goal stays."
+                : "Ease back in with a couple of short, easy runs this week."
               : raceModeActive
                 ? "Want to adjust the plan to match where you are now?"
                 : "Your weekly target stays the same."}

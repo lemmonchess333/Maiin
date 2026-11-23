@@ -58,6 +58,49 @@ describe("sanitizeAnalyticsParams", () => {
     expect(out).toEqual({ keep: "yes" });
   });
 
+  /* A saved food's id is its name, lower-cased: `chicken_and_rice`. It went
+     to Google as `favouriteId` until a fact-check of the Privacy Policy
+     found it (analyticsHealthFigures.test.ts guards the call sites). */
+  it("drops keys that carry what a person typed or named", () => {
+    const out = sanitizeAnalyticsParams({
+      favouriteId: "chicken_and_rice",
+      favoriteId: "chicken_and_rice",
+      foodName: "Chicken and rice",
+      mealName: "Chicken and rice",
+      exerciseName: "My secret lift",
+      routineName: "Push day",
+      segmentName: "Hill to the church",
+      spaceName: "Balham runners",
+      circleTitle: "Saturday crew",
+      shoeName: "Old blue pair",
+      routeName: "Home loop",
+      searchQuery: "chicken",
+      query: "chicken",
+      keep: "yes",
+    });
+    expect(out).toEqual({ keep: "yes" });
+  });
+
+  it("keeps every parameter a surface module declares that carries nothing typed", () => {
+    // The key tokens above are substrings, so a new one can catch a real
+    // parameter by accident (as "uid" catches "guide"). These are today's.
+    const params = {
+      fromPantry: true,
+      useCount: 3,
+      totalBefore: 51,
+      source: "search",
+      challengeId: "weekly-2026-11-16",
+      circleType: "strength_block",
+      binKey: "2026-11-16",
+      step: "goal",
+      hint: "first-set",
+      template: "run",
+      subTab: "following",
+      typed: true,
+    };
+    expect(sanitizeAnalyticsParams(params)).toEqual(params);
+  });
+
   it("drops non-primitive values (objects, arrays, null)", () => {
     const out = sanitizeAnalyticsParams({
       nested: { a: 1 },

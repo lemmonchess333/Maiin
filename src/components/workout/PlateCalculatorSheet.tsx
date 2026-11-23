@@ -46,14 +46,14 @@ export default function PlateCalculatorSheet({
 
         {!breakdown && (
           <p className="text-sm text-muted-foreground leading-relaxed">
-            That’s below the bar ({bar} {label}) — no plates needed. Consider
-            dumbbells or a lighter bar.
+            That’s below the bar ({bar} {label}). Try dumbbells or a lighter
+            bar.
           </p>
         )}
 
         {breakdown && breakdown.perSide.length === 0 && (
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Just the bar — no plates.
+            Just the bar.
           </p>
         )}
 
@@ -77,8 +77,8 @@ export default function PlateCalculatorSheet({
 
         {breakdown && breakdown.remainder > 0 && (
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {breakdown.remainder} {label} can’t be plated with standard plates —
-            nearest loadable is{" "}
+            {breakdown.remainder} {label} can’t be loaded with standard plates.
+            Nearest:{" "}
             <span className="font-mono tabular-nums text-foreground">
               {breakdown.loadable} {label}
             </span>

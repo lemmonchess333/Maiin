@@ -400,8 +400,8 @@ export default function DayActionContent({
             className="size-3.5 mt-0.5 shrink-0"
             aria-hidden="true"
           />
-          Quality run and a lift share this day — if recovery’s tight, go easier
-          on one of them.
+          A quality run and a lift share this day. If you’re tired, go easier on
+          one.
         </p>
       )}
 
@@ -487,7 +487,11 @@ export default function DayActionContent({
                     : null;
                   const isManual = completionKind === "manual";
                   return (
-                    <span className="text-xs font-medium text-success-strong">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                      <Check
+                        className="size-3.5 text-success-strong"
+                        aria-hidden="true"
+                      />
                       {isManual ? "Marked complete" : "Completed"}
                     </span>
                   );
@@ -534,7 +538,7 @@ export default function DayActionContent({
                     ? `${goalDayName(profile?.raceGoal)} · template locked`
                     : run.isStartable
                       ? "Run template"
-                      : `${run.status} — template locked`
+                      : `${run.status} · template locked`
                 }
               >
                 {RUN_TEMPLATES.map((t) => (
@@ -545,7 +549,7 @@ export default function DayActionContent({
               </Select>
               {isRaceTemplate ? (
                 <span className="mt-1 block text-caption text-muted-foreground">
-                  {goalDayName(profile?.raceGoal)} — the template is locked.
+                  {goalDayName(profile?.raceGoal)} keeps its template.
                 </span>
               ) : (
                 run.isStartable && (
@@ -645,7 +649,7 @@ export default function DayActionContent({
                         }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
-                        DNF — Started but didn’t finish
+                        DNF: started but didn’t finish
                       </button>
                       <button
                         type="button"
@@ -657,7 +661,7 @@ export default function DayActionContent({
                         }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
-                        DNS — Didn’t start
+                        DNS: didn’t start
                       </button>
                     </>
                   )}
@@ -692,7 +696,7 @@ export default function DayActionContent({
                       >
                         <CalendarDays
                           className="size-4"
-                          style={{ color: THEME.brand }}
+                          style={{ color: THEME.chrome.text }}
                         />
                         Move to another day
                       </button>
@@ -723,7 +727,7 @@ export default function DayActionContent({
                                   key={opt.dayIndex}
                                   type="button"
                                   disabled={!opt.available || pending}
-                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
+                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? ", has a trade-off" : opt.available ? "" : ", unavailable"}`}
                                   onClick={() =>
                                     void act(() =>
                                       moveRunDay(
@@ -778,7 +782,10 @@ export default function DayActionContent({
                 }
                 className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
               >
-                <RotateCcw className="size-4" style={{ color: THEME.brand }} />
+                <RotateCcw
+                  className="size-4"
+                  style={{ color: THEME.chrome.text }}
+                />
                 Restore to plan
               </button>
             )}
@@ -818,7 +825,11 @@ export default function DayActionContent({
             </div>
             <div className="shrink-0 pt-1">
               {lift.status === "completed" && (
-                <span className="text-xs font-medium text-success-strong">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                  <Check
+                    className="size-3.5 text-success-strong"
+                    aria-hidden="true"
+                  />
                   Completed
                 </span>
               )}
@@ -854,7 +865,10 @@ export default function DayActionContent({
               onClick={() => void act(() => restoreWorkoutDay(lift.index!))}
               className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <RotateCcw className="size-4" style={{ color: THEME.brand }} />
+              <RotateCcw
+                className="size-4"
+                style={{ color: THEME.chrome.text }}
+              />
               Restore to plan
             </button>
           )}

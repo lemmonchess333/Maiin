@@ -474,12 +474,12 @@ export default function AdjustWeekSheet({
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Feather className="size-4 text-running" aria-hidden="true" />
-              Easier week — preview
+              Easier week preview
             </div>
             {step.swaps.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nothing left to ease — the rest of this week is already easy
-                running (or done). Nice.
+                Nothing left to ease. The rest of this week is easy running or
+                done.
               </p>
             ) : (
               <ul className="space-y-1.5">
@@ -537,7 +537,7 @@ export default function AdjustWeekSheet({
                 className="size-4 text-running"
                 aria-hidden="true"
               />
-              Re-plan from today — preview
+              Re-plan from today: preview
             </div>
             <p className="text-sm text-muted-foreground">
               {step.timing === "healthy" &&

@@ -88,17 +88,17 @@ const FEATURE_PREVIEWS: Partial<
   // where they used to fall back to a title and a tagline with no product
   // in sight.
   adaptive_tdee: {
-    icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
+    icon: <Sparkles className="size-6" style={{ color: THEME.chrome.text }} />,
     preview: <ProPreview frames={["target"]} variant="single" />,
   },
   adaptive_macros: {
-    icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
+    icon: <Sparkles className="size-6" style={{ color: THEME.chrome.text }} />,
     preview: <ProPreview frames={["target"]} variant="single" />,
   },
 };
 
 const DEFAULT_HERO = {
-  icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
+  icon: <Sparkles className="size-6" style={{ color: THEME.chrome.text }} />,
   title: "Upgrade to Pro",
   tagline: "AI food logging, plus a calorie target that adapts to you.",
 };
@@ -120,7 +120,7 @@ const PRO_FEATURE_BULLETS: {
     icon: <Sparkles className="size-4" />,
     label: "Adaptive calorie target",
     sub: "Your target learns from your real intake and weight trend.",
-    color: THEME.brand,
+    color: THEME.semantic.nutrition,
   },
 ];
 
@@ -283,7 +283,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           onClick={onClose}
           aria-label="Close upgrade modal"
           disabled={loading}
-          className="absolute top-2 right-3 size-11 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
+          className="absolute top-2 right-3 size-11 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
         >
           <X className="size-4" aria-hidden="true" />
         </button>
@@ -295,7 +295,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         <div className="text-center space-y-2">
           <div
             className="size-12 rounded-2xl flex items-center justify-center mx-auto"
-            style={{ background: `${THEME.brand}14` }}
+            style={{ background: THEME.chrome.tint }}
           >
             {hero.icon}
           </div>

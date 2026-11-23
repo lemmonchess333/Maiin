@@ -70,6 +70,40 @@ describe("AnniversaryReveal", () => {
     );
   });
 
+  /* Owner, 22 November 2026: a shared card is read by anyone, so it
+     names no one; the reveal keeps "You’ve". */
+  it("shares a card that names no one, the reveal keeping its own words", async () => {
+    render(
+      <AnniversaryReveal
+        anniversary={{
+          kind: "sessions50",
+          day: "2026-11-14",
+          since: "2025-12-01",
+        }}
+        onDone={vi.fn()}
+      />
+    );
+    const dialog = screen.getByRole("dialog", { name: "Your 50th session" });
+    expect(within(dialog).getByText(/trained 50 times/).textContent).toBe(
+      "You’ve trained 50 times since 1\u00a0Dec\u00a02025. 100 is next."
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(share.shareImageFile).toHaveBeenCalledTimes(1));
+    const [node] = share.generateShareImage.mock.calls[0] as unknown as [
+      HTMLElement,
+    ];
+    const card = node.textContent ?? "";
+    expect(card).toContain("50th session");
+    expect(card).toContain(
+      "50 sessions on Tropos since 1\u00a0Dec\u00a02025. 100 is next."
+    );
+    expect(card).not.toMatch(/\byou(r|’ve)?\b/i);
+    expect(share.shareImageFile).toHaveBeenCalledWith(
+      expect.any(File),
+      "50th session on Tropos"
+    );
+  });
+
   it("closes on Escape and on Done", () => {
     const done = vi.fn();
     render(

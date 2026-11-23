@@ -204,7 +204,7 @@ export default function WorkoutFeedShareSheet({
           // the workout is already saved and this page will still be here
           // later, so deferring is honest and losing nothing.
           <p className="text-caption text-muted-foreground text-center">
-            You’re offline — come back to this workout when you’re connected.
+            You’re offline. Come back to this workout when you’re connected.
           </p>
         )}
       </div>

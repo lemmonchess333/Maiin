@@ -40,6 +40,16 @@ function meal(id: string, foodName: string, extra: Partial<Meal> = {}): Meal {
   } as Meal;
 }
 
+/** A meal an older build scanned, with the photo's server URL still on it,
+ *  as the document holds it until the purge reaches it. */
+function legacyMeal(id: string, foodName: string, extra: Partial<Meal> = {}) {
+  return {
+    ...meal(id, foodName, extra),
+    photoUrl: `https://example.test/${id}.jpg`,
+    photoPath: `food-photos/me/${id}.jpg`,
+  } as Meal;
+}
+
 function diary(meals: Meal[]) {
   return (
     <FoodTimeline
@@ -136,14 +146,14 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
     }
   );
 
-  it("prefers the first available local photo across the group before a legacy URL", () => {
+  it("uses the first local photo across the group, never a server URL an older build left", () => {
     photos.urls = {
       scanned: "data:image/jpeg;base64,c2Nhbm5lZA==",
       later: "data:image/jpeg;base64,bGF0ZXI=",
     };
     const { container } = render(
       diary([
-        meal("legacy", "Soup", { photoUrl: "https://example.test/soup.jpg" }),
+        legacyMeal("legacy", "Soup"),
         meal("scanned", "Soup"),
         meal("later", "Soup"),
       ])
@@ -156,10 +166,10 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
   });
 
   it("gives every row a picture, its photo or our drawing", () => {
+    photos.urls = { m1: "data:image/jpeg;base64,c2FsbW9u" };
     const { container } = render(
       diary([
         meal("m1", "Salmon", {
-          photoUrl: "https://example.test/salmon.jpg",
           meal: "dinner",
           createdAt: new Date(2026, 9, 11, 19, 30),
         }),
@@ -170,6 +180,24 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
       ])
     );
     expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
+  });
+
+  /* Owner, 2026-11-21: every photo older builds stored on the server is
+     deleted (functions/scripts/purgeLegacyFoodPhotos.js), so the app shows
+     none. Until the purge reaches a meal it still carries the URL, and the
+     row must not draw it, or draw a broken picture once the file is gone. */
+  it("shows no photo for a meal that carries only a server photoUrl", () => {
+    const { container } = render(
+      diary([
+        legacyMeal("m1", "Salmon", { meal: "dinner" }),
+        meal("m2", "Oats", { meal: "breakfast" }),
+      ])
+    );
+    // Anchor: the meal is on the diary, so the missing photo is the rule's.
+    expect(rowFor("Salmon")).not.toBeNull();
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(0);
+    expect(container.innerHTML).not.toContain("example.test");
     expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 

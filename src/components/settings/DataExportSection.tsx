@@ -12,9 +12,18 @@ import { shareFile } from "@/lib/shareFile";
 import type { User } from "firebase/auth";
 import { logger } from "@/lib/logger";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  EMAIL_UPDATES_LIVE,
+  emailConsentCsv,
+  type EmailConsentRecord,
+} from "@/lib/emailConsent";
 
 interface DataExportSectionProps {
   user: User | null;
+  /** The email consent record (App1 Q55), from the profile. */
+  emailConsent?: EmailConsentRecord | null;
+  /** Whether the emails are sent yet; tests set it. */
+  emailsLive?: boolean;
 }
 
 const EXPORTS = [
@@ -48,14 +57,20 @@ async function deliver(file: File, name: string): Promise<void> {
   }
 }
 
-export default function DataExportSection({ user }: DataExportSectionProps) {
+export default function DataExportSection({
+  user,
+  emailConsent,
+  emailsLive = EMAIL_UPDATES_LIVE,
+}: DataExportSectionProps) {
   const [exporting, setExporting] = useState<string | null>(null);
+  /* The email answers are part of the person's data (App1 Q55): when, how
+     and to which words they said yes or no. Offered once the emails can be
+     chosen, or whenever a record exists. Built from the profile already
+     loaded, so it reads nothing. */
+  const emailChoices = emailsLive || !!emailConsent;
 
   return (
-    <SettingsGroup
-      title="Export"
-      footer="Each export saves a CSV file you can open in a spreadsheet."
-    >
+    <SettingsGroup title="Export">
       {EXPORTS.map(({ label, key, name }) => (
         <SettingsRow
           key={key}
@@ -84,6 +99,24 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
           }}
         />
       ))}
+      {emailChoices && (
+        <SettingsRow
+          icon={Download}
+          label="Export email choices"
+          chevron={false}
+          disabled={exporting !== null || !user}
+          onClick={async () => {
+            if (!user) return;
+            await deliver(
+              csvFile(
+                emailConsentCsv(emailConsent),
+                `tropos-email-choices-${localDateString()}.csv`
+              ),
+              "Email choices"
+            );
+          }}
+        />
+      )}
     </SettingsGroup>
   );
 }

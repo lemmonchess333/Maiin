@@ -93,7 +93,7 @@ describe("ExpressSessionSheet", () => {
       },
     });
     expect(
-      screen.getByText(/Recommended — hard run yesterday/i)
+      screen.getByText(/Recommended: hard run yesterday/i)
     ).toBeInTheDocument();
 
     cleanup();

@@ -3,8 +3,9 @@
  * breakdown — fiber, sugar, sodium. These are NOT the same KIND:
  *
  *   - fiber  → a GOAL: aim to reach it (more is good). IOM adequate intake
- *              is ~38 g/day (men) / ~25 g/day (women); 30 g is a sensible
- *              default when sex is unknown.
+ *              is ~38 g/day (men) / ~25 g/day (women); with no sex stored
+ *              it is the midpoint, 31.5 rounded to 32 g (`figureForSex`,
+ *              the one rule for a figure that differs by sex).
  *   - sodium → a LIMIT: stay under it. FDA/AHA upper limit is 2300 mg/day.
  *   - sugar  → a soft LIMIT scaled to calories (see resolveMicroTargets):
  *              total-sugar data has no health cap, so it's a proportional
@@ -14,6 +15,8 @@
  * The `kind` drives the UI: a goal fills toward 100% (good), a limit flags
  * a warning register once exceeded (over is the caution state, not the win).
  */
+import { figureForSex, type Sex } from "./sex";
+
 export type MicroKind = "goal" | "limit";
 
 export interface MicroTarget {
@@ -23,6 +26,9 @@ export interface MicroTarget {
   unit: "g" | "mg";
   kind: MicroKind;
 }
+
+/** IOM adequate intake, grams a day. */
+const FIBRE_GOAL_G: Readonly<Record<Sex, number>> = { male: 38, female: 25 };
 
 // Sugar is 15% of the calorie target (4 kcal/g). Health guidance caps
 // ADDED/free sugar (WHO <10% cal, AHA 25–36 g), but Gemini/barcode give us
@@ -41,7 +47,7 @@ export function resolveMicroTargets(
   sex?: "male" | "female",
   calorieTarget?: number
 ): MicroTarget[] {
-  const fiberGoal = sex === "male" ? 38 : sex === "female" ? 25 : 30;
+  const fiberGoal = Math.round(figureForSex(FIBRE_GOAL_G, sex));
   const cals =
     typeof calorieTarget === "number" && calorieTarget > 0
       ? calorieTarget

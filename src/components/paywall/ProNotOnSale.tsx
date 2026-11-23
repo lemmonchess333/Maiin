@@ -9,8 +9,7 @@ export default function ProNotOnSale() {
       role="note"
       className="text-sm text-muted-foreground text-center leading-relaxed"
     >
-      Pro isn’t on sale in this version of the app yet. Everything on Free keeps
-      working.
+      Pro isn’t on sale in this version yet.
     </p>
   );
 }

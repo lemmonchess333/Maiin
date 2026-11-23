@@ -28,6 +28,8 @@ function request(version, platform) {
       athleteType: "Runner",
     },
     programState: {},
+    // Setup's agreement to store health details (Priv1 call 1).
+    healthDataConsent: { version: 1 },
   };
 }
 
@@ -91,7 +93,7 @@ describe("completeOnboarding activation journey", () => {
     ).toBe("web");
   });
 
-  it("keeps the first setup's timestamp, sport and platform on a retry", async () => {
+  it("stamps the first setup's timestamp, sport, platform and launch numbers", async () => {
     expect(await completeOnboarding.run(request(2, "ios"), actor)).toEqual({
       success: true,
       activationJourneyVersion: 2,
@@ -103,52 +105,39 @@ describe("completeOnboarding activation journey", () => {
     expect(first.onboardingCompletedAt).toMatch(/^SERVER_TS_/);
     // App1 Q17: this account's launch numbers are kept from here.
     expect(first.launchMilestones).toEqual({});
-
-    const retry = request(undefined, "web");
-    retry.profileData.athleteType = "Lifter";
-    expect(await completeOnboarding.run(retry, actor)).toEqual({
-      success: true,
-      activationJourneyVersion: 2,
-    });
-    expect(db.data.get(path).onboardingCompletedAt).toBe(
-      first.onboardingCompletedAt
-    );
-    expect(db.data.get(path).activationJourneyVersion).toBe(2);
-    expect(db.data.get(path).onboardingPlatform).toBe("ios");
-    expect(db.data.get(path).onboardingSport).toBe("runner");
   });
 
-  it("never resets an account's launch milestones on a retry", async () => {
+  it("refuses a second setup, so nothing it stamped moves", async () => {
     await completeOnboarding.run(request(2, "ios"), actor);
     const kept = {
       firstSession: { atMs: 1, kind: "run", daysSinceSetup: 0 },
     };
     db.data.set(path, { ...db.data.get(path), launchMilestones: kept });
-    await completeOnboarding.run(request(2, "ios"), actor);
-    expect(db.data.get(path).launchMilestones).toEqual(kept);
+    const first = db.data.get(path);
+    const retry = request(undefined, "web");
+    retry.profileData.athleteType = "Lifter";
+    await expect(completeOnboarding.run(retry, actor)).rejects.toMatchObject({
+      code: "already-exists",
+    });
+    expect(db.data.get(path)).toEqual(first);
   });
 
-  it("does not restamp an account set up before, whatever it was stamped", async () => {
+  it("refuses an account set up before, whatever it was stamped", async () => {
     for (const [uid, stamped] of [
       ["activation-user-comparison", 1],
       ["activation-user-unstamped", undefined],
     ]) {
-      db.data.set(`users/${uid}`, {
+      const before = {
         uid,
         onboardingComplete: true,
         onboardingCompletedAt: "SETUP_BEFORE",
         ...(stamped === undefined ? {} : { activationJourneyVersion: stamped }),
-      });
-      // An app build from before App1 routes on the answer: 2 is Today.
-      expect(
-        await completeOnboarding.run(request(2, "ios"), { auth: { uid } })
-      ).toEqual({ success: true, activationJourneyVersion: 2 });
-      const after = db.data.get(`users/${uid}`);
-      expect(after.activationJourneyVersion).toBe(stamped);
-      expect(after.onboardingCompletedAt).toBe("SETUP_BEFORE");
-      expect(after.onboardingPlatform).toBeUndefined();
-      // App1 Q17: an account set up before keeps no launch numbers.
-      expect(after.launchMilestones).toBeUndefined();
+      };
+      db.data.set(`users/${uid}`, before);
+      await expect(
+        completeOnboarding.run(request(2, "ios"), { auth: { uid } })
+      ).rejects.toMatchObject({ code: "already-exists" });
+      expect(db.data.get(`users/${uid}`)).toEqual(before);
     }
   });
 

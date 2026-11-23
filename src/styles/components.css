@@ -89,12 +89,14 @@
 }
 
 .bottom-nav-pill {
-  /* An opaque tinted bed keeps selected text legible over every page. */
+  /* An opaque bed keeps selected text legible over every page: the bar's
+     own surface lifted toward the text colour, neutral like the rest of
+     the chrome (DS10 call 1). */
   background: var(--surface-solid);
   background: color-mix(
     in srgb,
     var(--surface-solid) 88%,
-    var(--ds-purple-500)
+    hsl(var(--foreground))
   );
 }
 
@@ -411,6 +413,25 @@ select.ds-input:focus {
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.01em;
+}
+/* The small lockup of a shared post's and card's page. */
+.ds-wordmark-small {
+  font-size: 15px;
+}
+
+/* A shared post's or card's card (owner, 22 Nov 2026): the page's hero,
+   at most 60% of the screen's height as it is now, so it shrinks with
+   Safari's bars (DESIGN_GUIDE §14m), and the column's width at most.
+   `--card-ratio` is its width over its height. */
+.ds-shared-card {
+  --card-cap: 60vh;
+  width: min(100%, calc(var(--card-cap) * var(--card-ratio)));
+  margin-inline: auto;
+}
+@supports (height: 100dvh) {
+  .ds-shared-card {
+    --card-cap: 60dvh;
+  }
 }
 
 /* ─── THE WELCOME'S PHOTOGRAPHS (WelcomePhotos, owner 2026-11-12) ──
@@ -795,7 +816,8 @@ html.launching [data-brand-mark] {
    component that sets it, FinishHero). 64-96 px, sized by the screen's
    width rather than the text size, so a six-figure number still fits a
    320 px screen at double text; a longer figure steps down
-   (`--display-scale`). Never above the 120 px the register allows. */
+   (`--display-scale`). Never above the 120 px the register allows. A
+   finish sets its figure smaller (`.ds-display-finish`). */
 .ds-display-figure {
   font-family: var(--font-figure);
   font-style: italic;
@@ -813,6 +835,17 @@ html.launching [data-brand-mark] {
    two rows. */
 .ds-display-figure.ds-display-rest {
   font-size: clamp(64px, 18vw, 72px);
+}
+
+/* A finish's one figure (`FinishHero`): 64 px from a 388 px phone up, 54
+   on a 320 px one, below the register's floor only there. A total of
+   five characters ("7,470") then takes about 57% of a 393 px screen, so
+   it leads the screen without reading bigger than the session it counts.
+   It keeps that size at any length and never reads `--display-scale`:
+   seven characters ("123,456") are 260 px at 64 and 220 at 54, inside
+   a 320 px screen's column. */
+.ds-display-figure.ds-display-finish {
+  font-size: clamp(54px, 16.5vw, 64px);
 }
 
 /* The workout's docked cards, frosted (DS6 step 5, DESIGN_GUIDE §14o):

@@ -28,12 +28,12 @@ import {
   takeMoreLine,
 } from "@/lib/performanceLine";
 import {
+  leadEvidence,
   performanceWeekBreakdown,
-  trainedMoreThanUsual,
+  type LeadPlan,
 } from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
 import { haptic } from "@/lib/haptic";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const PerformanceDetails = lazyRetry(
@@ -68,6 +68,11 @@ interface PerformanceSectionProps {
   /** The details are Pro for this account (whole-app grill Q84): the row
    *  shows a lock and asks `onToggleDetails(true)`, which offers Pro. */
   detailsLocked?: boolean;
+  /** The plan, for the line's "3 of 5 planned sessions" (`leadPlan`, from
+   *  the profile and this week's count History has). The count is said only
+   *  when this week plans what the score divided by (`plannedForWindow`);
+   *  without it the line can't tell sessions from food. */
+  plan?: LeadPlan | null;
 }
 
 function Heading() {
@@ -111,6 +116,7 @@ export default function PerformanceSection({
   detailsOpen = false,
   onToggleDetails,
   detailsLocked = false,
+  plan = null,
 }: PerformanceSectionProps = {}) {
   const { currentWeek, docsAvailable, loading, failed, refresh } =
     usePerformanceWeeks();
@@ -154,7 +160,6 @@ export default function PerformanceSection({
             <EmptyState
               compact
               icon={Activity}
-              accent={THEME.brand}
               headline={copy.headline}
               sub={copy.sub}
               action={
@@ -188,14 +193,14 @@ export default function PerformanceSection({
      to the brand's: a first week is not told to back off in amber. */
   const label = establishing ? EARLY_READ : verb.label;
   const { textHue } = establishing
-    ? { textHue: "hsl(var(--primary-strong))" }
+    ? { textHue: "hsl(var(--lifting-strong))" }
     : getCardColour(pi, loadBand, deloadRecommended);
   const line = establishing
     ? getEstablishingLine(currentWeek.signals)
     : getLine(
         verb.state,
         currentWeek.signals,
-        trainedMoreThanUsual(currentWeek)
+        leadEvidence(currentWeek, plan, new Date())
       );
   const { measures } = performanceWeekBreakdown(currentWeek, {
     distanceUnit,
@@ -265,7 +270,7 @@ export default function PerformanceSection({
         aria-controls={detailsLocked ? undefined : detailsId}
         className={cn(
           "flex w-full items-center justify-between gap-2 min-h-11 rounded-lg text-sm font-semibold text-foreground",
-          "hover:text-lifting-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          "hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
       >
         {/* A space in the text, so "Score details Pro" reads as the

@@ -82,16 +82,18 @@ export function SettingsRow({
   const showChevron = chevron ?? (!!onClick && !trailing && !destructive);
   const body = (
     <>
-      {/* The icon gives its room to the label once the row is under 14em
+      {/* The icon sits bare at the label's size, with no chip behind it,
+          and gives its room to the label once the row is under 14em
           (larger text on the phone): beside it "Programme" and
           "Subscription" broke mid-word. */}
       {Icon && !destructive && (
-        <span className="size-8 rounded-lg bg-muted flex @max-[14em]:hidden items-center justify-center shrink-0">
-          <Icon
-            className={cn("size-4 text-muted-foreground", iconClassName)}
-            aria-hidden="true"
-          />
-        </span>
+        <Icon
+          className={cn(
+            "size-[18px] shrink-0 text-muted-foreground @max-[14em]:hidden",
+            iconClassName
+          )}
+          aria-hidden="true"
+        />
       )}
       {/* A row with a control wraps: once the label would be narrower than
           4em (double text on a 320px phone, beside a switch or a 124px

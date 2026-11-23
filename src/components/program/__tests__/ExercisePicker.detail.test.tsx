@@ -70,7 +70,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     fireEvent.click(box);
     expect(box).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByTestId("form-content")).toBeNull();
-    expect(screen.getByText(/1 exercise selected/)).toBeInTheDocument();
+    expect(screen.getByText(/Add 1 exercise/)).toBeInTheDocument();
   });
 
   it("the row body opens the detail sheet without touching the selection", async () => {
@@ -163,7 +163,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     );
     fireEvent.click(screen.getByRole("checkbox", { name: "Dips" }));
     const add = screen.getByRole("button", {
-      name: "1 exercise selected — Add to workout",
+      name: "Add 1 exercise",
     });
     fireEvent.click(add);
     expect(add).toHaveAttribute("aria-busy", "true");
@@ -184,7 +184,7 @@ describe("ExercisePicker row: see it vs add it", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "1 exercise selected — Add to workout",
+        name: "Add 1 exercise",
       })
     );
     await act(async () => resolveSave?.(true));
@@ -240,7 +240,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     const discard = screen.getByRole("button", { name: "Discard" });
     fireEvent.click(
       screen.getByRole("button", {
-        name: "2 exercises selected — Add to workout",
+        name: "Add 2 exercises",
       })
     );
     fireEvent.click(discard);
@@ -275,13 +275,13 @@ describe("ExercisePicker row: see it vs add it", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Dips" }));
     fireEvent.click(
       screen.getByRole("button", {
-        name: "1 exercise selected — Add to workout",
+        name: "Add 1 exercise",
       })
     );
     rerender(picker(["dips"]));
     expect(
       screen.getByRole("button", {
-        name: "1 exercise selected — Add to workout",
+        name: "Add 1 exercise",
       })
     ).toHaveAttribute("aria-busy", "true");
     await act(async () => resolveSave?.(false));
@@ -308,7 +308,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Dips" }));
     fireEvent.click(
       screen.getByRole("button", {
-        name: "1 exercise selected — Add to workout",
+        name: "Add 1 exercise",
       })
     );
     await waitFor(() =>
@@ -567,6 +567,6 @@ describe("ExercisePicker row: see it vs add it", () => {
       key: "Escape",
     });
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByText(/1 exercise selected/)).toBeInTheDocument();
+    expect(screen.getByText(/Add 1 exercise/)).toBeInTheDocument();
   });
 });

@@ -80,6 +80,7 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { useAuth } from "@/lib/auth";
+import { takeTrialOfferWebCheckout } from "@/lib/trialOffer";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
@@ -121,8 +122,7 @@ function checkoutBanner(status: string | null): CheckoutBanner | null {
   if (status === "success") {
     return {
       kind: "success",
-      message:
-        "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
+      message: "Payment received. Pro turns on within a few seconds.",
     };
   }
   if (status === "cancelled") {
@@ -252,6 +252,16 @@ export default function Upgrade() {
         platform,
       });
     }
+    // A checkout begun from the trial offer that ends setup goes on Home,
+    // as every way off that offer does (A6): the banner's words as a toast.
+    if (user && takeTrialOfferWebCheckout(user.uid)) {
+      const banner = checkoutBanner(checkoutStatus);
+      if (banner?.kind === "success") toast.success(banner.message);
+      else if (banner) toast(banner.message);
+      window.scrollTo(0, 0);
+      navigate("/", { replace: true });
+      return;
+    }
     // Strip the query param after one render so a refresh doesn't
     // re-render the banner. Keep the rest of the search params.
     const params = new URLSearchParams(searchParams);
@@ -362,7 +372,7 @@ export default function Upgrade() {
           <button
             onClick={() => setBeat("offer")}
             type="button"
-            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Back to the Pro overview"
           >
             <ArrowLeft className="size-5 text-foreground" />
@@ -375,7 +385,7 @@ export default function Upgrade() {
         <button
           onClick={leave}
           type="button"
-          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label="Close"
         >
           <X className="size-5 text-muted-foreground" />
@@ -389,8 +399,7 @@ export default function Upgrade() {
           aria-live="polite"
           className={cn(
             "flex items-start gap-3 p-3 rounded-xl",
-            statusBanner.kind === "success" &&
-              "bg-success-bg text-success-foreground",
+            statusBanner.kind === "success" && "bg-muted text-foreground",
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&
@@ -399,7 +408,7 @@ export default function Upgrade() {
         >
           {statusBanner.kind === "success" && (
             <CheckCircle2
-              className="size-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0 text-success-strong"
               aria-hidden="true"
             />
           )}
@@ -464,8 +473,8 @@ export default function Upgrade() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple’s App Store isn’t
-            the billing platform for this account.
+            Manage your subscription at troposfit.com. This account isn’t billed
+            through the App Store.
           </p>
         </div>
       )}
@@ -492,7 +501,7 @@ export default function Upgrade() {
               "w-full flex items-center justify-center gap-2 min-h-[44px] mt-1 rounded-xl",
               "bg-muted text-foreground text-sm font-semibold",
               "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:opacity-60 disabled:cursor-not-allowed"
             )}
           >
@@ -546,8 +555,8 @@ export default function Upgrade() {
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
               {fromOnboarding
-                ? "Pro logs your meals from a photo, and keeps your calorie target honest as your weight moves."
-                : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
+                ? "Pro logs meals from a photo and keeps your calorie target up to date."
+                : "Pro logs a meal from a photo and keeps your calorie target up to date."}
             </p>
           </div>
 

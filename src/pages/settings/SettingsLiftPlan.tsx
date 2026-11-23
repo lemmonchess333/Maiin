@@ -149,8 +149,8 @@ export default function SettingsLiftPlan() {
       >
         {prefillGoal && (
           <p className="mb-3 px-3 py-2.5 rounded-xl bg-primary/10 text-xs text-foreground">
-            Prefilled for your{blockTitle ? ` ${blockTitle}` : ""} block —
-            review and save. Nothing changes until you save.
+            Prefilled for your{blockTitle ? ` ${blockTitle}` : ""} block.
+            Nothing changes until you save.
           </p>
         )}
         <ProgrammeSettings

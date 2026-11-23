@@ -197,10 +197,10 @@ describe("the selected segment's fill is its state, at 3:1", () => {
     }
   }
 
-  it("a sport label on the grey fill misses AA (why the sport tones fill)", () => {
+  it("a sport label on the grey fill misses AA (why the selected label is white)", () => {
     // Any neutral fill bright enough for 3:1 on the dark track leaves the
-    // -strong text steps near 2:1 on it, so coral and purple ride in the
-    // fill rather than the label.
+    // -strong text steps near 2:1 on it, so a selected option's label is
+    // white and its sport stays in its icon and word (DS10 call 1).
     for (const block of Object.values(THEMES)) {
       const grey = readHsl(block, "segment-selected");
       for (const label of ["running-strong", "lifting-strong"]) {
@@ -219,13 +219,10 @@ describe("the selected segment's fill is its state, at 3:1", () => {
 
   it("SegmentedControl's selected segment is the fill, under white, with no edge", () => {
     const src = read("src/components/ui/SegmentedControl.tsx");
-    for (const cls of [
-      '"bg-segment-selected"',
-      '"bg-running-fill"',
-      '"bg-lifting-fill"',
-    ])
-      expect(src).toContain(cls);
-    expect(src).toMatch(/"text-white",\s*tone === "running"/);
+    // One selected state everywhere (DS10 call 1): the grey fill, never a
+    // sport's.
+    expect(src).toContain('"text-white bg-segment-selected"');
+    expect(src).not.toMatch(/bg-(running|lifting)-fill/);
     expect(src).not.toContain("border-muted-foreground");
     expect(src).not.toContain("bg-card shadow-sm");
   });

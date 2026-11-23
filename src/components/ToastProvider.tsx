@@ -66,7 +66,7 @@ export function ToastProvider() {
         /* A toast with BOTH an action and a cancel ("Retry" + "Log
            manually" on the Food page’s failed-search toast) at phone width:
            the pills are flex-shrink:0 below, so the title collapsed to its
-           min-content — one character per line ("C o u l d n ' t …",
+           min-content, one character per line ("C o u l d n ' t …",
            reproduced at 393px). Let the row wrap so the
            buttons drop beneath the title, and give the content a real share
            of the width; a single short action still fits beside the title. */
@@ -104,7 +104,7 @@ export function ToastProvider() {
         [data-sonner-toast][data-type="error"] [data-icon] svg {
           color: var(--ds-error) !important;
         }
-        /* Title/description hierarchy — sonner’s flat default made the
+        /* Title/description hierarchy: sonner’s flat default made the
            whole toast read as one undifferentiated line. */
         [data-sonner-toast] [data-title] {
           font-weight: 600 !important;
@@ -112,10 +112,10 @@ export function ToastProvider() {
         [data-sonner-toast] [data-description] {
           color: hsl(var(--muted-foreground)) !important;
         }
-        /* Action button — sonner’s default is an unstyled near-black pill
+        /* Action button: sonner’s default is an unstyled near-black pill
            that reads as a third-party artefact (the "Refresh" button on the
-           update toast). Restyle to the app’s primary CTA language:
-           brand-strong fill (the AA text-on-colour step), pill radius,
+           update toast). Restyle to the app’s filled button: the text
+           colour filled with the page's colour on it, pill radius,
            semibold. 36px matches the Button primitive’s sm size (the
            sanctioned inline-control height). */
         [data-sonner-toast] [data-button] {

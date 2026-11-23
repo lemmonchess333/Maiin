@@ -176,7 +176,7 @@ describe("the session a target first climbs past its range records it", () => {
     });
     const out = applyProgression(pullUps, 12, 0, false);
     expect(out.reps).toBe(12);
-    expect(out.notes).toMatch(/add load/);
+    expect(out.notes).toMatch(/add load/i);
     expect(out.stretched).toBeUndefined();
   });
 });

@@ -63,9 +63,7 @@ test("usual meals are visible and offline adds can be undone", async ({
   });
   const composer = page.locator("textarea").first();
   await composer.focus();
-  await expect(
-    page.getByText("Examples — tap to describe your own")
-  ).toBeVisible();
+  await expect(page.getByText("Examples", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: /Oatmeal/ })
     .first()
@@ -170,7 +168,7 @@ test("usual meals are visible and offline adds can be undone", async ({
   });
   await page.getByRole("button", { name: "Log", exact: true }).click();
   await expect(
-    page.getByText("Saved on this phone — syncs when you’re back online")
+    page.getByText("Saved on this phone. Syncs when you’re back online")
   ).toBeVisible();
   await expect(page.getByText(/^Your usual at /)).toHaveCount(0);
   await page.getByRole("button", { name: "Undo", exact: true }).click();

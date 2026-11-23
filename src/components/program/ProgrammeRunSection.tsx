@@ -1481,7 +1481,7 @@ export default function ProgrammeRunSection({
           ) : freeformCadence.kind === "lapsed" ? (
             <p className="text-xs text-muted-foreground">
               Your last run was {freeformCadence.lastRunDaysAgo} day
-              {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago — pick it
+              {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago. Pick it
               back up whenever you’re ready.
             </p>
           ) : (
@@ -1668,7 +1668,7 @@ export default function ProgrammeRunSection({
                     Training for a race?
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Pick a distance and date — we’ll build the plan.
+                    Pick a distance and date, and we’ll build the plan.
                   </p>
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
@@ -2179,12 +2179,12 @@ export default function ProgrammeRunSection({
             <div
               className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
               style={{
-                background: `${THEME.success}10`,
-                border: `1px solid ${THEME.success}30`,
-                color: THEME.success,
+                background: THEME.chrome.tint,
+                border: "1px solid hsl(var(--foreground) / 0.15)",
+                color: THEME.chrome.text,
               }}
             >
-              <Check className="size-3.5" />
+              <Check className="size-3.5" style={{ color: THEME.success }} />
               <span className="font-medium">All runs done this week</span>
             </div>
           )}

@@ -13,7 +13,6 @@ import {
   useFoodFavourites,
   type FoodFavourite,
 } from "@/hooks/useFoodFavourites";
-import { THEME } from "@/lib/theme";
 import { RotateCcw, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Drawer } from "vaul";
@@ -937,7 +936,7 @@ export default function FoodAnalyzer({
        browser-internal string "Failed to fetch", the dishonest cousin
        of the modal's "You're offline" one tab over. */
     if (!navigator.onLine) {
-      const msg = "You’re offline — barcode lookup needs a connection.";
+      const msg = "You’re offline. Barcode lookup needs a connection.";
       setBarcodeError(msg);
       toast.error(msg, { id: "barcode-offline" });
       return "unreachable";
@@ -1178,7 +1177,7 @@ export default function FoodAnalyzer({
                   <span aria-hidden="true">⚠</span>
                   <div className="text-xs leading-relaxed">
                     <span className="font-semibold">
-                      AI estimate — review carefully.
+                      AI estimate. Review carefully.
                     </span>
                     <span className="ml-1 opacity-80">
                       Some items may need correcting before you save.
@@ -1315,7 +1314,7 @@ export default function FoodAnalyzer({
                             aria-label={`Restore ${item.name}`}
                             /* 16px of text, reaching 14px past it each
                                side: a 44px tap area. */
-                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
+                            className="flex items-center gap-1 text-xs font-medium text-foreground hover:opacity-80 transition active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
                           >
                             <RotateCcw className="size-3" />
                             Restore
@@ -1470,8 +1469,9 @@ export default function FoodAnalyzer({
                   allRemoved ||
                   (isBarcode && barcodeServings === null)
                 }
-                /* Saved-state fill from the palette. */
-                style={saved ? { background: THEME.success } : undefined}
+                /* Saved keeps the button's own fill: the tick and the word
+                   say it (DS10 call 4: success green is a tick, not a
+                   fill). */
               >
                 {saved ? (
                   <>

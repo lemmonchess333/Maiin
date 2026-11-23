@@ -1,6 +1,6 @@
 /**
  * The drawing beside an onboarding choice (DS3): an exercise's cut-out,
- * a category's muscles, a route that grows with the running, or a level
+ * a runner's, a route that grows with the running, or a level
  * as chevrons. Always decorative; the choice's words carry its name.
  */
 import { afterEach, describe, expect, it } from "vitest";
@@ -23,16 +23,17 @@ describe("ChoiceArt", () => {
     expect(container.querySelector("img")).toHaveAttribute("alt", "");
   });
 
-  it("draws a category as the muscles it works", () => {
+  it("draws a runner as the run card's cut-out", () => {
     const { container } = render(
-      <ChoiceArt art={{ kind: "muscles", category: "Full Body" }} />
+      <ChoiceArt art={{ kind: "run", pose: "run-easy" }} />
     );
     const tile = container.firstElementChild!;
     expect(tile).toHaveAttribute("aria-hidden", "true");
-    expect(tile).toHaveAttribute("data-choice-art", "muscles");
+    expect(tile).toHaveAttribute("data-choice-art", "run");
     expect(container.querySelector("img")?.getAttribute("src")).toMatch(
-      /^data:image\/svg\+xml/
+      /\/form-art\/run-easy\.webp$/
     );
+    expect(container.querySelector("img")).toHaveAttribute("alt", "");
   });
 
   it("gives each running level its own route, longer as it goes", () => {

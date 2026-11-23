@@ -41,12 +41,25 @@ import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import FinishHero from "@/components/workout/FinishHero";
 import { IconButton } from "@/components/ui/IconButton";
-import { finishKicker, finishRegister, rewardLine } from "@/lib/finishMoment";
+import {
+  finishKicker,
+  finishRegister,
+  rewardLine,
+  rewardSentence,
+  type RewardLineContext,
+} from "@/lib/finishMoment";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
 import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
+import TopThreeCard from "../components/run/TopThreeCard";
+import {
+  runPlacings,
+  type PlacedRun,
+  type RunPlacing,
+} from "@/lib/runPlacings";
+import { holdPlacedRun } from "@/lib/runPlacingHistory";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
@@ -91,6 +104,7 @@ import {
   completeRun,
   earlierRunHistory,
   runDay,
+  runStart,
   runPostRoute,
   type FinishedRun,
 } from "@/lib/runCompletion";
@@ -329,18 +343,13 @@ function InvalidRunReview({
             <p className="text-xs text-muted-foreground text-center">
               {isOnline
                 ? "Saved on this phone · waiting to sync."
-                : "Saved locally — will sync when online."}
+                : "Saved on this phone. Syncs when you’re back online."}
             </p>
           )}
           <button
             type="button"
             onClick={onDone}
-            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-            style={{
-              background: `${THEME.success}20`,
-              color: THEME.success,
-              border: `1px solid ${THEME.success}4d`,
-            }}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2 bg-muted text-foreground chip-edge"
           >
             <CheckCircle size={16} aria-hidden="true" />
             Done
@@ -522,6 +531,8 @@ export default function RunSummary() {
     history: RunHistory | null;
     /** The account's first run though it has lifted before. */
     firstOfSport: boolean;
+    /** Where its 1K, 5K and 10K placed among the runner's own (Run29). */
+    placings: RunPlacing[];
   } | null>(null);
   const atFirstSave = useRef<{
     streak: StreakChange | null;
@@ -791,8 +802,8 @@ export default function RunSummary() {
   }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
   /* The goal race (`isGoalRaceRun`, the server's rule for a race run): on
-     its date, valid, and at least 95% of its distance, however it was
-     started. Only then is the prediction log read, to compare the race
+     its date, valid, not on a treadmill, and at least 95% of its distance,
+     however it was started. Only then is the prediction log read, to compare the race
      with what Tropos predicted and keep that on the saved run. */
   const goalRace =
     pendingWeekRun && profile
@@ -811,6 +822,9 @@ export default function RunSummary() {
       {
         ...pendingWeekRun,
         date: pendingWeekRun.date ?? localDateString(),
+        // A treadmill run is not the race (`isTreadmillRun`).
+        place: state?.runConfig?.place,
+        activityType: state?.runConfig?.activityType,
       },
       goalRace
     ) === true;
@@ -1055,20 +1069,29 @@ export default function RunSummary() {
     : null;
   const finishReward =
     finishRegistered?.register === "reward" ? finishRegistered : null;
+  const finishLineContext: RewardLineContext = {
+    sport: "run",
+    distanceUnit: unit,
+    loadIn: (kg) => kg,
+    loadUnit: "kg",
+    fastestBefore:
+      finishReward?.moment.kind === "fastestEffort"
+        ? (finishFacts?.history?.fastestSeconds[finishReward.moment.meters] ??
+          null)
+        : null,
+  };
   const finishLine = finishReward
-    ? rewardLine(finishReward.moment, {
-        sport: "run",
-        distanceUnit: unit,
-        loadIn: (kg) => kg,
-        loadUnit: "kg",
-        fastestBefore:
-          finishReward.moment.kind === "fastestEffort"
-            ? (finishFacts?.history?.fastestSeconds[
-                finishReward.moment.meters
-              ] ?? null)
-            : null,
-      })
+    ? rewardLine(finishReward.moment, finishLineContext)
     : null;
+  /* The share card's form of it, which names no one ("Ran 5K in …"). */
+  const finishCardLine = finishReward
+    ? rewardSentence(
+        rewardLine(finishReward.moment, {
+          ...finishLineContext,
+          voice: "card",
+        })
+      )
+    : undefined;
 
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
@@ -1487,7 +1510,7 @@ export default function RunSummary() {
               );
             } else if (alert === "warning") {
               toast.warning(
-                "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
+                "Your shoes are at 85% of their recommended mileage.",
                 { duration: 5000 }
               );
             }
@@ -1497,6 +1520,24 @@ export default function RunSummary() {
           );
       }
 
+      /* The run as the placings read it, ordered by when it started, as
+         its saved `startedAt` is. */
+      const placedRun: PlacedRun = {
+        id: saveRunId,
+        completedAt: new Date(),
+        startedAt: runStart(finishedRun),
+        distance,
+        duration: elapsed,
+        avgPace: avgPaceSeconds,
+        activityType: runConfig?.activityType || "freerun",
+        place: runConfig?.place ?? null,
+        isInvalid,
+        savedAnyway: isInvalid,
+        bestEfforts,
+      };
+      /* A run's page opened next ranks against the history with this run
+         in it, without reading it again. */
+      holdPlacedRun(user.uid, placedRun);
       setFinishFacts({
         moments: runPostMoments(
           { distance, bestEfforts },
@@ -1504,6 +1545,12 @@ export default function RunSummary() {
         ),
         history: finishedRun.moments?.history ?? null,
         firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+        /* Your top three (Run29), against the whole history only, as the
+           post's bests are claimed. */
+        placings:
+          historyRead && historyRead.uid === user.uid && historyRead.known
+            ? runPlacings(placedRun, historyRead.runs)
+            : [],
       });
       setAnniversaryRun({
         id: saveRunId,
@@ -1668,7 +1715,7 @@ export default function RunSummary() {
         <IconButton
           aria-label="Back"
           variant="secondary"
-          className="bg-background/85 backdrop-blur-sm"
+          className="bg-background/85 backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-background!"
           onClick={() => navigate(-1)}
           icon={<ChevronLeft className="size-5" aria-hidden="true" />}
         />
@@ -1790,6 +1837,18 @@ export default function RunSummary() {
           {/* Below the first screen: the week, the run's numbers, its
               splits and climb, and what the runner adds to it. */}
           <div className="h-6" aria-hidden="true" />
+
+          {/* Your top three (Run29): under the reward, the distances this
+              run placed 1st to 3rd at, quiet; a new best is the reward
+              above. Under a reward's sentence it says none of its own. */}
+          {finishFacts && finishFacts.placings.length > 0 && (
+            <div className="mx-4 mb-4">
+              <TopThreeCard
+                placings={finishFacts.placings}
+                rewardAbove={finishLine !== null}
+              />
+            </div>
+          )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (
@@ -2143,10 +2202,16 @@ export default function RunSummary() {
                       ? "bg-running/10 text-running-strong"
                       : adherenceLabel === "Custom"
                         ? "bg-muted text-muted-foreground"
-                        : "bg-success/10 text-success-strong"
+                        : "bg-muted text-foreground"
                   }`}
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >
+                  {adherenceLabel === "Planned" && (
+                    <CheckCircle
+                      className="size-4 shrink-0 text-success-strong"
+                      aria-hidden="true"
+                    />
+                  )}
                   {adherenceLabel}
                 </span>
               )}
@@ -2257,7 +2322,6 @@ export default function RunSummary() {
                     setRelativeEffort((cur) => (cur === v ? null : v))
                   }
                   ariaLabel="How did this run feel compared to what you expected?"
-                  tone="running"
                 />
               </div>
             )}
@@ -2329,7 +2393,7 @@ export default function RunSummary() {
                 if (!template) return null;
                 return (
                   <p className="text-sm text-muted-foreground">
-                    Next run: {runTemplateName(template.name, unit)} —{" "}
+                    Next run: {runTemplateName(template.name, unit)} ·{" "}
                     {new Date(`${next.date}T12:00:00`).toLocaleDateString(
                       "en-GB",
                       { weekday: "long" }
@@ -2430,7 +2494,7 @@ export default function RunSummary() {
                     {pendingSync
                       ? isOnline
                         ? "Saved on this phone · waiting to sync"
-                        : "Saved locally — will sync when online"
+                        : "Saved on this phone. Syncs when you’re back online"
                       : "Run saved"}
                   </p>
                 </>
@@ -2486,11 +2550,11 @@ export default function RunSummary() {
           handle: profile?.displayName || "Athlete",
           // Posted to the feed: the card links to the post while public.
           postId: postedActivityId(shareAction),
+          // Saved: any other card's page goes with the run (Soc17).
+          runId: savedRunId ?? undefined,
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
-          line: finishLine
-            ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
-            : undefined,
+          line: finishCardLine,
           tone: finishReward?.tone,
           date: runDate.toLocaleDateString("en-GB", {
             day: "numeric",

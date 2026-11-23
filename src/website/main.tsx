@@ -8,8 +8,8 @@
  *
  * A page whose HTML was written for this address is taken over as it is
  * (`hydrateRoot`): each page, Home for an address of the app's own, and
- * the 404 (Hosting's 404.html). A shared post, which arrives as Home's
- * HTML with the post's data, is drawn afresh, once its page's script is
+ * the 404 (Hosting's 404.html). A shared post or card, which arrives as
+ * Home's HTML with its data, is drawn afresh, once its page's script is
  * in, so the routes' blank fallback never shows.
  */
 import { StrictMode } from "react";
@@ -49,7 +49,11 @@ async function start() {
   }
   const route = websiteRoute(pathname);
   const key =
-    route.kind === "post" ? "post" : route.kind === "page" ? route.key : null;
+    route.kind === "post" || route.kind === "card"
+      ? route.kind
+      : route.kind === "page"
+        ? route.key
+        : null;
   if (key && key !== "home") {
     await WEBSITE_PAGE_MODULES[key]().catch(() => undefined);
   }

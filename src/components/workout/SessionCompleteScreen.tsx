@@ -34,7 +34,9 @@ import {
   finishKicker,
   finishRegister,
   rewardLine,
+  rewardSentence,
   summaryLine,
+  type RewardLineContext,
 } from "@/lib/finishMoment";
 import type { PostMoment } from "@/lib/postMoments";
 import { liftUnitLabel } from "@/lib/liftLoad";
@@ -116,6 +118,9 @@ interface SessionCompleteScreenProps {
   /** The account's first workout though it has run before
    *  (`isFirstOfSport`): rewarded as a first. */
   firstOfSport?: boolean;
+  /** The saved workout's id, once saved: a shared card's page goes with
+   *  it (Soc17 call 1). */
+  savedWorkoutId?: string;
 }
 
 export default function SessionCompleteScreen({
@@ -142,6 +147,7 @@ export default function SessionCompleteScreen({
   onRename,
   moments = null,
   firstOfSport = false,
+  savedWorkoutId,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -321,17 +327,28 @@ export default function SessionCompleteScreen({
     : undefined;
   const rewardExerciseId = rewardPrRow?.exerciseId;
   const bestBefore = rewardPrRow?.result.bestBeforeSession;
-  const line = reward
-    ? rewardLine(reward.moment, {
-        sport: "lift",
-        distanceUnit: "km",
-        loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
-        loadUnit: liftUnitLabel(liftUnit),
-        prBefore: bestBefore
-          ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
-          : null,
-      })
-    : null;
+  /* The first screen's line is the reward's one sentence (§14m rule 30),
+     so it stays. A session's only best, when that line already says it
+     and what it beat, is not listed again under it; from two bests the
+     list sums the session up, the one in the line included. */
+  const listedBests =
+    bests.length === 1 && rewardPrRow?.key === bests[0].key ? [] : bests;
+  const lineContext: RewardLineContext = {
+    sport: "lift",
+    distanceUnit: "km",
+    loadIn: (kg) => kitLoadIn(kg, liftUnit, rewardExerciseId),
+    loadUnit: liftUnitLabel(liftUnit),
+    prBefore: bestBefore
+      ? { weightKg: bestBefore.weight, reps: bestBefore.reps }
+      : null,
+  };
+  const line = reward ? rewardLine(reward.moment, lineContext) : null;
+  /* The share card's form of it, which names no one ("Rowed …"). */
+  const cardLine = reward
+    ? rewardSentence(
+        rewardLine(reward.moment, { ...lineContext, voice: "card" })
+      )
+    : undefined;
   /* The routine session's one line: a plan's week done, else what comes
      next. Either way it is said once on the screen. */
   const quietLine = saved
@@ -345,7 +362,7 @@ export default function SessionCompleteScreen({
     sessionVariant === "easier_today"
       ? "Easier session. Your regular plan stays in place."
       : sessionVariant === "time_budget"
-        ? "Session prepared for your usual time. Your full programme stays in place."
+        ? "Session prepared for your usual time."
         : sessionVariant
           ? `Express ${sessionVariant === "express45" ? "45" : "30"}: the essentials, done.`
           : null;
@@ -355,8 +372,12 @@ export default function SessionCompleteScreen({
   const prCutout =
     rewardPr && rewardExerciseId ? getFormArtCutout(rewardExerciseId) : null;
   const object =
-    prCutout && rewardPr
-      ? { cutout: prCutout, exerciseName: rewardPr.exercise }
+    prCutout && rewardPr && rewardExerciseId
+      ? {
+          cutout: prCutout,
+          exerciseName: rewardPr.exercise,
+          exerciseId: rewardExerciseId,
+        }
       : leadArt;
   const picture = object ? (
     <img
@@ -546,7 +567,7 @@ export default function SessionCompleteScreen({
               muscles it worked. The bests land a beat after the screen, a
               little large and settling, and their trophy after them
               (Pol1). */}
-          {bests.length > 0 && (
+          {listedBests.length > 0 && (
             <motion.section
               aria-labelledby="session-new-bests"
               className="space-y-2 origin-top"
@@ -565,11 +586,11 @@ export default function SessionCompleteScreen({
               >
                 New bests
                 <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
-                  {bests.length}
+                  {listedBests.length}
                 </span>
               </SectionHeading>
               <Card padded={false} className="divide-y divide-border">
-                {bests.map(({ key, name, exerciseId, result }) => (
+                {listedBests.map(({ key, name, exerciseId, result }) => (
                   <div key={key} className="flex items-center gap-3 p-3">
                     <ExerciseThumb exerciseId={exerciseId ?? ""} />
                     <div className="min-w-0 flex-1">
@@ -704,7 +725,7 @@ export default function SessionCompleteScreen({
           )}
 
           <details className="group space-y-4">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
               Session details
               <ChevronDown
                 className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
@@ -815,6 +836,8 @@ export default function SessionCompleteScreen({
               date: finishKicker(undefined, startedAt ?? openedAt),
               // Posted to the feed: the card links to the post while public.
               postId: postedActivityId(share),
+              // Saved: any other card's page goes with the workout (Soc17).
+              workoutId: saved ? savedWorkoutId : undefined,
               totalVolumeKg: totalVolume,
               totalReps,
               exerciseCount: exerciseSummary.length,
@@ -822,11 +845,11 @@ export default function SessionCompleteScreen({
               prExercise: bests[0]?.name,
               durationSec: Math.round(sessionDurationMinutes * 60),
               headline: heading,
-              line: line
-                ? `${line.before}${line.figure}${line.after}`
-                : undefined,
+              line: cardLine,
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
+              // The same drawing on the card's own page (Soc17).
+              artId: object?.exerciseId,
             }}
             /* CIRCLE-SESSION-01, as on the run's finish: a planned
                session, saved, can tell a Circle it was done. Only
@@ -898,7 +921,7 @@ function DetailRow({
           {value}
         </span>
       </span>
-      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-lifting-strong">
+      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-foreground">
         {action}
         <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
       </span>

@@ -261,9 +261,9 @@ describe("set completion through row controls", () => {
       document.querySelector(`[data-set-row="${index}"] > div`)!;
     fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
     await vi.waitFor(() =>
-      expect(row(1).className.split(" ")).toContain("bg-primary/10")
+      expect(row(1).className.split(" ")).toContain("bg-lifting/10")
     );
-    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
+    expect(row(0).className).not.toMatch(/\bbg-(success|primary|lifting)\//);
     expect(
       screen.getByRole("button", { name: "Edit completed set 1" })
     ).toBeInTheDocument();
@@ -2397,9 +2397,9 @@ it("Undo followed by finishing early saves only the final completed work", async
   });
 });
 
-describe("a saved workout carries the sets the server's Plate Club scores", () => {
+describe("a saved workout carries the sets the server's One plate scores", () => {
   /* Every badge is awarded by the server (App1 Q33): onWorkoutCreated
-     scores the Plate Club from the workout built from the completed sets
+     scores the One plate from the workout built from the completed sets
      this command carries, and the screen awards nothing itself. Until
      then the screen scored them here too, so the seal cracked before the
      trigger's round trip; the reveal now comes from the server's record,

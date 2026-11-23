@@ -65,28 +65,13 @@ function times(n: number, make: () => Meal): Meal[] {
   return Array.from({ length: n }, make);
 }
 
-/* A small inline photo, so the photo-card shape renders without a
-   network or the device store. */
-const PHOTO =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#e9c46a"/><circle cx="200" cy="150" r="90" fill="#f4a261"/></svg>'
-  );
-
 const demo: Meal[] = [
   meal("Porridge with banana", [item("Porridge", "1 bowl", 320)], at(8, 5)),
   ...times(2, () =>
     meal("Coffee", [item("Coffee", "1 cup", 40, 2, 4, 1)], at(10, 30))
   ),
   meal("Chicken salad", [item("Chicken salad", "1 plate", 420)], at(13, 10)),
-  meal(
-    "Salmon, rice and greens",
-    [item("Salmon", "1 fillet", 610)],
-    at(19, 0),
-    {
-      photoUrl: PHOTO,
-    }
-  ),
+  meal("Salmon, rice and greens", [item("Salmon", "1 fillet", 610)], at(19, 0)),
 ];
 
 const worst: Meal[] = [
@@ -166,17 +151,14 @@ const worst: Meal[] = [
       meal: "snacks",
     })
   ),
-  // An AI photo meal with a long name, and one whose photo is gone.
+  // An AI-scanned meal's long name. Its photo, if any, is on the device
+  // (Food9), which this lab does not reach, so the row shows our drawing.
   meal(
     "Grilled halloumi, roasted vegetable and quinoa bowl with tahini dressing",
     [item("Bowl", "1 bowl", 720)],
     at(12, 45),
-    { meal: "lunch", photoUrl: PHOTO }
+    { meal: "lunch" }
   ),
-  meal("Lost photo", [item("Lost", "1 plate", 300)], at(11, 0), {
-    meal: "lunch",
-    photoUrl: "https://example.com/meal-photos/does-not-exist.jpg",
-  }),
   // A zero-calorie entry and one with no name.
   meal("Water", [item("Water", "1 glass", 0, 0, 0, 0)], at(9, 0), {
     meal: "breakfast",

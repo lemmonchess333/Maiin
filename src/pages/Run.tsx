@@ -635,7 +635,7 @@ export default function Run() {
             seconds: true,
           });
           setBgGapBanner(
-            `App was in background for ${duration} — GPS data may have gaps`
+            `App was in the background for ${duration}, so the route may have gaps`
           );
           if (bgGapBannerTimer.current) clearTimeout(bgGapBannerTimer.current);
           bgGapBannerTimer.current = setTimeout(() => {
@@ -2338,7 +2338,7 @@ export default function Run() {
       points.length < 2
     ) {
       toast(
-        "GPS never locked on — your time is saved, but there’s no route or distance for this one."
+        "GPS never locked on. Your time is saved, with no route or distance."
       );
     }
     if (heartRateEligible && identityRef.current && user?.uid)
@@ -3419,7 +3419,7 @@ export default function Run() {
       <ConfirmDialog
         open={showLeaveConfirm}
         title="Leave this run?"
-        description="Your progress is saved — you can resume it from where you left off."
+        description="Your progress is saved. You can resume where you left off."
         confirmLabel="Leave"
         onConfirm={() => {
           setShowLeaveConfirm(false);

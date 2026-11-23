@@ -199,7 +199,7 @@ export default function Routine() {
         <button
           type="button"
           onClick={() => navigate("/program")}
-          className="text-xs font-medium text-lifting-strong"
+          className="text-xs font-medium text-foreground"
         >
           Back to programme
         </button>
@@ -216,7 +216,7 @@ export default function Routine() {
         <button
           type="button"
           onClick={() => navigate("/program")}
-          className="text-xs font-medium text-lifting-strong"
+          className="text-xs font-medium text-foreground"
         >
           Back to programme
         </button>

@@ -94,17 +94,20 @@ export default function IntervalStepShell({
       <div
         className="mx-4 p-4 rounded-2xl text-center"
         style={{
-          background: `${THEME.success}1F`,
-          border: `1px solid ${THEME.success}4D`,
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.12)",
         }}
       >
-        <p className="text-lg font-bold" style={{ color: THEME.success }}>
+        <p className="text-lg font-bold text-white">
+          <span style={{ color: THEME.success }} aria-hidden="true">
+            ✓{" "}
+          </span>
           All steps complete
         </p>
-        <p className="text-xs mt-1" style={{ color: `${THEME.success}B3` }}>
+        <p className="text-xs mt-1 text-white/70">
           {manualDistance
             ? "Finish the run and enter the distance covered to save it."
-            : "Cruise home at whatever feels good — then finish the run to save it."}
+            : "Cruise home at an easy effort, then finish the run to save it."}
         </p>
       </div>
     );
@@ -160,8 +163,11 @@ export default function IntervalStepShell({
       <div className="p-4 pt-3 space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
-            <p className="text-caption font-bold text-success-strong min-w-0 truncate">
-              ✓ {flash} done
+            <p className="text-caption font-bold text-white min-w-0 truncate">
+              <span className="text-success-strong" aria-hidden="true">
+                ✓
+              </span>{" "}
+              {flash} done
             </p>
           ) : (
             <p
@@ -231,7 +237,7 @@ export default function IntervalStepShell({
                   </span>
                 </>
               ) : (
-                "Last step — bring it home."
+                "Last step. Bring it home."
               )}
             </p>
             <button

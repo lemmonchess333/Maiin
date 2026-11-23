@@ -32,7 +32,7 @@ const SHELL = `<!doctype html>
       name="description"
       content="The fitness app for hybrid athletes."
     />
-    <meta property="og:title" content="Tropos — Adaptive Fitness" />
+    <meta property="og:title" content="Tropos · Adaptive Fitness" />
     <meta property="og:url" content="https://troposfit.com/" />
     <meta name="twitter:card" content="summary" />
     <title>Tropos</title>
@@ -138,6 +138,7 @@ describe("who a public post is shown to", () => {
         authorPhotoURL: PHOTO,
         unit: "km",
         liftUnit: "kg",
+        firstName: "Sam",
         title: "Long run",
         createdAt: Date.parse("2026-11-12T07:10:00Z"),
         durationSec: 3130,
@@ -185,6 +186,20 @@ describe("who a public post is shown to", () => {
     const res = await answer(memoryFirestore(data), "run1");
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ id: "run1", available: false });
+  });
+
+  it("names the author's first name for the button, and never their invite code (Soc17 call 3)", async () => {
+    const withCode = seed({
+      "users/sam": { preferredDistanceUnit: "km", inviteCode: "K7P49M2H" },
+      "users/sam/public/profile": { displayName: "Sam Rivers" },
+      "inviteCodes/K7P49M2H": { uid: "sam", createdAt: 1 },
+    });
+    const res = await answer(memoryFirestore(withCode), "run1");
+    expect(res.body.post.firstName).toBe("Sam");
+    expect(res.body.post).not.toHaveProperty("inviteCode");
+    expect(JSON.stringify(res.body)).not.toContain("K7P49M2H");
+    const page = await ask(memoryFirestore(withCode), "/activity/run1");
+    expect(page.body).not.toContain("K7P49M2H");
   });
 
   it("answers an address that is no post's the same way", async () => {
@@ -441,7 +456,7 @@ describe("the page Hosting serves", () => {
       `<meta property="og:image" content="${PUBLIC_ORIGIN}/icons/icon-512x512.png" />`
     );
     // The app's own preview is replaced, not repeated.
-    expect(html).not.toContain("Tropos — Adaptive Fitness");
+    expect(html).not.toContain("Tropos · Adaptive Fitness");
     expect(html).not.toContain("The fitness app for hybrid athletes.");
     expect(html.match(/og:title/g)).toHaveLength(1);
     // Safari's banner: Open on a phone with Tropos, which hands the app
@@ -463,7 +478,7 @@ describe("the page Hosting serves", () => {
     const data = seed();
     data["activities/run1"] = run({ visibility: "followers" });
     const res = await ask(memoryFirestore(data), "/activity/run1");
-    expect(res.body).toContain("Tropos — Adaptive Fitness");
+    expect(res.body).toContain("Tropos · Adaptive Fitness");
     expect(res.body).not.toContain("Long run");
     expect(res.body).not.toContain("Sam");
     expect(dataBlock(res.body)).toEqual({ id: "run1", available: false });

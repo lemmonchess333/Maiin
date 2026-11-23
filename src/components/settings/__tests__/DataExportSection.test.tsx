@@ -62,6 +62,51 @@ function sharedFile(n = 0): File {
   return shareFile.mock.calls[n][0] as File;
 }
 
+describe("DataExportSection — email choices (App1 Q55)", () => {
+  it("is not offered before the emails can be chosen, to someone never asked", () => {
+    render(<DataExportSection user={USER} emailsLive={false} />);
+    expect(
+      screen.queryByRole("button", { name: /export email choices/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("is offered once the emails can be chosen, and exports the record as a CSV", async () => {
+    render(
+      <DataExportSection
+        user={USER}
+        emailsLive
+        emailConsent={{
+          weeklyReview: { on: true, givenVia: "setup", wording: 1 },
+        }}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /export email choices/i })
+    );
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    const file = sharedFile();
+    expect(file.name).toMatch(/^tropos-email-choices-\d{4}-\d{2}-\d{2}\.csv$/);
+    const text = await file.text();
+    expect(text.split("\n")[1]).toBe("Weekly review,Yes,,Setup,1,,");
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("Email choices exported")
+    );
+  });
+
+  it("is offered whenever a record exists, so an answer is never stuck inside", () => {
+    render(
+      <DataExportSection
+        user={USER}
+        emailsLive={false}
+        emailConsent={{ winBack: { on: false } }}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /export email choices/i })
+    ).toBeInTheDocument();
+  });
+});
+
 describe("DataExportSection", () => {
   it("offers all three exports", () => {
     render(<DataExportSection user={USER} />);

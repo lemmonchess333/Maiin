@@ -29,6 +29,7 @@ import {
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { LOW_CARB_G, restDaySplit } from "@/lib/phaseNutrition";
+import MacroSwatch from "@/components/food/MacroSwatch";
 
 interface NutritionSectionProps {
   profile: UserProfile;
@@ -87,11 +88,10 @@ export default function NutritionSection({
 }: NutritionSectionProps) {
   /** The age as typed, while the field is being edited. */
   const [ageDraft, setAgeDraft] = useState<string | null>(null);
-  // Contrast-safe macro colours from the shared palette — protein=pink,
-  // carbs=gold, fat=sage everywhere else in the app. These tiles were
-  // previously mis-coloured (protein blue / carbs amber / fat pink) with
-  // raw Tailwind palette classes that also broke the token invariant.
-  const { text: macroText } = useMacroPalette();
+  // The macros' colours from the shared palette, as everywhere else in the
+  // app: each figure in the text colour, its macro's swatch beside its
+  // name (DS10 call 3).
+  const { accent: macroAccent, text: macroText } = useMacroPalette();
 
   /* #calorie-targets is this explanation's address. Home's "How targets
      work" tip linked here until the first-visit guide (FV1) took its
@@ -291,7 +291,7 @@ export default function NutritionSection({
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                     activityLevel === key
-                      ? "bg-primary/10 text-lifting-strong font-medium"
+                      ? "bg-primary/10 text-foreground font-medium"
                       : "bg-muted chip-edge text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -326,7 +326,7 @@ export default function NutritionSection({
           <div>
             <p className="text-sm font-medium text-foreground">Goal weight</p>
             <p className="text-xs text-muted-foreground">
-              Sets your calorie target — current{" "}
+              Sets your calorie target. Now{" "}
               <span className="font-mono tabular-nums">
                 {formatWeightInUnit(currentKg, weightUnit)}
               </span>{" "}
@@ -481,7 +481,7 @@ export default function NutritionSection({
                 initial={{ opacity: 0.5, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="text-sm font-bold text-lifting-strong"
+                className="text-sm font-bold text-foreground"
               >
                 {formatCalories(tdee.targetCalories)} {CALORIE_UNIT}
               </motion.span>
@@ -547,7 +547,10 @@ export default function NutritionSection({
               >
                 {split.protein} g
               </p>
-              <p className="text-xs text-muted-foreground">protein</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.protein} />
+                protein
+              </p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
@@ -562,7 +565,10 @@ export default function NutritionSection({
               >
                 {split.carbs} g
               </p>
-              <p className="text-xs text-muted-foreground">carbs</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.carbs} />
+                carbs
+              </p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
@@ -577,7 +583,10 @@ export default function NutritionSection({
               >
                 {split.fat} g
               </p>
-              <p className="text-xs text-muted-foreground">fat</p>
+              <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MacroSwatch color={macroAccent.fat} />
+                fat
+              </p>
             </motion.div>
           </div>
 
@@ -589,8 +598,7 @@ export default function NutritionSection({
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
           <p className="text-micro text-muted-foreground leading-snug pt-2">
-            Protein follows your training block. Carbs and fat are a rest day’s;
-            training days move some fat to carbs.
+            Protein follows your training block.
           </p>
 
           {split.aggressive && !split.infeasible && (
@@ -604,8 +612,7 @@ export default function NutritionSection({
               <span className="font-mono tabular-nums">
                 {split.proteinUncapped} g
               </span>{" "}
-              your plan aims for — essential fat has to fit too. A slower pace
-              holds protein.
+              your plan aims for. A slower pace holds protein.
             </p>
           )}
 
@@ -671,11 +678,6 @@ export default function NutritionSection({
           <div className="text-left min-w-0">
             <p className="text-sm font-medium text-foreground">
               Activity is already in your target
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Your daily calorie target already accounts for your training, so
-              there’s no need to eat back exercise calories. Big training days
-              shift more carbs for fuel.
             </p>
           </div>
         </div>

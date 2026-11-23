@@ -280,14 +280,14 @@ export default function TrainingBlockCard({
     });
     setBusy(false);
     if (!ok) {
-      toast.error("Couldn’t start the block. Nothing changed — try again.");
+      toast.error("Couldn’t start the block. Nothing changed. Try again.");
       return;
     }
     setShowCreate(false);
     haptic("light");
     toast.success(
       focus !== currentFocus
-        ? `${focusLabel(focus)} — ${duration} weeks. Your programme’s updated.`
+        ? `${focusLabel(focus)}, ${duration} weeks. Your programme’s updated.`
         : `${duration} weeks. Your programme’s unchanged.`
     );
   };
@@ -355,7 +355,7 @@ export default function TrainingBlockCard({
               Start a training block
             </p>
             <p className="text-xs text-muted-foreground">
-              Pick what the next few weeks are for. Your programme follows.
+              Pick what the next few weeks are for.
             </p>
           </div>
           <ChevronRight
@@ -389,7 +389,7 @@ export default function TrainingBlockCard({
             </p>
             <p className="text-xs text-muted-foreground">
               {finished
-                ? "Block complete — see what changed."
+                ? "Block complete. See what changed."
                 : !block.owned
                   ? `Block week ${week ?? 1} of ${block.durationWeeks}.`
                   : block.pace === "easing" && week !== null && week <= 2
@@ -702,7 +702,7 @@ export default function TrainingBlockCard({
                             ~{formatOneRepMaxRange(a.endE1rm!, liftUnit)}
                           </span>
                           {gain > 0 && (
-                            <span className="ml-1.5 font-mono tabular-nums text-success-strong">
+                            <span className="ml-1.5 font-mono tabular-nums text-foreground">
                               +{formatLoad(gain, liftUnit)}
                             </span>
                           )}

@@ -14,7 +14,6 @@ import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
 import { Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -365,13 +364,12 @@ export default function PeopleView({
             <div className="rounded-xl bg-card border border-border/50 dark:card-shadow dark:border-transparent">
               <HexEmptyState
                 icon={Users}
-                accent={THEME.brand}
                 headline="No suggestions yet"
                 sub={
                   /* Someone already in a space has done what the first
                      line asks; tell them where suggestions come from. */
                   joinedSpaceIds.length > 0
-                    ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+                    ? "Suggestions come from your spaces and the people you follow."
                     : "Follow people or join a space to start seeing suggestions."
                 }
                 action={{

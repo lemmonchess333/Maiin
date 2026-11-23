@@ -8,6 +8,7 @@ import { resetNodeClock } from "./helpers/nodeClock";
 import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { settleImages } from "./helpers/settleImages";
+import { seededHealthConsent } from "./helpers/healthConsent";
 
 test.skip(!emulatorActive, "Requires the local Auth and Firestore emulators");
 test.setTimeout(180_000);
@@ -150,6 +151,8 @@ test("browses lifts and runs, filters an older period and restores the expanded 
         email,
         displayName: "History review",
         onboardingComplete: true,
+        // Agreed to the storing of health details (Priv1 call 1).
+        healthDataConsent: seededHealthConsent(),
         subscriptionTier: "pro",
         weightKg: 74,
         heightCm: 170,

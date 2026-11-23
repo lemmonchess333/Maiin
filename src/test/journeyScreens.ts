@@ -4,7 +4,9 @@
  * renamed button fails in the unit suite in seconds, not weeks into a
  * journey in CI.
  *
- * - Setup's names: `Onboarding.test.tsx` walks setup by them.
+ * - Setup's names: `Onboarding.test.tsx` walks setup by them, the
+ *   health-details agreement's I agree included; Save your plan's and the
+ *   trial offer's: `SaveYourPlan.test.tsx` and `TrialOffer.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -23,6 +25,7 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import { formatRepTarget } from "@/features/program/repTarget";
 import { getExerciseById } from "@/lib/exercises";
 import { runStripLabel } from "@/lib/runProgrammeViewModel";
+import { liftWeekDayNames } from "@/lib/liftDayLabel";
 
 /** Setup's screens (`Onboarding`). */
 export const SETUP = {
@@ -45,6 +48,10 @@ export const SETUP = {
   legTrim: "Lighten leg sessions while your runs build",
   /** "What do you have?" beside a home gym, Minimal and no equipment. */
   pullUpBar: "A pull-up bar",
+  /** Priv1 call 1: the agreement to store health details, asked before
+   *  the first body question (a lifter's limitations, or About you). */
+  healthDetails: "Your health details",
+  agreeHealth: "I agree",
   noInjuries: "None",
   weight: "Weight (kg)",
   height: "Height (cm)",
@@ -53,6 +60,29 @@ export const SETUP = {
   birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
+  /** Signed out, the review's button: Save your plan comes next, where
+   *  the account is made (A6). */
+  saveNext: "Continue",
+} as const;
+
+/** Save your plan (A6), where setup makes the account once its questions
+ *  are answered: the email form's fields by their labels, its button, and
+ *  the way to sign in instead (`SaveYourPlan.test.tsx`). */
+export const SAVE_PLAN = {
+  heading: "Save your plan",
+  apple: "Continue with Apple",
+  google: "Continue with Google",
+  email: "Email address",
+  password: "Password",
+  create: "Create account",
+  signInInstead: "Sign in",
+} as const;
+
+/** The trial offer that ends setup (A6 call 2): its kicker, and Not now,
+ *  which goes Home (`TrialOffer.test.tsx`). */
+export const TRIAL_OFFER = {
+  kicker: "Your plan is ready",
+  notNow: "Not now",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.
@@ -185,6 +215,28 @@ export const TRAIN = {
    *  (`EmptyWorkoutEntry.test.tsx`). */
   emptyWorkout: "Empty workout",
 } as const;
+
+/** A session's card (`SessionCommandCard`) is a region named by its
+ *  eyebrow and its title, "Up next: Long 12K": found by the title, which
+ *  ends the name. */
+export function sessionCardName(title: string): RegExp {
+  return new RegExp(`: ${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+}
+
+/** Your plan (`TrainingPlan`): the next lift's card, headed by the day's
+ *  name as Train shows it in its week, and started by its button. */
+export const PLAN = {
+  startNextLift: "Start workout",
+} as const;
+
+/** A plan day's name as Train and Your plan show it ("Full Body A"),
+ *  never its stored name. */
+export function shownLiftDayName(
+  week: readonly string[],
+  index: number
+): string {
+  return liftWeekDayNames(week)[index];
+}
 
 /** A run's name on Train's run week, from its template: the function
  *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
