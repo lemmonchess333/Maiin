@@ -93,7 +93,12 @@ describe("calculateTDEE", () => {
             calculateTDEE(w, h + more, a, act, g).bmr
           ).toBeGreaterThanOrEqual(base);
           expect(calculateTDEE(w, h, a + 1, act, g).bmr).toBeLessThan(base);
-          expect(base - calculateTDEE(w, h, a, act, g, "female").bmr).toBe(166);
+          // Both named: with no sex the formula takes the midpoint, not a
+          // man's (A5 STATUS, #3489), so `base` is 83 under a man's.
+          expect(
+            calculateTDEE(w, h, a, act, g, "male").bmr -
+              calculateTDEE(w, h, a, act, g, "female").bmr
+          ).toBe(166);
         }
       )
     );
