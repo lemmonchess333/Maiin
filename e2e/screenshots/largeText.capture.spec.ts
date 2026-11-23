@@ -886,7 +886,7 @@ test.describe("large text", () => {
       const dialog = page.getByRole("dialog").first();
 
       await page.goto("activity/rich-feed-push");
-      const props = page.getByRole("button", { name: /props — show list$/ });
+      const props = page.getByRole("button", { name: /props, show list$/ });
       await ready(page, props);
       await props.click();
       await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
