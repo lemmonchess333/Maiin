@@ -816,7 +816,7 @@ export default function LiftSessionView({
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Recommended — {easierRecommendation.reason}
+                    Recommended: {easierRecommendation.reason}
                   </p>
                 </button>
               )}

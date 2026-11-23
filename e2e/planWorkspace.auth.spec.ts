@@ -9,6 +9,11 @@ import { buildPlan } from "../src/features/program/planBuilder";
 import { stripUndefined } from "../src/lib/firestoreGuards";
 import { settleImages } from "./helpers/settleImages";
 import { seededHealthConsent } from "./helpers/healthConsent";
+import {
+  PLAN,
+  sessionCardName,
+  shownLiftDayName,
+} from "../src/test/journeyScreens";
 
 const PASSWORD = "test-password-123";
 
@@ -200,11 +205,16 @@ test("reviews a run move while preserving actual history, lift rotation and usua
     expect(new URL(page.url()).searchParams.get("tab")).toBe("run");
     expect(new URL(page.url()).searchParams.get("rday")).toBe(thursday);
     await page.getByRole("link", { name: "Your plan", exact: true }).click();
+    const nextLift = page.getByRole("region", {
+      name: sessionCardName(
+        shownLiftDayName(
+          state.workouts.map((day) => day.dayName),
+          1
+        )
+      ),
+    });
     await expect(
-      page.getByRole("button", {
-        name: `Start ${state.workouts[1].dayName}`,
-        exact: true,
-      })
+      nextLift.getByRole("button", { name: PLAN.startNextLift, exact: true })
     ).toBeVisible();
     const move = page.getByRole("button", { name: "Move a run", exact: true });
     await expect(move).toBeEnabled();

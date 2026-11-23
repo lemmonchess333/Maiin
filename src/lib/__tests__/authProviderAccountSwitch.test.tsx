@@ -160,6 +160,7 @@ vi.mock("@/lib/captureTimezone", () => ({
 
 import { AuthProvider, useAuth } from "../auth";
 import { noteEmailChange, pendingEmailChange } from "../emailChangeNote";
+import { holdRunHistory, placingHistory } from "../runPlacingHistory";
 import {
   seedFirestore,
   resetFirestore,
@@ -376,6 +377,25 @@ describe("AuthProvider — account switch isolation", () => {
     });
     expect(state().p).toBe("B");
     expect(state().u).toBe("B");
+  });
+
+  it("lets go of A's held run history on a switch to B and on a sign-out", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    holdRunHistory(
+      "A",
+      [{ id: "r-1", completedAt: new Date(2026, 9, 1), distance: 5000 }],
+      true
+    );
+    // POSITIVE anchor: A's history is held while A is signed in.
+    expect(placingHistory("A")?.runs).toHaveLength(1);
+    await emit("B");
+    await waitFor(() => expect(placingHistory("A")).toBeNull());
+
+    holdRunHistory("B", [], true);
+    expect(placingHistory("B")).not.toBeNull();
+    await emit(null);
+    await waitFor(() => expect(placingHistory("B")).toBeNull());
   });
 
   it("A→B clears A's profile immediately, before B hydrates", async () => {

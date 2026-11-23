@@ -32,7 +32,7 @@ const SHELL = `<!doctype html>
       name="description"
       content="The fitness app for hybrid athletes."
     />
-    <meta property="og:title" content="Tropos — Adaptive Fitness" />
+    <meta property="og:title" content="Tropos · Adaptive Fitness" />
     <meta property="og:url" content="https://troposfit.com/" />
     <meta name="twitter:card" content="summary" />
     <title>Tropos</title>
@@ -456,7 +456,7 @@ describe("the page Hosting serves", () => {
       `<meta property="og:image" content="${PUBLIC_ORIGIN}/icons/icon-512x512.png" />`
     );
     // The app's own preview is replaced, not repeated.
-    expect(html).not.toContain("Tropos — Adaptive Fitness");
+    expect(html).not.toContain("Tropos · Adaptive Fitness");
     expect(html).not.toContain("The fitness app for hybrid athletes.");
     expect(html.match(/og:title/g)).toHaveLength(1);
     // Safari's banner: Open on a phone with Tropos, which hands the app
@@ -478,7 +478,7 @@ describe("the page Hosting serves", () => {
     const data = seed();
     data["activities/run1"] = run({ visibility: "followers" });
     const res = await ask(memoryFirestore(data), "/activity/run1");
-    expect(res.body).toContain("Tropos — Adaptive Fitness");
+    expect(res.body).toContain("Tropos · Adaptive Fitness");
     expect(res.body).not.toContain("Long run");
     expect(res.body).not.toContain("Sam");
     expect(dataBlock(res.body)).toEqual({ id: "run1", available: false });

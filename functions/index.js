@@ -970,8 +970,8 @@ exports.completeOnboarding = functions
       // any sanitiser-passing values from the input — they're
       // server-managed regardless of what the client sent. The tier is
       // "free" for an account that has none yet; one billing has already
-      // set is left alone below, as configurePlan leaves it, so setup run
-      // again cannot downgrade a Pro account until the next store sync.
+      // set is left alone below, as configurePlan leaves it, so setup
+      // cannot downgrade a Pro account until the next store sync.
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
@@ -1033,35 +1033,43 @@ exports.completeOnboarding = functions
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
+        // Setup builds a plan only for an account whose setup is not
+        // finished (A6). The app reads the account before it sends, and
+        // keeps a plan it finds; this holds the rule for a profile copy from
+        // before the plan (made on another phone, or kept in a cache) and
+        // for two phones finishing at once. Read in the transaction, so only
+        // one of two can build. A programme stored beside a profile that
+        // does not say setup finished is rebuilt here, with the flag, so
+        // that account reaches Home instead of being sent back to setup.
+        if (existingData.onboardingComplete === true) {
+          throw new functions.https.HttpsError(
+            "already-exists",
+            "This account already has a plan."
+          );
+        }
         const nextProfileData = { ...profileData };
-        // The agreement given in this setup, dated by the server. A retry
-        // records the latest agreement: the person agreed again to finish.
+        // The agreement given in this setup, dated by the server.
         nextProfileData.healthDataConsent = healthConsent.healthConsentRecord(
           admin.firestore.FieldValue.serverTimestamp()
         );
 
-        // The timestamp and journey describe the first successful setup
-        // commit. A retry, even from a newer client, must not move the
-        // activation window or restamp an account set up earlier. The
-        // journey stays stamped, always 2, for the activation report and
-        // for app builds from before App1, which read it.
-        const alreadyCompleted = existingData.onboardingComplete === true;
-        if (!alreadyCompleted) {
-          nextProfileData.onboardingCompletedAt =
-            admin.firestore.FieldValue.serverTimestamp();
-          nextProfileData.onboardingSport = activationSport(
-            nextProfileData.athleteType
-          );
-          // App1 Q17: an account set up from here on has its launch
-          // numbers kept (lib/launchMilestones). Empty until its first
-          // counted session; an older account never gets one, so its next
-          // session is not taken for its first.
-          nextProfileData.launchMilestones = {};
-          nextProfileData.activationJourneyVersion =
-            ONE_ACTIVATION_JOURNEY_VERSION;
-          if (onboardingPlatform) {
-            nextProfileData.onboardingPlatform = onboardingPlatform;
-          }
+        // The account's first and only setup: when it finished, the sport
+        // it began with and the journey, which stays stamped, always 2, for
+        // the activation report and for app builds from before App1.
+        nextProfileData.onboardingCompletedAt =
+          admin.firestore.FieldValue.serverTimestamp();
+        nextProfileData.onboardingSport = activationSport(
+          nextProfileData.athleteType
+        );
+        // App1 Q17: an account set up from here on has its launch numbers
+        // kept (lib/launchMilestones). Empty until its first counted
+        // session; an older account never gets one, so its next session is
+        // not taken for its first.
+        nextProfileData.launchMilestones = {};
+        nextProfileData.activationJourneyVersion =
+          ONE_ACTIVATION_JOURNEY_VERSION;
+        if (onboardingPlatform) {
+          nextProfileData.onboardingPlatform = onboardingPlatform;
         }
         if (emailOptIn.optIn) {
           const consent = emailConsent.applyEmailConsent(

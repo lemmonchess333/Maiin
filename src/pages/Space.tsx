@@ -283,7 +283,7 @@ function RaceEventHeader({
       </a>
 
       <p className="text-micro text-muted-foreground">
-        Community space — not affiliated with the event.
+        Community space, not affiliated with the event.
       </p>
     </div>
   );

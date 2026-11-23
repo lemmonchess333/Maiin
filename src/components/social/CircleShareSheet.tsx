@@ -114,7 +114,7 @@ export default function CircleShareSheet({
       open={open}
       onOpenChange={onOpenChange}
       title="Share to circle"
-      description="Only 'completed a session' is shared — never your numbers."
+      description="Only that you finished a session is shared, never your numbers."
       /* Lifted above the default stack, as the workout's own sheets are:
          it opens over the lift's finish screen, a full-screen layer at
          z-50 that would cover the default z-40 dimming. */
@@ -213,7 +213,7 @@ export default function CircleShareSheet({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={GOAL_SPACE_TEXT_MAX}
-              placeholder="Add a note — optional"
+              placeholder="Add a note (optional)"
               aria-label="Note"
               className="ds-input text-sm"
             />

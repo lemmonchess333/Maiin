@@ -473,7 +473,7 @@ export default function HeroDrillDownSheet({
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                  Already counted in your target — no need to eat it back.
+                  Already counted in your target. No need to eat it back.
                 </p>
               </div>
             </section>

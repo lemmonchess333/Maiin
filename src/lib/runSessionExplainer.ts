@@ -152,8 +152,8 @@ function runWalkWhy(templateId: string): string {
     RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
       .length ?? 0;
   return runs === 1
-    ? "The last run-walk — what the weeks before it built up to."
-    : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
+    ? "The last run-walk: what the weeks before it built up to."
+    : "Run-walk: the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
 }
 
 export function runSessionExplainer(
@@ -207,23 +207,23 @@ export function runSessionExplainer(
 
   if (phase === "taper") {
     if (type === "tempo" && input.racePace === "tempo") {
-      return "Taper — a short block at race pace keeps the rhythm sharp while the volume drops.";
+      return "Taper: a short block at race pace keeps the rhythm sharp while the volume drops.";
     }
     // Not the easy runs' reason: a tempo is comfortably hard (Run21 (1)).
     if (type === "tempo") {
-      return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
+      return "Taper: a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
     }
     if (type === "intervals") {
       return "A taper sharpener, fast but small, keeps the legs quick while the volume drops.";
     }
     if (type === "long") {
-      return "Taper long run — shorter on purpose, so the training you’ve banked shows up fresh.";
+      return "Taper long run: shorter on purpose, so you arrive fresh.";
     }
     // Run22: the first taper weeks keep a shorter medium-long.
     if (isMediumLong) {
-      return "Taper medium-long — shorter on purpose: the volume comes down in steps, so you arrive fresh without losing your rhythm.";
+      return "Taper medium-long run: shorter on purpose, so you arrive fresh.";
     }
-    return "Taper — easy and short on purpose; recovery is the work now.";
+    return "Taper: easy and short on purpose.";
   }
 
   // Run24 (4): the plan's benchmark session.
@@ -276,8 +276,8 @@ export function runSessionExplainer(
     return input.racePace === "finish"
       ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
       : weekHasQuality
-        ? "The week’s anchor run — the long run keeps ramping while quality sharpens around it."
-        : "The week’s anchor run — it builds the endurance the race needs.";
+        ? "The week’s anchor run: the long run keeps growing while the quality sessions sharpen around it."
+        : "The week’s anchor run: it builds the endurance the race needs.";
   }
   if (type === "tempo" && input.racePace === "tempo") {
     return "It teaches your legs and breathing what race pace feels like, so it’s familiar when it counts.";
@@ -290,17 +290,17 @@ export function runSessionExplainer(
   }
   // Easy family.
   if (isMediumLong) {
-    return "The week’s medium-long run — extra easy volume midweek, so the long run isn’t carrying the whole week.";
+    return "The week’s medium-long run: extra easy distance midweek, so the long run isn’t the whole week.";
   }
   if (isStrides) {
-    return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
+    return "Easy day with strides: relaxed 20-second accelerations that keep your speed. Not a hard session.";
   }
   if (phase === "base") {
     return "Easy running in the base phase is the foundation everything later stands on.";
   }
   return weekHasQuality
-    ? "Easy day — it makes the quality sessions work. If it feels too easy, it’s right."
-    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it’s right.";
+    ? "Easy day: it makes the quality sessions work. If it feels too easy, it’s right."
+    : "Easy day: most of your running is easy, and it all counts towards the race. If it feels too easy, it’s right.";
 }
 
 /**

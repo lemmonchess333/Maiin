@@ -116,9 +116,15 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Genre exceptions are real and stay.** Spoken mid-run audio cues are
   NRC-register coach speech ("Last one — leave nothing!" is correct
   THERE); kudos quick-chips are the USER'S voice to a friend ("Nice
-  run!" stays); badge names are Fitbit-era vernacular ("Week Warrior"
-  stays); share-card fun facts are playful by design. Do not flatten
-  these into the calm-chrome register.
+  run!" stays); share-card fun facts are playful by design. Do not flatten
+  these into the calm-chrome register. Badge names are not one of them:
+  they say what was done, as Apple Fitness and Strava name awards ("7 days
+  in a row", "First 10K", "Every macro on target"), never an alliterative
+  title (DS11 call 2).
+- **No em dash on screen** (DS11 call 2). A full stop between two
+  statements, a colon before what a label introduces, the middot between
+  a thing and its detail, "so" for a cause. `emDashCopy.test.ts` holds it
+  at zero.
 - **Buttons are sentence case** ("Start workout", "Add exercise") — the
   Title Case strays kept reading unpolished next to the majority.
 - **One spelling, one ellipsis, one apostrophe.** Programme, analyse,

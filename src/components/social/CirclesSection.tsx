@@ -1834,7 +1834,7 @@ export default function CirclesSection({
                           <span className="font-semibold">{name}</span>{" "}
                           <span className="text-muted-foreground">
                             {copy}
-                            {e.text ? ` — “${e.text}”` : ""} ·{" "}
+                            {e.text ? `: “${e.text}”` : ""} ·{" "}
                             {getTimeAgo(new Date(e.createdAt))}
                           </span>
                         </p>

@@ -300,11 +300,6 @@ export default function MuscleHeatMap({
             })}
           </div>
         )}
-        {recovery && trainedGroups.length > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground text-center">
-            Recovery chips are as of today, independent of the selected range.
-          </p>
-        )}
       </div>
     </div>
   );

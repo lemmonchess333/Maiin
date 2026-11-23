@@ -81,7 +81,7 @@ describe("AdjustWeekSheet — intent list", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /I’m not feeling 100%/ })
     );
-    expect(screen.getByText(/Easier week — preview/)).toBeInTheDocument();
+    expect(screen.getByText(/Easier week preview/)).toBeInTheDocument();
   });
 });
 
@@ -116,9 +116,7 @@ describe("AdjustWeekSheet — crowded intent previews the generator's timing", (
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
-    expect(
-      screen.getByText(/Re-plan from today — preview/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Re-plan from today: preview/)).toBeInTheDocument();
   }
 
   it("a Tuesday marathon 20 days from a Wednesday is a compressed build, not mostly-easy", () => {

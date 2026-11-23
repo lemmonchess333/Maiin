@@ -296,7 +296,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Return seated", "Sit back onto the saddle smoothly."],
     ],
     [
-      "Dial in seat and bar height — seat level with the bars for most.",
+      "Dial in seat and bar height. Seat level with the bars for most.",
       "Clip or strap in, grip the bars with a firm but relaxed hold.",
     ]
   ),
@@ -378,7 +378,7 @@ export const RELEASED_FORM_PLACARDS = {
     ],
     [
       "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
-      "Hold a wall or rail for balance only — don't pull yourself up with it.",
+      "Hold a wall or rail for balance only. Don't pull yourself up with it.",
     ]
   ),
   "side-plank": placard(

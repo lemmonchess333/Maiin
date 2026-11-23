@@ -1151,7 +1151,7 @@ function ActivityCard({
               <button
                 type="button"
                 onClick={handleShowKudosList}
-                aria-label={`${kudosCount.toLocaleString()} props — show list`}
+                aria-label={`${kudosCount.toLocaleString()} props, show list`}
                 className="p-3 -m-3 text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
               >
                 {kudosCount.toLocaleString()}

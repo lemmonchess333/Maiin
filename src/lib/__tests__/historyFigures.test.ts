@@ -12,6 +12,7 @@ import { addLocalDays, localDateString, parseLocalDate } from "../dateHelpers";
 import { getExerciseById } from "../exercises";
 import type { Workout, WorkoutExercise } from "../savedWorkouts";
 import { formatDayMonth } from "@/utils/formatters";
+import { runPlacings } from "../runPlacings";
 
 /**
  * Analytics' figures, called with sessions, a range and a join day. Every
@@ -659,6 +660,42 @@ describe("runRecordRows", () => {
         "Fastest 5K"
       )?.runnersUp
     ).toBeUndefined();
+  });
+
+  it("gives a tie at the fastest to the earlier run, fed newest first (Run29)", () => {
+    const fiveK = (time: number) => [{ distance: 5000, time }];
+    const older = run("older", {
+      daysAgo: 20,
+      km: 5,
+      pace: 300,
+      bestEfforts: fiveK(1500),
+    });
+    const newer = run("newer", {
+      daysAgo: 10,
+      km: 5,
+      pace: 300,
+      bestEfforts: fiveK(1500),
+    });
+    const slow = run("slow", {
+      daysAgo: 5,
+      km: 5,
+      pace: 320,
+      bestEfforts: fiveK(1600),
+    });
+    // Newest first, as a live read hands them: the order must not decide.
+    const fastest = row(rows([slow, newer, older]).lifetime, "Fastest 5K");
+    expect(fastest?.runId).toBe("older");
+    expect(fastest?.runnersUp?.map((up) => [up.place, up.runId])).toEqual([
+      [2, "newer"],
+      [3, "slow"],
+    ]);
+    // The later run's page says the same: its 2nd best.
+    expect(
+      runPlacings(
+        { ...newer, place: null },
+        [slow, newer, older].map((r) => ({ ...r, place: null }))
+      )[0]?.place
+    ).toBe(2);
   });
 
   it("says New on a recent fastest time only when it is the fastest ever", () => {

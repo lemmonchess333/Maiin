@@ -508,9 +508,7 @@ describe("FeedView — following nobody (the retired solo-first stack)", () => {
       followingCount: 0,
       followingFeedUnlocked: false,
     });
-    expect(
-      screen.getByText(/sessions people shared publicly/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/sessions shared publicly/i)).toBeInTheDocument();
     expect(feedOrder()).toEqual(["a", "b"]);
     expect(screen.queryByText(/start a partner streak/i)).toBeNull();
   });

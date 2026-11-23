@@ -96,8 +96,8 @@ export function ChallengeFinaleCard({
                 You finished with{" "}
                 <span className="font-semibold text-foreground">
                   {TIER_LABELS[tier]}
-                </span>{" "}
-                —{" "}
+                </span>
+                ,{" "}
                 <span className="font-mono tabular-nums">
                   {formatValue(
                     challenge.metric,

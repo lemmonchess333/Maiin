@@ -55,9 +55,12 @@ export const TRIAL_OFFER_COPY = {
 } as const;
 
 /* The website's checkout leaves the app and returns to /upgrade, where its
-   Web Purchase Link is set to send it. A checkout begun from the offer is
-   noted for the visit, so the return goes on to Home, as every other way
-   off the offer does. */
+   Web Purchase Link is set to send it, whatever began it. A checkout begun
+   from the offer is noted for the tab, so its return goes on to Home, as
+   every other way off the offer does. The note is that one checkout's:
+   every checkout that starts writes or clears it (`useProCheckout`), and
+   the offer clears it when it is on screen again (Back from the checkout)
+   or left in the app. */
 const webCheckoutKey = (uid: string) => `tropos.trialOffer.webCheckout.${uid}`;
 
 /** The offer is sending this account to the website's checkout. */
@@ -65,7 +68,8 @@ export function noteTrialOfferWebCheckout(uid: string): void {
   writeSessionString(webCheckoutKey(uid), "1");
 }
 
-/** The checkout did not leave the app after all. */
+/** No checkout from the offer is away: none left the app, another began,
+ *  or the offer is on screen again. */
 export function forgetTrialOfferWebCheckout(uid: string): void {
   removeSessionKey(webCheckoutKey(uid));
 }

@@ -40,6 +40,10 @@ import {
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import type { PlanId } from "@/lib/proPlans";
 import type { ProFeatureKey } from "@/lib/proFeatures";
+import {
+  forgetTrialOfferWebCheckout,
+  noteTrialOfferWebCheckout,
+} from "@/lib/trialOffer";
 
 export interface StartCheckoutOptions {
   /** Analytics dimension (`upgrade_page`, `feature_gate`, etc.). */
@@ -53,6 +57,9 @@ export interface StartCheckoutOptions {
   /** Whether the paywall offered a trial. The trial is the store's own:
    *  App Store Connect's introductory offer, or the web product's. */
   withTrial?: boolean;
+  /** Begun from the trial offer that ends setup: on the web, its return
+   *  (to Upgrade, as every web checkout's is) goes on to Home. */
+  fromTrialOffer?: boolean;
 }
 
 /**
@@ -144,6 +151,13 @@ export function useProCheckout(): UseProCheckoutResult {
       } as const;
 
       track("checkout_started", dimensions);
+      /* The website's checkout returns to Upgrade whatever began it, so
+         each one notes for itself whether that return goes on to Home: a
+         note an earlier checkout left never meets a later one's return. */
+      if (platform === "web") {
+        if (options.fromTrialOffer) noteTrialOfferWebCheckout(user.uid);
+        else forgetTrialOfferWebCheckout(user.uid);
+      }
 
       let outcome: PurchaseOutcome;
       try {
@@ -161,6 +175,8 @@ export function useProCheckout(): UseProCheckoutResult {
         };
       }
       send({ type: "settled", outcome });
+      // Only a checkout that has the window comes back to Upgrade.
+      if (outcome.kind !== "redirected") forgetTrialOfferWebCheckout(user.uid);
 
       switch (outcome.kind) {
         case "cancelled":

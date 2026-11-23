@@ -165,6 +165,8 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
   default: () => null,
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
+// A reward's confetti draws on a canvas jsdom does not have.
+vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
 vi.mock("@/components/WeekPulseView", () => ({
   default: () => {
     h.optionalAttempts.push("week");
@@ -520,7 +522,7 @@ describe("RunSummary — the week's runs are counted once", () => {
       weekday: "long",
     });
     expect(
-      await screen.findByText(new RegExp(`^Next run: .* — ${weekday}$`))
+      await screen.findByText(new RegExp(`^Next run: .* · ${weekday}$`))
     ).toBeInTheDocument();
   });
 
@@ -1745,7 +1747,10 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
 /* Run29: your top three on the finish, under the reward, from the runs
    saved before this one. Only a run that placed shows the list. */
 describe("RunSummary — your top three", () => {
+  /** A trace begun an hour ago: runs are ranked by when they started, so
+   *  the earlier runs below are before it. */
   function trace(n: number, dtSec: number) {
+    const start = Date.now() - 3_600_000;
     return Array.from({ length: n }, (_, i) => ({
       lat: 51.5 + i * 0.001,
       lon: 0,
@@ -1754,11 +1759,11 @@ describe("RunSummary — your top three", () => {
       altitude: null,
       accuracy: 5,
       speed: null,
-      timestamp: 1_700_000_000_000 + i * dtSec * 1000,
+      timestamp: start + i * dtSec * 1000,
     }));
   }
   /** Earlier outdoor runs, each with a 1K effort of the seconds given. */
-  function seedOneKs(times: number[]) {
+  function seedOneKs(times: number[], distance = 3000) {
     seedFirestore(
       Object.fromEntries(
         times.map((time, i) => [
@@ -1767,8 +1772,8 @@ describe("RunSummary — your top three", () => {
             completedAt: Timestamp.fromMillis(
               Date.now() - (i + 2) * 86_400_000
             ),
-            distance: 3000,
-            duration: 900,
+            distance,
+            duration: distance * 0.3,
             avgPace: 300,
             activityType: "freerun",
             isInvalid: false,
@@ -1814,6 +1819,21 @@ describe("RunSummary — your top three", () => {
     expect(row.textContent).toContain("3rd fastest");
     expect(row.textContent).toContain("1K");
     expect(row.textContent).toContain("4:30");
+    expect(row.textContent).toContain("best 4:10");
+  });
+
+  it("says one sentence under a reward: the hero's, with the card's rows", async () => {
+    // Three shorter runs before it: this one is the longest yet, the
+    // hero's reward, and its 1K is the 3rd fastest.
+    seedOneKs([250, 260, 300], 1000);
+    renderAndSave();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    const list = await screen.findByRole("region", { name: "Your top three" });
+    expect(screen.getByText(/your longest run yet/)).toBeInTheDocument();
+    expect(list.textContent).not.toContain("your 3rd fastest.");
+    expect(list.querySelector("p")).toBeNull();
+    const row = within(list).getByRole("listitem");
+    expect(row.textContent).toContain("3rd fastest");
     expect(row.textContent).toContain("best 4:10");
   });
 

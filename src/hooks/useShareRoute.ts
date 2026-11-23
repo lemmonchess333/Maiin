@@ -29,7 +29,9 @@ export function useShareRoute() {
       }
       const safe = resolveShareRoute(points, zones);
       if (!safe) {
-        toast.error("That route is inside a privacy zone — nothing to share");
+        toast.error(
+          "That route is inside a privacy zone, so there’s nothing to share"
+        );
         return;
       }
       announceRouteShare(await shareRoute(name, safe));

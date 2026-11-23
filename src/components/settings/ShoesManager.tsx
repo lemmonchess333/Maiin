@@ -114,7 +114,7 @@ export default function ShoesManager() {
       toast.success(
         totalRuns > 0
           ? `Recalculated mileage from ${totalRuns} run${totalRuns === 1 ? "" : "s"}.`
-          : "No runs yet — nothing to recalculate."
+          : "No runs yet, so nothing to recalculate."
       );
     } catch (err) {
       logger.error("[ShoesManager] reconcileMileageFromRuns failed", err);

@@ -68,9 +68,7 @@ describe("RacePredictionsCard", () => {
     expect(
       screen.getByText(/from a race or time trial you ran/)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/independent of the selected range/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/^As of today\.$/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Update" })).toHaveAttribute(
       "href",
       "/settings/run-plan"

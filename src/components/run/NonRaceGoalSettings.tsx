@@ -22,7 +22,7 @@ export default function NonRaceGoalSettings({
           <label htmlFor={selectId}>Weekly running goal</label>
         </SectionHeading>
         <p className="mt-1 text-xs text-muted-foreground">
-          Runs count from Monday to Sunday. Nothing is planned for you.
+          Runs count from Monday to Sunday.
         </p>
       </div>
       <Select

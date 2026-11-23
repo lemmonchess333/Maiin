@@ -73,7 +73,7 @@ export function BadgeEarnedContent({
         aria-label={
           revealed
             ? `Badge earned: ${badge.name}`
-            : `New ${badge.tier} badge — tap the seal to break it open`
+            : `New ${badge.tier} badge. Tap the seal to open it`
         }
         initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

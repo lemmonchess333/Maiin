@@ -42,6 +42,14 @@ real kill, and a sandbox purchase from the offer.
       asks the agreement again, I agree opens the review, and its email
       switch is off (asked afresh). Signing in from the welcome instead, or
       leaving the answers two days, leaves none of them for the next setup.
+- [ ] **The agreement lapses with the app left open.** Signed out, answer
+      setup to the review, tap I agree, then press the Home button (do not
+      kill the app) and lock the phone for over two hours. Unlock and go
+      back to Tropos. Passing: setup shows "Your health details" again in
+      place of the review, and I agree returns to the review with every
+      answer kept. This rests on iOS telling the web view it went to the
+      background (`visibilitychange` in `setupSave.ts`); under ten minutes
+      away, the review is still there.
 - [ ] **The trial from the offer, in sandbox.** With a sandbox Apple ID,
       finish setup to the trial offer. Passing: the yearly plan and its App
       Store price show, with "7 days free, then …" under Start free trial;
@@ -60,11 +68,14 @@ real kill, and a sandbox purchase from the offer.
 
 A run's 1K, 5K and 10K placed 1st to 3rd among your own times show on the
 run finish ("Your top three"), on the run's page and under Bests' Fastest
-rows (`runPlacings.ts`). The run's page shows the place the run took on its
-day, among the runs before it, as its finish said; Bests shows today's top
-three. So the two can differ: a run its page calls "Your 2nd best" can sit
-4th on Bests once two faster runs follow it, by design. The unit tests
-and the capture rig drive the web build.
+rows (`runPlacings.ts`). Runs are ordered by when they started. The run's
+page shows the place the run holds among the runs that started before it,
+as those runs are now: a run deleted since, or one saved since that
+started earlier, moves it, so it need not be what the finish showed.
+Bests shows today's top three, so the page and Bests can differ: a run its
+page calls "Your 2nd best" can sit 4th on Bests once two faster runs
+follow it, by design. The unit tests and the capture rig drive the web
+build.
 
 - [ ] **The finish on a phone.** Finish an outdoor run that places 2nd or
       3rd at 1K, 5K or 10K. Passing: under the hero, "Your top three" with

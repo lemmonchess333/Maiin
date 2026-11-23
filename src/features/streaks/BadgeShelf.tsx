@@ -106,10 +106,10 @@ export default function BadgeShelf({
 
       {showAll ? (
         <SectionErrorBoundary sectionName="profile-badges">
-          {/* The page says it shows your profile as other people see it.
-              This part is the exception, so it says so. */}
+          {/* The whole collection is shown to its owner only: others see the
+              earned shelf. */}
           <p className="text-small text-muted-foreground">
-            Only you see this. Other people see the badges you have earned.
+            Others see only the badges you’ve earned.
           </p>
           <Suspense fallback={<Skeleton className="h-40 w-full rounded-2xl" />}>
             <BadgeGrid />

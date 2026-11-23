@@ -683,9 +683,9 @@ export function getRaceGoalPlannerState(
        make (the internal `finish_safely` state keys are unchanged;
        renaming persisted vocabulary buys no user value). */
     statusDescription = far
-      ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
+      ? `${far} Tropos can create a mostly-easy plan: easy running only, no quality sessions.`
       : // Run24 (7): the honest sentence and the alternatives first.
-        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan — easy running only, no quality sessions.${hasLong ? ` The longest run before race week is ${longest}.` : ""}`;
+        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan: easy running only, no quality sessions.${hasLong ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 
@@ -782,7 +782,7 @@ export function raceTargetVerdict(input: {
     band === "long_shot"
       ? " Training paces stay on your current fitness until the gap closes."
       : "";
-  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)} ${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)} ${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)}, a Tropos estimate, not a promise).${holdNote}`;
   return {
     band,
     goalPaceS,

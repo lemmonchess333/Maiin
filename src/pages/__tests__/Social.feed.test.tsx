@@ -200,9 +200,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
   it("the link says Following, Bea's other post loses its link, and the line counts the follow", async () => {
     renderSocial("/social?tab=feed&feed=explore");
     await waitFor(() => expect(followLinks()).toHaveLength(2));
-    expect(
-      screen.getByText(/^Sessions people shared publicly/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/^Sessions shared publicly/)).toBeInTheDocument();
     expect(youFollow()).toBeUndefined();
     // Each post's card, found from its Follow link (newest first).
     const [first, second] = followLinks().map((link) =>
@@ -220,7 +218,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
     expect(followLinks()).toHaveLength(0);
     expect(readDoc("following/me/users/bea")).toBeDefined();
     expect(readDoc("followers/bea/users/me")).toBeDefined();
-    expect(screen.queryByText(/^Sessions people shared publicly/)).toBeNull();
+    expect(screen.queryByText(/^Sessions shared publicly/)).toBeNull();
   });
 });
 

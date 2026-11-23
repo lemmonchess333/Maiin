@@ -36,7 +36,7 @@ export function recalibrationCheckIn(input: {
       tipKey: `recal-return-w${week}`,
       title: "Does your plan still fit?",
       description:
-        "You’ve been away a bit — recheck your training days and goal so your plan matches where you are now.",
+        "You’ve been away a while. Check your training days and goal.",
     };
   }
 
@@ -44,8 +44,7 @@ export function recalibrationCheckIn(input: {
     return {
       tipKey: `recal-block-w${week}`,
       title: "Still on track?",
-      description:
-        "A few weeks in — still chasing the same goal and training days? Tune your plan if anything’s changed.",
+      description: "A few weeks in. Same goal and training days?",
     };
   }
 

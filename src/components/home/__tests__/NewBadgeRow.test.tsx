@@ -8,9 +8,9 @@ import NewBadgeRow from "../NewBadgeRow";
 describe("NewBadgeRow", () => {
   it("names the waiting badge and opens it when tapped", () => {
     const onOpen = vi.fn();
-    render(<NewBadgeRow name="Getting Started" onOpen={onOpen} />);
+    render(<NewBadgeRow name="3 days in a row" onOpen={onOpen} />);
     const row = screen.getByRole("button", {
-      name: /New badge\s*Getting Started/,
+      name: /New badge\s*3 days in a row/,
     });
     fireEvent.click(row);
     expect(onOpen).toHaveBeenCalledOnce();

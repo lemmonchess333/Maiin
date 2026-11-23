@@ -721,11 +721,19 @@ describe("at the finish, a bodyweight lift follows the load added (Pgm8 L6)", ()
 
   it("the rep climb's prompt to add load goes once the plan carries some", () => {
     const prompt =
-      "Hitting 10+ reps — add load (weighted vest / band) to keep progressing.";
+      "Hitting 10+ reps. Add load (a weighted vest or band) to keep progressing.";
+    // A plan saved before the prompt lost its dash says it the old way.
+    const legacy =
+      "Hitting 10+ reps \u2014 add load (weighted vest / band) to keep progressing.";
+    for (const notes of [prompt, legacy]) {
+      const loaded = finish(
+        stateWith(pullUps({ reps: 10, notes })),
+        three(5, 8)
+      );
+      expect(loaded.weight).toBe(5);
+      expect(loaded.notes).toBeUndefined();
+    }
     const atTop = pullUps({ reps: 10, notes: prompt });
-    const loaded = finish(stateWith(atTop), three(5, 8));
-    expect(loaded.weight).toBe(5);
-    expect(loaded.notes).toBeUndefined();
     // Any other note stays, and so does the prompt while there is no load.
     const swapped = "Swapped from Lat Pulldown (shoulder limitation)";
     expect(

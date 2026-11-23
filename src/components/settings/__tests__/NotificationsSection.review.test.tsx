@@ -103,9 +103,7 @@ describe("NotificationsSection — the weekly review", () => {
   it("has its own switch, on once notifications are allowed, saying when it comes", async () => {
     renderSection({ enabled: true });
     expect(screen.getByText("Weekly review")).toBeInTheDocument();
-    expect(
-      screen.getByText("Monday at 09:00, when last week’s review is ready")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Monday at 09:00")).toBeInTheDocument();
     await waitFor(() => expect(reviewSwitch()).toBeChecked());
   });
 

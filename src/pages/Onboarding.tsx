@@ -164,14 +164,18 @@ import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
+  forgetSetupSent,
   noteSetupSent,
   noteSignedOutAgreement,
+  onSignedOutAgreementLapsed,
   setupSentThisVisitFor,
   signedOutAgreementThisVisit,
   cancelSetupSave,
   finishSetupSave,
   keepExistingPlan,
   readSetupSave,
+  refusedBeforeWriting,
+  refusedForExistingPlan,
   startSetupSave,
 } from "@/lib/setupSave";
 import { pathAfterSetup } from "@/lib/trialOffer";
@@ -206,10 +210,7 @@ const STEP_META = [
     "What would you like to work towards?",
     "Choose the focus for your training plan.",
   ],
-  [
-    "Find your starting rhythm",
-    "Choose the training you want in your week. You can change this later.",
-  ],
+  ["Find your starting rhythm", "Choose the training you want in your week."],
   [LIFT_KIT_QUESTION.title, LIFT_KIT_QUESTION.hint],
   ["How does running fit in?", "Keep runs flexible, or work towards a race."],
   [LIFT_LIMITS_QUESTION.title, LIFT_LIMITS_QUESTION.hint],
@@ -218,10 +219,7 @@ const STEP_META = [
     "These set your nutrition targets and your initial loads.",
   ],
   ["Review your plan", "Check your answers before creating your plan."],
-  [
-    "Your plan",
-    "Your first week, built from your answers. Change anything before you start.",
-  ],
+  ["Your plan", "Your first week, built from your answers."],
   [HEALTH_CONSENT_COPY.title, HEALTH_CONSENT_COPY.stored],
 ];
 const GOALS = [
@@ -241,7 +239,7 @@ const GOALS = [
     id: "fat_loss",
     label: goalLabel("fat_loss"),
     desc: "Lifting to support your goal. Set nutrition separately.",
-    art: { kind: "muscles", category: "Full Body" },
+    art: { kind: "exercise", id: "kettlebell-swing" },
   },
   {
     id: "general",
@@ -253,7 +251,7 @@ const GOALS = [
     id: "running",
     label: goalLabel("running"),
     desc: "Free running or a race goal, with optional lifting alongside it.",
-    art: { kind: "route", distance: 2 },
+    art: { kind: "run", pose: "run-easy" },
   },
 ] as const;
 
@@ -1073,6 +1071,28 @@ export default function Onboarding() {
     setStepMove(-1);
     setSaveView(false);
   };
+  /* Signed out, the agreement lapses after two hours in the background or
+     two days from I agree (`setupSave.ts`). Setup on screen then forgets it
+     and asks again, as it does for answers picked up cold: past the
+     agreement, it opens on it, and from the review I agree returns there. */
+  const askAgreementAgain = () => {
+    setHealthConsentVersion(undefined);
+    if (flow.indexOf(step) <= flow.indexOf(HEALTH_CONSENT_STEP)) return;
+    setSaveView(false);
+    setSaveError("");
+    setConsentDeclined(false);
+    setReturnToReview(step === 7);
+    setStepMove(0);
+    setStep(HEALTH_CONSENT_STEP);
+  };
+  const agreementLapsedRef = useRef(askAgreementAgain);
+  useEffect(() => {
+    agreementLapsedRef.current = askAgreementAgain;
+  });
+  useEffect(() => {
+    if (user) return;
+    return onSignedOutAgreementLapsed(() => agreementLapsedRef.current());
+  }, [user]);
   /* Leave setup from Not now at the agreement, before there is an account:
      the answers given so far are forgotten. */
   const leaveSetup = () => {
@@ -1107,7 +1127,8 @@ export default function Onboarding() {
     }
     if (step === 7) {
       if (user) void handleFinish();
-      else openSaveView();
+      // A lapsed agreement is asked for again, in place of Save your plan.
+      else if (signedOutAgreementThisVisit()) openSaveView();
       return;
     }
     setStepMove(1);
@@ -1121,25 +1142,31 @@ export default function Onboarding() {
     const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
     setSaveError("");
+    /* An account that has a plan keeps it, and the answers here are
+       dropped. */
+    const keepPlan = async () => {
+      onboardingCompletedRef.current = true;
+      clearOnboardingDraft(user.uid);
+      keepExistingPlan();
+      toast.success(KEPT_PLAN_NOTICE);
+      navigate("/", { replace: true });
+      await refreshProfile();
+    };
     try {
       /* Finishing setup replaces the programme, so it never runs over a
-         plan (A6). The profile this screen holds can be a copy from before
-         the account had one, made on another phone or kept in this one's
-         cache, so the account is read from the server first. One that has
-         a plan keeps it, and the answers here are dropped. */
+         plan (A6), and `completeOnboarding` refuses one. The profile this
+         screen holds can be a copy from before the account had one, made on
+         another phone or kept in this one's cache, so the account is read
+         from the server first. */
       /* Once this open of the app has asked for the plan, a plan on the
          account is that one, its answer lost on the way back: Try again
-         builds it again, as before, and nothing reads as kept. */
-      const stored = setupSentThisVisitFor(user.uid)
+         carries on as if the answer had come, and nothing reads as kept. */
+      const sentBefore = setupSentThisVisitFor(user.uid);
+      const stored = sentBefore
         ? null
         : await getDocFromServer(doc(db, "users", user.uid));
       if (stored?.data()?.onboardingComplete === true) {
-        onboardingCompletedRef.current = true;
-        clearOnboardingDraft(user.uid);
-        keepExistingPlan();
-        toast.success(KEPT_PLAN_NOTICE);
-        navigate("/", { replace: true });
-        await refreshProfile();
+        await keepPlan();
         return;
       }
       // The answers are this account's now; nothing waits for another.
@@ -1304,30 +1331,54 @@ export default function Onboarding() {
               }
             : {}),
         });
+      /* "kept" when the server found a plan on the account that this open
+         of the app did not ask for: another phone's, which stays. One a
+         call from this open asked for (a Try again, or the retry below
+         after a timeout) is the plan that call built, its answer lost. */
+      const sendPlan = async (): Promise<"built" | "kept"> => {
+        try {
+          await callCF();
+          return "built";
+        } catch (err) {
+          if (refusedForExistingPlan(err)) return sentBefore ? "built" : "kept";
+          const code = (err as { code?: string })?.code;
+          const msg = (err as { message?: string })?.message || "";
+          // The CF has no minInstances, so the first call after idle
+          // cold-starts and can exceed the client SDK's wait window. That
+          // surfaces as `internal`, but ALSO as `deadline-exceeded` /
+          // `unavailable` depending on where the timeout bites — all three
+          // are transient cold-start signals a warm retry fixes. (The old
+          // check only caught `internal`, so a cold start that timed out as
+          // deadline-exceeded fell straight through to the error toast.)
+          const isTransient =
+            code === "functions/internal" ||
+            code === "internal" ||
+            code === "functions/deadline-exceeded" ||
+            code === "deadline-exceeded" ||
+            code === "functions/unavailable" ||
+            code === "unavailable" ||
+            msg.toUpperCase().includes("INTERNAL");
+          if (!isTransient) {
+            // Refused with nothing written, and no earlier ask from this
+            // open whose answer was lost: this open has built no plan, so a
+            // plan on the account at Try again is another phone's.
+            if (!sentBefore && refusedBeforeWriting(err))
+              forgetSetupSent(user.uid);
+            throw err;
+          }
+          await new Promise((r) => setTimeout(r, 1200));
+          try {
+            await callCF();
+          } catch (retryErr) {
+            if (!refusedForExistingPlan(retryErr)) throw retryErr;
+          }
+          return "built";
+        }
+      };
       noteSetupSent(user.uid);
-      try {
-        await callCF();
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        const msg = (err as { message?: string })?.message || "";
-        // The CF has no minInstances, so the first call after idle
-        // cold-starts and can exceed the client SDK's wait window. That
-        // surfaces as `internal`, but ALSO as `deadline-exceeded` /
-        // `unavailable` depending on where the timeout bites — all three
-        // are transient cold-start signals a warm retry fixes. (The old
-        // check only caught `internal`, so a cold start that timed out as
-        // deadline-exceeded fell straight through to the error toast.)
-        const isTransient =
-          code === "functions/internal" ||
-          code === "internal" ||
-          code === "functions/deadline-exceeded" ||
-          code === "deadline-exceeded" ||
-          code === "functions/unavailable" ||
-          code === "unavailable" ||
-          msg.toUpperCase().includes("INTERNAL");
-        if (!isTransient) throw err;
-        await new Promise((r) => setTimeout(r, 1200));
-        await callCF();
+      if ((await sendPlan()) === "kept") {
+        await keepPlan();
+        return;
       }
 
       onboardingCompletedRef.current = true;
@@ -1693,11 +1744,7 @@ export default function Onboarding() {
                   }
                 />
               ))}
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                {goalConfirmed
-                  ? "This sets your training focus. You can add a goal weight when you get to About you."
-                  : "Choose one to continue. You can revisit it before creating your plan."}
-              </p>
+
               <NewAccountMethodNote
                 method={signInMethodOf(user?.providerData?.[0]?.providerId)}
                 email={user?.email ?? null}
@@ -1735,8 +1782,8 @@ export default function Onboarding() {
               )}
               <p className="text-sm text-muted-foreground">
                 {hasLifting
-                  ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
-                  : "No lifts will be scheduled. Next, choose free running, 30 minutes without stopping, or a race."}
+                  ? "The draft below follows your choices."
+                  : "No lifts will be scheduled."}
               </p>
               {hasLifting && (
                 <WeekPreview
@@ -2465,8 +2512,7 @@ export default function Onboarding() {
                 (profile?.runTimeLimits?.sessionMinutes ||
                   profile?.runTimeLimits?.longRunMinutes) && (
                   <p className="text-sm text-muted-foreground">
-                    This plan uses your saved running time limits. You can
-                    change them in Run plan settings.
+                    This plan uses your saved running time limits.
                   </p>
                 )}
 
@@ -2578,8 +2624,7 @@ export default function Onboarding() {
                   id="onboarding-name-note"
                   className="text-sm text-muted-foreground"
                 >
-                  Other people can see this name on your profile. You can change
-                  it later.
+                  Other people see this name on your profile.
                 </p>
                 {nameMessage && (
                   <p
@@ -2655,11 +2700,9 @@ export default function Onboarding() {
       ) : (
         !declinedHere && (
           <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-            {step === 7 && (
+            {step === 7 && !user && (
               <p className="text-sm text-muted-foreground">
-                {user
-                  ? "Today shows your plan and what to do next. Start when you’re ready."
-                  : "Next, save your plan to an account."}
+                Next, save your plan to an account.
               </p>
             )}
             <div className="flex gap-3 @max-[15em]:flex-col-reverse">

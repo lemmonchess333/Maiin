@@ -1,6 +1,6 @@
 /**
- * History's Lifetime footer is three PEER tiles, and they must state their
- * unit in one place.
+ * History's Lifetime footer is three PEER figures on one line, and they
+ * must state their unit in one place.
  *
  * They did not. The runs tile pushed `km` down into its caption ("km · 1
  * runs") while the lifting tile beside it carried `kg` inline on the
@@ -61,8 +61,8 @@ function lifetimeSection(): string {
   return stripComments(historyRaw.slice(start, end));
 }
 
-describe("History — Lifetime tiles", () => {
-  it("has three tiles, each with its unit on the figure", () => {
+describe("History — Lifetime figures", () => {
+  it("has three figures, each with its unit on the figure", () => {
     const section = lifetimeSection();
 
     // Anchors the count, so a fourth tile added without a unit fails here
@@ -73,16 +73,16 @@ describe("History — Lifetime tiles", () => {
     const units = section.match(/<span className="text-xs font-medium/g);
     expect(
       units?.length,
-      "every lifetime figure carries its unit inline — one span per tile"
+      "every lifetime figure carries its unit inline, one span per figure"
     ).toBe(3);
   });
 
   it("keeps no unit in the caption line", () => {
     const section = lifetimeSection();
-    // The captions are the `text-caption` paragraphs. None may open on a
+    // The captions are the `text-caption` lines under each figure. None may open on a
     // unit token; that is the exact shape the runs tile had.
     const captions = [
-      ...section.matchAll(/className="text-caption[^"]*"\s*>([\s\S]*?)<\/p>/g),
+      ...section.matchAll(/className="text-caption[^"]*"\s*>([\s\S]*?)<\/dd>/g),
     ].map((m) => m[1].trim());
     expect(captions.length, "expected three lifetime captions").toBe(3);
     for (const caption of captions) {

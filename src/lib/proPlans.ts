@@ -207,7 +207,7 @@ export function yearlySavingPercent(plans: readonly ProPlan[]): number | null {
  *  "Start Pro — £39.99/yr". */
 export function getCheckoutCtaLabel(plan: ProPlan, withTrial = false): string {
   if (withTrial) return `Start your ${TRIAL_DAYS}-day free trial`;
-  return `Start Pro — ${plan.price}/${plan.shortPeriod}`;
+  return `Start Pro · ${plan.price}/${plan.shortPeriod}`;
 }
 
 /**

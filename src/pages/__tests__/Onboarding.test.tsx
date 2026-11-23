@@ -177,10 +177,8 @@ describe("onboarding chapters and commit", () => {
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     open();
     expect(
-      screen.getByText(
-        "Today shows your plan and what to do next. Start when you’re ready."
-      )
-    ).toBeInTheDocument();
+      screen.queryByText("Next, save your plan to an account.")
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit lift sessions" }));
     fireEvent.click(screen.getByRole("radio", { name: "5" }));
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
@@ -494,10 +492,8 @@ describe("activity-relevant setup", () => {
       screen.queryByRole("region", { name: "First lift preview" })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Today shows your plan and what to do next. Start when you’re ready."
-      )
-    ).toBeInTheDocument();
+      screen.queryByText("Next, save your plan to an account.")
+    ).not.toBeInTheDocument();
     const openWeek = screen.getByRole("region", { name: "Your week shape" });
     expect(openWeek).toHaveTextContent("Free running");
     expect(openWeek).not.toHaveTextContent("0 lifts");
@@ -1585,9 +1581,16 @@ describe("choices with drawings", () => {
     open();
     expect(artOf("Build muscle").img).toMatch(/\/form-art\/db-curl\.webp$/);
     expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
-    expect(artOf("Lose fat").kind).toBe("muscles");
+    // Every goal is a drawn figure: a swing for fat loss, the run card's
+    // runner for running.
+    expect(artOf("Lose fat").img).toMatch(
+      /\/form-art\/kettlebell-swing\.webp$/
+    );
     expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
-    expect(artOf("Support my running").kind).toBe("route");
+    expect(artOf("Support my running").kind).toBe("run");
+    expect(artOf("Support my running").img).toMatch(
+      /\/form-art\/run-easy\.webp$/
+    );
   });
 
   it("draws the kit each setup means, and experience as a level", () => {
