@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import {
+  CARD_ART_FILES,
   RETIRED_WORKER_PATHS,
   RETIRED_WORKER_SOURCE,
   WEBSITE_HTML,
@@ -91,8 +92,9 @@ describe("websiteEntryPlugin", () => {
       expect(emitted.get(path), path).toBe(worker);
     }
     // The app's own files stay with the app: of its picture folders, only
-    // the few drawings the website's pages draw (`WEBSITE_PUBLIC_ART`).
-    const art = new Set<string>(WEBSITE_PUBLIC_ART);
+    // the few drawings the website's pages draw (`WEBSITE_PUBLIC_ART`)
+    // and the exercise cut-outs a shared card's page draws (Soc17).
+    const art = new Set<string>([...WEBSITE_PUBLIC_ART, ...CARD_ART_FILES]);
     for (const name of emitted.keys()) {
       if (art.has(name)) continue;
       expect(name).not.toMatch(
@@ -100,6 +102,11 @@ describe("websiteEntryPlugin", () => {
       );
     }
     expect(WEBSITE_PUBLIC_ART.length).toBeLessThan(30);
+    // Each cut-out once, and none of the form guide's motion frames.
+    for (const file of CARD_ART_FILES) {
+      expect(emitted.has(file), file).toBe(true);
+      expect(file).toMatch(/^form-art\/[a-z0-9-]+\.webp$/);
+    }
     expect([...emitted.keys()].sort()).toEqual(
       [
         WEBSITE_OUTPUT,

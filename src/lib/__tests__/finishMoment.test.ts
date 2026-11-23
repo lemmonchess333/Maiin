@@ -237,6 +237,99 @@ describe("rewardLine: you, what you did, the number and its comparison (house vo
   });
 });
 
+/* Owner, 22 November 2026: a shared card is read by anyone, so its
+   sentence drops the "you" and reads the same to whoever sees it. The
+   finish screen keeps "You". */
+describe("rewardLine on a share card: the same fact, naming no one", () => {
+  const card: RewardLineContext = { ...kg, voice: "card" };
+
+  it("starts a best on its verb, capitalised", () => {
+    expect(
+      text(
+        rewardLine(pr("Barbell Row", 35, 8), {
+          ...card,
+          prBefore: { weightKg: 32.5, reps: 8 },
+        })
+      )
+    ).toBe("Rowed 35 kg × 8, a new best by 2.5 kg.");
+    for (const [exercise, verb] of [
+      ["Dumbbell Curl", "Curled"],
+      ["Back Squat", "Squatted"],
+      ["Deadlift", "Deadlifted"],
+      ["Bench Press", "Benched"],
+      ["Overhead Press", "Lifted"],
+    ])
+      expect(text(rewardLine(pr(exercise, 40, 8), card))).toMatch(
+        new RegExp(`^${verb} 40 kg × 8`)
+      );
+    expect(text(rewardLine(pr("Leg Press", 120, 10), card))).toBe(
+      "Lifted 120 kg × 10 on Leg Press, a new best."
+    );
+  });
+
+  it("words a run's bests as a lift's are, without your", () => {
+    expect(
+      text(
+        rewardLine(
+          { kind: "fastestEffort", meters: 5000, seconds: 1450 },
+          { ...card, fastestBefore: 1482 }
+        )
+      )
+    ).toBe("Ran 5K in 24:10, a new best by 0:32.");
+    expect(
+      text(
+        rewardLine({ kind: "fastestEffort", meters: 1000, seconds: 290 }, card)
+      )
+    ).toBe("Ran 1K in 4:50, a new best.");
+    expect(text(rewardLine({ kind: "longestRun", meters: 12400 }, card))).toBe(
+      "Ran 12.4 km, the longest run yet."
+    );
+    expect(
+      text(rewardLine({ kind: "firstDistance", meters: 10000 }, card))
+    ).toBe("First 10K done!");
+  });
+
+  it("says a first, a streak and a plan without you", () => {
+    expect(
+      text(rewardLine({ kind: "firstSession" }, { ...card, sport: "lift" }))
+    ).toBe("First workout done!");
+    expect(
+      text(rewardLine({ kind: "firstSession" }, { ...card, sport: "run" }))
+    ).toBe("First run done!");
+    expect(text(rewardLine({ kind: "streak", days: 7 }, card))).toBe(
+      "Trained 7 days in a row. 14 is next."
+    );
+    expect(
+      text(rewardLine({ kind: "planWeek", week: 3, weeks: 8 }, card))
+    ).toBe("Finished week 3 of 8.");
+    expect(text(rewardLine({ kind: "planComplete" }, card))).toBe(
+      "Finished the last week of the plan."
+    );
+  });
+
+  it("never says you or your, and keeps the figure the screen draws", () => {
+    const moments: PostMoment[] = [
+      pr("Barbell Row", 35, 8),
+      { kind: "longestRun", meters: 12400 },
+      { kind: "firstDistance", meters: 5000 },
+      { kind: "fastestEffort", meters: 10000, seconds: 3000 },
+      { kind: "streak", days: 30 },
+      { kind: "planWeek", week: 2, weeks: 6 },
+      { kind: "planComplete" },
+      { kind: "firstSession" },
+    ];
+    for (const moment of moments) {
+      const words = text(rewardLine(moment, card));
+      expect(words).not.toMatch(/\byou(r|’ve|'ve)?\b/i);
+      expect(words.charAt(0)).toBe(words.charAt(0).toUpperCase());
+      expect(words.split("!").length - 1).toBeLessThanOrEqual(1);
+      expect(rewardLine(moment, card).figure.toLowerCase()).toBe(
+        rewardLine(moment, kg).figure.toLowerCase()
+      );
+    }
+  });
+});
+
 describe("summaryLine: a routine session's one quiet line", () => {
   it("says a plan's week done with its number", () => {
     expect(summaryLine([{ kind: "planWeek", week: 3, weeks: 8 }])).toBe(

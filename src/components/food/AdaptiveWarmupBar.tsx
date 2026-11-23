@@ -39,11 +39,11 @@ export default function AdaptiveWarmupBar({
       </div>
       <div
         className="h-1 rounded-full overflow-hidden"
-        style={{ background: `${THEME.brand}1F` }}
+        style={{ background: "hsl(var(--nutrition) / 0.12)" }}
       >
         <div
           className="h-full rounded-full motion-safe:transition-[width] motion-safe:duration-500"
-          style={{ width: `${pct}%`, background: THEME.brand }}
+          style={{ width: `${pct}%`, background: THEME.semantic.nutrition }}
         />
       </div>
       {stalled && (

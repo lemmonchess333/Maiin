@@ -59,7 +59,7 @@ export default function YearRecapRow() {
             aria-hidden="true"
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-lifting/12"
           >
-            <Sparkles className="size-4 text-lifting-strong" />
+            <Sparkles className="size-4 text-foreground" />
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-xs font-medium text-muted-foreground">

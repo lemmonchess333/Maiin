@@ -544,7 +544,7 @@ describe("RunPlanSettings", () => {
     expect(distance).toHaveAccessibleDescription(/^42\.2 km · \d+\+ weeks$/);
   });
 
-  it("draws the plan's two knobs in the running colour", () => {
+  it("draws the plan's two knobs in the one neutral selected state (DS10)", () => {
     renderPage(baseProfile);
     pickRacePrep();
     for (const name of ["Long-run volume", "Plan intensity"]) {
@@ -553,7 +553,7 @@ describe("RunPlanSettings", () => {
         group.querySelectorAll('[aria-checked="true"]')
       );
       expect(selected).toHaveLength(1);
-      expect(selected[0].className, name).toContain("bg-running-fill");
+      expect(selected[0].className, name).toContain("bg-segment-selected");
     }
   });
 

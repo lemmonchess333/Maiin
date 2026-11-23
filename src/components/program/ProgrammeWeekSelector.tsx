@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { runStripLines } from "@/lib/runProgrammeViewModel";
 
@@ -92,26 +91,16 @@ export default function ProgrammeWeekSelector({
   const runTwoLines =
     sport === "run" &&
     cells.some((cell) => runStripLines(cell.bottomLabel).length > 1);
-  // Sport colour drives the today/selected circle — purple for lifting,
-  // coral for running — so the selector reads as belonging to its tab.
-  const SPORT = sport === "run" ? THEME.running : THEME.brand;
-  /* The identity fills the dot and draws its ring; words take the AA
-     text step, which the bare identity misses on the page canvas. */
-  const SPORT_TEXT =
-    sport === "run"
-      ? "hsl(var(--running-strong))"
-      : "hsl(var(--lifting-strong))";
-  /* A done day is filled with its sport at 30%, the way Home's week strip
-     fills a logged day (DS3), not the success green: the strips read as
-     one control, and green is kept for status that is not a sport. The
+  /* Today and the selected day are chrome, so they are neutral, as every
+     selected state is (DS10 call 1): a ring and a halo in the text colour
+     for today, the segmented control's grey under a white number for the
+     selected day. The sport stays in the done days' fill, which is the
+     person's data, as Home's week strip fills a logged day (DS3); the
      check takes the foreground, which reads on the tint in both themes. */
+  const MARK = "hsl(var(--foreground))";
+  const HALO = "0 0 0 4px hsl(var(--foreground) / 0.1)";
   const DONE_FILL = `hsl(var(--${sport === "run" ? "running" : "lifting"}) / 0.3)`;
-  /* The selected day's fill sits under a white number, so it takes the
-     sport's `-fill` step, as the filled buttons do: white on the bare
-     identity is 3.87:1 for purple and 3.58:1 for coral, under the 4.5:1
-     a 14px number needs. The ring and the halo keep the identity. */
-  const SELECTED_FILL =
-    sport === "run" ? "hsl(var(--running-fill))" : "hsl(var(--lifting-fill))";
+  const SELECTED_FILL = "hsl(var(--segment-selected))";
 
   /* Under 21em of row (a 320px phone) the row gives up its side inset and
      half of each gap, and a run's name sets tighter, so "Easy 30"
@@ -164,7 +153,7 @@ export default function ProgrammeWeekSelector({
             fill = DONE_FILL;
             bWidth = 0;
             bColor = "transparent";
-            glow = `0 0 0 4px ${SPORT}1A`;
+            glow = HALO;
             content = (
               <Check className="size-4 text-foreground" strokeWidth={3} />
             );
@@ -181,27 +170,27 @@ export default function ProgrammeWeekSelector({
             fill = SELECTED_FILL;
             bWidth = 0;
             bColor = "transparent";
-            glow = `0 0 0 4px ${SPORT}1A`;
+            glow = HALO;
             content = (
               <span className="text-sm font-semibold font-mono tabular-nums text-white">
                 {cell.center}
               </span>
             );
-            labelColor = SPORT_TEXT;
+            labelColor = MARK;
           } else if (isToday) {
             fill = "transparent";
             bWidth = 2;
-            bColor = SPORT;
-            glow = `0 0 0 4px ${SPORT}1A`;
+            bColor = MARK;
+            glow = HALO;
             content = (
               <span
                 className="text-sm font-semibold font-mono tabular-nums"
-                style={{ color: SPORT_TEXT }}
+                style={{ color: MARK }}
               >
                 {cell.center}
               </span>
             );
-            labelColor = SPORT_TEXT;
+            labelColor = MARK;
           } else if (isSelected) {
             fill = SELECTED_FILL;
             bWidth = 0;
@@ -211,7 +200,7 @@ export default function ProgrammeWeekSelector({
                 {cell.center}
               </span>
             );
-            labelColor = SPORT_TEXT;
+            labelColor = MARK;
           } else {
             // An upcoming day has the calm outline; a run-scope rest day has
             // none, so it reads as "nothing here" rather than "to do", as a

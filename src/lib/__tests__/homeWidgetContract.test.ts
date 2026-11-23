@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { THEME } from "@/lib/theme";
+import { MACROS_LIGHT, THEME } from "@/lib/theme";
 import { MAX_SINGLE_LOG_ML } from "@/lib/waterUnits";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { widgetUrl } from "@/lib/widgetLinks";
@@ -239,7 +239,12 @@ describe("the widgets draw in the app's words, colours and links", () => {
     expect(hex("food")).toBe(THEME.semantic.nutrition);
     expect(hex("foodDeep")).toBe(THEME.calorieRing.deep);
     expect(hex("water")).toBe(THEME.semantic.hydration);
-    expect(hex("protein")).toBe(THEME.macros.protein);
+    // Protein follows the theme, as Food's does (DS10 call 3).
+    const protein = palette.match(
+      /static let protein = Color\(light: 0x([0-9A-F]{6}), dark: 0x([0-9A-F]{6})\)/
+    );
+    expect(`#${protein?.[1]}`).toBe(MACROS_LIGHT.protein);
+    expect(`#${protein?.[2]}`).toBe(THEME.macros.protein);
     expect(hex("lifting")).toBe(THEME.lifting);
     expect(hex("running")).toBe(THEME.running);
     expect(hex("done")).toBe(THEME.success);

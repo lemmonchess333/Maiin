@@ -188,7 +188,6 @@ interface SettingsOptionCardProps {
   desc?: string;
   disabled?: boolean;
   index?: number;
-  accent?: string;
 }
 
 function SettingsOptionCard({
@@ -199,7 +198,6 @@ function SettingsOptionCard({
   desc,
   disabled,
   index = 0,
-  accent = THEME.brand,
 }: SettingsOptionCardProps) {
   // The card is a container so its picture can give way at larger text,
   // as setup's OptionCard does: under 15em the icon tile left a word like
@@ -222,21 +220,21 @@ function SettingsOptionCard({
             ? "border-transparent"
             : "border-border/70 dark:border-transparent",
           disabled && "opacity-35 pointer-events-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         )}
         style={
           selected
             ? {
                 /* The tint lies over the card, not in place of it. A bare
-                   `${accent}14` replaced `bg-card` with a wash over the
+                   tint replaced `bg-card` with a wash over the
                    PAGE, so in light the description under it (muted, 12px)
                    was 4.23:1 on #e3e2ee, and in dark the selected card sat
                    darker than its neighbours. axe caught it once Settings
                    listed this editor (Trim1 call 2). An image over the
                    class's fill, so no shorthand resets it
                    (inlineBackgroundFill.test.ts). */
-                backgroundImage: `linear-gradient(${accent}14, ${accent}14)`,
-                borderColor: `${accent}45`,
+                backgroundImage: `linear-gradient(${THEME.chrome.tint}, ${THEME.chrome.tint})`,
+                borderColor: "hsl(var(--foreground) / 0.45)",
               }
             : undefined
         }
@@ -257,18 +255,19 @@ function SettingsOptionCard({
           ) : null}
         </span>
         {selected && !disabled ? (
-          <Check className="size-4 shrink-0" style={{ color: accent }} />
+          <Check
+            className="size-4 shrink-0"
+            style={{ color: THEME.chrome.text }}
+          />
         ) : null}
       </motion.button>
     </div>
   );
 }
 
-// Each focus card gets a distinct GLYPH for scannability, but all keep the
-// purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Support my running" is lifting that
-// complements runs, NOT run scheduling). So per sport-coding, purple is
-// correct; only the icon varies. Do not recolour these to coral.
+// Each focus card gets a distinct GLYPH for scannability. The glyph and the
+// selection are the chrome's colour (DS10 call 1): a selected card is
+// neutral on every screen, and the page is the lift plan already.
 const FOCUS_OPTIONS: {
   id: PrimaryGoal;
   label: string;
@@ -279,13 +278,13 @@ const FOCUS_OPTIONS: {
     id: "hypertrophy",
     label: "Build muscle",
     desc: "Higher reps, more volume",
-    icon: <BicepsFlexed size={18} style={{ color: THEME.brand }} />,
+    icon: <BicepsFlexed size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "strength",
     label: "Get stronger",
     desc: "Lower reps, heavier compounds",
-    icon: <Dumbbell size={18} style={{ color: THEME.brand }} />,
+    icon: <Dumbbell size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "fat_loss",
@@ -294,19 +293,19 @@ const FOCUS_OPTIONS: {
     // high-rep "conditioning" work: the lifting keeps strength and muscle
     // while the calorie deficit does the fat loss (Lift4 (4)).
     desc: "Keeps your strength and muscle as you lose fat",
-    icon: <Flame size={18} style={{ color: THEME.brand }} />,
+    icon: <Flame size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "general",
     label: "General fitness",
     desc: "Balanced general training",
-    icon: <Heart size={18} style={{ color: THEME.brand }} />,
+    icon: <Heart size={18} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "running",
     label: "Support my running",
     desc: "Lifting that complements your runs",
-    icon: <Footprints size={18} style={{ color: THEME.brand }} />,
+    icon: <Footprints size={18} style={{ color: THEME.chrome.text }} />,
   },
 ];
 
@@ -320,13 +319,13 @@ const EXPERIENCE_OPTIONS: {
     id: "beginner",
     label: "Beginner",
     desc: "0 – 6 months of consistent training",
-    icon: <Target size={20} style={{ color: THEME.success }} />,
+    icon: <Target size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "intermediate",
     label: "Intermediate",
     desc: "6 months – 2 years of training",
-    icon: <Award size={20} style={{ color: THEME.brand }} />,
+    icon: <Award size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "advanced",
@@ -346,19 +345,19 @@ const EQUIPMENT_OPTIONS: {
     id: "full_gym",
     label: "Full gym",
     desc: "Barbells, dumbbells, cables, machines",
-    icon: <Warehouse size={20} className="text-lifting" />,
+    icon: <Warehouse size={20} className="text-foreground" />,
   },
   {
     id: "home_gym",
     label: "Home gym",
     desc: "Dumbbells, bench",
-    icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
+    icon: <Dumbbell size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "minimal",
     label: "Minimal",
     desc: "Dumbbells and bodyweight",
-    icon: <User size={20} style={{ color: THEME.success }} />,
+    icon: <User size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "no_equipment",
@@ -378,7 +377,7 @@ const INJURY_OPTIONS: {
     id: "none",
     label: "No injuries",
     desc: "No limitations",
-    icon: <Check size={20} style={{ color: THEME.success }} />,
+    icon: <Check size={20} style={{ color: THEME.chrome.text }} />,
   },
   {
     id: "lower_back",
@@ -916,7 +915,6 @@ export default function ProgrammeSettings({
                   onSelect={() => setPrimaryGoal(opt.id)}
                   index={i}
                   icon={opt.icon}
-                  accent={THEME.brand}
                   label={opt.label}
                   desc={opt.desc}
                 />
@@ -1052,7 +1050,7 @@ export default function ProgrammeSettings({
             <button
               type="button"
               onClick={onOpenWeeklyLayout}
-              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
+              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-foreground transition-transform active:scale-[0.97]"
             >
               Edit days &rarr;
             </button>

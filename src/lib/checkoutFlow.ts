@@ -66,7 +66,9 @@ export const SIGN_IN_MESSAGE = "Sign in to start Pro.";
 /** What a paywall says while the store has the purchase and Pro is not on.
  *  Each names what the person is waiting for, and neither asks them to buy
  *  again. */
-const PENDING_MESSAGE: Record<PurchasePending, string> = {
+/** What a paywall says while a purchase waits on the store; a screen that
+ *  leaves at once (the trial offer, A6) says it as a toast. */
+export const PENDING_MESSAGE: Record<PurchasePending, string> = {
   approval:
     "Your purchase is waiting for approval. Pro switches on once it’s approved.",
   entitlement:

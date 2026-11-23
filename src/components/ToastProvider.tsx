@@ -114,8 +114,8 @@ export function ToastProvider() {
         }
         /* Action button — sonner’s default is an unstyled near-black pill
            that reads as a third-party artefact (the "Refresh" button on the
-           update toast). Restyle to the app’s primary CTA language:
-           brand-strong fill (the AA text-on-colour step), pill radius,
+           update toast). Restyle to the app’s filled button: the text
+           colour filled with the page's colour on it, pill radius,
            semibold. 36px matches the Button primitive’s sm size (the
            sanctioned inline-control height). */
         [data-sonner-toast] [data-button] {

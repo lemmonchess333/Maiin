@@ -101,7 +101,7 @@ export default function PhotoChoiceCards<T extends string>({
             className={cn(
               "photo-choice relative isolate flex overflow-hidden rounded-xl text-left",
               "motion-safe:transition-transform active:scale-[0.98]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               tall ? "min-h-[104px]" : "min-h-[88px]",
               // An odd last card takes the whole row.
               options.length % 2 === 1 && index === options.length - 1

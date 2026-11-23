@@ -301,7 +301,7 @@ function ZoneLine({ kind, count }: { kind: "up" | "down"; count: number }) {
       aria-label={label}
       className={cn(
         "flex items-center gap-2 py-1 text-xs font-semibold",
-        kind === "up" ? "text-success-strong" : "text-muted-foreground"
+        kind === "up" ? "text-foreground" : "text-muted-foreground"
       )}
     >
       {/* The rules give way before the words do: at large text on a

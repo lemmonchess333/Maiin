@@ -339,7 +339,7 @@ export default function TrainingWeeksCard({
                     pick(b);
                   }}
                   onKeyDown={(e) => onKeyDown(e, i)}
-                  className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
               ))}
             </div>

@@ -197,6 +197,9 @@ describe("onboarding chapters and commit", () => {
     const commit = screen.getByRole("button", { name: "Start my plan" });
     fireEvent.click(commit);
     fireEvent.click(commit);
+    // The account is read from the server first (A6: never over a plan).
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    fireEvent.click(commit);
     expect(complete).toHaveBeenCalledTimes(1);
     const payload = complete.mock.calls[0][0];
     expect(payload.activationJourneyVersion).toBe(2);
@@ -243,15 +246,18 @@ describe("onboarding chapters and commit", () => {
     expect(options).toEqual({ merge: true });
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        /^\/trial-offer$/
+      )
     );
     builder.mockRestore();
   });
-  /* App1 (whole-app grill Q27): setup ends on Today for every account.
-     The answer's journey version decides nothing, even one from a server
-     that still answered 1 or none for its comparison group. */
+  /* App1 (whole-app grill Q27): the answer's journey version decides
+     nothing, even one from a server that still answered 1 or none for its
+     comparison group. Setup ends on the trial offer for an account that can
+     take one (Biz1 call 3, A6). */
   it.each([1, null, undefined])(
-    "lands on Today whatever journey version the server answers (%s)",
+    "ends on the trial offer whatever journey version the server answers (%s)",
     async (activationJourneyVersion) => {
       saveOnboardingDraft("setup-test", draft);
       complete.mockResolvedValue({
@@ -261,7 +267,9 @@ describe("onboarding chapters and commit", () => {
       fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
       await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
       await waitFor(() =>
-        expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+        expect(screen.getByLabelText("Current route")).toHaveTextContent(
+          /^\/trial-offer$/
+        )
       );
     }
   );
@@ -522,7 +530,9 @@ describe("activity-relevant setup", () => {
       athleteType: "Runner",
     });
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        /^\/trial-offer$/
+      )
     );
   });
   it("restores the selected lift rhythm when changing activity from review, including reload", () => {
@@ -558,7 +568,9 @@ describe("activity-relevant setup", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        /^\/trial-offer$/
+      )
     );
   });
 });
@@ -1434,7 +1446,7 @@ describe("a recent race at setup", () => {
     fireEvent.change(field(name), { target: { value } });
   const back = () => screen.getByRole("button", { name: "Back to review" });
 
-  it("sets the plan's paces and is saved as the person's own benchmark", () => {
+  it("sets the plan's paces and is saved as the person's own benchmark", async () => {
     saveOnboardingDraft("setup-test", draft);
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     open();
@@ -1448,7 +1460,7 @@ describe("a recent race at setup", () => {
     fireEvent.click(back());
     expect(screen.getByText(/recent 10K in 48:00/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
-    expect(complete).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].profileData.runFitness).toEqual({
       benchmark: { distanceM: 10000, timeS: 2880 },
       vdot: 42,
@@ -1493,7 +1505,7 @@ describe("a recent race at setup", () => {
     expect(screen.getByText(/recent 5K in 22:30/)).toBeInTheDocument();
   });
 
-  it("isn't asked of someone new to running, and an earlier answer isn't saved", () => {
+  it("isn't asked of someone new to running, and an earlier answer isn't saved", async () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
       runFrequency: "new",
@@ -1508,7 +1520,7 @@ describe("a recent race at setup", () => {
     expect(recentRace()).toBeNull();
     fireEvent.click(back());
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
-    expect(complete).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
     const { profileData } = complete.mock.calls[0][0];
     expect(profileData.runFrequency).toBe("new");
     expect(profileData).not.toHaveProperty("runFitness");
@@ -1574,9 +1586,16 @@ describe("choices with drawings", () => {
     open();
     expect(artOf("Build muscle").img).toMatch(/\/form-art\/db-curl\.webp$/);
     expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
-    expect(artOf("Lose fat").kind).toBe("muscles");
+    // Every goal is a drawn figure: a swing for fat loss, the run card's
+    // runner for running.
+    expect(artOf("Lose fat").img).toMatch(
+      /\/form-art\/kettlebell-swing\.webp$/
+    );
     expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
-    expect(artOf("Support my running").kind).toBe("route");
+    expect(artOf("Support my running").kind).toBe("run");
+    expect(artOf("Support my running").img).toMatch(
+      /\/form-art\/run-easy\.webp$/
+    );
   });
 
   it("draws the kit each setup means, and experience as a level", () => {
@@ -2428,6 +2447,42 @@ describe("the agreement to store health details", () => {
         "Agree to Tropos storing your health details to finish setting up."
       )
     ).toBeInTheDocument();
+  });
+});
+
+/* Setup wrote `sex: "male"` for every answer but female, "Prefer not to
+   say" included, so the BMR read 166 kcal above a woman's and the first
+   weights took a man's (rankings spec, 22 November 2026). It now sends
+   `sex` only for an answer, and the maths take the midpoint without one. */
+describe("sex is stored only when answered", () => {
+  const commit = async (gender: OnboardingDraft["gender"]) => {
+    saveOnboardingDraft("setup-test", { ...draft, gender });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const sent = complete.mock.calls[0][0].profileData;
+    cleanup();
+    complete.mockClear();
+    return sent;
+  };
+
+  it("sends no `sex` for Prefer not to say, and a target between the two", async () => {
+    const none = await commit("unspecified");
+    expect(none).not.toHaveProperty("sex");
+    expect(none.gender).toBe("unspecified");
+    const male = await commit("male");
+    const female = await commit("female");
+    expect(male.sex).toBe("male");
+    expect(female.sex).toBe("female");
+    // The BMR's constant is the mean of +5 and −161, so the target sits
+    // between, within the rounding of the activity multiplier.
+    expect(none.targetCalories).toBeLessThan(male.targetCalories);
+    expect(none.targetCalories).toBeGreaterThan(female.targetCalories);
+    expect(
+      Math.abs(
+        none.targetCalories - (male.targetCalories + female.targetCalories) / 2
+      )
+    ).toBeLessThanOrEqual(1);
   });
 });
 

@@ -16,6 +16,7 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const postPhotos = require("../lib/postPhotos");
 const routeMapFiles = require("../lib/routeMapFiles");
 const socialFanout = require("../lib/socialFanout");
+const sharedCards = require("../lib/sharedCards");
 const { onActivityDeleted } = require("../index");
 
 const {
@@ -246,6 +247,7 @@ describe("onActivityDeleted — the post's photos", () => {
     vi.spyOn(postPhotos, "deletePostPhotoFiles").mockResolvedValue(
       "post-photos/author-uid/post-1/"
     );
+    vi.spyOn(sharedCards, "removeCardsShowing").mockResolvedValue(0);
   });
   afterEach(() => vi.restoreAllMocks());
 

@@ -112,7 +112,12 @@ export default function WeekPreview({
           <p className="text-sm text-muted-foreground">{liftNames}</p>
         )}
       </div>
-      <div className="flex gap-0.5 -mx-2 overflow-x-auto">
+      {/* The seven days share the card's width at every width and text
+          size, as Home's week strip does: they give way rather than scroll
+          a day out of sight. A day too narrow for its three letters shows
+          the first, and its place in the week tells the S's and T's apart.
+          The icons are px, so larger text does not widen them. */}
+      <div className="grid grid-cols-7 gap-[2px] -mx-2">
         {orderedDays.map(({ day, type }) => (
           <Button
             key={day}
@@ -121,20 +126,26 @@ export default function WeekPreview({
             aria-label={`${DAY_LABELS[day]}: ${openWeek ? "open day" : type === "both" ? "lift and run" : type}`}
             onClick={() => setSelected(selected === day ? null : day)}
             className={cn(
-              "min-w-11 min-h-16 flex-1 px-0 flex-col gap-1 text-caption",
+              "@container w-full min-w-0 min-h-[64px] px-0 flex-col gap-1 text-caption",
               selected === day && "bg-muted ring-1 ring-primary"
             )}
           >
-            <span>{DAY_LABELS[day]}</span>
-            <span className="flex h-5 items-center gap-0.5" aria-hidden="true">
+            <span className="@max-[2.75em]:hidden">{DAY_LABELS[day]}</span>
+            <span className="hidden @max-[2.75em]:inline">
+              {DAY_LABELS[day].charAt(0)}
+            </span>
+            <span
+              className="flex min-h-[20px] flex-wrap items-center justify-center gap-[2px]"
+              aria-hidden="true"
+            >
               {(type === "lift" || type === "both") && (
-                <Dumbbell className="size-4 text-lifting-strong" />
+                <Dumbbell className="size-[16px] text-lifting-strong" />
               )}
               {(type === "run" || type === "both") && (
-                <Footprints className="size-4 text-running-strong" />
+                <Footprints className="size-[16px] text-running-strong" />
               )}
               {type === "rest" && (
-                <Minus className="size-4 text-muted-foreground" />
+                <Minus className="size-[16px] text-muted-foreground" />
               )}
             </span>
           </Button>

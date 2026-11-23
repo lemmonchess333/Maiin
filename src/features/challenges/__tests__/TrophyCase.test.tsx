@@ -79,12 +79,14 @@ describe("TrophyCase", () => {
     expect(within(list()).getAllByRole("button")).toHaveLength(
       TROPHY_CASE_SHOWN
     );
-    fireEvent.click(screen.getByRole("button", { name: "See all 9" }));
+    const seeAll = screen.getByRole("button", { name: "See all 9" });
+    // See all opens the rest, so it ends in a chevron; Show fewer takes none.
+    expect(seeAll).toHaveClass("link-standalone");
+    fireEvent.click(seeAll);
     expect(within(list()).getAllByRole("button")).toHaveLength(9);
-    expect(screen.getByRole("button", { name: "Show fewer" })).toHaveAttribute(
-      "aria-expanded",
-      "true"
-    );
+    const fewer = screen.getByRole("button", { name: "Show fewer" });
+    expect(fewer).toHaveAttribute("aria-expanded", "true");
+    expect(fewer).not.toHaveClass("link-standalone");
   });
 
   it("offers no See all when everything fits", () => {

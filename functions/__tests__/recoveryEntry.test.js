@@ -112,6 +112,26 @@ describe("_decideRecoveryEntry — gate-by-gate negative cases", () => {
     expect(result.write).toBe(false);
   });
 
+  it("does not write for a treadmill run started from the race slot", () => {
+    // A treadmill run on race day is not the race (rankings spec, 22
+    // November 2026); the sweep records the race day as missed instead.
+    for (const treadmill of [
+      { place: "treadmill", activityType: "race" },
+      { activityType: "treadmill" },
+    ]) {
+      const result = _decideRecoveryEntry(
+        profile(),
+        programState(),
+        savedRun(treadmill)
+      );
+      expect(result.write, JSON.stringify(treadmill)).toBe(false);
+    }
+    // Anchor: the same run outdoors enters recovery.
+    expect(
+      _decideRecoveryEntry(profile(), programState(), savedRun()).write
+    ).toBe(true);
+  });
+
   it("does not write when the saved run is on a different date", () => {
     const result = _decideRecoveryEntry(
       profile(),

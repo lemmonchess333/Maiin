@@ -166,7 +166,11 @@ export default function RunMap({
         source: "target-route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": THEME.brand,
+          // The route to follow is the chrome's colour, not a sport's
+          // (DS10 call 1): purple means lifting, and this is a run.
+          "line-color": darkMode
+            ? THEME.chrome.line.dark
+            : THEME.chrome.line.light,
           "line-width": 6,
           "line-opacity": 0.45,
           "line-dasharray": [2, 1.5],
@@ -263,7 +267,7 @@ export default function RunMap({
         source: "segment-pick",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": darkMode ? THEME.bg : THEME.purpleRamp[50],
+          "line-color": darkMode ? THEME.bg : "#FFFFFF",
           "line-width": 11,
           "line-opacity": 0.9,
         },
@@ -273,7 +277,12 @@ export default function RunMap({
         type: "line",
         source: "segment-pick",
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": THEME.brand, "line-width": 6 },
+        paint: {
+          "line-color": darkMode
+            ? THEME.chrome.line.dark
+            : THEME.chrome.line.light,
+          "line-width": 6,
+        },
       });
     };
     map.on("load", onLoad);
@@ -542,7 +551,7 @@ export default function RunMap({
         replayIndex === undefined
       ) {
         const el = document.createElement("div");
-        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.danger};border:2px solid white;`;
+        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.running};border:2px solid white;`;
         endMarkerRef.current = new maplibregl.Marker({ element: el })
           .setLngLat([
             points[points.length - 1].lon,
@@ -706,7 +715,7 @@ export default function RunMap({
             onClick={toggleHeadingUp}
             className={
               headingUp
-                ? "bg-running-fill text-white shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-card"
             }
           />
@@ -715,7 +724,7 @@ export default function RunMap({
               aria-label="Recenter map on your location"
               icon={<LocateFixed />}
               onClick={recenter}
-              className="bg-running-fill text-white shadow-sm"
+              className="bg-primary text-primary-foreground shadow-sm"
             />
           )}
         </div>

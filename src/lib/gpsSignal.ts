@@ -27,8 +27,8 @@ export function gpsSignalBars(quality: GPSSignalQuality): GpsSignalBars {
     case "fair":
       return { lit: 2, colour: THEME.warning };
     case "weak":
-      return { lit: 1, colour: THEME.semantic.vitals };
+      return { lit: 1, colour: THEME.danger };
     default:
-      return { lit: 0, colour: THEME.semantic.vitals };
+      return { lit: 0, colour: THEME.danger };
   }
 }

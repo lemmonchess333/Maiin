@@ -364,7 +364,7 @@ function ScheduleLayoutSheetBody({
                     : s.type === "run"
                       ? THEME.running
                       : s.type === "both"
-                        ? THEME.brand
+                        ? THEME.chrome.grey
                         : undefined;
                 const label =
                   s.type === "lift"
@@ -498,7 +498,7 @@ function ScheduleLayoutSheetBody({
           {pendingLiftDays !== null && (
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
-              <span className="text-lifting-strong">
+              <span className="text-foreground">
                 {splitLabel(
                   chooseSplit(
                     pendingLiftDays,

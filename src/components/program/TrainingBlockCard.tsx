@@ -702,7 +702,7 @@ export default function TrainingBlockCard({
                             ~{formatOneRepMaxRange(a.endE1rm!, liftUnit)}
                           </span>
                           {gain > 0 && (
-                            <span className="ml-1.5 font-mono tabular-nums text-success-strong">
+                            <span className="ml-1.5 font-mono tabular-nums text-foreground">
                               +{formatLoad(gain, liftUnit)}
                             </span>
                           )}

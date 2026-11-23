@@ -1238,7 +1238,6 @@ export default function RunPlanSettings({
                 <SectionHeading size="compact">Runs per week</SectionHeading>
                 <SegmentedControl<"2" | "3">
                   ariaLabel="Runs per week"
-                  tone="running"
                   value={weeklyRunDays <= 2 ? "2" : "3"}
                   onChange={(next) => {
                     haptic();
@@ -1470,7 +1469,6 @@ export default function RunPlanSettings({
                   value={runVolume}
                   onChange={(v) => setRunVolume(v as RunVolumePreset)}
                   ariaLabel="Long-run volume"
-                  tone="running"
                 />
               </div>
               <div className="space-y-2">
@@ -1489,7 +1487,6 @@ export default function RunPlanSettings({
                   value={runDifficulty}
                   onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
                   ariaLabel="Plan intensity"
-                  tone="running"
                 />
               </div>
               {/* Lift4 (10): the race-setup answer on the leg trim, changeable

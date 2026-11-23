@@ -310,6 +310,42 @@ describe("_decideReconciliationActions — L1 race-no-show", () => {
     expect(result.noShowWritten).toBe(true);
   });
 
+  it("writes race_no_show for a treadmill run started from the race slot", () => {
+    /* A treadmill run on race day is not the race (rankings spec, 22
+       November 2026). Nothing in the app stores the race day as done (a
+       race takes no mark by hand, and the claim map leaves it to a
+       treadmill run), so the day is still planned here, and a treadmill
+       run of the full distance, tagged from the slot, leaves it as a
+       missed race. */
+    for (const treadmill of [
+      { place: "treadmill", activityType: "race" },
+      { activityType: "treadmill" },
+    ]) {
+      const result = _decideReconciliationActions(
+        profile(),
+        programState(),
+        [{ actualTemplateId: "10k_race", distance: 10500, ...treadmill }],
+        FIXED_NOW_MS
+      );
+      expect(result.noShowWritten, JSON.stringify(treadmill)).toBe(true);
+      expect(result.payload.runDays[0].status).toBe("race_no_show");
+    }
+    // Typed in by someone who raced without their phone, it is the race.
+    const manual = _decideReconciliationActions(
+      profile(),
+      programState(),
+      [
+        {
+          actualTemplateId: "10k_race",
+          distance: 10500,
+          activityType: "manual",
+        },
+      ],
+      FIXED_NOW_MS
+    );
+    expect(manual.noShowWritten).toBe(false);
+  });
+
   it("preserves non-race-day runDays unchanged when writing", () => {
     const otherRunDay = runDay({
       id: "runday_thu_easy",
