@@ -7836,6 +7836,12 @@ and accounts made by `onAuthUserCreated`.
       Then reach the agreement: requests to `app-measurement.com` start.
       Sign out, and on the next welcome they stop again until the agreement
       is shown.
+- [ ] **Turn off on the agreement, on an iPhone.** On a fresh install with
+      the proxy on, reach the agreement and tap Turn off at the end of the
+      analytics line. Passing: the line reads "Google Analytics is off. You
+      can turn it on in Settings › Social & privacy.", no request to
+      `app-measurement.com` follows for the rest of setup, and once the plan
+      is saved Settings › Social & privacy shows Share usage analytics off.
 - [ ] **The same on the web.** In a private window on the Pages build,
       with the network tab open, go from the welcome to the step before the
       agreement. Passing: no `gtag` script and no request to

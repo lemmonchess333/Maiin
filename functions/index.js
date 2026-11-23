@@ -774,6 +774,8 @@ function assertDisplayNameAllowed(displayName) {
    older ones included, now takes this journey in the app. */
 const ONE_ACTIVATION_JOURNEY_VERSION = 2;
 
+// Share usage analytics carried from setup (lib/setupAnalyticsChoice.js).
+const setupAnalyticsChoice = require("./lib/setupAnalyticsChoice");
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -822,6 +824,17 @@ exports.completeOnboarding = functions
         throw new functions.https.HttpsError(
           "invalid-argument",
           emailOptIn.error
+        );
+      }
+      // Share usage analytics turned off in setup, before the account
+      // (the agreement's Turn off), outside profileData as the email
+      // opt-in is (lib/setupAnalyticsChoice.js).
+      const setupAnalytics =
+        setupAnalyticsChoice.readSetupUsageAnalytics(data);
+      if (setupAnalytics.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          setupAnalytics.error
         );
       }
       // Every account takes the one first-week journey (App1, whole-app
@@ -1072,6 +1085,14 @@ exports.completeOnboarding = functions
           ONE_ACTIVATION_JOURNEY_VERSION;
         if (onboardingPlatform) {
           nextProfileData.onboardingPlatform = onboardingPlatform;
+        }
+        // The account's own answer, if it has one, stands.
+        const usageAnalytics = setupAnalyticsChoice.usageAnalyticsToWrite(
+          setupAnalytics.answer,
+          existingData
+        );
+        if (usageAnalytics !== undefined) {
+          nextProfileData.usageAnalytics = usageAnalytics;
         }
         if (emailOptIn.optIn) {
           const consent = emailConsent.applyEmailConsent(

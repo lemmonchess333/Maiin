@@ -85,8 +85,12 @@ import {
 } from "@/lib/healthConsent";
 import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
 import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
-import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
-import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
+import AnalyticsNotice from "@/components/healthConsent/AnalyticsNotice";
+import {
+  noteAnalyticsNoticeShown,
+  setUsageAnalytics,
+} from "@/lib/analyticsProvider";
+import { usageAnalyticsOnThisDevice } from "@/lib/usageAnalytics";
 import {
   buildOnboardingPlan,
   onboardingActivity,
@@ -697,6 +701,16 @@ export default function Onboarding() {
      what it counts and how to turn it off: from its showing on, or from a
      draft that already carries the agreement, it may run. */
   const agreementShown = step === HEALTH_CONSENT_STEP || healthConsentGiven;
+  /* The line's Turn off: this device stops at once, and the choice goes to
+     the account with the plan (`completeOnboarding`), unless the account
+     has one already. */
+  const [analyticsOff, setAnalyticsOff] = useState(
+    () => !usageAnalyticsOnThisDevice()
+  );
+  const turnOffAnalytics = () => {
+    setUsageAnalytics(false);
+    setAnalyticsOff(true);
+  };
   useEffect(() => {
     if (agreementShown) noteAnalyticsNoticeShown();
   }, [agreementShown]);
@@ -1331,6 +1345,11 @@ export default function Onboarding() {
           // Priv1 call 1: the agreement given on its step, which the
           // server dates and stores, and without which it saves nothing.
           healthDataConsent: setupHealthConsent(),
+          // Share usage analytics turned off on this device (the
+          // agreement's Turn off, or before): carried to the account, which
+          // keeps a choice it already has. On is the default and goes
+          // unsent.
+          ...(usageAnalyticsOnThisDevice() ? {} : { usageAnalytics: false }),
           // A yes to both emails the toggle names, with the words it
           // showed. Nothing is sent for a no: absent already means no.
           ...(askEmail && emailOptIn
@@ -2259,9 +2278,10 @@ export default function Onboarding() {
                 <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
                 <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
                 <HealthConsentPolicyLink />
-                <p className="text-sm text-muted-foreground">
-                  {USAGE_ANALYTICS_NOTICE}
-                </p>
+                <AnalyticsNotice
+                  off={analyticsOff}
+                  onTurnOff={turnOffAnalytics}
+                />
                 {/* No to a question already answered yes takes the yes
                     back: the plan is saved only with an agreement. */}
                 <Button

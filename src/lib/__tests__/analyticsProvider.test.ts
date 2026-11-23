@@ -524,6 +524,21 @@ describe("analyticsProvider: nothing before the analytics line", () => {
     expect(nativeLogEvent).not.toHaveBeenCalled();
   });
 
+  it("Turn off on the line: on iPhone, nothing more goes and the SDK is told off", async () => {
+    isNativePlatform.mockReturnValue(true);
+    const mod = await import("../analyticsProvider");
+    mod.initAnalytics(FAKE_APP);
+    mod.noteAnalyticsNoticeShown();
+    await expect(mod.analyticsSettled()).resolves.toBe(true);
+
+    mod.setUsageAnalytics(false);
+    mod.logAnalyticsEvent("onboarding_step_viewed", { surface: "lifecycle" });
+    await expect(mod.analyticsSettled()).resolves.toBe(false);
+    expect(nativeSetEnabled).toHaveBeenLastCalledWith({ enabled: false });
+    expect(nativeLogEvent).not.toHaveBeenCalled();
+    expect(readString(USAGE_ANALYTICS_OFF_KEY)).toBe("1");
+  });
+
   it("the line does not override Share usage analytics turned off", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     writeString(USAGE_ANALYTICS_OFF_KEY, "1");
