@@ -159,15 +159,17 @@ export default function FeedView({
      timestamp last seen by the user (persisted in localStorage per
      sub-tab). Dot never renders on the active sub-tab — content is
      visible directly there. */
+  // Only what can be drawn counts as seen.
+  const followingNewest = blockedReady
+    ? followingFeed.items[0]?.createdAt
+    : undefined;
+  const exploreNewest = blockedReady
+    ? exploreFeed.items[0]?.createdAt
+    : undefined;
   const { followingHasNew, exploreHasNew } = useFeedSubTabFreshness({
     activeSubTab: feedSubTab,
-    // Only what can be drawn counts as seen.
-    followingNewestCreatedAt: blockedReady
-      ? followingFeed.items[0]?.createdAt
-      : undefined,
-    exploreNewestCreatedAt: blockedReady
-      ? exploreFeed.items[0]?.createdAt
-      : undefined,
+    followingNewestCreatedAt: followingNewest,
+    exploreNewestCreatedAt: exploreNewest,
     uid: freshnessUid,
   });
 
