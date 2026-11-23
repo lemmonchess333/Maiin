@@ -1947,7 +1947,7 @@ describe("RunSummary — results", () => {
       expect(row.textContent).toContain("best 3:29");
       // No distance placed and no reward above: the segment's sentence.
       expect(block.textContent).toContain(
-        "Ran Hill Road in 3:37, your 2nd best."
+        "Ran Hill Road in 3:37, your 2nd fastest."
       );
     });
 
@@ -1969,9 +1969,15 @@ describe("RunSummary — results", () => {
       expect(rows[0].textContent).toContain("1K");
       expect(rows[1].textContent).toContain("Hill Road");
       expect(rows[1].textContent).toContain("New best");
-      // One sentence: the distance's.
+      // One sentence: the strongest place, the segment's 1st over the 1K's
+      // 3rd.
+      await waitFor(() =>
+        expect(block.textContent).toContain(
+          "Ran Hill Road in 3:20, your fastest yet."
+        )
+      );
       expect(block.querySelectorAll("p")).toHaveLength(1);
-      expect(block.textContent).toContain("Ran 1K in 4:30, your 3rd fastest.");
+      expect(block.textContent).not.toContain("your 3rd fastest.");
     });
 
     it("shows nothing for the first effort on a segment", async () => {

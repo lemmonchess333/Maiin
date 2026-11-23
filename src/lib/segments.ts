@@ -23,6 +23,7 @@ import { describeRejection, stripCallablePrefix } from "./callableErrors";
 import { functions } from "./firebase";
 import { haversine } from "./gps";
 import { formatClock } from "@/utils/formatters";
+import { placingSentence, type RunPlacing } from "./runPlacings";
 import type { RouteCoordinate } from "./routeSegments";
 
 /** The shortest segment, in metres (a Tropos heuristic, as the server's). */
@@ -397,7 +398,8 @@ export function segmentPlacings(
     if (
       !held ||
       placing.place < held.placing.place ||
-      (placing.place === held.placing.place && runOrder(effort, held.effort) < 0)
+      (placing.place === held.placing.place &&
+        runOrder(effort, held.effort) < 0)
     )
       bySegment.set(segment.id, { placing, effort });
   }
@@ -409,16 +411,47 @@ export function segmentPlacings(
     .map((held) => held.placing);
 }
 
-/** The finish's one sentence on a segment, when no distance placed: the
- *  first listed ("Ran Hill Road in 3:37, your 2nd best."). Null with none. */
+/** The finish's sentence on a segment: the first listed, in the words the
+ *  finish says a distance in ("Ran Hill Road in 3:37, your 2nd fastest.",
+ *  and for a 1st finishMoment's "your fastest yet."). Null with none. */
 export function segmentPlacingSentence(
   placings: readonly SegmentPlacing[]
 ): string | null {
   const first = placings[0];
   if (!first) return null;
-  const word =
-    first.place === 1 ? "best" : first.place === 2 ? "2nd best" : "3rd best";
-  return `Ran ${first.name} in ${formatClock(first.seconds)}, your ${word}.`;
+  const words =
+    first.place === 1
+      ? "your fastest yet"
+      : first.place === 2
+        ? "your 2nd fastest"
+        : "your 3rd fastest";
+  return `Ran ${first.name} in ${formatClock(first.seconds)}, ${words}.`;
+}
+
+/**
+ * The Results block's one sentence (Run30 call 1, owner 23 November 2026):
+ * the strongest place leads, across distances and segments, so a segment's
+ * 1st outranks a 2nd or 3rd at 1K, 5K or 10K, and a distance leads only
+ * at an equal place. A distance's 1st is the hero's reward
+ * (`finishMoment`), so when it leads the block says nothing. The caller
+ * says none at all under the hero's reward.
+ */
+export function resultsSentence(
+  placings: readonly RunPlacing[],
+  segments: readonly SegmentPlacing[]
+): string | null {
+  const distancePlace = placings.length
+    ? Math.min(...placings.map((p) => p.place))
+    : null;
+  const segmentPlace = segments.length
+    ? Math.min(...segments.map((s) => s.place))
+    : null;
+  if (
+    distancePlace !== null &&
+    (segmentPlace === null || distancePlace <= segmentPlace)
+  )
+    return placingSentence(placings);
+  return segmentPlacingSentence(segments);
 }
 
 /* ───────────── A board as the viewer reads it ───────────── */

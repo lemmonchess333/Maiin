@@ -16,6 +16,7 @@ import {
   parseEffort,
   parseSegment,
   rankWords,
+  resultsSentence,
   segmentPlacingSentence,
   segmentPlacings,
   segmentRejection,
@@ -267,9 +268,9 @@ describe("a run's segment places on the finish", () => {
       at("c", "s1", 220, 300),
       now,
     ];
-    expect(
-      segmentPlacings([{ effort: now, segment: seg("s1"), own }])
-    ).toEqual([]);
+    expect(segmentPlacings([{ effort: now, segment: seg("s1"), own }])).toEqual(
+      []
+    );
   });
 
   it("is moved by no effort that started after it", () => {
@@ -308,8 +309,54 @@ describe("a run's segment places on the finish", () => {
       },
     ]);
     expect(segmentPlacingSentence(placings)).toBe(
-      "Ran Hill Road in 3:37, your 2nd best."
+      "Ran Hill Road in 3:37, your 2nd fastest."
     );
     expect(segmentPlacingSentence([])).toBeNull();
+  });
+
+  describe("the Results block's one sentence: the strongest place leads", () => {
+    const hill = (place: 1 | 2 | 3, seconds: number) => ({
+      segmentId: "hill",
+      name: "Tooting Bec hill",
+      lengthMeters: 620,
+      seconds,
+      place,
+      bestSeconds: 151,
+    });
+    const fiveK = (place: 1 | 2 | 3) => ({
+      meters: 5000,
+      seconds: 1541,
+      place,
+      bestSeconds: 1510,
+    });
+
+    it("a segment's 1st outranks a 5K 2nd", () => {
+      expect(resultsSentence([fiveK(2)], [hill(1, 147)])).toBe(
+        "Ran Tooting Bec hill in 2:27, your fastest yet."
+      );
+    });
+
+    it("a distance leads at an equal place", () => {
+      expect(resultsSentence([fiveK(2)], [hill(2, 160)])).toBe(
+        "Ran 5K in 25:41, your 2nd fastest."
+      );
+    });
+
+    it("a distance's 2nd outranks a segment's 3rd", () => {
+      expect(resultsSentence([fiveK(2)], [hill(3, 170)])).toBe(
+        "Ran 5K in 25:41, your 2nd fastest."
+      );
+    });
+
+    it("leaves a distance's 1st to the hero's reward, even beside a segment's 1st", () => {
+      expect(resultsSentence([fiveK(1)], [hill(1, 147)])).toBeNull();
+    });
+
+    it("names a segment alone, and nothing with no place", () => {
+      expect(resultsSentence([], [hill(3, 170)])).toBe(
+        "Ran Tooting Bec hill in 2:50, your 3rd fastest."
+      );
+      expect(resultsSentence([], [])).toBeNull();
+    });
   });
 });

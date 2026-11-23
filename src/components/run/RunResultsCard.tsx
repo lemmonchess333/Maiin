@@ -9,10 +9,9 @@ import { finishTimeLabel, nearDistanceLabel } from "@/lib/runLabels";
 import {
   placingDistanceName,
   placingGap,
-  placingSentence,
   type RunPlacing,
 } from "@/lib/runPlacings";
-import { segmentPlacingSentence, type SegmentPlacing } from "@/lib/segments";
+import { resultsSentence, type SegmentPlacing } from "@/lib/segments";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 
 /** The most segment rows the finish lists; the rest are on the run's page,
@@ -29,10 +28,11 @@ export const FINISH_SEGMENT_ROWS = 3;
  *
  * A finish says one reward sentence (DESIGN_GUIDE rule 30): when the hero
  * above says one (`rewardAbove`), the block shows its rows and no sentence.
- * Otherwise it names a distance's 2nd or 3rd ("Ran 5K in 25:41, your 2nd
- * fastest."), and with no distance placed, the first segment listed ("Ran
- * Hill Road in 3:37, your 2nd best."). A distance's 1st is the reward
- * above it (`finishMoment`), so it has no sentence here.
+ * Otherwise the strongest place leads (`resultsSentence`): a segment's 1st
+ * ("Ran Hill Road in 3:25, your fastest yet.") over a distance's 2nd, a
+ * distance at an equal place ("Ran 5K in 25:41, your 2nd fastest."). A
+ * distance's 1st is the reward above it (`finishMoment`), so it has no
+ * sentence here.
  */
 export default function RunResultsCard({
   placings,
@@ -51,11 +51,7 @@ export default function RunResultsCard({
 }) {
   const headingId = useId();
   if (placings.length === 0 && segments.length === 0) return null;
-  const sentence = rewardAbove
-    ? null
-    : placings.length > 0
-      ? placingSentence(placings)
-      : segmentPlacingSentence(segments);
+  const sentence = rewardAbove ? null : resultsSentence(placings, segments);
   const shownSegments = segments.slice(0, FINISH_SEGMENT_ROWS);
   const moreSegments = segments.length - shownSegments.length;
   return (

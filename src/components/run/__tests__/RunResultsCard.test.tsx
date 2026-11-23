@@ -104,9 +104,11 @@ describe("RunResultsCard", () => {
     expect(
       within(card).getByRole("link", { name: /Hill Road/ })
     ).toHaveAttribute("href", "/segment/s1");
-    // The distance's sentence; a segment adds none of its own.
+    // One sentence: the strongest place, the segment's 1st.
     expect(card.querySelectorAll("p")).toHaveLength(1);
-    expect(card.textContent).toContain("Ran 5K in 25:41, your 2nd fastest.");
+    expect(card.textContent).toContain(
+      "Ran Hill Road in 3:25, your fastest yet."
+    );
   });
 
   it("names the first segment when no distance placed", () => {
@@ -115,7 +117,22 @@ describe("RunResultsCard", () => {
       segments: [segment("s1", "Hill Road", 2, 217, 209)],
     });
     const card = screen.getByRole("region", { name: "Results" });
-    expect(card.textContent).toContain("Ran Hill Road in 3:37, your 2nd best.");
+    expect(card.textContent).toContain(
+      "Ran Hill Road in 3:37, your 2nd fastest."
+    );
+  });
+
+  it("leads with a segment's 1st over a 5K 2nd: the strongest place", () => {
+    renderCard({
+      placings: [{ meters: 5000, seconds: 1541, place: 2, bestSeconds: 1510 }],
+      segments: [segment("s1", "Tooting Bec hill", 1, 147, 151)],
+    });
+    const card = screen.getByRole("region", { name: "Results" });
+    expect(card.querySelectorAll("p")).toHaveLength(1);
+    expect(card.textContent).toContain(
+      "Ran Tooting Bec hill in 2:27, your fastest yet."
+    );
+    expect(card.textContent).not.toContain("your 2nd fastest.");
   });
 
   it("says a segment's 1st when nothing above has a reward", () => {
@@ -125,7 +142,7 @@ describe("RunResultsCard", () => {
     });
     expect(
       screen.getByRole("region", { name: "Results" }).textContent
-    ).toContain("Ran Hill Road in 3:25, your best.");
+    ).toContain("Ran Hill Road in 3:25, your fastest yet.");
   });
 
   it("lists three segments and sends the rest to the run's page", () => {
