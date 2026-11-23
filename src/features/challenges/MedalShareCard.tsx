@@ -39,7 +39,6 @@ export default function MedalShareCard({
   distanceUnit: DistanceUnit;
   ref?: Ref<HTMLDivElement>;
 }) {
-  const tier = THEME.tier[medal.tier];
   const value = medalValueParts(medal, liftUnit, distanceUnit);
   return (
     <div
@@ -61,7 +60,6 @@ export default function MedalShareCard({
         color: "white",
         fontFamily: JAKARTA,
         backgroundColor: THEME.bg,
-        backgroundImage: `radial-gradient(circle at 50% 38%, ${tier}40, transparent 62%)`,
       }}
     >
       <MedalArt {...medalFace(medal, liftUnit, distanceUnit)} size={420} />

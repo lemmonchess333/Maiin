@@ -54,11 +54,6 @@ type RunControlButtonProps = Omit<
    *  caller because run-control glyphs vary (lucide icons, raw
    *  SVG, two-rect pause symbol). */
   icon: ReactNode;
-  /** When true, applies an outer glow that mirrors the visual
-   *  emphasis of the active "Resume" button (THEME.running). The
-   *  variant already drives the colour; this gates the shadow on
-   *  the call site. */
-  glow?: boolean;
   ref?: Ref<HTMLButtonElement>;
 };
 
@@ -92,19 +87,15 @@ const SIZE_CLASSES: Record<RunControlSize, string> = {
  * cleanly to design-system tokens (the run screen is the one
  * deliberately-dark surface in the app regardless of OS theme).
  */
-function variantStyle(
-  variant: RunControlVariant,
-  glow: boolean
-): React.CSSProperties {
+function variantStyle(variant: RunControlVariant): React.CSSProperties {
   switch (variant) {
     case "primary":
-      // THEME.running filled — used on Resume. Glow always-on for this
-      // variant because the user is looking for the go-action.
+      // THEME.running filled: Resume, the go-action. The fill is the
+      // emphasis; its shadow is neutral, with no coloured glow
+      // (DESIGN_GUIDE §14o).
       return {
         background: THEME.running,
-        boxShadow: glow
-          ? `0 0 32px ${THEME.running}66, 0 8px 24px rgba(0, 0, 0, 0.4)`
-          : "0 8px 24px rgba(0, 0, 0, 0.4)",
+        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
       };
     case "neutral":
     default:
@@ -124,7 +115,6 @@ const LABEL_CLASSES = "leading-none select-none";
 function RunControlButton({
   variant = "neutral",
   size = "lg",
-  glow = false,
   label,
   icon,
   type,
@@ -138,7 +128,7 @@ function RunControlButton({
         ref={ref}
         type={type ?? "button"}
         className={cn(BASE_BUTTON, SIZE_CLASSES[size], className)}
-        style={variantStyle(variant, glow)}
+        style={variantStyle(variant)}
         {...rest}
       >
         {/* Glyph is supplied by the caller. The wrapper is

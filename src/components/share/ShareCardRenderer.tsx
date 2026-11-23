@@ -170,25 +170,20 @@ const DIMS: Record<ShareFormat, { w: number; h: number }> = {
 
 function bgStyle(
   background: ShareBackground,
-  template: ShareTemplate,
-  meaning: string
+  template: ShareTemplate
 ): CSSProperties {
   switch (background) {
     case "brand":
-      // DS4 (§14m rules 13, 14, 31): the app's dark stage with one soft
-      // light of the session's meaning colour behind its picture, fading
-      // into the page. A run is coral and a lift purple, as everywhere in
-      // the app; a new best is gold. Nutrition and the hybrid and recap
-      // cards keep their own washes.
+      // The app's dark stage, flat, with no light behind the picture
+      // (DESIGN_GUIDE §14o): the session's meaning colour is on its route
+      // or drawing and its line. Nutrition and the hybrid and recap cards
+      // keep their own washes.
       if (
         template === "run" ||
         template === "lift" ||
         template === "anniversary"
       )
-        return {
-          backgroundColor: STAGE,
-          backgroundImage: `radial-gradient(ellipse 72% 40% at 50% ${template === "lift" ? 30 : 32}%, ${meaning}5c 0%, ${meaning}24 45%, ${meaning}00 100%)`,
-        };
+        return { backgroundColor: STAGE };
       return {
         backgroundImage:
           template === "nutrition"
@@ -591,7 +586,7 @@ function ShareCardRenderer({
     padding: 80 * scale,
     color: "#ffffff",
     fontFamily: JAKARTA,
-    ...bgStyle(data.background, data.template, meaning),
+    ...bgStyle(data.background, data.template),
   };
 
   return (
