@@ -25,7 +25,13 @@
  * `featureMap.test.ts` holds every route to a `path=` in `src/App.tsx` and
  * every source glob to at least one file.
  */
-import { HOME, TABS, TRAIN, WORKOUT } from "@/test/journeyScreens";
+import {
+  HOME,
+  SETUP_OPTIONS,
+  TABS,
+  TRAIN,
+  WORKOUT,
+} from "@/test/journeyScreens";
 import type { Account } from "./rigConfig";
 
 /** What a feature needs from the rig before it can run. */
@@ -172,21 +178,31 @@ export const FEATURES: Feature[] = [
       "and a Sign in button; no error text before anything is typed.",
   },
   {
-    id: "sign-up-form",
-    title: "Sign-up form",
+    /* Get started opened a sign-up form until A6 (#3487, 2026-11-22): it
+       now opens setup signed out, and the account is made at setup's end,
+       on Save your plan. This map's old `sign-up-form` caught the change
+       the first time it ran against it. Save your plan itself needs setup's
+       answers planted first (e2e/helpers/auth.ts `openSaveYourPlan`),
+       which this map's steps cannot do yet. */
+    id: "setup-start",
+    title: "Get started opens setup, signed out",
     needs: "signed-out",
-    sources: ["src/pages/Login.tsx", "src/components/auth/**"],
-    route: "*",
+    sources: [
+      "src/pages/Login.tsx",
+      "src/pages/Onboarding.tsx",
+      "src/components/onboarding/**",
+    ],
+    route: "/setup",
     steps: [
       { goto: "" },
       { click: { role: "button", name: "Get started", exact: true } },
-      { see: { role: "heading", name: "Create your account", level: 1 } },
-      { see: { css: "#login-email" } },
-      { see: { role: "button", name: /create account/i } },
+      { url: /\/setup$/ },
+      { see: { role: "button", name: SETUP_OPTIONS.aims[0], exact: false } },
+      { absent: { css: "#login-email" } },
     ],
     expected:
-      "The sign-up form: email, password and Create account, with the " +
-      "Apple and Google buttons offered beside email.",
+      "Setup's first question, signed out: the aims to choose from " +
+      "(Build muscle first), with no sign-in or sign-up form on screen.",
   },
   {
     id: "public-pages",
@@ -378,6 +394,51 @@ export const FEATURES: Feature[] = [
     expected:
       "The workout screen: the first exercise's sets with weight and reps, " +
       "a Complete control per set and the rest timer; nothing saved.",
+  },
+  {
+    id: "lift-day-page",
+    title: "A lift's own page, opened by its address",
+    needs: "signed-in",
+    sources: [
+      "src/pages/LiftSession.tsx",
+      "src/components/program/LiftSessionView.tsx",
+      "src/components/program/LiftSessionOverlays.tsx",
+      "src/features/program/useLiftSession.ts",
+    ],
+    route: "/program/lift/:day",
+    steps: [
+      { goto: "program/lift/0" },
+      { see: { role: "button", name: WORKOUT.start, exact: true } },
+      /* A day the plan does not have redirects to /program, which also
+         draws Start workout: the address is what proves this page. */
+      { url: /\/program\/lift\/0$/ },
+    ],
+    expected:
+      "The plan's first lift alone: its card with Start workout, why it is " +
+      "in the week, and its exercises; no day strip.",
+  },
+  {
+    id: "circuit",
+    title: "Circuit mode: the picker",
+    needs: "signed-in",
+    sources: [
+      "src/pages/Circuit.tsx",
+      "src/components/circuit/**",
+      "src/features/circuit/**",
+    ],
+    route: "/circuit",
+    steps: [
+      { goto: "circuit" },
+      { see: { role: "heading", name: "Circuit", level: 1 } },
+      /* The list is busy while the circuit history is read; a circuit's
+         button inside it once it is not is the loaded screen. */
+      {
+        see: { css: 'ul[aria-label="Circuits"][aria-busy="false"] li button' },
+      },
+    ],
+    expected:
+      "Circuit full screen, without the tab bar: the built-in circuits, " +
+      "each with its first move's picture, its shape and its rung.",
   },
   {
     id: "plan-week",
@@ -587,7 +648,7 @@ export const FEATURES: Feature[] = [
       "src/components/social/**",
       "src/features/challenges/**",
       "src/features/goalSpace/**",
-      "src/lib/enoughPeople.ts",
+      "src/lib/fillingUp.ts",
     ],
     route: "/social",
     steps: [
@@ -865,9 +926,12 @@ export const FEATURES: Feature[] = [
  * choice: map it, or say here why the rig cannot.
  */
 export const NOT_DRIVEN: Readonly<Record<string, string>> = {
-  "src/pages/Onboarding.tsx":
-    "Setup needs a new account and writes a programme; the journeys " +
-    "(e2e/journeys) and onboarding.screens.capture drive it.",
+  "src/pages/TrialOffer.tsx":
+    "Shown once, at setup's end, to a new account that can take a trial; " +
+    "the journeys reach it by saving a plan signed out.",
+  "src/pages/RunSession.tsx":
+    "A run's page needs the date of a planned run, which the seeded week " +
+    "moves with the clock; train-run drives the Run tab it opens from.",
   "src/pages/AdminModeration.tsx":
     "Admin only (VITE_ADMIN_UIDS); the seeded account is not an admin.",
   "src/pages/PublicPost.tsx":

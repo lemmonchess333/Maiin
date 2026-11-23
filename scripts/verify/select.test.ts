@@ -114,7 +114,7 @@ describe("selectFeatures", () => {
       "src/pages/Login.tsx",
       "src/pages/Login.tsx",
     ]);
-    expect(got).toEqual(["welcome", "sign-in-form", "sign-up-form", "upgrade"]);
+    expect(got).toEqual(["welcome", "sign-in-form", "setup-start", "upgrade"]);
   });
 });
 
