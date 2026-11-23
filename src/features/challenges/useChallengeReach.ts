@@ -28,14 +28,13 @@ export function useChallengeReach(
   const inDoubt = challenges.filter((c) =>
     reachTurnsOnDaysTrained(c, todayKey)
   );
-  const since = inDoubt
-    .map((c) => boundaryDayKey(c.startDate))
-    .filter((k): k is string => !!k)
-    .sort()[0];
-  const window = useMemo(
-    () => (since ? { since, until: todayKey } : null),
-    [since, todayKey]
-  );
+  const since = inDoubt.reduce<string | null>((earliest, c) => {
+    const key = boundaryDayKey(c.startDate);
+    return key && (!earliest || key < earliest) ? key : earliest;
+  }, null);
+  // A new object each render is fine: the live query restarts only when
+  // the window's key changes (`windowKey`).
+  const window = since ? { since, until: todayKey } : null;
   const workouts = useSavedSessions(SAVED_WORKOUTS, uid, window);
   const runs = useSavedRuns(window);
   const answered =
