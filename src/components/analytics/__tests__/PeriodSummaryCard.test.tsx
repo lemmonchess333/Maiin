@@ -118,14 +118,14 @@ describe("PeriodSummaryCard", () => {
     );
   });
 
-  it("reads a rise in the status green and a drop in plain text", () => {
+  it("reads a rise in the text colour and a drop in muted text (DS10)", () => {
     card();
     // A drop after a hard block is a plan working, not an alarm.
     const up = screen.getByText(/Up 2 on the 30 days before/).parentElement!;
     const down = screen.getByText(
       /Down 3.4k kg on the 30 days before/
     ).parentElement!;
-    expect(up.className).toContain("text-success-strong");
+    expect(up.className).toContain("text-foreground");
     expect(down.className).toContain("text-muted-foreground");
     expect(down.className).not.toMatch(/destructive|running|warning/);
   });

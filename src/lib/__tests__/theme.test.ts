@@ -22,8 +22,8 @@ describe("THEME", () => {
       "textMuted",
       "chartGrid",
       "chartTooltipBg",
-      "paceFast",
-      "paceSlow",
+      "pace",
+      "hrZoneMax",
     ];
     for (const key of requiredKeys) {
       expect(THEME[key as keyof typeof THEME]).toBeDefined();

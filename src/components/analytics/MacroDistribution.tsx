@@ -1,10 +1,10 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
-import { THEME } from "@/lib/theme";
 import { CHART_TOOLTIP_STYLE, CHART_TOOLTIP_SEPARATOR } from "./chartStyles";
 import { percentagesSummingTo100 } from "@/utils/formatters";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 interface MacroDistributionProps {
   protein: number;
@@ -45,6 +45,7 @@ export default function MacroDistribution({
   fat,
   avgCalories,
 }: MacroDistributionProps) {
+  const { accent } = useMacroPalette();
   const pCal = protein * 4;
   const cCal = carbs * 4;
   const fCal = fat * 9;
@@ -56,11 +57,11 @@ export default function MacroDistribution({
     {
       name: "Protein",
       value: pCal,
-      color: THEME.macros.protein,
+      color: accent.protein,
       grams: protein,
     },
-    { name: "Carbs", value: cCal, color: THEME.macros.carbs, grams: carbs },
-    { name: "Fat", value: fCal, color: THEME.macros.fat, grams: fat },
+    { name: "Carbs", value: cCal, color: accent.carbs, grams: carbs },
+    { name: "Fat", value: fCal, color: accent.fat, grams: fat },
   ];
 
   // Largest-remainder rounding so the three slices always total

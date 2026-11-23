@@ -343,12 +343,7 @@ function InvalidRunReview({
           <button
             type="button"
             onClick={onDone}
-            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-            style={{
-              background: `${THEME.success}20`,
-              color: THEME.success,
-              border: `1px solid ${THEME.success}4d`,
-            }}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2 bg-muted text-foreground chip-edge"
           >
             <CheckCircle size={16} aria-hidden="true" />
             Done
@@ -801,8 +796,8 @@ export default function RunSummary() {
   }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
   /* The goal race (`isGoalRaceRun`, the server's rule for a race run): on
-     its date, valid, and at least 95% of its distance, however it was
-     started. Only then is the prediction log read, to compare the race
+     its date, valid, not on a treadmill, and at least 95% of its distance,
+     however it was started. Only then is the prediction log read, to compare the race
      with what Tropos predicted and keep that on the saved run. */
   const goalRace =
     pendingWeekRun && profile
@@ -821,6 +816,9 @@ export default function RunSummary() {
       {
         ...pendingWeekRun,
         date: pendingWeekRun.date ?? localDateString(),
+        // A treadmill run is not the race (`isTreadmillRun`).
+        place: state?.runConfig?.place,
+        activityType: state?.runConfig?.activityType,
       },
       goalRace
     ) === true;
@@ -2191,10 +2189,16 @@ export default function RunSummary() {
                       ? "bg-running/10 text-running-strong"
                       : adherenceLabel === "Custom"
                         ? "bg-muted text-muted-foreground"
-                        : "bg-success/10 text-success-strong"
+                        : "bg-muted text-foreground"
                   }`}
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >
+                  {adherenceLabel === "Planned" && (
+                    <CheckCircle
+                      className="size-4 shrink-0 text-success-strong"
+                      aria-hidden="true"
+                    />
+                  )}
                   {adherenceLabel}
                 </span>
               )}
@@ -2305,7 +2309,6 @@ export default function RunSummary() {
                     setRelativeEffort((cur) => (cur === v ? null : v))
                   }
                   ariaLabel="How did this run feel compared to what you expected?"
-                  tone="running"
                 />
               </div>
             )}

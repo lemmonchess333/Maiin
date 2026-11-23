@@ -89,12 +89,14 @@
 }
 
 .bottom-nav-pill {
-  /* An opaque tinted bed keeps selected text legible over every page. */
+  /* An opaque bed keeps selected text legible over every page: the bar's
+     own surface lifted toward the text colour, neutral like the rest of
+     the chrome (DS10 call 1). */
   background: var(--surface-solid);
   background: color-mix(
     in srgb,
     var(--surface-solid) 88%,
-    var(--ds-purple-500)
+    hsl(var(--foreground))
   );
 }
 

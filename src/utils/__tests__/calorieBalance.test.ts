@@ -23,28 +23,34 @@ describe("calcDayBalance", () => {
 });
 
 describe("getBalanceColor", () => {
-  it("returns success (green) for deficit during cut", () => {
-    const color = getBalanceColor(300, "cut");
-    expect(color).toBe(THEME.success);
+  /* A day that went the goal's way is the food orange, one that did not
+     the muted grey; the bar's side of the line says deficit or surplus
+     (DS10 call 4: no success green, no error red). */
+  it("is the food orange for a deficit during a cut", () => {
+    expect(getBalanceColor(300, "cut")).toBe(THEME.semantic.nutrition);
   });
 
-  it("returns danger (red) for surplus during cut", () => {
-    const color = getBalanceColor(-300, "cut");
-    expect(color).toBe(THEME.danger);
+  it("is grey for a surplus during a cut", () => {
+    expect(getBalanceColor(-300, "cut")).toBe(THEME.chrome.grey);
   });
 
-  it("returns success (green) for surplus during lean bulk", () => {
-    const color = getBalanceColor(-300, "lean bulk");
-    expect(color).toBe(THEME.success);
+  it("is the food orange for a surplus during a lean bulk", () => {
+    expect(getBalanceColor(-300, "lean bulk")).toBe(THEME.semantic.nutrition);
   });
 
-  it("returns warning (amber) for deficit during lean bulk", () => {
-    const color = getBalanceColor(300, "lean bulk");
-    expect(color).toBe(THEME.warning);
+  it("is grey for a deficit during a lean bulk", () => {
+    expect(getBalanceColor(300, "lean bulk")).toBe(THEME.chrome.grey);
   });
 
-  it("defaults to cut-like behavior for undefined goal", () => {
-    const color = getBalanceColor(300, undefined);
-    expect(color).toBe(THEME.success);
+  it("reads an unknown goal as a cut", () => {
+    expect(getBalanceColor(300, undefined)).toBe(THEME.semantic.nutrition);
+  });
+
+  it("is never success green or the error red", () => {
+    for (const b of [300, -300])
+      for (const g of ["cut", "lean bulk", undefined])
+        expect([THEME.success, THEME.danger]).not.toContain(
+          getBalanceColor(b, g)
+        );
   });
 });

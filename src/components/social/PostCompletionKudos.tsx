@@ -47,8 +47,8 @@ export default function PostCompletionKudos({
         <div
           className="mt-3 flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl text-sm font-semibold"
           style={{
-            color: THEME.semantic.positive,
-            background: `${THEME.semantic.positive}12`,
+            color: THEME.chrome.text,
+            background: THEME.chrome.tint,
           }}
         >
           <Check size={16} />
@@ -60,8 +60,7 @@ export default function PostCompletionKudos({
             type="button"
             onClick={onSend}
             disabled={sending}
-            className="flex-1 min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-white motion-safe:active:scale-[0.99] transition-transform disabled:opacity-60"
-            style={{ background: THEME.brand }}
+            className="flex-1 min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl bg-primary text-sm font-semibold text-primary-foreground motion-safe:active:scale-[0.99] transition-transform disabled:opacity-60"
           >
             <ThumbsUp size={16} />
             {sending ? "Sending…" : "Give props"}

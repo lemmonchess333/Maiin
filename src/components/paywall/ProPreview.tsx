@@ -32,12 +32,12 @@ function TargetFrame() {
       </div>
       <div
         className="flex items-start gap-2 rounded-xl p-2.5"
-        style={{ background: `${THEME.brand}14` }}
+        style={{ background: THEME.chrome.tint }}
         aria-hidden="true"
       >
         <span
           className="size-7 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${THEME.brand}1F`, color: THEME.brand }}
+          style={{ background: THEME.chrome.tint, color: THEME.chrome.text }}
         >
           <TrendingDown className="size-4" strokeWidth={2.25} />
         </span>
@@ -60,7 +60,7 @@ function TargetFrame() {
         <div className="h-1.5 rounded-full track-cut overflow-hidden">
           <div
             className="h-full rounded-full"
-            style={{ width: "60%", background: THEME.brand }}
+            style={{ width: "60%", background: THEME.semantic.nutrition }}
           />
         </div>
       </div>

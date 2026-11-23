@@ -11,7 +11,7 @@ export default function HealthConsentPolicyLink() {
   return (
     <Link
       to="/privacy"
-      className="inline-flex items-center min-h-11 text-base font-medium text-foreground underline underline-offset-2 hover:text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm"
+      className="inline-flex items-center min-h-11 text-base font-medium link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
     >
       {HEALTH_CONSENT_COPY.policy}
     </Link>

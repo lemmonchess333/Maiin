@@ -68,7 +68,7 @@ export default function TrophyCase({
               /* `lifting-strong`: see the badges' link above it on the
                  shelf (`BadgeShelf`). `primary-strong` is under 4.5:1 as
                  small text on the page in both themes. */
-              className="-mr-2 min-h-[44px] text-lifting-strong"
+              className="-mr-2 min-h-[44px] link-standalone"
               aria-expanded={showAll}
               onClick={() => setShowAll((all) => !all)}
             >

@@ -470,7 +470,7 @@ export default function ExercisePicker({
                   className={cn(
                     "h-11 px-4 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
-                      ? "font-semibold text-white bg-primary-strong"
+                      ? "font-semibold text-white bg-segment-selected"
                       : "font-medium bg-muted text-muted-foreground"
                   )}
                 >
