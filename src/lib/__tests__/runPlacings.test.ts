@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  compareRunOrder,
   placeWords,
   placingGap,
   placingSentence,
   rankedEfforts,
   runPlacings,
+  topEfforts,
   type PlacedRun,
   type RunPlacing,
 } from "../runPlacings";
@@ -160,6 +162,39 @@ describe("runPlacings", () => {
     expect(runPlacings(self, history)[0]?.place).toBe(2);
   });
 
+  it("orders runs by when they started, so a run saved late keeps its place", () => {
+    /* Started on day 3 and left on the finish screen until day 6; a
+       later run, started and saved on day 4, is behind it, as Strava
+       orders activities by their start. */
+    const savedLate = run(
+      6,
+      { 5000: 1500 },
+      { startedAt: new Date(START + 3 * DAY) }
+    );
+    const later = run(
+      4,
+      { 5000: 1550 },
+      { startedAt: new Date(START + 4 * DAY - 3_600_000) }
+    );
+    const history = [savedLate, later];
+    expect(runPlacings(later, history)).toEqual([
+      { meters: 5000, seconds: 1550, place: 2, bestSeconds: 1500 },
+    ]);
+    // The run saved late came first, so it is a first 5K: no place.
+    expect(runPlacings(savedLate, history)).toEqual([]);
+  });
+
+  it("orders a run saved without a start by when it was saved", () => {
+    const noStart = run(2, { 5000: 1500 });
+    const started = run(
+      3,
+      { 5000: 1550 },
+      { startedAt: new Date(START + 3 * DAY - 3_600_000) }
+    );
+    expect(runPlacings(started, [noStart, started])[0]?.place).toBe(2);
+    expect(runPlacings(noStart, [noStart, started])).toEqual([]);
+  });
+
   it("times an older run by its splits, as Bests does", () => {
     const older = {
       ...run(1, {}),
@@ -186,6 +221,38 @@ describe("rankedEfforts", () => {
       [a.id, 1541],
       [c.id, 1541],
     ]);
+  });
+});
+
+describe("the tie rule", () => {
+  it("keeps the earlier run ahead whatever order the runs come in", () => {
+    const older = run(1, { 5000: 1500 });
+    const newer = run(2, { 5000: 1500 });
+    const slow = run(3, { 5000: 1600 });
+    // Newest first, as a live read hands them.
+    const newestFirst = [slow, newer, older];
+    expect(rankedEfforts(newestFirst, 5000).map((e) => e.run.id)).toEqual([
+      older.id,
+      newer.id,
+      slow.id,
+    ]);
+    // Bests' Fastest row names the earlier run ...
+    expect(topEfforts(newestFirst, [5000])).toEqual([
+      { meters: 5000, seconds: 1500, run: older },
+    ]);
+    // ... and the later run's page agrees: it is the 2nd.
+    expect(runPlacings(newer, newestFirst)[0]?.place).toBe(2);
+    expect(runPlacings(older, newestFirst)).toEqual([]);
+  });
+
+  it("orders by start, then finish, then id, so no two runs are level", () => {
+    const at = new Date(START);
+    const a = run(1, {}, { id: "a", startedAt: at });
+    const b = run(1, {}, { id: "b", startedAt: at });
+    expect(compareRunOrder(a, b)).toBeLessThan(0);
+    expect(compareRunOrder(b, a)).toBeGreaterThan(0);
+    const finishedFirst = run(0, {}, { id: "z", startedAt: at });
+    expect(compareRunOrder(finishedFirst, a)).toBeLessThan(0);
   });
 });
 

@@ -10,14 +10,20 @@
  * A run's place is its rank among every eligible time at the distance up
  * to and including its own, shown from 1st to 3rd, as Strava ranks a
  * run's efforts: a second 5K slower than the first is your 2nd fastest.
+ * "Up to" is by when each run started (`compareRunOrder`), as Strava orders
+ * activities, so a run saved after a later one still comes before it.
  * A distance run for the first time shows no place on the run, as Strava
  * marks none on the activity; it is still that distance's 1st on Bests
  * and ranks the runs after it. Two runs at the same time keep the order
- * they were run in, the earlier ahead.
+ * they were run in, the earlier ahead, on every surface.
  *
  * No Firebase and no React here.
  */
-import { runEffortSeconds, type EffortRun } from "./runEfforts";
+import {
+  runEffortSeconds,
+  type EffortRun,
+  type FastestEffort,
+} from "./runEfforts";
 import { isPaceEligible, type RunRecord } from "./runStatsEligibility";
 import { FASTEST_EFFORT_METERS } from "./postMoments";
 import { formatClock } from "@/utils/formatters";
@@ -29,7 +35,31 @@ export type PlacedRun = EffortRun &
   RunRecord & {
     id: string;
     completedAt: Date;
+    /** When the run started. Absent on a run saved without it, which is
+     *  ordered by `completedAt`. */
+    startedAt?: Date;
   };
+
+/** The instant a run is ordered by: its start, else its finish. */
+export function runStartMs(run: Pick<PlacedRun, "startedAt" | "completedAt">) {
+  return (run.startedAt ?? run.completedAt).getTime();
+}
+
+/**
+ * The order runs were run in, the one rule every surface ranks by: the
+ * earlier start first, then the earlier finish, then the id, so no two
+ * runs are ever level.
+ */
+export function compareRunOrder(
+  a: Pick<PlacedRun, "id" | "startedAt" | "completedAt">,
+  b: Pick<PlacedRun, "id" | "startedAt" | "completedAt">
+): number {
+  return (
+    runStartMs(a) - runStartMs(b) ||
+    a.completedAt.getTime() - b.completedAt.getTime() ||
+    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
+}
 
 /** One distance this run placed at. */
 export interface RunPlacing {
@@ -65,7 +95,7 @@ function placeable<T extends PlacedRun>(runs: readonly T[]): T[] {
 
 /**
  * Every eligible time at `meters`, fastest first; of two the same, the
- * one run first.
+ * one run first (`compareRunOrder`), whatever order `runs` is in.
  */
 export function rankedEfforts<T extends PlacedRun>(
   runs: readonly T[],
@@ -77,26 +107,42 @@ export function rankedEfforts<T extends PlacedRun>(
     if (seconds !== null) ranked.push({ run, seconds });
   }
   return ranked.sort(
-    (a, b) =>
-      a.seconds - b.seconds ||
-      a.run.completedAt.getTime() - b.run.completedAt.getTime()
+    (a, b) => a.seconds - b.seconds || compareRunOrder(a.run, b.run)
   );
 }
 
 /**
+ * Each distance's fastest eligible time, in the order of `meters`, held by
+ * the run `rankedEfforts` puts first: at a tie, the one run first. Bests'
+ * Fastest rows read this, so the run they name is the one whose page says
+ * "Your best".
+ */
+export function topEfforts<T extends PlacedRun>(
+  runs: readonly T[],
+  meters: readonly number[]
+): FastestEffort<T>[] {
+  const top: FastestEffort<T>[] = [];
+  for (const distance of meters) {
+    const first = rankedEfforts(runs, distance)[0];
+    if (first)
+      top.push({ meters: distance, seconds: first.seconds, run: first.run });
+  }
+  return top;
+}
+
+/**
  * The distances `run` placed 1st to 3rd at, among the runs in `history`
- * that came before it, in the order of 1K, 5K, 10K. `history` may hold the
- * run itself and later runs; neither counts. Empty for a run that is not
- * pace-eligible.
+ * that started before it (`compareRunOrder`), in the order of 1K, 5K, 10K.
+ * `history` may hold the run itself and later runs; neither counts. Empty
+ * for a run that is not pace-eligible.
  */
 export function runPlacings(
   run: PlacedRun,
   history: readonly PlacedRun[]
 ): RunPlacing[] {
   if (!isPaceEligible(run)) return [];
-  const at = run.completedAt.getTime();
   const earlier = placeable(history).filter(
-    (other) => other.id !== run.id && other.completedAt.getTime() < at
+    (other) => other.id !== run.id && compareRunOrder(other, run) < 0
   );
   const placings: RunPlacing[] = [];
   for (const meters of FASTEST_EFFORT_METERS) {

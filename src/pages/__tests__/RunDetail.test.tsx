@@ -20,6 +20,8 @@ import { restoreRealTimers } from "@/test/fakeTimers";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { totalDistance, type GPSPoint } from "@/lib/gps";
 import { runTitle } from "@/lib/runLabels";
+import type { PlacedRun } from "@/lib/runPlacings";
+import { isPaceEligible } from "@/lib/runStatsEligibility";
 
 const h = vi.hoisted(() => ({
   run: null as Record<string, unknown> | null,
@@ -209,6 +211,26 @@ describe("RunDetail — best efforts", () => {
     expect(run.bestEfforts).toEqual([
       { distance: 1000, time: 262, label: "1K" },
     ]);
+  });
+
+  it("hands the hook a legacy run as ranking and Bests read it (Run29)", () => {
+    /* No activityType: the saved-run reader reads it as a free run, so
+       it ranks other runs and sits on Bests; its own page places it by
+       the same rule, ordered by when it started. */
+    const started = new Date(2026, 9, 3, 8, 0);
+    h.run = savedRun({
+      activityType: undefined,
+      avgPace: 277,
+      startedAt: { toDate: () => started },
+      bestEfforts: [{ distance: 1000, time: 262, label: "1K" }],
+    });
+    renderDetail();
+    // POSITIVE anchor: the saved run rendered.
+    expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
+    const [, run] = h.placingCalls.at(-1) as [string, PlacedRun];
+    expect(run.activityType).toBe("freerun");
+    expect(run.startedAt).toEqual(started);
+    expect(isPaceEligible(run)).toBe(true);
   });
 
   it("does not search a thinned track for a run saved before efforts were kept", () => {
