@@ -158,6 +158,24 @@ function setup(extra = {}) {
       runId: "b1",
       elapsedSeconds: 250,
     },
+    // Run30 call 3: Alice's and Bob's entries on the bench board, and an
+    // effort of each.
+    "liftBoards/bench-press/lifters/alice": { uid: "alice", weightKg: 60 },
+    "liftBoards/bench-press/lifters/bob": { uid: "bob", weightKg: 80 },
+    "users/alice/liftEfforts/w1_bench-press": {
+      uid: "alice",
+      exerciseId: "bench-press",
+      workoutId: "w1",
+      weightKg: 60,
+      reps: 5,
+    },
+    "users/bob/liftEfforts/b2_bench-press": {
+      uid: "bob",
+      exerciseId: "bench-press",
+      workoutId: "b2",
+      weightKg: 80,
+      reps: 3,
+    },
     "friendsBoard/bob": { sessions: 1 },
     "followCounts/bob": { followers: 4, following: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
@@ -339,6 +357,8 @@ function setup(extra = {}) {
 // unit::segments.removeSegmentTracesForUser.owned
 // unit::segments.removeSegmentTracesForUser.owners
 // unit::segments.removeSegmentTracesForUser.entries
+// smoke::userSubcollections::liftEfforts
+// unit::liftBoards.removeLiftBoardTracesForUser.entries
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -397,6 +417,9 @@ describe("complete account erasure", () => {
       "users/alice/segmentEfforts/r9_seg-alice_1",
       "users/alice/segmentEfforts/r9_seg-bob_1",
       "segments/seg-bob/board/alice",
+      // Run30 call 3: her entry on a lift's board and her effort.
+      "liftBoards/bench-press/lifters/alice",
+      "users/alice/liftEfforts/w1_bench-press",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -444,6 +467,9 @@ describe("complete account erasure", () => {
       "segmentOwners/seg-bob",
       "segments/seg-bob/board/bob",
       "users/bob/segmentEfforts/b1_seg-bob_1",
+      // Bob's entry on the bench board and his effort stay.
+      "liftBoards/bench-press/lifters/bob",
+      "users/bob/liftEfforts/b2_bench-press",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);

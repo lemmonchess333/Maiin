@@ -1134,6 +1134,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* A workout's heaviest set of each barbell lift (Run30 call 3,
+       functions/lib/liftBoards.js). Only the workout triggers write one,
+       since a client that could would put any weight on a board; nobody
+       reads one, the owner included, since the app reads its own sets
+       from the workouts. */
+    match /users/{uid}/liftEfforts/{effortId} {
+      allow read, write: if false;
+    }
+
     // ========================================
     // Latent subcollections — owner-only, write-frozen during deletion
     // ========================================
@@ -2586,6 +2595,21 @@ service cloud.firestore {
          a post they could see, outside the runner's privacy zones and
          never a restricted account's. There is no board of everyone. */
       match /board/{runnerUid} {
+        allow read, write: if false;
+      }
+    }
+
+    /* A barbell lift's board (Run30 call 3, functions/lib/liftBoards.js):
+       each lifter's heaviest set from a workout shared with followers or
+       everyone. Never read by a client: the getLiftBoard callable shows an
+       entry only to someone who follows its lifter, across no block
+       either way, from a post they could see, never a restricted
+       account's or one being deleted. There is no board of everyone. Only
+       the workout and post triggers write one. */
+    match /liftBoards/{exerciseId} {
+      allow read, write: if false;
+
+      match /lifters/{lifterUid} {
         allow read, write: if false;
       }
     }

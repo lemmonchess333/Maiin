@@ -31,6 +31,7 @@ const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
 const leagues = require("./lib/leagues");
 const segments = require("./lib/segments");
+const liftBoards = require("./lib/liftBoards");
 
 /**
  * Every subcollection under users/{uid}.
@@ -114,6 +115,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // Server-owned, owner-read. Its board entries and the segments it made
   // go in the segments step below, which reads no subcollection of its own.
   "segmentEfforts",
+  // A workout's heaviest set of each barbell lift (lib/liftBoards.js,
+  // Run30 call 3). Server-only. Its board entries go in the lift boards
+  // step below.
+  "liftEfforts",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",
@@ -466,6 +471,15 @@ async function deleteAccount({
     // which the deletion guard turns into a no-op.
     stage = "segments";
     await segments.removeSegmentTracesForUser(firestore, uid);
+
+    // 0g. Lift boards (Run30 call 3, inventory `liftBoardEntries`). The
+    // account's entry on each barbell lift's board, found by
+    // `lifters.uid` across every board; its efforts go with its tree
+    // (USER_SUBCOLLECTIONS). The workout sweep below fires
+    // onWorkoutDeleted for each workout, which the deletion guard turns
+    // into a no-op.
+    stage = "lift_boards";
+    await liftBoards.removeLiftBoardTracesForUser(firestore, uid);
 
     // 1. User's own subcollections
     stage = "user_subcollections";

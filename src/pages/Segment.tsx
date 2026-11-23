@@ -9,8 +9,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import Avatar from "@/components/Avatar";
-import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
+import BoardRowItem from "@/components/social/BoardRowItem";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import RunMap from "@/components/run/RunMapLazy";
 import ReportModal from "@/components/social/ReportModal";
@@ -22,15 +21,9 @@ import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { finishTimeLabel, nearDistanceLabel } from "@/lib/runLabels";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthYear } from "@/utils/formatters";
-import {
-  boardRows,
-  removeSegment,
-  segmentRejection,
-  type BoardRow,
-} from "@/lib/segments";
+import { boardRows, removeSegment, segmentRejection } from "@/lib/segments";
 import type { GPSPoint } from "@/lib/gps";
 import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 
 /** "12 Nov 2026", or nothing for an effort whose day can't be read. */
 function dayLabel(day: string | null): string {
@@ -272,6 +265,8 @@ export default function Segment() {
                     key={row.uid}
                     row={row}
                     place={i + 1}
+                    detail={dayLabel(row.day)}
+                    figure={finishTimeLabel(row.elapsedSeconds)}
                     selfPhoto={profile?.photoURL ?? undefined}
                     selfInitial={profile?.displayName?.charAt(0)}
                   />
@@ -320,77 +315,5 @@ export default function Segment() {
         onCancel={() => setConfirmDelete(false)}
       />
     </div>
-  );
-}
-
-function BoardRowItem({
-  row,
-  place,
-  selfPhoto,
-  selfInitial,
-}: {
-  row: BoardRow;
-  place: number;
-  selfPhoto?: string;
-  selfInitial?: string;
-}) {
-  const body = (
-    <>
-      <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center text-sm font-bold font-mono tabular-nums text-foreground">
-        {place}
-      </span>
-      {row.self ? (
-        <Avatar
-          photoURL={selfPhoto}
-          displayName="You"
-          fallbackInitial={selfInitial}
-          size="md"
-        />
-      ) : (
-        <BlockAwareAvatar
-          uid={row.uid}
-          photoURL={row.photoURL ?? undefined}
-          displayName={row.name}
-          size="md"
-        />
-      )}
-      <span className="min-w-[min(6em,100%)] flex-1">
-        <span
-          dir="auto"
-          className="block truncate text-sm font-semibold text-foreground"
-        >
-          {row.name}
-        </span>
-        <span className="block text-xs text-muted-foreground">
-          {dayLabel(row.day)}
-        </span>
-      </span>
-      <span className="ml-auto shrink-0 text-base font-bold font-mono tabular-nums text-foreground">
-        {finishTimeLabel(row.elapsedSeconds)}
-      </span>
-    </>
-  );
-  const classes = cn(
-    "flex min-h-[44px] flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
-    row.self
-      ? "border border-primary/25 bg-primary/10"
-      : "bg-card dark:card-shadow"
-  );
-  return (
-    <li aria-current={row.self ? "true" : undefined}>
-      {row.href ? (
-        <Link
-          to={row.href}
-          className={cn(
-            classes,
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          )}
-        >
-          {body}
-        </Link>
-      ) : (
-        <div className={classes}>{body}</div>
-      )}
-    </li>
   );
 }
