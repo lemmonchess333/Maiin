@@ -35,8 +35,8 @@ const MEDAL_H = Math.round((MEDAL_W * 4) / 3);
 
 /**
  * A medal's reveal (Soc15): the loud register DESIGN_GUIDE §14l allows
- * Social and rewards. A full screen on the dark stage, with the tier's
- * light behind it, opening as a new badge does (owner, 3 November 2026):
+ * Social and rewards. A full screen on the flat dark stage, with no light
+ * behind the medal (DESIGN_GUIDE §14o), opening as a new badge does (owner, 3 November 2026):
  * on the badges' sealed capsule in the medal's tier, which the person
  * taps open (SealStage and useSealBreak, the badge's own ceremony, so the
  * taps, sounds, haptics and confetti are the same). The medal is what is
@@ -137,14 +137,6 @@ export default function MedalReveal({
       // badge's: the moment cannot be skipped by tapping beside it.
       onClick={revealed ? undefined : seal.tap}
     >
-      {/* The tier's light behind the seal, and behind the medal after it. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background: `radial-gradient(circle at 50% 34%, ${tier}59, transparent 62%)`,
-        }}
-      />
       {/* Its rays, blooming in on the break. */}
       <AnimatePresence>
         {revealed && (

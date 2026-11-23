@@ -1,13 +1,7 @@
 import { useId } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BadgeTier } from "./badges";
-import { THEME } from "@/lib/theme";
 import { TIER_PALETTES, type Palette } from "./tierPalettes";
-
-// Tier hue for the earned-art glow. Reads THEME.tier directly (same values
-// TIER_COLORS re-exports) — a ./badges import here would be circular-ish
-// (badges.ts is a data module that many surfaces pull in).
-const TIER_GLOW: Record<BadgeTier, string> = THEME.tier;
 
 /**
  * Hex-shaped achievement badge. SVG-based so the metallic gradient + shine
@@ -78,9 +72,8 @@ export function BadgeHex({
 
   if (imageSrc) {
     /* Phase-4 render-site fix (visual audit):
-       — Earned art carries a tier-tinted glow ON the badge itself (the old
-         card-level box-shadow barely registered at grid size). Static,
-         size-dependent filter, so it stays inline.
+       — Earned art stands on a small neutral drop shadow and no coloured
+         light (DESIGN_GUIDE §14o): the metal is the tier's colour.
        — LOCKED art contrast is theme-dependent, so its opacity + filter live
          in the `.badge-art-locked` CSS class (light/dark split). The bespoke
          silver art grayscales to a light grey that WASHED OUT on the white
@@ -102,7 +95,7 @@ export function BadgeHex({
           ...(earned
             ? {
                 opacity: 1,
-                filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.22)) drop-shadow(0 0 ${Math.max(6, Math.round(size * 0.14))}px ${TIER_GLOW[tier]}59)`,
+                filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.22))",
               }
             : null),
         }}

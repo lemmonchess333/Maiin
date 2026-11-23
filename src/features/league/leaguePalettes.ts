@@ -26,8 +26,8 @@ export const LEAGUE_PALETTES: Record<LeagueTier, Palette> = {
 };
 
 /**
- * Each tier's light: the one colour the card's bar, the page's glow and
- * the reveal's rays are drawn in. Bronze to Platinum are the badges'
+ * Each tier's colour: the one the card's bar, the reveal's rays and its
+ * confetti are drawn in. Bronze to Platinum are the badges'
  * metals (THEME.tier); Diamond's is a mid step of the brand's purple ramp,
  * which reads on the light card and the dark stage alike.
  */

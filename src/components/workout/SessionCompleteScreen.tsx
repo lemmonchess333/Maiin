@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { getFormArtCutout } from "@/lib/formArtCutouts";
+import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
 import {
   finishKicker,
@@ -380,14 +381,10 @@ export default function SessionCompleteScreen({
         }
       : leadArt;
   const picture = object ? (
-    <img
+    <FinishFigure
       src={formArtCutoutUrl(object.cutout)}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      decoding="async"
-      data-lead-drawing={object.exerciseName}
-      className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
+      leadDrawing={object.exerciseName}
+      className="exercise-drawing"
     />
   ) : hasMuscleFigure(muscleCategories) ? (
     <MiniMuscleFigure

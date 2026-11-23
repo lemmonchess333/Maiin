@@ -123,9 +123,6 @@ export function BadgeGrid() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 overflow-hidden dark:card-shadow dark:border-transparent"
-          style={{
-            backgroundImage: `radial-gradient(circle at 16% 30%, ${nextColor}14, transparent 60%)`,
-          }}
         >
           <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
             <ProgressRing pct={next.progress.pct} color={nextColor} />
@@ -251,8 +248,8 @@ export function BadgeGrid() {
                        background issue"). Isolated by rendering the card CSS
                        four ways against the real asset: dropping the filter
                        keeps the box, dropping the wash removes it.
-                       Earned still reads as earned three other ways — the
-                       tier glow BadgeHex puts on the art itself, the
+                       Earned still reads as earned three other ways: the
+                       art in its full metal (locked art is greyed), the
                        foreground name colour, and the date in place of a
                        progress bar. */
                     style={{ transformStyle: "preserve-3d" }}
