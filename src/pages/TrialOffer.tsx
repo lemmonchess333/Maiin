@@ -42,7 +42,6 @@ import { trackTrialOfferViewed } from "@/lib/firstRunEvents";
 import {
   forgetTrialOfferWebCheckout,
   meetsTrialOffer,
-  noteTrialOfferWebCheckout,
   TRIAL_OFFER_COPY,
 } from "@/lib/trialOffer";
 import { toast } from "@/lib/toast";
@@ -85,6 +84,23 @@ export default function TrialOffer() {
     track("paywall_viewed", { source: SOURCE, platform });
   }, [meets, uid, platform]);
 
+  /* With the offer on screen no checkout from it is away. One left with
+     the browser's Back comes back here, the page loaded again or restored
+     from the back-forward cache, and its note goes; so does leaving the
+     offer in the app. */
+  useEffect(() => {
+    if (!uid) return;
+    forgetTrialOfferWebCheckout(uid);
+    const shownAgain = (event: PageTransitionEvent) => {
+      if (event.persisted) forgetTrialOfferWebCheckout(uid);
+    };
+    window.addEventListener("pageshow", shownAgain);
+    return () => {
+      window.removeEventListener("pageshow", shownAgain);
+      forgetTrialOfferWebCheckout(uid);
+    };
+  }, [uid]);
+
   if (!meets) return <Navigate to="/" replace />;
 
   /* Home opens at its top: the app keeps a page's scroll across a route
@@ -97,13 +113,12 @@ export default function TrialOffer() {
   const startTrial = async () => {
     track("paywall_cta_clicked", { source: SOURCE, selectedPlan, platform });
     // The website's checkout returns to /upgrade, which sends it on Home.
-    if (platform === "web") noteTrialOfferWebCheckout(uid);
     const outcome = await startCheckout(selectedPlan, {
       source: SOURCE,
       entryPoint: "upgrade",
       withTrial,
+      fromTrialOffer: true,
     });
-    if (outcome?.kind !== "redirected") forgetTrialOfferWebCheckout(uid);
     // Nothing began (one already running): stay.
     if (!outcome) return;
     // The web checkout has the window; its return goes Home (Upgrade).

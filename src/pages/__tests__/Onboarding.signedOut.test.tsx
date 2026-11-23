@@ -33,6 +33,8 @@ import {
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
+  SIGNED_OUT_AGREEMENT_MAX_AGE_MS,
+  SIGNED_OUT_AGREEMENT_MAX_AWAY_MS,
   __resetSetupVisitForTests,
   readSetupSave,
   startSetupSave,
@@ -130,6 +132,24 @@ const open = (path = "/setup") =>
 
 const route = () => screen.getByLabelText("Current route");
 
+/** The app going to the background, or coming back. */
+function setVisibility(state: "visible" | "hidden") {
+  Object.defineProperty(document, "visibilityState", {
+    value: state,
+    configurable: true,
+  });
+  fireEvent(document, new Event("visibilitychange"));
+}
+
+/** The phone's clock moved on by `ms`. */
+function later(ms: number) {
+  const now = Date.now() + ms;
+  vi.spyOn(Date, "now").mockReturnValue(now);
+}
+
+const agreementHeading = () =>
+  screen.queryByRole("heading", { name: SETUP.healthDetails, level: 1 });
+
 /** Signed out at the review, picked up cold: the agreement is asked again
  *  and given, the review comes back, and its Continue opens Save your
  *  plan, whose ways in are their own chunk. */
@@ -157,7 +177,11 @@ beforeEach(() => {
   h.complete.mockResolvedValue({ data: { success: true } });
   Element.prototype.scrollIntoView = vi.fn();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  setVisibility("visible");
+});
 
 describe("setup before there is an account", () => {
   it("keeps the answers on the phone, through a reload, and sends nothing", () => {
@@ -249,6 +273,64 @@ describe("the agreement, on answers picked up cold", () => {
     expect(
       screen.getByRole("button", { name: SETUP.saveNext })
     ).toBeInTheDocument();
+  });
+});
+
+/* Held in memory, the agreement lapses with the app still open: after two
+   hours in the background, or two days from I agree. Setup on screen then
+   asks for it again, as it does for answers picked up cold. */
+describe("the agreement, with the app left open", () => {
+  it("stands after a short time in the background", () => {
+    saveSignedOutDraft(review);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    setVisibility("hidden");
+    later(SIGNED_OUT_AGREEMENT_MAX_AWAY_MS);
+    setVisibility("visible");
+    expect(
+      screen.getByRole("button", { name: SETUP.saveNext })
+    ).toBeInTheDocument();
+  });
+
+  it("is asked again after two hours in the background, and I agree returns to the review", () => {
+    saveSignedOutDraft(review);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    setVisibility("hidden");
+    later(SIGNED_OUT_AGREEMENT_MAX_AWAY_MS + 1);
+    setVisibility("visible");
+    expect(agreementHeading()).toBeInTheDocument();
+    // The phone's copy no longer carries it either.
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)?.healthConsentVersion).toBe(
+      undefined
+    );
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    expect(
+      screen.getByRole("button", { name: SETUP.saveNext })
+    ).toBeInTheDocument();
+  });
+
+  it("is asked again in place of Save your plan, on screen when it lapsed", async () => {
+    await openSaveYourPlan();
+    setVisibility("hidden");
+    later(SIGNED_OUT_AGREEMENT_MAX_AWAY_MS + 1);
+    setVisibility("visible");
+    expect(agreementHeading()).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
+    ).toBeNull();
+  });
+
+  it("is asked again two days after I agree, before Save your plan opens", () => {
+    saveSignedOutDraft(review);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.agreeHealth }));
+    later(SIGNED_OUT_AGREEMENT_MAX_AGE_MS + 1);
+    fireEvent.click(screen.getByRole("button", { name: SETUP.saveNext }));
+    expect(agreementHeading()).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
+    ).toBeNull();
   });
 });
 
@@ -388,9 +470,12 @@ describe("once the account exists", () => {
     await waitFor(() => expect(route()).toHaveTextContent(/^\/$/));
   });
 
-  it("Try again after a lost answer builds the plan again, never reads as kept", async () => {
-    // The first call's answer is lost; the server had saved the plan.
-    h.complete.mockRejectedValueOnce({ code: "functions/permission-denied" });
+  it("Try again after a lost answer carries on with the plan it built, never reads as kept", async () => {
+    // The first call's answer is lost; the server had saved the plan, so
+    // it refuses the second.
+    h.complete
+      .mockRejectedValueOnce({ code: "functions/permission-denied" })
+      .mockRejectedValueOnce({ code: "functions/already-exists" });
     signedInFromSave("google");
     await waitFor(() =>
       expect(
@@ -404,6 +489,35 @@ describe("once the account exists", () => {
       expect(route()).toHaveTextContent(new RegExp(`^${TRIAL_OFFER_PATH}$`))
     );
     expect(toast.success).not.toHaveBeenCalledWith(KEPT_PLAN_NOTICE);
+  });
+
+  it("a timed-out call that built the plan carries on when its retry is refused", async () => {
+    h.complete
+      .mockRejectedValueOnce({ code: "functions/deadline-exceeded" })
+      .mockRejectedValueOnce({ code: "functions/already-exists" });
+    signedInFromSave("email");
+    await waitFor(() => expect(h.complete).toHaveBeenCalledTimes(2), {
+      timeout: 3000,
+    });
+    await waitFor(() =>
+      expect(route()).toHaveTextContent(new RegExp(`^${TRIAL_OFFER_PATH}$`))
+    );
+    expect(toast.success).not.toHaveBeenCalledWith(KEPT_PLAN_NOTICE);
+  });
+
+  it("a plan the server finds first, from another phone, is kept", async () => {
+    // The account read showed no plan; another phone's landed before this
+    // one's, and the server refused this one.
+    h.complete.mockRejectedValueOnce({ code: "functions/already-exists" });
+    signedInFromSave("apple");
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(KEPT_PLAN_NOTICE)
+    );
+    await waitFor(() => expect(route()).toHaveTextContent(/^\/$/));
+    expect(h.complete).toHaveBeenCalledTimes(1);
+    expect(loadOnboardingDraft("new-apple", ONBOARDING_MAX_STEP)).toBeNull();
+    expect(loadSignedOutDraft(ONBOARDING_MAX_STEP)).toBeNull();
+    expect(readSetupSave()).toBeNull();
   });
 
   it("a plan that could not be saved stays on the review with Try again", async () => {

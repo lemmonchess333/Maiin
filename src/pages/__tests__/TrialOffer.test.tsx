@@ -147,6 +147,7 @@ describe("the trial offer at the end of setup", () => {
       source: "onboarding",
       entryPoint: "upgrade",
       withTrial: true,
+      fromTrialOffer: true,
     });
   });
 
@@ -177,30 +178,54 @@ describe("the trial offer at the end of setup", () => {
     await atHome();
   });
 
-  it("with the website's checkout, notes the offer so its return goes Home", async () => {
+  it("with the website's checkout, sends its return on Home and stays while it has the window", async () => {
     h.onSale = true;
     h.startCheckout.mockResolvedValue({ kind: "redirected", url: "https://x" });
     show();
     fireEvent.click(screen.getByRole("button", { name: "Start free trial" }));
     await waitFor(() => expect(h.startCheckout).toHaveBeenCalled());
-    expect(
-      sessionStorage.getItem("tropos.trialOffer.webCheckout.trial-uid")
-    ).toBe("1");
+    expect(h.startCheckout.mock.calls[0][1]).toMatchObject({
+      fromTrialOffer: true,
+    });
     // The window has gone to the checkout: nothing more here.
     expect(screen.getByLabelText("Current route")).toHaveTextContent(
       "/trial-offer"
     );
   });
 
-  it("with the website's checkout refused, forgets the note and goes Home", async () => {
-    h.onSale = true;
-    h.startCheckout.mockResolvedValue({ kind: "failed", message: "No." });
-    show();
-    fireEvent.click(screen.getByRole("button", { name: "Start free trial" }));
-    await atHome();
-    expect(
-      sessionStorage.getItem("tropos.trialOffer.webCheckout.trial-uid")
-    ).toBeNull();
+  /* The note that sends the website checkout's return Home is that one
+     checkout's: on screen again, the offer has none away. */
+  describe("the website checkout's note", () => {
+    const NOTE = "tropos.trialOffer.webCheckout.trial-uid";
+
+    it("goes when the offer is opened again", () => {
+      sessionStorage.setItem(NOTE, "1");
+      show();
+      expect(screen.getByText(TRIAL_OFFER.kicker)).toBeInTheDocument();
+      expect(sessionStorage.getItem(NOTE)).toBeNull();
+    });
+
+    it("goes when Back from the checkout restores the offer as it was", () => {
+      show();
+      // The checkout has the window, and the page is kept as it was.
+      sessionStorage.setItem(NOTE, "1");
+      window.dispatchEvent(
+        Object.assign(new Event("pageshow"), { persisted: false })
+      );
+      expect(sessionStorage.getItem(NOTE)).toBe("1");
+      window.dispatchEvent(
+        Object.assign(new Event("pageshow"), { persisted: true })
+      );
+      expect(sessionStorage.getItem(NOTE)).toBeNull();
+    });
+
+    it("goes when the offer is left in the app", async () => {
+      show();
+      sessionStorage.setItem(NOTE, "1");
+      fireEvent.click(screen.getByRole("button", { name: TRIAL_OFFER.notNow }));
+      await atHome();
+      expect(sessionStorage.getItem(NOTE)).toBeNull();
+    });
   });
 
   it("one trial per account: an account that has had one goes Home unshown", async () => {

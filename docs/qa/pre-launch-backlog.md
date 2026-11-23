@@ -42,6 +42,14 @@ real kill, and a sandbox purchase from the offer.
       asks the agreement again, I agree opens the review, and its email
       switch is off (asked afresh). Signing in from the welcome instead, or
       leaving the answers two days, leaves none of them for the next setup.
+- [ ] **The agreement lapses with the app left open.** Signed out, answer
+      setup to the review, tap I agree, then press the Home button (do not
+      kill the app) and lock the phone for over two hours. Unlock and go
+      back to Tropos. Passing: setup shows "Your health details" again in
+      place of the review, and I agree returns to the review with every
+      answer kept. This rests on iOS telling the web view it went to the
+      background (`visibilitychange` in `setupSave.ts`); under ten minutes
+      away, the review is still there.
 - [ ] **The trial from the offer, in sandbox.** With a sandbox Apple ID,
       finish setup to the trial offer. Passing: the yearly plan and its App
       Store price show, with "7 days free, then …" under Start free trial;

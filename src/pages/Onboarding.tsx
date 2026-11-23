@@ -165,12 +165,14 @@ import {
   SAVE_PLAN_COPY,
   noteSetupSent,
   noteSignedOutAgreement,
+  onSignedOutAgreementLapsed,
   setupSentThisVisitFor,
   signedOutAgreementThisVisit,
   cancelSetupSave,
   finishSetupSave,
   keepExistingPlan,
   readSetupSave,
+  refusedForExistingPlan,
   startSetupSave,
 } from "@/lib/setupSave";
 import { pathAfterSetup } from "@/lib/trialOffer";
@@ -1069,6 +1071,28 @@ export default function Onboarding() {
     setStepMove(-1);
     setSaveView(false);
   };
+  /* Signed out, the agreement lapses after two hours in the background or
+     two days from I agree (`setupSave.ts`). Setup on screen then forgets it
+     and asks again, as it does for answers picked up cold: past the
+     agreement, it opens on it, and from the review I agree returns there. */
+  const askAgreementAgain = () => {
+    setHealthConsentVersion(undefined);
+    if (flow.indexOf(step) <= flow.indexOf(HEALTH_CONSENT_STEP)) return;
+    setSaveView(false);
+    setSaveError("");
+    setConsentDeclined(false);
+    setReturnToReview(step === 7);
+    setStepMove(0);
+    setStep(HEALTH_CONSENT_STEP);
+  };
+  const agreementLapsedRef = useRef(askAgreementAgain);
+  useEffect(() => {
+    agreementLapsedRef.current = askAgreementAgain;
+  });
+  useEffect(() => {
+    if (user) return;
+    return onSignedOutAgreementLapsed(() => agreementLapsedRef.current());
+  }, [user]);
   /* Leave setup from Not now at the agreement, before there is an account:
      the answers given so far are forgotten. */
   const leaveSetup = () => {
@@ -1103,7 +1127,8 @@ export default function Onboarding() {
     }
     if (step === 7) {
       if (user) void handleFinish();
-      else openSaveView();
+      // A lapsed agreement is asked for again, in place of Save your plan.
+      else if (signedOutAgreementThisVisit()) openSaveView();
       return;
     }
     setStepMove(1);
@@ -1117,25 +1142,31 @@ export default function Onboarding() {
     const pendingInviteAtFinish = snapshotPendingInvite();
     setSaving(true);
     setSaveError("");
+    /* An account that has a plan keeps it, and the answers here are
+       dropped. */
+    const keepPlan = async () => {
+      onboardingCompletedRef.current = true;
+      clearOnboardingDraft(user.uid);
+      keepExistingPlan();
+      toast.success(KEPT_PLAN_NOTICE);
+      navigate("/", { replace: true });
+      await refreshProfile();
+    };
     try {
       /* Finishing setup replaces the programme, so it never runs over a
-         plan (A6). The profile this screen holds can be a copy from before
-         the account had one, made on another phone or kept in this one's
-         cache, so the account is read from the server first. One that has
-         a plan keeps it, and the answers here are dropped. */
+         plan (A6), and `completeOnboarding` refuses one. The profile this
+         screen holds can be a copy from before the account had one, made on
+         another phone or kept in this one's cache, so the account is read
+         from the server first. */
       /* Once this open of the app has asked for the plan, a plan on the
          account is that one, its answer lost on the way back: Try again
-         builds it again, as before, and nothing reads as kept. */
-      const stored = setupSentThisVisitFor(user.uid)
+         carries on as if the answer had come, and nothing reads as kept. */
+      const sentBefore = setupSentThisVisitFor(user.uid);
+      const stored = sentBefore
         ? null
         : await getDocFromServer(doc(db, "users", user.uid));
       if (stored?.data()?.onboardingComplete === true) {
-        onboardingCompletedRef.current = true;
-        clearOnboardingDraft(user.uid);
-        keepExistingPlan();
-        toast.success(KEPT_PLAN_NOTICE);
-        navigate("/", { replace: true });
-        await refreshProfile();
+        await keepPlan();
         return;
       }
       // The answers are this account's now; nothing waits for another.
@@ -1300,30 +1331,47 @@ export default function Onboarding() {
               }
             : {}),
         });
+      /* "kept" when the server found a plan on the account that this open
+         of the app did not ask for: another phone's, which stays. One a
+         call from this open asked for (a Try again, or the retry below
+         after a timeout) is the plan that call built, its answer lost. */
+      const sendPlan = async (): Promise<"built" | "kept"> => {
+        try {
+          await callCF();
+          return "built";
+        } catch (err) {
+          if (refusedForExistingPlan(err)) return sentBefore ? "built" : "kept";
+          const code = (err as { code?: string })?.code;
+          const msg = (err as { message?: string })?.message || "";
+          // The CF has no minInstances, so the first call after idle
+          // cold-starts and can exceed the client SDK's wait window. That
+          // surfaces as `internal`, but ALSO as `deadline-exceeded` /
+          // `unavailable` depending on where the timeout bites — all three
+          // are transient cold-start signals a warm retry fixes. (The old
+          // check only caught `internal`, so a cold start that timed out as
+          // deadline-exceeded fell straight through to the error toast.)
+          const isTransient =
+            code === "functions/internal" ||
+            code === "internal" ||
+            code === "functions/deadline-exceeded" ||
+            code === "deadline-exceeded" ||
+            code === "functions/unavailable" ||
+            code === "unavailable" ||
+            msg.toUpperCase().includes("INTERNAL");
+          if (!isTransient) throw err;
+          await new Promise((r) => setTimeout(r, 1200));
+          try {
+            await callCF();
+          } catch (retryErr) {
+            if (!refusedForExistingPlan(retryErr)) throw retryErr;
+          }
+          return "built";
+        }
+      };
       noteSetupSent(user.uid);
-      try {
-        await callCF();
-      } catch (err) {
-        const code = (err as { code?: string })?.code;
-        const msg = (err as { message?: string })?.message || "";
-        // The CF has no minInstances, so the first call after idle
-        // cold-starts and can exceed the client SDK's wait window. That
-        // surfaces as `internal`, but ALSO as `deadline-exceeded` /
-        // `unavailable` depending on where the timeout bites — all three
-        // are transient cold-start signals a warm retry fixes. (The old
-        // check only caught `internal`, so a cold start that timed out as
-        // deadline-exceeded fell straight through to the error toast.)
-        const isTransient =
-          code === "functions/internal" ||
-          code === "internal" ||
-          code === "functions/deadline-exceeded" ||
-          code === "deadline-exceeded" ||
-          code === "functions/unavailable" ||
-          code === "unavailable" ||
-          msg.toUpperCase().includes("INTERNAL");
-        if (!isTransient) throw err;
-        await new Promise((r) => setTimeout(r, 1200));
-        await callCF();
+      if ((await sendPlan()) === "kept") {
+        await keepPlan();
+        return;
       }
 
       onboardingCompletedRef.current = true;

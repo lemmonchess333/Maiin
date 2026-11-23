@@ -109,6 +109,13 @@ export function keepExistingPlan(): boolean {
   return true;
 }
 
+/** `completeOnboarding`'s refusal of an account that already has a plan
+ *  (functions/index.js): the plan stays, and nothing was written. */
+export function refusedForExistingPlan(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return code === "functions/already-exists" || code === "already-exists";
+}
+
 /**
  * An account has appeared on the phone (a sign-in, or a session restored
  * at launch). Unless it came from Save your plan, the answers given signed
@@ -125,21 +132,80 @@ export function signedOut(): void {
   forgetSignedOutDraft();
 }
 
+/** How long the agreement given signed out is held: two days from I agree,
+ *  the signed-out draft's own lifetime. */
+export const SIGNED_OUT_AGREEMENT_MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000;
+/** And no longer than the app has been out of sight: two hours in the
+ *  background and the phone may be someone else's. */
+export const SIGNED_OUT_AGREEMENT_MAX_AWAY_MS = 2 * 60 * 60 * 1000;
+
 /* What this open of the app has done in setup. Kept in memory, so an app
-   killed and opened again starts with neither. */
-let agreedSignedOutThisVisit = false;
+   killed and opened again starts with neither. On iOS an app can stay open
+   for days, so the agreement also lapses on the two limits above. */
+let signedOutAgreedAt: number | null = null;
+let hiddenSince: number | null = null;
+let agreementTimer: ReturnType<typeof setTimeout> | null = null;
+const agreementListeners = new Set<() => void>();
 const setupSentThisVisit = new Set<string>();
+
+function agreementLapsed(now: number): boolean {
+  if (signedOutAgreedAt === null) return false;
+  return (
+    now < signedOutAgreedAt ||
+    now - signedOutAgreedAt > SIGNED_OUT_AGREEMENT_MAX_AGE_MS ||
+    (hiddenSince !== null &&
+      now - hiddenSince > SIGNED_OUT_AGREEMENT_MAX_AWAY_MS)
+  );
+}
+
+/* Forgets a lapsed agreement and tells whoever holds a copy of it. */
+function checkAgreement(): void {
+  if (!agreementLapsed(Date.now())) return;
+  signedOutAgreedAt = null;
+  if (agreementTimer !== null) clearTimeout(agreementTimer);
+  agreementTimer = null;
+  for (const listener of agreementListeners) listener();
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      hiddenSince ??= Date.now();
+      return;
+    }
+    checkAgreement();
+    hiddenSince = null;
+  });
+}
 
 /** I agree was tapped in setup before there was an account. */
 export function noteSignedOutAgreement(): void {
-  agreedSignedOutThisVisit = true;
+  signedOutAgreedAt = Date.now();
+  if (agreementTimer !== null) clearTimeout(agreementTimer);
+  // The two days can run out with the app on screen; a timer held in the
+  // background is caught by the check on the way back.
+  agreementTimer = setTimeout(
+    checkAgreement,
+    SIGNED_OUT_AGREEMENT_MAX_AGE_MS + 1
+  );
 }
 
-/** Whether the agreement given signed out was given in this open of the
- *  app. A draft picked up cold asks for it again: by then the phone may be
- *  someone else's. */
+/** Whether the agreement given signed out stands: given in this open of
+ *  the app, under two days ago, and the app not in the background for two
+ *  hours since. Otherwise setup asks for it again, as it does for a draft
+ *  picked up cold: by then the phone may be someone else's. */
 export function signedOutAgreementThisVisit(): boolean {
-  return agreedSignedOutThisVisit;
+  checkAgreement();
+  return signedOutAgreedAt !== null;
+}
+
+/** Calls `listener` when the agreement given signed out lapses, so a setup
+ *  on screen can ask again. Returns the way to stop. */
+export function onSignedOutAgreementLapsed(listener: () => void): () => void {
+  agreementListeners.add(listener);
+  return () => {
+    agreementListeners.delete(listener);
+  };
 }
 
 /** `completeOnboarding` was asked to build this account's plan. */
@@ -156,6 +222,10 @@ export function setupSentThisVisitFor(uid: string): boolean {
 
 /** Tests only (the `__` marks a test hook): a fresh open of the app. */
 export function __resetSetupVisitForTests(): void {
-  agreedSignedOutThisVisit = false;
+  signedOutAgreedAt = null;
+  hiddenSince = null;
+  if (agreementTimer !== null) clearTimeout(agreementTimer);
+  agreementTimer = null;
+  agreementListeners.clear();
   setupSentThisVisit.clear();
 }
