@@ -755,7 +755,7 @@ function ProgramInner() {
               <button
                 type="button"
                 onClick={() => setReorderMode(false)}
-                className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-lifting-strong"
+                className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-foreground"
               >
                 Done
               </button>
@@ -779,7 +779,6 @@ function ProgramInner() {
           ariaLabel="Train mode"
           value={activeTab}
           onChange={(value) => selectTab(value)}
-          tone={activeTab === "run" ? "running" : "lifting"}
           /* A 36pt track with 44pt options (§14m rule 18), its 4pt bands
              above and below laid over the gaps rather than adding to them. */
           size="sm"

@@ -217,6 +217,12 @@ const PINNED: Record<string, string> = {
   // (src/lib/gps.ts) and isOutdoorGpsRun (src/lib/runGuards.ts), which the
   // same cross-test holds to the app's.
   "functions/lib/publicRoute.js": "src/lib/__tests__/publicPost.cross.test.ts",
+  // A shared card's page (Soc17 call 1): the server writes the card into
+  // the page and src/lib/sharedCardPage.ts reads it. A basename pair; the
+  // cross-test feeds the sheet's copy to the server and the server's page
+  // to the reader.
+  "functions/lib/sharedCardPage.js":
+    "src/lib/__tests__/sharedCards.cross.test.ts",
   // Run26 call 3: a segment's stretch rule and name refusals, which the
   // maker says before asking. A basename pair with src/lib/segments.ts;
   // the cross-test drives segments.js and segmentGeometry.js both.

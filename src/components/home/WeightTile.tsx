@@ -112,7 +112,7 @@ export default function WeightTile({
           >
             <Scale
               className="size-3.5"
-              style={{ color: THEME.semantic.activity }}
+              style={{ color: THEME.chrome.text }}
               aria-hidden="true"
             />
           </div>
@@ -131,7 +131,7 @@ export default function WeightTile({
             <div className="flex items-center gap-1.5">
               <TrendIcon
                 className="size-4 flex-shrink-0"
-                style={{ color: THEME.semantic.activity }}
+                style={{ color: THEME.chrome.text }}
                 aria-hidden="true"
               />
               <p className="text-lg font-bold leading-none text-foreground">

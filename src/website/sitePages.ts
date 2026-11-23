@@ -181,7 +181,9 @@ export const APP_ADDRESS_PREFIXES: readonly string[] = [
   "/run-summary",
   "/segment",
   "/settings",
+  "/setup",
   "/space",
+  "/trial-offer",
   "/upgrade",
   "/user",
   "/workout",
@@ -200,10 +202,11 @@ export const PAGE_ALIASES: Readonly<Record<string, SitePageKey>> = {
 };
 
 /** What the website shows at an address: a page in the table, a shared
- *  post, Home for one of the app's addresses, or the 404. */
+ *  post or card, Home for one of the app's addresses, or the 404. */
 export type WebsiteRoute =
   | { kind: "page"; key: SitePageKey }
   | { kind: "post" }
+  | { kind: "card" }
   | { kind: "appAddress" }
   | { kind: "notFound" };
 
@@ -232,6 +235,7 @@ export function websiteRoute(pathname: string): WebsiteRoute {
   const alias = PAGE_ALIASES[path];
   if (alias) return { kind: "page", key: alias };
   if (/^\/activity\/[^/]+$/.test(path)) return { kind: "post" };
+  if (/^\/card\/[^/]+$/.test(path)) return { kind: "card" };
   const app = APP_ADDRESS_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`)
   );
@@ -259,7 +263,8 @@ export function takesOverHtml(
 /**
  * Which pre-written page an address draws, so the browser can take over
  * the HTML it was sent (`main.tsx`) rather than draw it again. One of the
- * app's addresses draws Home, the page Hosting sends for it.
+ * app's addresses draws Home, the page Hosting sends for it. A shared post
+ * or card arrives as Home's HTML with its data, and is drawn afresh.
  */
 export function prerenderedKeyFor(pathname: string): SitePageKey | null {
   const route = websiteRoute(pathname);

@@ -34,7 +34,6 @@ export default function LiftWeekQuestion({
           label: <span className="font-figure tabular-nums text-xl">{n}</span>,
         }))}
         onChange={onDaysChange}
-        tone="lifting"
         className="py-2"
       />
       <SegmentedControl<SessionMinutesChoice>
@@ -45,7 +44,6 @@ export default function LiftWeekQuestion({
           label: <SessionLengthLabel minutes={n} />,
         }))}
         onChange={onMinutesChange}
-        tone="lifting"
         className="@container"
       />
     </>

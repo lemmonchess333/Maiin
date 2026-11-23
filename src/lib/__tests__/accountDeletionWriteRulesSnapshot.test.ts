@@ -157,6 +157,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // false`). Written only by the getInviteCode and redeemInvite callables,
   // both actor-locked for deletion; the executor sweeps by the uid field.
   "match /inviteCodes/{code}",
+  // Soc17 call 1: a shared card's copy, fully client-locked. Written only
+  // by the sharedCard callable (actor-locked for deletion, the freeze read
+  // in its transaction); the executor sweeps by the ownerUid field.
+  "match /sharedCards/{token}",
   // SOC-P2c — space-post likes. Client READ only ("did I like this");
   // ALL writes are server-only via toggleSpacePostLikeCallable, whose
   // deletion actor-lock (assertCallableActorNotDeleting) covers the

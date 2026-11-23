@@ -164,6 +164,24 @@ function setup(extra = {}) {
     "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
     "inviteCodes/A2B3C4D5": { uid: "alice", createdAt: now },
     "inviteCodes/Z9Y8X7W6": { uid: "bob", createdAt: now },
+    // Soc17 call 1: two of Alice's shared cards' copies and one of Bob's.
+    "sharedCards/aliceCardToken0000000001": {
+      ownerUid: "alice",
+      workoutId: "w1",
+      card: { template: "lift" },
+      createdAt: now,
+    },
+    "sharedCards/aliceCardToken0000000002": {
+      ownerUid: "alice",
+      card: { template: "recap" },
+      createdAt: now,
+    },
+    "sharedCards/bobCardToken000000000001": {
+      ownerUid: "bob",
+      runId: "b1",
+      card: { template: "run" },
+      createdAt: now,
+    },
     "spaces/running/posts/bobs-post": { authorId: "bob", likeCount: 2 },
     "spaces/running/posts/bobs-post/likes/alice": { createdAt: now },
     "spaces/running/posts/bobs-post/likes/carol": { createdAt: now },
@@ -309,6 +327,7 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::blockedBy
 // smoke::blockedByReverse
 // smoke::topLevelQuery::inviteCodes
+// smoke::topLevelQuery::sharedCards
 // smoke::topLevelOwn::leagueMembers
 // smoke::topLevelQuery::leagueGroups
 // smoke::leagueStandings
@@ -357,6 +376,8 @@ describe("complete account erasure", () => {
       "followCounts/alice",
       "inviteCodes/K7P49M2H",
       "inviteCodes/A2B3C4D5",
+      "sharedCards/aliceCardToken0000000001",
+      "sharedCards/aliceCardToken0000000002",
       "leagueMembers/alice",
       "leagueGroups/wk-001/standings/alice",
       "users/alice/leagueResults/2026-09-07",
@@ -410,6 +431,7 @@ describe("complete account erasure", () => {
       "friendsBoard/bob",
       "followCounts/bob",
       "inviteCodes/Z9Y8X7W6",
+      "sharedCards/bobCardToken000000000001",
       "leagueMembers/bob",
       "leagueGroups/wk-001/standings/bob",
       "users/bob/leagueResults/2026-09-07",

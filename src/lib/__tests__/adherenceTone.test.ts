@@ -42,19 +42,21 @@ describe("adherenceTone", () => {
     }
     // Stated positively for the band that had the identity, so this
     // cannot pass by the colour simply having moved somewhere else.
-    expect(adherenceTone(85).color).toBe("hsl(var(--success-strong))");
+    // The reliable band is the text colour on the chrome's tint: green is
+    // a tick, not a word (DS10 call 4).
+    expect(adherenceTone(85).color).toBe("hsl(var(--foreground))");
   });
 
   it("keeps the alpha concat on a hex, where it is valid", () => {
     // `${var(--x)}1A` would be invalid CSS. Only the two washed bands
     // have a tint; the muted band is transparent.
-    expect(adherenceTone(85).bg).toBe(`${THEME.success}1A`);
+    expect(adherenceTone(85).bg).toBe(THEME.chrome.tint);
     expect(adherenceTone(20).bg).toBe(`${THEME.amberLight}1A`);
     expect(adherenceTone(65).bg).toBe("transparent");
   });
 
   it("switches band at 80 and at 50, inclusive", () => {
-    expect(adherenceTone(80).color).toBe("hsl(var(--success-strong))");
+    expect(adherenceTone(80).color).toBe("hsl(var(--foreground))");
     expect(adherenceTone(79.9).color).toBe("hsl(var(--muted-foreground))");
     expect(adherenceTone(50).color).toBe("hsl(var(--muted-foreground))");
     expect(adherenceTone(49.9).color).toBe("hsl(var(--warning-strong))");

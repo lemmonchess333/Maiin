@@ -77,8 +77,10 @@ export function sessionLeadIndex(
  *  exercise's name. Null when no exercise in the day has art. */
 export function sessionLeadArt(
   exercises: readonly { exerciseId?: string; name: string }[]
-): { cutout: FormArtCutout; exerciseName: string } | null {
+): { cutout: FormArtCutout; exerciseName: string; exerciseId: string } | null {
   const lead = exercises[sessionLeadIndex(exercises)];
   const cutout = lead?.exerciseId ? getFormArtCutout(lead.exerciseId) : null;
-  return lead && cutout ? { cutout, exerciseName: lead.name } : null;
+  return lead?.exerciseId && cutout
+    ? { cutout, exerciseName: lead.name, exerciseId: lead.exerciseId }
+    : null;
 }

@@ -232,7 +232,7 @@ export default function SpacePostCard({
               {post.official && (
                 /* The success tint with its AA text step: the fixed green
                    as ink measured 2.24:1 on the light card. */
-                <span className="inline-flex max-w-full items-center text-caption font-semibold px-1.5 py-0.5 rounded bg-success/10 text-success-strong">
+                <span className="inline-flex max-w-full items-center text-caption font-semibold px-1.5 py-0.5 rounded bg-muted text-foreground">
                   Tropos Team
                 </span>
               )}

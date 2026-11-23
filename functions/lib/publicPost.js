@@ -32,6 +32,14 @@
    A run with too little left after the cut, a treadmill or manual run, a
    lift, and a run whose route or zones cannot be read get no map.
 
+   Its page names the author by first name ("Sam shared a run", the
+   owner's layout of 22 Nov 2026) and its one way on is "Join Tropos", to
+   the App Store. Never with the author's invite code: a post's address is
+   fixed and anyone signed out can open it, so a code on it would hand a
+   person the author blocked the code renewed to keep them out (Soc15
+   STATUS lines). A shared card's page carries the code it was shared with
+   (sharedCardPage.js).
+
    Kept out of search (legal audit §3.2): a public run must not be found
    by searching its author's name, so every answer here asks search
    engines not to index it, the page with a robots tag in its head and
@@ -44,6 +52,7 @@ const { isRestricted } = require("./restriction");
 const { isAccountDeleting, isTombstoned } = require("./accountDeletionStatus");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 const { publicRoute } = require("./publicRoute");
+const { firstNameOf } = require("./inviteCodes");
 
 /** The production web app, as src/lib/publicLinks.ts names it. */
 const PUBLIC_ORIGIN = "https://troposfit.com";
@@ -210,6 +219,9 @@ async function readPublicPost(db, activityId, logger) {
     unit: account.preferredDistanceUnit === "mi" ? "mi" : "km",
     liftUnit: account.liftingWeightUnit === "lbs" ? "lbs" : "kg",
   };
+  const firstName =
+    firstNameOf(shown.displayName) || firstNameOf(post.authorName);
+  if (firstName) view.firstName = firstName;
   const photo = publicPhotoUrl(shown.photoURL);
   if (photo) view.authorPhotoURL = photo;
   const title = text(
@@ -519,6 +531,14 @@ module.exports = {
   DATA_ELEMENT_ID,
   SECURITY_HEADERS,
   SHELL_TTL_MS,
+  NO_INDEX,
+  ROBOTS_TAG,
+  ROBOTS_META,
+  PREVIEW_META,
+  PREVIEW_IMAGE,
+  escapeAttr,
+  jsonForScript,
+  setHeaders,
   servePublicPost,
   shellLoader,
 };

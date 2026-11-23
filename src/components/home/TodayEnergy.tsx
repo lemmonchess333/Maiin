@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import { Beef, Plus, Wheat } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -18,6 +17,7 @@ import MacroColumn, {
 } from "@/components/food/MacroColumn";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 type MacroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -62,6 +62,7 @@ export default function TodayEnergy({
     proteinRemaining: number;
   } | null;
 }) {
+  const { accent: macroAccent } = useMacroPalette();
   const tCal = targets.finalTarget;
   // Nutr3: below the essential-fat floor the split funds no protein or
   // carbs, so those two carry NO goal rather than a 0 g goal every meal
@@ -213,7 +214,7 @@ export default function TodayEnergy({
                     consumed={m.value}
                     target={m.target}
                     label={m.label}
-                    color={THEME.macros[m.key]}
+                    color={macroAccent[m.key]}
                     mode={mode}
                     onTap={toggleMode}
                   />

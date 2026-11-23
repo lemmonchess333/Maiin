@@ -138,7 +138,6 @@ export default function CircleMeetupSheet({
             haptic("light");
             setSport(s);
           }}
-          tone={sport === "lift" ? "lifting" : "running"}
         />
         <input
           type="text"

@@ -39,7 +39,7 @@ export default function NewAccountMethodNote({
         variant="ghost"
         size="md"
         onClick={onSignInAnotherWay}
-        className="-mx-4 -mb-2 text-lifting-strong font-semibold"
+        className="-mx-4 -mb-2 text-foreground font-semibold"
       >
         Used Tropos before? Sign in another way
       </Button>

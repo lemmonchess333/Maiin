@@ -14,6 +14,24 @@ describe("calculateTDEE", () => {
     expect(result.bmr).toBe(1639);
   });
 
+  /* No sex stored read as male, 166 kcal above the female BMR (rankings
+     spec, 22 November 2026). It now takes the mean of the two constants,
+     (5 − 161) / 2 = −78 (owner, the same day). */
+  it("takes the midpoint constant, −78, when no sex is stored", () => {
+    // BMR = 10*80 + 6.25*180 - 5*25 - 78 = 1722
+    for (const sex of [undefined, null] as const) {
+      const result = calculateTDEE(80, 180, 25, "sedentary", "recomp", sex);
+      expect(result.bmr).toBe(1722);
+    }
+    expect(calculateTDEE(80, 180, 25, "sedentary", "recomp").bmr).toBe(1722);
+    // Between the two, and the same distance from each.
+    expect(1805 - 1722).toBe(1722 - 1639);
+    // The target follows: 1722 × 1.55 = 2669, with no offset at recomp.
+    expect(
+      calculateTDEE(80, 180, 25, "moderate", "recomp").targetCalories
+    ).toBe(2669);
+  });
+
   it("applies activity multipliers correctly", () => {
     const bmr = 1805; // male, 80kg, 180cm, 25yo
     const multipliers = {

@@ -147,6 +147,18 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // A shared card's page behind Hosting's /card/** rewrite (Soc17 call 1),
+  // and the share sheet's callable that keeps and takes back its copy.
+  sharedCardPage: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
+  sharedCard: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   analyzeFoodText: {
     kind: "http",
     maxInstances: 100,

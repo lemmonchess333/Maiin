@@ -49,6 +49,41 @@ describe("WeekPreview — day order", () => {
   });
 });
 
+/* The seven days share the card's width as seven equal cells, at every
+   width and text size. jsdom lays nothing out, so this reads the grid's
+   own terms; the 320 px large-text capture spec measures the result. */
+describe("WeekPreview — the week's grid", () => {
+  it("draws seven equal cells, none with a width of its own", () => {
+    render(<WeekPreview schedule={schedule} />);
+    const days = screen.getAllByRole("button", {
+      name: /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun): /,
+    });
+    expect(days).toHaveLength(7);
+    const grid = days[0].parentElement!;
+    expect(grid).toHaveClass("grid", "grid-cols-7");
+    expect(grid.children).toHaveLength(7);
+    for (const day of days) {
+      expect(day.parentElement).toBe(grid);
+      // Each fills its column and may shrink below its content.
+      expect(day).toHaveClass("w-full", "min-w-0");
+      expect(day.className).not.toMatch(
+        /(^|\s)(col-span-|w-\[|min-w-\[|basis-)/
+      );
+    }
+  });
+
+  it("gives each day its first letter for when its three do not fit", () => {
+    render(<WeekPreview schedule={schedule} />);
+    const monday = screen.getByRole("button", { name: "Mon: lift" });
+    const [full, initial] = [...monday.querySelectorAll(":scope > span")];
+    expect(monday).toHaveClass("@container");
+    expect(full).toHaveTextContent("Mon");
+    expect(full).toHaveClass("@max-[2.75em]:hidden");
+    expect(initial).toHaveTextContent(/^M$/);
+    expect(initial).toHaveClass("hidden", "@max-[2.75em]:inline");
+  });
+});
+
 describe("WeekPreview — a session's lifts", () => {
   it("shows a climbing lift's range and a fixed lift's target (Lift4 (3))", () => {
     const lift = (o: Partial<ProgramExercise>) =>

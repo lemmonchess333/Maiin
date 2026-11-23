@@ -22,8 +22,9 @@ const PrivacyPolicy = lazyRetry(WEBSITE_PAGE_MODULES.privacy);
 const TermsOfService = lazyRetry(WEBSITE_PAGE_MODULES.terms);
 const Support = lazyRetry(WEBSITE_PAGE_MODULES.support);
 const PublicPost = lazyRetry(WEBSITE_PAGE_MODULES.post);
+const SharedCard = lazyRetry(WEBSITE_PAGE_MODULES.card);
 
-/** A shared post's page names the post, not the website. */
+/** A shared post's or card's page names what it shows, not the website. */
 const POST_TITLE = "Tropos";
 
 /** The app's legal and support pages, as the app draws them, inside the
@@ -39,9 +40,18 @@ function Legal({
   return <SiteLayout ownMain>{children}</SiteLayout>;
 }
 
+/** A shared post's page and a shared card's (Soc17) are named by what
+ *  they show in their preview, and kept out of search, as the server's
+ *  robots tag and header ask: the head's robots tag is put back in place
+ *  of the one the page's own head would take out. */
 function Post() {
-  usePageHead({ title: POST_TITLE });
+  usePageHead({ title: POST_TITLE, noindex: true });
   return <PublicPost />;
+}
+
+function Card() {
+  usePageHead({ title: POST_TITLE, noindex: true });
+  return <SharedCard />;
 }
 
 /** Any other address: one of the app's own lands on Home, which points to
@@ -66,10 +76,11 @@ function ScrollToTop() {
 
 /**
  * troposfit.com's addresses (App1 Q52 and the website’s design): the
- * website's pages, a shared post's public page (Q51), the app's legal and
- * support pages, Home for every address of the app's own, and the 404.
- * firebase.json sends every address here but a shared post, which
- * reaches it through `publicPostPage`, and Hosting's own `/__/` handlers;
+ * website's pages, a shared post's public page (Q51), a shared card's
+ * page (Soc17), the app's legal and support pages, Home for every address
+ * of the app's own, and the 404. firebase.json sends every address here
+ * but a shared post and a shared card, which reach it through
+ * `publicPostPage` and `sharedCardPage`, and Hosting's own `/__/` handlers;
  * each page in `SITE_PAGES` also has its own HTML, written at build time
  * (scripts/website/prerender.ts), which this takes over.
  */
@@ -89,6 +100,7 @@ export default function WebsiteRoutes() {
           <Route path="/about" element={<About />} />
           <Route path="/press" element={<Press />} />
           <Route path="/activity/:activityId" element={<Post />} />
+          <Route path="/card/:token" element={<Card />} />
           <Route
             path="/privacy"
             element={

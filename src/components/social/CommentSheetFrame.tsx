@@ -150,7 +150,7 @@ export function CommentComposer({
               type="button"
               key={chip}
               onClick={() => onTextChange(chip)}
-              className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition active:scale-95 bg-primary/10 text-lifting-strong"
+              className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition active:scale-95 bg-primary/10 text-foreground"
             >
               {chip}
             </button>
