@@ -354,7 +354,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "protein_pro",
-    name: "Protein target 7 days",
+    name: "7 days on protein",
     description: "Hit protein target 7 days in a row",
     icon: "beef",
     lucideIcon: "Beef",
@@ -363,7 +363,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "hydration_hero",
-    name: "Water target 7 days",
+    name: "7 days on water",
     description: "Hit water target 7 days in a row",
     icon: "droplets",
     lucideIcon: "Droplets",
@@ -372,7 +372,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "meal_prep_master",
-    name: "Every meal logged 14 days",
+    name: "14 days fully logged",
     description: "Log all meals for 14 days straight",
     icon: "utensils-crossed",
     lucideIcon: "UtensilsCrossed",
