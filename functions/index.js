@@ -192,6 +192,8 @@ const communityGoal = require("./lib/communityGoal");
 const pulse = require("./lib/pulse");
 // Run26 call 3: segments, their efforts and the boards of who you follow.
 const segments = require("./lib/segments");
+// Run30 call 3: each barbell lift's board of the people you follow.
+const liftBoards = require("./lib/liftBoards");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
@@ -6013,6 +6015,17 @@ exports.onWorkoutCreated = functions
       })
     );
 
+    // Run30 call 3: the workout's heaviest set of each barbell lift, and
+    // the lifter's board entries on those lifts (lib/liftBoards), read
+    // from the workout as it is now, so a retry writes the same.
+    await steps.run("lift boards", () =>
+      liftBoards.syncWorkoutEfforts(db, {
+        uid,
+        workoutId,
+        nowMs: eventTimeMs(context),
+      })
+    );
+
     steps.settle();
 
     // PI1a: skip recompute when the workout falls outside the rolling
@@ -6463,6 +6476,15 @@ exports.onWorkoutUpdated = functions
     // session's week, and those Spaces' weeks counted again. Recounted from
     // the sessions, so a retry is safe.
     await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
+    // Run30 call 3: a workout shared, unshared, corrected or moved to
+    // another day changes its efforts or which of them may be shown, so
+    // they and its board entries are written again from the workout now.
+    if (liftBoards.workoutBoardMayHaveChanged(before, after))
+      await liftBoards.syncWorkoutEfforts(db, {
+        uid,
+        workoutId,
+        nowMs: eventTimeMs(context),
+      });
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -6631,6 +6653,14 @@ exports.onWorkoutDeleted = functions
         kind: "workout",
         sessionId: workoutId,
         fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
+    // Run30 call 3: its lift efforts, and the boards they were on.
+    await steps.run("lift boards", () =>
+      liftBoards.removeWorkoutEfforts(db, {
+        uid,
+        workoutId,
         nowMs: eventTimeMs(context),
       })
     );
@@ -6933,6 +6963,63 @@ exports.onPrivacyZoneWritten = functions
     )
       return null;
     await segments.refreshAllBoardEntries(db, uid, {
+      nowMs: eventTimeMs(context),
+    });
+    return null;
+  });
+
+// ══════════════════════════════════════════════
+// LIFT BOARDS (Run30 call 3) — lib/liftBoards.js
+// ══════════════════════════════════════════════
+
+/**
+ * getLiftBoard — a barbell lift's board as the caller may see it: the
+ * heaviest shown set of each person they follow who has done it
+ * (lib/liftBoards.js readLiftBoard says what is shown and why). The
+ * caller's own row is the app's, from their own workouts.
+ */
+exports.getLiftBoard = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const exerciseId = data && data.exerciseId;
+    if (!liftBoards.isBoardLift(exerciseId)) {
+      throw new functions.https.HttpsError("invalid-argument", "Which lift?");
+    }
+    if (await isRateLimited(uid, "liftBoard", 60, 60_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    return liftBoards.readLiftBoard(db, { viewerUid: uid, exerciseId });
+  });
+
+/**
+ * A lift post made, deleted or moved between who may see it: the board
+ * entries of the workouts that link to it are recomputed from the current
+ * documents (lib/liftBoards.js). Board reads check the post again, so a
+ * post made private is hidden before this lands. Every other write to a
+ * post (props, a comment count, a photo) returns before reading anything.
+ */
+exports.onLiftPostWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("activities/{activityId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const before = change.before.exists ? change.before.data() : null;
+    const after = change.after.exists ? change.after.data() : null;
+    if (!liftBoards.postMayMoveBoards(before, after)) return null;
+    // Recomputed from the current documents, and each write reads the
+    // deletion freeze in its transaction, so a retry or an account being
+    // erased writes nothing it should not.
+    await liftBoards.refreshPostEntries(db, {
+      activityId: context.params.activityId,
+      before,
+      after,
       nowMs: eventTimeMs(context),
     });
     return null;

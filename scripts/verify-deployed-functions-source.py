@@ -29,6 +29,7 @@ RETRY_REQUIRED = frozenset({
     "onFollowerEdgeWritten", "onFollowingEdgeWritten",
     "onNotificationItemWritten",
     "onPrivacyZoneWritten",
+    "onLiftPostWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -98,6 +99,11 @@ def source_targets():
                      "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
                      "lib/restriction.js", "lib/accountDeletionLocks.js",
                      "lib/objectionableText.js", "profanityFilter.js"]
+    # Run30 call 3: each barbell lift's board of the people you follow.
+    lift_board_lib = ["lib/liftBoards.js"]
+    lift_board_paths = ["index.js", "package-lock.json"] + lift_board_lib + [
+                        "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                        "lib/challengeActivityWindow.js"]
     follow_count_paths = ["index.js", "package-lock.json", "lib/followCounts.js",
                           "lib/raceCohorts.js", "lib/spaceIds.js",
                           "lib/deletionTransactionGuard.js",
@@ -206,10 +212,15 @@ def source_targets():
         "deleteSegment": segment_paths,
         "getSegmentBoard": segment_paths + ["lib/identityResync.js", "lib/publicPhotoUrl.js"],
         "onPrivacyZoneWritten": segment_paths + ["lib/triggerRetry.js"],
+        # Run30 call 3: reading a lift's board, and the post trigger that
+        # recomputes the entries of the workouts linked to a post.
+        "getLiftBoard": lift_board_paths + ["lib/identityResync.js", "lib/publicPhotoUrl.js"],
+        "onLiftPostWritten": lift_board_paths + ["lib/triggerRetry.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
-        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib + pulse_lib,
-        "onWorkoutUpdated": training_paths + challenge_paths[2:] + league_lib,
+        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib + pulse_lib
+                            + lift_board_lib,
+        "onWorkoutUpdated": training_paths + challenge_paths[2:] + league_lib + lift_board_lib,
         # Monthly rotation and participation must execute the same source that
         # passed CI, including the new active-day/minute recomputation helper.
         # Checking index.js alone misses a stale independently changed library.
@@ -227,7 +238,7 @@ def source_targets():
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
                                               "lib/triggerRetry.js", "lib/sharedCards.js",
                                               "lib/cardArt.js"]
-                            + league_lib + pulse_lib,
+                            + league_lib + pulse_lib + lift_board_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
                                               "lib/triggerRetry.js", "lib/sharedCards.js",
                                               "lib/cardArt.js"]

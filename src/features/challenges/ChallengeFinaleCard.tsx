@@ -68,7 +68,6 @@ export function ChallengeFinaleCard({
       className="relative rounded-2xl bg-card border overflow-hidden p-4"
       style={{
         borderColor: `${accent}40`,
-        backgroundImage: `radial-gradient(circle at 14% 25%, ${accent}14, transparent 60%)`,
       }}
     >
       <div className="flex items-start gap-3">

@@ -17,8 +17,6 @@ interface CalorieRingProps {
   onToggleMode: () => void;
   /** "On pace" / "150 ahead" / "150 behind" / null to suppress */
   trajectoryLabel: string | null;
-  /** Drives celebration drop-shadow. Parent owns the timing. */
-  glowing?: boolean;
   /** How long the arc takes to redraw and the number to count, in ms.
    *  Default 1500. */
   ringDurationMs?: number;
@@ -87,7 +85,6 @@ export default function CalorieRing({
   mode,
   onToggleMode,
   trajectoryLabel,
-  glowing = false,
   ringDurationMs = 1500,
   ringDelayMs = 100,
   drawIn = true,
@@ -192,12 +189,6 @@ export default function CalorieRing({
           ? "@container w-[264px] max-w-full mx-auto"
           : "w-26 max-w-full shrink-0"
       )}
-      style={{
-        // Celebration glow — the ring's own orange, for the moment a day's
-        // goals are met. Transient; the ring has no ambient loop.
-        filter: glowing ? `drop-shadow(0 0 16px ${COLOR_RING}66)` : undefined,
-        transition: "filter 800ms ease-in-out",
-      }}
     >
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="relative size-full">
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
