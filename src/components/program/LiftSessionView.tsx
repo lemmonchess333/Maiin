@@ -201,7 +201,7 @@ export default function LiftSessionView({
 
   // Every counted set from the last session each lift of the plan ran in
   // its slot, for the rows' "Last:" line (`lastSetsBySlot`). The workout
-  // screen reads the same.
+  // screen and the session card's line read the same, as Home's hero does.
   const lastSetsOf = useMemo(
     () => lastSetsBySlot(recentWorkouts, planLifts),
     [recentWorkouts, planLifts]
@@ -580,12 +580,14 @@ export default function LiftSessionView({
   });
 
   // The session card's line, Home's (`liftHeroLine`), for a day still to
-  // train; a done or missed day is its record, not a prescription.
+  // train; a done or missed day is its record, not a prescription. Last
+  // time is the one the rows below list (`lastSetsOf`).
   const sessionLine =
     selectedWorkout && status !== "completed" && !missed
       ? liftHeroLine(
           selectedWorkout.exercises,
-          resolveLiftUnit(profile?.liftingWeightUnit)
+          resolveLiftUnit(profile?.liftingWeightUnit),
+          lastSetsOf
         )
       : null;
 

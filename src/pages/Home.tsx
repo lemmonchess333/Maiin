@@ -41,6 +41,7 @@ import YearRecapRow from "@/components/home/YearRecapRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
+import { lastSetsBySlot } from "@/features/program/lastSets";
 import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
 import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
@@ -655,6 +656,18 @@ export default function Home() {
     [programState, todayKey]
   );
   const kicker = heroKicker(session, heroPositionLabel);
+  /* Last time for each lift of the plan, as Train's "Last:" line reads it:
+     the saved session that ran its slot, else its exercise's last
+     (`lastSetsBySlot`). The hero's line sets today against it, so Home and
+     Train name one last time. */
+  const planLifts = useMemo(
+    () => programState?.workouts?.flatMap((day) => day.exercises) ?? [],
+    [programState?.workouts]
+  );
+  const lastSetsOf = useMemo(
+    () => lastSetsBySlot(workouts, planLifts),
+    [workouts, planLifts]
+  );
   /* A free run's line is the week's distance against last week's
      (`freeRunHeroLine`), so the runs from last week's Monday on are read,
      and only while the hero is a free run. A day early, as the claim
@@ -1407,6 +1420,7 @@ export default function Home() {
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
                 runPlanLocked={runPlanLocked}
+                lastSetsOf={lastSetsOf}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
