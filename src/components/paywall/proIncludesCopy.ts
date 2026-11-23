@@ -20,7 +20,7 @@ export const PRO_INCLUDES: readonly string[] = [
   PHOTO_LOGGING,
   "A calorie target that adapts to you",
   TRAINING_MACROS,
-  "Running paces that speed up as your races and sessions show you’re fitter",
+  "Running paces that follow your fitness",
   READINESS,
   "Charts older than 3 months, and your score’s 12-week chart, average and details",
   "Plans for a half marathon or longer, after their first week",

@@ -149,8 +149,8 @@ export default function PrivacyPolicy() {
                 kept{" "}
                 <strong className="text-foreground">
                   only on the device that took it
-                </strong>{" "}
-                — we do not store it on our servers. It is deleted automatically
+                </strong>
+                . We do not store it on our servers. It is deleted automatically
                 after 90 days. See section 7 for the detail.
               </li>
               <li>
@@ -257,7 +257,7 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">New progress photos</strong>{" "}
               are additionally encrypted on your device (AES-GCM-256) before
-              upload, so they are not stored as plain image files &mdash; anyone
+              upload, so they are not stored as plain image files. Anyone
               browsing raw storage sees ciphertext rather than pictures.
             </p>
             <p>
@@ -420,11 +420,11 @@ export default function PrivacyPolicy() {
                   One limit on erasure, stated plainly:
                 </strong>{" "}
                 meal photos are not on our servers, so there is nothing there
-                for us to erase — and equally, no process of ours can reach a
-                phone. Deleting your account clears them from the device you
-                delete from. If you have signed in on another device, that
-                device keeps its copies until they expire after 90 days or you
-                delete the app there.
+                for us to erase. Equally, no process of ours can reach a phone.
+                Deleting your account clears them from the device you delete
+                from. If you have signed in on another device, that device keeps
+                its copies until they expire after 90 days or you delete the app
+                there.
               </li>
             </ul>
             <p>
@@ -478,7 +478,7 @@ export default function PrivacyPolicy() {
                 After analysis, the photo is kept only on the device that took
                 it, so your meal diary can show it. It is not backed up to
                 iCloud, does not sync between your devices, and is deleted
-                automatically after 90 days — the furthest back the diary can be
+                automatically after 90 days, the furthest back the diary can be
                 viewed. Deleting the app, or getting a new phone, removes these
                 photos; your logged meals and their nutrition data are
                 unaffected. Barcode scans do not use AI: the barcode is read on
@@ -539,8 +539,8 @@ export default function PrivacyPolicy() {
                 start point plus a handful of nearby points we compute from it
                 and your chosen distance) were sent from our server to Mapbox’s
                 Directions service to calculate a walking route. We sent only
-                those coordinates — never your name, account details, saved
-                routes, or run history — and did not separately log the request
+                those coordinates (never your name, account details, saved
+                routes, or run history) and did not separately log the request
                 coordinates. When you chose Save &amp; follow, the returned
                 route geometry was saved privately to your account.
               </li>

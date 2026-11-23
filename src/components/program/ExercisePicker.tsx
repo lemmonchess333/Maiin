@@ -562,8 +562,8 @@ export default function ExercisePicker({
                     loading={saving}
                     onClick={() => void handleAddSelected()}
                   >
-                    {batchCount} exercise
-                    {batchCount !== 1 ? "s" : ""} selected — Add to workout
+                    Add {batchCount} exercise
+                    {batchCount !== 1 ? "s" : ""}
                   </Button>
                 </motion.div>
               )}
@@ -671,7 +671,7 @@ export default function ExercisePicker({
                           : pickAction
                             ? pickAction
                             : preExistingIds.has(detail.id)
-                              ? "In this workout — tap to remove"
+                              ? "Remove from workout"
                               : newlySelectedCount +
                                     (selectedIds.has(detail.id) ? 0 : 1) >
                                   1

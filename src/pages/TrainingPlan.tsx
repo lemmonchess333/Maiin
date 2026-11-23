@@ -378,7 +378,7 @@ export default function TrainingPlan() {
             <SessionCommandCard
               compact
               eyebrow="Next lift"
-              title={model.nextLift.dayName}
+              title={model.nextLiftName ?? model.nextLift.dayName}
               // What follows wraps as a sentence: day names run long, and a
               // meta item never breaks.
               description={
@@ -386,15 +386,10 @@ export default function TrainingPlan() {
                   ? `Then ${model.thenLifts.join(" · ")}`
                   : undefined
               }
-              meta={[
-                `${model.nextLift.exercises.length} exercises`,
-                "Follows your rotation",
-              ]}
+              meta={[`${model.nextLift.exercises.length} exercises`]}
               sport="lift"
               primaryActionLabel={
-                readiness === "ready"
-                  ? `Start ${model.nextLift.dayName}`
-                  : undefined
+                readiness === "ready" ? "Start workout" : undefined
               }
               onPrimaryAction={() =>
                 navigate(`/program?tab=lift&day=${model.nextLiftIndex}&start=1`)
@@ -658,22 +653,7 @@ export default function TrainingPlan() {
                 ))}
               </ol>
             </Card>
-            <p className="text-xs text-muted-foreground">
-              Lift days show your usual pattern. Your next lift follows the
-              rotation.
-            </p>
           </section>
-          {!evidencePending && !evidenceFailed && eligibleRuns.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No planned runs to move this week.{" "}
-              <Link
-                to="/settings/run-plan"
-                className="underline text-running-strong"
-              >
-                Edit run plan
-              </Link>
-            </p>
-          )}
           <section className="space-y-2" aria-label="Programme setup">
             <Button
               variant="ghost"
@@ -741,7 +721,7 @@ export default function TrainingPlan() {
           weekSchedule={profile.weekSchedule ?? []}
           todayKey={todayKey}
           unit={resolveDistanceUnit(profile.preferredDistanceUnit)}
-          nextLiftName={model.nextLift?.dayName}
+          nextLiftName={model.nextLiftName ?? undefined}
           initialRunId={move.id}
           blocked={!canEdit}
           goalDay={goalDayName(profile.raceGoal)}

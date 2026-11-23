@@ -16,7 +16,7 @@ describe("CircuitEntry (Circ1 (8))", () => {
     // Named by its words as drawn, the title first (WCAG 2.5.3): axe's
     // label-content-name-mismatch refused a name of the title alone.
     const entry = screen.getByRole("link", {
-      name: "Circuit Work and rest on a clock, 10 to 30 min. Your plan stays as it is.",
+      name: "Circuit Work and rest on a clock, 10 to 30 min.",
     });
     expect(entry).toHaveAttribute("href", "/circuit");
   });

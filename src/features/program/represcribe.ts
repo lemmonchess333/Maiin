@@ -468,7 +468,7 @@ export function blockConsequence(input: {
     // Build muscle → Get stronger, the first two entries in the picker and
     // the likeliest change anyone makes, which lowers every target.
     const loadDrops = targetsRise(currentFocus, focus, experience);
-    const aiming = changes ? " — only what you’re aiming for changes." : ".";
+    const aiming = changes ? ". Only what you’re aiming for changes." : ".";
     const tail =
       pace === "easing"
         ? ` ${hold}`
@@ -482,7 +482,7 @@ export function blockConsequence(input: {
               " then climb again."
             : ` Your weights stay where they are${aiming}`
           : loadDrops
-            ? " Same exercises, same days — the weights come down a little to" +
+            ? " Same exercises, same days. The weights come down a little to" +
               " match the new target, then climb again."
             : ` Same exercises, same days, same weights${aiming}`;
     return lead + tail;
@@ -494,10 +494,10 @@ export function blockConsequence(input: {
     // The focus's name is the person's own goal ("Support my running"),
     // so it goes in whole, as the thing kept, not lowercased into the
     // sentence.
-    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line. Your focus stays ${focusLabel(currentFocus)}.`;
+    return `Nothing about your sessions changes for the next ${weeks}. Your focus stays ${focusLabel(currentFocus)}.`;
   }
   if (pace === "lighter") {
-    return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;
+    return `Same prescription for ${weeks}, ${trimmed} each time. The full session is a tap away.`;
   }
   return `Same prescription, ${trimmed} each time. ${hold}`;
 }

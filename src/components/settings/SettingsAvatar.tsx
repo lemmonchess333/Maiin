@@ -88,9 +88,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
           logger.error("uploadProfilePhoto failed:", err);
           const code = (err as { code?: string } | null)?.code;
           if (code === "storage/unauthorized" || code === "permission-denied") {
-            toast.error(
-              "Upload not permitted. Try again in a minute — the server may need to update."
-            );
+            toast.error("Upload not permitted. Try again in a minute.");
           } else if (code === "storage/canceled") {
             toast.error("Upload cancelled.");
           } else if (code === "storage/retry-limit-exceeded") {

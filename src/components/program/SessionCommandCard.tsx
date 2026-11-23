@@ -109,7 +109,7 @@ export default function SessionCommandCard({
 
   return (
     <section
-      aria-label={`${eyebrow} — ${title}`}
+      aria-label={`${eyebrow}: ${title}`}
       className={cn(
         "relative overflow-hidden rounded-xl card-shadow",
         surfaceClass

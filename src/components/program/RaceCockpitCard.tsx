@@ -277,9 +277,9 @@ export default function RaceCockpitCard({
           transient message and the persistent one agree. */}
       {belowFloor ? (
         <p className="text-xs text-muted-foreground">
-          Mostly-easy plan — there aren’t enough weeks for a full build at this
-          distance, so every session is easy running, with no quality sessions.
-          Aim to finish strong, not to PR.
+          Mostly-easy plan: too few weeks for a full build at this distance, so
+          every run is easy, with no quality sessions. Aim to finish strong, not
+          to PR.
         </p>
       ) : (
         compressed && (
@@ -309,8 +309,8 @@ export default function RaceCockpitCard({
              realignCopy's "compressible" case ("a tighter build"). */
           <p className="text-xs text-muted-foreground">
             {noBuild
-              ? "Compressed plan — your target date leaves no weeks for a build at this distance, so the plan tapers to race day, with no tempo or intervals."
-              : "Compressed plan — your target date is sooner than the ideal build for this distance, so interval work is trimmed and the long-run build is packed into fewer weeks. Expect bigger jumps between long runs than a full-length plan would use."}
+              ? "Compressed plan: no weeks for a build at this distance, so the plan tapers to race day with no tempo or intervals."
+              : "Compressed plan: interval work is trimmed and the long-run build is packed into fewer weeks, with bigger jumps between long runs."}
           </p>
         )
       )}

@@ -24,6 +24,7 @@ import { resolveDistanceUnit } from "./distanceUnits";
 import { plannedRunDose } from "./runDose";
 import { formatDuration, formatShortWeekday } from "@/utils/formatters";
 import { workoutTitle } from "./workoutLabels";
+import { liftWeekDayNames } from "./liftDayLabel";
 import { trainingWeek, type WeekCount } from "./trainingWeek";
 
 export interface WorkspaceActivity {
@@ -55,8 +56,11 @@ export interface TrainingPlanWorkspace {
   days: WorkspaceDay[];
   nextLiftIndex: number | null;
   nextLift: WorkoutDay | null;
+  /** The next lift's on-screen name, as Train names it in its week
+   *  (`liftWeekDayNames`: "Full Body A", "Pull B"), never its stored name. */
+  nextLiftName: string | null;
   /** The two lifts after the next one, in rotation order ("Then Pull ·
-   *  Legs"): an order, not dates (ADR-0002). */
+   *  Legs"), by their on-screen names: an order, not dates (ADR-0002). */
   thenLifts: string[];
   /** The week's lifts and runs, done against planned, as Home's week and
    *  the weekly review count them (`trainingWeek`); and its rest days. */
@@ -241,6 +245,9 @@ export function buildTrainingPlanWorkspace({
     };
   });
   const nextIndex = nextUpIndex(programState);
+  const weekNames = liftWeekDayNames(
+    (programState?.workouts ?? []).map((workout) => workout.dayName)
+  );
   const week = trainingWeek({
     weekKey,
     profile,
@@ -254,13 +261,15 @@ export function buildTrainingPlanWorkspace({
     days,
     nextLiftIndex: nextIndex >= 0 ? nextIndex : null,
     nextLift: nextIndex >= 0 ? programState!.workouts[nextIndex] : null,
+    nextLiftName: nextIndex >= 0 ? weekNames[nextIndex] : null,
     thenLifts:
       nextIndex >= 0
         ? programState!.workouts
+            .map((workout, index) => ({ workout, name: weekNames[index] }))
             .slice(nextIndex + 1)
-            .filter((workout) => !workout.completed && !workout.skipped)
+            .filter(({ workout }) => !workout.completed && !workout.skipped)
             .slice(0, 2)
-            .map((workout) => workout.dayName)
+            .map(({ name }) => name)
         : [],
     summary: {
       lifts: week.lifts,

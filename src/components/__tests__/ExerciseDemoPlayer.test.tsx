@@ -42,11 +42,11 @@ describe("ExerciseDemoPlayer", function () {
       />
     );
     // First + last frame only, captioned Start/Finish.
-    expect(screen.getByAltText("Squat — start position")).toHaveAttribute(
+    expect(screen.getByAltText("Squat, start position")).toHaveAttribute(
       "src",
       "/a.webp"
     );
-    expect(screen.getByAltText("Squat — finish position")).toHaveAttribute(
+    expect(screen.getByAltText("Squat, finish position")).toHaveAttribute(
       "src",
       "/c.webp"
     );

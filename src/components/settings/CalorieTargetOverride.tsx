@@ -55,7 +55,7 @@ export default function CalorieTargetOverride({
         <span className="font-mono tabular-nums">
           {formatCalories(calculatedTarget)}
         </span>{" "}
-        {CALORIE_UNIT}. Changes save when you leave this field.
+        {CALORIE_UNIT}.
       </p>
       <input
         id="tdee-custom-target"
@@ -95,9 +95,9 @@ export default function CalorieTargetOverride({
             <span className="font-mono tabular-nums">
               {formatCalories(MIN_TARGET_CALORIES)}
             </span>{" "}
-            {CALORIE_UNIT} floor Tropos uses everywhere else. Your plan will
-            keep this figure — very low targets make protein and essential fat
-            hard to fit.
+            {CALORIE_UNIT} floor Tropos uses everywhere else. Your plan keeps
+            this figure. Very low targets make protein and essential fat hard to
+            fit.
           </p>
         )}
     </div>

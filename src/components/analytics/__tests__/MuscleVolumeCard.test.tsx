@@ -38,9 +38,7 @@ describe("MuscleVolumeCard", () => {
       screen.getByText("2 of 3 muscles below their range: side delts, calves")
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /A week, averaged over 3 full weeks\. Your focus: Build muscle\./
-      )
+      screen.getByText(/Weekly average, 3 weeks\. Your focus: Build muscle\./)
     ).toBeInTheDocument();
   });
 

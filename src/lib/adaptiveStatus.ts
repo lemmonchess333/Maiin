@@ -70,11 +70,11 @@ export function adaptiveCalorieStatusLabel(
 ): string {
   switch (s.kind) {
     case "manual":
-      return "Manual target — you set this; adaptive learning is paused.";
+      return "Manual target. Tropos won’t adjust it while you set it.";
     case "adapting": {
       const when =
         s.retunedDaysAgo === 0 ? "today" : `${s.retunedDaysAgo}d ago`;
-      const base = `Adapting — retuned ${when} from your real intake + weight.`;
+      const base = `Updated ${when} from your meals and weigh-ins.`;
       return typeof appliedTarget === "number" && Number.isFinite(appliedTarget)
         ? `${base} This is your baseline; today’s target is ${Math.round(
             appliedTarget
@@ -83,7 +83,7 @@ export function adaptiveCalorieStatusLabel(
     }
     case "formula":
       return isPro
-        ? "Formula estimate — adapts to your real expenditure once you track for a while."
+        ? "Formula estimate: adapts to your real expenditure once you track for a while."
         : "Formula estimate. After about two weeks of meals and weigh-ins, Food shows your personal target, and Pro uses it.";
   }
 }

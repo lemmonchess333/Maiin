@@ -133,7 +133,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "new-to-tropos",
     name: "New to Tropos",
-    tagline: "Say hi, ask anything — every athlete here started at zero.",
+    tagline: "Say hi and ask anything. Everyone here started at zero.",
     kind: "interest",
     accent: "brand",
     icon: "sprout",
@@ -141,7 +141,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "hybrid-training",
     name: "Hybrid Training",
-    tagline: "Lift and run in the same week — the Tropos way.",
+    tagline: "Lift and run in the same week.",
     kind: "interest",
     accent: "brand",
     icon: "zap",
@@ -158,7 +158,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "runners",
     name: "Runners",
-    tagline: "Routes, races, paces — everything running.",
+    tagline: "Routes, races and paces.",
     kind: "interest",
     accent: "running",
     icon: "footprints",
@@ -166,8 +166,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "trail-running",
     name: "Trail Running",
-    tagline:
-      "Dirt, hills and long climbs — racing the landscape, not the clock.",
+    tagline: "Dirt, hills and long climbs.",
     kind: "interest",
     accent: "running",
     icon: "mountain",
@@ -175,7 +174,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "lifters",
     name: "Lifters",
-    tagline: "Programmes, PRs and plates — everything strength.",
+    tagline: "Programmes, PRs and plates.",
     kind: "interest",
     accent: "lifting",
     icon: "dumbbell",
@@ -183,7 +182,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "triathlon-multisport",
     name: "Triathlon & Multisport",
-    tagline: "Swim, bike, run — training across disciplines.",
+    tagline: "Swim, bike and run.",
     kind: "interest",
     accent: "running",
     icon: "medal",
@@ -243,7 +242,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "brighton-marathon",
     name: "Brighton Marathon",
-    tagline: "26.2 by the sea — spring marathon on the south coast.",
+    tagline: "A spring marathon by the sea.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -276,7 +275,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "great-north-run",
     name: "Great North Run",
-    tagline: "The world's biggest half — Newcastle to the sea.",
+    tagline: "The world's biggest half, Newcastle to the sea.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -292,7 +291,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "the-big-half",
     name: "The Big Half",
-    tagline: "Tower Bridge to Cutty Sark — London's community half.",
+    tagline: "London's community half, Tower Bridge to Cutty Sark.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -537,7 +536,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "new-york-city-marathon",
     name: "New York City Marathon",
-    tagline: "Five boroughs, one marathon — share your New York build-up.",
+    tagline: "Five boroughs, one marathon.",
     kind: "race",
     accent: "running",
     icon: "flag",

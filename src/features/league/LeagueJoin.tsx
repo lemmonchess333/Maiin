@@ -61,9 +61,8 @@ export default function LeagueJoin({
             Weekly leagues
           </Heading>
           <p className="mt-0.5 text-sm leading-snug text-muted-foreground text-pretty">
-            Groups of about 20, scored on the sessions you do against your own
-            plan, so a three-day week can win. The top move up a tier each
-            Monday.
+            Groups of about 20, scored against your own plan. The top move up a
+            tier each Monday.
           </p>
         </div>
       </div>

@@ -111,7 +111,7 @@ export default function FollowButton({
       aria-disabled={refused || undefined}
       aria-label={
         disabled
-          ? "Following actions are unavailable — your account is restricted"
+          ? "Following is unavailable because your account is restricted"
           : following
             ? "Unfollow user"
             : requested

@@ -362,7 +362,7 @@ export default function SessionCompleteScreen({
     sessionVariant === "easier_today"
       ? "Easier session. Your regular plan stays in place."
       : sessionVariant === "time_budget"
-        ? "Session prepared for your usual time. Your full programme stays in place."
+        ? "Session prepared for your usual time."
         : sessionVariant
           ? `Express ${sessionVariant === "express45" ? "45" : "30"}: the essentials, done.`
           : null;

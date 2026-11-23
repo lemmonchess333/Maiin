@@ -77,8 +77,7 @@ export default function FoodDaysCard({
         </h2>
         <p className="text-sm text-muted-foreground">
           Before today. On target is within{" "}
-          {Math.round(CALORIE_TARGET_BAND * 100)}% of that day’s calories;
-          protein counts at or over.
+          {Math.round(CALORIE_TARGET_BAND * 100)}% of calories.
         </p>
       </div>
       <ul className="divide-y divide-border">

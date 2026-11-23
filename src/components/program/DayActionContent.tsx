@@ -400,8 +400,8 @@ export default function DayActionContent({
             className="size-3.5 mt-0.5 shrink-0"
             aria-hidden="true"
           />
-          Quality run and a lift share this day — if recovery’s tight, go easier
-          on one of them.
+          A quality run and a lift share this day. If you’re tired, go easier on
+          one.
         </p>
       )}
 
@@ -538,7 +538,7 @@ export default function DayActionContent({
                     ? `${goalDayName(profile?.raceGoal)} · template locked`
                     : run.isStartable
                       ? "Run template"
-                      : `${run.status} — template locked`
+                      : `${run.status} · template locked`
                 }
               >
                 {RUN_TEMPLATES.map((t) => (
@@ -549,7 +549,7 @@ export default function DayActionContent({
               </Select>
               {isRaceTemplate ? (
                 <span className="mt-1 block text-caption text-muted-foreground">
-                  {goalDayName(profile?.raceGoal)} — the template is locked.
+                  {goalDayName(profile?.raceGoal)} keeps its template.
                 </span>
               ) : (
                 run.isStartable && (
@@ -649,7 +649,7 @@ export default function DayActionContent({
                         }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
-                        DNF — Started but didn’t finish
+                        DNF: started but didn’t finish
                       </button>
                       <button
                         type="button"
@@ -661,7 +661,7 @@ export default function DayActionContent({
                         }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
-                        DNS — Didn’t start
+                        DNS: didn’t start
                       </button>
                     </>
                   )}
@@ -727,7 +727,7 @@ export default function DayActionContent({
                                   key={opt.dayIndex}
                                   type="button"
                                   disabled={!opt.available || pending}
-                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
+                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? ", has a trade-off" : opt.available ? "" : ", unavailable"}`}
                                   onClick={() =>
                                     void act(() =>
                                       moveRunDay(

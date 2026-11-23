@@ -142,7 +142,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   // Consistency
   {
     id: "first_step",
-    name: "First Step",
+    name: "First log",
     description: "Log your first meal or workout",
     icon: "footprints",
     lucideIcon: "Footprints",
@@ -152,7 +152,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "three_day",
-    name: "Getting Started",
+    name: "3 days in a row",
     description: "3-day streak",
     icon: "sparkles",
     lucideIcon: "Sparkles",
@@ -162,7 +162,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "week_warrior",
-    name: "Week Warrior",
+    name: "7 days in a row",
     description: "7-day streak",
     icon: "flame",
     lucideIcon: "Flame",
@@ -172,7 +172,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "two_week",
-    name: "Two Week Wonder",
+    name: "14 days in a row",
     description: "14-day streak",
     icon: "flame",
     lucideIcon: "Flame",
@@ -182,7 +182,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "month_master",
-    name: "Month Master",
+    name: "30 days in a row",
     description: "30-day streak",
     icon: "gem",
     lucideIcon: "Gem",
@@ -192,7 +192,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "two_month",
-    name: "Unbroken",
+    name: "60 days in a row",
     description: "60-day streak",
     icon: "lock",
     lucideIcon: "Lock",
@@ -202,7 +202,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "century_club",
-    name: "Century Club",
+    name: "100 days in a row",
     description: "100-day streak",
     icon: "medal",
     lucideIcon: "Medal",
@@ -242,7 +242,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "plate_club",
-    name: "Plate Club",
+    name: "One plate",
     description: "Lift 60 kg on any compound",
     icon: "dumbbell",
     lucideIcon: "Dumbbell",
@@ -251,7 +251,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "two_plate",
-    name: "Two Plate Club",
+    name: "Two plates",
     description: "Lift 100 kg on any compound",
     icon: "dumbbell",
     lucideIcon: "Dumbbell",
@@ -260,7 +260,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "three_plate",
-    name: "Three Plate Club",
+    name: "Three plates",
     description: "Lift 140 kg on any compound",
     icon: "flame",
     lucideIcon: "Flame",
@@ -278,7 +278,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "tonnage_100",
-    name: "100-Tonne Club",
+    name: "100 tonnes lifted",
     description: "Move 100 tonnes total volume",
     icon: "zap",
     lucideIcon: "Zap",
@@ -298,7 +298,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "10k_club",
-    name: "10K Club",
+    name: "First 10K",
     description: "Complete a 10K run",
     icon: "target",
     lucideIcon: "Target",
@@ -307,7 +307,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "half_marathon",
-    name: "Half Marathon",
+    name: "First half marathon",
     description: "Complete 21.1 km",
     icon: "medal",
     lucideIcon: "Medal",
@@ -316,7 +316,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "marathon",
-    name: "Marathoner",
+    name: "First marathon",
     description: "Complete 42.2 km",
     icon: "medal",
     lucideIcon: "Medal",
@@ -325,7 +325,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "speed_demon",
-    name: "Speed Demon",
+    name: "Under 5:00 /km",
     description: "Run a sub-5:00 /km pace",
     icon: "zap",
     lucideIcon: "Zap",
@@ -334,7 +334,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "century_km",
-    name: "100 km Total",
+    name: "100 km run",
     description: "Run 100 km lifetime distance",
     icon: "map",
     lucideIcon: "Map",
@@ -345,7 +345,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   // Nutrition
   {
     id: "macro_master",
-    name: "Macro Master",
+    name: "Every macro on target",
     description: "Hit all macros within 5% for a day",
     icon: "target",
     lucideIcon: "Target",
@@ -354,7 +354,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "protein_pro",
-    name: "Protein Pro",
+    name: "Protein target 7 days",
     description: "Hit protein target 7 days in a row",
     icon: "beef",
     lucideIcon: "Beef",
@@ -363,7 +363,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "hydration_hero",
-    name: "Hydration Hero",
+    name: "Water target 7 days",
     description: "Hit water target 7 days in a row",
     icon: "droplets",
     lucideIcon: "Droplets",
@@ -372,7 +372,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "meal_prep_master",
-    name: "Meal Prep Master",
+    name: "Every meal logged 14 days",
     description: "Log all meals for 14 days straight",
     icon: "utensils-crossed",
     lucideIcon: "UtensilsCrossed",
@@ -392,8 +392,8 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "balanced",
-    name: "Balanced",
-    description: "5 lifts + 5 runs in 14 days",
+    name: "5 lifts and 5 runs",
+    description: "5 lifts and 5 runs in 14 days",
     icon: "scale",
     lucideIcon: "Scale",
     tier: "silver",
@@ -401,8 +401,8 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "iron_runner",
-    name: "Iron Runner",
-    description: "3 lifts + 3 runs in one week",
+    name: "3 lifts and 3 runs",
+    description: "3 lifts and 3 runs in one week",
     icon: "crown",
     lucideIcon: "Crown",
     tier: "silver",
@@ -410,8 +410,8 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "triple_threat",
-    name: "Triple Threat",
-    description: "Hit nutrition, lift, and run targets same day",
+    name: "Food, lift and run in a day",
+    description: "Hit your food, lift and run targets on the same day",
     icon: "star",
     lucideIcon: "Star",
     tier: "gold",
@@ -419,7 +419,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "ultimate_athlete",
-    name: "Ultimate Athlete",
+    name: "15 badges",
     description: "Earn 15 badges",
     icon: "trophy",
     lucideIcon: "Trophy",

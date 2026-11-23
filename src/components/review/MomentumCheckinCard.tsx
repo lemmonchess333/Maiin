@@ -229,7 +229,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
-              Checked in — {feelLabel}
+              Checked in: {feelLabel}
             </p>
             {focusLabel && (
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -290,7 +290,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
       {feel && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            One focus for next week — optional, pick what’s realistic.
+            One focus for next week (optional).
           </p>
           <div
             className="grid grid-cols-2 gap-2"
@@ -319,8 +319,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
                   and "the app was hard to follow" are different
                   complaints, and merging them loses both. */}
               <p className="text-xs text-muted-foreground">
-                Two quick ones about the app — asked about once a month, both
-                optional.
+                Two questions about the app. Both optional.
               </p>
               <ExperienceScale
                 label="Did this week’s plan make sense?"

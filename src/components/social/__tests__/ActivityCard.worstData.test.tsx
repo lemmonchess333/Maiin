@@ -104,7 +104,7 @@ describe("ActivityCard with worst-case data", () => {
     // textContent, not toHaveTextContent: the matcher collapses
     // whitespace, and fr-FR groups with a narrow no-break space.
     expect(
-      screen.getByRole("button", { name: `${group(1284)} props — show list` })
+      screen.getByRole("button", { name: `${group(1284)} props, show list` })
         .textContent
     ).toBe(group(1284));
     expect(

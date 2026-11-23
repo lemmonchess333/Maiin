@@ -122,8 +122,7 @@ function checkoutBanner(status: string | null): CheckoutBanner | null {
   if (status === "success") {
     return {
       kind: "success",
-      message:
-        "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
+      message: "Payment received. Pro turns on within a few seconds.",
     };
   }
   if (status === "cancelled") {
@@ -474,8 +473,8 @@ export default function Upgrade() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple’s App Store isn’t
-            the billing platform for this account.
+            Manage your subscription at troposfit.com. This account isn’t billed
+            through the App Store.
           </p>
         </div>
       )}
@@ -556,8 +555,8 @@ export default function Upgrade() {
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
               {fromOnboarding
-                ? "Pro logs your meals from a photo, and keeps your calorie target honest as your weight moves."
-                : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
+                ? "Pro logs meals from a photo and keeps your calorie target up to date."
+                : "Pro logs a meal from a photo and keeps your calorie target up to date."}
             </p>
           </div>
 

@@ -179,9 +179,8 @@ export default function RunFitnessSection({
             {fitness?.pendingConfirmation && (
               <div className="rounded-lg bg-muted/60 p-3 space-y-2">
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Set automatically from a race, time trial or tempo you ran. It
-                  shapes predictions now — accept it to also drive your session
-                  pace targets, or remove it to stay on standard paces.
+                  Set from a race, time trial or tempo you ran. Accept it to set
+                  your session paces, or remove it to keep standard paces.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button

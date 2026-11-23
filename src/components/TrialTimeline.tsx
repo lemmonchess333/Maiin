@@ -56,7 +56,7 @@ export default function TrialTimeline({ plan }: Props) {
             <Icon className="size-3 text-primary" />
           </span>
           <p className="text-xs text-muted-foreground leading-snug">
-            <span className="font-semibold text-foreground">{when}</span> —{" "}
+            <span className="font-semibold text-foreground">{when}</span>:{" "}
             {what}
           </p>
         </li>

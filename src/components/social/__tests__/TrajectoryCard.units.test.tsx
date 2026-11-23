@@ -75,7 +75,7 @@ describe("TrajectoryCard's week", () => {
       delta: -1,
     });
     expect(
-      screen.getByText("Start your week — beat last week")
+      screen.getByText("Start your week. Beat last week")
     ).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
   });

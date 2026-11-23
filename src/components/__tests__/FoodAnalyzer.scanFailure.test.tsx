@@ -179,7 +179,7 @@ describe("FoodAnalyzer — scan outcome routing", () => {
     fireEvent.click(screen.getByText("stub-barcode"));
     await waitFor(() =>
       expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-        "You’re offline — barcode lookup needs a connection.",
+        "You’re offline. Barcode lookup needs a connection.",
         expect.anything()
       )
     );

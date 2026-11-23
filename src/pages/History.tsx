@@ -1393,8 +1393,7 @@ export default function History() {
                     Still loading your {formatSourceList(stalledSources)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    This is taking longer than it should. Your data is safe —
-                    the connection to it has stalled.
+                    This is taking longer than it should. Your data is safe.
                   </p>
                   <Button
                     variant="secondary"
@@ -1511,8 +1510,7 @@ export default function History() {
                       Couldn’t load your runs
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Your runs are safe — this was a problem reading them, not
-                      a problem with your data.
+                      Your runs are safe. Tropos couldn’t read them just now.
                     </p>
                     <Button
                       variant="sport-tinted"

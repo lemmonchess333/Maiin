@@ -321,14 +321,17 @@ the point where it helps. Before you unify something, ask whether the thing
 you are unifying IS the identity of its surface; if it is, unify the
 behaviour (roles, keyboard, target size) and leave the treatment alone.
 
-### 3g. Em dashes: one rhythm is the problem, not one character
+### 3g. No em dash on screen (DS11 call 2, 23 November 2026)
 
 Copy that reaches for "statement — explanation" at every beat reads as
-machine-written even when each line is fine on its own. Prefer the middot
-the app already uses for `fact · fact`, or a full stop between two
-independent statements. Keep the em dash for a genuine aside.
-`emDashCopy.test.ts` ratchets the total and caps any single component, so
-the count can only fall.
+machine-written even when each line is fine on its own, and designers
+named it as a tell. The app shows none: a full stop between two
+statements, a colon before what a label introduces ("Today: Full Pro
+access"), the middot the app already uses for `fact · fact`, "so" for a
+cause. A stored day name such as the generator's "Full Body — Squat
+Focus" is never shown whole; `liftDayLabel.ts` names it. A bare "—" for
+a figure with no value is not copy and stays. `emDashCopy.test.ts` fails
+on any other em dash in a string, template or JSX text under `src/`.
 
 ---
 

@@ -23,8 +23,8 @@ export default function FoodOfflineBanner({
 }: FoodOfflineBannerProps) {
   return (
     <SustainedOfflineBanner thresholdMs={thresholdMs} bannerKey="food-offline">
-      Image AI and barcode scanner are unavailable offline. Text logging keeps
-      working — entries sync when you reconnect.
+      Photo and barcode logging need a connection. Typed meals sync when you
+      reconnect.
     </SustainedOfflineBanner>
   );
 }

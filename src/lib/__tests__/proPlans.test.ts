@@ -6,7 +6,7 @@
  *   - Exactly one plan is marked recommended (DEFAULT_PLAN tracks it)
  *   - The recommended plan carries a topBadge so the marketing card
  *     ribbon renders
- *   - getCheckoutCtaLabel returns the "Start Pro — £X/<period>"
+ *   - getCheckoutCtaLabel returns the "Start Pro · £X/<period>"
  *     shape both ProModal and Upgrade.tsx rely on
  *   - The renewal disclosure says what is charged, after the trial when
  *     there is one, and that it renews (App Store Guideline 3.1.2(c)),
@@ -102,19 +102,19 @@ describe("findPlan", () => {
 });
 
 describe("getCheckoutCtaLabel", () => {
-  it("formats as 'Start Pro — <price>/<short-period>'", () => {
+  it("formats as 'Start Pro · <price>/<short-period>'", () => {
     expect(getCheckoutCtaLabel(getPlan("monthly"))).toBe(
-      "Start Pro — £6.99/mo"
+      "Start Pro · £6.99/mo"
     );
     expect(getCheckoutCtaLabel(getPlan("yearly"))).toBe(
-      "Start Pro — £39.99/yr"
+      "Start Pro · £39.99/yr"
     );
   });
 
   it("is priced from the plan it is handed (the App Store's price on iOS)", () => {
     const plans = localizePlans(US_STOREFRONT);
     expect(getCheckoutCtaLabel(findPlan(plans, "yearly"))).toBe(
-      "Start Pro — $39.99/yr"
+      "Start Pro · $39.99/yr"
     );
   });
 
@@ -357,7 +357,7 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
 
   it("every price string carries the £ the copy assumes", () => {
     // getCheckoutCtaLabel and getInlinePriceSummary interpolate `price`
-    // raw — a bare "3.99" would render "Start Pro — 3.99/mo".
+    // raw — a bare "3.99" would render "Start Pro · 3.99/mo".
     for (const plan of PRO_PLANS) {
       expect(plan.price.startsWith("£"), `${plan.id}: ${plan.price}`).toBe(
         true

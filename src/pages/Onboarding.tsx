@@ -206,10 +206,7 @@ const STEP_META = [
     "What would you like to work towards?",
     "Choose the focus for your training plan.",
   ],
-  [
-    "Find your starting rhythm",
-    "Choose the training you want in your week. You can change this later.",
-  ],
+  ["Find your starting rhythm", "Choose the training you want in your week."],
   [LIFT_KIT_QUESTION.title, LIFT_KIT_QUESTION.hint],
   ["How does running fit in?", "Keep runs flexible, or work towards a race."],
   [LIFT_LIMITS_QUESTION.title, LIFT_LIMITS_QUESTION.hint],
@@ -218,10 +215,7 @@ const STEP_META = [
     "These set your nutrition targets and your initial loads.",
   ],
   ["Review your plan", "Check your answers before creating your plan."],
-  [
-    "Your plan",
-    "Your first week, built from your answers. Change anything before you start.",
-  ],
+  ["Your plan", "Your first week, built from your answers."],
   [HEALTH_CONSENT_COPY.title, HEALTH_CONSENT_COPY.stored],
 ];
 const GOALS = [
@@ -1693,11 +1687,7 @@ export default function Onboarding() {
                   }
                 />
               ))}
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                {goalConfirmed
-                  ? "This sets your training focus. You can add a goal weight when you get to About you."
-                  : "Choose one to continue. You can revisit it before creating your plan."}
-              </p>
+
               <NewAccountMethodNote
                 method={signInMethodOf(user?.providerData?.[0]?.providerId)}
                 email={user?.email ?? null}
@@ -1735,8 +1725,8 @@ export default function Onboarding() {
               )}
               <p className="text-sm text-muted-foreground">
                 {hasLifting
-                  ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
-                  : "No lifts will be scheduled. Next, choose free running, 30 minutes without stopping, or a race."}
+                  ? "The draft below follows your choices."
+                  : "No lifts will be scheduled."}
               </p>
               {hasLifting && (
                 <WeekPreview
@@ -2465,8 +2455,7 @@ export default function Onboarding() {
                 (profile?.runTimeLimits?.sessionMinutes ||
                   profile?.runTimeLimits?.longRunMinutes) && (
                   <p className="text-sm text-muted-foreground">
-                    This plan uses your saved running time limits. You can
-                    change them in Run plan settings.
+                    This plan uses your saved running time limits.
                   </p>
                 )}
 
@@ -2578,8 +2567,7 @@ export default function Onboarding() {
                   id="onboarding-name-note"
                   className="text-sm text-muted-foreground"
                 >
-                  Other people can see this name on your profile. You can change
-                  it later.
+                  Other people see this name on your profile.
                 </p>
                 {nameMessage && (
                   <p
@@ -2655,11 +2643,9 @@ export default function Onboarding() {
       ) : (
         !declinedHere && (
           <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-            {step === 7 && (
+            {step === 7 && !user && (
               <p className="text-sm text-muted-foreground">
-                {user
-                  ? "Today shows your plan and what to do next. Start when you’re ready."
-                  : "Next, save your plan to an account."}
+                Next, save your plan to an account.
               </p>
             )}
             <div className="flex gap-3 @max-[15em]:flex-col-reverse">

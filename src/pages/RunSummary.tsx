@@ -337,7 +337,7 @@ function InvalidRunReview({
             <p className="text-xs text-muted-foreground text-center">
               {isOnline
                 ? "Saved on this phone · waiting to sync."
-                : "Saved locally — will sync when online."}
+                : "Saved on this phone. Syncs when you’re back online."}
             </p>
           )}
           <button
@@ -1504,7 +1504,7 @@ export default function RunSummary() {
               );
             } else if (alert === "warning") {
               toast.warning(
-                "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
+                "Your shoes are at 85% of their recommended mileage.",
                 { duration: 5000 }
               );
             }
@@ -2380,7 +2380,7 @@ export default function RunSummary() {
                 if (!template) return null;
                 return (
                   <p className="text-sm text-muted-foreground">
-                    Next run: {runTemplateName(template.name, unit)} —{" "}
+                    Next run: {runTemplateName(template.name, unit)} ·{" "}
                     {new Date(`${next.date}T12:00:00`).toLocaleDateString(
                       "en-GB",
                       { weekday: "long" }
@@ -2481,7 +2481,7 @@ export default function RunSummary() {
                     {pendingSync
                       ? isOnline
                         ? "Saved on this phone · waiting to sync"
-                        : "Saved locally — will sync when online"
+                        : "Saved on this phone. Syncs when you’re back online"
                       : "Run saved"}
                   </p>
                 </>

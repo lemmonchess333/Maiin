@@ -306,8 +306,7 @@ export default function ShareComposerSheet() {
 
         {!isOnline && (
           <p className="text-caption text-muted-foreground text-center">
-            You’re offline — your post will be queued and shared when you’re
-            back online.
+            You’re offline. Your post shares when you’re back online.
           </p>
         )}
       </div>
