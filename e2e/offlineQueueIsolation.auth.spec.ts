@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "./helpers/verifySignupEmail";
-import { openSignInForm, openSignUpForm } from "./helpers/auth";
+import { newAccountAtSetup, openSignInForm } from "./helpers/auth";
 /**
  * PR #820 — offline-queue uid isolation, end-to-end on the real app
  * (the two-account "device test" row in the pre-launch QA backlog).
@@ -253,13 +252,7 @@ async function mintOnboardedAccount(
 ): Promise<string> {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await openSignUpForm(page);
-  await page.fill("#login-email", email);
-  await page.fill("#login-password", PASSWORD);
-  await page
-    .getByRole("button", { name: /create account/i })
-    .click({ timeout: 8_000 });
-  await verifySignupEmail(page, email);
+  await newAccountAtSetup(page, email, PASSWORD);
   // Onboarding step 0 confirms the account + profile doc exist.
   await page
     .getByRole("button", { name: /build muscle/i })

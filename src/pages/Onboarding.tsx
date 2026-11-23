@@ -7,7 +7,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
-import { doc, serverTimestamp } from "firebase/firestore";
+import { doc, getDocFromServer, serverTimestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
@@ -59,8 +59,12 @@ import {
   raceRunDaysNote,
 } from "@/lib/raceGoalPlanner";
 import {
+  adoptSignedOutDraft,
+  clearSignedOutDraft,
   loadOnboardingDraft,
+  loadSignedOutDraft,
   saveOnboardingDraft,
+  saveSignedOutDraft,
   clearOnboardingDraft,
   HEALTH_CONSENT_STEP,
   ONBOARDING_MAX_STEP,
@@ -72,6 +76,7 @@ import {
   DELETE_ACCOUNT_ANCHOR,
   HEALTH_CONSENT_COPY,
   HEALTH_CONSENT_DECLINED_COPY,
+  HEALTH_CONSENT_DECLINED_SIGNED_OUT_COPY,
   HEALTH_DATA_CONSENT_VERSION,
   SIGN_OUT_FAILED,
   hasCurrentHealthConsent,
@@ -91,7 +96,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { benchmarkFromRaceTime, manualRunFitness } from "@/lib/runPaces";
 import { finishTimeLabel } from "@/lib/runLabels";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
-import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
+import { Check, ChevronRight, ArrowLeft, UserRound, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import LiftWeekQuestion from "@/components/onboarding/LiftWeekQuestion";
@@ -155,6 +160,21 @@ import {
   snapshotPendingInvite,
 } from "@/lib/pendingInvite";
 import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
+import {
+  KEPT_PLAN_NOTICE,
+  SAVE_PLAN_COPY,
+  noteSetupSent,
+  noteSignedOutAgreement,
+  setupSentThisVisitFor,
+  signedOutAgreementThisVisit,
+  cancelSetupSave,
+  finishSetupSave,
+  keepExistingPlan,
+  readSetupSave,
+  startSetupSave,
+} from "@/lib/setupSave";
+import { pathAfterSetup } from "@/lib/trialOffer";
+import { trackSetupStarted } from "@/lib/firstRunEvents";
 import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 
 /* The review's reminder row is its own chunk, fetched once setup has
@@ -164,6 +184,11 @@ import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 const loadSetupRacePicker = () =>
   import("@/components/onboarding/SetupRacePicker");
 const SetupRacePicker = lazyRetry(loadSetupRacePicker);
+/* Save your plan (A6) is drawn only signed out, at setup's end, so the
+   ways in are fetched when the review's button is pressed, not by every
+   signed-in setup. */
+const loadSaveYourPlan = () => import("@/components/onboarding/SaveYourPlan");
+const SaveYourPlan = lazyRetry(loadSaveYourPlan);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -237,9 +262,36 @@ export default function Onboarding() {
   // distance control says so to a free account.
   const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();
-  const [draft] = useState(() =>
-    user ? loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP) : null
-  );
+  /* A6: setup is answered before there is an account, and Save your plan
+     makes one at its end. Signed in, setup is drawn afresh; a sign-in that
+     came from Save your plan (`setupSave`) takes the answers given signed
+     out and builds the plan at once. Any other account keeps its own. */
+  const [setupSave] = useState(() => (user ? readSetupSave() : null));
+  /* Signed out, the agreement to store health details is the person's,
+     and the phone may be someone else's by the time setup is opened again:
+     answers picked up cold, not in this open of the app, ask for it again
+     (A6). Adopted under Save your plan's mark, they keep it. */
+  const [{ draft, agreementAskedAgain }] = useState(() => {
+    if (user)
+      return {
+        draft: setupSave
+          ? adoptSignedOutDraft(user.uid, ONBOARDING_MAX_STEP)
+          : loadOnboardingDraft(user.uid, ONBOARDING_MAX_STEP),
+        agreementAskedAgain: false,
+      };
+    const kept = loadSignedOutDraft(ONBOARDING_MAX_STEP);
+    if (!kept?.healthConsentVersion || signedOutAgreementThisVisit())
+      return { draft: kept, agreementAskedAgain: false };
+    return {
+      draft: { ...kept, healthConsentVersion: undefined },
+      agreementAskedAgain: true,
+    };
+  });
+  /* Signed out, the review's button opens Save your plan in its place. */
+  const [saveView, setSaveView] = useState(false);
+  /* Not now at the agreement, then Leave setup: the answers are forgotten,
+     and nothing writes them again on the way out. */
+  const draftClosedRef = useRef(false);
   const [trainingActivity, setTrainingActivity] = useState<OnboardingActivity>(
     () => onboardingActivity(draft)
   );
@@ -294,8 +346,11 @@ export default function Onboarding() {
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
+  /* Asked again at the review, I agree goes back to the review. */
   const [returnToReview, setReturnToReview] = useState(
-    !askConsentFirst && (askBirthYearAgain || (draft?.returnToReview ?? false))
+    askConsentFirst
+      ? agreementAskedAgain && draft?.step === 7
+      : askBirthYearAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -312,7 +367,9 @@ export default function Onboarding() {
   const nameRef = useRef<HTMLInputElement>(null);
   /* Soc15: a friend's invite code, from a link opened on this device or
      typed on the last step. Used once the plan is made. */
-  const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput();
+  const [inviteCode, setInviteCode, inviteRevision] = useInviteCodeInput(
+    setupSave?.inviteCode
+  );
   /* App1 Q55: the email opt-in, off until the person turns it on (§14n
      (55)), and asked only of an account that has never answered: running
      setup again does not ask again; Settings → Notifications has the
@@ -320,7 +377,9 @@ export default function Onboarding() {
      afresh rather than carry a yes forward. */
   const askEmail =
     EMAIL_UPDATES_LIVE && !emailConsentAnswered(profile?.emailConsent);
-  const [emailOptIn, setEmailOptIn] = useState(false);
+  /* Kept across Save your plan's sign-in (`setupSave`), and nowhere
+     longer. */
+  const [emailOptIn, setEmailOptIn] = useState(setupSave?.emailOptIn ?? false);
   const arrivedName = profile?.displayName?.trim() ?? "";
   const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
   if (arrivedName !== seenArrivedName) {
@@ -628,9 +687,16 @@ export default function Onboarding() {
     ]
   );
   useEffect(() => {
-    if (user && !saving && !onboardingCompletedRef.current)
-      saveOnboardingDraft(user.uid, answers);
+    if (saving || onboardingCompletedRef.current || draftClosedRef.current)
+      return;
+    if (user) saveOnboardingDraft(user.uid, answers);
+    else saveSignedOutDraft(answers);
   }, [user, saving, answers]);
+  // The first time this phone opens setup (A6's first-run events).
+  const signedIn = !!user;
+  useEffect(() => {
+    trackSetupStarted(signedIn);
+  }, [signedIn]);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -648,6 +714,15 @@ export default function Onboarding() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     headingRef.current?.focus({ preventScroll: true });
   }, [step, consentDeclined]);
+  /* Signed out at the review, Save your plan is the next screen. */
+  useEffect(() => {
+    if (!user && step === 7) void loadSaveYourPlan().catch(() => {});
+  }, [user, step]);
+  /* Save your plan opens, and closes back to the review, at the top. */
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    headingRef.current?.focus({ preventScroll: true });
+  }, [saveView]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
   /* Goal weight (optional): the target weight owns the nutrition direction
@@ -985,6 +1060,22 @@ export default function Onboarding() {
     stepMove > 0 && "starting:[transform:translateX(16px)]",
     stepMove < 0 && "starting:[transform:translateX(-16px)]"
   );
+  const openSaveView = () => {
+    setSaveError("");
+    setStepMove(1);
+    setSaveView(true);
+  };
+  const closeSaveView = () => {
+    setStepMove(-1);
+    setSaveView(false);
+  };
+  /* Leave setup from Not now at the agreement, before there is an account:
+     the answers given so far are forgotten. */
+  const leaveSetup = () => {
+    draftClosedRef.current = true;
+    clearSignedOutDraft();
+    navigate("/", { replace: true });
+  };
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
@@ -1003,6 +1094,7 @@ export default function Onboarding() {
       // I agree. Nothing about the answer goes to analytics (Priv1 call
       // 1): the step's view is the one event it has.
       setHealthConsentVersion(HEALTH_DATA_CONSENT_VERSION);
+      if (!user) noteSignedOutAgreement();
     } else {
       trackLifecycle("onboarding_step_completed", {
         step: STEP_IDS[step],
@@ -1010,7 +1102,8 @@ export default function Onboarding() {
       });
     }
     if (step === 7) {
-      void handleFinish();
+      if (user) void handleFinish();
+      else openSaveView();
       return;
     }
     setStepMove(1);
@@ -1025,6 +1118,28 @@ export default function Onboarding() {
     setSaving(true);
     setSaveError("");
     try {
+      /* Finishing setup replaces the programme, so it never runs over a
+         plan (A6). The profile this screen holds can be a copy from before
+         the account had one, made on another phone or kept in this one's
+         cache, so the account is read from the server first. One that has
+         a plan keeps it, and the answers here are dropped. */
+      /* Once this open of the app has asked for the plan, a plan on the
+         account is that one, its answer lost on the way back: Try again
+         builds it again, as before, and nothing reads as kept. */
+      const stored = setupSentThisVisitFor(user.uid)
+        ? null
+        : await getDocFromServer(doc(db, "users", user.uid));
+      if (stored?.data()?.onboardingComplete === true) {
+        onboardingCompletedRef.current = true;
+        clearOnboardingDraft(user.uid);
+        keepExistingPlan();
+        toast.success(KEPT_PLAN_NOTICE);
+        navigate("/", { replace: true });
+        await refreshProfile();
+        return;
+      }
+      // The answers are this account's now; nothing waits for another.
+      finishSetupSave();
       const profileData: Record<string, unknown> = {
         displayName: displayNameValidation.trimmed,
         // Dark is the app default (see public/init.js + auth.tsx).
@@ -1185,6 +1300,7 @@ export default function Onboarding() {
               }
             : {}),
         });
+      noteSetupSent(user.uid);
       try {
         await callCF();
       } catch (err) {
@@ -1212,6 +1328,12 @@ export default function Onboarding() {
 
       onboardingCompletedRef.current = true;
       clearOnboardingDraft(user.uid);
+
+      /* Where setup ends: the trial offer, or Home for an account that
+         cannot take a trial (Biz1 call 3, A6). Before the profile is read
+         again, so the signed-in app opens there and never draws Home on
+         the way. */
+      navigate(pathAfterSetup(profile), { replace: true });
 
       // Data is saved server-side (the CF flipped onboardingComplete=true
       // and wrote the chosen experience/plan fields via the Admin SDK).
@@ -1300,10 +1422,6 @@ export default function Onboarding() {
         daysPerWeek,
         runMode: effectiveRunMode,
       });
-
-      // Setup ends on Today, for every account (App1, whole-app grill
-      // Q27): the plan and what to do next, with no offer between.
-      navigate("/", { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -1329,6 +1447,23 @@ export default function Onboarding() {
       setSaving(false);
     }
   };
+  /* A6: setup drawn again under the account Save your plan just made. The
+     plan is built at once from the answers, as the review's button would
+     build it, once the word filter has read the name. Answers that no
+     longer pass (a race date gone by) leave the review to say why. */
+  const finishRef = useRef(handleFinish);
+  useEffect(() => {
+    finishRef.current = handleFinish;
+  });
+  const autoBuildRef = useRef(!!setupSave && !!draft);
+  const nameChecked =
+    displayNameValidation.valid || displayNameValidation.problem !== null;
+  useEffect(() => {
+    if (!autoBuildRef.current || !user || !nameChecked) return;
+    autoBuildRef.current = false;
+    if (step === 7 && answersValid && displayNameValidation.valid)
+      void finishRef.current();
+  }, [user, nameChecked, step, answersValid, displayNameValidation.valid]);
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
@@ -1423,11 +1558,21 @@ export default function Onboarding() {
     >
       <header className="shrink-0 py-3 space-y-3">
         <div className="flex justify-between items-center text-sm">
-          <IconButton
-            aria-label="Account settings"
-            onClick={() => navigate("/settings/account")}
-            icon={<UserRound aria-hidden="true" />}
-          />
+          {user ? (
+            <IconButton
+              aria-label="Account settings"
+              onClick={() => navigate("/settings/account")}
+              icon={<UserRound aria-hidden="true" />}
+            />
+          ) : (
+            /* Before there is an account (A6): back to the welcome. The
+               answers stay on the phone, and Get started picks them up. */
+            <IconButton
+              aria-label="Close setup"
+              onClick={() => navigate("/")}
+              icon={<X aria-hidden="true" />}
+            />
+          )}
           <span className="text-muted-foreground">
             {chapters[chapter]} ·{" "}
             <span className="font-mono tabular-nums">
@@ -1462,7 +1607,7 @@ export default function Onboarding() {
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
         <div
-          key={`heading-${step}${declinedHere ? "-declined" : ""}`}
+          key={`heading-${step}${declinedHere ? "-declined" : ""}${saveView ? "-save" : ""}`}
           className={cn("space-y-3", stepEnters)}
         >
           {chapterPosition && (
@@ -1475,21 +1620,43 @@ export default function Onboarding() {
             tabIndex={-1}
             className="text-h1 leading-tight tracking-tight font-extrabold focus:outline-none"
           >
-            {declinedHere
-              ? HEALTH_CONSENT_DECLINED_COPY.title
-              : STEP_META[step][0]}
+            {saveView
+              ? SAVE_PLAN_COPY.title
+              : declinedHere
+                ? HEALTH_CONSENT_DECLINED_COPY.title
+                : STEP_META[step][0]}
           </h1>
           <p className="text-base text-muted-foreground">
-            {declinedHere
-              ? HEALTH_CONSENT_DECLINED_COPY.body
-              : step === 5 && !hasLifting
-                ? "Check these starting values. They help estimate your nutrition targets."
-                : STEP_META[step][1]}
+            {saveView
+              ? SAVE_PLAN_COPY.lead
+              : declinedHere
+                ? user
+                  ? HEALTH_CONSENT_DECLINED_COPY.body
+                  : HEALTH_CONSENT_DECLINED_SIGNED_OUT_COPY.body
+                : step === 5 && !hasLifting
+                  ? "Check these starting values. They help estimate your nutrition targets."
+                  : STEP_META[step][1]}
           </p>
         </div>
+        {saveView && (
+          <div key="save-your-plan" className={stepEnters}>
+            <Suspense fallback={null}>
+              <SaveYourPlan
+                onStart={() =>
+                  startSetupSave({
+                    emailOptIn: askEmail && emailOptIn,
+                    inviteCode,
+                  })
+                }
+                onStopped={cancelSetupSave}
+              />
+            </Suspense>
+          </div>
+        )}
         <fieldset
           key={`questions-${step}`}
           disabled={saving}
+          hidden={saveView}
           className={cn("min-w-0 space-y-5", stepEnters)}
         >
           <legend className="sr-only">{chapters[chapter]}</legend>
@@ -2014,18 +2181,25 @@ export default function Onboarding() {
           )}
           {step === HEALTH_CONSENT_STEP &&
             (consentDeclined ? (
-              <HealthConsentDeclineActions
-                onBack={() => setConsentDeclined(false)}
-                onDeleteAccount={() =>
-                  navigate(`/settings/account#${DELETE_ACCOUNT_ANCHOR}`)
-                }
-                onSignOut={() =>
-                  void signOut().catch((err: unknown) => {
-                    logger.warn("Onboarding: sign-out failed", err);
-                    toast.error(SIGN_OUT_FAILED);
-                  })
-                }
-              />
+              user ? (
+                <HealthConsentDeclineActions
+                  onBack={() => setConsentDeclined(false)}
+                  onDeleteAccount={() =>
+                    navigate(`/settings/account#${DELETE_ACCOUNT_ANCHOR}`)
+                  }
+                  onSignOut={() =>
+                    void signOut().catch((err: unknown) => {
+                      logger.warn("Onboarding: sign-out failed", err);
+                      toast.error(SIGN_OUT_FAILED);
+                    })
+                  }
+                />
+              ) : (
+                <HealthConsentDeclineActions
+                  onBack={() => setConsentDeclined(false)}
+                  onLeaveSetup={leaveSetup}
+                />
+              )
             ) : (
               <div className="space-y-4">
                 <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
@@ -2470,62 +2644,80 @@ export default function Onboarding() {
           full width. Wide-first. */}
       {/* Not now's three ways on stand in for the footer: its Back and
           I agree would be a fourth and fifth. */}
-      {!declinedHere && (
-        <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-          {step === 7 && (
-            <p className="text-sm text-muted-foreground">
-              Today shows your plan and what to do next. Start when you’re
-              ready.
-            </p>
-          )}
-          <div className="flex gap-3 @max-[15em]:flex-col-reverse">
-            {step !== 0 && (
-              <Button
-                variant="secondary"
-                disabled={saving}
-                leftIcon={<ArrowLeft className="size-4" />}
-                onClick={() => {
-                  setSaveError("");
-                  setStepMove(-1);
-                  setStep(
-                    returnToReview
-                      ? 7
-                      : flow[Math.max(0, flow.indexOf(step) - 1)]
-                  );
-                  setReturnToReview(false);
-                }}
-              >
-                Back
-              </Button>
-            )}
-            <Button
-              size="lg"
-              className="flex-1"
-              loading={saving}
-              disabled={buttonDisabled}
-              onClick={advance}
-              rightIcon={
-                step === 7 ? (
-                  <Check className="size-4" />
-                ) : (
-                  <ChevronRight className="size-4" />
-                )
-              }
-            >
-              {saving
-                ? "Creating your plan…"
-                : step === 7
-                  ? saveError
-                    ? "Try again"
-                    : "Start my plan"
-                  : step === HEALTH_CONSENT_STEP
-                    ? HEALTH_CONSENT_COPY.agree
-                    : returnToReview
-                      ? "Back to review"
-                      : "Continue"}
-            </Button>
-          </div>
+      {saveView ? (
+        <footer className="shrink-0 border-t border-border pt-4">
+          <Button
+            variant="secondary"
+            fullWidth
+            leftIcon={<ArrowLeft className="size-4" />}
+            onClick={closeSaveView}
+          >
+            Back
+          </Button>
         </footer>
+      ) : (
+        !declinedHere && (
+          <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+            {step === 7 && (
+              <p className="text-sm text-muted-foreground">
+                {user
+                  ? "Today shows your plan and what to do next. Start when you’re ready."
+                  : "Next, save your plan to an account."}
+              </p>
+            )}
+            <div className="flex gap-3 @max-[15em]:flex-col-reverse">
+              {step !== 0 && (
+                <Button
+                  variant="secondary"
+                  disabled={saving}
+                  leftIcon={<ArrowLeft className="size-4" />}
+                  onClick={() => {
+                    setSaveError("");
+                    setStepMove(-1);
+                    setStep(
+                      returnToReview
+                        ? 7
+                        : flow[Math.max(0, flow.indexOf(step) - 1)]
+                    );
+                    setReturnToReview(false);
+                  }}
+                >
+                  Back
+                </Button>
+              )}
+              <Button
+                size="lg"
+                className="flex-1"
+                loading={saving}
+                disabled={buttonDisabled}
+                onClick={advance}
+                rightIcon={
+                  step === 7 && user ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <ChevronRight className="size-4" />
+                  )
+                }
+              >
+                {saving
+                  ? "Creating your plan…"
+                  : step === 7
+                    ? saveError
+                      ? "Try again"
+                      : user
+                        ? "Start my plan"
+                        : // Signed out, Save your plan comes next, not
+                          // the plan itself.
+                          "Continue"
+                    : step === HEALTH_CONSENT_STEP
+                      ? HEALTH_CONSENT_COPY.agree
+                      : returnToReview
+                        ? "Back to review"
+                        : "Continue"}
+              </Button>
+            </div>
+          </footer>
+        )
       )}
     </div>
   );

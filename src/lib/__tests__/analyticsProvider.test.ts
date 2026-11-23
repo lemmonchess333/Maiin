@@ -110,13 +110,13 @@ describe("analyticsProvider", () => {
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
     expect(mod.getAnalyticsStatus()).toBe("active");
 
-    mod.logAnalyticsEvent("signup_completed", {
+    mod.logAnalyticsEvent("account_created", {
       method: "email",
       surface: "lifecycle",
     });
     expect(logEvent).toHaveBeenCalledWith(
       { __handle: true },
-      "signup_completed",
+      "account_created",
       expect.objectContaining({
         method: "email",
         surface: "lifecycle",

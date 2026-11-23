@@ -27,7 +27,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 // Sub1a P1 — default profile to `hasUsedTrial: true` so the
 // plan-priced CTA ("Start Pro — £X/yr") is the rendered baseline
@@ -125,6 +125,10 @@ vi.mock("@/hooks/useStoreTrialEligibility", async (importOriginal) => ({
 }));
 
 import Upgrade from "../Upgrade";
+import {
+  noteTrialOfferWebCheckout,
+  takeTrialOfferWebCheckout,
+} from "@/lib/trialOffer";
 import { PRO_PLANS, localizePlans, type ProPlan } from "@/lib/proPlans";
 
 function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
@@ -894,6 +898,25 @@ describe("Upgrade — checkout return banner", () => {
     renderWithQuery("?checkout=cancelled");
     const banner = screen.getByRole("status");
     expect(banner.textContent).toContain("Checkout cancelled");
+  });
+
+  /* A6: the trial offer that ends setup sends every way
+     off it Home, the website's checkout too, which returns here. */
+  it("a checkout begun from the trial offer goes on Home", async () => {
+    noteTrialOfferWebCheckout("test-uid");
+    syncAfterWebPurchaseMock.mockClear();
+    render(
+      <MemoryRouter initialEntries={["/upgrade?checkout=success"]}>
+        <Routes>
+          <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/" element={<p>Home</p>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getByText("Home")).toBeInTheDocument());
+    expect(syncAfterWebPurchaseMock).toHaveBeenCalledOnce();
+    // Once: the next return to the page is its own.
+    expect(takeTrialOfferWebCheckout("test-uid")).toBe(false);
   });
 });
 

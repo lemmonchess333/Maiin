@@ -78,10 +78,12 @@ export interface UseProCheckoutResult {
   /** Set when the store has the purchase and Pro is not on yet: a sentence
    *  to show calmly, never as an error. */
   notice: string | null;
+  /** Resolves with how the purchase ended, or null when none began (one
+   *  already running, or no account). */
   startCheckout: (
     plan: PlanId,
     options?: StartCheckoutOptions
-  ) => Promise<void>;
+  ) => Promise<PurchaseOutcome | null>;
   /** True when the auth context has no user — callers can flip the
    *  CTA label to "Sign in to start Pro" rather than rendering a
    *  disabled button with no explanation. */
@@ -105,7 +107,10 @@ export function useProCheckout(): UseProCheckoutResult {
   }, []);
 
   const startCheckout = useCallback(
-    async (plan: PlanId, options: StartCheckoutOptions = {}) => {
+    async (
+      plan: PlanId,
+      options: StartCheckoutOptions = {}
+    ): Promise<PurchaseOutcome | null> => {
       // Capture plan at submit so a mid-flight selection change
       // can't swap which plan is purchased.
       const submittedPlan = plan;
@@ -116,7 +121,7 @@ export function useProCheckout(): UseProCheckoutResult {
         signedIn: !!user,
       });
       // One purchase at a time.
-      if (started === before) return;
+      if (started === before) return null;
 
       // Auth-less branch. Per the spec we don't disable the CTA —
       // we route the user to sign in. In Tropos, the unauthenticated
@@ -127,7 +132,7 @@ export function useProCheckout(): UseProCheckoutResult {
       // `<Login />` is rendered in place rather than at a /login URL.
       if (!user) {
         toast.error(SIGN_IN_MESSAGE);
-        return;
+        return null;
       }
 
       const platform = isNativeIOS() ? "ios" : "web";
@@ -189,6 +194,7 @@ export function useProCheckout(): UseProCheckoutResult {
           // neither surface needs its own refresh race.
           break;
       }
+      return outcome;
     },
     [user, location.pathname, send]
   );

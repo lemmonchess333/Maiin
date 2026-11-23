@@ -78,8 +78,8 @@ describe("analytics wrappers — surface keys", () => {
   });
 
   it("lifecycleAnalytics uses surface='lifecycle'", () => {
-    trackLifecycle("signup_completed", { method: "email" });
-    expect(emitSpy).toHaveBeenCalledWith("lifecycle", "signup_completed", {
+    trackLifecycle("account_created", { method: "email" });
+    expect(emitSpy).toHaveBeenCalledWith("lifecycle", "account_created", {
       method: "email",
     });
   });

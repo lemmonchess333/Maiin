@@ -45,6 +45,12 @@ import { captureError } from "@/lib/errorReporting";
    so sub-component lazy loads (Soc5 item 10) can share it. */
 import { lazyRetry } from "@/lib/lazyRetry";
 import MinVersionGate from "@/components/MinVersionGate";
+import {
+  KEPT_PLAN_NOTICE,
+  accountAppeared,
+  keepExistingPlan,
+} from "@/lib/setupSave";
+import { toast } from "@/lib/toast";
 
 /* Two root-mounted components that render null until something happens.
    A static import is unconditional, so theirs were the entire reason a
@@ -194,6 +200,8 @@ const SettingsHiddenPosts = lazyRetry(
   () => import("@/pages/settings/SettingsHiddenPosts")
 );
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
+// The trial offer that ends setup (Biz1 call 3, A6 call 2).
+const TrialOffer = lazyRetry(() => import("@/pages/TrialOffer"));
 // Train and the session pages under it share one programme engine, held
 // by this route (TrainWk1 call 2).
 const ProgramEngineRoute = lazyRetry(
@@ -475,6 +483,20 @@ function AppRoutes() {
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
+  /* A6: an account on the phone that did not come from Save your plan
+     takes none of the answers given signed out, which are another
+     person's, their agreement to store health details among them. */
+  useEffect(() => {
+    if (uid) accountAppeared();
+  }, [uid]);
+  /* A6: a sign-in from Save your plan that reached an account with a plan.
+     The plan stays, the answers given signed out are dropped, and Home
+     says so in one line. Read once the profile is here, so an account
+     whose profile could not be read keeps both until it can. */
+  const hasPlan = !!profile?.onboardingComplete;
+  useEffect(() => {
+    if (uid && hasPlan && keepExistingPlan()) toast.success(KEPT_PLAN_NOTICE);
+  }, [uid, hasPlan]);
   /* App1 Q17: the launch numbers the server keeps (the first session, the
      week-4 return, the first trial and payment) are sent once per account
      by whichever of its devices is open (lib/launchEvents). Loaded once
@@ -614,6 +636,16 @@ function AppRoutes() {
           {/* A shared post's public page (App1 Q51); signed in, the same
               address is the post in the app. */}
           <Route path="/activity/:activityId" element={<PublicPost />} />
+          {/* Setup comes before the account (A6): its answers wait on the
+              phone, and Save your plan at its end makes the account. */}
+          <Route
+            path="/setup"
+            element={
+              <MotionRoot>
+                <Onboarding />
+              </MotionRoot>
+            }
+          />
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
@@ -764,6 +796,16 @@ function SignedInRoutes({
                       <Route path="/terms" element={<TermsOfService />} />
                       <Route path="/support" element={<Support />} />
                       <Route path="/review" element={<WeeklyReviewPage />} />
+                      {/* Where setup ends for an account that can take a
+                          trial: full screen, as setup is (A6 call 2). */}
+                      <Route
+                        path="/trial-offer"
+                        element={
+                          <RouteErrorBoundary>
+                            <TrialOffer />
+                          </RouteErrorBoundary>
+                        }
+                      />
                       <Route element={<Layout />}>
                         <Route
                           path="/"

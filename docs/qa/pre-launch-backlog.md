@@ -10,6 +10,52 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Sign-up at the end of setup, then a trial offer (A6, 2026-11-22)
+
+Get started opens setup before any account; its answers wait on the phone,
+Save your plan makes the account (Apple, Google, email), the plan is built
+and the trial offer follows for an account that can take a trial
+(`Onboarding.tsx`, `SaveYourPlan.tsx`, `setupSave.ts`, `TrialOffer.tsx`).
+The unit tests and the web harness draw every screen; only a phone shows
+the native sign-in sheets at the end of setup, the answers outliving a
+real kill, and a sandbox purchase from the offer.
+
+- [ ] **Sign in with Apple at the end of setup.** On the TestFlight build,
+      signed out, tap Get started, answer setup, tap Continue, then
+      Continue with Apple with an Apple ID that has never used Tropos.
+      Passing: Apple's sheet opens over Save your plan; after it, "Creating
+      your plan…" shows on the review, then the trial offer, with no
+      second setup; the account's `users/{uid}` carries the answers given
+      signed out, `healthDataConsent` dated now, and `onboardingComplete`.
+      Then the same with Google. A launch blocker: App Review signs up.
+- [ ] **An Apple ID that already has a plan keeps it.** Signed out on a
+      second phone (or after Sign out), answer setup differently and Save
+      your plan with an Apple ID whose account has a plan. Passing: Home
+      opens with "You already have a plan, so we kept it.", the plan and
+      its history are as they were, and `programState/current` in the
+      console has the old `updatedAt`.
+- [ ] **The answers outlive a kill.** Signed out, answer setup to About you,
+      swipe the app away from the app switcher, open it again and tap Get
+      started. Passing: setup opens on "Your health details" (asked again on
+      answers picked up cold), and I agree goes on with every answer kept.
+      Then reach the review, kill the app again, and reopen: Get started
+      asks the agreement again, I agree opens the review, and its email
+      switch is off (asked afresh). Signing in from the welcome instead, or
+      leaving the answers two days, leaves none of them for the next setup.
+- [ ] **The trial from the offer, in sandbox.** With a sandbox Apple ID,
+      finish setup to the trial offer. Passing: the yearly plan and its App
+      Store price show, with "7 days free, then …" under Start free trial;
+      the sheet's trial matches; buying lands on Home with Pro on; Not now
+      and closing the sheet each land on Home with nothing bought; Restore
+      on a second new account with the same sandbox Apple ID lands on Home
+      with Pro on. GA4 DebugView shows `trial_offer_viewed` once, and
+      `trial_started` once the server has the trial.
+- [ ] **The first-run events.** On a phone that has never had Tropos, with
+      Share usage analytics on, go from the welcome to Home. Passing: GA4
+      DebugView shows `welcome_viewed`, `setup_started`, `account_created`
+      (with its method), `onboarding_completed` and `trial_offer_viewed`,
+      each once, and none of them with Share usage analytics off.
+
 ## Your top three on a run (Run29, 2026-11-22)
 
 A run's 1K, 5K and 10K placed 1st to 3rd among your own times show on the
@@ -1535,8 +1581,8 @@ TestFlight script names each one.
 - [ ] **Sign in with Apple and with Google on the phone.** On the
       TestFlight build, sign out, then sign in with Apple, then with Google,
       each with an account that has never signed in. Passing: each reaches
-      setup with no error, and GA4 DebugView shows `signup_completed` for
-      each. The native flow (`src/lib/nativeAuth.ts`) has only run against
+      setup with no error, and GA4 DebugView shows `account_created` (it was
+      `signup_completed`) for each. The native flow (`src/lib/nativeAuth.ts`) has only run against
       mocks, and the Google button needs the `REVERSED_CLIENT_ID` URL scheme
       that only CI's build adds (`deploy-ios.yml`). A launch blocker: App
       Review tries every sign-in button. (Script step 9.)
@@ -3176,7 +3222,7 @@ In this order:
       listed or written again.
 - [ ] **Dry run again.** Mode `dry-run` once more. Passing: it prints
       `DRY RUN: 0 object(s) under food-photos/ and 0 of N meal(s) hold a
-    photo field`; Firebase console → Storage has no `food-photos`
+photo field`; Firebase console → Storage has no `food-photos`
       folder; and in Firestore console a meal scanned before 18 August
       2026 has neither `photoUrl` nor `photoPath`. Then write into
       CLAUDE.md's "Meal photos are device-local" section, where it says
@@ -5699,7 +5745,8 @@ by 176 px both times); no iPhone has drawn the fix.
 - [ ] **Sign in, the lifter.** Tap "Sign in". Passing: "Welcome back", and
       beside it the lifter, about a third of the screen's width, pressing
       the bar in its soft purple light; no thin oval at the screen's right
-      edge. Tap "Sign up": "Create your account" and the same lifter.
+      edge. (Its "Get started" now opens setup, A6; sign-up is Save your
+      plan at setup's end.)
 - [ ] **After deleting an account.** Delete a test account from Settings →
       Account. Passing: the app opens on Sign in with "Your account and all
       data have been deleted." above the buttons; close and reopen the app,
@@ -7630,7 +7677,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-      name>’s workout on Tropos" (run, day, week) with the card's figures in
+              name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,
