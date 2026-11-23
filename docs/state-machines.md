@@ -241,8 +241,13 @@ null` used to mean both "this account has no profile yet" and "the profile
   `onboardingComplete`; `handleFinish`, which reads the account from the
   server before writing, for a device whose copy is older; and
   `completeOnboarding`, which refuses in its transaction an account with
-  `onboardingComplete` or a stored programme, for two phones at once. Each
-  drops the answers and says so on Home (`KEPT_PLAN_NOTICE`).
+  `onboardingComplete`, for two phones at once. Each drops the answers and
+  says so on Home (`KEPT_PLAN_NOTICE`). A programme stored without
+  `onboardingComplete` is not a plan to keep: setup rebuilds it and sets
+  the flag, so the account leaves setup. A refusal from the server is
+  "kept" unless this open of the app sent setup and its answer is unknown
+  (`setupSentThisVisitFor`); a refusal that wrote nothing
+  (`refusedBeforeWriting`) does not count as sent.
 - **The trial offer.** Once the plan is built, setup goes to
   `/trial-offer` (`src/pages/TrialOffer.tsx`) for an account that can take
   a trial, before Home; every way off it goes Home, a purchase through

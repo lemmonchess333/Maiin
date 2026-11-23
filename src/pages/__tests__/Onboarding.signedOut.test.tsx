@@ -530,6 +530,36 @@ describe("once the account exists", () => {
     expect(readSetupSave()).toBeNull();
   });
 
+  it("Try again after a refusal that wrote nothing keeps a plan made elsewhere meanwhile", async () => {
+    // The rate limit refuses the first ask, which writes nothing; another
+    // phone's plan lands before Try again, and the server refuses this one.
+    h.complete
+      .mockRejectedValueOnce({ code: "functions/resource-exhausted" })
+      .mockRejectedValueOnce({ code: "functions/already-exists" });
+    signedInFromSave("google");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Try again" })
+      ).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(KEPT_PLAN_NOTICE)
+    );
+    await waitFor(() => expect(route()).toHaveTextContent(/^\/$/));
+    expect(h.complete).toHaveBeenCalledTimes(2);
+    expect(track).not.toHaveBeenCalledWith(
+      "onboarding_completed",
+      expect.anything()
+    );
+    expect(track).not.toHaveBeenCalledWith(
+      "first_plan_generated",
+      expect.anything()
+    );
+    // The other phone's public profile is left as it is.
+    expect(setDocGuarded).not.toHaveBeenCalled();
+  });
+
   it("a plan that could not be saved stays on the review with Try again", async () => {
     h.complete.mockRejectedValue({ code: "functions/permission-denied" });
     signedInFromSave("email");

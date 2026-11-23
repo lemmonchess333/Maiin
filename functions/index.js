@@ -1031,18 +1031,17 @@ exports.completeOnboarding = functions
       }
       await db.runTransaction(async (transaction) => {
         const existing = await transaction.get(userRef);
-        const existingProgram = await transaction.get(programRef);
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
-        // Setup builds a plan only for an account that has none (A6). The
-        // app reads the account before it sends, and keeps a plan it finds;
-        // this holds the rule for a profile copy from before the plan (made
-        // on another phone, or kept in a cache) and for two phones finishing
-        // at once. Read in the transaction, so only one of two can build.
-        if (
-          existingData.onboardingComplete === true ||
-          existingProgram.exists
-        ) {
+        // Setup builds a plan only for an account whose setup is not
+        // finished (A6). The app reads the account before it sends, and
+        // keeps a plan it finds; this holds the rule for a profile copy from
+        // before the plan (made on another phone, or kept in a cache) and
+        // for two phones finishing at once. Read in the transaction, so only
+        // one of two can build. A programme stored beside a profile that
+        // does not say setup finished is rebuilt here, with the flag, so
+        // that account reaches Home instead of being sent back to setup.
+        if (existingData.onboardingComplete === true) {
           throw new functions.https.HttpsError(
             "already-exists",
             "This account already has a plan."

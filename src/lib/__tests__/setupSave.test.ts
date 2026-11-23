@@ -13,11 +13,15 @@ import {
   signedOut,
   cancelSetupSave,
   finishSetupSave,
+  forgetSetupSent,
   keepExistingPlan,
+  noteSetupSent,
   noteSignedOutAgreement,
   onSignedOutAgreementLapsed,
   readSetupSave,
+  refusedBeforeWriting,
   refusedForExistingPlan,
+  setupSentThisVisitFor,
   signedOutAgreementThisVisit,
   startSetupSave,
 } from "../setupSave";
@@ -164,6 +168,41 @@ describe("the server's refusal of an account that already has a plan", () => {
   });
 });
 
+describe("an ask to build the plan, refused before anything was written", () => {
+  it("is each code completeOnboarding refuses with before its transaction", () => {
+    for (const code of [
+      "unauthenticated",
+      "resource-exhausted",
+      "invalid-argument",
+      "failed-precondition",
+    ]) {
+      expect(refusedBeforeWriting({ code: `functions/${code}` })).toBe(true);
+      expect(refusedBeforeWriting({ code })).toBe(true);
+    }
+  });
+
+  it("is not an answer that leaves the outcome unknown, nor a plan found", () => {
+    for (const code of [
+      "functions/internal",
+      "functions/deadline-exceeded",
+      "functions/unavailable",
+      "functions/permission-denied",
+      "functions/already-exists",
+    ])
+      expect(refusedBeforeWriting({ code })).toBe(false);
+    expect(refusedBeforeWriting(null)).toBe(false);
+    expect(refusedBeforeWriting({})).toBe(false);
+  });
+
+  it("is forgotten as sent, for that account alone", () => {
+    noteSetupSent("a");
+    noteSetupSent("b");
+    forgetSetupSent("a");
+    expect(setupSentThisVisitFor("a")).toBe(false);
+    expect(setupSentThisVisitFor("b")).toBe(true);
+  });
+});
+
 /* The agreement to store health details, given signed out, is held in
    memory; on iOS an app can stay open for days, so it lapses on whichever
    comes first: two hours in the background or two days from I agree. */
@@ -220,6 +259,23 @@ describe("the agreement given signed out", () => {
       vi.setSystemTime(Date.now() + 60 * 60 * 1000);
       setVisibility("visible");
     }
+    expect(signedOutAgreementThisVisit()).toBe(false);
+  });
+
+  it("lapses when the clock is set back before I agree, and says so", () => {
+    const lapsed = vi.fn();
+    onSignedOutAgreementLapsed(lapsed);
+    noteSignedOutAgreement();
+    vi.setSystemTime(Date.now() - 1);
+    expect(signedOutAgreementThisVisit()).toBe(false);
+    expect(lapsed).toHaveBeenCalledTimes(1);
+  });
+
+  it("lapses when the clock was set back while the app was away", () => {
+    noteSignedOutAgreement();
+    setVisibility("hidden");
+    vi.setSystemTime(Date.now() - 60 * 60 * 1000);
+    setVisibility("visible");
     expect(signedOutAgreementThisVisit()).toBe(false);
   });
 

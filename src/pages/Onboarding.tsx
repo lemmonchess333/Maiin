@@ -164,6 +164,7 @@ import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
 import {
   KEPT_PLAN_NOTICE,
   SAVE_PLAN_COPY,
+  forgetSetupSent,
   noteSetupSent,
   noteSignedOutAgreement,
   onSignedOutAgreementLapsed,
@@ -173,6 +174,7 @@ import {
   finishSetupSave,
   keepExistingPlan,
   readSetupSave,
+  refusedBeforeWriting,
   refusedForExistingPlan,
   startSetupSave,
 } from "@/lib/setupSave";
@@ -1362,7 +1364,14 @@ export default function Onboarding() {
             code === "functions/unavailable" ||
             code === "unavailable" ||
             msg.toUpperCase().includes("INTERNAL");
-          if (!isTransient) throw err;
+          if (!isTransient) {
+            // Refused with nothing written, and no earlier ask from this
+            // open whose answer was lost: this open has built no plan, so a
+            // plan on the account at Try again is another phone's.
+            if (!sentBefore && refusedBeforeWriting(err))
+              forgetSetupSent(user.uid);
+            throw err;
+          }
           await new Promise((r) => setTimeout(r, 1200));
           try {
             await callCF();

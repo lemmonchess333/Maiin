@@ -1,10 +1,11 @@
 /**
- * Setup builds a plan only for an account that has none (A6). The app
- * reads the account from the server before it sends, and keeps a plan it
- * finds; `completeOnboarding` holds the same rule, for a profile copy from
- * before the plan and for two phones finishing at once. It refuses with
- * `already-exists`, which the app takes as "keep the plan", and writes
- * nothing.
+ * Setup builds a plan only for an account whose setup is not finished
+ * (A6). The app reads the account from the server before it sends, and
+ * keeps a plan it finds; `completeOnboarding` holds the same rule, for a
+ * profile copy from before the plan and for two phones finishing at once.
+ * It refuses with `already-exists`, which the app takes as "keep the
+ * plan", and writes nothing. A programme stored without a finished setup
+ * is rebuilt, so that account can get out of setup.
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
@@ -103,16 +104,20 @@ describe("completeOnboarding on an account that already has a plan", () => {
     expect(stored()).toEqual(before);
   });
 
-  it("refuses one with a programme stored, however its profile reads", async () => {
-    // A profile that does not say setup finished (a copy from before the
-    // plan, or one written over) beside a programme that is there.
+  it("rebuilds a programme stored beside a profile whose setup is not finished", async () => {
+    // A programme with no finished setup on its profile (old or
+    // hand-written data): setup builds it again and finishes, so the
+    // account reaches Home instead of being sent back to setup.
     db.data.set(userPath, { uid, onboardingComplete: false });
     db.data.set(programPath, { goal: "hypertrophy" });
-    const before = stored();
     await expect(
       completeOnboarding.run(request("Robin"), actor)
-    ).rejects.toMatchObject({ code: "already-exists" });
-    expect(stored()).toEqual(before);
+    ).resolves.toMatchObject({ success: true });
+    expect(db.data.get(userPath)).toMatchObject({
+      onboardingComplete: true,
+      displayName: "Robin",
+    });
+    expect(db.data.get(programPath)).toEqual({ goal: "strength" });
   });
 
   it("of two phones finishing setup, keeps the plan of the first", async () => {

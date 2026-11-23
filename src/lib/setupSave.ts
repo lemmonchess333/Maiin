@@ -213,9 +213,38 @@ export function noteSetupSent(uid: string): void {
   setupSentThisVisit.add(uid);
 }
 
-/** Whether this open of the app has already asked to build this account's
- *  plan: a plan found on the account then is the one just built, its
- *  answer lost on the way back, not someone's older plan. */
+/** The ask was refused before anything was written: this open of the app
+ *  has not built the plan, so a plan found on the account later is someone
+ *  else's, kept. */
+export function forgetSetupSent(uid: string): void {
+  setupSentThisVisit.delete(uid);
+}
+
+/* The codes `completeOnboarding` (functions/index.js) refuses with before
+   its transaction: no sign-in, the rate limit, a malformed or refused
+   answer, and failed-precondition for a missing agreement, an account
+   being deleted or a name the word filter refuses. */
+const REFUSED_BEFORE_WRITING = new Set([
+  "unauthenticated",
+  "resource-exhausted",
+  "invalid-argument",
+  "failed-precondition",
+]);
+
+/** Whether `completeOnboarding` refused the ask with nothing written. A
+ *  timeout, a dropped connection or an internal error leaves it unknown. */
+export function refusedBeforeWriting(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  return (
+    typeof code === "string" &&
+    REFUSED_BEFORE_WRITING.has(code.replace(/^functions\//, ""))
+  );
+}
+
+/** Whether this open of the app has asked to build this account's plan,
+ *  without being refused before writing: a plan found on the account then
+ *  is the one asked for, its answer lost on the way back, not someone's
+ *  older plan. */
 export function setupSentThisVisitFor(uid: string): boolean {
   return setupSentThisVisit.has(uid);
 }
