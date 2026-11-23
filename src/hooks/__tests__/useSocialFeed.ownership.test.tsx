@@ -40,6 +40,7 @@ vi.mock("../../lib/logger", () => ({
 }));
 
 import { useSocialFeed } from "../useSocialFeed";
+import { __resetFeedSnapshotsForTests } from "../../lib/feedSnapshots";
 
 function feedItem(id: string, authorId: string) {
   return {
@@ -56,6 +57,7 @@ function feedItem(id: string, authorId: string) {
 describe("useSocialFeed — uid/generation ownership", () => {
   beforeEach(() => {
     authUser.current = { uid: "A" };
+    __resetFeedSnapshotsForTests();
     getFeedDeferred.resolve = null;
   });
 
@@ -103,8 +105,7 @@ describe("useSocialFeed — uid/generation ownership", () => {
     const blocked = new Set<string>();
     const renders: { uid: string | undefined; ids: string[] }[] = [];
     let resolveA:
-      | ((v: { items: unknown[]; lastDoc: undefined }) => void)
-      | null = null;
+      ((v: { items: unknown[]; lastDoc: undefined }) => void) | null = null;
     function Harness({ step }: { step: number }) {
       const { items } = useSocialFeed(false, blocked, true);
       renders.push({

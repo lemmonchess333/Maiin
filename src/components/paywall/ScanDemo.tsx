@@ -184,7 +184,13 @@ const FLIGHT_START = {
   x: FIELD_BOX.left + FIELD_BOX.width / 3,
   y: FIELD_BOX.top + FIELD_BOX.height / 2,
 };
-const FLIGHT_END = arcEndPoint(WHEEL_BOX, DAY.before.calories, DAY.target);
+/* The demo's wheel shows what is left (`Wheel`). */
+const FLIGHT_END = arcEndPoint(
+  WHEEL_BOX,
+  DAY.before.calories,
+  DAY.target,
+  "left"
+);
 const FLIGHT_EASE = [0.4, 0, 0.2, 1] as const;
 /** What flies: our drawing of the dish, as the page reads it from the
  *  meal's names. */

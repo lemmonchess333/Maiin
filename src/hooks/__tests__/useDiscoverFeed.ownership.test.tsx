@@ -42,6 +42,7 @@ vi.mock("../../lib/socialApi", () => ({
 vi.mock("@/lib/errorReporting", () => ({ captureError: vi.fn() }));
 
 import { useDiscoverFeed } from "../useDiscoverFeed";
+import { __resetFeedSnapshotsForTests } from "@/lib/feedSnapshots";
 
 function activity(id: string, authorId: string) {
   return { id, authorId, authorName: "x", type: "run", summary: "" };
@@ -59,6 +60,7 @@ const BLOCKED = new Set<string>();
 describe("useDiscoverFeed — uid/generation ownership", () => {
   beforeEach(() => {
     authUser.current = { uid: "A" };
+    __resetFeedSnapshotsForTests();
     feed.calls = [];
   });
 
@@ -170,6 +172,7 @@ describe("useDiscoverFeed — uid/generation ownership", () => {
 describe("useDiscoverFeed — hidden posts", () => {
   beforeEach(() => {
     authUser.current = { uid: "A" };
+    __resetFeedSnapshotsForTests();
     feed.calls = [];
   });
 
@@ -189,6 +192,7 @@ describe("useDiscoverFeed — hidden posts", () => {
 describe("useDiscoverFeed — the reader's own posts", () => {
   beforeEach(() => {
     authUser.current = { uid: "A" };
+    __resetFeedSnapshotsForTests();
     feed.calls = [];
   });
 
@@ -203,5 +207,63 @@ describe("useDiscoverFeed — the reader's own posts", () => {
       });
     });
     expect(result.current.items.map((i) => i.activityId)).toEqual(["theirs"]);
+  });
+});
+
+describe("useDiscoverFeed — the read kept for the session", () => {
+  beforeEach(() => {
+    authUser.current = { uid: "A" };
+    __resetFeedSnapshotsForTests();
+    feed.calls = [];
+  });
+
+  /** Explore read once under A, then left (Social unmounted). */
+  async function readOnceThenLeave() {
+    const first = renderHook(() => useDiscoverFeed(true, BLOCKED));
+    await act(async () => {
+      feed.calls[0].resolve({ items: [activity("x1", "X")], lastDoc: "end" });
+    });
+    expect(first.result.current.items.map((i) => i.id)).toEqual(["x1"]);
+    first.unmount();
+  }
+
+  it("coming back, Explore starts from that read and reads again behind it", async () => {
+    await readOnceThenLeave();
+    const { result } = renderHook(() => useDiscoverFeed(true, BLOCKED));
+    expect(result.current.items.map((i) => i.id)).toEqual(["x1"]);
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.loadingMore).toBe(false);
+    expect(feed.calls).toHaveLength(2);
+    expect(feed.calls[1].cursor).toBeUndefined();
+
+    await act(async () => {
+      feed.calls[1].resolve({
+        items: [activity("x2", "X"), activity("x1", "X")],
+        lastDoc: "end",
+      });
+    });
+    expect(result.current.items.map((i) => i.id)).toEqual(["x2", "x1"]);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("another account never starts from it", async () => {
+    await readOnceThenLeave();
+    authUser.current = { uid: "B" };
+    const { result } = renderHook(() => useDiscoverFeed(true, BLOCKED));
+    expect(result.current.items).toEqual([]);
+    expect(result.current.loaded).toBe(false);
+  });
+
+  it("a block or a hide made since leaves the kept post out", async () => {
+    await readOnceThenLeave();
+    const blocked = new Set(["X"]);
+    const blockedSince = renderHook(() => useDiscoverFeed(true, blocked));
+    expect(blockedSince.result.current.items).toEqual([]);
+    blockedSince.unmount();
+
+    const hidden = new Set(["x1"]);
+    const { result } = renderHook(() => useDiscoverFeed(true, BLOCKED, hidden));
+    expect(result.current.items).toEqual([]);
   });
 });

@@ -7,7 +7,9 @@ import FeedView from "../FeedView";
 
 const emptyFeed = {
   items: [] as unknown[],
+  loaded: true,
   loading: false,
+  loadingMore: false,
   error: null as string | null,
   hasMore: false,
   refresh: vi.fn(async () => {}),
@@ -17,6 +19,8 @@ const emptyFeed = {
 let feedItems: unknown[] = [];
 /** The Following feed's raw error, as the hook reports it. */
 let followingError: string | null = null;
+/** Where both feeds' reads stand; a test sets it before rendering. */
+let feedFlags: Partial<typeof emptyFeed> = {};
 const post = (id: string) => ({
   id,
   activityId: id,
@@ -42,12 +46,13 @@ const joinedSpacePost = (authorId = "member-1") => ({
 vi.mock("@/hooks/useSocialFeed", () => ({
   useSocialFeed: () => ({
     ...emptyFeed,
+    ...feedFlags,
     items: feedItems,
     error: followingError,
   }),
 }));
 vi.mock("@/hooks/useDiscoverFeed", () => ({
-  useDiscoverFeed: () => ({ ...emptyFeed, items: feedItems }),
+  useDiscoverFeed: () => ({ ...emptyFeed, ...feedFlags, items: feedItems }),
 }));
 vi.mock("@/hooks/useFeedSubTabFreshness", () => ({
   useFeedSubTabFreshness: () => ({
@@ -180,6 +185,7 @@ afterEach(() => cleanup());
 beforeEach(() => {
   vi.clearAllMocks();
   feedItems = [];
+  feedFlags = {};
   directory.entries = JOINED_RUNNERS;
   social.restricted = false;
   social.people = [];
@@ -187,6 +193,7 @@ beforeEach(() => {
   mockGetPersonalTrajectory.mockResolvedValue(trajectory(2));
   mockCommunitiesFeed.mockReturnValue({
     items: [],
+    loaded: true,
     loading: false,
     refresh: vi.fn(async () => {}),
     remove: vi.fn(),
@@ -235,6 +242,94 @@ function setup(overrides: FeedViewProps = {}) {
   const rerender = (more: FeedViewProps) => view.rerender(element(more));
   return { selectFeedSubTab, openTogether, rerender, refreshRef };
 }
+
+describe("FeedView — a source keeps what it read", () => {
+  /* Each source keeps its posts across switches and for the session
+     (`feedSnapshots`) and reads again behind them. On the phone every
+     switch drew grey cards for about a second, even back to a source just
+     seen, because the placeholder showed whenever a read was in flight
+     and the list was empty. */
+  const placeholder = () => screen.queryByLabelText("Loading feed");
+
+  it("nothing read yet: the placeholder, and no empty state", () => {
+    feedFlags = { loaded: false, loading: true };
+    setup({ feedSubTab: "explore" });
+    expect(placeholder()).toBeInTheDocument();
+    expect(screen.queryByText("Tropos is quiet right now")).toBeNull();
+  });
+
+  it("read before, reading again: its posts, with no placeholder or spinner", () => {
+    feedFlags = { loaded: true, loading: true, loadingMore: false };
+    feedItems = ["a", "b"].map(post);
+    setup({ feedSubTab: "explore" });
+    expect(feedOrder()).toEqual(["a", "b"]);
+    expect(placeholder()).toBeNull();
+    expect(screen.queryByLabelText("Loading more posts")).toBeNull();
+  });
+
+  it("read before and empty, reading again: its empty state, not a placeholder", () => {
+    feedFlags = { loaded: true, loading: true };
+    setup({ feedSubTab: "explore" });
+    expect(screen.getByText("Tropos is quiet right now")).toBeInTheDocument();
+    expect(placeholder()).toBeNull();
+  });
+
+  it("Following read before and empty says so at once", () => {
+    feedFlags = { loaded: true, loading: true };
+    setup({ feedSubTab: "following", followingCount: 1 });
+    expect(
+      screen.getByText("Nothing from people you follow yet")
+    ).toBeInTheDocument();
+    expect(placeholder()).toBeNull();
+  });
+
+  it("the next page shows the spinner under the posts", () => {
+    feedFlags = { loaded: true, loading: true, loadingMore: true };
+    feedItems = ["a"].map(post);
+    setup({ feedSubTab: "explore" });
+    expect(screen.getByLabelText("Loading more posts")).toBeInTheDocument();
+  });
+
+  it("kept posts wait for the blocks and hidden posts to be known", () => {
+    feedFlags = { loaded: true };
+    feedItems = ["a", "b"].map(post);
+    const { rerender } = setup({ feedSubTab: "explore", blockedReady: false });
+    expect(feedOrder()).toEqual([]);
+    expect(placeholder()).toBeInTheDocument();
+    rerender({ blockedReady: true });
+    expect(feedOrder()).toEqual(["a", "b"]);
+  });
+
+  it("the Spaces stream read before shows while it reads again", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [joinedSpacePost()],
+      loaded: true,
+      loading: true,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    setup({ feedSubTab: "communities" });
+    expect(screen.getByTestId("space-post")).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Loading posts from your Spaces")
+    ).toBeNull();
+  });
+
+  it("the Spaces stream with nothing read yet shows its placeholder", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [],
+      loaded: false,
+      loading: true,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    setup({ feedSubTab: "communities" });
+    expect(
+      screen.getByLabelText("Loading posts from your Spaces")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Your spaces are quiet right now")).toBeNull();
+  });
+});
 
 describe("FeedView — a failed Following feed", () => {
   afterEach(() => {
@@ -577,6 +672,7 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     (followingCount) => {
       mockCommunitiesFeed.mockReturnValue({
         items: [joinedSpacePost()],
+        loaded: true,
         loading: false,
         refresh: vi.fn(async () => {}),
         remove: vi.fn(),
@@ -596,6 +692,7 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
   it("lets a reader give props and comment without leaving Feed", () => {
     mockCommunitiesFeed.mockReturnValue({
       items: [joinedSpacePost()],
+      loaded: true,
       loading: false,
       refresh: vi.fn(async () => {}),
       remove: vi.fn(),
@@ -618,6 +715,7 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
   it("holds Space posts until blocks load, then hides blocked authors", () => {
     mockCommunitiesFeed.mockReturnValue({
       items: [joinedSpacePost()],
+      loaded: true,
       loading: false,
       refresh: vi.fn(async () => {}),
       remove: vi.fn(),
@@ -639,6 +737,7 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
   it("never renders a cached post from a Space this account has not joined", () => {
     mockCommunitiesFeed.mockReturnValue({
       items: [joinedSpacePost()],
+      loaded: true,
       loading: false,
       refresh: vi.fn(async () => {}),
       remove: vi.fn(),
@@ -689,6 +788,7 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     const communitiesRefresh = vi.fn(async () => {});
     mockCommunitiesFeed.mockReturnValue({
       items: [],
+      loaded: true,
       loading: false,
       refresh: communitiesRefresh,
       remove: vi.fn(),

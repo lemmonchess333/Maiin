@@ -325,12 +325,11 @@ describe("MacroColumn — the goal-reached state stays in the accessible name", 
 });
 
 /**
- * The bar fades when it is EMPTY, which since Food11 call 5 is a macro
- * with nothing logged, in both modes: the bar is what is logged.
- *
- * Before Food11, LEFT mode (the default) drew what was left, so a day
- * with nothing logged was a FULL bar and a target used up was an empty
- * one. The two LEFT cases below pinned that; they now pin the reverse.
+ * The bar fades when nothing is drawn on it. It follows the left and
+ * logged switch (`ringFill`), so that is nothing logged in the logged
+ * view and the target used up in the left one; a full left bar (nothing
+ * logged) is at full strength, and an empty first lap still carrying a
+ * second lap past the target does not fade it.
  *
  * Each case anchors on the accessible name first, so the opacity is read
  * from the state the test claims to be in.
@@ -353,16 +352,14 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     return bar!;
   }
 
-  it("LEFT mode with nothing logged fades the empty track", () => {
-    // Food11 call 5: the bar is what is logged in both modes, so nothing
-    // logged is an empty bar here too. It was a full bar in this mode.
+  it("LEFT mode with nothing logged is a full bar at full strength", () => {
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
         name: "150g left Protein. 0g logged of 150g. Show protein logged",
       })
     ).toBeInTheDocument();
-    expect(bar.style.opacity).toBe("0.4");
+    expect(bar.style.opacity).toBe("1");
   });
 
   it("EATEN mode with nothing eaten fades the empty track", () => {
@@ -375,8 +372,24 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     expect(bar.style.opacity).toBe("0.4");
   });
 
-  it("LEFT mode with the target reached draws the full bar at full strength", () => {
+  it("LEFT mode with the target reached fades the emptied track", () => {
     const bar = renderAt("left", 150);
+    expect(
+      screen.getByRole("button", { name: /150g logged of 150g\./ })
+    ).toBeInTheDocument();
+    expect(bar.style.opacity).toBe("0.4");
+  });
+
+  it("LEFT mode past the target keeps the track at full strength under its second lap", () => {
+    const bar = renderAt("left", 180);
+    expect(
+      screen.getByRole("button", { name: /180g logged of 150g\./ })
+    ).toBeInTheDocument();
+    expect(bar.style.opacity).toBe("1");
+  });
+
+  it("EATEN mode with the target reached draws the full bar at full strength", () => {
+    const bar = renderAt("eaten", 150);
     expect(
       screen.getByRole("button", { name: /150g logged of 150g\./ })
     ).toBeInTheDocument();
@@ -422,12 +435,13 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
 });
 
 /**
- * Which way the bar runs (Food11 call 5): it is what is logged, in both
- * modes. The figure beside it follows the left and logged switch; the bar
- * does not. In "left" it used to start full and empty as food was logged.
+ * Which way the bar runs: with the left and logged switch, as the wheel's
+ * arc does (`ringFill`; owner, 23 November 2026, reversing Food11 call 5).
+ * Logged fills with what is logged; left starts full and empties. Past
+ * the target the second lap shows what is over, in both.
  */
-describe("MacroColumn — the bar is what is logged, in both modes", () => {
-  function fillWidth(mode: "left" | "eaten", consumed: number) {
+describe("MacroColumn — the bar follows the left and logged switch", () => {
+  function widths(mode: "left" | "eaten", consumed: number) {
     const { container } = render(
       <MacroColumn
         macroKey="protein"
@@ -440,34 +454,30 @@ describe("MacroColumn — the bar is what is logged, in both modes", () => {
         drawIn={false}
       />
     );
-    const fill = container.querySelector<HTMLElement>(
-      "[data-macro-bar] > div"
-    )!;
-    const width = fill.style.width;
+    const layers = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-macro-bar] > div")
+    ).map((el) => el.style.width);
     cleanup();
-    return width;
+    return { fill: layers[0], over: layers[1] ?? null };
   }
 
-  it.each(["left", "eaten"] as const)(
-    "%s: empty with nothing logged",
-    (mode) => {
-      expect(fillWidth(mode, 0)).toBe("0%");
-    }
-  );
-
-  it.each(["left", "eaten"] as const)("%s: 60 of 150g is a 40% bar", (mode) => {
-    expect(fillWidth(mode, 60)).toBe("40%");
+  it.each([
+    // [logged, logged view, left view]
+    [0, "0%", "100%"],
+    [60, "40%", "60%"],
+    [150, "100%", "0%"],
+  ])("%i of 150g: logged %s, left %s", (consumed, logged, left) => {
+    expect(widths("eaten", consumed)).toEqual({ fill: logged, over: null });
+    expect(widths("left", consumed)).toEqual({ fill: left, over: null });
   });
 
-  it.each(["left", "eaten"] as const)(
-    "%s: full at the target and past it",
-    (mode) => {
-      expect(fillWidth(mode, 150)).toBe("100%");
-      expect(fillWidth(mode, 190)).toBe("100%");
-    }
-  );
+  it("past the target: logged full, left empty, and both carry what is over", () => {
+    // 180 of 150g: 30g over, a fifth of the target.
+    expect(widths("eaten", 180)).toEqual({ fill: "100%", over: "20%" });
+    expect(widths("left", 180)).toEqual({ fill: "0%", over: "20%" });
+  });
 
-  it("LEFT mode still counts the figure down while the bar fills", () => {
+  it("LEFT mode counts the figure down while the bar empties", () => {
     render(
       <MacroColumn
         macroKey="protein"
