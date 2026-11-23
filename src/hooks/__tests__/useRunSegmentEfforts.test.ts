@@ -122,6 +122,29 @@ describe("useRunSegmentEfforts", () => {
     expect(unfiredFailures()).toEqual([]);
   });
 
+  it("with a window, adds what lands inside it and stops listening after", async () => {
+    /* The run finish's bounded wait (Run30 call 1): real timers, a short
+       window. */
+    const { result } = renderHook(() =>
+      useRunSegmentEfforts(UID, "r1", { listenMs: 80 })
+    );
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+    seedFirestore({
+      [path("r1", "hill", 2)]: effort("hill", "r1", 240, 6000, 2),
+    });
+    await flushSnapshots();
+    await waitFor(() => expect(result.current.rows).toHaveLength(3));
+    expect(result.current.rows[2].own).toHaveLength(4);
+    await new Promise((r) => setTimeout(r, 120));
+    seedFirestore({
+      [path("r1", "flat", 2)]: effort("flat", "r1", 480, 7000, 2),
+    });
+    await flushSnapshots();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.loading).toBe(false);
+  });
+
   it("reads nothing signed out", () => {
     const { result } = renderHook(() => useRunSegmentEfforts(null, "r1"));
     expect(result.current).toEqual({ loading: false, failed: false, rows: [] });

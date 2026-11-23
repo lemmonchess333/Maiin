@@ -244,6 +244,13 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /segments/{segmentId}",
   "match /board/{runnerUid}",
   "match /segmentOwners/{segmentId}",
+  // Run30 call 3: lift boards. No client reads or writes either: the
+  // workout and post triggers write them, reading the deletion state in
+  // their transaction. The executor removes the account's entries
+  // (removeLiftBoardTracesForUser) and its efforts (USER_SUBCOLLECTIONS).
+  "match /users/{uid}/liftEfforts/{effortId}",
+  "match /liftBoards/{exerciseId}",
+  "match /lifters/{lifterUid}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).

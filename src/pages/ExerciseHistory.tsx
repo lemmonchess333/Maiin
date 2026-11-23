@@ -37,12 +37,16 @@ import { bestSetsByReps } from "@/lib/repBuckets";
 import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
 import { exerciseProgressReading } from "@/lib/historyReadings";
 import ChartReading from "@/components/analytics/ChartReading";
+import { hasLiftBoard } from "@/lib/liftBoardLifts";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
 );
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
+);
+const LiftBoardSection = lazyRetry(
+  () => import("@/components/analytics/LiftBoardSection")
 );
 
 // Time ranges available on the chart. Mirrors History's main time-range
@@ -119,8 +123,10 @@ export default function ExerciseHistory() {
   // all-time bests above the chart stay free.
   const { isPro } = useSubscription();
   const [metric, setMetric] = useState<Metric>("1RM");
-  // Top-level tab: "progress" (chart + sessions) or "form" (muscle
-  // diagrams + instructions). Default depends on entry point — opening
+  // Top-level tab: "progress" (chart + sessions), "form" (muscle
+  // diagrams + instructions) or, on a barbell lift, "board" (the heaviest
+  // set of each person you follow, Run30 call 3). Default depends on entry
+  // point — opening
   // from Program (where the user is asking "how do I do this?") starts
   // on Form; from History / PR list (where the user is asking "how am
   // I trending?") starts on Progress. The caller threads the intent
@@ -128,13 +134,17 @@ export default function ExerciseHistory() {
   const initialTab = (
     location.state as { initialTab?: "progress" | "form" } | null
   )?.initialTab;
-  const [tab, setTab] = useState<"progress" | "form">(initialTab ?? "progress");
+  const [tab, setTab] = useState<"progress" | "form" | "board">(
+    initialTab ?? "progress"
+  );
 
   const exercise = useMemo(
     () => EXERCISES.find((e) => e.name === decodedName),
     [decodedName]
   );
   const isBodyweight = exercise?.equipment === "Bodyweight";
+  // A barbell lift has a board of the people you follow (Run30 call 3).
+  const boardId = hasLiftBoard(exercise?.id) ? exercise?.id : undefined;
   const isTimed =
     isTimedExerciseId(exercise?.id) ||
     workouts.some((workout) =>
@@ -448,6 +458,9 @@ export default function ExerciseHistory() {
         options={[
           { value: "progress", label: "Progress" },
           { value: "form", label: "Form" },
+          ...(boardId
+            ? [{ value: "board" as const, label: "Leaderboard" }]
+            : []),
         ]}
       />
 
@@ -502,7 +515,20 @@ export default function ExerciseHistory() {
         </div>
       )}
 
-      {tab === "form" ? (
+      {tab === "board" && boardId ? (
+        <Suspense
+          fallback={
+            <div className="h-40 bg-muted/30 rounded-2xl motion-safe:animate-pulse" />
+          }
+        >
+          <LiftBoardSection
+            exerciseId={boardId}
+            exerciseName={decodedName}
+            sessions={allSessions}
+            liftUnit={liftUnit}
+          />
+        </Suspense>
+      ) : tab === "form" ? (
         <div className="rounded-2xl bg-card p-4 card-shadow">
           <Suspense
             fallback={
