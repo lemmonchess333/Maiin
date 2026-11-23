@@ -205,3 +205,41 @@ must load, identify the same race and publish the same date. A failure or
 disagreement requires review; neither source is silently dropped. Evidence
 stores both URLs and response hashes. An adapter failure never erases a date
 or a race.
+
+## Entry links (Reg1, 23 November 2026)
+
+A race's page offers "Enter this race" while the race is ahead: a link
+to the organiser's own entry page (`entryUrl`), opened outside the app.
+The owner asked for it on 23 November 2026, with a monthly check that
+every link still works.
+
+- **What a link may be.** https, on the race's official domains: the
+  website's host without "www." and any `entryDomains` (Berlin's
+  rebrand to generali-berlin-marathon.com, Loch Ness's
+  caledoniangroupevents.co.uk). Never a ticketing marketplace (Let's Do
+  This, Active, Race Roster, njuko), a charity listing or an affiliate
+  link, even where the organiser sells through one: its checkout links
+  change each edition and carry tracking. Where the organiser's own
+  event page is where its Enter button lives, the entry link is that
+  page and the page shows it once, as the button. No link means no
+  button; a race without a verified entry page has none (Chester, New
+  York, Athens on 23 November 2026).
+- **Notes.** `entryNote` only says how places are given where that
+  rarely changes ("Entry is by ballot.", Boston's qualifying time).
+  Never a status that moves within an edition (sold out, opens on a
+  date).
+- **The check.** `race-entry-link-check.yml` runs on the 3rd of each month
+  and by hand, never on a pull request. It requests each link with
+  redirects followed one at a time (`scripts/races/entry-links.ts`) and
+  keeps one `ready-for-agent` issue for a 4xx or 5xx, a name that does
+  not resolve, no answer after a retry, a redirect off the race's
+  domains, or a link whose path names an earlier year than the race's.
+  A Cloudflare bot check is listed in the run summary as unverified, not
+  as broken.
+- **Builds on phones.** `sync-race-events.yml` mirrors `entryUrl` and
+  `entryNote` into `config/raceEvents` (null where a race has none), and
+  the app takes a server link only on the race's bundled domains, so a
+  fixed or removed link reaches builds already installed.
+- **Research.** Each race's source page and the label evidence are in the
+  pull request that added them (Reg1).
+

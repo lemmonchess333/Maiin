@@ -733,6 +733,22 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/privacyZones/{zoneId}",
   },
+  // Lift boards (Run30 call 3, lib/liftBoards.js).
+  getLiftBoard: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // A lift post made, deleted or seen by different people recomputes the
+  // entries of the workouts linked to it.
+  onLiftPostWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
   weeklyLeagueTurn: {
     kind: "schedule",
     maxInstances: 1,

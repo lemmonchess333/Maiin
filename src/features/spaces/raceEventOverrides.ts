@@ -25,6 +25,11 @@ import { useEffect, useSyncExternalStore } from "react";
 import { logger } from "@/lib/logger";
 import { validRaceDateKeys } from "./raceDates";
 import {
+  ENTRY_NOTE_MAX_LENGTH,
+  ENTRY_URL_MAX_LENGTH,
+  isOfficialRaceUrl,
+} from "./raceEntry";
+import {
   RACE_COUNTRIES,
   raceSpaceDefs,
   type SpaceDef,
@@ -44,10 +49,11 @@ const ELEVATIONS = ["flat", "rolling", "hilly"] as const;
  */
 export function sanitizeRaceEventOverrides(raw: unknown): RaceEventOverrides {
   if (typeof raw !== "object" || raw === null) return {};
-  const raceIds = new Set(raceSpaceDefs().map((d) => d.id));
+  const races = new Map(raceSpaceDefs().map((d) => [d.id, d]));
   const out: RaceEventOverrides = {};
   for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!raceIds.has(id)) continue;
+    const def = races.get(id);
+    if (!def?.event) continue;
     if (typeof value !== "object" || value === null) continue;
     const v = value as Record<string, unknown>;
     const o: RaceEventOverride = {};
@@ -61,6 +67,28 @@ export function sanitizeRaceEventOverrides(raw: unknown): RaceEventOverrides {
       v.websiteUrl.length <= 200
     ) {
       o.websiteUrl = v.websiteUrl;
+    }
+    /* An entry link is checked against the race's bundled domains, so a
+       bad doc cannot send anyone off the organiser's site. A null takes
+       the bundled link or note away: a link found broken is removed for
+       app builds already on phones too. */
+    if (v.entryUrl === null) {
+      o.entryUrl = undefined;
+    } else if (
+      typeof v.entryUrl === "string" &&
+      v.entryUrl.length <= ENTRY_URL_MAX_LENGTH &&
+      isOfficialRaceUrl(v.entryUrl, def.event)
+    ) {
+      o.entryUrl = v.entryUrl;
+    }
+    if (v.entryNote === null) {
+      o.entryNote = undefined;
+    } else if (
+      typeof v.entryNote === "string" &&
+      v.entryNote.length > 0 &&
+      v.entryNote.length <= ENTRY_NOTE_MAX_LENGTH
+    ) {
+      o.entryNote = v.entryNote;
     }
     if (
       typeof v.elevation === "string" &&
