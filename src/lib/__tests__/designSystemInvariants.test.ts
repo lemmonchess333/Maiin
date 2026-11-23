@@ -402,7 +402,10 @@ describe("DS ratchets — surface-level drift", () => {
   // field asks for no meal.
   // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
   // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
-  const RAW_BUTTON_BASELINE = 293;
+  // 293 → 294: Turn off at the end of the health-details agreement's
+  // analytics line (owner, 23 November 2026), a link inside a sentence,
+  // whose 44 px target is padding the line takes back (AnalyticsNotice).
+  const RAW_BUTTON_BASELINE = 294;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length

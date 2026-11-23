@@ -53,7 +53,12 @@ const { complete, refresh, signOut } = vi.hoisted(() => ({
   signOut: vi.fn().mockResolvedValue(undefined),
 }));
 import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
-import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
+import {
+  USAGE_ANALYTICS_NOTICE,
+  USAGE_ANALYTICS_OFF_NOTICE,
+  USAGE_ANALYTICS_TURN_OFF,
+  usageAnalyticsOnThisDevice,
+} from "@/lib/usageAnalytics";
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "setup-test", email: "test@example.com" },
@@ -2309,6 +2314,45 @@ describe("the agreement to store health details", () => {
     expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
       "healthDataConsent"
     );
+  });
+
+  /* The line ends in Turn off (owner, 23 November 2026): this phone stops
+     at once, and the plan carries the choice to the account. */
+  it("Turn off stops analytics on this phone, and the plan carries it to the account", async () => {
+    toAgreement();
+    expect(usageAnalyticsOnThisDevice()).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: USAGE_ANALYTICS_TURN_OFF })
+    );
+    expect(usageAnalyticsOnThisDevice()).toBe(false);
+    expect(screen.getByText(USAGE_ANALYTICS_OFF_NOTICE)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: USAGE_ANALYTICS_TURN_OFF })
+    ).not.toBeInTheDocument();
+    cleanup();
+
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].usageAnalytics).toBe(false);
+    expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
+      "usageAnalytics"
+    );
+  });
+
+  it("sends no analytics answer with the plan when it was left on", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0]).not.toHaveProperty("usageAnalytics");
+  });
+
+  it("says somebody's earlier Turn off on this phone, with Settings as the way back", () => {
+    localStorage.setItem("tropos.usageAnalytics.off", "1");
+    toAgreement();
+    expect(screen.getByText(USAGE_ANALYTICS_OFF_NOTICE)).toBeInTheDocument();
   });
 
   it("says why on Not now, and offers going back, deleting the account and signing out", async () => {

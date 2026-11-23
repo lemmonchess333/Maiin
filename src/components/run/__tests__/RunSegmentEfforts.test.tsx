@@ -38,6 +38,7 @@ const row = (
   segment: { id, name, lengthMeters, points: [] },
   rank,
   of,
+  own: [],
 });
 
 const renderCard = (unit: "km" | "mi" = "km") =>

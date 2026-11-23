@@ -89,7 +89,7 @@ real kill, and a sandbox purchase from the offer.
 ## Your top three on a run (Run29, 2026-11-22)
 
 A run's 1K, 5K and 10K placed 1st to 3rd among your own times show on the
-run finish ("Your top three"), on the run's page and under Bests' Fastest
+run finish (in "Results" since Run30 call 1), on the run's page and under Bests' Fastest
 rows (`runPlacings.ts`). Runs are ordered by when they started. The run's
 page shows the place the run holds among the runs that started before it,
 as those runs are now: a run deleted since, or one saved since that
@@ -100,7 +100,7 @@ follow it, by design. The unit tests and the capture rig drive the web
 build.
 
 - [ ] **The finish on a phone.** Finish an outdoor run that places 2nd or
-      3rd at 1K, 5K or 10K. Passing: under the hero, "Your top three" with
+      3rd at 1K, 5K or 10K. Passing: under the hero, "Results" with
       "Ran 5K in 25:41, your 2nd fastest." and a row per distance placed,
       each disc's number readable in both themes at the phone's text size;
       a treadmill run shows no card.
@@ -109,6 +109,30 @@ build.
       "Your 2nd best". Progress → Bests lists it under the Fastest row. After
       two faster runs at that distance, the run's page still says "Your 2nd
       best" and Bests no longer lists it.
+
+## Segment places on the run finish (Run30 call 1, 2026-11-23)
+
+The run finish's Results block lists the run's segments that placed 1st
+to 3rd among your own efforts there, under the distances, at most three
+with the rest on the run's page (`segmentPlacings` in `segments.ts`,
+`RunResultsCard`). The server times a run on its segments after the run
+reaches it (`onRunCreated`), so the finish listens for its efforts for
+15 seconds from when the save is on the server and the phone is online
+(`FINISH_SEGMENT_WAIT_MS`), and shows nothing until they come; a run saved
+offline is listened for once it syncs while the screen is open. The unit
+tests drive the wait on the Firestore fake and the capture rig seeds the
+efforts; only production shows how long the real trigger takes.
+
+- [ ] **The places arrive inside the wait.** On a phone, run a segment you
+      have run at least once before, so the run is its 2nd or 3rd, and save
+      on a connection. Passing: within a few seconds of Save, Results gains
+      the segment's row (disc, name, length, time, "best m:ss"), and it
+      opens the segment's page. If it never comes, read `onRunCreated`'s
+      duration in the Functions logs for that run against the 15 seconds.
+- [ ] **A first time and offline show nothing.** Run a segment for the
+      first time: no row for it. Save a run in airplane mode and stay on the
+      finish: no segment rows until it syncs, then they come as on a
+      connection.
 
 ## The health-details agreement, in setup and once before the app (Priv1 call 1, 2026-11-21)
 
@@ -7825,6 +7849,12 @@ and accounts made by `onAuthUserCreated`.
       Then reach the agreement: requests to `app-measurement.com` start.
       Sign out, and on the next welcome they stop again until the agreement
       is shown.
+- [ ] **Turn off on the agreement, on an iPhone.** On a fresh install with
+      the proxy on, reach the agreement and tap Turn off at the end of the
+      analytics line. Passing: the line reads "Google Analytics is off. You
+      can turn it on in Settings › Social & privacy.", no request to
+      `app-measurement.com` follows for the rest of setup, and once the plan
+      is saved Settings › Social & privacy shows Share usage analytics off.
 - [ ] **The same on the web.** In a private window on the Pages build,
       with the network tab open, go from the welcome to the step before the
       agreement. Passing: no `gtag` script and no request to

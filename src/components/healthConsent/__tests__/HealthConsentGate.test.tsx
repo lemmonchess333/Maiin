@@ -23,7 +23,11 @@ import {
 import { agreeToHealthData } from "@/lib/healthConsentWrite";
 import { toast } from "@/lib/toast";
 import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
-import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
+import {
+  USAGE_ANALYTICS_NOTICE,
+  USAGE_ANALYTICS_OFF_NOTICE,
+  USAGE_ANALYTICS_TURN_OFF,
+} from "@/lib/usageAnalytics";
 
 vi.mock("@/lib/healthConsentWrite", () => ({
   agreeToHealthData: vi.fn(),
@@ -46,7 +50,9 @@ function Where() {
 const onAgreed = vi.fn<() => Promise<boolean>>();
 const onSignOut = vi.fn<() => Promise<void>>();
 
-function show() {
+const onTurnOffAnalytics = vi.fn<() => Promise<boolean>>();
+
+function show({ analyticsOff = false }: { analyticsOff?: boolean } = {}) {
   return render(
     <MemoryRouter initialEntries={["/"]}>
       <Routes>
@@ -56,6 +62,8 @@ function show() {
             <>
               <HealthConsentGate
                 uid="u1"
+                analyticsOff={analyticsOff}
+                onTurnOffAnalytics={onTurnOffAnalytics}
                 onAgreed={onAgreed}
                 onSignOut={onSignOut}
               />
@@ -141,8 +149,35 @@ describe("HealthConsentGate", () => {
   it("carries the analytics line, and lets analytics run from its showing", () => {
     vi.mocked(noteAnalyticsNoticeShown).mockClear();
     show();
-    expect(screen.getByText(USAGE_ANALYTICS_NOTICE)).toBeInTheDocument();
+    expect(
+      screen.getByText(USAGE_ANALYTICS_NOTICE, { exact: false })
+    ).toBeInTheDocument();
     expect(noteAnalyticsNoticeShown).toHaveBeenCalledTimes(1);
+  });
+
+  it("Turn off writes the account's answer, and the line says it is off", async () => {
+    onTurnOffAnalytics.mockReset().mockResolvedValue(true);
+    show();
+    fireEvent.click(button(USAGE_ANALYTICS_TURN_OFF));
+    expect(onTurnOffAnalytics).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByText(USAGE_ANALYTICS_OFF_NOTICE)
+    ).toBeInTheDocument();
+    expect(agreeToHealthData).not.toHaveBeenCalled();
+  });
+
+  it("puts the line back when the account could not save the Turn off", async () => {
+    onTurnOffAnalytics.mockReset().mockResolvedValue(false);
+    show();
+    fireEvent.click(button(USAGE_ANALYTICS_TURN_OFF));
+    expect(
+      await screen.findByRole("button", { name: USAGE_ANALYTICS_TURN_OFF })
+    ).toBeInTheDocument();
+  });
+
+  it("says analytics is off for an account that already turned it off", () => {
+    show({ analyticsOff: true });
+    expect(screen.getByText(USAGE_ANALYTICS_OFF_NOTICE)).toBeInTheDocument();
   });
 
   it("links the Privacy Policy, by its own words", () => {

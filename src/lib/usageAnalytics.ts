@@ -43,10 +43,20 @@ export const USAGE_ANALYTICS_DESCRIPTION =
 
 /** The line on the health-details agreement, in setup and on its own
  *  screen, that tells the person before anything goes to Google: what is
- *  counted, why, and how to turn it off. The owner's words to approve. */
+ *  counted, why, and how to turn it off, there or in Settings
+ *  (`AnalyticsNotice`). Owner's words, approved 23 November 2026. */
 export const USAGE_ANALYTICS_NOTICE =
   "Tropos counts how the app is used with Google Analytics, to improve it. " +
   "You can turn this off in Settings › Social & privacy.";
+
+/** What the line says once Turn off was tapped on it, or when this device
+ *  or the account already has analytics off. Owner's words, 23 November
+ *  2026. */
+export const USAGE_ANALYTICS_OFF_NOTICE =
+  "Google Analytics is off. You can turn it on in Settings › Social & privacy.";
+
+/** The link that ends the line: analytics off on this device at once. */
+export const USAGE_ANALYTICS_TURN_OFF = "Turn off";
 
 /** The account's answer: on unless it says false. */
 export function accountSharesUsageAnalytics(profile: {

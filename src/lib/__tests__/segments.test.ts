@@ -1,7 +1,8 @@
 /**
  * Segments in the app (Run26 call 3, src/lib/segments.ts): an effort's
  * place among your own, the maker's stretch and its map taps, the stored
- * shapes read at the boundary, and the board as the viewer reads it.
+ * shapes read at the boundary, the board as the viewer reads it, and the
+ * run finish's places (Run30 call 1).
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -15,7 +16,11 @@ import {
   parseEffort,
   parseSegment,
   rankWords,
+  resultsSentence,
+  segmentPlacingSentence,
+  segmentPlacings,
   segmentRejection,
+  type Segment,
   type SegmentEffort,
 } from "@/lib/segments";
 
@@ -210,5 +215,148 @@ describe("a refusal in the server's words", () => {
       segmentRejection({ code: "functions/internal", message: "INTERNAL" })
     ).toBeNull();
     expect(segmentRejection(new Error("network"))).toBeNull();
+  });
+});
+
+/* Run30 call 1: the run finish's places, by Run29's rule for distances. */
+describe("a run's segment places on the finish", () => {
+  const seg = (id: string, name = id): Segment => ({
+    id,
+    name,
+    lengthMeters: 1200,
+    points: [],
+  });
+  const at = (
+    id: string,
+    segmentId: string,
+    elapsedSeconds: number,
+    startedAtMs: number
+  ): SegmentEffort => ({
+    ...effort(id, elapsedSeconds, startedAtMs),
+    segmentId,
+  });
+
+  it("places an effort among your efforts up to it, with your best before it", () => {
+    const now = at("now", "s1", 217, 500);
+    const own = [at("a", "s1", 209, 100), at("b", "s1", 230, 200), now];
+    expect(segmentPlacings([{ effort: now, segment: seg("s1"), own }])).toEqual(
+      [
+        {
+          segmentId: "s1",
+          name: "s1",
+          lengthMeters: 1200,
+          seconds: 217,
+          place: 2,
+          bestSeconds: 209,
+        },
+      ]
+    );
+  });
+
+  it("shows nothing for the first effort on a segment", () => {
+    const now = at("now", "s1", 217, 500);
+    expect(
+      segmentPlacings([{ effort: now, segment: seg("s1"), own: [now] }])
+    ).toEqual([]);
+  });
+
+  it("leaves out a place past 3rd, and keeps an equal earlier time ahead", () => {
+    const now = at("now", "s1", 220, 500);
+    const own = [
+      at("a", "s1", 200, 100),
+      at("b", "s1", 210, 200),
+      at("c", "s1", 220, 300),
+      now,
+    ];
+    expect(segmentPlacings([{ effort: now, segment: seg("s1"), own }])).toEqual(
+      []
+    );
+  });
+
+  it("is moved by no effort that started after it", () => {
+    // A run synced late but run later is not ahead of this one.
+    const now = at("now", "s1", 230, 500);
+    const own = [at("a", "s1", 240, 100), now, at("later", "s1", 200, 900)];
+    expect(
+      segmentPlacings([{ effort: now, segment: seg("s1"), own }])[0]
+    ).toMatchObject({ place: 1, bestSeconds: 240 });
+  });
+
+  it("lists a segment once, its better placed lap, and orders by place", () => {
+    const lap1 = at("l1", "s1", 230, 500);
+    const lap2 = at("l2", "s1", 205, 700);
+    const other = at("o", "s2", 300, 600);
+    const own1 = [at("a", "s1", 210, 100), lap1, lap2];
+    const own2 = [at("b", "s2", 280, 100), other];
+    const placings = segmentPlacings([
+      { effort: lap1, segment: seg("s1", "Hill Road"), own: own1 },
+      { effort: other, segment: seg("s2", "River path"), own: own2 },
+      { effort: lap2, segment: seg("s1", "Hill Road"), own: own1 },
+    ]);
+    expect(placings.map((p) => [p.name, p.place, p.seconds])).toEqual([
+      ["Hill Road", 1, 205],
+      ["River path", 2, 300],
+    ]);
+  });
+
+  it("says the first listed in one sentence", () => {
+    const now = at("now", "s1", 217, 500);
+    const placings = segmentPlacings([
+      {
+        effort: now,
+        segment: seg("s1", "Hill Road"),
+        own: [at("a", "s1", 209, 100), now],
+      },
+    ]);
+    expect(segmentPlacingSentence(placings)).toBe(
+      "Ran Hill Road in 3:37, your 2nd fastest."
+    );
+    expect(segmentPlacingSentence([])).toBeNull();
+  });
+
+  describe("the Results block's one sentence: the strongest place leads", () => {
+    const hill = (place: 1 | 2 | 3, seconds: number) => ({
+      segmentId: "hill",
+      name: "Tooting Bec hill",
+      lengthMeters: 620,
+      seconds,
+      place,
+      bestSeconds: 151,
+    });
+    const fiveK = (place: 1 | 2 | 3) => ({
+      meters: 5000,
+      seconds: 1541,
+      place,
+      bestSeconds: 1510,
+    });
+
+    it("a segment's 1st outranks a 5K 2nd", () => {
+      expect(resultsSentence([fiveK(2)], [hill(1, 147)])).toBe(
+        "Ran Tooting Bec hill in 2:27, your fastest yet."
+      );
+    });
+
+    it("a distance leads at an equal place", () => {
+      expect(resultsSentence([fiveK(2)], [hill(2, 160)])).toBe(
+        "Ran 5K in 25:41, your 2nd fastest."
+      );
+    });
+
+    it("a distance's 2nd outranks a segment's 3rd", () => {
+      expect(resultsSentence([fiveK(2)], [hill(3, 170)])).toBe(
+        "Ran 5K in 25:41, your 2nd fastest."
+      );
+    });
+
+    it("leaves a distance's 1st to the hero's reward, even beside a segment's 1st", () => {
+      expect(resultsSentence([fiveK(1)], [hill(1, 147)])).toBeNull();
+    });
+
+    it("names a segment alone, and nothing with no place", () => {
+      expect(resultsSentence([], [hill(3, 170)])).toBe(
+        "Ran Tooting Bec hill in 2:50, your 3rd fastest."
+      );
+      expect(resultsSentence([], [])).toBeNull();
+    });
   });
 });
