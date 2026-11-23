@@ -212,17 +212,11 @@ export default function NotificationsSheet({
                     }}
                     className="flex min-h-[44px] min-w-[min(12em,100%)] flex-1 items-center gap-3 py-3 text-left active:scale-[0.99] transition-transform"
                   >
-                    <div
-                      className="size-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor:
-                          color === THEME.chrome.text
-                            ? THEME.chrome.tint
-                            : color + "1A",
-                      }}
-                    >
-                      <Icon className="size-5" style={{ color }} />
-                    </div>
+                    <Icon
+                      className="size-5 shrink-0"
+                      style={{ color }}
+                      aria-hidden="true"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground leading-snug">
                         {n.message || fallbackMessage(n)}
