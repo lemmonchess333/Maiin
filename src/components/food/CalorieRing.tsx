@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import SwapFade from "@/components/ui/SwapFade";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
 import { loggedFill, WHEEL_SIZE, WHEEL_STROKE } from "@/lib/calorieRingFill";
@@ -274,72 +275,84 @@ export default function CalorieRing({
         aria-hidden="true"
       >
         {hasTarget ? (
-          /* One figure for both modes: a tap counts it from the old value
-             to the new one, as the tiles do. Keyed by mode, it went blank
-             for 200 ms, then counted up from zero for 1.5 s. */
           <div className="flex flex-col items-center">
-            {/* Zero is a real value, not a placeholder: full strength,
-                  like any other number. */}
-            <p
-              className={cn(
-                "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
-                compact
-                  ? "text-2xl"
-                  : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
-              )}
-            >
-              <AnimatedNumber
-                value={displayValue}
-                duration={ringDurationSec}
-                ease={RING_EASE}
-                fromZero={drawIn}
-              />
-            </p>
-            {/* A space in the text between the figure and its words, so
-                they read as words, as the button's name does; the column
-                draws nothing for it. */}{" "}
-            {/* The label is the only mode indicator ("kcal left",
-                  "kcal logged", "kcal over"), in the tiles' register:
-                  plain text. The whole ring is the tap target, and the
-                  macros switch the same way.
+            {/* A tap on the wheel changes what the figure means, not the
+                food: the figure and its words swap with a short
+                crossfade, in step with the macros (`SwapFade`), and are
+                never counted from one to the other: a count from "0
+                logged" to "3,400 left" passed "2,954 left", a figure the
+                day never had. A real change (a log, a delete) counts from
+                the old value to the new, and the first draw counts up
+                from zero. */}
+            <SwapFade swapKey={mode} className="justify-items-center">
+              {(swapped) => (
+                <div className="flex flex-col items-center">
+                  {/* Zero is a real value, not a placeholder: full
+                      strength, like any other number. */}
+                  <p
+                    className={cn(
+                      "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
+                      compact
+                        ? "text-2xl"
+                        : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
+                    )}
+                  >
+                    <AnimatedNumber
+                      value={displayValue}
+                      duration={ringDurationSec}
+                      ease={RING_EASE}
+                      fromZero={drawIn && !swapped}
+                    />
+                  </p>
+                  {/* A space in the text between the figure and its
+                      words, so they read as words, as the button's name
+                      does; the column draws nothing for it. */}{" "}
+                  {/* The label is the only mode indicator ("kcal left",
+                      "kcal logged", "kcal over"), in the tiles' register:
+                      plain text. The whole ring is the tap target, and
+                      the macros switch the same way.
 
-                  Food's wheel adds two things to it (Food11 call 2, from
-                  the research). The target, so the number has both ends
-                  of its range beside it: "kcal left of 2,200" (5 of the
-                  6 food apps with a ring print the goal by the number,
-                  and Apple's gauge rule asks for it). And a small mark
-                  after the words, because nothing else says the wheel
-                  can be tapped: the two apps that switch on a tap both
-                  mark it. DS3 took a swap arrow off this label with the
-                  tag it sat in; this is a 13px grey mark, and Home's
-                  wheel still has none. The label may wrap inside the
-                  ring at larger text. */}
-            <p
-              className={cn(
-                "font-medium text-muted-foreground",
-                hero
-                  ? "mt-2 max-w-[72cqw] text-center text-balance text-sm font-mono tabular-nums"
-                  : "mt-1 text-xs"
+                      Food's wheel adds two things to it (Food11 call 2,
+                      from the research). The target, so the number has
+                      both ends of its range beside it: "kcal left of
+                      2,200" (5 of the 6 food apps with a ring print the
+                      goal by the number, and Apple's gauge rule asks for
+                      it). And a small mark after the words, because
+                      nothing else says the wheel can be tapped: the two
+                      apps that switch on a tap both mark it. DS3 took a
+                      swap arrow off this label with the tag it sat in;
+                      this is a 13px grey mark, and Home's wheel still has
+                      none. The label may wrap inside the ring at larger
+                      text. */}
+                  <p
+                    className={cn(
+                      "font-medium text-muted-foreground",
+                      hero
+                        ? "mt-2 max-w-[72cqw] text-center text-balance text-sm font-mono tabular-nums"
+                        : "mt-1 text-xs"
+                    )}
+                  >
+                    {hero ? (
+                      <>
+                        {labelMode === "over"
+                          ? `${CALORIE_UNIT} over ${formatCalories(target)}`
+                          : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`}
+                        {/* In the line, so it stays beside the last word
+                            when the label wraps, and sized from the text
+                            (13px at the label's 14). */}
+                        <ChevronsUpDown
+                          data-tap-mark=""
+                          className="ml-1 inline-block size-[0.93em] align-[-0.08em]"
+                          aria-hidden="true"
+                        />
+                      </>
+                    ) : (
+                      `${CALORIE_UNIT} ${labelMode}`
+                    )}
+                  </p>
+                </div>
               )}
-            >
-              {hero ? (
-                <>
-                  {labelMode === "over"
-                    ? `${CALORIE_UNIT} over ${formatCalories(target)}`
-                    : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`}
-                  {/* In the line, so it stays beside the last word when
-                      the label wraps, and sized from the text (13px at
-                      the label's 14). */}
-                  <ChevronsUpDown
-                    data-tap-mark=""
-                    className="ml-1 inline-block size-[0.93em] align-[-0.08em]"
-                    aria-hidden="true"
-                  />
-                </>
-              ) : (
-                `${CALORIE_UNIT} ${labelMode}`
-              )}
-            </p>{" "}
+            </SwapFade>{" "}
             {trajectoryLabel && (
               <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                 {trajectoryLabel}

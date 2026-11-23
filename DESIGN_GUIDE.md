@@ -698,7 +698,11 @@ behaviour.
 - **Count-up:** the moments' numbers count up as they appear, through
   `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
   a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
-  plain text from the first paint.
+  plain text from the first paint. A switch that changes what a figure
+  means, not what it measures (Food's left and logged), never counts: the
+  values between are untrue, so the figure and its words swap with a
+  200 ms crossfade (`SwapFade`), the wheel and the macros together. A log
+  still counts.
 - **Entrance:** a page's header and sections take the framer variants in
   `src/components/ui/pageMotion.ts` (`pageItemVariant` inside
   `pageStaggerContainer`), which `PageShell` applies, but they do not
@@ -728,7 +732,9 @@ behaviour.
   exercise just shows. Content replacing its placeholder fades in where
   the placeholder was (`ArrivalFade` with `useArrivedAfterLoading`);
   content that was ready, or comes back on a tab or view switch, just
-  shows.
+  shows. The Feed's sources keep what they read for the session and read
+  again behind it (`feedSnapshots`): a placeholder is for a first read
+  only.
 - **Transient workout cards dock above the bottom bar** (Pol1): the rest
   timer and the new-best moment take their room from the bottom of the
   list, so nothing above them moves under the thumb that ticked the set.

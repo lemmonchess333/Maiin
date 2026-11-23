@@ -20,7 +20,13 @@
  * relevant to the shared-mode contract.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -124,7 +130,7 @@ describe("FoodHeroCard — single shared display mode", () => {
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("eaten");
   });
 
-  it("tapping the ring flips all three tiles too", () => {
+  it("tapping the ring flips all three tiles too", async () => {
     const { container } = renderHero();
 
     fireEvent.click(ringButton());
@@ -132,9 +138,13 @@ describe("FoodHeroCard — single shared display mode", () => {
     expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("eaten");
 
-    // …and back again — ring + tiles stay in lockstep.
+    // …and back again — ring + tiles stay in lockstep. The words swap
+    // with a crossfade (`SwapFade`), so the old ones are gone once it
+    // ends, not on the tap.
     fireEvent.click(ringButton());
-    expect(tileModes(container)).toEqual(["left", "left", "left"]);
+    await waitFor(() =>
+      expect(tileModes(container)).toEqual(["left", "left", "left"])
+    );
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("left");
   });
 

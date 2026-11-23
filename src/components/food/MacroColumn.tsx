@@ -7,6 +7,7 @@ import {
   useReducedMotion as useFramerReducedMotion,
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import SwapFade from "@/components/ui/SwapFade";
 import { haptic } from "@/lib/haptic";
 import { loggedFill } from "@/lib/calorieRingFill";
 import { cn } from "@/lib/utils";
@@ -263,7 +264,10 @@ export default function MacroColumn({
      as a subscript. It stays unspaced: grams on the food surface are
      "128g". */
   const FigureTag = row ? "span" : "p";
-  const figure = (
+  /* `swapped`: the left and logged switch has been used since this
+     mounted, so the figure starts at its value rather than counting up
+     from zero (`SwapFade`). */
+  const figure = (swapped: boolean) => (
     <FigureTag
       className={cn(
         "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
@@ -274,7 +278,7 @@ export default function MacroColumn({
         value={displayValue}
         duration={numberDurationSec}
         ease={RING_EASE}
-        fromZero={drawIn}
+        fromZero={drawIn && !swapped}
       />
       <span
         data-macro-unit=""
@@ -413,27 +417,41 @@ export default function MacroColumn({
               together; a flex box draws nothing for them. */}{" "}
           {/* The figure and its word on one line ("15g left"), wrapping
               the word under the figure when the column is too narrow
-              for both ("logged" at larger text). */}
-          <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1">
-            {figure}{" "}
-            <span className="text-sm text-muted-foreground lowercase">
-              {displayLabel}
-            </span>
-          </span>
+              for both ("logged" at larger text). The left and logged
+              switch swaps them with the wheel's crossfade, never
+              counting from one meaning to the other (`SwapFade`). */}
+          <SwapFade as="span" swapKey={mode} className="mt-0.5">
+            {(swapped) => (
+              <span className="flex flex-wrap items-baseline gap-x-1">
+                {figure(swapped)}{" "}
+                <span className="text-sm text-muted-foreground lowercase">
+                  {displayLabel}
+                </span>
+              </span>
+            )}
+          </SwapFade>
           {bar}
         </>
       ) : (
         <>
           {icon}
-          {figure}
-          {/* Spaces in the text, as the row has, so the tile reads as
-              words ("78g left Protein"). */}{" "}
-          {/* Mode-aware label sits below the big number. Always-rendered
-              rather than conditionally suppressed so the line height stays
-              stable across mode toggles. */}
-          <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-            {displayLabel}
-          </p>{" "}
+          {/* The figure and its word swap together on the left and
+              logged switch, in step with the wheel (`SwapFade`). */}
+          <SwapFade swapKey={mode} className="justify-items-center">
+            {(swapped) => (
+              <div className="flex flex-col items-center">
+                {figure(swapped)}
+                {/* Spaces in the text, as the row has, so the tile reads
+                    as words ("78g left Protein"). */}{" "}
+                {/* Mode-aware label sits below the big number.
+                    Always-rendered rather than conditionally suppressed
+                    so the line height stays stable across mode toggles. */}
+                <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+                  {displayLabel}
+                </p>
+              </div>
+            )}
+          </SwapFade>{" "}
           {bar}
           {/* Macro label — intentionally muted (same tone as the
               `X / Yg` ratio line above) so the card's colour identity is
