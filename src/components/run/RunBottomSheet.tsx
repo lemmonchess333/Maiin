@@ -896,7 +896,6 @@ export default function RunBottomSheet({
                   label="Resume"
                   size="lg"
                   variant="primary"
-                  glow
                   onClick={() => {
                     onResume();
                     haptic("medium");

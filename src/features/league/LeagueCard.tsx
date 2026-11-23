@@ -156,14 +156,6 @@ export default function LeagueCard({ uid }: { uid: string }) {
       )}
       data-testid="league-card"
     >
-      {/* The tier's light behind its badge: Social's loud register. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(circle at 14% 0%, ${metal}40, transparent 58%)`,
-        }}
-      />
       <div className="relative space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-x-[12px] gap-y-2">
           <TierBadge tier={tier} size={48} className="shrink-0" />

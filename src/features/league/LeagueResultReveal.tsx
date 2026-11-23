@@ -40,12 +40,13 @@ function throwRiseConfetti(tierColour: string): () => void {
 /**
  * A league week's result (Soc15 call 3), full screen on the dark stage the
  * medal reveal uses: the loud register DESIGN_GUIDE §14l allows Social.
- * The new tier's badge in its light, the result in a sentence ("You moved
- * up to Silver"), the place and points, and See your league and Done.
+ * The new tier's badge on the flat stage (no light behind it, DESIGN_GUIDE
+ * §14o), the result in a sentence ("You moved up to Silver"), the place
+ * and points, and See your league and Done.
  *
  * A rise gets the tier's rays, the badge springing in and confetti; a
- * week held gets the light and the badge; a fall gets the badge settling
- * in under a softer light, and the words say only what happened. Under
+ * week held gets the badge; a fall gets the badge settling in, and the
+ * words say only what happened. Under
  * Reduce Motion the badge fades in where it stays, the rays hold still
  * and nothing is thrown.
  *
@@ -117,14 +118,6 @@ export default function LeagueResultReveal({
       data-testid="league-result-reveal"
       data-outcome={result.outcome}
     >
-      {/* The new tier's light. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background: `radial-gradient(circle at 50% 34%, ${metal}${fell ? "33" : "59"}, transparent 62%)`,
-        }}
-      />
       {/* A rise's rays. */}
       <AnimatePresence>
         {rose && (
@@ -176,9 +169,6 @@ export default function LeagueResultReveal({
                 ? { type: "spring", stiffness: 260, damping: 14, delay: 0.1 }
                 : { duration: 0.5, ease: "easeOut", delay: 0.1 }
           }
-          style={{
-            filter: `drop-shadow(0 0 28px ${metal}66)`,
-          }}
         >
           <TierBadge tier={tier} size={BADGE} />
         </motion.div>
