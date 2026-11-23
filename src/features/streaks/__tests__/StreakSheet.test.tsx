@@ -194,7 +194,7 @@ describe("StreakSheet", () => {
       open();
       const sheet = screen.getByRole("dialog", { name: "12-day streak" });
       expect(
-        within(sheet).getByText("Two Week Wonder in 2 days")
+        within(sheet).getByText("2 days to a 14-day streak")
       ).toBeInTheDocument();
       expect(within(sheet).getByText("12 of 14 days")).toBeInTheDocument();
       expect(
@@ -216,7 +216,7 @@ describe("StreakSheet", () => {
 
     it("keeps its words smaller than the sheet's title, the one hero (DS4)", () => {
       open();
-      const band = screen.getByRole("group", { name: /Two Week Wonder/ });
+      const band = screen.getByRole("group", { name: /14-day streak/ });
       // The title is the BottomSheet's heading; nothing in the band is
       // drawn at a heading's size or a figure's weight.
       expect(band.innerHTML).not.toMatch(/text-(lg|xl|2xl|3xl)\b/);
@@ -224,7 +224,7 @@ describe("StreakSheet", () => {
     });
 
     it("draws a tier already held as earned, says so, and points at the length", () => {
-      // Longest 40, five days into a new streak: Week Warrior is two days
+      // Longest 40, five days into a new streak: 7 days in a row is two days
       // off and was earned on the long one.
       h.streak = 5;
       h.longest = 40;
@@ -240,13 +240,13 @@ describe("StreakSheet", () => {
       ).toBeInTheDocument();
       expect(within(sheet).getByText("5 of 7 days")).toBeInTheDocument();
       expect(
-        within(sheet).getByText("Week Warrior already earned")
+        within(sheet).getByText("7 days in a row already earned")
       ).toBeInTheDocument();
       expect(
         within(sheet).getByText("Longest 40 days, 36 days to pass it")
       ).toBeInTheDocument();
-      // Never "Week Warrior in 2 days", which reads as not yet earned.
-      expect(sheet.textContent).not.toMatch(/Week Warrior in/);
+      // Never "7 days in a row in 2 days", which reads as not yet earned.
+      expect(sheet.textContent).not.toMatch(/7 days in a row in/);
       const art = sheet.querySelector("[data-next-tier]");
       expect(art?.getAttribute("data-next-tier")).toBe("earned");
       expect(art?.querySelector("svg circle")).toBeNull();
@@ -280,14 +280,14 @@ describe("StreakSheet", () => {
     });
 
     it("draws the progress in the streak's purple, never a tier's gold", () => {
-      // 20 days: the next tier is Month Master, a gold-tier badge. Gold
+      // 20 days: the next tier is 30 days in a row, a gold-tier badge. Gold
       // means a new best and nothing else (flameTiers.ts).
       h.streak = 20;
       h.longest = 20;
       open();
       const sheet = screen.getByRole("dialog", { name: "20-day streak" });
       expect(
-        within(sheet).getByText("Month Master in 10 days")
+        within(sheet).getByText("10 days to a 30-day streak")
       ).toBeInTheDocument();
       const arc = sheet.querySelectorAll("[data-next-tier] svg circle");
       expect(arc.length).toBeGreaterThan(0);
@@ -308,7 +308,7 @@ describe("StreakSheet", () => {
       open();
       expect(
         screen.getByRole("group", {
-          name: "Two Week Wonder in 2 days. 12 of 14 days. Longest 21 days, 10 days to pass it.",
+          name: "2 days to a 14-day streak. 12 of 14 days. Longest 21 days, 10 days to pass it.",
         })
       ).toBeInTheDocument();
     });
@@ -320,7 +320,7 @@ describe("StreakSheet", () => {
       open();
       expect(
         screen.getByRole("group", {
-          name: "2 days to a 7-day streak. 5 of 7 days. Week Warrior already earned. Longest 40 days, 36 days to pass it.",
+          name: "2 days to a 7-day streak. 5 of 7 days. 7 days in a row already earned. Longest 40 days, 36 days to pass it.",
         })
       ).toBeInTheDocument();
     });
@@ -330,13 +330,13 @@ describe("StreakSheet", () => {
       // locked, which is not this person's record.
       h.loadFailed = true;
       const { unmount } = open();
-      expect(screen.queryByText(/Two Week Wonder/)).toBeNull();
+      expect(screen.queryByText(/14-day streak/)).toBeNull();
       expect(screen.queryByText(/Longest/)).toBeNull();
       unmount();
       h.loadFailed = false;
       h.loading = true;
       open();
-      expect(screen.queryByText(/Two Week Wonder/)).toBeNull();
+      expect(screen.queryByText(/14-day streak/)).toBeNull();
       expect(screen.queryByText(/Longest/)).toBeNull();
     });
   });

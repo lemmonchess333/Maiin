@@ -315,9 +315,7 @@ function FoodSuggestionsDropdown({
               <Star aria-hidden="true" className="size-3 text-achievement" />
             )}
             <SectionLabel as="span" tier="section">
-              {quickAdd.asExamples
-                ? "Examples — tap to describe your own"
-                : "Log again"}
+              {quickAdd.asExamples ? "Examples" : "Log again"}
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (

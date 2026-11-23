@@ -77,7 +77,7 @@ describe("FoodOfflineBanner", function () {
     act(function () {
       vi.advanceTimersByTime(30_000);
     });
-    expect(screen.getByText(/Image AI and barcode/i)).toBeInTheDocument();
+    expect(screen.getByText(/Photo and barcode logging/i)).toBeInTheDocument();
   });
 
   it("honours a custom threshold", function () {
@@ -86,6 +86,6 @@ describe("FoodOfflineBanner", function () {
     act(function () {
       vi.advanceTimersByTime(100);
     });
-    expect(screen.getByText(/Image AI and barcode/i)).toBeInTheDocument();
+    expect(screen.getByText(/Photo and barcode logging/i)).toBeInTheDocument();
   });
 });

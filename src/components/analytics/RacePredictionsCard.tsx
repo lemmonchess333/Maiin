@@ -123,7 +123,7 @@ export default function RacePredictionsCard() {
             <span className="font-mono tabular-nums">
               {finishTimeLabel(benchmark.timeS)}
             </span>
-            {sourceLabel ? ` — ${sourceLabel}` : ""}.{" "}
+            {sourceLabel ? `, ${sourceLabel}` : ""}.{" "}
           </>
         ) : (
           <>Based on your current fitness level. </>
@@ -138,9 +138,7 @@ export default function RacePredictionsCard() {
         </Link>
       </p>
       {/* Range carve-out (Hist5c): predictions are a today-snapshot. */}
-      <p className="text-xs text-muted-foreground mt-1">
-        As of today — independent of the selected range.
-      </p>
+      <p className="text-xs text-muted-foreground mt-1">As of today.</p>
     </div>
   );
 }

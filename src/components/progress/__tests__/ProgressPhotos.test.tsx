@@ -150,7 +150,9 @@ describe("private-only contract", () => {
     expect(screen.getByText(/private to your account/i)).toBeInTheDocument();
     // Soc9: Tropos can read both stores, so the honest claim is "never
     // shown to other users", never "only you can view".
-    expect(screen.getByText(/never shown to other users/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/never shown to other people/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/only you can/i)).toBeNull();
     expect(screen.queryByText(/make photos public/i)).toBeNull();
     expect(screen.queryByRole("switch")).toBeNull();

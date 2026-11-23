@@ -2422,7 +2422,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
       "false"
     );
     expect(
-      screen.getByRole("region", { name: /^Up next · Sat\s12\sSep — Easy 30$/ })
+      screen.getByRole("region", { name: /^Up next · Sat\s12\sSep: Easy 30$/ })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "View run" })

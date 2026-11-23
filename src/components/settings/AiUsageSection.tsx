@@ -80,7 +80,7 @@ export default function AiUsageSection() {
       type="button"
       onClick={() => navigate("/upgrade?from=settings")}
       className="w-full flex items-center justify-between p-4 rounded-2xl bg-card dark:card-shadow"
-      aria-label="AI food logging is part of Pro — see Pro"
+      aria-label="AI food logging is part of Pro. See Pro"
     >
       <div className="flex items-center gap-3">
         <Sparkles className="size-5 text-primary" aria-hidden="true" />

@@ -326,7 +326,7 @@ export default function NutritionSection({
           <div>
             <p className="text-sm font-medium text-foreground">Goal weight</p>
             <p className="text-xs text-muted-foreground">
-              Sets your calorie target — current{" "}
+              Sets your calorie target. Now{" "}
               <span className="font-mono tabular-nums">
                 {formatWeightInUnit(currentKg, weightUnit)}
               </span>{" "}
@@ -598,8 +598,7 @@ export default function NutritionSection({
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
           <p className="text-micro text-muted-foreground leading-snug pt-2">
-            Protein follows your training block. Carbs and fat are a rest day’s;
-            training days move some fat to carbs.
+            Protein follows your training block.
           </p>
 
           {split.aggressive && !split.infeasible && (
@@ -613,8 +612,7 @@ export default function NutritionSection({
               <span className="font-mono tabular-nums">
                 {split.proteinUncapped} g
               </span>{" "}
-              your plan aims for — essential fat has to fit too. A slower pace
-              holds protein.
+              your plan aims for. A slower pace holds protein.
             </p>
           )}
 
@@ -680,11 +678,6 @@ export default function NutritionSection({
           <div className="text-left min-w-0">
             <p className="text-sm font-medium text-foreground">
               Activity is already in your target
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Your daily calorie target already accounts for your training, so
-              there’s no need to eat back exercise calories. Big training days
-              shift more carbs for fuel.
             </p>
           </div>
         </div>

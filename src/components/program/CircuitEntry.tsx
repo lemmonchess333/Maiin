@@ -39,7 +39,7 @@ export default function CircuitEntry() {
             Circuit
           </span>{" "}
           <span className="block text-xs text-muted-foreground">
-            Work and rest on a clock, 10 to 30 min. Your plan stays as it is.
+            Work and rest on a clock, 10 to 30 min.
           </span>
         </span>
         <ChevronRight

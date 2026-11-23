@@ -83,7 +83,7 @@ export interface StandingLines {
   title: string;
   /** How far along the next tier: "12 of 14 days". */
   progress: string | null;
-  /** The badge ahead is already held: "Week Warrior already earned". */
+  /** The badge ahead is already held: "7 days in a row already earned". */
   held: string | null;
   /** The longest, and how far off passing it. */
   best: string | null;
@@ -101,7 +101,7 @@ export function standingLines(
       : null;
   if (next && !next.earned)
     return {
-      title: `${next.badge.name} in ${daysOf(next.toGo)}`,
+      title: `${daysOf(next.toGo)} to a ${next.days}-day streak`,
       progress: `${current} of ${daysOf(next.days)}`,
       held: null,
       best,

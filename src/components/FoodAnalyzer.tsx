@@ -936,7 +936,7 @@ export default function FoodAnalyzer({
        browser-internal string "Failed to fetch", the dishonest cousin
        of the modal's "You're offline" one tab over. */
     if (!navigator.onLine) {
-      const msg = "You’re offline — barcode lookup needs a connection.";
+      const msg = "You’re offline. Barcode lookup needs a connection.";
       setBarcodeError(msg);
       toast.error(msg, { id: "barcode-offline" });
       return "unreachable";
@@ -1177,7 +1177,7 @@ export default function FoodAnalyzer({
                   <span aria-hidden="true">⚠</span>
                   <div className="text-xs leading-relaxed">
                     <span className="font-semibold">
-                      AI estimate — review carefully.
+                      AI estimate. Review carefully.
                     </span>
                     <span className="ml-1 opacity-80">
                       Some items may need correcting before you save.

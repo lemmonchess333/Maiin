@@ -214,7 +214,7 @@ export default function SaveRoutineSheet({
           </div>
           {external && (
             <p className="text-xs text-muted-foreground">
-              Saves the structure only — your own history sets the weights.
+              Saves the exercises only. Your own history sets the weights.
             </p>
           )}
         </div>

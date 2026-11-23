@@ -169,7 +169,7 @@ describe("the trial offer at the end of setup", () => {
       screen.getByRole("heading", { name: "Add Pro to your plan" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Pro isn’t on sale in this version of the app yet/)
+      screen.getByText(/Pro isn’t on sale in this version yet/)
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Start free trial" })

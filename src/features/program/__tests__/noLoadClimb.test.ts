@@ -86,7 +86,7 @@ describe("anyone else's bodyweight lift", () => {
   it("stops at its range and is told to add load", () => {
     const top = done(pushUps(), 12, false);
     expect(top.reps).toBe(12);
-    expect(top.notes).toMatch(/add load/);
+    expect(top.notes).toMatch(/add load/i);
   });
 });
 

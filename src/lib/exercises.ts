@@ -177,7 +177,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Lie flat with dumbbells pressed straight up over your chest.",
-      "Set a soft bend in your elbows — lock that angle, don't change it.",
+      "Set a soft bend in your elbows. Lock that angle, don't change it.",
       "Lower the weights in a wide arc until you feel a stretch across your chest.",
       "Squeeze your chest to bring the dumbbells back together above your chest.",
     ],
@@ -276,7 +276,7 @@ export const EXERCISES: Exercise[] = [
       "Start in a high plank, hands slightly wider than shoulders, body in a straight line.",
       "Lower your chest toward the floor, elbows tracking at about 45° from your sides.",
       "Pause just above the ground, then press back up to full extension.",
-      "Keep your abs tight the whole time — no sagging hips.",
+      "Keep your abs tight the whole time. No sagging hips.",
     ],
     tip: "Flared elbows (90° out) wreck your shoulders over time. If you can't hold the 45° angle, drop to knees and build up.",
   },
@@ -341,7 +341,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until your upper arms are parallel to the floor, chest stretched.",
       "Press back up to the top, keeping the forward lean locked throughout.",
     ],
-    tip: "Going below parallel with rounded shoulders is how people tear pecs. If your shoulders feel bad mid-rep, rack the weights — don't train through it.",
+    tip: "Going below parallel with rounded shoulders is how people tear pecs. If your shoulders feel bad mid-rep, rack the weights. Don't train through it.",
   },
 
   // ================= BACK =================
@@ -357,7 +357,7 @@ export const EXERCISES: Exercise[] = [
       "Bar over midfoot, feet hip-width, shins almost touching the bar.",
       "Hinge down, grip just outside your shins, chest up, back flat.",
       "Take a big breath, brace hard, then stand up by pushing the floor away.",
-      "Lower under control — don't bounce or drop the bar.",
+      "Lower under control. Don't bounce or drop the bar.",
     ],
     tip: "If your lower back rounds on the lift, the weight's too heavy or you lost your brace. Drop a set, reset, don't train through it.",
     difficulty: "advanced",
@@ -384,7 +384,7 @@ export const EXERCISES: Exercise[] = [
       "Row the bar to your lower chest by driving your elbows up and back.",
       "Lower under control to a full stretch, keeping the hinge locked.",
     ],
-    tip: "If your torso keeps rising to yank the bar up, you're cheating with leg drive. Lock the hinge or drop weight — standing reps train traps, not lats.",
+    tip: "If your torso keeps rising to yank the bar up, you're cheating with leg drive. Lock the hinge or drop weight. Standing reps train traps, not lats.",
     commonMistakes: [
       "Standing up through the pull so the torso angle changes rep to rep.",
       "Rounding the lower back to reach the bar at the bottom.",
@@ -405,7 +405,7 @@ export const EXERCISES: Exercise[] = [
       "Explosively row the bar to your lower chest without lifting your torso.",
       "Lower it back to a dead stop on the floor and reset every rep.",
     ],
-    tip: "The dead stop only works if the torso stays parallel. If your back rounds at the bottom, the weight's too heavy — this movement punishes sloppy form fast.",
+    tip: "The dead stop only works if the torso stays parallel. If your back rounds at the bottom, the weight's too heavy. This movement punishes sloppy form fast.",
   },
   {
     id: "db-row",
@@ -443,7 +443,7 @@ export const EXERCISES: Exercise[] = [
       "Row both dumbbells toward your hips, squeezing your shoulder blades together.",
       "Lower to a full stretch without letting your chest leave the pad.",
     ],
-    tip: "Lifting your chest off the pad to heave the weight. If your chest leaves the pad, momentum is rowing — not your back.",
+    tip: "Lifting your chest off the pad to heave the weight. If your chest leaves the pad, momentum is rowing, not your back.",
   },
   {
     id: "meadows-row",
@@ -472,7 +472,7 @@ export const EXERCISES: Exercise[] = [
       "Hang from the bar with an overhand grip slightly wider than shoulders.",
       "Pull your shoulder blades down and back before your arms start to move.",
       "Pull your chest toward the bar until your chin clears it.",
-      "Lower under control to a full dead hang — no kipping, no swing.",
+      "Lower under control to a full dead hang. No kipping, no swing.",
     ],
     tip: "Kipping and half-reps train nothing but your ego. If you can't hit a dead-hang chin-over-bar, use a band or lat pulldown until you can.",
     commonMistakes: [
@@ -495,7 +495,7 @@ export const EXERCISES: Exercise[] = [
       "Clear your chin above the bar, squeezing your biceps and lats together.",
       "Lower to a full dead hang under control before the next rep.",
     ],
-    tip: "Half reps from a bent hang. Start from a dead hang, pull your chin over the bar, and lower under control — full range beats extra reps.",
+    tip: "Half reps from a bent hang. Start from a dead hang, pull your chin over the bar, and lower under control. Full range beats extra reps.",
     commonMistakes: [
       "Letting the elbows drift forward so the biceps take the whole movement.",
       "Bouncing out of the bottom of the hang.",
@@ -517,7 +517,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the bar to your upper chest by driving your elbows down and back.",
       "Return slowly to a full overhead stretch, keeping tension on the lats.",
     ],
-    tip: "Leaning way back and heaving turns it into a row. Stay near upright, pull the bar to your collarbone, and drive the elbows down — not the hands.",
+    tip: "Leaning way back and heaving turns it into a row. Stay near upright, pull the bar to your collarbone, and drive the elbows down, not the hands.",
     commonMistakes: [
       "Leaning far back and turning it into a row.",
       "Pulling the bar behind the neck, which strains the shoulder.",
@@ -615,7 +615,7 @@ export const EXERCISES: Exercise[] = [
       "Stand up by driving your hips forward, finishing with shoulders stacked.",
       "Lower the bar back to the pins under control without bouncing.",
     ],
-    tip: "Because the range is short, lifters stack plates and round over. If your upper back bows forward under load, cut weight — short range still hurts if form breaks.",
+    tip: "Because the range is short, lifters stack plates and round over. If your upper back bows forward under load, cut weight. Short range still hurts if form breaks.",
   },
   {
     id: "straight-arm-pulldown",
@@ -665,7 +665,7 @@ export const EXERCISES: Exercise[] = [
       "Press the bar straight up, tucking your chin so it clears.",
       "Punch your head through at lockout so the bar is over your ears.",
     ],
-    tip: "If your lower back arches hard to get the bar up, you're losing the brace. Squeeze glutes and abs like a vice — no spinal load, no cheat press.",
+    tip: "If your lower back arches hard to get the bar up, you're losing the brace. Squeeze glutes and abs like a vice. No spinal load, no cheat press.",
     commonMistakes: [
       "Arching the lower back to muscle the bar up instead of holding the brace.",
       "Pressing around the face rather than tucking the chin and letting the bar pass close.",
@@ -699,11 +699,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4.5,
     instructions: [
       "Stand tall with dumbbells at your sides, palms facing in.",
-      "Keep a slight bend in your elbows — don't lock them.",
+      "Keep a slight bend in your elbows. Don't lock them.",
       "Raise your arms out to the sides until they reach shoulder height.",
-      "Lower slowly under control — resist the urge to drop them.",
+      "Lower slowly under control. Resist the urge to drop them.",
     ],
-    tip: "Swinging the weights up with momentum. Raise slowly to shoulder height with a soft elbow bend — if you have to shrug or swing, the dumbbells are too heavy.",
+    tip: "Swinging the weights up with momentum. Raise slowly to shoulder height with a soft elbow bend. If you have to shrug or swing, the dumbbells are too heavy.",
   },
   {
     id: "reverse-pec-deck",
@@ -720,7 +720,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the handles back and out in a wide arc, squeezing your rear delts.",
       "Return slowly to a full stretch without letting the stack touch down.",
     ],
-    tip: "Shrugging as the arms sweep back. Keep the shoulders down and lead with the elbows — rear delts, not traps.",
+    tip: "Shrugging as the arms sweep back. Keep the shoulders down and lead with the elbows. Rear delts, not traps.",
   },
   {
     id: "cable-lateral-raise",
@@ -735,7 +735,7 @@ export const EXERCISES: Exercise[] = [
       "Stand sideways to a low pulley, grip the handle with your far hand.",
       "Keep a slight bend in your elbow and pin it to that angle.",
       "Raise your arm out to shoulder height in a smooth arc.",
-      "Lower slowly with constant tension — no swinging at the bottom.",
+      "Lower slowly with constant tension. No swinging at the bottom.",
     ],
   },
   {
@@ -751,7 +751,7 @@ export const EXERCISES: Exercise[] = [
       "Stand with dumbbells in front of your thighs, palms facing your body.",
       "Set a slight bend in your elbows and brace your core.",
       "Raise one or both arms straight in front to shoulder height.",
-      "Lower slowly under control — no swinging, no momentum.",
+      "Lower slowly under control. No swinging, no momentum.",
     ],
   },
   {
@@ -800,7 +800,7 @@ export const EXERCISES: Exercise[] = [
       "Press to full extension without letting the weights clash.",
       "Reverse the rotation on the way down to the starting position.",
     ],
-    tip: "Rushing the rotation and jamming the shoulders. Rotate smoothly through the middle of the press — the twist is the point, not an obstacle.",
+    tip: "Rushing the rotation and jamming the shoulders. Rotate smoothly through the middle of the press. The twist is the point, not an obstacle.",
   },
   {
     id: "shoulder-press-machine",
@@ -843,7 +843,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Stand with the bar at your thighs, overhand grip just inside shoulders.",
       "Pull the bar straight up along your body, leading with your elbows.",
-      "Stop at upper chest height — elbows should not go above shoulders.",
+      "Stop at upper chest height. Elbows should not go above shoulders.",
       "Lower under control to the starting position.",
     ],
     tip: "Pulling the bar above chest height with a narrow grip impinges shoulders. If your elbows pass your shoulders, stop short or drop to a wider grip.",
@@ -864,7 +864,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Stand tall with dumbbells at your sides, arms straight.",
-      "Shrug your shoulders straight up toward your ears — no rolling.",
+      "Shrug your shoulders straight up toward your ears. No rolling.",
       "Squeeze your traps hard at the top for a beat.",
       "Lower slowly to a full stretch before the next rep.",
     ],
@@ -882,7 +882,7 @@ export const EXERCISES: Exercise[] = [
       "Stand with the bar at your thighs, overhand grip at shoulder-width.",
       "Shrug your shoulders straight up toward your ears, arms straight.",
       "Squeeze your traps hard at the top, then lower slowly.",
-      "Keep the motion strictly vertical — no rolling, no rocking.",
+      "Keep the motion strictly vertical. No rolling, no rocking.",
     ],
     tip: "Rolling the shoulders in circles. Shrug straight up towards your ears, hold a beat, then straight down.",
   },
@@ -901,7 +901,7 @@ export const EXERCISES: Exercise[] = [
       "From there, rotate your shoulders so the dumbbells point up.",
       "Press overhead, then reverse each segment back to the start.",
     ],
-    tip: "This is a rotator-cuff exercise, not a strength lift. Going heavy turns it into a sloppy upright row and wrecks the shoulder joint — stay light.",
+    tip: "This is a rotator-cuff exercise, not a strength lift. Going heavy turns it into a sloppy upright row and wrecks the shoulder joint. Stay light.",
   },
   {
     id: "lu-raise",
@@ -948,11 +948,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Stand with the bar at your thighs, underhand grip at shoulder-width.",
-      "Pin your elbows to your sides — they shouldn't drift forward.",
+      "Pin your elbows to your sides. They shouldn't drift forward.",
       "Curl the bar up to shoulder height by contracting the biceps.",
       "Lower slowly to a full stretch without swinging your torso.",
     ],
-    tip: "Rocking your hips back to fling the bar up is ego lifting, not biceps training. Lock the torso or drop weight — clean reps grow arms.",
+    tip: "Rocking your hips back to fling the bar up is ego lifting, not biceps training. Lock the torso or drop weight. Clean reps grow arms.",
     commonMistakes: [
       "Swinging the hips to throw the bar up once it gets heavy.",
       "Letting the elbows drift forward so the front delts take over at the top.",
@@ -990,7 +990,7 @@ export const EXERCISES: Exercise[] = [
       "Curl both dumbbells up to shoulder height in a smooth arc.",
       "Lower slowly with constant tension, no bouncing at the bottom.",
     ],
-    tip: "Swinging the hips to start the rep. Pin your elbows to your sides and curl strict — cheat reps just take the work away from the biceps.",
+    tip: "Swinging the hips to start the rep. Pin your elbows to your sides and curl strict. Cheat reps just take the work away from the biceps.",
   },
   {
     id: "incline-db-curl",
@@ -1003,7 +1003,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Set a bench to 45°, sit back, arms hanging straight with palms forward.",
-      "Let your shoulders open up — the stretch is the whole point.",
+      "Let your shoulders open up. The stretch is the whole point.",
       "Curl the dumbbells up without letting your upper arms move forward.",
       "Lower slowly to a full biceps stretch before the next rep.",
     ],
@@ -1019,11 +1019,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Stand with dumbbells at your sides, palms facing each other.",
-      "Pin your elbows at your sides — the neutral grip stays locked.",
+      "Pin your elbows at your sides. The neutral grip stays locked.",
       "Curl both dumbbells up to shoulder height, squeezing at the top.",
       "Lower slowly under control to a full stretch.",
     ],
-    tip: "Elbows drifting forward to lift the bells higher. Keep them pinned at your sides — the squeeze matters more than the height.",
+    tip: "Elbows drifting forward to lift the bells higher. Keep them pinned at your sides. The squeeze matters more than the height.",
   },
   {
     id: "cross-body-hammer-curl",
@@ -1072,7 +1072,7 @@ export const EXERCISES: Exercise[] = [
       "Curl the bar up to shoulder height without shrugging.",
       "Lower slowly to just short of full extension, keeping tension on the biceps.",
     ],
-    tip: "Slamming into a fully locked-out elbow at the bottom is how biceps tendons tear. Stop just short and keep tension — control beats range here.",
+    tip: "Slamming into a fully locked-out elbow at the bottom is how biceps tendons tear. Stop just short and keep tension. Control beats range here.",
   },
   {
     id: "cable-curl",
@@ -1086,11 +1086,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4.5,
     instructions: [
       "Stand facing a low cable pulley, grip the bar with an underhand grip at shoulder-width.",
-      "Keep your elbows pinned to your sides — they shouldn't move.",
+      "Keep your elbows pinned to your sides. They shouldn't move.",
       "Curl the bar up toward your shoulders, squeezing at the top.",
       "Lower slowly, feeling constant tension on the way down.",
     ],
-    tip: "Standing so close the cable goes slack at the bottom. Step back until there's tension through the whole rep — constant pull is the point of the cable.",
+    tip: "Standing so close the cable goes slack at the bottom. Step back until there's tension through the whole rep. Constant pull is the point of the cable.",
   },
   {
     id: "bayesian-cable-curl",
@@ -1169,7 +1169,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 5,
     instructions: [
       "Stand facing a high pulley with a rope attached, grip the ends neutrally.",
-      "Pin your elbows to your ribs — that angle stays fixed all set.",
+      "Pin your elbows to your ribs. That angle stays fixed all set.",
       "Push the rope down, spreading the ends apart as your arms lock out.",
       "Return slowly to a full stretch without letting elbows drift forward.",
     ],
@@ -1242,7 +1242,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 7,
     instructions: [
       "Grip parallel bars with arms locked, torso upright, legs tucked or straight.",
-      "Keep your chest tall — don't lean forward like a chest dip.",
+      "Keep your chest tall. Don't lean forward like a chest dip.",
       "Lower with elbows straight back until upper arms are parallel to the floor.",
       "Press up to full lockout, squeezing the triceps hard.",
     ],
@@ -1277,7 +1277,7 @@ export const EXERCISES: Exercise[] = [
       "Lower the bar to your lower chest with elbows tucked close to your torso.",
       "Press back to lockout, driving through the triceps.",
     ],
-    tip: "Grip any closer than shoulder-width and you torque the wrists without training the triceps any harder. Shoulder-width in, elbows tucked — that's where it works.",
+    tip: "Grip any closer than shoulder-width and you torque the wrists without training the triceps any harder. Shoulder-width in, elbows tucked. That's where it works.",
     commonMistakes: [
       "Gripping so narrow the wrists bend back painfully \u2014 shoulder-width is close enough.",
       "Flaring the elbows, which turns it back into a regular bench.",
@@ -1311,7 +1311,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4.5,
     instructions: [
       "Attach a single handle to a high pulley, grip neutrally with one hand.",
-      "Pin your elbow at your side — it stays put the whole set.",
+      "Pin your elbow at your side. It stays put the whole set.",
       "Push the handle down by extending your elbow to full lockout.",
       "Return slowly to a full stretch and complete reps on one side.",
     ],
@@ -1346,7 +1346,7 @@ export const EXERCISES: Exercise[] = [
       "Let the bar sink close to your throat but never touch down.",
       "Press back to lockout by driving the elbows forward and up.",
     ],
-    tip: "This is halfway between a skull crusher and a close-grip bench — go light until the groove is dialled in. Elbow strain here sidelines pressing for weeks.",
+    tip: "This is halfway between a skull crusher and a close-grip bench. Go light until the groove is dialled in. Elbow strain here sidelines pressing for weeks.",
   },
   {
     id: "diamond-push-ups",
@@ -1405,7 +1405,7 @@ export const EXERCISES: Exercise[] = [
       "Squat down with an upright torso until thighs are at or below parallel.",
       "Drive up through your whole foot, keeping elbows high all the way.",
     ],
-    tip: "If your elbows drop, the bar rolls off your shoulders and onto your neck. Keep elbows up like you're holding a tray — dropped elbows end the set.",
+    tip: "If your elbows drop, the bar rolls off your shoulders and onto your neck. Keep elbows up like you're holding a tray. Dropped elbows end the set.",
     commonMistakes: [
       "Elbows dropping, which rolls the bar off the shoulders and onto the neck.",
       "Letting the torso pitch forward \u2014 the front rack punishes it far faster than a back squat.",
@@ -1443,7 +1443,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until you feel a deep stretch across the quads and hip flexors.",
       "Squeeze your quads to drive back to standing.",
     ],
-    tip: "This loads the knees heavily — skip it if you've got patellar issues, and stay bodyweight until quads can handle the range. Don't add load until form is locked.",
+    tip: "This loads the knees heavily. Skip it if you've got patellar issues, and stay bodyweight until quads can handle the range. Don't add load until form is locked.",
   },
   {
     id: "smith-machine-squat",
@@ -1516,7 +1516,7 @@ export const EXERCISES: Exercise[] = [
       "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
       "Grip the side handles and keep your hips pressed into the seat.",
       "Extend your legs smoothly until they're fully straight, squeeze the quads at the top.",
-      "Lower with control — don't let the stack crash.",
+      "Lower with control. Don't let the stack crash.",
     ],
     tip: "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control.",
   },
@@ -1536,7 +1536,7 @@ export const EXERCISES: Exercise[] = [
       "Curl your legs down and back by driving the heels toward the floor.",
       "Return slowly to the start without letting the stack touch down.",
     ],
-    tip: "Letting the stack yank your legs back up. Control the return — the slow way back is half the exercise.",
+    tip: "Letting the stack yank your legs back up. Control the return. The slow way back is half the exercise.",
   },
   {
     id: "romanian-deadlift",
@@ -1550,10 +1550,10 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Start standing, bar at your hips, feet hip-width, soft knees locked.",
       "Push your hips back and slide the bar down your thighs, back flat.",
-      "Lower until you feel a strong hamstring stretch — usually mid-shin.",
+      "Lower until you feel a strong hamstring stretch, usually mid-shin.",
       "Drive your hips forward to stand, squeezing glutes at lockout.",
     ],
-    tip: "If you turn this into a squat by bending the knees, you've lost the movement. Knees stay soft but fixed — the hips do the work.",
+    tip: "If you turn this into a squat by bending the knees, you've lost the movement. Knees stay soft but fixed. The hips do the work.",
     commonMistakes: [
       "Squatting the weight down instead of pushing the hips back \u2014 the knees should stay soft, not bend.",
       "Rounding the lower back once the bar passes the knees.",
@@ -1575,7 +1575,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until you feel a strong hamstring stretch, usually mid-shin.",
       "Drive your hips forward to stand, squeezing glutes at lockout.",
     ],
-    tip: "Bending the knees turns it into a squat. Push your hips back with soft knees and stop where your hamstrings stop you — not where the floor is.",
+    tip: "Bending the knees turns it into a squat. Push your hips back with soft knees and stop where your hamstrings stop you, not where the floor is.",
   },
   {
     id: "nordic-hamstring-curl",
@@ -1593,7 +1593,7 @@ export const EXERCISES: Exercise[] = [
       "Lower slowly forward by extending at the knees, fighting gravity.",
       "Pull yourself back up with the hamstrings, or push off the floor.",
     ],
-    tip: "This is one of the hardest lifts in the gym. Start with a band for assistance or just the eccentric — ego reps here snap hamstrings.",
+    tip: "This is one of the hardest lifts in the gym. Start with a band for assistance or just the eccentric. Ego reps here snap hamstrings.",
   },
   {
     id: "glute-ham-raise",
@@ -1625,7 +1625,7 @@ export const EXERCISES: Exercise[] = [
       "Brace hard, pull slack out of the bar, then stand up by driving the floor apart.",
       "Lower under control, knees tracking over your toes all the way down.",
     ],
-    tip: "If your hips shoot up first, you're a stiff-leg deadlift with wide feet. Drive knees and hips up together — wide stance means legs stay involved.",
+    tip: "If your hips shoot up first, you're a stiff-leg deadlift with wide feet. Drive knees and hips up together. Wide stance means legs stay involved.",
     commonMistakes: [
       "Letting the bar drift away from the body instead of staying close over the centre of the foot.",
       "Letting the knees collapse inward rather than spreading them out over the ankles.",
@@ -1683,7 +1683,7 @@ export const EXERCISES: Exercise[] = [
       "Lower your back knee toward the floor with control.",
       "Drive through your front heel to return to standing and alternate.",
     ],
-    tip: "Balancing on a tightrope. Keep your feet hip-width apart like train tracks — stability comes from the base, not from waving arms.",
+    tip: "Balancing on a tightrope. Keep your feet hip-width apart like train tracks. Stability comes from the base, not from waving arms.",
   },
   {
     id: "bodyweight-squat",
@@ -1731,7 +1731,7 @@ export const EXERCISES: Exercise[] = [
       "Lower your back knee toward the floor by bending the front knee.",
       "Drive through the front heel to stand, completing reps before switching.",
     ],
-    tip: "If your front knee caves inward under load, drop weight. This is a one-leg loaded movement — caving knees mean the hip can't handle the stress yet.",
+    tip: "If your front knee caves inward under load, drop weight. This is a one-leg loaded movement. Caving knees mean the hip can't handle the stress yet.",
     commonMistakes: [
       "Setting the front foot too close, so the front knee travels far past the toes.",
       "Letting the front knee cave inward under fatigue.",
@@ -1752,7 +1752,7 @@ export const EXERCISES: Exercise[] = [
       "Bring the trailing leg up, then step back down under control.",
       "Alternate legs or finish all reps before switching.",
     ],
-    tip: "Pushing off the floor leg turns it into a hop. Make the top leg do the work — slow drive up, quiet foot down.",
+    tip: "Pushing off the floor leg turns it into a hop. Make the top leg do the work. Slow drive up, quiet foot down.",
   },
   {
     id: "calf-raise",
@@ -1781,11 +1781,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4,
     instructions: [
       "Stand tall with the pads on your shoulders, balls of your feet on the edge.",
-      "Keep your legs straight — that's what targets the gastrocnemius.",
+      "Keep your legs straight. That's what targets the gastrocnemius.",
       "Rise onto your toes as high as possible, pausing at the peak.",
       "Lower slowly to a deep stretch below the platform.",
     ],
-    tip: "Bouncing out of the bottom. Pause in the stretch, drive to full tiptoe, and lower slowly — no springs.",
+    tip: "Bouncing out of the bottom. Pause in the stretch, drive to full tiptoe, and lower slowly. No springs.",
   },
   {
     id: "seated-calf-raise",
@@ -1802,7 +1802,7 @@ export const EXERCISES: Exercise[] = [
       "Raise your heels as high as possible, squeezing the soleus at the top.",
       "Lower slowly to a full stretch for the next rep.",
     ],
-    tip: "Short pulses in the middle of the range. Full stretch at the bottom, full squeeze at the top — the ends do the work.",
+    tip: "Short pulses in the middle of the range. Full stretch at the bottom, full squeeze at the top. The ends do the work.",
   },
   {
     id: "donkey-calf-raise",
@@ -1831,11 +1831,11 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4,
     instructions: [
       "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
-      "Hold a wall or rail for balance only — don't pull yourself up with it.",
+      "Hold a wall or rail for balance only. Don't pull yourself up with it.",
       "Rise as high onto your toes as possible, pausing at the top squeeze.",
       "Lower slowly until your heel drops below the step for a full stretch.",
     ],
-    tip: "Rushing the negative. The slow lower into the deep stretch is where single-leg work earns its keep — three seconds down, every rep.",
+    tip: "Rushing the negative. The slow lower into the deep stretch is where single-leg work earns its keep. Three seconds down, every rep.",
   },
   {
     id: "hip-thrust",
@@ -1851,7 +1851,7 @@ export const EXERCISES: Exercise[] = [
       "Drive through your heels to lift your hips, forming a straight line from shoulders to knees.",
       "Lower under control, keeping your ribs stacked over your pelvis.",
     ],
-    tip: "Hyperextending at the top — ribs flaring up — loads your lower back, not your glutes. Squeeze glutes hard, keep ribs down, stop when hips are in line.",
+    tip: "Hyperextending at the top, with the ribs flaring up, loads your lower back, not your glutes. Squeeze glutes hard, keep ribs down, stop when hips are in line.",
     commonMistakes: [
       "Hyperextending the lower back at the top instead of finishing with the glutes.",
       "Letting the chin and ribs flare up so the movement comes from the spine.",
@@ -1872,7 +1872,7 @@ export const EXERCISES: Exercise[] = [
       "Squeeze glutes hard at the top, hips stacked in line with knees and shoulders.",
       "Lower under control to the floor for the next rep.",
     ],
-    tip: "Pushing through the toes and finishing with a back arch. Drive through your heels and end with a glute squeeze — not an arched spine.",
+    tip: "Pushing through the toes and finishing with a back arch. Drive through your heels and end with a glute squeeze, not an arched spine.",
   },
   {
     id: "hip-abduction-machine",
@@ -1955,7 +1955,7 @@ export const EXERCISES: Exercise[] = [
       "Make one straight line from the back of your head to your heels.",
       "Squeeze glutes and abs, breathe normally, hold for time.",
     ],
-    tip: "Hips sagging or piked turn a plank into a lower-back hang. Squeeze your glutes and brace hard — one straight line from head to heels.",
+    tip: "Hips sagging or piked turn a plank into a lower-back hang. Squeeze your glutes and brace hard. One straight line from head to heels.",
   },
   {
     id: "superman-hold",
@@ -1972,7 +1972,7 @@ export const EXERCISES: Exercise[] = [
       "Hold the top briefly, reaching long through fingers and toes.",
       "Lower under control to the floor for the next rep.",
     ],
-    tip: "Cranking the neck up to look forward. Keep your gaze down, lift chest and thighs a few inches, and hold — the squeeze is the goal, not the height.",
+    tip: "Cranking the neck up to look forward. Keep your gaze down, lift chest and thighs a few inches, and hold. The squeeze is the goal, not the height.",
   },
   {
     id: "side-plank",
@@ -2002,7 +2002,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Get into a forearm plank, elbows under shoulders, body straight.",
       "Have a partner place a plate on your upper back over the shoulder blades.",
-      "Brace harder — abs, glutes, lats all firing.",
+      "Brace harder. Abs, glutes, lats all firing.",
       "Hold rigid for time, breathing shallowly through the brace.",
     ],
     tip: "A sliding plate drags down your spine and can hit your head. Use a partner who can pin it on shoulder blades, or skip to a weighted vest.",
@@ -2019,7 +2019,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Lie on your back, knees bent, feet flat, hands lightly behind your head.",
       "Curl your shoulders off the floor by contracting your abs.",
-      "Don't pull on your neck — let the abs do the work.",
+      "Don't pull on your neck. Let the abs do the work.",
       "Lower slowly to the floor with control.",
     ],
   },
@@ -2038,7 +2038,7 @@ export const EXERCISES: Exercise[] = [
       "Extend the opposite leg straight out without letting it touch down.",
       "Alternate sides in a smooth, controlled pedal.",
     ],
-    tip: "Yanking the neck and racing through reps. Hands support the head — they don't pull. Rotate slowly and reach the elbow to the opposite knee.",
+    tip: "Yanking the neck and racing through reps. Hands support the head. They don't pull. Rotate slowly and reach the elbow to the opposite knee.",
   },
   {
     id: "decline-sit-up",
@@ -2069,7 +2069,7 @@ export const EXERCISES: Exercise[] = [
       "Hang from a pull-up bar with straight arms, shoulders packed down.",
       "Brace your core to eliminate any swing.",
       "Raise your legs straight in front until they're parallel to the floor or higher.",
-      "Lower slowly under control — no kicking back to reset.",
+      "Lower slowly under control. No kicking back to reset.",
     ],
     tip: "If you can't raise legs without swinging, you're using momentum not abs. Bend knees for an easier version or lower reps per set.",
   },
@@ -2102,9 +2102,9 @@ export const EXERCISES: Exercise[] = [
       "Sit on the floor, knees bent, lean back to about 45° with a flat back.",
       "Hold a plate or clasp your hands together in front of your chest.",
       "Rotate your torso side to side, tapping the weight just outside your hips.",
-      "Keep your chest tall — no rounding the back to cheat the range.",
+      "Keep your chest tall. No rounding the back to cheat the range.",
     ],
-    tip: "Slumping into a rounded back and whipping the hands side to side. Sit tall and rotate the shoulders from the ribs — not just the arms.",
+    tip: "Slumping into a rounded back and whipping the hands side to side. Sit tall and rotate the shoulders from the ribs, not just the arms.",
   },
   {
     id: "mountain-climbers",
@@ -2119,7 +2119,7 @@ export const EXERCISES: Exercise[] = [
       "Start in a high plank, hands under shoulders, body straight.",
       "Drive one knee toward your chest without letting hips pike up.",
       "Quickly switch legs, alternating in a smooth running rhythm.",
-      "Keep the plank tight — hips level, core braced, no bouncing.",
+      "Keep the plank tight. Hips level, core braced, no bouncing.",
     ],
     tip: "Bouncing the hips high turns it into a hop. Hold a solid plank and drive the knees in fast while the hips stay level.",
   },
@@ -2136,9 +2136,9 @@ export const EXERCISES: Exercise[] = [
       "Kneel facing a high pulley with a rope attachment held at your temples.",
       "Set your hips back slightly so tension stays on the abs.",
       "Crunch your torso down toward your thighs, elbows driving to knees.",
-      "Return slowly to upright, keeping hips fixed — this is an ab crunch, not a hip pull.",
+      "Return slowly to upright, keeping hips fixed. This is an ab crunch, not a hip pull.",
     ],
-    tip: "Pulling with your arms instead of flexing your abs. Lock your hips in place and crunch ribs to pelvis — the rope just comes along for the ride.",
+    tip: "Pulling with your arms instead of flexing your abs. Lock your hips in place and crunch ribs to pelvis. The rope just comes along for the ride.",
     commonMistakes: [
       "Pulling with the arms and hips instead of flexing the spine.",
       "Letting the hips rise and fall so it becomes a hip-flexor movement.",
@@ -2176,7 +2176,7 @@ export const EXERCISES: Exercise[] = [
       "Press the handle straight out in front of your chest, resisting the rotation.",
       "Return slowly to your chest without letting the cable twist you.",
     ],
-    tip: "The cable wants to spin you — that's the exercise. If your hips or shoulders rotate as you press out, step closer or go lighter.",
+    tip: "The cable wants to spin you. That's the exercise. If your hips or shoulders rotate as you press out, step closer or go lighter.",
   },
   {
     id: "dead-bug",
@@ -2189,7 +2189,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 4,
     instructions: [
       "Lie on your back, arms straight up toward the ceiling, knees bent at 90°.",
-      "Press your lower back into the floor — that contact stays all set.",
+      "Press your lower back into the floor. That contact stays all set.",
       "Slowly extend one arm overhead and straighten the opposite leg.",
       "Return to start and alternate sides, keeping the back pinned.",
     ],
@@ -2210,7 +2210,7 @@ export const EXERCISES: Exercise[] = [
       "Lower as one rigid plank until nearly parallel to the bench.",
       "Press back up with control, never letting the hips bend.",
     ],
-    tip: "This is an advanced move — start with tuck or one-leg variants. A broken plank mid-rep loads the lumbar spine hard.",
+    tip: "This is an advanced move. Start with tuck or one-leg variants. A broken plank mid-rep loads the lumbar spine hard.",
   },
   {
     id: "ab-wheel",
@@ -2261,7 +2261,7 @@ export const EXERCISES: Exercise[] = [
       "Brace and press the bar overhead to lockout with straight legs; do not dip your knees.",
       "Lower to your front shoulders, then guide the bar to high thigh and floor with control before the next rep.",
     ],
-    tip: "This is a technical lift — go light until the catch and strict press are controlled. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
+    tip: "This is a technical lift. Go light until the catch and strict press are controlled. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
   },
   {
     id: "kettlebell-swing",
@@ -2277,7 +2277,7 @@ export const EXERCISES: Exercise[] = [
       "Hike the bell back between your legs, then snap your hips forward.",
       "Let the bell float to chest height without lifting with your arms.",
     ],
-    tip: "This is a hip hinge, not a squat or a front raise. If you're lifting with your shoulders or bending knees deep, reset — the hips launch the bell.",
+    tip: "This is a hip hinge, not a squat or a front raise. If you're lifting with your shoulders or bending knees deep, reset. The hips launch the bell.",
   },
   {
     id: "burpees",
@@ -2321,7 +2321,7 @@ export const EXERCISES: Exercise[] = [
       "Pick up heavy dumbbells or kettlebells with a deadlift setup.",
       "Stand tall with shoulders packed down and back, core braced.",
       "Walk forward in short controlled steps, eyes up, chest proud.",
-      "Set the weights down with control — no dropping at the finish.",
+      "Set the weights down with control. No dropping at the finish.",
     ],
   },
   {
@@ -2335,7 +2335,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "For the push: grip the handles low, lean in, drive through your feet in short powerful strides.",
       "For the pull: attach a rope, face the sled, hinge and pull it toward you hand over hand.",
-      "Keep your core braced and breathing steady — no holding your breath.",
+      "Keep your core braced and breathing steady. No holding your breath.",
       "Reset at the start for each round, swap direction or load as programmed.",
     ],
   },
@@ -2368,7 +2368,7 @@ export const EXERCISES: Exercise[] = [
       "Squat down keeping the torso upright, elbows driving inside your knees.",
       "Drive up through your heels without letting the bar roll forward.",
     ],
-    tip: "The bar will bruise your elbows if you go too heavy too fast. Use a sleeve or towel and build load slowly — this is a patience lift.",
+    tip: "The bar will bruise your elbows if you go too heavy too fast. Use a sleeve or towel and build load slowly. This is a patience lift.",
   },
   {
     id: "turkish-get-up",
@@ -2413,7 +2413,7 @@ export const EXERCISES: Exercise[] = [
       "Grip one end of the rope in each hand, stance wide, soft knees.",
       "Drop into a quarter squat and brace your core.",
       "Drive waves by alternating arms up and down at a fast pace.",
-      "Keep the rhythm consistent — don't let the waves die at the anchor.",
+      "Keep the rhythm consistent. Don't let the waves die at the anchor.",
     ],
   },
   {
@@ -2428,9 +2428,9 @@ export const EXERCISES: Exercise[] = [
       "Stand facing a sturdy box, feet shoulder-width, soft knees.",
       "Dip into a quarter squat and swing your arms back for momentum.",
       "Explode up onto the box, landing softly with both feet at the same time.",
-      "Stand fully upright on the box, then step down — don't jump down.",
+      "Stand fully upright on the box, then step down. Don't jump down.",
     ],
-    tip: "Jumping down trashes knees over time. Step down every rep — your joints will thank you ten years from now.",
+    tip: "Jumping down trashes knees over time. Step down every rep. Your joints will thank you ten years from now.",
   },
 
   // ================= CARDIO =================
@@ -2446,7 +2446,7 @@ export const EXERCISES: Exercise[] = [
       "Step onto the belt and start at a slow walk to find your footing.",
       "Dial in your target speed and incline for the session.",
       "Run or walk with upright posture and a natural arm swing.",
-      "Don't hold the handrails — let your arms drive the pace.",
+      "Don't hold the handrails. Let your arms drive the pace.",
     ],
   },
   {
@@ -2476,7 +2476,7 @@ export const EXERCISES: Exercise[] = [
       "Step on the pedals with feet evenly placed, grip the moving handles.",
       "Start with a smooth easy pace to find the stride rhythm.",
       "Push and pull with arms and legs together for full-body drive.",
-      "Stand tall — no leaning on the console.",
+      "Stand tall. No leaning on the console.",
     ],
   },
   {
@@ -2491,9 +2491,9 @@ export const EXERCISES: Exercise[] = [
       "Strap in, grip the handle, start compressed with shins vertical.",
       "Drive with your legs first, then lean back, then pull the handle to your ribs.",
       "Return in reverse order: arms out, hinge forward, then slide the seat in.",
-      "Keep the stroke rhythm smooth — 2:1 return to drive ratio.",
+      "Keep the stroke rhythm smooth: a 2:1 return to drive ratio.",
     ],
-    tip: "If you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms — in that order.",
+    tip: "If you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms, in that order.",
   },
   {
     id: "stairmaster",
@@ -2506,7 +2506,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Step on and set a steady pace you can sustain.",
       "Stand tall with shoulders stacked over hips, light grip on the rails.",
-      "Climb with full steps — drive your whole foot down each time.",
+      "Climb with full steps. Drive your whole foot down each time.",
       "Don't lean hard on the handles or you'll cut the work in half.",
     ],
   },
@@ -2522,7 +2522,7 @@ export const EXERCISES: Exercise[] = [
       "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
       "Sit with a neutral spine, grip the bars loosely.",
       "Pedal at a steady cadence, adjusting resistance to hit your target effort.",
-      "Keep the cadence smooth — no yanking up on the stroke.",
+      "Keep the cadence smooth. No yanking up on the stroke.",
     ],
   },
   {
@@ -2534,10 +2534,10 @@ export const EXERCISES: Exercise[] = [
     equipment: "Machine",
     caloriesPerMinute: 9,
     instructions: [
-      "Dial in seat and bar height — seat level with the bars for most.",
+      "Dial in seat and bar height. Seat level with the bars for most.",
       "Clip or strap in, grip the bars with a firm but relaxed hold.",
       "Pedal at a high cadence, alternating seated and standing drives.",
-      "Match resistance to the effort — no flying pedals at max RPM.",
+      "Match resistance to the effort. No flying pedals at max RPM.",
     ],
   },
   {
@@ -2552,7 +2552,7 @@ export const EXERCISES: Exercise[] = [
       "Adjust the seat so your legs extend almost straight at the bottom.",
       "Grip the moving handles, place feet on the pedals.",
       "Push and pull with the arms while driving the pedals hard.",
-      "Breathe rhythmically — this burns out fast if you hold your breath.",
+      "Breathe rhythmically. This burns out fast if you hold your breath.",
     ],
   },
   {
@@ -2566,7 +2566,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Stand facing the machine, grip both handles overhead, soft knees.",
       "Hinge at the hips and pull the handles down past your thighs.",
-      "Drive through your core and lats — not just your arms.",
+      "Drive through your core and lats, not just your arms.",
       "Stand up and reach overhead smoothly for the next pull.",
     ],
   },
@@ -2581,7 +2581,7 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Hold handles at your hips, elbows pinned close to your ribs.",
       "Start with small wrist flicks to turn the rope, not big arm swings.",
-      "Jump just an inch or two off the floor — enough to clear the rope.",
+      "Jump just an inch or two off the floor, enough to clear the rope.",
       "Land softly on the balls of your feet and stay relaxed.",
     ],
   },
@@ -2595,7 +2595,7 @@ export const EXERCISES: Exercise[] = [
     caloriesPerMinute: 9,
     instructions: [
       "Pick your stroke and start with an easy warm-up length.",
-      "Focus on a streamlined body position — hips at the surface.",
+      "Focus on a streamlined body position. Hips at the surface.",
       "Breathe on a consistent rhythm for the stroke you're using.",
       "Swim continuous laps at your target effort, resting on the wall as programmed.",
     ],

@@ -482,19 +482,19 @@ export function splitRationale(weeklyLiftDays: number, noPull = false): string {
       : "Six days runs upper / lower twice and two full-body days, so each muscle trains about twice a week.";
   switch (d) {
     case 0:
-      return "No lift days set — add some to build a split.";
+      return "No lift days set. Add some to build a split.";
     case 1:
       return "One day a week is full-body so you still train everything.";
     case 2:
-      return "Two days runs full-body twice — every muscle hit both sessions instead of once a week.";
+      return "Two days runs full-body twice, so every muscle trains in both.";
     case 3:
       return "Three days stays full-body: every muscle 3× a week beats a 3-way split at the same volume.";
     case 4:
-      return "Four days is upper / lower twice — each muscle about twice a week.";
+      return "Four days is upper and lower twice, so each muscle trains twice a week.";
     case 5:
       return "Five days layers push/pull/legs onto upper/lower to keep most muscles near 2× a week.";
     default:
-      return "Six days runs push/pull/legs twice — each muscle about twice a week.";
+      return "Six days runs push, pull and legs twice, so each muscle trains twice a week.";
   }
 }
 
@@ -2543,20 +2543,29 @@ export function liftedLoad(
   return loaded ? actualWeight : null;
 }
 
-/** The end of the prompt the rep climb leaves at its top (D-LIFT-11). */
+/** The end of the prompt the rep climb leaves at its top (D-LIFT-11). A
+ *  plan saved before carries the dashed prompt, which is read the same way. */
 const ADD_LOAD_PROMPT =
-  " — add load (weighted vest / band) to keep progressing.";
+  ". Add load (a weighted vest or band) to keep progressing.";
+const LEGACY_ADD_LOAD_PROMPT =
+  " \u2014 add load (weighted vest / band) to keep progressing.";
 
 /**
  * A lift without the prompt the rep climb left at its top ("Hitting 12+
- * reps — add load…"), once the plan carries load added to it: the prompt
+ * reps. Add load…"), once the plan carries load added to it: the prompt
  * has been acted on, and the plan follows that load (Pgm8 L6). Any other
  * note stays, and so does the prompt while there is no load.
  */
 export function withoutAddLoadPrompt(
   exercise: ProgramExercise
 ): ProgramExercise {
-  if (!(exercise.weight > 0) || !exercise.notes?.endsWith(ADD_LOAD_PROMPT))
+  if (
+    !(exercise.weight > 0) ||
+    !(
+      exercise.notes?.endsWith(ADD_LOAD_PROMPT) ||
+      exercise.notes?.endsWith(LEGACY_ADD_LOAD_PROMPT)
+    )
+  )
     return exercise;
   const { notes: _prompt, ...rest } = exercise;
   return rest;

@@ -173,8 +173,8 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       <Card className="space-y-3">
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <Lock aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-          Private to your account — encrypted on this device before upload and
-          never shown to other users.
+          Private to your account. Encrypted on this device before upload and
+          never shown to other people.
         </p>
 
         {loading ? (
@@ -193,7 +193,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
               compact
               icon={Camera}
               headline="No photos yet"
-              sub="Front, side and back every few weeks show change the scale can miss."
+              sub="Front, side and back, every few weeks."
               action={{
                 label: "Add photos",
                 onClick: () => openDay(localDateString()),

@@ -111,7 +111,7 @@ export function badgeProgress(
     };
   }
 
-  // Meal Prep Master — longest run of consecutive meal-logged days vs 14.
+  // 14-day logging streak: the longest run of consecutive meal-logged days, against 14.
   if (badge.id === "meal_prep_master") {
     const run = maxConsecutiveDayRun(ctx.mealDates ?? []);
     const current = Math.min(run, MEAL_PREP_RUN_DAYS);
@@ -147,7 +147,7 @@ export function badgeProgress(
     };
   }
 
-  // Protein Pro / Hydration Hero — longest run of target-hit days vs 7.
+  // The 7-day protein and water streaks: the longest run of target-hit days, against 7.
   if (badge.id === "protein_pro" || badge.id === "hydration_hero") {
     const days =
       badge.id === "protein_pro" ? ctx.proteinHitDays : ctx.waterHitDays;

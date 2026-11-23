@@ -372,7 +372,7 @@ async function logMealViaComposer(
     });
   } else {
     await expect(
-      page.getByText(/Saved on this phone — syncs when/)
+      page.getByText(/Saved on this phone\. Syncs when/)
     ).toBeVisible({
       timeout: 15_000,
     });
@@ -460,7 +460,9 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     ).toBeVisible();
     await expect(page.getByText("Saved", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("Saved locally — will sync when online.", { exact: true })
+      page.getByText("Saved on this phone. Syncs when you’re back online.", {
+        exact: true,
+      })
     ).toBeVisible();
     await expect(
       page.getByText("We’ve kept this run on your account.", { exact: true })

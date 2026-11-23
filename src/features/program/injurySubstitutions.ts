@@ -278,7 +278,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "chest-supported-db-row",
       "Chest-Supported DB Row",
       ["lower_back", "knee"],
-      "Bench supports torso — zero lumbar load"
+      "Bench supports the torso, so no load on the lower back"
     ),
     sub(
       "seated-row",
@@ -561,7 +561,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "bulgarian-split",
       "Bulgarian Split Squat",
       ["knee"],
-      "Unilateral loading — clinically knee-friendlier than leg press"
+      "One leg at a time, easier on the knee than the leg press"
     ),
     sub(
       "hip-thrust",
@@ -624,7 +624,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "hip-thrust",
       "Hip Thrust",
       ["knee"],
-      "Off-loads the knee — sissy squat is maximal knee shear"
+      "Off-loads the knee, where the sissy squat loads it most"
     ),
     sub(
       "bulgarian-split",
@@ -672,7 +672,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "bulgarian-split",
       "Bulgarian Split Squat",
       ["knee"],
-      "Rear foot stable — less knee shear than forward lunge"
+      "Rear foot stable, with less knee shear than a forward lunge"
     ),
     sub(
       "barbell-step-ups",
@@ -752,7 +752,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "shoulder-press-machine",
       "Shoulder Press Machine",
       ["shoulder", "wrist", "elbow", "lower_back"],
-      "Controlled plane + limited ROM — spares stabilisers, wrist, and elbow"
+      "A fixed path and shorter range spare the stabilisers, wrist and elbow"
     ),
     sub(
       "incline-db-press",
@@ -918,7 +918,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "barbell-floor-press",
       "Floor Press",
       ["shoulder"],
-      "Limits ROM — no bottom-of-press stretch that irritates the shoulder"
+      "Shorter range, with no stretch at the bottom to irritate the shoulder"
     ),
   ],
 
@@ -1043,7 +1043,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "chin-ups",
       "Chin-Ups",
       ["shoulder"],
-      "Supinated grip externally rotates the shoulder — friendlier position (still elbow-loaded)"
+      "Supinated grip externally rotates the shoulder into a friendlier position (still elbow-loaded)"
     ),
     sub(
       "inverted-row",
@@ -1142,7 +1142,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "incline-db-press",
       "Incline DB Press",
       ["shoulder", "wrist"],
-      "Neutral-grip DB press — wrist-friendlier than barbell"
+      "Neutral-grip dumbbell press, easier on the wrist than a barbell"
     ),
     sub(
       "rope-tricep-pushdown",
@@ -1203,7 +1203,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "incline-db-press",
       "Incline DB Press",
       ["shoulder", "wrist"],
-      "Neutral-grip DB press — wrist stays aligned with the forearm"
+      "Neutral-grip dumbbell press, with the wrist in line with the forearm"
     ),
   ],
 
@@ -1230,7 +1230,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "goblet-squat",
       "Goblet Squat",
       ["knee", "wrist"],
-      "Front-loaded at chest, no rack position — wrist-friendly and lighter load"
+      "Held at the chest with no rack position, so lighter and easier on the wrist"
     ),
     sub(
       "bulgarian-split",
