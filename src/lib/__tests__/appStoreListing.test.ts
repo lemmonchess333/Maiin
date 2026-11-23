@@ -230,13 +230,15 @@ describe("App Store listing: claims the code can contradict", () => {
     // and missing here sells a free-looking feature that asks for money.
     // AI reading of typed meals (the `text_ai` cap, dailyAiLimits.ts) is a
     // gate the list leaves out, so it is asserted on its own. Read as
-    // source: the module imports the subscription caps.
+    // source: the module imports the subscription caps. A gate is a line
+    // of the list: its words, or a named line the trial offer shares
+    // (`PHOTO_LOGGING,`), which A6 (#3487) moved three of them to.
     const copy = read("../../components/paywall/proIncludesCopy.ts");
     const list = copy
       .split("export const PRO_INCLUDES")[1]
       .split("];")[0]
       .split("\n")
-      .filter((line) => /^\s+[`"]/.test(line));
+      .filter((line) => /^\s+(?:[`"]|[A-Z][A-Z0-9_]*,$)/.test(line));
     expect(list, "PRO_INCLUDES changed: name the new gate here").toHaveLength(
       7
     );
