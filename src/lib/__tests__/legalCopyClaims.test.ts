@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
 import { redactPageUrl } from "@/lib/analyticsRedaction";
+import { HEALTH_CONSENT_COPY } from "@/lib/healthConsent";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -107,14 +108,17 @@ describe("meal-photo retention — the quoted window matches the code", () => {
   });
 
   it("says flatly that no meal photo is kept on a server, and what happens to a deleted meal", () => {
-    // Prose only for now. Food9's STATUS of 21 November (#3463) deletes
-    // every photo older builds stored under food-photos/; the code that
-    // closes the prefix and stops the app reading photoUrl is #3465, and
-    // the purge is its workflow, run with apply. A deleted meal is purged
-    // 30 days after deletion (F5's STATUS, #3466), built on
-    // claude/deleted-meal-purge. Pin each sentence to its code once that
-    // code is on main: storage.rules' food-photos block read and write
-    // false, and the purge job's 30 days.
+    // Food9's STATUS of 21 November (#3463) deletes every photo older
+    // builds stored under food-photos/; #3465 closed the prefix to every
+    // client, and its purge workflow, run with apply, deletes what is left
+    // (a console fact, kept as a backlog row). A deleted meal is purged 30
+    // days after deletion (F5's STATUS, #3467's job).
+    expect(STORAGE_RULES).toMatch(
+      /match \/food-photos\/\{allPaths=\*\*\} \{ allow read, write: if false; \}/
+    );
+    expect(FUNCTIONS("mealPurge.js")).toMatch(
+      /const DELETED_MEAL_RETENTION_DAYS = 30;/
+    );
     expect(PRIVACY_PROSE).not.toMatch(
       /earlier versions? of Tropos stored|stored by earlier versions|deleting the meal does not remove it/
     );
@@ -666,7 +670,7 @@ describe("who sees what, as the code lets them", () => {
     expect(FUNCTIONS("leagues.js")).toMatch(/function leagueFirstName\(/);
     const sharing = SHARING();
     expect(sharing).toMatch(
-      /a Circle meet-up \(what it is, when, and the place you type\) by the Circle’s members/
+      /a Circle meet-up \(what it is, when, the place, note and pace groups you type, and who is going\) by the Circle’s members/
     );
     expect(sharing).toMatch(
       /If you join a challenge, your name, photo and progress in it are visible to other signed-in Tropos users/
@@ -948,12 +952,13 @@ describe("what the policy says about the build, food searches, alerts and errors
   });
 
   it("says error reports keep the screen's address, names and ids taken out, and the user agent", () => {
-    // The address goes through redactPageUrl once claude/analytics-no-food-
-    // names is on main (the fact-check found the full href stored); this
-    // page merges after it. The example the policy gives is the function's
-    // own answer.
-    const REPORTING = read("../errorReporting.ts");
-    expect(REPORTING).toMatch(/url: [^\n]*window\.location\.href/);
+    // The address goes through redactPageUrl (#3462; the fact-check found
+    // the full href stored before it). The example the policy gives is the
+    // function's own answer.
+    const REPORTING = collapsed("../errorReporting.ts");
+    expect(REPORTING).toMatch(
+      /url: [^,]*redactPageUrl\(window\.location\.href/
+    );
     expect(
       redactPageUrl("https://troposfit.com/history/exercise/My%20Secret%20Lift")
     ).toBe("https://troposfit.com/history/exercise/:id");
@@ -1018,8 +1023,23 @@ describe("transfers, legal bases and complaints (UK GDPR Art. 13)", () => {
     ]) {
       expect(PRIVACY_PROSE).toMatch(basis);
     }
-    // The health row lists what the consent screen names, steps included
-    // (#3471's words); pinned to that screen's copy once #3471 is on main.
+    // The health row lists what the consent screen names (#3471's words):
+    // each thing the screen says Tropos stores is in the row.
+    const healthRow = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf('"Your health details:'),
+      PRIVACY_PROSE.indexOf('"Your health details:') + 200
+    );
+    for (const named of [
+      "weight",
+      "height",
+      "injuries",
+      "steps",
+      "the food you log",
+      "the heart rate from your runs",
+    ]) {
+      expect(HEALTH_CONSENT_COPY.stored).toContain(named);
+      expect(healthRow).toContain(named);
+    }
     expect(PRIVACY_PROSE).toMatch(
       /"Your health details: weight, height, sex, injuries, steps, the food you log, the heart rate from your runs, and anything else you allow from Apple Health"/
     );
@@ -1107,5 +1127,192 @@ describe("the Terms describe the subscription the app sells", () => {
     // refunds through Google Play and the web, where nothing is sold.
     expect(TERMS_PROSE).not.toMatch(/lifetime/i);
     expect(TERMS_PROSE).not.toMatch(/Google Play/);
+  });
+});
+
+describe("what shipped after the draft, as the code on main does it", () => {
+  it("shared cards: what the copy holds, who sees it, search, and how long it lasts", () => {
+    const CARDS = FUNCTIONS("sharedCards.js");
+    const PAGE = FUNCTIONS("sharedCardPage.js");
+    // The copy holds figures and words, field by field; no route, point,
+    // photo or name is among them.
+    const figures = CARDS.split(
+      "const TEMPLATE_FIGURES = Object.freeze("
+    )[1].split("});")[0];
+    expect(figures).not.toMatch(/route|coord|lat|lng|photo|name/i);
+    expect(figures).toMatch(
+      /nutrition: \["calories", "calorieTarget", "protein", "carbs", "fat"\]/
+    );
+    expect(CARDS).toMatch(/const UNSOURCED_CARD_DAYS = 30;/);
+    expect(PAGE).toMatch(/res\.set\("X-Robots-Tag", NO_INDEX\)/);
+    expect(CARDS).toMatch(/const firstName = firstNameOf\(/);
+    expect(collapsed("../../../functions/accountDeletion.js")).toMatch(
+      /\.collection\("sharedCards"\) \.where\("ownerUid", "==", uid\)/
+    );
+    const cards = policySection("Shared cards.", "Spaces you join.");
+    for (const claim of [
+      /Anyone with the link can open it, signed in or not, and the page asks search engines not to list it\./,
+      /never a route, a coordinate, the photo the card was drawn on or your full name\./,
+      /names you by your first name/,
+      /invite code you had when you shared it is still yours/,
+      /A card of a post or a session stops opening when you delete that post or session/,
+      /A card of a day’s food or a week opens for 30 days and is then deleted\./,
+      /Deleting your account deletes them all\./,
+    ]) {
+      expect(cards).toMatch(claim);
+    }
+  });
+
+  it("Spaces: public posts routed in, and a week's totals with their floor", () => {
+    expect(FUNCTIONS("spaceFeed.js")).toMatch(
+      /const JOIN_BACKFILL_DAYS = 28; const JOIN_BACKFILL_MAX = 20;/
+    );
+    expect(FUNCTIONS("spaceWeeks.js")).toMatch(
+      /const SPACE_WEEK_MIN_MEMBERS = 5;/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /including up to 20 from the 28 days before you joined\./
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /shown only once at least 5 members trained that week\./
+    );
+  });
+
+  it("a meet-up's typed words and who is going, to the Circle's members", () => {
+    const MEETUPS = FUNCTIONS("circleMeetups.js");
+    expect(MEETUPS).toMatch(/paceGroups/);
+    expect(MEETUPS).toMatch(/note/);
+    expect(PRIVACY_PROSE).toMatch(
+      /a Circle meet-up \(what it is, when, the place, note and pace groups you type, and who is going\) by the Circle’s members/
+    );
+  });
+
+  it("names the first-run events and the launch numbers, and how to turn analytics off", () => {
+    const FIRST_RUN = read("../firstRunEvents.ts");
+    for (const event of [
+      "welcome_viewed",
+      "setup_started",
+      "trial_offer_viewed",
+    ]) {
+      expect(FIRST_RUN).toMatch(new RegExp(`track\\("${event}"`));
+    }
+    expect(read("../auth.tsx")).toMatch(
+      /trackLifecycle\("account_created", \{ method \}\)/
+    );
+    const LAUNCH = collapsed("../launchEvents.ts");
+    expect(LAUNCH).toMatch(/kind: value\.kind, daysSinceSetup:/);
+    expect(LAUNCH).toMatch(
+      /purchasePlatform: value\.source === "ios_iap" \? "ios" : "web"/
+    );
+    const analytics = policySection(
+      "2. How We Use Your Data",
+      "3. Data Storage"
+    );
+    for (const claim of [
+      /the welcome screen seen and setup started \(once on each phone, so these can be sent before you have an account\), your account made and how \(Apple, Google or email\), setup finished, and the trial offer seen\./,
+      /your first saved session and whether it was a lift or a run, a session in your fourth week, and your first trial and first paid period, with whether each was bought in the app or on the web\./,
+      /with Share usage analytics in Settings &gt; Social &amp; privacy/,
+    ]) {
+      expect(analytics).toMatch(claim);
+    }
+    // The switch is where the policy says, and it is the one switch.
+    expect(read("../../pages/settings/SettingsPrivacy.tsx")).toMatch(
+      /<UsageAnalyticsGroup /
+    );
+    expect(read("../../components/settings/UsageAnalyticsGroup.tsx")).toMatch(
+      /label="Share usage analytics"/
+    );
+    // No user id goes to analytics: the events are the installation's.
+    expect(read("../analyticsProvider.ts")).not.toMatch(/setUserId/);
+    expect(PRIVACY_PROSE).toMatch(
+      /tied to an identifier for this installation of the app, not to your account\./
+    );
+  });
+
+  it("setup before an account: kept on the phone, for the code's times", () => {
+    expect(read("../signedOutDraft.ts")).toMatch(
+      /SIGNED_OUT_DRAFT_TTL_MS = 2 \* 24 \* 60 \* 60 \* 1000;/
+    );
+    const SAVE = read("../setupSave.ts");
+    expect(SAVE).toMatch(
+      /SIGNED_OUT_AGREEMENT_MAX_AGE_MS = 2 \* 24 \* 60 \* 60 \* 1000;/
+    );
+    expect(SAVE).toMatch(
+      /SIGNED_OUT_AGREEMENT_MAX_AWAY_MS = 2 \* 60 \* 60 \* 1000;/
+    );
+    expect(SAVE).toMatch(
+      /export function signedOut\(\): void \{\s+remove\(SETUP_SAVE_KEY\);\s+forgetSignedOutDraft\(\);/
+    );
+    const setup = policySection(
+      "Setup Before You Have an Account:",
+      "Activity Data:"
+    );
+    for (const claim of [
+      /are kept only on your phone or in your browser, and none of them is sent to our servers\./,
+      /They are kept for 2 days from your last answer/,
+      /deleted at once when you sign out/,
+      /that agreement lapses after 2 days, after 2 hours with Tropos in the background, or when the app is closed/,
+    ]) {
+      expect(setup).toMatch(claim);
+    }
+  });
+
+  it("sex is optional, and the maths take the midpoint without it", () => {
+    expect(read("../../pages/Onboarding.tsx")).toMatch(
+      /\{ value: "unspecified", label: "Prefer not to say" \}/
+    );
+    expect(read("../../components/settings/ProfileInfoSection.tsx")).toMatch(
+      /\{ value: "unset", label: "Not set" \}/
+    );
+    expect(read("../sex.ts")).toMatch(
+      /isSex\(sex\) \? figures\[sex\] : \(figures\.male \+ figures\.female\) \/ 2/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /choose Prefer not to say in setup, or Not set on your profile in Settings, and Tropos stores none and uses a figure halfway between the male and female ones\./
+    );
+  });
+
+  it("the push budget and a reminder going quiet, at the server's numbers", () => {
+    expect(FUNCTIONS("pushBudget.js")).toMatch(
+      /const DAILY_PUSH_LIMIT = 1; const WEEKLY_PUSH_LIMIT = 5;/
+    );
+    expect(FUNCTIONS("reminderAttention.js")).toMatch(
+      /const IGNORED_LIMIT = 3;/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Our server sends at most one notification a day, and 5 in any 7 days, that is not about something a person did/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /A reminder you leave unanswered 3 times running/
+    );
+  });
+
+  it("the web checkout: RevenueCat Billing gets the account ID and the email, Stripe the card", () => {
+    const PURCHASE = read("../purchaseProvider.ts");
+    expect(PURCHASE).toMatch(/if \(email\) params\.set\("email", email\);/);
+    expect(PURCHASE).toMatch(
+      /https:\/\/pay\.rev\.cat\/\$\{encodeURIComponent\(token\)\}\/\$\{encodeURIComponent\(uid\)\}/
+    );
+    const processors = policySection(
+      "7. Third-Party Services",
+      "Where your data goes."
+    );
+    expect(processors).toMatch(
+      /runs the checkout on the web \(RevenueCat Billing\)\. It holds your Tropos account ID and your purchase history, and for a purchase on the web, the email address you pay with\./
+    );
+    expect(processors).toMatch(/Tropos never receives your card details\./);
+    // The old Stripe Checkout identifiers are no longer described as received.
+    expect(processors).not.toMatch(
+      /Stripe’s customer and subscription identifiers/
+    );
+  });
+
+  it("a Google sign-in's name and photo seed the profile", () => {
+    expect(read("../auth.tsx")).toMatch(
+      /createDefaultProfile\(\s+uid,\s+cred\.user\.displayName \|\| "",\s+cred\.user\.photoURL \|\| null\s+\)/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /with Google, the photo on your Google account is your profile photo until you change it\./
+    );
   });
 });

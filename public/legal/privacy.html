@@ -149,16 +149,39 @@
               <strong>Account Information:</strong> your email address, your
               display name and how you sign in (email and password, Google or
               Apple). If you sign in with Apple, Apple may give us a private
-              relay address instead of your own.
+              relay address instead of your own. If you sign in with Google or
+              Apple, the name on that account is your display name until you
+              change it, and with Google, the photo on your Google account is
+              your profile photo until you change it.
             </li>
             <li>
-              <strong>Profile and Fitness Details:</strong> sex or gender, year
-              of birth (an older account may hold an age or an age range
-              instead), height and weight, activity level and training
-              experience, any injury limits you tell us about, your maximum
-              heart rate, your goals (including a goal weight), and the details
-              of any race you are training for, such as its distance, date and
-              event.
+              <strong>Profile and Fitness Details:</strong> your sex for the
+              calorie calculation (if you give it), year of birth (an older
+              account may hold an age or an age range instead), height and
+              weight, activity level and training experience, any injury limits
+              you tell us about, your maximum heart rate, your goals (including
+              a goal weight), and the details of any race you are training for,
+              such as its distance, date and event. Sex is optional: choose
+              Prefer not to say in setup, or Not set on your profile in
+              Settings, and Tropos stores none and uses a figure halfway between
+              the male and female ones. We also keep when you agreed to Tropos
+              storing your health details, and to which wording of that
+              question.
+            </li>
+            <li>
+              <strong>Setup Before You Have an Account:</strong> you answer
+              setup’s questions before you make an account. Until you do, your
+              answers, including your health details once you have agreed to
+              Tropos storing them, are kept only on your phone or in your
+              browser, and none of them is sent to our servers. They are kept
+              for 2 days from your last answer and deleted the next time Tropos
+              opens after that, and deleted at once when you sign out or when an
+              account other than the one you make from Save your plan signs in.
+              When you make your account from Save your plan, they become your
+              plan. If you agreed to Tropos storing your health details before
+              you had an account, that agreement lapses after 2 days, after 2
+              hours with Tropos in the background, or when the app is closed,
+              and setup asks again.
             </li>
             <li>
               <strong>Activity Data:</strong> workouts, sets and personal
@@ -244,6 +267,14 @@
               segment, yours or someone else’s. See section 4.
             </li>
             <li>
+              <strong>Shared Cards (optional):</strong> when you share a card of
+              a session, a day’s food or a week from the share sheet, a copy of
+              the card’s figures and words as the card shows them, without any
+              you hid, so that its link can open it. It never holds a route, a
+              coordinate, the photo the card was drawn on or your name. See
+              section 4.
+            </li>
+            <li>
               <strong>Social Activity (optional):</strong> the posts you share,
               comments, props, follows, Circle check-ins and meet-ups, Space
               posts, and the reports you make about content or accounts. Also
@@ -264,14 +295,20 @@
             <li>
               <strong>Subscription Records:</strong> whether you have Pro, where
               you bought it, its product and dates, and the store’s transaction
-              identifiers.
+              identifiers. If you start a free trial, its dates and the price
+              you were shown, so we can remind you before it turns into a paid
+              subscription.
             </li>
             <li>
               <strong>Usage Data and Analytics Identifiers:</strong> which
               screens and features you use, and events such as finishing a
               workout, a run or a scan, tied to an identifier for this
-              installation of the app. They carry no figure about your body,
-              food or training. See section 2.
+              installation of the app, not to your account. They carry no figure
+              about your body, food or training. Your account also keeps when
+              you saved your first session, when you trained in your fourth
+              week, and when your first trial and first paid period began, and
+              which of these your phone has already sent to analytics, so each
+              is counted once. See section 2.
             </li>
             <li>
               <strong>Notification Token (optional):</strong> if you allow
@@ -289,7 +326,11 @@
             <li>
               <strong>Preferences and Time Zone:</strong> units, theme,
               notification and sharing choices, and your device’s time zone, so
-              daily limits and reminders follow your local day.
+              daily limits and reminders follow your local day. For each email
+              you can choose (section 2), whether you said yes or no, when,
+              where and to which wording. For the evening streak reminder and
+              the Monday review, when each was last sent and whether you opened
+              Tropos after it.
             </li>
           </ul>
         </section>
@@ -310,6 +351,15 @@
               If you choose them, email you your weekly review on Mondays, and
               one email at 2 weeks and one at a month if you stop logging (we
               ask in setup, off until you turn it on)
+            </li>
+            <li>
+              Send the reminders and notifications you turn on. Our server sends
+              at most one notification a day, and 5 in any 7 days, that is not
+              about something a person did (such as the evening streak reminder,
+              the Monday review, a challenge or a badge). A reminder you leave
+              unanswered 3 times running (you did not open Tropos that day, tap
+              it or do what it asked) is turned off, and Home tells you once.
+              You can turn it back on in Settings &gt; Notifications.
             </li>
             <li>
               Understand how the app is used and fix what breaks (analytics, and
@@ -333,6 +383,26 @@
             from your connection. Analytics never receives your email address,
             your name, GPS routes, what you type about meals, the names of your
             foods, or your notes.
+          </p>
+          <p>
+            It also receives a few events about your first days, each sent once:
+            the welcome screen seen and setup started (once on each phone, so
+            these can be sent before you have an account), your account made and
+            how (Apple, Google or email), setup finished, and the trial offer
+            seen. And once for each account, with how many days after setup each
+            came: your first saved session and whether it was a lift or a run, a
+            session in your fourth week, and your first trial and first paid
+            period, with whether each was bought in the app or on the web. None
+            of them carries your name, your email address or a figure about you.
+          </p>
+          <p>
+            <strong>Turning analytics off.</strong> Usage analytics is on until
+            you turn it off, with Share usage analytics in Settings &gt; Social
+            &amp; privacy. Off, the phone or browser you are using stops sending
+            anything to Google Analytics at once, and your account keeps the
+            choice so your other devices follow it once you sign in on them.
+            Crash and error reports are not analytics and do not follow this
+            switch.
           </p>
           <p>
             We do not use your data for advertising, Tropos shows no adverts,
@@ -379,7 +449,8 @@
             private to your account unless you share them. Comments on a session
             you share are seen by whoever can see that session. Circle check-ins
             are seen by the people in that Circle, and a Circle meet-up (what it
-            is, when, and the place you type) by the Circle’s members.
+            is, when, the place, note and pace groups you type, and who is
+            going) by the Circle’s members.
             <strong>Spaces are open to everyone signed in:</strong> anyone
             signed in to Tropos can read a Space’s posts, the comments and props
             on them, and who has joined it (each member’s name and photo),
@@ -410,6 +481,29 @@
             time, volume, number of exercises and any record) and, for a run, a
             map of its route with the start and finish cut off and your privacy
             zones removed. A followers-only or private post never opens there.
+          </p>
+          <p>
+            <strong>Shared cards.</strong> A card you share from the share sheet
+            that is not of a public post can end with a link to its own page on
+            troposfit.com. Anyone with the link can open it, signed in or not,
+            and the page asks search engines not to list it. It shows the card’s
+            figures and words as you shared them (such as a run’s distance, time
+            and pace, a workout’s volume, or a day’s calories and macros), never
+            a route, a coordinate, the photo the card was drawn on or your full
+            name. The line above the card names you by your first name, and
+            while the invite code you had when you shared it is still yours, the
+            page offers it to join Tropos. A card of a post or a session stops
+            opening when you delete that post or session, and its copy is
+            deleted. A card of a day’s food or a week opens for 30 days and is
+            then deleted. Deleting your account deletes them all.
+          </p>
+          <p>
+            <strong>Spaces you join.</strong> The sessions you share publicly
+            are shown in each Space you have joined, including up to 20 from the
+            28 days before you joined. Each week your sessions also count
+            towards the Space’s totals (how many members trained, their sessions
+            and distance), which name no one and are shown only once at least 5
+            members trained that week.
           </p>
           <p>
             <strong>Segments.</strong> A segment is a stretch of one of your
@@ -581,31 +675,34 @@
               account is active. A meal you delete goes to Recently deleted
               meals (Settings &gt; Account), where for 30 days you can restore
               it or delete it permanently; after 30 days it is deleted for good.
-              Deleting your account freezes new writes, removes your personal
-              data, then removes your sign-in. Failed cleanup is retried in the
-              background. We retain a minimal deletion record for 30 days and a
-              protection record for 90 days. Non-public comment text and
-              minimised moderation records may be retained for up to 365 days
-              for safety review. Protected billing identifiers are retained for
-              13 months to prevent purchase theft. If a moderator had restricted
-              your account, we keep a coded form of its email address and its
-              Apple or Google sign-in for 13 months, which can’t be read back,
-              so that a new account made with them is restricted too. A record
-              of a password-reset request holds a coded form of the email
-              address a reset was asked for, never the address itself, and is
-              kept for up to a day after the last request. When you open an
-              invite link before you have an account, our server keeps a coded
-              form of your connection’s IP address, never the address itself,
-              for up to a day after the last lookup, so that invite codes can’t
-              be looked up too often. Expired records are removed by scheduled
-              retention policies; removal is not instantaneous. An outstanding
-              subscription cancellation request is kept until it is resolved.
-              Deletion also leaves the records of Apple’s subscription
-              notifications, kept so each is handled once. Outside Tropos,
-              RevenueCat keeps its subscription records, Stripe keeps its
-              records of any purchase made on the web, and Google keeps
-              analytics data under its Google Analytics retention settings, each
-              under its own policy.
+              A shared card of a day’s food or a week stops opening 30 days
+              after you share it and is then deleted (section 4). Setup answers
+              kept on your phone before you have an account are deleted after 2
+              days (section 1). Deleting your account freezes new writes,
+              removes your personal data, then removes your sign-in. Failed
+              cleanup is retried in the background. We retain a minimal deletion
+              record for 30 days and a protection record for 90 days. Non-public
+              comment text and minimised moderation records may be retained for
+              up to 365 days for safety review. Protected billing identifiers
+              are retained for 13 months to prevent purchase theft. If a
+              moderator had restricted your account, we keep a coded form of its
+              email address and its Apple or Google sign-in for 13 months, which
+              can’t be read back, so that a new account made with them is
+              restricted too. A record of a password-reset request holds a coded
+              form of the email address a reset was asked for, never the address
+              itself, and is kept for up to a day after the last request. When
+              you open an invite link before you have an account, our server
+              keeps a coded form of your connection’s IP address, never the
+              address itself, for up to a day after the last lookup, so that
+              invite codes can’t be looked up too often. Expired records are
+              removed by scheduled retention policies; removal is not
+              instantaneous. An outstanding subscription cancellation request is
+              kept until it is resolved. Deletion also leaves the records of
+              Apple’s subscription notifications, kept so each is handled once.
+              Outside Tropos, RevenueCat keeps its subscription records, Stripe
+              keeps its records of any purchase made on the web, and Google
+              keeps analytics data under its Google Analytics retention
+              settings, each under its own policy.
             </li>
             <li>
               <strong>One limit on erasure, stated plainly:</strong> meal photos
@@ -640,14 +737,15 @@
           <ul>
             <li>
               <strong>Google (Firebase):</strong> Firebase Authentication
-              (sign-in), Cloud Firestore (your data), Cloud Storage (progress,
-              profile, post and Space photos, and the map images of runs you
-              share), Cloud Functions (our server code), App Check (which checks
-              that requests come from the real app; on the web it uses
-              reCAPTCHA), Firebase Cloud Messaging (which delivers notifications
-              to your phone or browser), Google Analytics for Firebase (usage
-              analytics, section 2) and, in the iPhone app, Firebase Crashlytics
-              (crash reports, below).
+              (sign-in), Firebase Hosting (which serves troposfit.com, including
+              the pages of public posts and shared cards), Cloud Firestore (your
+              data), Cloud Storage (progress, profile, post and Space photos,
+              and the map images of runs you share), Cloud Functions (our server
+              code), App Check (which checks that requests come from the real
+              app; on the web it uses reCAPTCHA), Firebase Cloud Messaging
+              (which delivers notifications to your phone or browser), Google
+              Analytics for Firebase (usage analytics, section 2) and, in the
+              iPhone app, Firebase Crashlytics (crash reports, below).
             </li>
             <li>
               <strong>Photo checks (Google Cloud Vision):</strong> the photo you
@@ -689,13 +787,18 @@
               that requests come from the real app on your iPhone).
             </li>
             <li>
-              <strong>RevenueCat:</strong> manages Pro subscriptions. It holds
-              your Tropos account ID and your purchase history.
+              <strong>RevenueCat:</strong> manages Pro subscriptions, bought in
+              the app or on the web, and runs the checkout on the web
+              (RevenueCat Billing). It holds your Tropos account ID and your
+              purchase history, and for a purchase on the web, the email address
+              you pay with. We receive from it whether you have Pro, its product
+              and dates, and whether it is a trial.
             </li>
             <li>
-              <strong>Stripe:</strong> payments for Pro bought on the web.
-              Stripe handles the card details; we receive the subscription’s
-              status and Stripe’s customer and subscription identifiers.
+              <strong>Stripe:</strong> takes the payment for Pro bought on the
+              web, through RevenueCat’s checkout. Stripe receives your card
+              details and the email address you pay with. Tropos never receives
+              your card details.
             </li>
             <li>
               <strong>Resend:</strong> sends account emails, such as verifying
