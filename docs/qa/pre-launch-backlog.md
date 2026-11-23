@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Enter this race opens the organiser's page (Reg1, 2026-11-23)
+
+A race's page has "Enter this race", a link to the organiser's own entry
+page while the race is ahead (`entryUrl` in `spaceDefs.ts`,
+`raceEntry.ts`). It is an `<a target="_blank">`, which the iPhone app's
+web view hands to Safari (Capacitor's `createWebViewWith`), as "Visit
+official website" always has. The unit tests and the web harness draw it;
+only a phone shows where it opens.
+
+- [ ] **It opens in Safari, not inside Tropos.** On the TestFlight build,
+      open Social → a race Space (London Marathon) and tap Enter this race.
+      Passing: Safari opens on the London Marathon ballot page; switching
+      back returns to the race page where it was. VoiceOver reads the
+      button as "Enter this race on the organiser’s website, outside
+      Tropos, link".
+- [ ] **The first monthly link check ran.** After the 3rd of the month,
+      Actions → Check race entry links has a green run, or a run that
+      opened the "Race entry links are broken" issue with the races it
+      lists. Run it once by hand after merging (Run workflow).
+
 ## Sign-up at the end of setup, then a trial offer (A6, 2026-11-22)
 
 Get started opens setup before any account; its answers wait on the phone,

@@ -187,3 +187,44 @@ it("keeps every recurring race discoverable, with confirmed dates before awaitin
   expect(restored[0].id).toBe("berlin-marathon");
   expect(upcomingResolvedRaceDefs({}, "2099-01-01")).toEqual([]);
 });
+
+describe("entry links from the server (Reg1)", () => {
+  const manchester = spaceDef("manchester-marathon")!;
+
+  it("takes a new entry page on the race's own domains, and its note", () => {
+    const o = sanitizeRaceEventOverrides({
+      "manchester-marathon": {
+        entryUrl: "https://www.manchestermarathon.co.uk/enter-2028",
+        entryNote: "Entry is by ballot.",
+      },
+    });
+    const event = resolveRaceEvent(manchester, o)!;
+    expect(event.entryUrl).toBe(
+      "https://www.manchestermarathon.co.uk/enter-2028"
+    );
+    expect(event.entryNote).toBe("Entry is by ballot.");
+  });
+
+  it.each([
+    "https://www.letsdothis.com/gb/e/manchester",
+    "http://www.manchestermarathon.co.uk/enter",
+    "https://user@www.manchestermarathon.co.uk/enter",
+    `https://www.manchestermarathon.co.uk/${"x".repeat(300)}`,
+  ])("keeps the bundled link over %s", (entryUrl) => {
+    const o = sanitizeRaceEventOverrides({
+      "manchester-marathon": { entryUrl },
+    });
+    expect(resolveRaceEvent(manchester, o)?.entryUrl).toBe(
+      manchester.event!.entryUrl
+    );
+  });
+
+  it("takes the bundled link and note away when the server says null", () => {
+    const o = sanitizeRaceEventOverrides({
+      "london-marathon": { entryUrl: null, entryNote: null },
+    });
+    const event = resolveRaceEvent(spaceDef("london-marathon")!, o)!;
+    expect(event.entryUrl).toBeUndefined();
+    expect(event.entryNote).toBeUndefined();
+  });
+});
