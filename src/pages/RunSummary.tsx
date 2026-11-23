@@ -54,7 +54,12 @@ import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
 import TopThreeCard from "../components/run/TopThreeCard";
-import { runPlacings, type RunPlacing } from "@/lib/runPlacings";
+import {
+  runPlacings,
+  type PlacedRun,
+  type RunPlacing,
+} from "@/lib/runPlacings";
+import { holdPlacedRun } from "@/lib/runPlacingHistory";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
@@ -99,6 +104,7 @@ import {
   completeRun,
   earlierRunHistory,
   runDay,
+  runStart,
   runPostRoute,
   type FinishedRun,
 } from "@/lib/runCompletion";
@@ -1514,6 +1520,24 @@ export default function RunSummary() {
           );
       }
 
+      /* The run as the placings read it, ordered by when it started, as
+         its saved `startedAt` is. */
+      const placedRun: PlacedRun = {
+        id: saveRunId,
+        completedAt: new Date(),
+        startedAt: runStart(finishedRun),
+        distance,
+        duration: elapsed,
+        avgPace: avgPaceSeconds,
+        activityType: runConfig?.activityType || "freerun",
+        place: runConfig?.place ?? null,
+        isInvalid,
+        savedAnyway: isInvalid,
+        bestEfforts,
+      };
+      /* A run's page opened next ranks against the history with this run
+         in it, without reading it again. */
+      holdPlacedRun(user.uid, placedRun);
       setFinishFacts({
         moments: runPostMoments(
           { distance, bestEfforts },
@@ -1525,21 +1549,7 @@ export default function RunSummary() {
            post's bests are claimed. */
         placings:
           historyRead && historyRead.uid === user.uid && historyRead.known
-            ? runPlacings(
-                {
-                  id: saveRunId,
-                  completedAt: new Date(),
-                  distance,
-                  duration: elapsed,
-                  avgPace: avgPaceSeconds,
-                  activityType: runConfig?.activityType || "freerun",
-                  place: runConfig?.place ?? null,
-                  isInvalid,
-                  savedAnyway: isInvalid,
-                  bestEfforts,
-                },
-                historyRead.runs
-              )
+            ? runPlacings(placedRun, historyRead.runs)
             : [],
       });
       setAnniversaryRun({
@@ -1830,10 +1840,13 @@ export default function RunSummary() {
 
           {/* Your top three (Run29): under the reward, the distances this
               run placed 1st to 3rd at, quiet; a new best is the reward
-              above. */}
+              above. Under a reward's sentence it says none of its own. */}
           {finishFacts && finishFacts.placings.length > 0 && (
             <div className="mx-4 mb-4">
-              <TopThreeCard placings={finishFacts.placings} />
+              <TopThreeCard
+                placings={finishFacts.placings}
+                rewardAbove={finishLine !== null}
+              />
             </div>
           )}
 

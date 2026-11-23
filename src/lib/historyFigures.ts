@@ -40,12 +40,8 @@ import {
   type SummaryGranularity,
 } from "./periodSummary";
 import { runEvidenceDate } from "./runExecutionEvidence";
-import {
-  fastestEfforts,
-  type EffortRun,
-  type FastestEffort,
-} from "./runEfforts";
-import { rankedEfforts } from "./runPlacings";
+import { type EffortRun, type FastestEffort } from "./runEfforts";
+import { rankedEfforts, topEfforts } from "./runPlacings";
 import { FASTEST_EFFORT_METERS } from "./postMoments";
 import {
   isAllTimeRecord,
@@ -464,7 +460,7 @@ function recordRows<R extends RecordRun>(
     includeLongest: boolean;
     /** The runs whose 2nd and 3rd fastest go under each Fastest row. */
     topThreeFrom?: readonly R[];
-    /** The pool's fastest 1K, 5K and 10K (`fastestEfforts`). */
+    /** The pool's fastest 1K, 5K and 10K (`topEfforts`). */
     efforts?: readonly FastestEffort<R>[];
     /** The records over every run, for a narrower pool. */
     allTime?: RunRecords<R>;
@@ -568,9 +564,10 @@ const EFFORT_NAMES: Readonly<Record<number, string>> = {
  *
  * App1 Q15: every running record a finish screen celebrates has its row
  * here, from the same figures. The fastest 1K, 5K and 10K are the runs'
- * own times over them (`fastestEfforts`, which the post's moments read
- * too). The longest run is kept on both cards, since a treadmill run can
- * be the longest yet: its finish screen compares it with every run.
+ * own times over them (`runEffortSeconds`, which the post's moments read
+ * too), the earlier run ahead at a tie (`topEfforts`). The longest run
+ * is kept on both cards, since a treadmill run can be the longest yet:
+ * its finish screen compares it with every run.
  */
 export function runRecordRows<R extends RecordRun>(
   allRuns: readonly R[],
@@ -583,7 +580,10 @@ export function runRecordRows<R extends RecordRun>(
     (r) => runEvidenceDate(r) >= range.recentSinceKey
   );
   const allTime = selectRunRecords(outdoor, { includeLongest: true });
-  const allTimeEfforts = fastestEfforts(outdoor, FASTEST_EFFORT_METERS);
+  /* At a tie the earlier run holds the row (`topEfforts`), whatever order
+     the runs come in, so the run a Fastest row names is the one whose
+     page says "Your best". */
+  const allTimeEfforts = topEfforts(outdoor, FASTEST_EFFORT_METERS);
   const indoor = selectRunRecords(
     completed.filter((r) => isIndoorPaceEligible(r)),
     { includeLongest: true }
@@ -601,7 +601,7 @@ export function runRecordRows<R extends RecordRun>(
     recent30d: recordRows(selectRunRecords(recent, { includeLongest: true }), {
       ...shared,
       includeLongest: true,
-      efforts: fastestEfforts(recent, FASTEST_EFFORT_METERS),
+      efforts: topEfforts(recent, FASTEST_EFFORT_METERS),
       allTime,
       allTimeEfforts,
     }),

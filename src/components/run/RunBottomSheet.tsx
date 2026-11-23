@@ -766,9 +766,9 @@ export default function RunBottomSheet({
                           aria-hidden="true"
                           data-testid="hr-zone-dot"
                           style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: 4,
+                            width: 10,
+                            height: 10,
+                            borderRadius: 5,
                             flexShrink: 0,
                             background: zoneColour,
                           }}

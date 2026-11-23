@@ -1,12 +1,12 @@
 import ExerciseThumb from "@/components/program/ExerciseThumb";
-import { categoryFigureUri } from "@/lib/muscleFigureSvg";
+import { runPoseUrl, type RunPose } from "@/lib/runPoses";
 
 /** What an onboarding choice shows beside its words (DS3). */
 export type ChoiceArtSpec =
   /** An exercise's cut-out drawing, as Train and the finish screen show it. */
   | { kind: "exercise"; id: string }
-  /** The muscles a category works, where no one exercise says it. */
-  | { kind: "muscles"; category: string }
+  /** A runner, as a run card draws one (`runPoses.ts`). */
+  | { kind: "run"; pose: RunPose }
   /** A run's route, longer for a runner who runs more. */
   | { kind: "route"; distance: 1 | 2 | 3 }
   /** A level, as one to three of the brand mark's chevrons. */
@@ -103,22 +103,20 @@ function LevelGlyph({ level }: { level: 1 | 2 | 3 }) {
  * list. Decorative: the choice's words carry its name.
  *
  * The route and the level draw in `currentColor`, so they take the
- * card's own tone, coral for running and purple for lifting.
+ * card's own tone, coral for running and purple for lifting. The runner
+ * is the run card's own cut-out, as an exercise is the lift card's.
  */
 export default function ChoiceArt({ art }: { art: ChoiceArtSpec }) {
   if (art.kind === "exercise") return <ExerciseThumb exerciseId={art.id} />;
-  if (art.kind === "muscles") {
-    const figure = categoryFigureUri(art.category);
+  if (art.kind === "run") {
     return (
-      <div aria-hidden="true" data-choice-art="muscles" className={TILE}>
-        {figure && (
-          <img
-            src={figure}
-            alt=""
-            draggable={false}
-            className="h-[88%] w-auto"
-          />
-        )}
+      <div aria-hidden="true" data-choice-art="run" className={TILE}>
+        <img
+          src={runPoseUrl(art.pose)}
+          alt=""
+          draggable={false}
+          className="h-[88%] w-auto"
+        />
       </div>
     );
   }

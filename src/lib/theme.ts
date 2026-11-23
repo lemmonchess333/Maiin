@@ -46,7 +46,7 @@ export const THEME = {
   semantic: {
     activity: "#7B72E9", // purple — lifting
     hydration: "#52A3BD", // teal — water
-    vitals: "#D4637A", // coral — running (heart rate has its own scale, `hrZones`)
+    vitals: "#D4637A", // coral — running (heart rate has its own scale, ending in `hrZoneMax`)
     nutrition: "#D9884E", // warm orange — food, calories, macros
     positive: "#4DB872", // green — a done state, beside its tick
     negative: "#EF4444", // red — errors and destructive actions (DS10 call 2)
@@ -214,7 +214,7 @@ export const THEME = {
      from #EF4444 in normal vision (CIEDE2000). Against zone 4's amber it
      measures 49.4 normal, 40.7 deutan 100 and 52.4 protan 100 (amber
      against coral measures 18.9 deutan); its nearest other zone is teal,
-     11.1 at deutan 100. It is the dot beside "HR Z5", 3.2:1 on the stats
+     11.1 at deutan 100. It is the 10 px dot beside "HR Z5", 3.2:1 on the stats
      pill: under 4.5:1, so the bpm keeps the stat colour. The steps that
      clear 4.5:1 there are violet (lifting's purple), pale, under 15 from
      coral, or under 9.6 from teal under colour blindness. `paceScale.test.ts` holds

@@ -1064,7 +1064,10 @@ export interface UpdateProfileOptions {
   throwOnError?: boolean;
   /** Fields taken off the profile in the same write (`deleteField()`), and
    *  off the profile the app holds: Settings › Profile's Not set takes
-   *  `sex` off this way. A protected field is kept unless `allowProtected`. */
+   *  `sex` off this way. A protected field is kept unless `allowProtected`.
+   *  Safe because `updateProfile` writes directly, where the SDK holds the
+   *  sentinel offline; a write routed through `offlineQueue.ts` stores to
+   *  localStorage, where a `deleteField()` sentinel does not survive. */
   remove?: readonly (keyof UserProfile)[];
 }
 
@@ -1304,6 +1307,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setProfileReadFailed(false);
         setLoading(true);
+      }
+      // The run history the run placings hold is the outgoing account's:
+      // let go of it on a sign-out or a switch, however it came about.
+      // Loaded only then, so it stays off the cold start.
+      if (previousUid !== null && previousUid !== uid) {
+        void import("./runPlacingHistory")
+          .then(({ forgetPlacingHistory }) => forgetPlacingHistory())
+          .catch(() => {});
       }
       // The Watch bridge can retain an active run, pending controls and raw
       // heart rate while the web view is suspended. Clear those native values

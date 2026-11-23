@@ -235,7 +235,7 @@ const GOALS = [
     id: "fat_loss",
     label: goalLabel("fat_loss"),
     desc: "Lifting to support your goal. Set nutrition separately.",
-    art: { kind: "muscles", category: "Full Body" },
+    art: { kind: "exercise", id: "kettlebell-swing" },
   },
   {
     id: "general",
@@ -247,7 +247,7 @@ const GOALS = [
     id: "running",
     label: goalLabel("running"),
     desc: "Free running or a race goal, with optional lifting alongside it.",
-    art: { kind: "route", distance: 2 },
+    art: { kind: "run", pose: "run-easy" },
   },
 ] as const;
 
