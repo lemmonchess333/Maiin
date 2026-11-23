@@ -22,8 +22,12 @@
 If you only remember thirteen things:
 
 1. **Five colours, one meaning each, and colour goes on the person's data
-   (DS4).** Purple is lifting and the brand, coral running, orange food, teal
-   water, gold a new best. An everyday screen carries at most 8% colour on
+   (DS4, DS10).** Purple is lifting, coral running, orange food, teal
+   water, gold a new best. The chrome is neutral: selection, links and text
+   buttons, switches, focus rings, icon and callout tints and Pro's buttons
+   are the text and muted greys, and one selected state serves every
+   screen (DS10 call 1, owner 22 November 2026). The brand lives in the
+   mark and the drawn art. An everyday screen carries at most 8% colour on
    dark and 15% on light, in at most three hues with one leading, and its
    biggest patch of colour is data (a ring, week segments, a route, a
    figure's lit muscles), never a button. A generic action (Follow, Edit
@@ -32,8 +36,10 @@ If you only remember thirteen things:
    into its surface. Adding a "nice blue" or neon is a regression; glass is
    for what floats, never for a card of the person's data (DS6, §14o).
    §14m.
-2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
-   (dots, labels, icons, CTAs). Never cross the wires.
+2. **Purple = lifting. Coral = running.** This sport-coding is everywhere
+   a sport is (dots, labels, icons, a sport's own actions). Never cross the
+   wires, and never lend a sport's colour to the chrome: a link, a selected
+   chip or a switch in purple says "lifting" on a screen about food.
 3. **Numbers come in two tiers, both with tabular figures.** A figure that
    stands on its own at display size (the calorie ring's 2,336, a tile's
    81.7, a hero stat, a timer, a set log's inputs) is Archivo:
@@ -50,8 +56,9 @@ If you only remember thirteen things:
 6. **Use the primitives.** `Button`, `IconButton`, `Banner`, `BottomSheet`,
    `Dialog`, `.ds-card`, `.ds-input`. Don't hand-roll a button out of a `div`
    and a Tailwind string.
-7. **Colours come from tokens, not hardcoded hex.** Use `bg-primary`,
-   `text-muted-foreground`, or `THEME.*` — never paste `#7B72E9` inline.
+7. **Colours come from tokens, not hardcoded hex.** Use `bg-primary` (the
+   neutral chrome), `text-muted-foreground`, `bg-lifting` or `THEME.*`,
+   never paste `#7B72E9` inline.
 8. **Light AND dark mode both have to work.** Every change is reviewed in both.
 9. **One hero per screen, and everything else steps down (DS4).** The
    hero is the thing about the person right now: 30-60% of the first screen,
@@ -95,14 +102,19 @@ If you only remember thirteen things:
   data and the screen's hero carry it (DS4). Light uses the
   warm grouped-background/card treatment. Every visual change must be
   reviewed in both.
-- **One colour per job (DS3):** purple is lifting and the brand, coral is
-  running, orange is food, teal is water, gold is a new best — and nothing
-  else. A colour that means a sport or a domain is not decoration.
-- **Brand colour:** Purple `#7B72E9` means lifting and the brand (DS4 call
-  1). It colours lifting data (week segments, a figure's lit muscles,
-  progress on a lifting goal), a brand moment and the smaller lifting
-  controls; a generic action (Follow, Edit profile, Start a circle, Done,
-  Save) is neutral, because a colour that is on every button means nothing.
+- **One colour per job (DS3, DS10):** purple is lifting, coral is
+  running, orange is food, teal is water, gold is a new best, and nothing
+  else. A colour that means a sport or a domain is not decoration, and the
+  chrome is neutral.
+- **Brand colour:** Purple `#7B72E9` is the brand's in the mark, the
+  lockup and the drawn art, and lifting's everywhere else (DS4 call 1,
+  DS10 call 1). It colours lifting data (week segments, a figure's lit
+  muscles, progress on a lifting goal, a set's row, the rest ring) and a
+  lift's own small controls; a generic action (Follow, Edit profile, Start
+  a circle, Done, Save, Upgrade) is neutral, because a colour that is on
+  every button means nothing. `--primary` is the text colour since DS10,
+  so `bg-primary`, `text-primary` and `ring-primary` are neutral wherever
+  they are written (`primaryNeutral.test.ts`).
   A screen's one full-width filled button is neutral too, white on dark and
   ink on light, Start workout included (owner, 7 November 2026): filled in
   purple it became the largest patch of colour on Home and took the screen
@@ -158,25 +170,24 @@ external contributors get wrong.
 Defined in `src/index.css` as HSL vars and bridged to Tailwind. Use them as
 normal Tailwind utilities. They automatically adapt to dark mode.
 
-| Class                                                       | Meaning                                                                                                                                   |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                                |
-| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                   |
-| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                   |
-| `bg-primary` / `text-primary`                               | Brand purple (light — **for tints, accents, icons and large numerals**; under 4.5:1 as small text)                                        |
-| `text-lifting-strong`                                       | Brand purple as **small text** — the AA step (the brand and lifting are one purple; `text-primary-strong` is the fill, not the text step) |
-| `bg-primary-strong`                                         | Darker brand purple — **for filled CTAs with white text** (clears WCAG AA where `bg-primary` is borderline)                               |
-| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                   |
-| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                           |
-| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                  |
-| `border-border`                                             | The standard hairline border                                                                                                              |
+| Class                                                       | Meaning                                                                                                                                 |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                              |
+| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                 |
+| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                 |
+| `bg-primary` / `text-primary`                               | The chrome: the text colour (DS10). Tints (`bg-primary/10`), a selected chip's border, a focus ring, a switch that is on, a chrome icon |
+| `bg-primary-strong` + `text-primary-foreground`             | A neutral filled button: white on dark, ink on light (`Button` `primary` and `neutral` look the same since DS10)                        |
+| `bg-lifting` / `text-lifting-strong`                        | Lifting purple: its data, and its small text at the AA step. Never a link, a selection or a generic button                              |
+| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                 |
+| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                         |
+| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                |
+| `border-border`                                             | The standard hairline border                                                                                                            |
 
-> ⚠️ **`bg-primary` vs `bg-primary-strong`:** if white text sits _on_ the
-> colour (a filled button, a "Join"/"Follow" pill), use `bg-primary-strong`.
-> If the colour is a light tint, use `bg-primary`. Purple TEXT smaller than
-> 24px (18.66px bold) takes `text-lifting-strong`, never `text-primary` —
-> `identityTextGuard.test.ts` counts the bare uses. The `Button` primitive
-> already does this for you.
+> ⚠️ **What sits on a filled `bg-primary`** is `text-primary-foreground`,
+> never `text-white`: the fill is near white in dark (`primaryNeutral.test.ts`
+> refuses the pair). Purple TEXT smaller than 24px (18.66px bold) takes
+> `text-lifting-strong`, and only for lifting; a link or a text button is
+> `text-foreground` with its weight (DS10).
 
 ### 3b. The `THEME` object (JS constants) — for what classes can't reach
 
@@ -189,18 +200,23 @@ import { THEME } from "@/lib/theme";
 
 // Sport-coding
 THEME.running; // #D4637A  coral  — running
-THEME.lifting; // #7B72E9  purple — lifting (same as brand)
-THEME.brand; // #7B72E9
-THEME.brandStrong; // #6560C8  filled CTA brand (AA-safe on white text)
+THEME.lifting; // #7B72E9  purple — lifting
+THEME.brand; // #7B72E9  the mark and the drawn art only (DS10)
+THEME.brandStrong; // #6560C8  the mark's and the art's darker step
+THEME.chrome.text; // the text colour, for an icon or a line that is chrome
+THEME.chrome.tint; // the text colour at 8%, for a chrome tile or callout
 
 // Semantic (harmonised)
 THEME.semantic.hydration; // #52A3BD teal   — water
 THEME.semantic.nutrition; // #D9884E orange — food/calories/macros
-THEME.semantic.vitals; // #D4637A coral  — health/HR/recovery (== running)
-THEME.semantic.positive; // #4DB872 green  — streaks/PRs
+THEME.semantic.vitals; // #D4637A coral  — running (== running)
+THEME.semantic.positive; // #4DB872 green  — a done state, beside its tick
+THEME.danger; // #EF4444 red  — an error or a destructive action, with its icon
+THEME.pace; // fast #F9D86A · average #D97706 · slow #2975E0 (DS10 call 2)
+THEME.hrZoneMax; // #CD1D93 heart-rate zone 5: not the running coral, not the error red
 
-// Macros (dark-tuned; see 3d)
-THEME.macros.protein; // pink   THEME.macros.carbs // gold   THEME.macros.fat // sage
+// Macros (dark-tuned; see 3d). Protein orchid, carbs gold, fat jade (DS10)
+THEME.macros.protein; // #EC8AF5   THEME.macros.carbs // #EAB308   THEME.macros.fat // #0D907B
 ```
 
 ### 3c. Tints via hex-alpha suffix (the `${THEME.x}14` pattern)
@@ -225,26 +241,49 @@ constant. You'll see this constantly — learn the conversions:
 />
 ```
 
-`THEME.iconBg` (`rgba(123,114,233,0.10)`) is the pre-baked brand icon tint.
+`THEME.iconBg` is the chrome's neutral icon tint (the text colour at 8%),
+not a brand purple, since DS10. A tint written with the hex-alpha suffix
+is for a domain colour; the chrome's tints are `THEME.chrome.tint` or
+`bg-primary/10`.
 
 ### 3d. Macro colours need a light-mode swap
 
-The raw `THEME.macros.*` values are tuned for dark mode and **fail WCAG AA as
-text on white**. For macro _text on a light card_, use the `useMacroPalette()`
-hook (returns bright values in dark mode, the AA-safe `MACROS_TEXT_LIGHT`
-values in light mode). Use the raw values only for dots/tints/bars.
+The raw `THEME.macros.*` values are tuned for dark mode. Protein and fat are
+**under 3:1 on white even as fills**, so every macro colour comes through the
+`useMacroPalette()` hook: `accent` for fills (bars, the donut, icons, tints)
+and `text` for words, each the dark value in dark and `MACROS_LIGHT` /
+`MACROS_TEXT_LIGHT` in light. Carbs keeps its yellow fill in both themes.
+
+The macros were picked by measurement (DS10 call 3, owner 22 November 2026).
+On Food, Home and Progress › Food each is 20 or more
+(CIEDE2000) from the ring, carbs, the other macro, running coral, water teal
+and lifting purple in normal vision, and 15 or more at deutan and protan 100
+from the ring, carbs and the other macro, which colour alone separates in the
+meal's bar and the donut (`macroPalette.test.ts`).
+
+| Macro   | Dark      | Light     | Closest in normal vision | Closest at deutan/protan 100 (colour alone)  |
+| ------- | --------- | --------- | ------------------------ | -------------------------------------------- |
+| Protein | `#EC8AF5` | `#A21CAF` | purple 22 (both)         | fat 26; the ring 47 (dark), 52 (light)       |
+| Fat     | `#0D907B` | `#007058` | water 21 / 22            | the ring 16 (dark), the deep ring 17 (light) |
+
+Protein is one colour everywhere, Progress's protein trend included.
 
 ### 3e. Semantic colour meanings are fixed
 
 | Colour              | Always means                                                                                                                                                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Purple `#7B72E9`    | Brand / lifting                                                                                                                                                                                                                                                                |
-| Coral `#D4637A`     | Running / vitals / recovery                                                                                                                                                                                                                                                    |
+| Purple `#7B72E9`    | Lifting, and the brand only in the mark, the lockup and the drawn art (DS10)                                                                                                                                                                                                   |
+| Text and muted grey | The chrome: selection (one selected state, `--segment-selected` under a white label, or a foreground border and tint), links and text buttons, switches, focus rings, chrome icons and callouts, Pro's buttons (DS10)                                                          |
+| Coral `#D4637A`     | Running, and nothing else (DS10 call 2): never "slow", "behind" or an error on a run screen. Slow and behind are neutral with their chevron or word                                                                                                                            |
+| Red `#EF4444`       | An error or a destructive action, always with its icon (`THEME.danger`, `--destructive`)                                                                                                                                                                                       |
+| Pace scale          | Fast light yellow `#F9D86A`, the run's average amber `#D97706`, slow blue `#2975E0` (`THEME.pace`): the route on a run's detail and finish, and the live run's pace bar. Light to dark, each step 15 or more apart in normal, deutan and protan vision (`paceScale.test.ts`)   |
+| Heart-rate zones    | Teal, green, two ambers and zone 5's raspberry `#CD1D93` (`THEME.hrZoneMax`, DS10 call 2: neither the running coral nor the error red), a dot beside its name ("HR Z5") with the bpm in the stat colour                                                                        |
 | Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                                                                                  |
 | Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                                                                              |
-| Green `#4DB872`     | Positive (streak, PR, success)                                                                                                                                                                                                                                                 |
+| Green `#4DB872`     | A done state, as a tick beside neutral words ("✓ Completed", "✓ Verified"). Never "PR", never a fill or a word on its own (DS10 call 4)                                                                                                                                        |
+| Gold                | A best and nothing else: a new best's value on the finish, the longest streak, a best's trophy and New chip (`--achievement`, DS10 call 4). The Bests page's values and the current streak are the text colour                                                                 |
 | Coral-red `#FF6B4A` | Scanning, inside the scanner only — the shutter ring (`THEME.food.scan`) and the scan art in the Pro preview. The scanner's selected mode is a near-white chip (white on coral was 2.8:1). The Food page's camera button is food orange (owner call, CLAUDE.md Button mapping) |
-| Amber `#D97706`     | Warning _banners_ only (`THEME.amber`) — distinct from nutrition orange                                                                                                                                                                                                        |
+| Amber `#D97706`     | Warning _banners_ (`THEME.amber`), and the middle of a data scale: the pace scale's average (DS10). Distinct from nutrition orange                                                                                                                                             |
 
 Never repurpose one of these for an unrelated feature.
 
@@ -555,12 +594,19 @@ Reach for these instead of bespoke markup. They already encode the radius,
 focus ring, touch target, press feedback, AA contrast, and reduced-motion
 behaviour.
 
-- **`Button`** (`src/components/ui/Button.tsx`): variants `primary` (filled
-  brand), `secondary`, `destructive`, `ghost`, `outline`, `sport` (coral run
-  CTA — "Start"/"Go"), `sport-tinted` (coral-tinted non-critical run action).
-  Sizes `sm` 36px / `md` 44px (default) / `lg` 52px. Has `loading`, `leftIcon`,
-  `rightIcon`, `fullWidth`. **Lifting CTAs use `primary`; running CTAs use
-  `sport`.**
+- **`Button`** (`src/components/ui/Button.tsx`): variants `primary` and
+  `neutral` (one button under two names: the text colour filled, DS10),
+  `secondary`, `destructive`, `ghost`, `outline`, `sport` (coral run CTA —
+  "Start"/"Go"), `sport-tinted` (coral-tinted non-critical run action),
+  `lifting-tinted` (a lift's quieter action). Sizes `sm` 36px / `md` 44px
+  (default) / `lg` 52px. Has `loading`, `leftIcon`, `rightIcon`,
+  `fullWidth`. **Running CTAs use `sport`; a lift's filled Start is neutral
+  and its tinted one `lifting-tinted`.**
+- **Links** (`link-standalone`, `link-inline` in `src/index.css`): the text
+  colour. A link that stands on its own line ends in a chevron ("Weekly
+  review", "See all", "Find people"); one inside a sentence is underlined.
+  A text button that acts rather than goes somewhere (Follow, Restore, Load
+  more) takes neither (DS10).
 - **`IconButton`**: icon-only; enforces `aria-label` at compile time; square
   44px default.
 - **`Banner`** (`info` | `warning`): inline, state-derived notices that live in
@@ -571,12 +617,11 @@ behaviour.
 - **`SegmentedControl`**: the one single-select pill group (Train's
   Lift/Run, Social's Together/Feed, Progress's Overview/Bests and ranges).
   The selected segment is a filled pill under a white label, with no outline,
-  as iOS draws its dark-mode control: grey (`--segment-selected`) by
-  default, coral (`--running-fill`) or purple (`--lifting-fill`) for
-  `tone="running"` / `"lifting"`. The fill is the selected state, so it
-  clears 3:1 against the track in both themes and its label 4.5:1
-  (`controlBoundaries.test.ts`). A coloured label on the grey cannot keep
-  the sport coding at AA, which is why the sport rides in the fill.
+  as iOS draws its dark-mode control: grey (`--segment-selected`) on every
+  control, Train's Lift/Run included, so one selected state serves every
+  screen and the sport is in the option's icon and word (DS10 call 1). The
+  fill is the selected state, so it clears 3:1 against the track in both
+  themes and its label 4.5:1 (`controlBoundaries.test.ts`).
   `emphasis="solid"` is the Food meal pills (§3f). `emphasis="tabs"` is
   a page's second level under a track control (Social's Feed, then
   Following / Spaces / Explore): text tabs on a hairline, the selected one
@@ -658,7 +703,8 @@ behaviour.
   new best is the gold card docked above the workout's bottom bar
   (`NewBestMoment`).
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
-  `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
+  `ring-2 ring-primary ring-offset-2`, solid in the text colour so it
+  clears 3:1 on every surface. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
   for CSS (animations.css) and, through `MotionConfig`, for framer's
   POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
@@ -891,23 +937,23 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
 - **The Food hero keeps its wash and three macro cards (owner, 1 November 2026).** A 31 October pass put the ring and the macros on one plain card to calm the page; the owner compared the two on a phone and kept the earlier look, which was restored. Don't flatten the Food hero again without asking. The same day the welcome screen got back its three rows (Lifting, Running, Food, each with its drawing) in place of the pass's single photo. On 11 November 2026 the owner chose the welcome's picture over those rows (DS8, §14p). On 12 November 2026 he replaced that picture with photographs of athletes (§14p).
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — lifting and the brand (DS4 call 1): lifting actions and data, active tab indicators, progress on a lifting goal. Generic actions are neutral. Never as a full background: its only fills are the primary button on a lifting or brand action and, as `--lifting-fill` under a white label, the selected segment of a lifting `SegmentedControl` (§7), and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Brand colour:** Purple #7B72E9 — lifting, and the brand in the mark, the lockup and the drawn art (DS4 call 1, DS10 call 1). Lifting actions and data and progress on a lifting goal take it; the open tab, selection, links, switches, focus and generic actions are neutral (DS10, owner 22 November 2026: the chrome had made purple mean "selected", "a link", "Pro" and "lifting" at once). Never as a full background, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** a T whose stem rises into its bar: a bar notched under its middle and a stem pointed to fit, with an upward chevron as the gap between them. White on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose it on 2026-11-11 (DS7; `docs/visual-audit/bakeoff/DECISION.md`, decision 5) over the hexagon of decision 4, from the top apps' marks: a letter of the name, one shape straight on the field. It is the app icon (with dark and tinted versions for iOS's home-screen modes), the mark in the welcome and sign-in screens' lockup (DS8, §14p), the mark in the share card's lockup, and the launch image (the bar alone). The hexagon is no longer the logo; it stays the shape of badges and empty states (§7). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
 - **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same bar, `#boot-splash`, until the bundle runs). Once its first frame is up it takes the native launch image down (`nativeLaunchImage.ts`; the two frames are the same), so the rise is seen and not played underneath it. The stem rises into the bar; if the app is still loading a beat later, the mark breathes until it leaves. Once the app is ready (on Home, once Home's header mark holds still and Home has drawn today's session and food, `data-page-ready`, waited for at most a second) the mark flies into Home's header mark on a soft arc that leaves upward, on a spring with no bounce, as the page shows; anywhere but Home it lifts a little as the overlay fades. Every movement is a transform or an opacity, played by the Web Animations API on a layer of its own, so it keeps its frames while the app starts underneath. Reduce Motion: the stem fades in where it stays, nothing breathes, and the overlay fades. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
 
 ### 14b. Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
-- Purple brand: #7B72E9 (primary), #9590E0 (light), #6560C8 (dark)
+- Purple: #7B72E9 (lifting; the mark and the art), #9590E0 (light), #6560C8 (dark). `--primary` is NOT purple: it is the text colour (DS10 call 1)
 - Running coral: #D4637A
 - Nutrition orange: #D9884E / #e87316
 - Hydration teal: #52A3BD
 - Success green: #4DB872 / #22b558
-- Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
+- Icon backgrounds: the text colour at 8% (`THEME.iconBg`, `THEME.chrome.tint`), neutral since DS10
 - Card backgrounds: white (light) / #17171B (dark)
 - Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
 - Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
-- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
+- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else: a new best's value on the finish, the longest streak, and a best's trophy and New chip; the Bests page's values are plain, as Strava's and Hevy's are (DS10 call 4). Success green is a tick beside neutral words, never "PR"
 - Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### 14c. Typography (Plus Jakarta Sans + Archivo)
@@ -1143,7 +1189,7 @@ substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
 NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
 not reintroduce structured mode or structured-mode transitions. Settings →
 Run plan asks the one question the model has, whether there is a race:
-a coral `SegmentedControl`, "No race | Training for a race", the same
+a `SegmentedControl`, "No race | Training for a race", the same
 control as the race's Distance. It never names the stored mode.
 
 Constraints these primitives must keep:
@@ -1251,7 +1297,8 @@ the variant by the action's role:
 
 | Action role                   | Variant                         |
 | ----------------------------- | ------------------------------- |
-| Main lifting / brand CTA      | `primary`                       |
+| Main generic CTA (and Pro)    | `primary` (neutral since DS10)  |
+| A lift's own quieter action   | `lifting-tinted` (purple 10%)   |
 | Main running CTA              | `sport` (coral)                 |
 | Secondary action              | `secondary` or `outline`        |
 | Low-emphasis action           | `ghost`                         |
@@ -1295,7 +1342,7 @@ progress bar, the current exercise's ring and the rest's arc.
 | ----------------------------------- | ----------- | ------------------ |
 | Logging food, on any page           | `nutrition` | `nutrition-tinted` |
 | Starting, logging or planning a run | `sport`     | `sport-tinted`     |
-| Starting a lift; a brand action     | `primary`   | `lifting-tinted`   |
+| Starting a lift                     | `neutral`   | `lifting-tinted`   |
 
 So "Log meal" is orange on Progress's empty state and in the manual logger,
 "Log food" is orange on Home's food card and in a search result's serving sheet,
@@ -1430,7 +1477,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **A run's card shows its route on a real map** (Soc15 call 5, 4 November 2026). Strava, Nike Run Club and Garmin draw a run on the streets it went down; a coral line on a wash said nothing about where. Once a run is posted online, the author's app draws the post's route on the basemap the live maps use (OpenFreeMap's Positron and Dark) and names both images on the post (`routeMapUpload.ts`, `routeMapImage.ts`). The card shows the one for the theme on screen in a 5:2 box, the image's own ratio, so nothing is cropped at any text size, and fades it in over the drawn route (`RouteMapHero`; Reduce Motion skips the fade). The drawn route stays when there is no image or it fails to load, and it is never drawn over the image. The line is the drawing's: coral, layered for its glow, a hollow start ring and a solid finish dot. The distance keeps its row under the map. The map shows exactly what the post's preview may (`sharedRouteTrace`: privacy zones cut, ends clipped unless the runner shows them, nothing while the route is withheld), and the credit the live maps fold behind their (i) is drawn into the image's bottom-right corner (`burnBasemapCredit`). A post queued offline, a run on a Space post, a share image and posts from before keep the drawn route.
 - **Photos on posts** (Soc15 call 2, owner, 3 November 2026). Strava, Hevy and Nike Run Club let a post carry the person's own photos; a Tropos post could not. A shared session now carries one to four, checked automatically before anyone else sees them and reportable like the rest of the post. They go on a post that exists, as its map does: Add photos sits under Undo on the finish screen's posted row, where most posts are made because sharing is mostly automatic, and on your own post's page at any time (`PostPhotosSheet`: add up to four in one pick, take any off). The share sheet has no picker; a post waiting offline offers nothing until it is posted, and offline the button is off with "Photos need a connection." Each photo is saved again on the phone at a 1600 px longest edge, JPEG 0.82 (`imageEncode.ts`, which leaves its EXIF, the place it was taken included, behind), uploaded under a random id, screened, and only then named on the post; a refused photo gets the screen's own sentence, any other failure a plain one with Try again, and the photos that passed are added all the same. On the card the photos are one block under the session's numbers and route and before its moments, the same place on a run's, a lift's and a hybrid card, rounded to the card's inner media radius (`rounded-xl`) with a 4px gap: one is the card's width at 4:3; two side by side, square; three one large on the left and two stacked on the right inside 4:3, so the card is as tall as with one; four a 2×2 of squares. Every tile is a box of a fixed ratio before its photo arrives, object-cover, lazy and async, so nothing moves as it loads, and a photo that fails to load leaves a quiet tile (`PostPhotoGrid`). A tap opens the viewer on the media stage (`PostPhotoViewer`): the photo whole, "2 of 3", Close, the arrows, a swipe and the arrow keys between photos, Escape and the device's back to close, focus kept inside and handed back to the photo tapped, and each photo named "Photo 2 of 3 from Maya Chen's run". A photo slides in from its side; Reduce Motion only fades it. The moderation queue shows a reported post's photos as thumbnails; Hide content makes the post private as before. Food9 is unchanged and separate: a meal photo stays on the device.
 - **An invite carries who sent it, and joining from it follows both ways** (Soc15 calls 4 and 5, 4 November 2026). Strava, Duolingo and Hevy credit the person who invited you and connect you at once; Tropos's invite link was the bare front door and carried nobody. Each person has one invite code, eight characters with no 0, O, 1, I, L or U, shown grouped ("K7P4-9M2H"). People's Bring a friend shares `https://troposfit.com/?invite=<code>` and shows the code under "Your code" with Copy code, to read out or paste after installing. Compatible signed iPhone builds can open invite-only Universal Links once Associated Domains and the hosted association are configured (see `docs/ios-invite-links.md`). A link opened before installation does not transfer its code automatically: the browser shows Copy invite code and explains where to paste it, or to reopen the original message’s link afterward. The web app keeps a link's code on the device until setup uses it (`pendingInvite.ts`); the welcome and sign-up screens say "Maya invited you to Tropos" (the first word of the inviter's public name, from a signed-out lookup that names no one it should not) or "A friend invited you to Tropos", with "They'll follow you once you've set up your plan." under it. Setup's last step has an optional "Invited by a friend?" under the name, closed unless a code is waiting; the code is used once the plan is made and a toast says what it made. People offers the same field to an account in its first 14 days that has not used one. **STATUS 5 November 2026 (owner, on a privacy flag):** using an invite counts as the new person accepting the inviter, so the inviter follows them at once; the new person follows the inviter at once only when the inviter has Approve followers off ("You and Maya now follow each other", and the inviter is told "Sam joined from your invite. You follow each other now" under its own switch, Invites, on by default). With approval on, the default, the new person's follow waits as a request marked as from the invite: their toast says "Maya follows you now. Your request to follow them is waiting", and the inviter's notification says "Sam joined from your invite and asked to follow you", with Accept beside it, so a code posted publicly reaches no followers-only post. Bring a friend says which the person's own setting makes. A refusal says why in a sentence (`invites.ts`), and an unknown code, a block either way and a restricted or deleting inviter read the same, so nothing says who has blocked whom. Circles keep their own invite codes.
-- **Weekly leagues** (Soc15 call 3, owner, 3 November 2026; built 5 November 2026). Duolingo's league gives a week a stake: a group of strangers, a countdown, a promotion zone and a result. Tropos's is opt-in and scored against each person's own plan. **Opt-in:** a league shows a first name, a photo and a week's points to about twenty people who may be strangers, so nobody is in one until they tap Join, under a line that says exactly that ("Your first name, photo and weekly points show to the people in your group. Nobody else sees them, and you can leave at any time."). A restricted account sees why it cannot join in Join's place; Leave the league, behind a confirmation, takes the person's row out of the group at once. **Scoring:** points are the share of your own plan done this week, out of 100 (`functions/lib/leagueRules.js`, the planned count `functions/lib/leaguePlanned.js` pinned to `trainingWeek.ts`), so a three-day week done beats six runs half done, and sessions beyond the plan add nothing. **The card** sits in Together's This week, under the weekly challenge, both being this week's and ending on Sunday; it keeps the page's one filled button for the challenge, so Join is the quiet secondary pill. Its four states: not joined (the line above and Join), locked ("The league starts once 10 people have joined. 4 so far." over a bar of the count), waiting ("Your group starts on Monday."), and in a group, where the card wears its tier's light: the drawn badge, "4th of 18" and the points as figures, a bar of the points in the tier's metal, "3 of 4 sessions" and "Ends Sunday". The whole card opens `/league`. **The page:** the badge large in its light, the countdown to the end of your own week ("Ends in 2 days 4 h"), every row (rank, face, first name, "3 of 4 sessions", tier, points), your row picked out as the weekly challenge's leaders pick it out (`LeaderboardRow`), a line under the places that move up ("Top 5 move up a tier", in the success green) and one above those that move down, and Leave the league. Someone blocked either way is left out of your view; the places still count them, so the numbers can skip. **The tiers are drawn, not iconised** (`TierBadge`): a shield in the tier's metal with the tier's mark, one, two and three chevrons for Bronze, Silver and Gold, a star for Platinum and a cut stone for Diamond, so shape as well as colour tells them apart. The first four metals are the badges' own; Diamond's is the brand's purple ramp, pale like the others, as the streak flame's tiers rise through it, so the closed palette gains no colour (`leaguePalettes.ts`). **The result** is revealed once per result per device, full screen on the dark stage, the first time Social opens after Monday's turn (`league-result`, ADR-0004): the new tier's badge in its light, "You moved up to Silver", the place and points, See your league and Done. A rise gets the rays, a spring and confetti; a week held gets the light; a fall gets a softer light, the badge settling in and "A new week has started", and never more than the facts. Reduce Motion fades the badge in and throws nothing. No mid-week nudges: the one notification is Monday's result, under its own switch (Leagues, on by default). **Since Soc16 (owner, 10 November 2026)** the league closes This week, under the challenges the person joined, and the waiting card is quiet: "Weekly league" (not "You're in the league", which a league that has not opened is not), "Leagues open when 10 people have joined." with "4 so far." and its bar only from 3, the bar in bronze, the tier the person starts in, beside the badge; the line on how groups are made lives on the league page. **Since App1 Q6 (owner, 18 November 2026: "Show them, say filling up")** the league is offered from a person's first day, however few people are on Tropos, and Join stays: until groups are made, the card and the page say "The league starts once 10 people have joined. 4 so far." (the count and its bronze bar only from 3, and no number before the server has counted anyone), and once there are enough, "The league starts on Monday. 12 people have joined." Challenges and Spaces are offered the same way, a small one saying "Filling up" in its count's place: the weekly challenge under its name and a challenge's sheet under 3 joined, a Space's card under 5 members (`src/lib/fillingUp.ts`). This reverses the reading of 13 November, which drew no league, challenge or Space for someone not in one below 10 people training; Strava shows a club's real count however small, and Duolingo shows its leaderboard before it opens with what it takes to start.
+- **Weekly leagues** (Soc15 call 3, owner, 3 November 2026; built 5 November 2026). Duolingo's league gives a week a stake: a group of strangers, a countdown, a promotion zone and a result. Tropos's is opt-in and scored against each person's own plan. **Opt-in:** a league shows a first name, a photo and a week's points to about twenty people who may be strangers, so nobody is in one until they tap Join, under a line that says exactly that ("Your first name, photo and weekly points show to the people in your group. Nobody else sees them, and you can leave at any time."). A restricted account sees why it cannot join in Join's place; Leave the league, behind a confirmation, takes the person's row out of the group at once. **Scoring:** points are the share of your own plan done this week, out of 100 (`functions/lib/leagueRules.js`, the planned count `functions/lib/leaguePlanned.js` pinned to `trainingWeek.ts`), so a three-day week done beats six runs half done, and sessions beyond the plan add nothing. **The card** sits in Together's This week, under the weekly challenge, both being this week's and ending on Sunday; it keeps the page's one filled button for the challenge, so Join is the quiet secondary pill. Its four states: not joined (the line above and Join), locked ("The league starts once 10 people have joined. 4 so far." over a bar of the count), waiting ("Your group starts on Monday."), and in a group, where the card wears its tier's light: the drawn badge, "4th of 18" and the points as figures, a bar of the points in the tier's metal, "3 of 4 sessions" and "Ends Sunday". The whole card opens `/league`. **The page:** the badge large in its light, the countdown to the end of your own week ("Ends in 2 days 4 h"), every row (rank, face, first name, "3 of 4 sessions", tier, points), your row picked out as the weekly challenge's leaders pick it out (`LeaderboardRow`), a line under the places that move up ("Top 5 move up a tier", in the text colour since DS10) and one above those that move down, and Leave the league. Someone blocked either way is left out of your view; the places still count them, so the numbers can skip. **The tiers are drawn, not iconised** (`TierBadge`): a shield in the tier's metal with the tier's mark, one, two and three chevrons for Bronze, Silver and Gold, a star for Platinum and a cut stone for Diamond, so shape as well as colour tells them apart. The first four metals are the badges' own; Diamond's is the brand's purple ramp, pale like the others, as the streak flame's tiers rise through it, so the closed palette gains no colour (`leaguePalettes.ts`). **The result** is revealed once per result per device, full screen on the dark stage, the first time Social opens after Monday's turn (`league-result`, ADR-0004): the new tier's badge in its light, "You moved up to Silver", the place and points, See your league and Done. A rise gets the rays, a spring and confetti; a week held gets the light; a fall gets a softer light, the badge settling in and "A new week has started", and never more than the facts. Reduce Motion fades the badge in and throws nothing. No mid-week nudges: the one notification is Monday's result, under its own switch (Leagues, on by default). **Since Soc16 (owner, 10 November 2026)** the league closes This week, under the challenges the person joined, and the waiting card is quiet: "Weekly league" (not "You're in the league", which a league that has not opened is not), "Leagues open when 10 people have joined." with "4 so far." and its bar only from 3, the bar in bronze, the tier the person starts in, beside the badge; the line on how groups are made lives on the league page. **Since App1 Q6 (owner, 18 November 2026: "Show them, say filling up")** the league is offered from a person's first day, however few people are on Tropos, and Join stays: until groups are made, the card and the page say "The league starts once 10 people have joined. 4 so far." (the count and its bronze bar only from 3, and no number before the server has counted anyone), and once there are enough, "The league starts on Monday. 12 people have joined." Challenges and Spaces are offered the same way, a small one saying "Filling up" in its count's place: the weekly challenge under its name and a challenge's sheet under 3 joined, a Space's card under 5 members (`src/lib/fillingUp.ts`). This reverses the reading of 13 November, which drew no league, challenge or Space for someone not in one below 10 people training; Strava shows a club's real count however small, and Duolingo shows its leaderboard before it opens with what it takes to start.
 - **Plan groups** (Soc15, built 5 November 2026). Strava's clubs and Runna's race spaces tell you who else is running your race; Tropos knows which race each plan is for. A plan group is the people on Tropos whose race goal is bound to the same race's space while that race is ahead. They share its date, so they are the same number of weeks out. Only someone in one sees anything of it, and only until their race day. **The card** sits last in Together's This week, under the league: the race's own photo in a 56px rounded tile (the coral flag tile when it has none), "You and 11 others are training for Manchester Marathon" in bold, and "9 weeks to go" under it in the running coral's strong ink ("1 week to go", then "Race week" inside the last seven days), all over the running coral's light, as the league card wears its tier's. The whole card opens the race's space. With fewer than two others (a count under 3, the viewer included), or with no count to read, it says "You're training for Manchester Marathon": a small group is not shown as a number, and a missing count is never a zero. While the count is read, a placeholder holds the card's height. At large text the words drop under the photo rather than stand a word a line beside it. **The hero** of the race's space, for the same person, gains a line under the space's size: "12 people on Tropos are training for this race", and nothing under 3. The hero is 176px and grows when its words need more (larger text, this second line), so they never run up under Back. **The count** is `raceCohorts/{spaceId}`, a number the server recounts and never increments; it names no one, so nobody is left out of it. The weeks are whole weeks from the viewer's own today to their race day (their day of a two-day race), as the "Training for" chip counts them (`planGroup.ts`). **No faces yet.** The people who chose to show "Training for this race" on their profile could stand beside the hero's count, but the app cannot tell a restricted account or the hidden App Review account from anyone else without new rules, and the query needs a collection-group index the emulator cannot check, so the hero shows the number alone. **Since Soc16 (owner, 10 November 2026) the card is Together's hero** (`RaceHero`), the first thing on the page while the person trains for a race: the race's photo the width of the page and at least 280px tall under the coral wash and the dark scrim, "Your race · 9 weeks to go" as its kicker, the race's name as the page's largest words (`text-hero`), its date and place, and, from a group of 3, "You and 11 others on Tropos are training for it". It draws at once and the group's line joins it once the count is read; under 3, or with no count, the line is left out. Without a race the weekly challenge's photo card leads the page.
 - **Together's order** (Soc16, owner, 10 November 2026: "Ok fine I agreed just build it", on a critique of the page). Laid out by the person's question, not by code module: the hero (their race, or the weekly challenge's card), This week (the weekly challenge, the challenges they joined, then the league), Circles, then Discover led by races and Spaces, then the community goal and the challenges to join. Every challenge row carries the medal it is working toward (`MedalArt`, `rowMedal.ts`): bronze for one not joined, the next tier for one joined, gold once gold is theirs; the community goal awards none and keeps its strip. A challenge's header, on the weekly card and in its sheet, is that medal at poster size in a soft light of its sport beside its name and time left (`ChallengeMedalBand`), not a photograph. No count of people under 3 on the page: the community goal's runners, the waiting league's joined count; a Circle of one says nothing of its size (a pair is a Circle, so a Circle's size shows from 2). Ended Circles fold under one "Ended circles" row. The page's one filled button is neutral: the weekly challenge's action, or Start a circle while there is no Circle.
 - **The live pulse** (Soc15, built 5 November 2026). One line that says other people are training today, the last of the lock's list before plan groups. It sits on Social's Feed, the first line under the source control whichever source is on screen, so the control never moves under a thumb when it arrives: "Today: 14 sessions on Tropos" in the small muted line the Feed's other notes use, the figure `font-mono tabular-nums` and semibold, grouped as the reader's locale groups (`toLocaleString`). Before it a brand-purple dot, and a ring of the same purple that grows out of it and fades every 2.4 s (`ds-live-pulse`: transform and opacity only, §14h, and the Feed's one ambient loop); under Reduce Motion the ring is not drawn and the dot stays still. The count is every saved session the challenges would credit, on its own local day, across Tropos (`functions/lib/pulse.js`); the line reads the viewer's own local today live and moves as sessions are saved. Below 10 sessions, while the day's first answer is coming and when it cannot be read, nothing is drawn, not a zero: "Today: 1 session" reads as an empty room, and every new Tropos lives there first. It is not a live region, so a screen reader is not told of every session. Social only: Home stays calm (call 1).

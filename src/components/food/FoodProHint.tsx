@@ -73,7 +73,7 @@ export default function FoodProHint({ limit, isUnlimited, loading }: Props) {
             });
             navigate("/upgrade?from=food");
           }}
-          className="min-h-11 px-1 font-semibold text-lifting-strong active:scale-[0.97] transition-transform"
+          className="min-h-11 px-1 font-semibold text-foreground active:scale-[0.97] transition-transform"
         >
           {ctaLabel}
         </button>

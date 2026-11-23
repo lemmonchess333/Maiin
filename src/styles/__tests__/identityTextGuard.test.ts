@@ -144,7 +144,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-11-21: 16 → 17. A circuit's feed post (Circ1): its rounds, a
   // text-2xl extrabold numeral where a lift's volume numeral stands, at
   // the large-text bar as that one is.
-  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 17 → 16 with DS10 call 1: the lift plan's equipment icon is the
+  // chrome's colour.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -219,7 +221,9 @@ const EXPECTED_INLINE_USES = {
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
   // 2026-10-26: 4 → 3. The exercise picker's dumbbell fallback, which
   // moved into ExerciseThumb with the row's drawing.
-  "THEME.lifting": 3,
+  // 3 → 5 with DS10 call 1: Saved routines' bookmark and play icons are
+  // a lift's, so they say THEME.lifting.
+  "THEME.lifting": 5,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
@@ -252,7 +256,10 @@ const EXPECTED_INLINE_USES = {
   // the same CalendarClock glyph in the same purple. An icon, no text.
   // 2026-11-15: 34 → 33. The training load card's Activity glyph went
   // with that chart (App1 Q16).
-  "THEME.brand": 33,
+  // 33 → 1 with DS10: icon tints, the empty states, the invite card, Pro,
+  // the notifications and the bests' empty state take THEME.chrome.text.
+  // The one left is the streak's flame (WeekPulseView), its drawn colour.
+  "THEME.brand": 1,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -272,6 +279,8 @@ const EXPECTED_INLINE_USES = {
   // `text-nutrition-strong` (the food orange was 2.35:1 on the light
   // field), and the pencil is no longer tinted while the field is
   // focused, since it gives its place to the text then.
+  // DS10 holds it at 9: Pro's adaptive-calorie row is food, so its icon
+  // is the food orange, and Progress's protein trend is protein's colour.
   "THEME.semantic.nutrition": 9,
 } as const;
 
@@ -371,18 +380,11 @@ function bareUses(token: string): string[] {
 // card chip, with no words.
 // 2026-11-11: 44 → 43. Workout preferences went as a page (Trim1 call 7),
 // and its timer icon with it; the Subscription card kept its crown.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
+const BRAND = { token: "primary", step: "lifting-strong" } as const;
 
 describe("identity colour usage is pinned", () => {
-  it("text-primary has the pinned number of bare uses", () => {
-    const uses = bareUses(BRAND.token);
-    expect(
-      uses.length,
-      uses.length > BRAND.bare
-        ? `A new bare text-${BRAND.token} appeared. If it is small text (under 24px, or under 18.66px bold) use text-${BRAND.step} — the brand purple is under 4.5:1 on every surface in both themes, and text-primary-strong is the fill step, not the text step. If it is an icon or a large numeral it is fine; raise the count.\n${uses.slice(BRAND.bare).join("\n")}`
-        : `Bare text-${BRAND.token} dropped to ${uses.length} — lower the pinned count to lock the gain in.`
-    ).toBe(BRAND.bare);
-  });
+  /* `text-primary` is the text colour, which clears AA everywhere, so it
+     is not counted; primaryNeutral.test.ts keeps `--primary` neutral. */
 
   it.each(IDENTITY)("text-%s has the pinned number of bare uses", (token) => {
     const expected = EXPECTED_BARE_USES[token];

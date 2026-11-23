@@ -449,7 +449,7 @@ describe("the lead while the baseline forms", () => {
     serve([week(daysAgo(0), 92, "overreach", true, 1)]);
     renderSection();
     expect(screen.getByText("Early read")).toHaveStyle({
-      color: "hsl(var(--primary-strong))",
+      color: "hsl(var(--lifting-strong))",
     });
     expect(screen.queryByText(/^Backing off$/)).toBeNull();
   });

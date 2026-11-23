@@ -65,7 +65,7 @@ export function EmptyState({
   sub,
   icon: Icon,
   action,
-  accent = THEME.brand,
+  accent = THEME.chrome.muted,
   compact = false,
   className,
 }: EmptyStateProps) {

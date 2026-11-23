@@ -44,12 +44,12 @@ export const THEME = {
 
   // Semantic — harmonised hues, calmer saturation
   semantic: {
-    activity: "#7B72E9", // purple — weight, brand, lifting
+    activity: "#7B72E9", // purple — lifting
     hydration: "#52A3BD", // teal — water
-    vitals: "#D4637A", // coral — health, heart rate, recovery
+    vitals: "#D4637A", // coral — running (heart rate has its own scale, `hrZones`)
     nutrition: "#D9884E", // warm orange — food, calories, macros
-    positive: "#4DB872", // green — positive states (streak, PR)
-    negative: "#D4637A", // shares coral — negative states, alerts
+    positive: "#4DB872", // green — a done state, beside its tick
+    negative: "#EF4444", // red — errors and destructive actions (DS10 call 2)
   },
 
   // Food-specific action colour — used by the Scan CTA on the Food page.
@@ -68,11 +68,14 @@ export const THEME = {
      IS the amber family now, same value as THEME.amber, matching the CSS
      ramp that was already amber (--warning light ≈ amber-700, dark =
      amber-500). Fill/icon use only; TEXT takes hsl(var(--warning-strong)).
-     `success`/`danger` remain value-aliases of semantic.positive/vitals —
-     pixel-correct, name-only debt, pinned in colorCanonical.test.ts. */
+     `success` is a value-alias of semantic.positive, pinned in
+     colorCanonical.test.ts. `danger` is the error red, the dark theme's
+     `--destructive` to a channel, and `semantic.negative` with it. Coral
+     means running only (DS10 call 2): an error is red with its icon, and
+     slow and behind are neutral with their chevron or word. */
   success: "#4DB872",
   warning: "#D97706",
-  danger: "#D4637A",
+  danger: "#EF4444",
   teal: "#52A3BD",
 
   // Text — softer contrast, not harsh white
@@ -123,24 +126,46 @@ export const THEME = {
     runDay: "#D4637A", // coral dot = run day (matches running)
   },
 
-  // Unified icon background
-  iconBg: "rgba(123, 114, 233, 0.10)", // brand tint — subtle
+  /* The chrome's colours for inline styles (DS10 call 1): an icon, a
+     tint or a line that is not the person's
+     data is neutral, so purple means lifting and the brand lives in the
+     mark and the art. `text` and `tint` follow the theme through the
+     tokens; `grey` is the one literal, for what cannot read a CSS
+     variable (a map's paint, a canvas). */
+  chrome: {
+    text: "hsl(var(--foreground))",
+    muted: "hsl(var(--muted-foreground))",
+    tint: "hsl(var(--foreground) / 0.08)",
+    grey: "#A1A1AA",
+    /* The text colour as a literal, per theme: a line on a map. */
+    line: { dark: "#F4F4F6", light: "#0E0E11" },
+  },
 
-  // Macro colours — iconic food per macro:
-  //   protein = meat-pink (Beef), carbs = wheat-gold (Wheat),
-  //   fat = avocado-sage (Avocado). Each tile pairs colour + silhouette
-  //   of the food it stands for. Sage fat is deliberately muted vs the
-  //   punchy success green (#4DB872) so the two never collide as signals.
-  //
-  //   These values are tuned for dark mode and for accents/tints/dots.
-  //   For text on a light card, pair with `MACROS_TEXT_LIGHT` (see below)
-  //   via the `useMacroPalette()` hook — the raw values fail WCAG AA
-  //   contrast on white (#EAB308 ≈ 1.95:1).
+  // Unified icon background: the chrome's tint (DS10 call 1).
+  iconBg: "hsl(var(--foreground) / 0.08)",
+
+  /* Macro colours, the dark theme's (DS10 call 3): protein orchid, carbs
+     wheat-gold, fat jade, each beside its Beef, Wheat or Avocado. Picked
+     by measurement (CIEDE2000, Machado 2009 at severity 100):
+
+       protein #EC8AF5  20 or more from the ring, carbs, fat, coral,
+                        water and lifting purple in normal vision (22 the
+                        closest, purple); 47 from the ring, 53 from carbs
+                        and 26 from fat at deutan and protan 100; 8.1:1 on
+                        the dark card.
+       fat     #0D907B  21 or more from every one of them in normal
+                        vision (21, water); 16 from the ring, 28 from carbs
+                        and 26 from protein at deutan and protan 100;
+                        4.5:1 on the dark card.
+
+     `macroPalette.test.ts` measures every pair. The light theme fills and
+     writes them in `MACROS_LIGHT`, through `useMacroPalette()`: these
+     are under 3:1 on white. Carbs is the same in both themes. */
   macros: {
     calories: "#EF4444", // Tailwind red-500
-    protein: "#EC4899", // Tailwind pink-500
+    protein: "#EC8AF5", // orchid
     carbs: "#EAB308", // Tailwind yellow-500
-    fat: "#7CB46C", // sage avocado
+    fat: "#0D907B", // jade
   },
 
   // The Food calorie ring's shades around the food orange
@@ -170,10 +195,31 @@ export const THEME = {
   chartGrid: "rgba(255,255,255,0.05)",
   chartTooltipBg: "#242429",
 
-  // Pace colours (for splits — used in both themes). The route map's
-  // middle step is `warning`, amber (`routePace.ts`).
-  paceFast: "#4DB872",
-  paceSlow: "#D4637A",
+  /* The run's pace, light to dark (DS10 call 2): a fast stretch light
+     yellow, the run's own average the amber that data scales keep, a slow
+     stretch blue, so no step is the running colour and none is red
+     against green. Each neighbouring step is 15 or more apart
+     (CIEDE2000) in normal vision and at deuteranopia and protanopia
+     severity 100 (Machado 2009); `paceScale.test.ts` measures it. Read by
+     the route's colours (`routePace.ts`) and the live run's pace bar
+     (`PaceZoneBar`). */
+  pace: {
+    fast: "#F9D86A",
+    average: "#D97706",
+    slow: "#2975E0",
+  },
+  /* Heart-rate zone 5, the hottest step of the zones' scale (teal, green,
+     two ambers, then this; RunBottomSheet). A raspberry, so it is
+     neither the running coral nor the error red: 17.0 from coral and 26.8
+     from #EF4444 in normal vision (CIEDE2000). Against zone 4's amber it
+     measures 49.4 normal, 40.7 deutan 100 and 52.4 protan 100 (amber
+     against coral measures 18.9 deutan); its nearest other zone is teal,
+     11.1 at deutan 100. It is the dot beside "HR Z5", 3.2:1 on the stats
+     pill: under 4.5:1, so the bpm keeps the stat colour. The steps that
+     clear 4.5:1 there are violet (lifting's purple), pale, under 15 from
+     coral, or under 9.6 from teal under colour blindness. `paceScale.test.ts` holds
+     the numbers. */
+  hrZoneMax: "#CD1D93",
   // Gradient helpers — subtler transitions
   gradient: {
     brand: "linear-gradient(135deg, #9590E0, #7B72E9)",
@@ -195,6 +241,27 @@ export const RANK_COLORS = [
 ] as const;
 
 /**
+ * The light theme's protein and fat, as fills and as text (DS10 call 3):
+ * the dark theme's values are under 3:1 on white. Each keeps 20 or more
+ * from every colour it meets in light (the ring #D9884E and its deep
+ * step #A34B08, carbs and its text step, coral, both waters, purple) and
+ * 15 or more from the ring, carbs and the other macro at deutan and
+ * protan 100.
+ *
+ *   protein  #A21CAF  6.3:1 on white; 22 from purple, 27 from coral
+ *   fat      #007058  6.1:1 on white; 22 from the water token, 22 from
+ *                     success green; 17 from the ring's deep step at
+ *                     protan 100
+ *
+ * Carbs keeps its yellow as a fill.
+ */
+export const MACROS_LIGHT = {
+  protein: "#A21CAF",
+  carbs: "#EAB308",
+  fat: "#007058",
+} as const;
+
+/**
  * Darker macro colours intended for text rendered on a light card surface.
  *
  * Paired with `THEME.macros.*` via `useMacroPalette()` — that hook returns
@@ -203,15 +270,15 @@ export const RANK_COLORS = [
  * contrast (4.5:1 for body text) on white. All values measured against
  * pure white are ≥ 4.85:1.
  *
- *   protein  #BE185D  pink-700   ~6.1:1
+ *   protein  #A21CAF  fuchsia     ~6.3:1 (MACROS_LIGHT, DS10)
  *   carbs    #A16207  yellow-700 ~4.95:1
- *   fat      #4F7D43  deep sage  ~4.86:1
+ *   fat      #007058  deep jade   ~6.1:1 (MACROS_LIGHT, DS10)
  *   nutrition #B45309 amber-700  ~4.95:1
  */
 export const MACROS_TEXT_LIGHT = {
-  protein: "#BE185D",
+  protein: MACROS_LIGHT.protein,
   carbs: "#A16207",
-  fat: "#4F7D43",
+  fat: MACROS_LIGHT.fat,
   nutrition: "#B45309",
 } as const;
 

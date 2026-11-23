@@ -92,7 +92,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const ACCENT_INK: Record<SpaceDef["accent"], string> = {
   running: "hsl(var(--running-strong))",
   lifting: "hsl(var(--lifting-strong))",
-  brand: "hsl(var(--primary-strong))",
+  brand: "hsl(var(--lifting-strong))",
 };
 
 /* An interest Space is a smaller card than a race: its name and one line

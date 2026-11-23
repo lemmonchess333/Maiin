@@ -20,8 +20,10 @@ function fmtDelta(sec: number): string {
 /**
  * "vs last time" ghost pacing — when re-running a past run, compares your
  * current elapsed time at this point on the route against how long the original
- * took to reach the same distance (routeTimeAtDistance). Green when you're
- * ahead, coral when behind, neutral when level.
+ * took to reach the same distance (routeTimeAtDistance). The words and the
+ * chevron say which: ahead, behind or level. Behind is neutral, since coral
+ * means running (DS10 call 2). Ahead has a green chevron beside neutral
+ * words.
  *
  * Hidden when the route has no real timestamps (GPX without <time>) — there's
  * nothing to race against. The Strava "beat your time" affordance, no deps.
@@ -44,7 +46,7 @@ export default function GhostDeltaChip({
   const delta = elapsedSec - original; // + = behind, - = ahead
   const ahead = delta < -EVEN_S;
   const behind = delta > EVEN_S;
-  const color = ahead ? THEME.success : behind ? THEME.danger : undefined;
+  const chevron = ahead ? THEME.success : undefined;
 
   return (
     <div
@@ -61,22 +63,15 @@ export default function GhostDeltaChip({
       {ahead ? (
         <ChevronUp
           className="size-3.5 shrink-0"
-          style={{ color }}
+          style={{ color: chevron }}
           aria-hidden="true"
         />
       ) : behind ? (
-        <ChevronDown
-          className="size-3.5 shrink-0"
-          style={{ color }}
-          aria-hidden="true"
-        />
+        <ChevronDown className="size-3.5 shrink-0" aria-hidden="true" />
       ) : (
         <Minus className="size-3.5 shrink-0 opacity-60" aria-hidden="true" />
       )}
-      <span
-        className="font-mono font-semibold tabular-nums"
-        style={color ? { color } : undefined}
-      >
+      <span className="font-mono font-semibold tabular-nums">
         {ahead
           ? `${fmtDelta(delta)} ahead`
           : behind

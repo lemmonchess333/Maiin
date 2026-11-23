@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { THEME } from "@/lib/theme";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 interface MealMacroBarProps {
   totalProtein: number;
@@ -27,6 +27,7 @@ export default function MealMacroBar({
   totalFat,
 }: MealMacroBarProps) {
   const reduce = useReducedMotion() === true;
+  const { accent } = useMacroPalette();
 
   const pKcal = totalProtein * 4;
   const cKcal = totalCarbs * 4;
@@ -53,7 +54,7 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${pPct}%`,
-          background: THEME.macros.protein,
+          background: accent.protein,
           opacity: 0.85,
           borderTopLeftRadius: "2px",
           borderBottomLeftRadius: "2px",
@@ -65,7 +66,7 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${cPct}%`,
-          background: THEME.macros.carbs,
+          background: accent.carbs,
           opacity: 0.85,
         }}
       />
@@ -75,7 +76,7 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${fPct}%`,
-          background: THEME.macros.fat,
+          background: accent.fat,
           opacity: 0.85,
           borderTopRightRadius: "2px",
           borderBottomRightRadius: "2px",

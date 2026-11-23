@@ -34,7 +34,7 @@ type LoadingAction = "email" | "google" | "apple" | "reset" | null;
    margin keeping the sentence's own line height (the Sign up toggle below
    uses the same trick). */
 const AGREEMENT_LINK =
-  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium text-foreground underline underline-offset-2 hover:text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm";
+  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm";
 
 export type AccountFormMode = "signIn" | "signUp";
 
@@ -385,7 +385,7 @@ export default function AccountForm({
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={isLoading}
-                className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-lifting-strong hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+                className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-foreground hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
               >
                 {loadingAction === "reset"
                   ? "Sending reset link…"

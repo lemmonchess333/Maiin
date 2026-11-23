@@ -102,16 +102,14 @@ export default function CompactRestTimer({
               strokeDashoffset={done ? 0 : RING * elapsed}
               className={cn(
                 "transition-[stroke-dashoffset] duration-1000 ease-linear",
-                done ? "stroke-success" : "stroke-primary"
+                done ? "stroke-success" : "stroke-lifting"
               )}
             />
           </svg>
           <span
             className={cn(
               "whitespace-nowrap text-xs",
-              done
-                ? "font-semibold text-success-strong"
-                : "text-muted-foreground"
+              done ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >
             {done ? "Rest done" : "Rest"}

@@ -128,7 +128,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
       </div>
       <div className="text-right flex-shrink-0 flex items-center gap-2">
         <div>
-          <p className="text-sm font-bold font-mono tabular-nums text-lifting-strong">
+          <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {isBW && pr.weight === 0 ? (
               "BW"
             ) : isBW && pr.weight > 0 ? (
@@ -215,7 +215,7 @@ function LiftPRList({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-lifting-strong"
+              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-foreground"
             >
               Show all ({prs.length})
             </button>
@@ -277,9 +277,9 @@ export default function PRsTab({
         <div className="p-6 rounded-2xl bg-card text-center space-y-3 dark:card-shadow">
           <div
             className="size-12 rounded-xl flex items-center justify-center mx-auto"
-            style={{ background: `${THEME.brand}15` }}
+            style={{ background: THEME.chrome.tint }}
           >
-            <Trophy size={24} style={{ color: THEME.brand }} />
+            <Trophy size={24} style={{ color: THEME.chrome.text }} />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">

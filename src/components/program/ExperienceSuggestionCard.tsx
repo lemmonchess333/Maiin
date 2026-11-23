@@ -74,7 +74,7 @@ export default function ExperienceSuggestionCard({
       </div>
 
       <details className="group mt-1 pl-12">
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-lifting-strong [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
           Read more
           <ChevronDown
             className="size-4 transition-transform group-open:rotate-180"

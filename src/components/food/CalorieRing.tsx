@@ -180,7 +180,7 @@ export default function CalorieRing({
         ariaLabel + ". Tap to toggle between calories left and calories logged."
       }
       className={cn(
-        "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
+        "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full",
         // Never wider than what holds it: at larger text on the phone
         // the ring's rem size outgrew its card.
         /* Food's wheel is 264px (Food11 call 2; 176 before), a drawing
