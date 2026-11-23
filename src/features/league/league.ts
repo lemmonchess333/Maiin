@@ -22,6 +22,7 @@ import {
   GROUP_MIN,
   isLeagueTier,
   normaliseTier,
+  ordinal,
   rankStandings,
   tierName,
   type LeagueTier,
@@ -219,6 +220,11 @@ export function showsJoinedCount(joined: number): boolean {
 /** "3 of 4 sessions". */
 export function sessionsLine(done: number, planned: number): string {
   return `${done} of ${planned} ${planned === 1 ? "session" : "sessions"}`;
+}
+
+/** The finish's league line (Run30 call 2): "Up to 4th of 18". */
+export function riseLine(rank: number, of: number): string {
+  return `Up to ${ordinal(rank)} of ${of}`;
 }
 
 /** "75 points", "1 point". */
