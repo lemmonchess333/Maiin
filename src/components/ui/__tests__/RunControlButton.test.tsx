@@ -82,14 +82,18 @@ describe("RunControlButton — variants", () => {
     expect(style).toMatch(/rgba\(255,\s*255,\s*255/);
   });
 
-  it("glow prop is opt-in for variants other than primary", () => {
-    // primary has glow always on; neutral respects the prop
-    render(
-      <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
-    );
-    const styleNoGlow = screen.getByRole("button").getAttribute("style") || "";
-    // neutral always has a drop-shadow but no coral-tinted glow
-    expect(styleNoGlow).not.toMatch(/rgba\(212,\s*99,\s*122/);
+  it("draws no coloured glow on either variant, only a neutral shadow", () => {
+    // DESIGN_GUIDE §14o: the fill is the emphasis, never a light round it.
+    for (const variant of ["primary", "neutral"] as const) {
+      const { unmount } = render(
+        <RunControlButton aria-label="X" icon={<svg />} variant={variant} />
+      );
+      const shadow = screen.getByRole("button").style.boxShadow;
+      expect(shadow).toMatch(/rgba\(0,\s*0,\s*0/);
+      expect(shadow).not.toMatch(/rgba\(212,\s*99,\s*122|#d4637a/i);
+      expect(shadow).not.toMatch(/\b0(px)? 0(px)? 32px/);
+      unmount();
+    }
   });
 });
 

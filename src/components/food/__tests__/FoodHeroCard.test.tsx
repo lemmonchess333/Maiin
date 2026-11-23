@@ -332,13 +332,11 @@ describe("FoodHeroCard — the wheel waits for a logged food's flight", () => {
   });
 });
 
-describe("FoodHeroCard — the light behind the wheel", () => {
-  it("is the food orange alone, with no purple (owner, 7 November 2026)", () => {
-    /* It was a wash from orange into the brand purple, the only two-hue
-       gradient on an everyday screen in 178 measured (DS4 §14m rule 13),
-       and dark was 2.5x louder than light. One hue now, drawn by its
-       class (components.css), faint enough to count in neither theme. */
-    const { container } = render(
+describe("FoodHeroCard — the wheel on the flat page", () => {
+  /* DESIGN_GUIDE §14o: the wheel stands on the page with nothing drawn
+     behind it. Its arc is the screen's colour. */
+  const hero = () =>
+    render(
       <MemoryRouter>
         <FoodHeroCard
           selectedDate="2026-06-09"
@@ -348,31 +346,28 @@ describe("FoodHeroCard — the light behind the wheel", () => {
         />
       </MemoryRouter>
     );
-    const glow = container.querySelector(".food-hero-glow") as HTMLElement;
-    expect(glow, "the glow layer").toBeTruthy();
+
+  it("draws no light, wash or purple behind the wheel", () => {
+    const { container } = hero();
+    const box = container.querySelector("[data-hero]") as HTMLElement;
+    expect(box, "the hero").toBeTruthy();
+    expect(container.innerHTML).not.toMatch(/glow|radial-gradient/);
     expect(container.innerHTML).not.toContain("--primary");
-    expect(glow).toHaveAttribute("aria-hidden", "true");
-    expect(glow).toHaveClass("pointer-events-none", "absolute");
+    // The wheel is the hero's first picture: no decorative layer sits
+    // beside it in the box.
+    expect(box.querySelectorAll(':scope > [aria-hidden="true"]')).toHaveLength(
+      0
+    );
   });
 
-  it("is a box no wider than the screen, with nothing wider inside it", () => {
-    // The light is a 340px circle. As an element of its own it reached
-    // 10px past a 320px screen, which the large-text spec counts as a
-    // spill; it is this box's background, drawn at its centre.
-    const { container } = render(
-      <MemoryRouter>
-        <FoodHeroCard
-          selectedDate="2026-06-09"
-          isToday
-          dailyTargets={dailyTargets}
-          dailyTotals={dailyTotals}
-        />
-      </MemoryRouter>
-    );
-    const glow = container.querySelector(".food-hero-glow")!;
-    expect(glow).toHaveClass("inset-x-[-16px]", "h-[340px]");
-    expect(glow.children).toHaveLength(0);
-    expect(glow.className).not.toMatch(/\bw-\[|\bsize-\[/);
+  it("keeps the wheel itself, with no shadow or filter on it", () => {
+    const { container } = hero();
+    const wheel = container.querySelector(
+      "[data-calorie-wheel]"
+    ) as HTMLElement;
+    expect(wheel, "the wheel").toBeTruthy();
+    expect(wheel.style.filter).toBe("");
+    expect(wheel.style.boxShadow).toBe("");
   });
 });
 

@@ -75,10 +75,11 @@ function displayScale(text: string): number {
  * run's map as a full-bleed band), the session's name, one display figure
  * with its caption, and one line.
  *
- * `tone` makes it the reward: the object stands in a glow of the
- * achievement's colour, the line's figure takes the colour, and
- * `confetti` throws once. Without a tone it is the calm summary, the same
- * structure on the plain page.
+ * `tone` makes it the reward: the line's figure and its icon take the
+ * achievement's colour, and `confetti` throws once. Without a tone it is
+ * the calm summary, the same structure. Both stand on the flat page with
+ * no light behind the object (§14o): the reward is the object, the
+ * display figure and the coloured line.
  */
 export default function FinishHero({
   kicker,
@@ -122,16 +123,6 @@ export default function FinishHero({
   useFinishConfetti(tone, confetti);
   const figureText =
     "value" in figure ? figure.value : figure.format(figure.to);
-  /* The achievement's light behind the object (`.ds-finish-glow`, its
-     colour picked by `data-finish-glow`): the reward's colour is the
-     object and its light, never a field (§14m rules 13, 14 and 31). */
-  const glow = tone && (
-    <div
-      aria-hidden="true"
-      data-finish-glow={tone}
-      className="ds-finish-glow pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[min(100%,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-full"
-    />
-  );
   const Icon =
     lineIcon === "trophy" ? Trophy : lineIcon === "flame" ? Flame : null;
   const headingClass =
@@ -165,11 +156,10 @@ export default function FinishHero({
           className={cn(
             "relative mt-2 flex w-full items-center justify-center",
             fill
-              ? "min-h-[clamp(200px,34svh,300px)] flex-1"
-              : "h-[clamp(200px,34svh,300px)]"
+              ? "min-h-[clamp(240px,40svh,340px)] flex-1"
+              : "h-[clamp(240px,40svh,340px)]"
           )}
         >
-          {glow}
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
             initial={reduce ? false : { opacity: 0, scale: 0.92 }}
@@ -181,7 +171,6 @@ export default function FinishHero({
         </div>
       )}
       <div className="relative mt-3 w-full">
-        {!picture && glow}
         {titleLevel === 1 ? (
           <h1 id={titleId} className={cn("relative", headingClass)}>
             <InlineNumerals>{title}</InlineNumerals>

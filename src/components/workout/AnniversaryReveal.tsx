@@ -114,14 +114,6 @@ export default function AnniversaryReveal({
       data-testid="anniversary-reveal"
       data-kind={anniversary.kind}
     >
-      {/* The achievement's light. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background: `radial-gradient(circle at 50% 34%, ${colour}59, transparent 62%)`,
-        }}
-      />
       {/* Its rays. */}
       <motion.div
         aria-hidden="true"
