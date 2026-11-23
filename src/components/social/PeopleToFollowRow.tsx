@@ -30,7 +30,7 @@ export default function PeopleToFollowRow({
           <button
             type="button"
             onClick={onSeeAll}
-            className="inline-flex min-h-[44px] items-center text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+            className="inline-flex min-h-[44px] items-center text-sm font-semibold link-standalone hover:text-foreground/80 transition-colors"
           >
             See all
           </button>

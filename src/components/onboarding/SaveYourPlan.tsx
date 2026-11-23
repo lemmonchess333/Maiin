@@ -40,7 +40,7 @@ export default function SaveYourPlan({ onStart, onStopped }: Props) {
           type="button"
           onClick={() => setMode(mode === "signUp" ? "signIn" : "signUp")}
           aria-pressed={mode === "signIn"}
-          className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+          className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
         >
           {mode === "signUp" ? SAVE_PLAN_COPY.signIn : SAVE_PLAN_COPY.create}
         </button>

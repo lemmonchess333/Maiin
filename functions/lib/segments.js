@@ -74,7 +74,7 @@
  * account's deletion state in the transaction that makes it.
  */
 
-const { isVolumeEligibleRun } = require("./runEligibility");
+const { isVolumeEligibleRun, isTreadmillRun } = require("./runEligibility");
 const { sourceActivityDateKey } = require("./challengeActivityWindow");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
 const { displayNameRefusal } = require("./objectionableText");
@@ -159,9 +159,6 @@ const zonesCol = (db, uid) =>
 function effortId(runId, segmentId, lap) {
   return `${runId}_${segmentId}_${lap}`;
 }
-
-const isTreadmillRun = (data) =>
-  data.place === "treadmill" || data.activityType === "treadmill";
 
 /** Whether a saved run is matched to segments at all. */
 function isMatchableRun(data) {

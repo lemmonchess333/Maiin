@@ -49,22 +49,22 @@ describe("route pace colours (RunMap)", () => {
   });
 
   it("colours a stretch by its pace against the run's average", () => {
-    expect(routePaceColor(0.85)).toBe(THEME.paceFast);
+    expect(routePaceColor(0.85)).toBe(THEME.pace.fast);
     expect(routePaceColor(0.92)).toBe(THEME.warning);
     expect(routePaceColor(1)).toBe(THEME.warning);
     expect(routePaceColor(1.09)).toBe(THEME.warning);
-    expect(routePaceColor(1.1)).toBe(THEME.paceSlow);
-    expect(routePaceColor(Number.NaN)).toBe(THEME.paceSlow);
+    expect(routePaceColor(1.1)).toBe(THEME.pace.slow);
+    expect(routePaceColor(Number.NaN)).toBe(THEME.pace.slow);
   });
 
   it("is one scale from faster to slower, with no brand purple in it", () => {
     /* The route's middle step was the brand purple, the lifting colour,
        and between green and amber it read as a fourth thing rather than
-       a step. The scale is green to amber to coral. */
+       a step. The scale is light yellow to amber to blue (DS10 call 2). */
     expect(colorsTheMapDraws()).toEqual([
-      THEME.paceFast,
+      THEME.pace.fast,
       THEME.warning,
-      THEME.paceSlow,
+      THEME.pace.slow,
     ]);
     expect(colorsTheMapDraws()).not.toContain(THEME.brand);
   });

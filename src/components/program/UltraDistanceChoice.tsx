@@ -37,7 +37,6 @@ export default function UltraDistanceChoice({
       <p className={labelClassName}>Ultra</p>
       <SegmentedControl<UltraRaceDistance>
         ariaLabel="Ultra distance"
-        tone="running"
         value={chosen}
         onChange={onChange}
         options={ULTRA_OPTIONS.map(({ value, label }) => ({ value, label }))}

@@ -9,6 +9,7 @@ import { readString, remove } from "@/lib/localStore";
 import { cancelSetupSave } from "@/lib/setupSave";
 import { pendingEmailChange } from "@/lib/emailChangeNote";
 import { hasSignedInOnThisDevice } from "@/lib/auth";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import InviteNote from "@/components/onboarding/InviteNote";
 import AuthLockup from "@/components/auth/AuthLockup";
@@ -179,8 +180,12 @@ export default function Login() {
             accountDeleted && (
               <div
                 role="status"
-                className="p-3 rounded-xl bg-success/10 border border-success/20 text-success-strong text-sm font-medium"
+                className="flex items-start gap-2 p-3 rounded-xl bg-muted text-foreground text-sm font-medium chip-edge"
               >
+                <CheckCircle2
+                  className="size-4 mt-0.5 shrink-0 text-success-strong"
+                  aria-hidden="true"
+                />
                 Your account and all data have been deleted.
               </div>
             )
@@ -199,7 +204,7 @@ export default function Login() {
           <button
             type="button"
             onClick={startSetup}
-            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 font-semibold link-inline hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
           >
             Get started
           </button>

@@ -373,7 +373,7 @@ export default function Upgrade() {
           <button
             onClick={() => setBeat("offer")}
             type="button"
-            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Back to the Pro overview"
           >
             <ArrowLeft className="size-5 text-foreground" />
@@ -386,7 +386,7 @@ export default function Upgrade() {
         <button
           onClick={leave}
           type="button"
-          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label="Close"
         >
           <X className="size-5 text-muted-foreground" />
@@ -400,8 +400,7 @@ export default function Upgrade() {
           aria-live="polite"
           className={cn(
             "flex items-start gap-3 p-3 rounded-xl",
-            statusBanner.kind === "success" &&
-              "bg-success-bg text-success-foreground",
+            statusBanner.kind === "success" && "bg-muted text-foreground",
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&
@@ -410,7 +409,7 @@ export default function Upgrade() {
         >
           {statusBanner.kind === "success" && (
             <CheckCircle2
-              className="size-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0 text-success-strong"
               aria-hidden="true"
             />
           )}
@@ -503,7 +502,7 @@ export default function Upgrade() {
               "w-full flex items-center justify-center gap-2 min-h-[44px] mt-1 rounded-xl",
               "bg-muted text-foreground text-sm font-semibold",
               "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:opacity-60 disabled:cursor-not-allowed"
             )}
           >

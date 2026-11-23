@@ -2179,12 +2179,12 @@ export default function ProgrammeRunSection({
             <div
               className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
               style={{
-                background: `${THEME.success}10`,
-                border: `1px solid ${THEME.success}30`,
-                color: THEME.success,
+                background: THEME.chrome.tint,
+                border: "1px solid hsl(var(--foreground) / 0.15)",
+                color: THEME.chrome.text,
               }}
             >
-              <Check className="size-3.5" />
+              <Check className="size-3.5" style={{ color: THEME.success }} />
               <span className="font-medium">All runs done this week</span>
             </div>
           )}

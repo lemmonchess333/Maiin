@@ -174,8 +174,11 @@ export default function SecuritySection({
               }
               trailing={
                 emailVerified ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
-                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-foreground">
+                    <CheckCircle2
+                      className="size-3.5 text-success-strong"
+                      aria-hidden="true"
+                    />
                     Verified
                   </span>
                 ) : (

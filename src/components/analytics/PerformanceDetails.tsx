@@ -119,9 +119,9 @@ function ScoreCard({
             <span
               className={
                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                (delta! > 0
-                  ? "bg-success/10 text-success-strong"
-                  : "bg-running/10 text-running-strong")
+                // The sign says which way, so the chip is neutral: coral
+                // means running and green is a tick (DS10).
+                "bg-muted text-foreground"
               }
             >
               {delta! > 0 ? (

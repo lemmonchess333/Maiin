@@ -151,10 +151,10 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
             className="size-14"
           />
         ) : (
-          // The brand /10 chip: on /20 the initials measured 4.13:1.
+          // A neutral /10 chip, the chrome's tint (DS10 call 1).
           <div className="size-full rounded-full bg-primary/10 flex items-center justify-center">
             {initials ? (
-              <span className="text-lg font-bold text-lifting-strong">
+              <span className="text-lg font-bold text-foreground">
                 {initials}
               </span>
             ) : (

@@ -115,7 +115,7 @@ function LiftRowShell({
         navigate(`/workout/${workoutId}`);
       }}
       aria-label={`Open ${label ?? "workout"} details`}
-      className="flex min-h-11 items-center gap-2 w-full text-sm text-left rounded-md -mx-1 px-1 py-2 active:scale-[0.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="flex min-h-11 items-center gap-2 w-full text-sm text-left rounded-md -mx-1 px-1 py-2 active:scale-[0.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {children}
       <ChevronRight
@@ -798,7 +798,7 @@ export default function DayPeekCard({
                 <button
                   type="button"
                   onClick={() => onManage(dateKey)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg transition-transform active:scale-[0.97]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-foreground px-2 min-h-[44px] rounded-lg transition-transform active:scale-[0.97]"
                 >
                   <Settings2 className="size-3.5" />
                   Manage day
@@ -895,7 +895,7 @@ function ExtraRunRow({
       type="button"
       onClick={onTap}
       aria-label={`Extra run: ${distanceText} ${bucketText}, tap to open`}
-      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
       <span className="text-muted-foreground">

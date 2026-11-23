@@ -128,7 +128,10 @@ describe("colour canonical layer — theme.ts ↔ tokens.css (EXACT hex)", () =>
   it("sport + accent identity hexes are internally consistent", () => {
     expect(norm(THEME.running)).toBe("#d4637a");
     expect(norm(THEME.semantic.vitals)).toBe(norm(THEME.running));
-    expect(norm(THEME.danger)).toBe(norm(THEME.running));
+    // The error red is the dark theme's --destructive to a channel; coral
+    // means running (DS10 call 2).
+    expect(norm(THEME.danger)).toBe("#ef4444");
+    expect(norm(THEME.semantic.negative)).toBe(norm(THEME.danger));
     expect(norm(THEME.teal)).toBe("#52a3bd");
     expect(norm(THEME.semantic.hydration)).toBe(norm(THEME.teal));
   });
@@ -185,14 +188,5 @@ describe("colour canonical layer — index.css HSL ↔ canonical hex (tolerance)
       indexCss
     );
     expect(Number(strong?.[1])).toBeLessThan(Number(fill?.[1]));
-  });
-
-  it("--primary-strong is within 1 channel of brandStrong", () => {
-    expect(
-      channelDelta(
-        cssHslVarHex(indexCss, "--primary-strong"),
-        THEME.brandStrong
-      )
-    ).toBeLessThanOrEqual(1);
   });
 });

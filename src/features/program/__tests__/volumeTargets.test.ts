@@ -124,6 +124,33 @@ describe("weeklyVolumeTargets — the person's own week", () => {
     }
   });
 
+  it("with no sex stored, never reads a Prefer not to say plan below its targets", () => {
+    /* Setup stores no `sex` for Prefer not to say (owner, 22 November
+       2026). The week that fits and the plan are built on the same
+       midpoint first weights, so the targets still hold the plan. */
+    for (const answers of people) {
+      const { state, profile } = firstPlan({
+        ...answers,
+        gender: "unspecified",
+      });
+      const unset = { ...profile, sex: undefined };
+      const targets = weeklyVolumeTargets({
+        goal: state.primaryGoal,
+        experience: unset.experience,
+        days: state.workouts.length,
+        sessionMinutes: state.sessionMinutes,
+        ...targetKit(unset),
+      });
+      expect(targetKit(unset).sex).toBeUndefined();
+      const low = weeklyVolumeByJudgementMuscle(state.workouts).filter(
+        ({ muscle, sets }) =>
+          classifyVolume(sets, targets.get(muscle)!) === "low"
+      );
+      expect(low, JSON.stringify(answers)).toEqual([]);
+      expect(volumeTargetsFor(unset)).toEqual(targets);
+    }
+  });
+
   it("gives History the targets Train judges the same person against", () => {
     for (const answers of people) {
       const { state, profile } = firstPlan(answers);

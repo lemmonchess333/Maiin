@@ -17,6 +17,7 @@ import type {
   ScheduledRunDay,
   ManualCompletion,
 } from "@/features/program/programTypes";
+import { isTreadmillRun } from "@/lib/runGuards";
 
 const GENERAL_DISTANCE_RATIO = 0.7;
 
@@ -41,6 +42,8 @@ export interface SavedRunLike {
   /** The session the run was set up as (`RunConfig.activityType`): what
    *  was run, where `templateId` falls back to what was planned. */
   activityType?: string;
+  /** "treadmill" for a run on one (`isTreadmillRun`). */
+  place?: string | null;
   createdAt?: { seconds?: number } | Date | number;
 }
 
@@ -107,11 +110,26 @@ function templateBucket(
   return lookup[templateId] === "quality" ? "quality" : "easy";
 }
 
+/** The plan's race: by its type, or by a race template, swapped in or not. */
+function isRaceDay(runDay: ScheduledRunDay, deps: CompletionDeps): boolean {
+  if (runDay.type === "race") return true;
+  const isRaceTemplate = deps && deps.isRaceTemplate;
+  return (
+    !!isRaceTemplate && isRaceTemplate(runDay.userOverride || runDay.templateId)
+  );
+}
+
 function distanceAndBucketOk(
   runDay: ScheduledRunDay,
   saved: SavedRunLike,
   deps: CompletionDeps
 ): boolean {
+  /* A treadmill run is not the race: its distance is typed in, and the
+     server's race-day rule (`isStrictRaceRun`) refuses it, so the race day
+     goes on to read as missed (`race_no_show`). It fills no race day here
+     either, and shows as an extra. A manual entry, from someone who raced
+     without their phone, still fills it. */
+  if (isTreadmillRun(saved) && isRaceDay(runDay, deps)) return false;
   const plannedDistanceFor =
     (deps && deps.plannedDistanceFor) || defaultPlannedDistanceFor;
   const plannedDistance = plannedDistanceFor(runDay);

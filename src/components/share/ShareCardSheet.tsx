@@ -462,7 +462,7 @@ export function ShareCardSheet({
                       ? // Brand words on a brand tint take --lifting-strong,
                         // the brand's tint-aware text step. --primary-strong
                         // is the white-on-fill step and misses AA here.
-                        "bg-primary/10 text-lifting-strong"
+                        "bg-primary/10 text-foreground"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >

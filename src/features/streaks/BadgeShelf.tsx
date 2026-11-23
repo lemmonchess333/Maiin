@@ -90,7 +90,7 @@ export default function BadgeShelf({
                  the latter is 4.42:1 on the light page and 3.86:1 on the
                  dark one, under the 4.5:1 small text needs (axe caught
                  it here; the medals' link had the same class). */
-              className="-mr-2 min-h-[44px] text-lifting-strong"
+              className="-mr-2 min-h-[44px] link-standalone"
               aria-expanded={showAll}
               onClick={() => onToggle?.(!showAll)}
             >

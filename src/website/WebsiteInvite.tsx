@@ -50,7 +50,7 @@ export default function WebsiteInvite({ code }: { code: string }) {
   };
 
   return (
-    <div className="p-[12px] rounded-xl bg-stage-raised border border-primary/20 text-sm">
+    <div className="p-[12px] rounded-xl bg-stage-raised border border-lifting/20 text-sm">
       <div className="flex items-start gap-2.5">
         <UserPlus
           className="size-4 shrink-0 mt-0.5 text-lifting-strong"

@@ -116,7 +116,7 @@ export default function SavedRoutinesSection() {
       <div className="flex items-center gap-2">
         <Bookmark
           className="size-5 shrink-0"
-          style={{ color: THEME.brand }}
+          style={{ color: THEME.lifting }}
           aria-hidden="true"
         />
         <SectionHeading>Saved routines</SectionHeading>
@@ -154,10 +154,10 @@ export default function SavedRoutinesSection() {
               >
                 <div
                   className="size-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: `${THEME.brand}14` }}
+                  style={{ background: `${THEME.lifting}14` }}
                   aria-hidden="true"
                 >
-                  <Play className="size-4" style={{ color: THEME.brand }} />
+                  <Play className="size-4" style={{ color: THEME.lifting }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">

@@ -33,12 +33,15 @@ export default function PaceLegend({ className }: { className?: string }) {
       <SectionLabel as="span">Route pace</SectionLabel>
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         Faster
+        {/* Each swatch has an edge at half the text colour (PACE_KEY_EDGE,
+            3:1 or more on the card in both themes), so the light fast step
+            reads on white as the route does inside its dark casing. */}
         <span className="flex gap-0.5">
           {ROUTE_PACE_STEPS.map((step) => (
             <span
               key={step.color}
               data-testid="route-pace-step"
-              className="h-[6px] w-[16px] rounded-full"
+              className="h-[6px] w-[16px] rounded-full ring-1 ring-foreground/50"
               style={{ background: step.color }}
             />
           ))}

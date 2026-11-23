@@ -725,7 +725,7 @@ export default function SessionCompleteScreen({
           )}
 
           <details className="group space-y-4">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
               Session details
               <ChevronDown
                 className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
@@ -921,7 +921,7 @@ function DetailRow({
           {value}
         </span>
       </span>
-      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-lifting-strong">
+      <span className="ml-auto flex shrink-0 items-center gap-1 text-sm font-semibold text-foreground">
         {action}
         <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
       </span>
