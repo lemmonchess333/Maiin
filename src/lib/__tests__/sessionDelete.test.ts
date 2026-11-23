@@ -38,6 +38,11 @@ import {
   readDoc,
 } from "@/test/firestoreHarness";
 import { deleteLoggedSession } from "@/lib/sessionDelete";
+import {
+  forgetPlacingHistory,
+  holdRunHistory,
+  placingHistory,
+} from "@/lib/runPlacingHistory";
 
 /** Deletes only, in the order they were applied. */
 function deletions(): string[] {
@@ -75,6 +80,24 @@ describe("deleteLoggedSession", () => {
     expect(allPaths()).not.toContain("users/u1/runs/r-1");
     expect(allPaths()).toContain("users/u1/workouts/w-1");
     expect(queueHealthWorkoutDeletion).toHaveBeenCalledWith("u1", "r-1");
+  });
+
+  it("takes a deleted run out of the history a run's page ranks against", async () => {
+    forgetPlacingHistory();
+    const at = new Date(2026, 7, 5);
+    holdRunHistory(
+      "u1",
+      [
+        { id: "r-1", completedAt: at, distance: 6000 },
+        { id: "r-2", completedAt: at, distance: 5000 },
+      ],
+      true
+    );
+    await deleteLoggedSession({ uid: "u1", kind: "run", id: "r-1" });
+    // POSITIVE anchor: the run itself is gone from the store.
+    expect(allPaths()).not.toContain("users/u1/runs/r-1");
+    expect(placingHistory("u1")?.runs.map((run) => run.id)).toEqual(["r-2"]);
+    expect(placingHistory("u1")?.known).toBe(true);
   });
 
   it("retains a run when its Health cleanup intent cannot be stored", async () => {

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 const H = vi.hoisted(() => ({
   result: { kind: "cancelled" } as unknown,
+  ios: true,
   toastError: vi.fn(),
   track: vi.fn(),
 }));
@@ -25,10 +26,13 @@ const purchase = vi.hoisted(() =>
 );
 vi.mock("@/lib/purchaseProvider", () => ({
   purchase,
-  isNativeIOS: () => true,
+  isNativeIOS: () => H.ios,
 }));
 
 import { useProCheckout } from "../useProCheckout";
+import { noteTrialOfferWebCheckout } from "@/lib/trialOffer";
+
+const NOTE = "tropos.trialOffer.webCheckout.u1";
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <MemoryRouter initialEntries={["/upgrade"]}>{children}</MemoryRouter>
@@ -43,6 +47,44 @@ beforeEach(() => {
   H.track.mockReset();
   purchase.mockClear();
   auth.user = { uid: "u1", email: "a@example.com" };
+  H.ios = true;
+  sessionStorage.clear();
+});
+
+/* The website's checkout returns to Upgrade whatever began it; the note
+   that sends a return on Home is the one checkout's that wrote it. */
+describe("useProCheckout, the website's checkout and the trial offer", () => {
+  beforeEach(() => {
+    H.ios = false;
+    H.result = { kind: "redirected", url: "https://pay.rev.cat/x" };
+  });
+
+  it("a checkout from the trial offer that leaves notes its return goes Home", async () => {
+    const { result } = renderHook(() => useProCheckout(), { wrapper });
+    await act(() =>
+      result.current.startCheckout("yearly", { fromTrialOffer: true })
+    );
+    expect(sessionStorage.getItem(NOTE)).toBe("1");
+  });
+
+  it("any other checkout clears a note an earlier one left", async () => {
+    noteTrialOfferWebCheckout("u1");
+    expect(sessionStorage.getItem(NOTE)).toBe("1");
+    const { result } = renderHook(() => useProCheckout(), { wrapper });
+    await act(() => result.current.startCheckout("yearly"));
+    expect(purchase).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem(NOTE)).toBeNull();
+  });
+
+  it("a checkout from the trial offer that never left keeps no note", async () => {
+    H.result = { kind: "failed", message: "No." };
+    const { result } = renderHook(() => useProCheckout(), { wrapper });
+    await act(() =>
+      result.current.startCheckout("yearly", { fromTrialOffer: true })
+    );
+    expect(purchase).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem(NOTE)).toBeNull();
+  });
 });
 
 describe("useProCheckout", () => {

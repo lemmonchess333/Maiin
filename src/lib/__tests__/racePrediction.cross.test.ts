@@ -7,7 +7,11 @@
  *    race-day rule accepts (`functions/lib/raceDayCompletion.js`,
  *    `isStrictRaceRun`, on the race's date). If the two drift, a race the
  *    plan counts as run keeps no comparison, or a run the plan does not
- *    count keeps one.
+ *    count keeps one. Both refuse a treadmill run by the same reading
+ *    (`isTreadmillRun`, its place or its older type), and both still take
+ *    a manual entry. The server's reading is one function
+ *    (`functions/lib/runEligibility.js`), which the segment matcher reads
+ *    too.
  * 2. What the report reads. The operator report
  *    (`functions/scripts/report-race-predictions.js`) scores the record the
  *    app saves on the run (`runDocument`); if the shape drifts, the report
@@ -33,6 +37,7 @@ import { runDocument, type FinishedRun } from "../runCompletion";
 import { elapsedSecondsOf, raceSeconds } from "../runElapsed";
 import { parseSavedRun } from "../savedRuns";
 import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
+import { isTreadmillRun } from "../runGuards";
 
 const require_ = createRequire(import.meta.url);
 const server = require_("../../../functions/lib/raceDayCompletion") as {
@@ -40,6 +45,13 @@ const server = require_("../../../functions/lib/raceDayCompletion") as {
   PLANNED_RACE_DISTANCE_METERS: Record<string, number>;
   plannedDistanceFor: (distance: string) => number;
   isStrictRaceRun: (run: unknown, plannedMeters: number) => boolean;
+  isTreadmillRun: (run: unknown) => boolean;
+};
+const eligibility = require_("../../../functions/lib/runEligibility") as {
+  isTreadmillRun: (run: unknown) => boolean;
+};
+const segments = require_("../../../functions/lib/segments.js") as {
+  isMatchableRun: (run: unknown) => boolean;
 };
 const report = require_(
   "../../../functions/scripts/report-race-predictions"
@@ -79,6 +91,44 @@ describe("the goal race: the app and the server's race-day rule agree", () => {
     { isInvalid: false, savedAnyway: false },
   ];
   const days = [RACE_DAY, "2027-03-27", "2027-03-29"];
+  /* Where and how it was run: outdoors with no type, a race run, a manual
+     entry, a treadmill run by its place, and one saved before the
+     treadmill became a place (Pgm8). */
+  const kinds = [
+    {},
+    { activityType: "race", place: null },
+    { activityType: "manual" },
+    { activityType: "race", place: "treadmill" },
+    { activityType: "treadmill" },
+  ];
+
+  it("reads a treadmill run as the app does", () => {
+    // One server reading: the race-day rule's is the shared one.
+    expect(server.isTreadmillRun).toBe(eligibility.isTreadmillRun);
+    for (const kind of [...kinds, { place: "outdoor" }, null])
+      expect(server.isTreadmillRun(kind), JSON.stringify(kind)).toBe(
+        isTreadmillRun(kind)
+      );
+    // Anchor: both readings meet a treadmill run.
+    expect(kinds.filter((kind) => server.isTreadmillRun(kind))).toHaveLength(2);
+  });
+
+  it("matches segments on no run the app calls a treadmill run", () => {
+    // A saved GPS run that counts, with a trace to match.
+    const gps = {
+      distance: 5000,
+      duration: 1500,
+      points: [
+        { lat: 51.44, lon: -0.15 },
+        { lat: 51.45, lon: -0.15 },
+      ],
+    };
+    for (const kind of kinds)
+      expect(
+        segments.isMatchableRun({ ...gps, ...kind }),
+        JSON.stringify(kind)
+      ).toBe(!isTreadmillRun(kind));
+  });
 
   it.each(distances)(
     "answers the same for every %s run on and around race day",
@@ -87,20 +137,38 @@ describe("the goal race: the app and the server's race-day rule agree", () => {
       const planned = server.plannedDistanceFor(distance);
       expect(planned).toBe(server.PLANNED_RACE_DISTANCE_METERS[distance]);
       let accepted = 0;
+      let treadmillRefused = 0;
+      let manualAccepted = 0;
       for (const share of shares)
         for (const extra of flags)
-          for (const date of days) {
-            const run = { date, distance: planned * share, ...extra };
-            const serverSays =
-              run.date === goal.targetDate &&
-              server.isStrictRaceRun(run, planned);
-            expect(isGoalRaceRun(run, goal), JSON.stringify(run)).toBe(
-              serverSays
-            );
-            if (serverSays) accepted++;
-          }
-      // Anchor: some runs were the race, so the agreement is not all "no".
+          for (const kind of kinds)
+            for (const date of days) {
+              const run = {
+                date,
+                distance: planned * share,
+                ...extra,
+                ...kind,
+              };
+              const serverSays =
+                run.date === goal.targetDate &&
+                server.isStrictRaceRun(run, planned);
+              expect(isGoalRaceRun(run, goal), JSON.stringify(run)).toBe(
+                serverSays
+              );
+              if (serverSays) accepted++;
+              if (serverSays && run.activityType === "manual") manualAccepted++;
+              if (
+                !serverSays &&
+                isTreadmillRun(run) &&
+                isGoalRaceRun({ ...run, place: null, activityType: null }, goal)
+              )
+                treadmillRefused++;
+            }
+      // Anchors: some runs were the race, a manual entry among them, and a
+      // run that would have been the race was refused for its treadmill.
       expect(accepted).toBeGreaterThan(0);
+      expect(manualAccepted).toBeGreaterThan(0);
+      expect(treadmillRefused).toBeGreaterThan(0);
     }
   );
 });

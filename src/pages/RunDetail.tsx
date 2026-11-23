@@ -45,6 +45,9 @@ import BestEffortsCard, {
   type BestEffort,
 } from "../components/run/BestEffortsCard";
 import { KEPT_ROUTE_POINTS } from "@/lib/routeSegments";
+import { useRunPlacings } from "@/hooks/useRunPlacings";
+import type { PlacedRun } from "@/lib/runPlacings";
+import { parseSavedRun } from "@/lib/savedRuns";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -192,6 +195,17 @@ export default function RunDetail() {
       ? detectBestEfforts(keptTrack, keptDistance ?? 0)
       : [];
   }, [keptTrack, keptDistance, savedEfforts, savedInvalid]);
+
+  /* Your top three (Run29): the place the efforts above hold among the
+     runs that started before this one, as those runs are now. The run is
+     read as the saved-run reader reads every run it is ranked against
+     (`parseSavedRun`: its start, its type, where it was run), and the
+     times ranked are the ones the card shows. */
+  const placingRun = useMemo<PlacedRun | null>(() => {
+    const parsed = run && runId ? parseSavedRun(runId, run) : null;
+    return parsed ? { ...parsed, bestEfforts } : null;
+  }, [run, runId, bestEfforts]);
+  const placings = useRunPlacings(user?.uid, placingRun);
 
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
@@ -387,7 +401,7 @@ export default function RunDetail() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Back"
-            className="absolute top-4 left-4 size-11 rounded-full flex items-center justify-center backdrop-blur-md z-10"
+            className="absolute top-4 left-4 size-11 rounded-full flex items-center justify-center backdrop-blur-md z-10 transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -411,7 +425,7 @@ export default function RunDetail() {
             type="button"
             onClick={startReplay}
             disabled={replaying}
-            className="absolute bottom-3 right-3 inline-flex items-center px-3 min-h-[44px] rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
+            className="absolute bottom-3 right-3 inline-flex items-center px-3 min-h-[44px] rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50 transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
             style={{
               background: "rgba(0,0,0,0.55)",
               color: "white",
@@ -671,7 +685,7 @@ export default function RunDetail() {
 
         {/* The finish screen's two cards, in its order: best efforts,
             then one splits table. */}
-        <BestEffortsCard efforts={bestEfforts} />
+        <BestEffortsCard efforts={bestEfforts} placings={placings} />
         {/* Run26 call 3: the segments this run was timed on. */}
         <Suspense fallback={null}>
           <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
@@ -808,6 +822,8 @@ export default function RunDetail() {
             typeof run.sharedActivityId === "string"
               ? run.sharedActivityId
               : undefined,
+          // Any other card's page goes with the run (Soc17).
+          runId,
           points: sharedPoints,
           distanceKm: run.distance / 1000,
           durationSec: run.duration,

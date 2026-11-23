@@ -43,8 +43,9 @@ export async function generateShareImage(
 
 /**
  * Hand a generated share card to the share sheet, its words ending in a
- * link to Tropos (`withAppLink`): `link` when the card is of a public post
- * (its page, `publicPostUrl`), else the front door (Web Share API — works in
+ * link to Tropos (`withAppLink`): `link`, the card's page (a public post's,
+ * `publicPostUrl`, or its own, `sharedCardUrl`) or the sharer's invite
+ * link, else the front door (Web Share API, which works in
  * browsers AND the iOS WKWebView), falling back to a download on the web
  * only: the native app has no download, so there a card the sheet cannot
  * take is a failure, not a silent "downloaded". A user-cancelled share

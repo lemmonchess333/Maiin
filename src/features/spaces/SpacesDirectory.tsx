@@ -92,7 +92,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const ACCENT_INK: Record<SpaceDef["accent"], string> = {
   running: "hsl(var(--running-strong))",
   lifting: "hsl(var(--lifting-strong))",
-  brand: "hsl(var(--primary-strong))",
+  brand: "hsl(var(--lifting-strong))",
 };
 
 /* An interest Space is a smaller card than a race: its name and one line
@@ -208,7 +208,9 @@ function SpaceCard({
       {event && (
         <span
           className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
+            photo
+              ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
+              : ""
           }`}
           /* Same chip grammar as Joined. On a photo the pill is the SCRIM
              register (photo-overlay text is white-over-dark-scrim in both
@@ -232,7 +234,9 @@ function SpaceCard({
       {joined && (
         <span
           className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
+            photo
+              ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
+              : ""
           }`}
           style={
             photo

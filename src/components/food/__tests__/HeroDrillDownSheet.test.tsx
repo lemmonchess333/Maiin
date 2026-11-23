@@ -28,8 +28,11 @@ vi.mock("@/lib/subscription", () => ({
 }));
 
 // Micro reference targets read profile.sex via useAuth — stub it.
+const auth = vi.hoisted(() => ({
+  profile: { sex: "male" } as { sex?: "male" | "female" },
+}));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ profile: { sex: "male" } }),
+  useAuth: () => ({ profile: auth.profile }),
   useUid: () => null,
 }));
 
@@ -375,6 +378,30 @@ describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", ()
     );
     expect(text).toMatch(/460 mg left/);
     expect(text).not.toMatch(/\dmg\b/);
+  });
+
+  /* Setup stores no `sex` for Prefer not to say (owner, 22 November 2026),
+     and the fibre goal is the midpoint of 38 and 25, rounded to 32 g, not
+     a man's 38 g. */
+  it("sets fibre's goal at 32 g with no sex stored", () => {
+    auth.profile = {};
+    try {
+      render(
+        <HeroDrillDownSheet
+          open
+          onOpenChange={() => {}}
+          selectedDate="2026-07-13"
+          isToday
+          dailyTotals={{ ...totals, fiber: 18 }}
+          dailyTargets={targets()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      expect(text).toMatch(/18\s*\/ 32g/);
+      expect(text).toMatch(/14g to goal/);
+    } finally {
+      auth.profile = { sex: "male" };
+    }
   });
 });
 

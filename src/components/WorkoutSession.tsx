@@ -2360,6 +2360,7 @@ export default function WorkoutSession({
               : undefined
           }
           onLogFood={onLogFood}
+          savedWorkoutId={savedWorkoutId ?? undefined}
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -2545,7 +2546,7 @@ export default function WorkoutSession({
       {/* Progress bar */}
       <div className="h-1 bg-muted">
         <div
-          className="h-full bg-primary transition-all duration-300"
+          className="h-full bg-lifting transition-all duration-300"
           style={{
             width: `${totalSetsTotal > 0 ? (totalSetsCompleted / totalSetsTotal) * 100 : 0}%`,
           }}
@@ -2602,7 +2603,7 @@ export default function WorkoutSession({
                   className={cn(
                     "relative rounded-lg",
                     active &&
-                      "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      "ring-2 ring-lifting ring-offset-2 ring-offset-background"
                   )}
                 >
                   <ExerciseThumb
@@ -2611,7 +2612,7 @@ export default function WorkoutSession({
                     className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
-                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-lifting-fill text-white ring-2 ring-background">
                       <Check className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
@@ -2942,7 +2943,7 @@ export default function WorkoutSession({
                           "border-t border-border/40 px-3 py-1.5 transition-colors short:py-0.5",
                           !set.completed &&
                             setIdx === currentSetIndex &&
-                            "bg-primary/10"
+                            "bg-lifting/10"
                         )}
                       >
                         <button
@@ -3108,7 +3109,6 @@ export default function WorkoutSession({
                             ariaLabel={`RPE for ${lowerFirst(name)}`}
                             value={set.rpe ?? null}
                             layout="wrap"
-                            tone="lifting"
                             options={RPE_OPTIONS.map((rpe) => ({
                               value: rpe,
                               label: rpe,

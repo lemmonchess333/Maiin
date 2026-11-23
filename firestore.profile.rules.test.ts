@@ -1708,3 +1708,52 @@ suite("users/{uid}.emailConsent — the server's record (App1 Q55)", () => {
     await assertSucceeds(updateDoc(doc(db, "users/ec3"), { darkMode: false }));
   });
 });
+
+/* Settings › Profile's Not set (owner, 22 November 2026) takes `sex` off the
+   profile and puts setup's "Prefer not to say" in `gender`, in the one merge
+   write `updateProfile` sends. The calorie maths and first weights then take
+   the midpoint of the male and female figures (`src/lib/sex.ts`). */
+suite("users/{uid} sex: the owner may clear it", () => {
+  it("accepts taking `sex` off with `gender` set to unspecified", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/sex1"), {
+        ...signupProfile("sex1"),
+        sex: "female",
+        gender: "female",
+      });
+    });
+    const db = env.authenticatedContext("sex1").firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, "users/sex1"),
+        { gender: "unspecified", sex: deleteField() },
+        { merge: true }
+      )
+    );
+    // And an answer can be given again afterwards.
+    await assertSucceeds(
+      setDoc(
+        doc(db, "users/sex1"),
+        { sex: "male", gender: "male" },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses the same write on someone else's profile", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/sex2"), {
+        ...signupProfile("sex2"),
+        sex: "female",
+      });
+    });
+    const db = env.authenticatedContext("someone-else").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "users/sex2"),
+        { gender: "unspecified", sex: deleteField() },
+        { merge: true }
+      )
+    );
+  });
+});

@@ -344,3 +344,24 @@ describe("the 30-minute goal from setup", () => {
     expect(plan.profileUpdates.runMode).toBe("freeform");
   });
 });
+
+/* Setup built every plan but a woman's on a man's first weights, "Prefer
+   not to say" included (rankings spec, 22 November 2026). With no answer
+   the first weights take the midpoint factor (owner, the same day). */
+describe("the first weights for each answer to sex", () => {
+  const lifts = { ...draft, runFrequency: "none" as const };
+  const firstSquat = (gender: OnboardingDraft["gender"]) => {
+    const plan = buildOnboardingPlan({ ...lifts, gender }, "recomp", today);
+    const squat = plan.programState.workouts
+      .flatMap((d) => d.exercises)
+      .find((e) => e.exerciseId === "squat");
+    expect(squat, "the plan has a squat").toBeTruthy();
+    return squat!.weight;
+  };
+
+  it("starts Prefer not to say between the man's and the woman's", () => {
+    const none = firstSquat("unspecified");
+    expect(none).toBeLessThan(firstSquat("male"));
+    expect(none).toBeGreaterThan(firstSquat("female"));
+  });
+});

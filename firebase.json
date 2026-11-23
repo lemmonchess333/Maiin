@@ -12,6 +12,13 @@
         }
       },
       {
+        "source": "/card/**",
+        "function": {
+          "functionId": "sharedCardPage",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/email/unsubscribe",
         "function": {
           "functionId": "emailUnsubscribe",
@@ -19,7 +26,7 @@
         }
       },
       {
-        "regex": "^/(?:admin|circuit|diagnostics|dev|empty-workout|followers|following|history|league|onboarding|program|review|routine|run|run-summary|segment|settings|space|upgrade|user|workout)(?:/.*)?$",
+        "regex": "^/(?:admin|circuit|diagnostics|dev|empty-workout|followers|following|history|league|onboarding|program|review|routine|run|run-summary|segment|settings|setup|space|trial-offer|upgrade|user|workout)(?:/.*)?$",
         "destination": "/index.html"
       }
     ],

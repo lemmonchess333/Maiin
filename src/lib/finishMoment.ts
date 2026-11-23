@@ -102,6 +102,10 @@ export interface RewardLineContext {
   prBefore?: { weightKg: number; reps: number } | null;
   /** The fastest earlier effort at the distance, in seconds. */
   fastestBefore?: number | null;
+  /** Who the sentence speaks to: the person, on their own finish ("You
+   *  rowed …"), or anyone who sees their share card, which names no one
+   *  and drops the "you" ("Rowed …"; owner, 22 November 2026). */
+  voice?: "finish" | "card";
 }
 
 /** A reward's one sentence, its figure apart so the screen can draw it in
@@ -130,6 +134,16 @@ const LIFT_VERBS: readonly [RegExp, string][] = [
   [/\bcurls?\b/i, "curled"],
 ];
 
+/** The card's sentence starts on its verb: "Rowed", not "rowed". */
+function capitalised(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/** A reward's sentence as one string, as a share card draws it. */
+export function rewardSentence(line: RewardLine): string {
+  return `${line.before}${line.figure}${line.after}`;
+}
+
 /** A load difference, without a float's tail ("2.5", "5.5", "10"). */
 function amount(value: number): string {
   return String(Math.round(value * 10) / 10);
@@ -157,8 +171,9 @@ function prLine(
     } else
       comparison = `, a new best (was ${keepTogether(`${load(before.weightKg)} × ${before.reps}`)}).`;
   }
+  const done = verb ? verb[1] : "lifted";
   return {
-    before: `You ${verb ? verb[1] : "lifted"} `,
+    before: ctx.voice === "card" ? `${capitalised(done)} ` : `You ${done} `,
     figure,
     after: `${named}${comparison}`,
   };
@@ -168,65 +183,83 @@ function prLine(
  * The reward's one sentence: you, what you did, the number and what it is
  * compared with (CODING_STANDARDS: "A reward says what, how much and
  * what's next"). A first carries the screen's one exclamation mark; the
- * headline above it carries none.
+ * headline above it carries none. With `voice: "card"` it is the share
+ * card's sentence, the same fact without the "you".
  */
 export function rewardLine(
   moment: PostMoment,
   ctx: RewardLineContext
 ): RewardLine {
+  /* The card's sentence is the same fact for anyone who sees it: no
+     "you" and no "your", its first word capitalised. A best on a card is
+     "a new best", as a lift's is on both. */
+  const card = ctx.voice === "card";
   switch (moment.kind) {
     case "pr":
       return prLine(moment, ctx);
     case "longestRun":
       return {
-        before: "You ran ",
+        before: card ? "Ran " : "You ran ",
         figure: keepTogether(distanceLabel(moment.meters, ctx.distanceUnit)),
-        after: ", your longest run yet.",
+        after: card ? ", the longest run yet." : ", your longest run yet.",
       };
     case "firstDistance":
-      return {
-        before: "You ran your first ",
-        figure: DISTANCE_NAMES[moment.meters],
-        after: "!",
-      };
+      return card
+        ? {
+            before: "First ",
+            figure: DISTANCE_NAMES[moment.meters],
+            after: " done!",
+          }
+        : {
+            before: "You ran your first ",
+            figure: DISTANCE_NAMES[moment.meters],
+            after: "!",
+          };
     case "fastestEffort": {
       const name = DISTANCE_NAMES[moment.meters] ?? "";
       const earlier = ctx.fastestBefore;
+      const by =
+        earlier && earlier > moment.seconds
+          ? formatClock(earlier - moment.seconds)
+          : null;
       return {
-        before: `You ran ${name} in `,
+        before: card ? `Ran ${name} in ` : `You ran ${name} in `,
         figure: formatClock(moment.seconds),
-        after:
-          earlier && earlier > moment.seconds
-            ? `, your fastest by ${formatClock(earlier - moment.seconds)}.`
+        after: card
+          ? by
+            ? `, a new best by ${by}.`
+            : ", a new best."
+          : by
+            ? `, your fastest by ${by}.`
             : ", your fastest yet.",
       };
     }
     case "streak": {
       const next = STREAK_MILESTONES.find((days) => days > moment.days);
       return {
-        before: "You’ve trained ",
+        before: card ? "Trained " : "You’ve trained ",
         figure: keepTogether(`${moment.days} days`),
         after: next ? ` in a row. ${next} is next.` : " in a row.",
       };
     }
     case "planWeek":
       return {
-        before: "You finished ",
+        before: card ? "Finished " : "You finished ",
         figure: keepTogether(`week ${moment.week} of ${moment.weeks}`),
         after: ".",
       };
     case "planComplete":
       return {
-        before: "You finished ",
+        before: card ? "Finished " : "You finished ",
         figure: "the last week",
-        after: " of your plan.",
+        after: card ? " of the plan." : " of your plan.",
       };
-    case "firstSession":
-      return {
-        before: "You finished your ",
-        figure: ctx.sport === "run" ? "first run" : "first workout",
-        after: "!",
-      };
+    case "firstSession": {
+      const first = ctx.sport === "run" ? "first run" : "first workout";
+      return card
+        ? { before: "", figure: capitalised(first), after: " done!" }
+        : { before: "You finished your ", figure: first, after: "!" };
+    }
   }
 }
 

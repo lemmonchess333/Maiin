@@ -64,7 +64,9 @@ export default function GpsSignalChip({
     <div
       className={cn(
         "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold",
-        onPage ? "bg-muted text-foreground" : "text-white backdrop-blur"
+        onPage
+          ? "bg-muted text-foreground"
+          : "text-white backdrop-blur transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
       )}
       style={onPage ? undefined : { background: THEME.scrim }}
       role={onPage ? "status" : undefined}

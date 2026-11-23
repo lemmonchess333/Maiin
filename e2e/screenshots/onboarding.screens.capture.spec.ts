@@ -1,5 +1,4 @@
-import { verifySignupEmail } from "../helpers/verifySignupEmail";
-import { openSignUpForm } from "../helpers/auth";
+import { openSetup } from "../helpers/auth";
 /**
  * Onboarding capture — the first-run flow, filmed step by step.
  *
@@ -11,9 +10,10 @@ import { openSignUpForm } from "../helpers/auth";
  * dated a few weeks out must show the engine's mostly-easy/compressed
  * line at DATE ENTRY, not after onboarding commits the plan.
  *
- * A fresh account is minted through the real signup form on every run
- * (unique email against the auth emulator), so no seed script is
- * involved and the captured state is exactly what a new user gets.
+ * Setup is walked signed out, as a new person walks it since A6, so no
+ * account or seed script is involved and the captured state is exactly
+ * what a new user gets. It ends on Save your plan, where the account
+ * would be made.
  * The walk stops at the confirmation step WITHOUT submitting — the
  * final save calls the completeOnboarding Cloud Function, which the
  * capture rig's emulator set doesn't run.
@@ -23,7 +23,7 @@ import { openSignUpForm } from "../helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
-import { SETUP } from "../../src/test/journeyScreens";
+import { SAVE_PLAN, SETUP } from "../../src/test/journeyScreens";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -90,7 +90,6 @@ test.describe("onboarding screenshots", () => {
     test.setTimeout(300_000);
 
     // ── Mint a brand-new account through the real signup form.
-    const email = `e2e-onboarding-${Date.now()}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     // A first visit opens on the welcome screen, not on "Welcome back".
@@ -100,15 +99,11 @@ test.describe("onboarding screenshots", () => {
       })
     ).toBeVisible({ timeout: 20_000 });
     await shootBoth(page, "onboarding-0-welcome");
-    await openSignUpForm(page);
-    await page.fill("#login-email", email);
-    await page.fill("#login-password", "test-password-123");
-    await page
-      .getByRole("button", { name: /create account/i })
-      .click({ timeout: 8000 });
-    await verifySignupEmail(page, email);
+    // Setup comes before the account (A6): Get started opens its first
+    // question, and Save your plan at its end makes the account.
+    await openSetup(page);
 
-    // Onboarding step 0 (goal) is the signed-in fallback route.
+    // Step 0 (goal), signed out at /setup.
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });
@@ -227,8 +222,19 @@ test.describe("onboarding screenshots", () => {
       .fill("1995");
     await next(page);
 
-    // Step 7 — confirmation. Shot but NOT submitted (completeOnboarding
-    // is a Cloud Function the capture emulators don't run).
+    // Step 7 — confirmation, then Save your plan in its place, where the
+    // account would be made. Shot but NOT submitted (completeOnboarding is
+    // a Cloud Function the capture emulators don't run).
     await shootBoth(page, "onboarding-7-confirm");
+    await page
+      .getByRole("textbox", { name: SETUP.name, exact: true })
+      .fill("Capture tester");
+    await page
+      .getByRole("button", { name: SETUP.saveNext, exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: SAVE_PLAN.heading, level: 1 })
+    ).toBeVisible();
+    await shootBoth(page, "onboarding-8-save-your-plan");
   });
 });

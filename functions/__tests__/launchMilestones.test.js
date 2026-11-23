@@ -248,14 +248,14 @@ describe("wiring", () => {
     }
   });
 
-  it("setup stamps the map on the first completion only", () => {
+  it("setup stamps the map only once it has refused an account with a plan", () => {
     const onboarding = slice("completeOnboarding");
-    const gate = onboarding.indexOf("if (!alreadyCompleted) {");
+    const refusal = onboarding.indexOf('"already-exists"');
     const stamp = onboarding.indexOf("nextProfileData.launchMilestones = {};");
-    expect(gate).toBeGreaterThan(-1);
-    expect(stamp).toBeGreaterThan(gate);
+    expect(refusal).toBeGreaterThan(-1);
+    expect(stamp).toBeGreaterThan(refusal);
     expect(stamp).toBeLessThan(
-      onboarding.indexOf("if (existing.exists)", gate)
+      onboarding.indexOf("if (existing.exists)", refusal)
     );
   });
 });

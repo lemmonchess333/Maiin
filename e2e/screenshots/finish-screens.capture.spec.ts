@@ -5,7 +5,12 @@
  *
  * The lift's two registers come from the finish lab (`/dev/finish`), the
  * real SessionCompleteScreen with a pull day's fixtures: a reward needs a
- * best to beat, which a fresh account has not got. The run's come from
+ * best to beat, which a fresh account has not got. The reward is taken
+ * with one new best, which the line says and the list leaves out, and
+ * with two, which the list sums up, and the summary with a long total
+ * ("12,400", "123,456"), which keeps the finish's size. The share card is
+ * taken as a story and a square on each background, and on a photo of
+ * plain white, the brightest ground its foot can meet. The run's come from
  * real saves on a fresh account: its first run (the reward for a first),
  * a shorter, slower one (the summary) and the same loop faster (a new
  * best: its fastest 1K and 5K).
@@ -145,12 +150,12 @@ async function shoot(page: Page, name: string) {
 
 test("the lift's reward and summary, and the share card", async ({ page }) => {
   test.skip(!emulatorActive, "emulator capture only");
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   await hideEmulatorBanner(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signInAsTestUser(page);
 
-  for (const state of ["lift-best", "lift-routine"] as const) {
+  for (const state of ["lift-best", "lift-bests", "lift-routine"] as const) {
     await page.goto(`dev/finish?state=${state}`);
     await expect(
       page.getByRole("heading", { name: "Pull A done", exact: true })
@@ -166,6 +171,19 @@ test("the lift's reward and summary, and the share card", async ({ page }) => {
           `finish-${state}-${width}-${dark ? "dark" : "light"}`
         );
       }
+    }
+    await page.setViewportSize({ width: 393, height: 852 });
+  }
+
+  for (const volume of [12400, 123456]) {
+    await page.goto(`dev/finish?state=lift-routine&volume=${volume}`);
+    await expect(
+      page.getByRole("heading", { name: "Pull A done", exact: true })
+    ).toBeVisible({ timeout: 20_000 });
+    await theme(page, true);
+    for (const width of [393, 320]) {
+      await page.setViewportSize({ width, height: 852 });
+      await shoot(page, `finish-lift-${volume}-${width}-dark`);
     }
     await page.setViewportSize({ width: 393, height: 852 });
   }
@@ -186,17 +204,34 @@ test("the lift's reward and summary, and the share card", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
 
   await page.setViewportSize({ width: 540, height: 960 });
-  for (const state of [
-    "share-lift-best",
-    "share-lift-routine",
-    "share-run-best",
-  ]) {
-    await page.goto(`dev/finish?state=${state}`);
+  const cards: [string, string][] = [
+    ["share-lift-best", ""],
+    ["share-lift-routine", ""],
+    ["share-run-best", ""],
+    ["share-run-best", "format=square"],
+    ["share-run-best", "best=longest"],
+    ["share-lift-best", "photo=white&background=photo"],
+  ];
+  for (const format of ["story", "square"])
+    for (const background of ["dark", "transparent", "photo"])
+      cards.push([
+        "share-lift-best",
+        `format=${format}&background=${background}`,
+      ]);
+  cards.push(["share-lift-best", "format=square"]);
+  for (const [state, query] of cards) {
+    await page.goto(`dev/finish?state=${state}${query ? `&${query}` : ""}`);
     const card = page.locator("[data-share-card]");
     await expect(card).toBeVisible({ timeout: 20_000 });
+    await expect(card.getByText("Tropos", { exact: true })).toBeVisible();
     await settleImages(page);
+    const variant = query
+      .split("&")
+      .filter(Boolean)
+      .map((pair) => pair.split("=")[1])
+      .join("-");
     await card.screenshot({
-      path: `screenshots/finish-${state}.png`,
+      path: `screenshots/finish-${state}${variant ? `-${variant}` : ""}.png`,
       animations: "disabled",
     });
   }

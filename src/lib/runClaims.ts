@@ -164,6 +164,7 @@ function toSavedRunDoc(run: SavedRun): SavedRunDoc {
     avgPace: run.avgPace,
     templateId: run.templateId,
     activityType: run.activityType,
+    place: run.place,
     createdAt: { seconds: run.savedAtSeconds },
     duration: run.duration,
     type: run.type,

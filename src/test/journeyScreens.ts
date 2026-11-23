@@ -5,7 +5,8 @@
  * journey in CI.
  *
  * - Setup's names: `Onboarding.test.tsx` walks setup by them, the
- *   health-details agreement's I agree included.
+ *   health-details agreement's I agree included; Save your plan's and the
+ *   trial offer's: `SaveYourPlan.test.tsx` and `TrialOffer.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -58,6 +59,29 @@ export const SETUP = {
   birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
+  /** Signed out, the review's button: Save your plan comes next, where
+   *  the account is made (A6). */
+  saveNext: "Continue",
+} as const;
+
+/** Save your plan (A6), where setup makes the account once its questions
+ *  are answered: the email form's fields by their labels, its button, and
+ *  the way to sign in instead (`SaveYourPlan.test.tsx`). */
+export const SAVE_PLAN = {
+  heading: "Save your plan",
+  apple: "Continue with Apple",
+  google: "Continue with Google",
+  email: "Email address",
+  password: "Password",
+  create: "Create account",
+  signInInstead: "Sign in",
+} as const;
+
+/** The trial offer that ends setup (A6 call 2): its kicker, and Not now,
+ *  which goes Home (`TrialOffer.test.tsx`). */
+export const TRIAL_OFFER = {
+  kicker: "Your plan is ready",
+  notNow: "Not now",
 } as const;
 
 /** The answers on setup's screens that the journeys give, by question.

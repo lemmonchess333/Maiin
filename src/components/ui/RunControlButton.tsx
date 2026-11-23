@@ -71,7 +71,7 @@ const BASE_BUTTON = [
   // Focus ring matches the rest of the design system so keyboard
   // users (rare on Run but possible via Bluetooth keyboard) get a
   // visible indicator.
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   // Disabled state for guarded transitions (e.g. mid-save).
   "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
 ].join(" ");

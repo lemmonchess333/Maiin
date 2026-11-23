@@ -32,6 +32,9 @@ export interface PublicPostView {
   type: "run" | "workout";
   authorName: string;
   authorPhotoURL?: string;
+  /** The author's first name, for "Sam shared a run" (the owner's layout).
+   *  Never their invite code: a post's address is fixed and public. */
+  firstName?: string;
   /** The post's own title ("Long run", "Push A"). */
   title?: string;
   /** Milliseconds. */
@@ -121,7 +124,12 @@ function readAnswer(
     unit: p.unit === "mi" ? "mi" : "km",
     liftUnit: p.liftUnit === "lbs" ? "lbs" : "kg",
   };
-  const strings = ["authorPhotoURL", "title", "prExercise"] as const;
+  const strings = [
+    "authorPhotoURL",
+    "title",
+    "prExercise",
+    "firstName",
+  ] as const;
   for (const key of strings) {
     const value = str(p[key]);
     if (value) view[key] = value;

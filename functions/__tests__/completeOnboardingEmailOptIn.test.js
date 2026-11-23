@@ -120,7 +120,7 @@ describe("completeOnboarding and the email opt-in", () => {
     expect(db.data.has(path)).toBe(false);
   });
 
-  it("setup run again keeps an earlier answer it was not asked to change", async () => {
+  it("keeps an answer already on the account that setup was not asked to change", async () => {
     const earlier = {
       weeklyReview: {
         on: false,
@@ -133,7 +133,7 @@ describe("completeOnboarding and the email opt-in", () => {
     };
     db.data.set(path, {
       uid: "email-setup-user",
-      onboardingComplete: true,
+      onboardingComplete: false,
       emailConsent: earlier,
     });
     await completeOnboarding.run(request(), actor);

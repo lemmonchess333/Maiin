@@ -77,7 +77,7 @@ export function ChallengeFinaleCard({
             in the text colours. Gold and silver as text or as an icon on
             their own tint all but vanished on a light card. */}
         <div
-          className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${tier ? "bg-card text-foreground" : "bg-primary/10 text-lifting-strong"}`}
+          className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${tier ? "bg-card text-foreground" : "bg-primary/10 text-foreground"}`}
           style={
             tier
               ? { boxShadow: `inset 0 0 0 2px ${TIER_COLORS[tier]}` }

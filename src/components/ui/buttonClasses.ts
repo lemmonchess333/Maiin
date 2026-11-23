@@ -44,10 +44,8 @@ const BASE_CLASSES = [
  * theme-contract test (src/lib/__tests__/themeContract.test.ts)
  * catches it before this component renders the wrong colour.
  *
- * `bg-primary-strong` is used for the primary variant rather than
- * `bg-primary` because the lighter --primary brand purple is
- * borderline for white text contrast. The strong variant is the
- * AA-clearing CTA filled colour.
+ * `primary` and `neutral` are one button: the text colour filled, the
+ * page's colour on it (DS10: the chrome is neutral).
  */
 /* The sport variants resolve via the --running token (DS1b): bg-running
  * is the full-saturation coral fill; bg-running/10 the 10% tint surface
@@ -81,9 +79,15 @@ export const FIELD_FOCUS_RING =
  * the dark theme, where the fill alone measures about 1.1:1 against a
  * card. The filled variants are their own edge, `outline` has a border,
  * and `ghost` is meant to have none. */
+/** A screen's one full-width filled button (DS4, DESIGN_GUIDE §14i): white
+ *  on dark and ink on light, whatever its domain. The foreground and page
+ *  tokens swap with the theme, so one class pair is both. */
+const NEUTRAL = "bg-foreground text-background hover:bg-foreground/90";
+
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary:
-    "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
+  // The same button as `neutral`, on purpose: the chrome is neutral
+  // (DS10), so the generic filled button has one look under both names.
+  primary: NEUTRAL,
   secondary: "bg-muted text-foreground hover:bg-muted/80 chip-edge",
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -97,9 +101,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   // Filled coral CTA. The fill is --running-fill, NOT the bare identity:
-  // white on #D4637A is 3.58:1, the same reason `primary` fills with
-  // --primary-strong rather than --primary. The identity itself is
-  // untouched — it still drives every tint.
+  // white on #D4637A is 3.58:1. The identity itself still drives every
+  // tint.
   sport: "bg-running-fill text-white",
   // 10% coral tint surface + the AA coral TEXT step — pairs with the
   // standard destructive variant for sport-discipline actions that aren't
@@ -109,8 +112,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // these buttons directly on the canvas, not inside a card).
   "sport-tinted": "bg-running/10 text-running-strong chip-edge",
   // Nutrition domain CTA. Filled uses `--nutrition-fill` (#B45309) under
-  // white text, mirroring how `primary` uses `--primary-strong`; the
-  // identity orange (#D9884E) is too light for white text. The tinted
+  // white text, as `sport` uses `--running-fill`; the identity orange
+  // (#D9884E) is too light for white text. The tinted
   // surface is the identity orange at 10%, with the theme-aware
   // `--nutrition-strong` text step on top.
   nutrition: "bg-nutrition-fill text-white",
@@ -119,12 +122,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // Home's hero), so a screen keeps one filled button and the lift keeps
   // its colour. `--lifting-strong` is the AA text step for a 12% tint.
   "lifting-tinted": "bg-lifting/10 text-lifting-strong chip-edge",
-  // A screen's one full-width filled button (DS4, DESIGN_GUIDE §14i):
-  // white on dark and ink on light, whatever its domain. Filled in a
-  // domain colour it was the largest patch of colour on the screen, where
-  // the largest colour is the person's data. The foreground and page
-  // tokens swap with the theme, so one class pair is both.
-  neutral: "bg-foreground text-background hover:bg-foreground/90",
+  neutral: NEUTRAL,
 };
 
 /**

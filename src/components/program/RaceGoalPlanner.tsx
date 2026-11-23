@@ -179,7 +179,6 @@ export default function RaceGoalPlanner({
         <SectionHeading size="compact">Race or on your own</SectionHeading>
         <SegmentedControl<RaceGoalEntry | "">
           ariaLabel="Race or on your own"
-          tone="running"
           layout="wrap"
           options={RACE_GOAL_ENTRY_OPTIONS.map((o) => ({ ...o }))}
           value={entry ?? ""}
