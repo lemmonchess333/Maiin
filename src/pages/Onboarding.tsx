@@ -2351,8 +2351,9 @@ export default function Onboarding() {
                   your age sets your heart-rate zones. Your year of birth is
                   never shown on your profile. The initial activity estimate
                   uses planned lifting frequency; running is accounted for as
-                  you log it. “Prefer not to say” uses the male calculation.
-                  These are estimates you can adjust in Settings.
+                  you log it. “Prefer not to say” uses the midpoint of the male
+                  and female calculations. These are estimates you can adjust
+                  in Settings.
                 </p>
               </details>
               <div className="space-y-3">
