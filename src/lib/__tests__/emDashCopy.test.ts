@@ -141,23 +141,28 @@ function sourceFiles(): string[] {
 }
 
 describe("no em dash on screen", () => {
-  it("no string, template or JSX text under src/ carries one", () => {
-    const files = sourceFiles();
-    expect(
-      files.some((f) => f.endsWith("runSessionExplainer.ts")),
-      "the scan reads no copy modules, so its total proves nothing"
-    ).toBe(true);
-    const hits = files.flatMap((f) =>
-      emDashCopy(readFileSync(join(SRC, f), "utf8"), f).map(
-        (hit) => `src/${f}:${hit}`
-      )
-    );
-    expect(
-      hits,
-      "Use a full stop between two statements, a colon before what a " +
-        "label introduces, or the middot between a thing and its detail."
-    ).toEqual([]);
-  });
+  // Parses every source file, which takes a while on a busy runner.
+  it(
+    "no string, template or JSX text under src/ carries one",
+    { timeout: 60_000 },
+    () => {
+      const files = sourceFiles();
+      expect(
+        files.some((f) => f.endsWith("runSessionExplainer.ts")),
+        "the scan reads no copy modules, so its total proves nothing"
+      ).toBe(true);
+      const hits = files.flatMap((f) =>
+        emDashCopy(readFileSync(join(SRC, f), "utf8"), f).map(
+          (hit) => `src/${f}:${hit}`
+        )
+      );
+      expect(
+        hits,
+        "Use a full stop between two statements, a colon before what a " +
+          "label introduces, or the middot between a thing and its detail."
+      ).toEqual([]);
+    }
+  );
 
   it("finds a dash in copy and passes over the exceptions (the measure is not vacuous)", () => {
     expect(emDashCopy('const a = "Week 1 — building";')).toHaveLength(1);
