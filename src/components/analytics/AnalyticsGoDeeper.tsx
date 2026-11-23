@@ -1,9 +1,6 @@
-import { Apple, ChevronLeft, Dumbbell, Footprints, Scale } from "lucide-react";
-import type { ComponentType } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { cardClasses } from "@/components/ui/cardClasses";
 import { haptic } from "@/lib/haptic";
-import { cn } from "@/lib/utils";
 
 /** Analytics' four deeper pages (DS3). The overview answers "how is it
  *  going"; each page holds one discipline's charts, which used to stack
@@ -12,44 +9,18 @@ export type AnalyticsPage = "lifting" | "running" | "body" | "food";
 
 const ANALYTICS_PAGES: Record<
   AnalyticsPage,
-  {
-    title: string;
-    detail: string;
-    icon: ComponentType<{ className?: string }>;
-    /** The identity colour of the page's icon, as a text utility. */
-    tint: string;
-  }
+  { title: string; detail: string }
 > = {
-  lifting: {
-    title: "Lifting",
-    detail: "Volume, sessions, muscles",
-    icon: Dumbbell,
-    tint: "text-lifting",
-  },
-  running: {
-    title: "Running",
-    detail: "Distance, pace, races",
-    icon: Footprints,
-    tint: "text-running",
-  },
-  body: {
-    title: "Body",
-    detail: "Weight trend",
-    icon: Scale,
-    tint: "text-foreground",
-  },
-  food: {
-    title: "Food",
-    detail: "Calories, macros, balance",
-    icon: Apple,
-    tint: "text-nutrition-strong",
-  },
+  lifting: { title: "Lifting", detail: "Volume, sessions, muscles" },
+  running: { title: "Running", detail: "Distance, pace, races" },
+  body: { title: "Body", detail: "Weight trend" },
+  food: { title: "Food", detail: "Calories, macros, balance" },
 };
 
 const ORDER: AnalyticsPage[] = ["lifting", "running", "body", "food"];
 
-/** The overview's way into the four pages: a two-by-two of plain cards,
- *  each an icon in its discipline's colour over a name and one line: what
+/** The overview's way into the four pages: ruled rows on the page, each
+ *  the page's name, one line beside it and a chevron. The line is what
  *  the page holds for this user when there is something (`goDeeperLines`),
  *  otherwise what it holds at all. */
 export default function AnalyticsGoDeeper({
@@ -60,38 +31,40 @@ export default function AnalyticsGoDeeper({
   lines?: Partial<Record<AnalyticsPage, string>>;
 }) {
   return (
-    <section aria-label="Go deeper" className="@container space-y-2">
+    <section aria-label="Go deeper" className="@container space-y-1">
       <SectionHeading>Go deeper</SectionHeading>
-      {/* One column under 11em (larger text on a small phone), where two
-          ran "Running" into the card's edge. */}
-      <div className="grid grid-cols-2 @max-[11em]:grid-cols-1 gap-2">
+      <ul className="divide-y divide-border">
         {ORDER.map((page) => {
-          const { title, detail, icon: Icon, tint } = ANALYTICS_PAGES[page];
+          const { title, detail } = ANALYTICS_PAGES[page];
           return (
-            <button
-              key={page}
-              type="button"
-              onClick={() => {
-                haptic();
-                onOpen(page);
-              }}
-              className={cardClasses({
-                size: "compact",
-                className:
-                  "flex min-h-[112px] flex-col items-start gap-1 text-left transition-transform motion-safe:active:scale-[0.97]",
-              })}
-            >
-              <Icon className={cn("mb-2 size-6", tint)} aria-hidden="true" />
-              <span className="text-base font-bold text-foreground">
-                {title}
-              </span>
-              <span className="text-sm text-muted-foreground text-pretty">
-                {lines[page] ?? detail}
-              </span>
-            </button>
+            <li key={page}>
+              {/* The line drops under the name when the two no longer fit
+                  side by side (larger text on a small phone). */}
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  onOpen(page);
+                }}
+                className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg px-2 py-3 text-left transition-colors active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+              >
+                <span className="min-w-min flex-1 text-base font-semibold text-foreground">
+                  {title}
+                </span>
+                <span className="ml-auto flex min-w-min items-center gap-3">
+                  <span className="text-right text-sm text-muted-foreground text-pretty">
+                    {lines[page] ?? detail}
+                  </span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </section>
   );
 }

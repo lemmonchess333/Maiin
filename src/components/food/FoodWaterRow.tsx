@@ -50,9 +50,7 @@ export default function FoodWaterRow({ date }: { date: string }) {
     <Card size="compact" className="@container space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 grow basis-[8em] items-center gap-2">
-          <span className="size-8 shrink-0 rounded-lg bg-teal/10 flex items-center justify-center">
-            <Droplets className="size-3.5 text-teal" aria-hidden="true" />
-          </span>
+          <Droplets className="size-4 shrink-0 text-teal" aria-hidden="true" />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-foreground">Water</h2>
             {loading ? (

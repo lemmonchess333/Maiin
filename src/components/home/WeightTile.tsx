@@ -106,16 +106,11 @@ export default function WeightTile({
         className="p-3 rounded-xl text-left transition-transform motion-safe:active:scale-[0.97] bg-card card-shadow h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="flex items-center gap-2 mb-1.5">
-          <div
-            className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: THEME.iconBg }}
-          >
-            <Scale
-              className="size-3.5"
-              style={{ color: THEME.chrome.text }}
-              aria-hidden="true"
-            />
-          </div>
+          <Scale
+            className="size-3.5 shrink-0 @max-[9em]:hidden"
+            style={{ color: THEME.chrome.text }}
+            aria-hidden="true"
+          />
           <SectionLabel>Weight</SectionLabel>
         </div>
         {/* Spaces in the text between the tile's words, so they read as

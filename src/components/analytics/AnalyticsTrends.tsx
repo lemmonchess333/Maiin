@@ -1,5 +1,4 @@
 import { ChevronRight } from "lucide-react";
-import Card from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Sparkline from "@/components/analytics/Sparkline";
 import type { AnalyticsPage } from "@/components/analytics/AnalyticsGoDeeper";
@@ -10,7 +9,9 @@ import { haptic } from "@/lib/haptic";
  * The overview's Trends (DS3): one row per measure that moves — weight,
  * what you eat, what you could race — each with its figure, what it is
  * measured against, and a small line for the shape. A row opens the page
- * that holds its chart.
+ * that holds its chart. The rows sit on the page, ruled, as the
+ * Go deeper rows under them do: nothing here is a thing to act on apart
+ * from the page it opens.
  *
  * Sessions, volume and distance are not here: the period summary above
  * already states them with their change, and saying a number twice on
@@ -25,73 +26,71 @@ export default function AnalyticsTrends({
 }) {
   if (rows.length === 0) return null;
   return (
-    <section aria-label="Trends" className="space-y-2">
+    <section aria-label="Trends" className="space-y-1">
       <SectionHeading>Trends</SectionHeading>
-      <Card
-        padded={false}
-        className="@container divide-y divide-border overflow-hidden"
-      >
+      <ul className="@container divide-y divide-border">
         {rows.map((row) => (
-          <button
-            key={row.key}
-            type="button"
-            onClick={() => {
-              haptic();
-              onOpen(row.page);
-            }}
-            className="flex min-h-16 w-full flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition-colors active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-          >
-            {/* The figure drops under the words when the two no longer
+          <li key={row.key}>
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                onOpen(row.page);
+              }}
+              className="-mx-2 flex min-h-16 w-[calc(100%+1rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-2 py-3 text-left transition-colors active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            >
+              {/* The figure drops under the words when the two no longer
                 fit side by side (larger text on the phone), rather than
-                pushing "target 2,200" past the card. */}
-            {/* No hyphenation: a browser that hyphenates counts the
+                pushing "target 2,200" past the screen's edge. */}
+              {/* No hyphenation: a browser that hyphenates counts the
                 pieces in the column's min-content, so "10K prediction"
                 split as "predic-tion" rather than the figure dropping
                 under it. The longest label word fits a line of its own. */}
-            <span className="min-w-min flex-1">
-              <span className="block text-base font-semibold text-foreground break-words">
-                {row.label}
-              </span>
-              {/* Wraps rather than cuts: "Down 1.2 kg since 30 A…" hid the
-                  one part of the line that says what the change is from. */}
-              <span className="block text-sm text-muted-foreground text-pretty">
-                {row.detail}
-              </span>
-            </span>
-            {row.series && (
-              /* The line is a glance at the shape, not the figure: it
-                 gives its room to the label once the card is under 20em
-                 (a 320px phone at larger text). */
-              <Sparkline
-                values={row.series}
-                color={row.color}
-                className="shrink-0 @max-[20em]:hidden"
-              />
-            )}
-            {/* The figure and the chevron move as one, so a wrapped row
-                does not leave the chevron alone on a line. */}
-            <span className="ml-auto flex min-w-min items-center gap-3">
-              {row.value && (
-                <span className="text-right">
-                  <span className="text-lg font-bold font-figure tabular-nums text-foreground">
-                    {row.value}
-                  </span>
-                  {row.unit && (
-                    <span className="text-sm text-muted-foreground">
-                      {" "}
-                      {row.unit}
-                    </span>
-                  )}
+              <span className="min-w-min flex-1">
+                <span className="block text-base font-semibold text-foreground break-words">
+                  {row.label}
                 </span>
+                {/* Wraps rather than cuts: "Down 1.2 kg since 30 A…" hid the
+                  one part of the line that says what the change is from. */}
+                <span className="block text-sm text-muted-foreground text-pretty">
+                  {row.detail}
+                </span>
+              </span>
+              {row.series && (
+                /* The line is a glance at the shape, not the figure: it
+                 gives its room to the label once the list is under 20em
+                 (a 320px phone at larger text). */
+                <Sparkline
+                  values={row.series}
+                  color={row.color}
+                  className="shrink-0 @max-[20em]:hidden"
+                />
               )}
-              <ChevronRight
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </span>
-          </button>
+              {/* The figure and the chevron move as one, so a wrapped row
+                does not leave the chevron alone on a line. */}
+              <span className="ml-auto flex min-w-min items-center gap-3">
+                {row.value && (
+                  <span className="text-right">
+                    <span className="text-lg font-bold font-figure tabular-nums text-foreground">
+                      {row.value}
+                    </span>
+                    {row.unit && (
+                      <span className="text-sm text-muted-foreground">
+                        {" "}
+                        {row.unit}
+                      </span>
+                    )}
+                  </span>
+                )}
+                <ChevronRight
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+          </li>
         ))}
-      </Card>
+      </ul>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import Card from "@/components/ui/Card";
+import SectionHeading from "@/components/ui/SectionHeading";
 import type { FoodDaysReading } from "@/lib/foodDays";
 import { CALORIE_TARGET_BAND } from "@/lib/foodDays";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
@@ -20,6 +20,9 @@ interface Row {
  * weekend of the opposite, and the day count cannot. Today is left out
  * because it is not over. A row that has nothing to count is left out
  * rather than shown as 0 of 0.
+ *
+ * A section on the page with ruled rows, not a card: nothing in it is
+ * tapped.
  */
 export default function FoodDaysCard({
   reading,
@@ -70,11 +73,9 @@ export default function FoodDaysCard({
   if (rows.length === 0) return null;
 
   return (
-    <Card as="section" aria-label="How the days went" className="space-y-3">
+    <section aria-label="How the days went" className="space-y-1 pt-4">
       <div>
-        <h2 className="text-base font-bold text-foreground">
-          How the days went
-        </h2>
+        <SectionHeading size="compact">How the days went</SectionHeading>
         <p className="text-sm text-muted-foreground">
           Before today. On target is within{" "}
           {Math.round(CALORIE_TARGET_BAND * 100)}% of that day’s calories;
@@ -85,7 +86,7 @@ export default function FoodDaysCard({
         {rows.map((row) => (
           <li
             key={row.label}
-            className="flex items-baseline justify-between gap-3 py-2 first:pt-0 last:pb-0"
+            className="flex min-h-12 flex-wrap items-baseline justify-between gap-x-3 py-3"
           >
             <span className="text-sm text-foreground">{row.label}</span>
             <span className="text-right text-sm text-muted-foreground">
@@ -97,6 +98,6 @@ export default function FoodDaysCard({
           </li>
         ))}
       </ul>
-    </Card>
+    </section>
   );
 }
