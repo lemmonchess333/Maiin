@@ -116,8 +116,15 @@ vi.mock("@/hooks/usePrivacyZones", () => ({
     confirmZones: async () => [],
   }),
 }));
+const net = vi.hoisted(() => ({ online: true }));
 vi.mock("@/hooks/useOnlineStatus", () => ({
-  useOnlineStatus: () => ({ isOnline: true }),
+  useOnlineStatus: () => ({ isOnline: net.online }),
+}));
+/* The run finish's wait for segment efforts (Run30 call 1), shortened so
+   a test can watch it close. */
+vi.mock("@/lib/segments", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/segments")>()),
+  FINISH_SEGMENT_WAIT_MS: 1000,
 }));
 vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
@@ -165,8 +172,11 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
   default: () => null,
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
-// A reward's confetti draws on a canvas jsdom does not have.
-vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
+// A reward's confetti draws on a canvas jsdom does not have. Its reset is
+// called when the hero unmounts after the library has loaded.
+vi.mock("canvas-confetti", () => ({
+  default: Object.assign(vi.fn(), { reset: vi.fn() }),
+}));
 vi.mock("@/components/WeekPulseView", () => ({
   default: () => {
     h.optionalAttempts.push("week");
@@ -202,6 +212,8 @@ import {
   pauseMoving,
 } from "@/lib/heartRateSession";
 import {
+  allPaths,
+  flushSnapshots,
   readsAt,
   releaseAllReads,
   resetFirestore,
@@ -1745,8 +1757,9 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
 });
 
 /* Run29: your top three on the finish, under the reward, from the runs
-   saved before this one. Only a run that placed shows the list. */
-describe("RunSummary — your top three", () => {
+   saved before this one; and Run30 call 1: the run's segments that placed,
+   in the same Results block. Only a run that placed shows it. */
+describe("RunSummary — results", () => {
   /** A trace begun an hour ago: runs are ranked by when they started, so
    *  the earlier runs below are before it. */
   function trace(n: number, dtSec: number) {
@@ -1813,7 +1826,7 @@ describe("RunSummary — your top three", () => {
     seedOneKs([250, 260, 300]);
     renderAndSave();
     fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
-    const list = await screen.findByRole("region", { name: "Your top three" });
+    const list = await screen.findByRole("region", { name: "Results" });
     expect(list.textContent).toContain("Ran 1K in 4:30, your 3rd fastest.");
     const row = within(list).getByRole("listitem");
     expect(row.textContent).toContain("3rd fastest");
@@ -1828,7 +1841,7 @@ describe("RunSummary — your top three", () => {
     seedOneKs([250, 260, 300], 1000);
     renderAndSave();
     fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
-    const list = await screen.findByRole("region", { name: "Your top three" });
+    const list = await screen.findByRole("region", { name: "Results" });
     expect(screen.getByText(/your longest run yet/)).toBeInTheDocument();
     expect(list.textContent).not.toContain("your 3rd fastest.");
     expect(list.querySelector("p")).toBeNull();
@@ -1845,7 +1858,7 @@ describe("RunSummary — your top three", () => {
     expect(
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Your top three" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
   });
 
   it("shows nothing for a run that placed nowhere", async () => {
@@ -1855,6 +1868,186 @@ describe("RunSummary — your top three", () => {
     expect(
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Your top three" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
+  });
+
+  describe("segments", () => {
+    const line = [
+      { lat: 51.4433, lon: -0.1517 },
+      { lat: 51.4433, lon: -0.1373 },
+    ];
+    /** The fields the server writes (functions/lib/segments.js). */
+    const effortDoc = (
+      runId: string,
+      elapsedSeconds: number,
+      startedAtMs: number
+    ) => ({
+      uid: "runner",
+      segmentId: "hill",
+      runId,
+      lap: 1,
+      elapsedSeconds,
+      startedAtMs,
+      day: "2026-11-10",
+      start: line[0],
+      end: line[1],
+      createdAtMs: 1,
+    });
+    const effortPath = (runId: string) =>
+      `users/runner/segmentEfforts/${runId}_hill_1`;
+    /** The run this screen saved. */
+    const savedId = () =>
+      allPaths()
+        .filter((p) => p.startsWith(`${RUNS_PATH}/`) && !p.includes("past-"))
+        .map((p) => p.slice(RUNS_PATH.length + 1))[0];
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    beforeEach(() => {
+      net.online = true;
+      seedFirestore({
+        "segments/hill": {
+          name: "Hill Road",
+          lengthMeters: 1200,
+          points: line,
+          start: line[0],
+          end: line[1],
+          startCell: "gcpuc",
+          createdAtMs: 1,
+        },
+        // Two earlier efforts on the hill: 3:29 and 3:50.
+        [effortPath("past-a")]: effortDoc("past-a", 209, 1000),
+        [effortPath("past-b")]: effortDoc("past-b", 230, 2000),
+      });
+    });
+    afterEach(() => {
+      net.online = true;
+    });
+
+    /** The server times the saved run: its effort on the hill. */
+    async function timeTheRun(seconds: number) {
+      const id = savedId();
+      expect(id).toBeTruthy();
+      seedFirestore({ [effortPath(id)]: effortDoc(id, seconds, Date.now()) });
+      await flushSnapshots();
+    }
+
+    it("lists a segment's place when the server times the run inside the wait", async () => {
+      seedOneKs([200, 210, 220]);
+      renderAndSave();
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      await screen.findByRole("button", { name: RUN.done });
+      // Nothing until the efforts arrive.
+      expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
+      await timeTheRun(217);
+      const block = await screen.findByRole("region", { name: "Results" });
+      const row = within(block).getByRole("listitem");
+      expect(row.textContent).toContain("2nd fastest");
+      expect(row.textContent).toContain("Hill Road");
+      expect(row.textContent).toContain("3:37");
+      expect(row.textContent).toContain("best 3:29");
+      // No distance placed and no reward above: the segment's sentence.
+      expect(block.textContent).toContain(
+        "Ran Hill Road in 3:37, your 2nd fastest."
+      );
+    });
+
+    it("joins the top three in one block, after the distances", async () => {
+      seedOneKs([250, 260, 300]);
+      renderAndSave();
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      await screen.findByRole("region", { name: "Results" });
+      await timeTheRun(200);
+      await waitFor(() =>
+        expect(
+          within(screen.getByRole("region", { name: "Results" })).getAllByRole(
+            "listitem"
+          )
+        ).toHaveLength(2)
+      );
+      const block = screen.getByRole("region", { name: "Results" });
+      const rows = within(block).getAllByRole("listitem");
+      expect(rows[0].textContent).toContain("1K");
+      expect(rows[1].textContent).toContain("Hill Road");
+      expect(rows[1].textContent).toContain("New best");
+      // One sentence: the strongest place, the segment's 1st over the 1K's
+      // 3rd.
+      await waitFor(() =>
+        expect(block.textContent).toContain(
+          "Ran Hill Road in 3:20, your fastest yet."
+        )
+      );
+      expect(block.querySelectorAll("p")).toHaveLength(1);
+      expect(block.textContent).not.toContain("your 3rd fastest.");
+    });
+
+    it("shows nothing for the first effort on a segment", async () => {
+      resetFirestore();
+      seedFirestore({
+        "segments/hill": {
+          name: "Hill Road",
+          lengthMeters: 1200,
+          points: line,
+          start: line[0],
+          end: line[1],
+          startCell: "gcpuc",
+          createdAtMs: 1,
+        },
+      });
+      seedOneKs([200, 210, 220]);
+      renderAndSave();
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      await screen.findByRole("button", { name: RUN.done });
+      await timeTheRun(217);
+      await wait(50);
+      expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
+    });
+
+    it("stops waiting when the wait is over", async () => {
+      seedOneKs([200, 210, 220]);
+      renderAndSave();
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      await screen.findByRole("button", { name: RUN.done });
+      await wait(1100);
+      await timeTheRun(217);
+      await wait(50);
+      expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
+    });
+
+    it("says no sentence of its own under the hero's reward", async () => {
+      // Shorter runs before it: the longest run yet is the hero's reward.
+      seedOneKs([200, 210, 220], 1000);
+      renderAndSave();
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      await screen.findByRole("button", { name: RUN.done });
+      await timeTheRun(217);
+      const block = await screen.findByRole("region", { name: "Results" });
+      expect(screen.getByText(/your longest run yet/)).toBeInTheDocument();
+      expect(block.querySelector("p")).toBeNull();
+      expect(within(block).getByRole("listitem").textContent).toContain(
+        "Hill Road"
+      );
+    });
+
+    it("listens for nothing offline", async () => {
+      net.online = false;
+      const navOnline = vi
+        .spyOn(navigator, "onLine", "get")
+        .mockReturnValue(false);
+      try {
+        seedOneKs([200, 210, 220]);
+        renderAndSave();
+        fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+        await screen.findByRole("button", { name: RUN.done });
+        const id = pendingDocumentWrites("runner", RUNS_PATH)[0]?.id;
+        expect(id).toBeTruthy();
+        seedFirestore({ [effortPath(id)]: effortDoc(id, 217, Date.now()) });
+        await flushSnapshots();
+        await wait(50);
+        expect(screen.queryByRole("region", { name: "Results" })).toBeNull();
+        expect(readsAt("users/runner/segmentEfforts")).toHaveLength(0);
+      } finally {
+        navOnline.mockRestore();
+      }
+    });
   });
 });
