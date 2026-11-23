@@ -1389,8 +1389,43 @@ describe("nothing goes to Google before the agreement screen", () => {
       "../../pages/Onboarding.tsx",
       "../../components/healthConsent/HealthConsentGate.tsx",
     ]) {
-      expect(read(screen)).toMatch(/\{USAGE_ANALYTICS_NOTICE\}/);
+      expect(read(screen)).toMatch(/<AnalyticsNotice\b/);
     }
+    expect(
+      read("../../components/healthConsent/AnalyticsNotice.tsx")
+    ).toMatch(/\{USAGE_ANALYTICS_NOTICE\}/);
+  });
+
+  it("Turn off on that screen stops it at once, and setup's choice reaches the account", () => {
+    expect(PRIVACY_PROSE).toMatch(
+      /with Turn off on that screen or with Share usage analytics in Settings &gt; Social &amp; privacy\. Off, the phone or browser you are using stops sending anything to Google Analytics at once/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /If you turn it off in setup before you have an account, the account keeps that choice when it is made\./
+    );
+    // The line's Turn off is on both screens and turns this device off.
+    const NOTICE = collapsed("../../components/healthConsent/AnalyticsNotice.tsx");
+    expect(NOTICE).toMatch(/onClick=\{onTurnOff\}/);
+    const SETUP = collapsed("../../pages/Onboarding.tsx");
+    expect(SETUP).toMatch(
+      /const turnOffAnalytics = \(\) => \{ setUsageAnalytics\(false\);/
+    );
+    expect(SETUP).toMatch(/<AnalyticsNotice off=\{analyticsOff\} onTurnOff=\{turnOffAnalytics\}/);
+    // Setup sends it with the plan, and the server writes it onto an
+    // account that has no answer of its own.
+    expect(SETUP).toMatch(
+      /\.\.\.\(usageAnalyticsOnThisDevice\(\) \? \{\} : \{ usageAnalytics: false \}\)/
+    );
+    expect(FUNCTIONS("setupAnalyticsChoice.js")).toMatch(
+      /if \(existing === true \|\| existing === false\) return undefined;/
+    );
+    expect(collapsed("../../../functions/index.js")).toMatch(
+      /nextProfileData\.usageAnalytics = usageAnalytics;/
+    );
+    // On the agreement's own screen it writes the account, as Settings does.
+    expect(
+      collapsed("../../components/healthConsent/HealthConsentRoutes.tsx")
+    ).toMatch(/updateProfile\(\{ usageAnalytics: false \}\)/);
   });
 
   it("the iPhone's SDK collects nothing before the line, from a fresh install", () => {

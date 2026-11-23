@@ -453,11 +453,13 @@ export default function PrivacyPolicy() {
               <strong className="text-foreground">
                 Turning analytics off.
               </strong>{" "}
-              Usage analytics is on from there until you turn it off, with Share
-              usage analytics in Settings &gt; Social &amp; privacy. Off, the phone or
-              browser you are using stops sending anything to Google Analytics
-              at once, and your account keeps the choice so your other devices
-              follow it once you sign in on them. Crash and error reports are
+              Usage analytics is on from there until you turn it off, with Turn
+              off on that screen or with Share usage analytics in Settings &gt;
+              Social &amp; privacy. Off, the phone or browser you are using stops
+              sending anything to Google Analytics at once, and your account
+              keeps the choice so your other devices follow it once you sign in
+              on them. If you turn it off in setup before you have an account,
+              the account keeps that choice when it is made. Crash and error reports are
               not analytics and do not follow this switch.
             </p>
             <p>
