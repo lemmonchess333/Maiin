@@ -47,6 +47,7 @@ import { loadWordFilter } from "@/lib/wordFilter";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { toast } from "@/lib/toast";
 import { track } from "@/lib/lifecycleAnalytics";
+import { countSetupStep } from "@/lib/setupCounts";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 import { SAVE_PLAN, SETUP } from "@/test/journeyScreens";
 import { TRIAL_OFFER_PATH } from "@/lib/trialOffer";
@@ -84,6 +85,7 @@ vi.mock("@/lib/firestoreWrite", () => ({
   setDocGuarded: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/setupCounts", () => ({ countSetupStep: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -209,7 +211,11 @@ describe("setup before there is an account", () => {
     ).toBeInTheDocument();
     expect(h.complete).not.toHaveBeenCalled();
     expect(setDocGuarded).not.toHaveBeenCalled();
-    expect(track).toHaveBeenCalledWith("setup_started", { signedIn: false });
+    // Counted on Tropos's server; Google hears nothing of setup's start.
+    expect(countSetupStep).toHaveBeenCalledWith("setup_started");
+    expect(vi.mocked(track).mock.calls.map(([e]) => e as string)).not.toContain(
+      "setup_started"
+    );
   });
 
   it("has no account to open: its corner leaves for the welcome", () => {

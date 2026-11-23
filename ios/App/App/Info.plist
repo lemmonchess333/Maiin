@@ -88,5 +88,11 @@
 	<false/>
     <key>FirebaseMessagingAutoInitEnabled</key>
     <false/>
+    <!-- Google Analytics collects nothing until the person says yes
+         (src/lib/analyticsProvider.ts): off from the first launch, before
+         any JavaScript runs. A yes turns it on with
+         setAnalyticsCollectionEnabled, which the SDK keeps across launches. -->
+    <key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+    <false/>
 </dict>
 </plist>

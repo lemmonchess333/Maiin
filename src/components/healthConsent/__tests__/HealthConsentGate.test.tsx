@@ -22,11 +22,16 @@ import {
 } from "@/lib/healthConsent";
 import { agreeToHealthData } from "@/lib/healthConsentWrite";
 import { toast } from "@/lib/toast";
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
 
 vi.mock("@/lib/healthConsentWrite", () => ({
   agreeToHealthData: vi.fn(),
 }));
 vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("@/lib/analyticsProvider", () => ({
+  noteAnalyticsNoticeShown: vi.fn(),
+}));
 
 function Where() {
   const location = useLocation();
@@ -129,6 +134,15 @@ describe("HealthConsentGate", () => {
     expect(agreeToHealthData).toHaveBeenCalledTimes(1);
     expect(button(HEALTH_CONSENT_COPY.agree)).toBeEnabled();
     expect(button(HEALTH_CONSENT_COPY.decline)).toBeEnabled();
+  });
+
+  /* Google Analytics runs from this screen on, so the screen says what it
+     counts and how to turn it off (owner, 23 November 2026). */
+  it("carries the analytics line, and lets analytics run from its showing", () => {
+    vi.mocked(noteAnalyticsNoticeShown).mockClear();
+    show();
+    expect(screen.getByText(USAGE_ANALYTICS_NOTICE)).toBeInTheDocument();
+    expect(noteAnalyticsNoticeShown).toHaveBeenCalledTimes(1);
   });
 
   it("links the Privacy Policy, by its own words", () => {

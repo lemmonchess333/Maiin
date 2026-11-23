@@ -142,6 +142,13 @@ const EXPECTED = {
   },
   // A shared post's public page behind Hosting's /activity/** rewrite
   // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
+  // Setup counts (owner, 23 November 2026): a day's anonymous totals,
+  // sent signed out, on the ten-instance tier (lib/setupCounts.js).
+  countSetupStep: {
+    kind: "http",
+    maxInstances: 10,
+    secrets: [],
+  },
   publicPostPage: {
     kind: "http",
     maxInstances: 100,

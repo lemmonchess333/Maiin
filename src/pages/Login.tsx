@@ -80,7 +80,7 @@ export default function Login() {
       screen: view === "signIn" ? "sign_in" : "welcome",
       returningDevice,
     });
-    if (view === "welcome") trackWelcomeViewed(returningDevice);
+    if (view === "welcome") trackWelcomeViewed();
   }, [view, returningDevice]);
   // Opening a legal page keeps the form for the way back.
   const keepForm = (email = "") => {

@@ -4,6 +4,8 @@ import Button from "@/components/ui/Button";
 import BrandMark from "@/components/ui/BrandMark";
 import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
 import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import { USAGE_ANALYTICS_NOTICE } from "@/lib/usageAnalytics";
 import {
   DELETE_ACCOUNT_ANCHOR,
   HEALTH_CONSENT_COPY,
@@ -33,7 +35,9 @@ export type HealthConsentGateView = "asking" | "saving" | "declined";
  * says why Tropos cannot work without these details and offers every way
  * on: back to the agreement, deleting the account, or signing out.
  *
- * Nothing about the answer is sent to analytics.
+ * Nothing about the answer is sent to analytics. The screen carries the
+ * analytics line (`USAGE_ANALYTICS_NOTICE`), and Google Analytics runs only
+ * from its showing on (`noteAnalyticsNoticeShown`).
  */
 export default function HealthConsentGate({
   uid,
@@ -53,6 +57,10 @@ export default function HealthConsentGate({
   const live = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const declined = view === "declined";
+
+  useEffect(() => {
+    noteAnalyticsNoticeShown();
+  }, []);
 
   useEffect(() => {
     live.current = true;
@@ -126,6 +134,9 @@ export default function HealthConsentGate({
             <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
             <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
             <HealthConsentPolicyLink />
+            <p className="text-sm text-muted-foreground">
+              {USAGE_ANALYTICS_NOTICE}
+            </p>
           </>
         )}
         {error && (

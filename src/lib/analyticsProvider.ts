@@ -30,8 +30,23 @@
  * URL: the native SDK sees one view controller, never the web view's
  * address.
  *
- * The person can turn it off: Share usage analytics, in Settings → Social &
- * privacy (Priv1 call 2; the rules for the answer are in `usageAnalytics.ts`).
+ * Nothing reaches Google before the person has met the line that says so
+ * (owner, 23 November 2026): the health-details agreement, in setup or on
+ * its own screen, carries one line saying Tropos counts how the app is used
+ * and how to turn it off (`USAGE_ANALYTICS_NOTICE`). Until then, on a
+ * fresh install and after a sign-out, every event is dropped here, the web
+ * SDK's chunk is never loaded, and the native SDK collects nothing: its
+ * collection is off in Info.plist from the first moment of the first
+ * launch (`FIREBASE_ANALYTICS_COLLECTION_ENABLED`) and is told off again
+ * at launch. The notice is met when the agreement is shown this visit
+ * (`noteAnalyticsNoticeShown`), or by an account that carries the
+ * agreement (`setAccountMetAnalyticsNotice`). The start of the funnel
+ * before it is counted on Tropos's own server with no identifier
+ * (`setupCounts.ts`), never sent to Google.
+ *
+ * From then on the person can turn it off: Share usage analytics, in
+ * Settings → Social & privacy (Priv1 call 2; the rules for the answer are
+ * in `usageAnalytics.ts`).
  * Off, every event is dropped here from that moment, the native SDK's own
  * collection is switched off (it keeps that across launches), and on the
  * web the SDK is never loaded on a device whose last answer was off, or is
@@ -64,6 +79,7 @@ export type AnalyticsStatus =
   | "uninitialised" // initAnalytics not called yet
   | "pending" // init started, provider resolving asynchronously
   | "active" // delivering (web SDK or native plugin)
+  | "before-notice" // the person has not met the analytics line yet
   | "off" // the person turned Share usage analytics off
   | "unconfigured" // web: no VITE_FIREBASE_MEASUREMENT_ID
   | "unsupported" // web: isSupported() returned false
@@ -87,6 +103,20 @@ let sharing: boolean | null = null;
 function shares(): boolean {
   if (sharing === null) sharing = usageAnalyticsOnThisDevice();
   return sharing;
+}
+
+/** Whether the person has met the analytics line: on their account, which
+ *  carries the agreement the line sits on, or on the agreement shown in
+ *  this visit. Neither is kept on the device. */
+let accountMetNotice = false;
+let noticeShownThisVisit = false;
+function metNotice(): boolean {
+  return accountMetNotice || noticeShownThisVisit;
+}
+
+/** Whether Google Analytics may run: the line met, and not turned off. */
+function delivers(): boolean {
+  return metNotice() && shares();
 }
 
 /** The web SDK once loaded: its delivery and its collection switch. */
@@ -141,7 +171,49 @@ export function initAnalytics(app: FirebaseApp): void {
   firebaseApp = app;
   status = "pending";
   markStarted();
-  queue(isNativePlatform() ? startNative : () => applyWeb(shares()));
+  queue(isNativePlatform() ? startNative : () => applyWeb(delivers()));
+}
+
+/** Apply a change to what `delivers()` says, if it changed. Off drops every
+ *  event at once, before the provider has heard. */
+function reapply(before: boolean): void {
+  const now = delivers();
+  if (!now) deliver = null;
+  if (before === now) return;
+  if (!initStarted) return; // init reads the answer when it starts
+  queue(isNativePlatform() ? () => applyNative(now) : () => applyWeb(now));
+}
+
+/**
+ * The health-details agreement, with its analytics line, is on screen
+ * (setup's step, or the agreement's own screen): Google Analytics may run
+ * from here on in this visit, unless the device turned it off. Never throws.
+ */
+export function noteAnalyticsNoticeShown(): void {
+  if (noticeShownThisVisit) return;
+  const before = delivers();
+  noticeShownThisVisit = true;
+  reapply(before);
+}
+
+/**
+ * Whether the signed-in account carries the agreement, and so met the line
+ * on it: from the account as it loads, false with no account. Signing out
+ * also forgets the agreement shown this visit, so the next person on the
+ * phone starts before the line. Never throws.
+ */
+export function setAccountMetAnalyticsNotice(met: boolean): void {
+  const before = delivers();
+  accountMetNotice = met;
+  reapply(before);
+}
+
+/** Signed out: the next person on this phone has not met the line. */
+export function forgetAnalyticsNoticeShown(): void {
+  const before = delivers();
+  noticeShownThisVisit = false;
+  accountMetNotice = false;
+  reapply(before);
 }
 
 /**
@@ -151,13 +223,15 @@ export function initAnalytics(app: FirebaseApp): void {
  * the provider is then switched in turn. Never throws.
  */
 export function setUsageAnalytics(on: boolean): void {
-  const before = shares();
+  const before = delivers();
   rememberUsageAnalyticsOnThisDevice(on);
-  if (before === on) return;
   sharing = on;
-  if (!on) deliver = null;
-  if (!initStarted) return; // init reads the answer when it starts
-  queue(isNativePlatform() ? () => applyNative(on) : () => applyWeb(on));
+  reapply(before);
+}
+
+/** The status for not delivering, by why. */
+function quietStatus(): AnalyticsStatus {
+  return metNotice() ? "off" : "before-notice";
 }
 
 /** Web: off loads nothing, or stops a loaded SDK collecting; on loads it
@@ -166,12 +240,18 @@ async function applyWeb(on: boolean): Promise<void> {
   if (!on) {
     deliver = null;
     web?.collect(false);
-    if (status === "pending" || status === "active") status = "off";
+    if (
+      status === "pending" ||
+      status === "active" ||
+      status === "off" ||
+      status === "before-notice"
+    )
+      status = quietStatus();
     return;
   }
   // A newer off is queued behind this on: gtag stays as it is until then,
   // never collecting again in between.
-  if (!shares()) return;
+  if (!delivers()) return;
   if (web) {
     web.collect(true);
     deliver = web.deliver;
@@ -179,7 +259,8 @@ async function applyWeb(on: boolean): Promise<void> {
     return;
   }
   // Loaded once: unconfigured, unsupported and a failed load are final.
-  if (status === "pending" || status === "off") await loadWeb();
+  if (status === "pending" || status === "off" || status === "before-notice")
+    await loadWeb();
 }
 
 /** Web path — firebase/analytics, gated on measurementId + isSupported(). */
@@ -211,9 +292,9 @@ async function loadWeb(): Promise<void> {
       );
       return;
     }
-    // Turned off while the SDK loaded: start nothing.
-    if (!shares()) {
-      status = "off";
+    // Turned off, or signed out, while the SDK loaded: start nothing.
+    if (!delivers()) {
+      status = quietStatus();
       return;
     }
     // The page fields in the config are what gtag's own events (user
@@ -271,13 +352,15 @@ async function startNative(): Promise<void> {
     );
     return;
   }
-  await applyNative(shares());
+  await applyNative(delivers());
 }
 
 /** Native: the SDK's collection switch, which it keeps across launches, so
  *  a device that turned it off is off from the next launch's first moment,
- *  before this code runs. Called with the answer at launch too, so a
- *  device's kept answer and the SDK's never disagree for long. */
+ *  before this code runs. Info.plist starts it off on a fresh install, so
+ *  nothing goes before the line is met. Called at launch too, off until the
+ *  line is met in this launch, so a device's kept answer and the SDK's never
+ *  disagree for long. */
 async function applyNative(on: boolean): Promise<void> {
   if (!native) return; // the plugin never loaded: `status` says why
   const { plugin } = native;
@@ -293,13 +376,13 @@ async function applyNative(on: boolean): Promise<void> {
     return;
   }
   // A newer answer is queued behind this one and will set both.
-  if (shares() !== on) return;
+  if (delivers() !== on) return;
   deliver = on
     ? (event, params) => {
         void plugin.logEvent({ name: event, params });
       }
     : null;
-  status = on ? "active" : "off";
+  status = on ? "active" : quietStatus();
   if (on) logger.log("[Analytics] Firebase Analytics (native) initialised.");
 }
 
