@@ -99,6 +99,8 @@ describe("your own profile", () => {
     expect(screen.queryByRole("list", { name: "Recent badges" })).toBeNull();
     const fewer = screen.getByRole("button", { name: "Show fewer" });
     expect(fewer).toHaveAttribute("aria-expanded", "true");
+    // It closes the collection, so it ends in no chevron.
+    expect(fewer).not.toHaveClass("link-standalone");
     fireEvent.click(fewer);
     expect(onToggle).toHaveBeenCalledWith(false);
   });
