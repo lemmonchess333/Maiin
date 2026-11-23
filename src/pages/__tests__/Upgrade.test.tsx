@@ -918,6 +918,33 @@ describe("Upgrade — checkout return banner", () => {
     // Once: the next return to the page is its own.
     expect(takeTrialOfferWebCheckout("test-uid")).toBe(false);
   });
+
+  /* The note is the one checkout's that wrote it. One from the offer left
+     with the browser's Back leaves it behind; a checkout begun here later,
+     in the same tab, comes back to this page, not Home. */
+  it("a checkout begun here, after one from the trial offer was abandoned, returns to this page", async () => {
+    noteTrialOfferWebCheckout("test-uid");
+    purchaseMock.mockResolvedValueOnce({
+      kind: "redirected",
+      url: "https://pay.rev.cat/x",
+    });
+    renderPlans();
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    cleanup();
+    render(
+      <MemoryRouter initialEntries={["/upgrade?checkout=success"]}>
+        <Routes>
+          <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/" element={<p>Home screen</p>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("status").textContent).toContain(
+      "Payment received"
+    );
+    expect(screen.queryByText("Home screen")).toBeNull();
+  });
 });
 
 describe("Upgrade — Sub1 P2 cross-platform Pro guard", () => {

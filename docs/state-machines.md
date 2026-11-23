@@ -143,11 +143,17 @@ code can hold that it should not, and what would make it explicit.
   and the mark lapses within the hour. `handleFinish` reads the account
   from the server before it writes, so a plan made elsewhere is kept,
   unless this open of the app already asked for the plan
-  (`setupSentThisVisitFor`), when Try again builds it again. Answers
+  (`setupSentThisVisitFor`), when Try again sends it again.
+  `completeOnboarding` refuses an account with a plan (`already-exists`):
+  after a call from this open of the app that is the plan that call built,
+  its answer lost, and setup carries on; otherwise the plan is kept. Answers
   picked up cold, not in this open of the app, drop their agreement to
   store health details and ask for it again (`agreementAskedAgain`; at the
-  review, I agree returns there). They last two days, and go on sign-out
-  and when any account appears without the mark (`accountAppeared`).
+  review, I agree returns there), and so does setup left open two days
+  after I agree or two hours in the background
+  (`onSignedOutAgreementLapsed`), from the step it is on. They last two
+  days, and go on sign-out and when any account appears without the mark
+  (`accountAppeared`).
 - **Explicit form.** One reducer over `OnboardingDraft` and a pure module for
   validity and the payload. Candidate A4.
 
@@ -230,11 +236,18 @@ null` used to mean both "this account has no profile yet" and "the profile
   (`adoptSignedOutDraft`) and builds the plan. A pending deletion,
   `ProfileUnavailable` and the agreement's gate stand as they were for a
   signed-in account.
-- **An existing plan is never replaced.** Two places see it: the app
+- **An existing plan is never replaced.** Three places see it: the app
   (`AppRoutes`), when the account's profile already carries
-  `onboardingComplete`, and `handleFinish`, which reads the account from
-  the server before writing, for a device whose copy is older. Either
-  drops the answers and says so on Home (`KEPT_PLAN_NOTICE`).
+  `onboardingComplete`; `handleFinish`, which reads the account from the
+  server before writing, for a device whose copy is older; and
+  `completeOnboarding`, which refuses in its transaction an account with
+  `onboardingComplete`, for two phones at once. Each drops the answers and
+  says so on Home (`KEPT_PLAN_NOTICE`). A programme stored without
+  `onboardingComplete` is not a plan to keep: setup rebuilds it and sets
+  the flag, so the account leaves setup. A refusal from the server is
+  "kept" unless this open of the app sent setup and its answer is unknown
+  (`setupSentThisVisitFor`); a refusal that wrote nothing
+  (`refusedBeforeWriting`) does not count as sent.
 - **The trial offer.** Once the plan is built, setup goes to
   `/trial-offer` (`src/pages/TrialOffer.tsx`) for an account that can take
   a trial, before Home; every way off it goes Home, a purchase through
