@@ -1,4 +1,5 @@
 "use strict";
+const { isTreadmillRun } = require("./runEligibility");
 
 /* ─────────────────────────────────────────────
    The route a run's public page draws (App1 Q51). The owner, 14 November
@@ -68,15 +69,10 @@ function metresBetween(a, b) {
 }
 
 /** Whether a run was run outdoors with GPS (src/lib/runGuards.ts
- *  `isOutdoorGpsRun`): not on a treadmill, by its place or by the type a
- *  treadmill run had before the treadmill became a place, and not
- *  entered by hand. */
+ *  `isOutdoorGpsRun`): not on a treadmill (the server's one reading,
+ *  `isTreadmillRun`) and not entered by hand. */
 function isOutdoorGpsRun(run) {
-  return !(
-    run.place === "treadmill" ||
-    run.activityType === "treadmill" ||
-    run.activityType === "manual"
-  );
+  return !(isTreadmillRun(run) || run.activityType === "manual");
 }
 
 function isLat(value) {

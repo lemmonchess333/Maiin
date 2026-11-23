@@ -1,10 +1,10 @@
 /**
- * The run's scales read in any colour vision (DS10 call 2, owner 22
- * November 2026). The route's pace on a run's detail and the live run's
- * pace bar are one light-to-dark scale (`THEME.pace`), each neighbouring
- * step 15 or more apart (CIEDE2000) in normal vision and at deuteranopia
- * and protanopia severity 100. The heart-rate zones keep their scale with
- * zone 5 off the running coral and the error red.
+ * The run's scales read in any colour vision (DS10 call 2). The route's
+ * pace on a run's detail and the live run's pace bar are one
+ * light-to-dark scale (`THEME.pace`), each neighbouring step 15 or more
+ * apart (CIEDE2000) in normal vision and at deuteranopia and protanopia
+ * severity 100. The heart-rate zones keep their scale with zone 5 off the
+ * running coral and the error red.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";

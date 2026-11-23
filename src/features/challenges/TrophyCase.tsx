@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -65,10 +66,12 @@ export default function TrophyCase({
             <Button
               variant="ghost"
               size="sm"
-              /* `lifting-strong`: see the badges' link above it on the
-                 shelf (`BadgeShelf`). `primary-strong` is under 4.5:1 as
-                 small text on the page in both themes. */
-              className="-mr-2 min-h-[44px] link-standalone"
+              /* As the badges' link above it on the shelf: a chevron
+                 on See all, none on Show fewer. */
+              className={cn(
+                "-mr-2 min-h-[44px]",
+                showAll ? "text-foreground" : "link-standalone"
+              )}
               aria-expanded={showAll}
               onClick={() => setShowAll((all) => !all)}
             >

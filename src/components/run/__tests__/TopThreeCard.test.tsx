@@ -47,6 +47,28 @@ describe("TopThreeCard", () => {
     );
   });
 
+  it("says no sentence of its own under the hero's reward, and keeps the rows", () => {
+    /* A first 10K, a streak or the longest run is the hero's sentence;
+       a finish says one (DESIGN_GUIDE rule 30). */
+    render(
+      <TopThreeCard
+        rewardAbove
+        placings={[
+          { meters: 1000, seconds: 262, place: 3, bestSeconds: 248 },
+          { meters: 5000, seconds: 1541, place: 2, bestSeconds: 1510 },
+        ]}
+      />
+    );
+    const card = screen.getByRole("region", { name: "Your top three" });
+    expect(card.querySelector("p")).toBeNull();
+    expect(card.textContent).not.toContain("your 2nd fastest.");
+    expect(
+      within(card)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent)
+    ).toEqual(["33rd fastest1K4:22best 4:08", "22nd fastest5K25:41best 25:10"]);
+  });
+
   it("renders nothing when the run placed nowhere", () => {
     const { container } = render(<TopThreeCard placings={[]} />);
     expect(container).toBeEmptyDOMElement();
