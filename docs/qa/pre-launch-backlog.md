@@ -7763,7 +7763,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-                  name>’s workout on Tropos" (run, day, week) with the card's figures in
+                      name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,
@@ -7819,8 +7819,8 @@ phone.
 
 - [ ] **A rise shows, within the window.** In a league group of 10 or more
       with at least half scored, save a planned lift that lifts your points
-      past someone's. Passing: within 15 s of the save, under the week card
-      (the run's: above the props prompt), a row with the tier's shield,
+      past someone's, then a run that does. Passing: within 15 s of each
+      save, under "Your week so far", a row with the tier's shield,
       "<Tier> league" and "Up to <place> of <size>"; tapping it opens the
       league page with you at that place.
 - [ ] **No rise, no row.** Save a session beyond the week's plan (points

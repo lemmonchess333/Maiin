@@ -2079,4 +2079,13 @@ describe("RunSummary — the league line (Run30 call 2)", () => {
       "onServer"
     );
   });
+
+  it("comes below the run's figures, so landing late pushes none of them down", async () => {
+    renderSummary();
+    const pace = await screen.findByText("Average pace");
+    const line = screen.getByTestId("league-line");
+    expect(
+      pace.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
 });

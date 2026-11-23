@@ -1907,20 +1907,6 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* The league line (Run30 call 2): mounted before the save, so it
-              reads the group first, and drawn only when the saved run
-              raised your place. */}
-          <LeagueRiseLine
-            className="mx-4 mb-4"
-            stage={
-              saveStatus === "idle" && savedRunId === null
-                ? "before"
-                : saved && savedRunId !== null && !pendingSync
-                  ? "onServer"
-                  : "saving"
-            }
-          />
-
           {/* Post-completion kudos (Phase 2) — after the run is banked, if
               someone the user follows also trained today. Renders nothing
               otherwise; once/day; dismissible. */}
@@ -2201,6 +2187,23 @@ export default function RunSummary() {
               </Suspense>
             </OptionalSummaryBoundary>
           </div>
+
+          {/* The league line (Run30 call 2), under the week as on the lift:
+              it lands seconds after the save, so it goes below the run's
+              figures and pushes none of them down, and it reserves no space
+              when it has nothing to say. Mounted before the save, so it
+              reads the group first; drawn only when the saved run raised
+              your place. */}
+          <LeagueRiseLine
+            className="mx-4 mb-4"
+            stage={
+              saveStatus === "idle" && savedRunId === null
+                ? "before"
+                : saved && savedRunId !== null && !pendingSync
+                  ? "onServer"
+                  : "saving"
+            }
+          />
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
               Adherence chip surfaces "Planned" / "Custom" / "Extra"
