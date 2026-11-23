@@ -7763,7 +7763,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-              name>’s workout on Tropos" (run, day, week) with the card's figures in
+                      name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,
@@ -7804,3 +7804,31 @@ has been deployed, and no phone or messaging app has opened a card's link.
       window. Passing: the same layout, "<first name> shared a run" (or a
       workout), the button reads "Join Tropos" and opens the App Store, and
       View Source has no invite code.
+
+## The league line on a finish (Run30 call 2, 2026-11-23)
+
+Affects: the lift finish (`SessionCompleteScreen`) and the run finish
+(`RunSummary`), each of which now mounts `LeagueRiseLine`
+(`src/features/league/`). For someone in a league group it reads the
+group's standings from the server before the save, then listens for 15 s
+(`LEAGUE_LINE_WAIT_MS`) once the session is on the server for the session
+trigger's recompute, and shows "Up to 4th of 18" only when the session
+raised their place and half the group has scored (`placeRise`). No server
+change. Unit-tested; no group of 10 exists yet, so nobody has seen it on a
+phone.
+
+- [ ] **A rise shows, within the window.** In a league group of 10 or more
+      with at least half scored, save a planned lift that lifts your points
+      past someone's, then a run that does. Passing: within 15 s of each
+      save, under "Your week so far", a row with the tier's shield,
+      "<Tier> league" and "Up to <place> of <size>"; tapping it opens the
+      league page with you at that place.
+- [ ] **No rise, no row.** Save a session beyond the week's plan (points
+      stay at 100), and one that ties the person above who reached the
+      points first. Passing: nothing, after 15 s or ever.
+- [ ] **A cold trigger.** After the functions have been idle for an hour,
+      save a session that rises. Note how long the row takes; if it often
+      misses 15 s, widen `LEAGUE_LINE_WAIT_MS`.
+- [ ] **Offline.** Open the finish with the phone in Airplane Mode, save,
+      then reconnect. Passing: nothing shows (the group could not be read
+      before the save).

@@ -103,3 +103,53 @@ export function ordinal(n: number): string {
       return `${n}th`;
   }
 }
+
+/* ───────── The finish's league line (Run30 call 2) ───────── */
+/* The app's alone: the server writes the points and never says a place
+   after a session, so these have no server copy to pin. */
+
+const pointsOf = (s: Rankable): number => Number(s.points) || 0;
+
+/** Whether half the group has scored this week: at least ceil(n / 2) of
+ *  its `n` standings above zero points. Until then a place says little
+ *  (a Monday's first finisher would read "1st"), so the finish names
+ *  none. */
+export function halfHaveScored(standings: readonly Rankable[]): boolean {
+  const n = standings.length;
+  if (n === 0) return false;
+  const scored = standings.filter((s) => pointsOf(s) > 0).length;
+  return scored >= Math.ceil(n / 2);
+}
+
+/**
+ * The place a session raised you to, from the group's standings read
+ * before it was saved and after the server recomputed yours; null when it
+ * raised you nowhere. A rise is all of these:
+ *
+ *   - half the group has scored, after (`halfHaveScored`);
+ *   - your place now is better than your place before;
+ *   - and better than it would be with your old points among everyone
+ *     else's now, so the session moved you, not someone leaving.
+ *
+ * A tie that keeps your place is no rise: ties rank by who reached the
+ * points first, and the session's points were reached last.
+ */
+export function placeRise(
+  uid: string,
+  before: readonly Rankable[],
+  after: readonly Rankable[]
+): { rank: number; of: number } | null {
+  const was = before.find((s) => s.uid === uid);
+  const now = after.find((s) => s.uid === uid);
+  if (!was || !now) return null;
+  if (!halfHaveScored(after)) return null;
+  const rankIn = (rows: readonly Rankable[]): number =>
+    rankStandings(rows).find((s) => s.uid === uid)?.rank ?? Infinity;
+  const rank = rankIn(after);
+  const rankBefore = rankIn(before);
+  const rankWithoutSession = rankIn(
+    after.map((s) => (s.uid === uid ? was : s))
+  );
+  if (rank >= rankBefore || rank >= rankWithoutSession) return null;
+  return { rank, of: after.length };
+}
