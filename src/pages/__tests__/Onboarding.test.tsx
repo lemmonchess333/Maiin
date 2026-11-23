@@ -2441,3 +2441,39 @@ describe("the agreement to store health details", () => {
     ).toBeInTheDocument();
   });
 });
+
+/* Setup wrote `sex: "male"` for every answer but female, "Prefer not to
+   say" included, so the BMR read 166 kcal above a woman's and the first
+   weights took a man's (rankings spec, 22 November 2026). It now sends
+   `sex` only for an answer, and the maths take the midpoint without one. */
+describe("sex is stored only when answered", () => {
+  const commit = async (gender: OnboardingDraft["gender"]) => {
+    saveOnboardingDraft("setup-test", { ...draft, gender });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const sent = complete.mock.calls[0][0].profileData;
+    cleanup();
+    complete.mockClear();
+    return sent;
+  };
+
+  it("sends no `sex` for Prefer not to say, and a target between the two", async () => {
+    const none = await commit("unspecified");
+    expect(none).not.toHaveProperty("sex");
+    expect(none.gender).toBe("unspecified");
+    const male = await commit("male");
+    const female = await commit("female");
+    expect(male.sex).toBe("male");
+    expect(female.sex).toBe("female");
+    // The BMR's constant is the mean of +5 and −161, so the target sits
+    // between, within the rounding of the activity multiplier.
+    expect(none.targetCalories).toBeLessThan(male.targetCalories);
+    expect(none.targetCalories).toBeGreaterThan(female.targetCalories);
+    expect(
+      Math.abs(
+        none.targetCalories - (male.targetCalories + female.targetCalories) / 2
+      )
+    ).toBeLessThanOrEqual(1);
+  });
+});

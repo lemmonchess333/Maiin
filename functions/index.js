@@ -908,11 +908,16 @@ exports.completeOnboarding = functions
       // an older bundle. A year sent is the one asked for, so a year the
       // sanitiser refused (under 18) fails here as itself. Nothing derived
       // from it is stored: the year is the one copy of the fact (Q21).
+      //
+      // `sex` is not required: setup sends it only for an answer of female
+      // or male, and "Prefer not to say" sends none (owner, 22 November
+      // 2026). The app's maths take the midpoint of the two figures for
+      // an account without one (`src/lib/sex.ts`). An older build still
+      // sends `sex: "male"` for that answer, which is kept as sent.
       const requiredFields = [
         "weightKg",
         "heightCm",
         rawProfileData.birthYear != null ? "birthYear" : "age",
-        "sex",
         "activityLevel",
       ];
       for (const field of requiredFields) {

@@ -193,6 +193,28 @@ describe("buildGoalWeightPersistPayload — the ONE persist recipe", () => {
     });
     expect(payload.program).toEqual({ goal: "cut", currentPhase: "base" });
   });
+
+  it("takes the midpoint BMR with no sex stored, never a man's", () => {
+    const at = (sex: "male" | "female" | undefined) =>
+      buildGoalWeightPersistPayload({
+        profile: { ...profile, sex },
+        currentKg: 90,
+        targetKg: 80,
+        rateKgPerWeek: 0.5,
+      });
+    const none = at(undefined);
+    // 10*90 + 6.25*180 - 5*30 - 78 = 1797
+    expect(none.tdee.bmr).toBe(1797);
+    expect(none.tdee.bmr).toBe(
+      (at("male").tdee.bmr + at("female").tdee.bmr) / 2
+    );
+    expect(none.payload.targetCalories).toBeLessThan(
+      at("male").payload.targetCalories
+    );
+    expect(none.payload.targetCalories).toBeGreaterThan(
+      at("female").payload.targetCalories
+    );
+  });
 });
 
 describe("buildActivityLevelPersistPayload — the activity level offer's save", () => {

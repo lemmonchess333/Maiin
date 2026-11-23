@@ -1641,8 +1641,9 @@ export default function Home() {
             reached a new account in the week that most needed it. The
             walk itself went with App1 (whole-app grill Q27).
           - Three tips (FV2, 2026-10-04). The age-and-sex nudge: setup
-            always records both, and no Settings screen can change sex, so
-            its button could not do what it asked. The experience nudge:
+            asks both, and Settings › Profile is where either changes,
+            sex included (Male, Female or Not set), so a nudge on Home
+            asked again for answers already given. The experience nudge:
             written when setup didn't ask, it now asked people a week later
             to check the answer they had just given. The race-goal
             invitation: Train's Run tab carries the same card where run

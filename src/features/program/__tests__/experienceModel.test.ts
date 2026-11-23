@@ -517,7 +517,12 @@ describe("the complexity gate survives composition", () => {
  * are silent — nothing in the app flags an implausible prescription.
  */
 describe("a swapped slot is re-calibrated, not carried", () => {
-  const CTX = { bodyweightKg: 80, experience: "beginner" as const };
+  // The plan's own person: no sex stored would take the midpoint factor.
+  const CTX = {
+    bodyweightKg: 80,
+    experience: "beginner" as const,
+    sex: "male",
+  };
 
   const mismatches = (w: WorkoutDay[], tolerance = 5) => {
     const out: string[] = [];

@@ -25,6 +25,7 @@ import {
   INJURY_SWAP_LOAD_SHARE,
 } from "./injurySubstitutions";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
+import { figureForSex, type Sex } from "@/lib/sex";
 
 import type {
   Experience,
@@ -49,9 +50,9 @@ export type { Experience };
 export interface StartingLoadContext {
   bodyweightKg: number;
   experience: Experience;
-  /** Lowers the estimate for female lifters, by the same factor for every
-   *  movement (`sexFactor`); anything non-female is treated as the
-   *  male/default. */
+  /** Scales the estimate by the same factor for every movement
+   *  (`SEX_FACTOR`). None stored, or any other value, takes the midpoint
+   *  of the male and female figures (`figureForSex`), never male. */
   sex?: string;
   /** The lifter's unit (Lift18): an lb lifter's starts are weights their lb
    *  kit makes. Kg when absent. */
@@ -87,9 +88,12 @@ const BW_MULTIPLE: Record<MovementCategory, Record<Experience, number>> = {
   core: { beginner: 0.35, intermediate: 0.45, advanced: 0.55 },
 };
 
-function sexFactor(sex: string | undefined): number {
-  return sex === "female" ? 0.75 : 1;
-}
+/** The share of a man's first weight each sex starts on. Someone who did
+ *  not say starts on the mean, 0.875 (owner, 22 November 2026). */
+export const SEX_FACTOR: Readonly<Record<Sex, number>> = {
+  male: 1,
+  female: 0.75,
+};
 
 /**
  * The most bodyweight a first weight is scaled from (training deep dive,
@@ -99,15 +103,14 @@ function sexFactor(sex: string | undefined): number {
  * heavier lifter who is stronger than this lifts more, and the plan follows
  * the weight lifted from the first session.
  */
-export const SEED_BODYWEIGHT_CAP_KG = { female: 70, other: 90 } as const;
+export const SEED_BODYWEIGHT_CAP_KG: Readonly<Record<Sex, number>> = {
+  female: 70,
+  male: 90,
+};
 
+/** With no sex stored the cap is the mean of the two, 80 kg. */
 function seedBodyweight(bodyweightKg: number, sex: string | undefined) {
-  return Math.min(
-    bodyweightKg,
-    sex === "female"
-      ? SEED_BODYWEIGHT_CAP_KG.female
-      : SEED_BODYWEIGHT_CAP_KG.other
-  );
+  return Math.min(bodyweightKg, figureForSex(SEED_BODYWEIGHT_CAP_KG, sex));
 }
 
 /**
@@ -154,7 +157,7 @@ export function startingWeightForCategory(
   const bw = seedBodyweight(ctx.bodyweightKg, ctx.sex);
   const mult = BW_MULTIPLE[category]?.[ctx.experience] ?? 0;
   if (mult <= 0) return 0;
-  const raw = bw * mult * sexFactor(ctx.sex);
+  const raw = bw * mult * figureForSex(SEX_FACTOR, ctx.sex);
   return Math.max(0, Math.round(raw / 2.5) * 2.5);
 }
 
@@ -412,10 +415,12 @@ export function weightAfterExerciseSwap(
 }
 
 /** Who a plan with no bodyweight is estimated for: the light end of adults,
- *  at the beginner's multiples, so the first guess errs light. */
+ *  at the beginner's multiples, so the first guess errs light. It is a
+ *  fixed guess, not the person, so it names the factor it was set at. */
 const FIRST_GUESS: StartingLoadContext = {
   bodyweightKg: 60,
   experience: "beginner",
+  sex: "male",
 };
 
 /**
