@@ -384,6 +384,11 @@ const PINNED: Record<string, string> = {
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
 const NOT_EQUALITY_MIRROR: Record<string, string> = {
+  "functions/lib/setupCounts.js":
+    "the two halves of one request, not two copies of a rule: the client " +
+    "module sends a step's name once a launch, the server one validates it " +
+    "and adds it to the day's totals; the step names they share are held " +
+    "by each side's own tests",
   "functions/lib/healthWorkoutLedger.js":
     "server deletion trigger only marks an existing receipt; the client module " +
     "reserves exports, checks consent and reconciles native cleanup, so they " +
