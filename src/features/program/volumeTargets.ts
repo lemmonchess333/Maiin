@@ -119,3 +119,12 @@ export function volumeTargetsFor(
     ...targetKit(profile),
   });
 }
+/**
+ * Returns all tracked muscles with zero or negative fitted sets.
+ */
+export function detectZeroVolumeGaps(
+  fittedSets: ReadonlyMap<string, number>,
+  trackedMuscles: readonly string[],
+): string[] {
+  return trackedMuscles.filter((muscle) => (fittedSets.get(muscle) ?? 0) <= 0);
+}
