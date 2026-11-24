@@ -1,7 +1,7 @@
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import { Scale, ArrowRight, ArrowDown, ArrowUp, Minus } from "lucide-react";
+import { Scale, ArrowRight, ArrowDown, ArrowUp, Minus, Plus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
@@ -111,7 +111,7 @@ export default function WeightTile({
             style={{ color: THEME.chrome.text }}
             aria-hidden="true"
           />
-          <SectionLabel>Weight</SectionLabel>
+          <SectionLabel>Weight</SectionLabel><Plus className="size-3.5 shrink-0 ml-auto" style={{ color: THEME.chrome.text }} aria-hidden="true" />
         </div>
         {/* Spaces in the text between the tile's words, so they read as
             words, as the name does; the flex boxes draw nothing for
