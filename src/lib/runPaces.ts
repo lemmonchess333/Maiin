@@ -98,7 +98,7 @@ export function vdotFromRace(distanceM: number, timeS: number): number {
   const velocity = distanceM / tMin; // m/min
   const vo2 = vo2AtVelocity(velocity);
   const pct = pctMaxForDuration(tMin);
-  if (pct <= 0) return 0;
+  if (vo2 <= 0 || pct <= 0) return 0;
   return vo2 / pct;
 }
 
@@ -334,7 +334,7 @@ function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
   } else if (fitness.vdot && fitness.vdot > 0) {
     vdot = fitness.vdot;
   }
-  return vdot > 0 ? { vdot, benchmark } : null;
+  return Number.isFinite(vdot) && vdot > 0 && vdot <= MAX_PLAUSIBLE_VDOT ? { vdot, benchmark } : null;
 }
 
 /** The concrete effort Riegel projections run off: the real benchmark when
@@ -723,4 +723,15 @@ export function derivedFitness(best: {
       ? { sourceRunAt: effort.completedAt.toISOString() }
       : {}),
   };
+}
+/** Adjusts target pace (s/km) for heat and humidity, clamped to a +12% slowdown. */
+export function heatAdjustedPaceSPerKm(paceSPerKm: number, tempC: number, humidityPct = 50): number {
+if (!Number.isFinite(paceSPerKm) || paceSPerKm <= 0 || !Number.isFinite(tempC) || tempC <= 15) return paceSPerKm;
+const penalty = Math.min(0.12, 0.003 * (tempC - 15) + (tempC >= 18 && humidityPct > 60 ? 0.0005 * (humidityPct - 60) : 0));
+return Math.round(paceSPerKm * (1 + penalty));
+}
+
+/** Returns true if planned single-session distance exceeds 110% of the 30-day longest run. */
+export function isSingleSessionDistanceSpike(plannedKm: number, longestLast30DaysKm: number): boolean {
+return Number.isFinite(plannedKm) && Number.isFinite(longestLast30DaysKm) && longestLast30DaysKm > 0 && plannedKm > longestLast30DaysKm * 1.1;
 }
