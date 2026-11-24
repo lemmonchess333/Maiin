@@ -133,38 +133,61 @@ describe("arcEndPoint", () => {
   // and the arc's line runs 122.1px from it (74 of the box's 80).
   const wheel = { left: 0, top: 0, width: 264, height: 264 };
   const r = 132 * (74 / 80);
+  const at = (x: number, y: number) => ({
+    x: expect.closeTo(x, 5),
+    y: expect.closeTo(y, 5),
+  });
+  const twelve = at(132, 132 - r);
+  const three = at(132 + r, 132);
+  const six = at(132, 132 + r);
+  const nine = at(132 - r, 132);
 
-  it("is twelve o'clock with nothing logged", () => {
-    const p = arcEndPoint(wheel, 0, 2200);
-    expect(p.x).toBeCloseTo(132, 5);
-    expect(p.y).toBeCloseTo(132 - r, 5);
+  describe("the logged view: the arc grows from twelve o'clock", () => {
+    it("is twelve o'clock with nothing logged", () => {
+      expect(arcEndPoint(wheel, 0, 2200, "eaten")).toEqual(twelve);
+    });
+
+    it("is three o'clock a quarter of the way round", () => {
+      expect(arcEndPoint(wheel, 550, 2200, "eaten")).toEqual(three);
+    });
+
+    it("is six o'clock at half the target", () => {
+      expect(arcEndPoint(wheel, 1100, 2200, "eaten")).toEqual(six);
+    });
+
+    it("is back at twelve at the target and past it", () => {
+      for (const calories of [2200, 3000]) {
+        expect(arcEndPoint(wheel, calories, 2200, "eaten")).toEqual(twelve);
+      }
+    });
   });
 
-  it("is three o'clock a quarter of the way round", () => {
-    const p = arcEndPoint(wheel, 550, 2200);
-    expect(p.x).toBeCloseTo(132 + r, 5);
-    expect(p.y).toBeCloseTo(132, 5);
-  });
+  describe("the left view: the arc is what is left", () => {
+    it("is all the way round, at twelve o'clock, with nothing logged", () => {
+      expect(arcEndPoint(wheel, 0, 2200, "left")).toEqual(twelve);
+    });
 
-  it("is six o'clock at half the target", () => {
-    const p = arcEndPoint(wheel, 1100, 2200);
-    expect(p.x).toBeCloseTo(132, 5);
-    expect(p.y).toBeCloseTo(132 + r, 5);
-  });
+    it("is nine o'clock with a quarter logged", () => {
+      expect(arcEndPoint(wheel, 550, 2200, "left")).toEqual(nine);
+    });
 
-  it("is back at twelve at the target and past it", () => {
-    for (const calories of [2200, 3000]) {
-      const p = arcEndPoint(wheel, calories, 2200);
-      expect(p.x).toBeCloseTo(132, 5);
-      expect(p.y).toBeCloseTo(132 - r, 5);
-    }
+    it("is three o'clock with three quarters logged", () => {
+      expect(arcEndPoint(wheel, 1650, 2200, "left")).toEqual(three);
+    });
+
+    it("is at twelve, the empty arc's start, at the target and past it", () => {
+      for (const calories of [2200, 3000]) {
+        expect(arcEndPoint(wheel, calories, 2200, "left")).toEqual(twelve);
+      }
+    });
   });
 
   it("follows the wheel wherever it is on screen, at any size", () => {
     const p = arcEndPoint(
       { left: 28, top: 92, width: 104, height: 104 },
       550,
-      2200
+      2200,
+      "eaten"
     );
     expect(p.x).toBeCloseTo(28 + 52 + 52 * (74 / 80), 5);
     expect(p.y).toBeCloseTo(92 + 52, 5);

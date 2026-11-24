@@ -15,6 +15,7 @@ import {
   weekSessions,
   type HeroExercise,
 } from "../homeHero";
+import type { LastSet } from "@/features/program/lastSets";
 import {
   liftTargets,
   runStartTarget,
@@ -248,17 +249,26 @@ describe("the lift line: today's lead lift against last time", () => {
     sets: 3,
     reps: 8,
     weight: 35,
-    lastPerformance: { sets: 3, reps: 8, weight: 32.5, completed: true },
     ...extra,
   });
+  /** Last time's counted sets by exercise, as Train's "Last:" line reads
+   *  them (`lastSetsBySlot`). */
+  const lastOf =
+    (byId: Record<string, LastSet[]>) =>
+    (ex: { exerciseId?: string }): LastSet[] | undefined =>
+      byId[ex.exerciseId ?? ""];
+  const sets = (weightKg: number, ...reps: number[]): LastSet[] =>
+    reps.map((r) => ({ weightKg, reps: r }));
+  const rowedAt = lastOf({ "barbell-row": sets(32.5, 8, 8, 8) });
+  const never = lastOf({});
 
   it("says how much heavier, in the lifter's unit", () => {
-    expect(liftHeroLine([row()], "kg")).toEqual({
+    expect(liftHeroLine([row()], "kg", rowedAt)).toEqual({
       title: "Barbell row 35 kg × 8",
       detail: "2.5 kg more than last time",
       mark: "up",
     });
-    expect(liftHeroLine([row()], "lbs")).toEqual({
+    expect(liftHeroLine([row()], "lbs", rowedAt)).toEqual({
       title: "Barbell row 77.2 lb × 8",
       detail: "5.5 lb more than last time",
       mark: "up",
@@ -268,43 +278,75 @@ describe("the lift line: today's lead lift against last time", () => {
   it("says a lighter weight plainly", () => {
     expect(
       liftHeroLine(
-        [
-          row({
-            weight: 30,
-            lastPerformance: { sets: 3, reps: 8, weight: 35, completed: false },
-          }),
-        ],
-        "kg"
+        [row({ weight: 30 })],
+        "kg",
+        lastOf({ "barbell-row": sets(35, 8, 7, 6) })
       )
     ).toMatchObject({ detail: "5 kg less than last time", mark: "down" });
   });
 
-  it("compares the reps at the same weight", () => {
-    const at = (reps: number, lastReps: number) =>
+  it("is the last time Train's row lists, not the plan's own record", () => {
+    /* The owner's Pull A (23 Nov 2026): Train's row read "Last: 60 kg ×
+       10, 10" while the hero said "7.5 kg less than last time", against
+       the 42.5 kg the plan last recorded for the slot. Both name one last
+       time: the saved session's sets. */
+    const pullA = {
+      ...row({ weight: 35 }),
+      lastPerformance: { sets: 3, reps: 8, weight: 42.5, completed: true },
+    };
+    expect(
+      liftHeroLine([pullA], "kg", lastOf({ "barbell-row": sets(60, 10, 10) }))
+    ).toEqual({
+      title: "Barbell row 35 kg × 8",
+      detail: "25 kg less than last time",
+      mark: "down",
+    });
+    // With no saved session it has no last time, whatever the plan holds.
+    expect(liftHeroLine([pullA], "kg", never)).toMatchObject({
+      title: "1 exercise · 3 sets",
+      detail: FIRST_LIFT_STEP,
+    });
+  });
+
+  it("reads the slot the lift fills", () => {
+    const slots: Record<string, LastSet[]> = {
+      heavy: sets(100, 5, 5),
+      light: sets(70, 9, 9),
+    };
+    const bySlot = (ex: { instanceId?: string }) => slots[ex.instanceId ?? ""];
+    expect(
       liftHeroLine(
         [
           row({
-            reps,
-            weight: 35,
-            lastPerformance: {
-              sets: 3,
-              reps: lastReps,
-              weight: 35,
-              completed: true,
-            },
+            name: "Squat",
+            exerciseId: "squat",
+            instanceId: "light",
+            weight: 72.5,
+            reps: 9,
           }),
         ],
-        "kg"
+        "kg",
+        bySlot
+      )?.detail
+    ).toBe("2.5 kg more than last time");
+  });
+
+  it("compares the reps at the same weight", () => {
+    const at = (reps: number, ...lastReps: number[]) =>
+      liftHeroLine(
+        [row({ reps, weight: 35 })],
+        "kg",
+        lastOf({ "barbell-row": sets(35, ...lastReps) })
       );
-    expect(at(9, 8)).toMatchObject({
+    expect(at(9, 8, 8, 8)).toMatchObject({
       detail: "1 rep more than last time",
       mark: "up",
     });
-    expect(at(8, 10)).toMatchObject({
+    expect(at(8, 10, 10)).toMatchObject({
       detail: "2 reps fewer than last time",
       mark: "down",
     });
-    expect(at(8, 8)).toMatchObject({
+    expect(at(8, 8, 8, 8)).toMatchObject({
       detail: "Same as last time",
       mark: "same",
     });
@@ -313,16 +355,9 @@ describe("the lift line: today's lead lift against last time", () => {
   it("counts a bodyweight lift's reps and a hold's seconds", () => {
     expect(
       liftHeroLine(
-        [
-          row({
-            name: "Pull-up",
-            exerciseId: "pull-up",
-            weight: 0,
-            reps: 7,
-            lastPerformance: { sets: 3, reps: 6, weight: 0, completed: true },
-          }),
-        ],
-        "kg"
+        [row({ name: "Pull-up", exerciseId: "pull-up", weight: 0, reps: 7 })],
+        "kg",
+        lastOf({ "pull-up": sets(0, 6, 6, 6) })
       )
     ).toEqual({
       title: "Pull-up × 7",
@@ -338,10 +373,10 @@ describe("the lift line: today's lead lift against last time", () => {
             weight: 0,
             reps: 40,
             repUnit: "seconds",
-            lastPerformance: { sets: 3, reps: 30, weight: 0, completed: true },
           }),
         ],
-        "kg"
+        "kg",
+        lastOf({ plank: sets(0, 30, 30, 30) })
       )
     ).toEqual({
       title: "Plank 40 s",
@@ -354,11 +389,12 @@ describe("the lift line: today's lead lift against last time", () => {
     expect(
       liftHeroLine(
         [
-          row({ lastPerformance: null }),
-          row({ name: "Lat pulldown", lastPerformance: null, sets: 3 }),
-          row({ name: "Curl", lastPerformance: null, sets: 2 }),
+          row(),
+          row({ name: "Lat pulldown", sets: 3 }),
+          row({ name: "Curl", sets: 2 }),
         ],
-        "kg"
+        "kg",
+        never
       )
     ).toEqual({
       title: "3 exercises · 8 sets",
@@ -368,26 +404,26 @@ describe("the lift line: today's lead lift against last time", () => {
     expect(FIRST_LIFT_STEP).toBe(
       "Pick a weight you could lift 3 more times than the reps ask."
     );
-    expect(liftHeroLine([], "kg")).toBeNull();
+    expect(liftHeroLine([], "kg", never)).toBeNull();
   });
 
   it("with nothing to load, asks for the reps in reserve, not a weight", () => {
     // A no-equipment day: push-ups, the inverted row, a pike push-up.
     const bodyweight = (name: string, exerciseId: string) =>
-      row({ name, exerciseId, weight: 0, lastPerformance: null });
+      row({ name, exerciseId, weight: 0 });
     const day = [
       bodyweight("Push-Ups", "push-ups"),
       bodyweight("Inverted Row", "inverted-row"),
       bodyweight("Pike Push-Up", "pike-push-up"),
     ];
-    expect(liftHeroLine(day, "kg")?.detail).toBe(FIRST_BODYWEIGHT_STEP);
+    expect(liftHeroLine(day, "kg", never)?.detail).toBe(FIRST_BODYWEIGHT_STEP);
     expect(FIRST_BODYWEIGHT_STEP).toBe(
       "Stop each set when you could do 3 more reps."
     );
     // One lift with a weight to pick, and the step is the weight's.
-    expect(
-      liftHeroLine([...day, row({ lastPerformance: null })], "kg")?.detail
-    ).toBe(FIRST_LIFT_STEP);
+    expect(liftHeroLine([...day, row()], "kg", never)?.detail).toBe(
+      FIRST_LIFT_STEP
+    );
   });
 
   it("is about the lift the picture shows", () => {

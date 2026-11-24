@@ -23,6 +23,7 @@ import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { blockWeekOf } from "@/features/program/trainingBlock";
 import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
 import { sessionLeadIndex } from "@/lib/formArtCutouts";
+import { lastTimeOf, type LastSet } from "@/features/program/lastSets";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { distanceValue, paceLabel } from "@/lib/runLabels";
 import { distanceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
@@ -127,9 +128,16 @@ export function heroKicker(
 export type HeroExercise = Partial<
   Pick<
     ProgramExercise,
-    "exerciseId" | "sets" | "reps" | "repUnit" | "weight" | "lastPerformance"
+    "exerciseId" | "instanceId" | "sets" | "reps" | "repUnit" | "weight"
   >
 > & { name: string };
+
+/** Last time's counted sets for a lift of the plan, as Train's "Last:"
+ *  line lists them: `lastSetsBySlot` over the saved workouts. */
+export type LastSetsOf = (lift: {
+  exerciseId: string;
+  instanceId?: string;
+}) => readonly LastSet[] | undefined;
 
 /**
  * The exercise the hero pictures and talks about: the day's main lift, as
@@ -205,14 +213,28 @@ function repsAgainst(
  * and the step a first session takes ("4 exercises · 12 sets", "Pick a
  * weight you could lift 3 more times than the reps ask."). Null with no
  * exercises.
+ *
+ * Last time is the saved session Train's row lists under the lift
+ * (`lastSetsOf`, read in one figure by `lastTimeOf`), so Home's hero,
+ * Train's session card and the row beneath it never name two different
+ * last times. Not the plan's own record of the slot (`lastPerformance`),
+ * which only a session the plan read moves.
  */
 export function liftHeroLine(
   exercises: readonly HeroExercise[],
-  unit: LiftUnit
+  unit: LiftUnit,
+  lastSetsOf: LastSetsOf
 ): HeroLine | null {
   const lead = heroLeadExercise(exercises);
   if (!lead) return null;
-  const last = lead.lastPerformance;
+  const last = lead.exerciseId
+    ? lastTimeOf(
+        lastSetsOf({
+          exerciseId: lead.exerciseId,
+          ...(lead.instanceId ? { instanceId: lead.instanceId } : {}),
+        })
+      )
+    : null;
   const timed = lead.repUnit === "seconds";
   const reps = finite(lead.reps) && lead.reps > 0 ? lead.reps : null;
   if (!last || !finite(last.reps) || !(last.reps > 0) || reps === null) {
@@ -237,7 +259,8 @@ export function liftHeroLine(
     weight > 0
       ? `${lead.name} ${formatLoad(weight, unit)} ${dose}`
       : `${lead.name} ${dose}`;
-  const lastWeight = finite(last.weight) && last.weight > 0 ? last.weight : 0;
+  const lastWeight =
+    finite(last.weightKg) && last.weightKg > 0 ? last.weightKg : 0;
   const diff = Math.round((weight - lastWeight) * 100) / 100;
   if (weight > 0 && lastWeight > 0 && diff !== 0) {
     return {

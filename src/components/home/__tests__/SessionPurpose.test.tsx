@@ -13,7 +13,10 @@ import {
   runStartTarget,
   type TodaySession,
 } from "@/lib/todaySession";
-import { heroKicker, planPosition } from "@/lib/homeHero";
+import { heroKicker, planPosition, type LastSetsOf } from "@/lib/homeHero";
+
+/** No saved session: the hero's line is a first session's. */
+const noLastSets: LastSetsOf = () => undefined;
 import type { ProgramState } from "@/features/program/programTypes";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -39,6 +42,7 @@ describe("session purpose command surfaces", () => {
     const purpose = "Week 3 of 4 · progression follows your sets";
     const { container } = render(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         {...liftTargets(null)}
         nextWorkout={{
           dayName: "Pull — Lat Focus",
@@ -160,6 +164,7 @@ describe("Home session actions and metadata", () => {
     const navigate = vi.fn();
     const { container } = render(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         nextWorkout={{
           dayName: "Upper body",
           dayType: "upper",
@@ -197,16 +202,15 @@ describe("Home session actions and metadata", () => {
               sets: 3,
               reps: 8,
               weight: 35,
-              lastPerformance: {
-                sets: 3,
-                reps: 8,
-                weight: 32.5,
-                completed: true,
-              },
             },
           ],
         }}
         navigate={vi.fn()}
+        lastSetsOf={({ exerciseId }) =>
+          exerciseId === "barbell-row"
+            ? [8, 8, 8].map((reps) => ({ weightKg: 32.5, reps }))
+            : undefined
+        }
       />
     );
     expect(container).toHaveTextContent("Barbell row 35 kg × 8");
@@ -217,6 +221,7 @@ describe("Home session actions and metadata", () => {
   it("prices the session only when every exercise carries its sets", () => {
     const { container, rerender } = render(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         {...liftTargets(null)}
         nextWorkout={{
           dayName: "Upper body",
@@ -232,6 +237,7 @@ describe("Home session actions and metadata", () => {
     expect(container).toHaveTextContent(/2 exercises · about \d+ min/);
     rerender(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         {...liftTargets(null)}
         nextWorkout={{
           dayName: "Upper body",
@@ -248,6 +254,7 @@ describe("Home session actions and metadata", () => {
   it("titles a programme day as Train names it in its week", () => {
     const { container } = render(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         nextWorkout={{
           dayName: "Pull — Lat Focus",
           dayType: "pull",
@@ -275,6 +282,7 @@ describe("Home session actions and metadata", () => {
   it("splits a day the person named into its category and title", () => {
     render(
       <LiftCTACard
+        lastSetsOf={noLastSets}
         {...liftTargets(null)}
         nextWorkout={{
           dayName: "Arms — Pump",

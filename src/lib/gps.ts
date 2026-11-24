@@ -916,6 +916,51 @@ export function isImpossibleStep(metres: number, seconds: number): boolean {
 }
 
 /**
+ * A trace's steps as best efforts measure them: the credited distance and
+ * the wall clock at each point, and whether the step into it is faster
+ * than any runner. Distance through `segmentMetres`, the rule the run's
+ * distance counts with, and none across a break. The clock never steps
+ * back, so no stretch can time out negative on a corrected phone clock.
+ */
+function traceSteps(points: readonly GPSPoint[]): {
+  cum: number[];
+  clock: number[];
+  impossible: boolean[];
+} {
+  const n = points.length;
+  const cum = new Array<number>(n).fill(0);
+  const clock = new Array<number>(n).fill(0);
+  const impossible = new Array<boolean>(n).fill(false);
+  if (n === 0) return { cum, clock, impossible };
+  clock[0] = points[0].timestamp;
+  for (let i = 1; i < n; i++) {
+    const metres = points[i].breakBefore
+      ? 0
+      : segmentMetres(points[i - 1], points[i]);
+    cum[i] = cum[i - 1] + metres;
+    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
+    impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
+  }
+  return { cum, clock, impossible };
+}
+
+/**
+ * Whether a trace has a step faster than any runner (`isImpossibleStep`),
+ * measured as best efforts measure it (`traceSteps`).
+ *
+ * Until 2 Nov 2026 the finish timed best efforts across such a
+ * step, the catch-up the smoothing made after a gap in the fixes, and
+ * saved them with the run. A saved run keeps its trace, thinned to
+ * `KEPT_ROUTE_POINTS`, and a catch-up still shows in it: a dozen fixes at
+ * up to 90 m/s are still far past 12 m/s between every third. So a reader
+ * asks the kept trace before it believes what the run saved
+ * (`keptBestEfforts`).
+ */
+export function hasImpossibleStep(points: readonly GPSPoint[]): boolean {
+  return traceSteps(points).impossible.some(Boolean);
+}
+
+/**
  * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
  * stretch ending there that covers the distance, timed on ELAPSED time,
  * the wall clock between its fixes (Run28 call 3), as Strava times best
@@ -942,23 +987,7 @@ export function detectBestEfforts(
   const results: { distance: number; time: number; label: string }[] = [];
   const n = points.length;
   if (n < 2) return results;
-
-  // Credited distance and the wall clock at each point. The clock never
-  // steps back, so no stretch can time out negative on a corrected phone
-  // clock. `impossible[i]`: the step into point i is faster than any runner.
-  const cum = new Array<number>(n);
-  const clock = new Array<number>(n);
-  const impossible = new Array<boolean>(n).fill(false);
-  cum[0] = 0;
-  clock[0] = points[0].timestamp;
-  for (let i = 1; i < n; i++) {
-    const metres = points[i].breakBefore
-      ? 0
-      : segmentMetres(points[i - 1], points[i]);
-    cum[i] = cum[i - 1] + metres;
-    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
-    impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
-  }
+  const { cum, clock, impossible } = traceSteps(points);
 
   for (const effort of efforts) {
     if (totalDistance < effort.target) continue;

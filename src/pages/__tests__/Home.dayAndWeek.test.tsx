@@ -29,7 +29,7 @@ const h = vi.hoisted(() => ({
   streak: 0,
   profile: null as any,
   programState: null as any,
-  workouts: [] as Array<{ id: string; date: string }>,
+  workouts: [] as Array<{ id: string; date: string; exercises: unknown[] }>,
   meals: [] as Array<{ id: string; date: string; calories?: number }>,
   mealsLoading: false,
   mealsError: null as string | null,
@@ -500,7 +500,9 @@ describe("Home — the date follows the clock", () => {
     });
     const lateSunday = new Date(2026, 8, 27, 23, 59, 30);
     const thisMonday = addLocalDays(lateSunday, -6);
-    h.workouts = [{ id: "w1", date: localDateString(thisMonday) }];
+    h.workouts = [
+      { id: "w1", date: localDateString(thisMonday), exercises: [] },
+    ];
     pinClock(lateSunday);
     renderHome();
     expect(weekCount()).toBe("1 of 2 sessions this week");
