@@ -295,7 +295,7 @@ function FoodSuggestionsDropdown({
   return (
     <div
       ref={ref}
-      className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
+      className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden pb-20 max-h-80 overflow-y-auto"
     >
       {quickAdd && quickAdd.items.length > 0 && (
         <div>
