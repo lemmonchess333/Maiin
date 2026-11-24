@@ -38,7 +38,7 @@ that browser. It is a standalone development page, outside the production app.
 - **AI:** Vertex AI / Gemini (food image + text parsing)
 - **Charts:** Recharts 3
 - **Maps:** MapLibre GL 6
-- **Animation:** Framer Motion 12 (gated through `useReducedMotion`)
+- **Animation:** Framer Motion 14 (gated through `useReducedMotion`)
 - **PWA:** custom service worker (`public/sw.js`) and registration (`src/lib/register-sw.ts`)
 - **Native:** Capacitor 8 (iOS; Android planned)
 - **Payments:** RevenueCat in-app purchases on iOS (ADR-0006); Stripe
@@ -104,15 +104,16 @@ is in `docs/iap/revenuecat-setup.md`.
 ### Stripe (Cloud Functions only — server-side keys)
 
 ```
-firebase functions:config:set stripe.secret_key=$STRIPE_SECRET_KEY
-firebase functions:config:set stripe.webhook_secret=$STRIPE_WEBHOOK_SECRET
+firebase functions:secrets:set STRIPE_SECRET_KEY
+firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+# Plain variables (set in functions/.env or GitHub Actions repository variables):
 
 # Server-side price allowlist (PR D — audit P0 #2). The CHECKOUT
 # endpoint rejects any priceId not in this allowlist. Setting only
 # the prices you actually sell here is the failsafe.
-firebase functions:config:set stripe.price_id_monthly=price_xxxxx
-firebase functions:config:set stripe.price_id_yearly=price_xxxxx
-firebase functions:config:set stripe.price_id_lifetime=price_xxxxx   # optional
+STRIPE_PRICE_ID_MONTHLY=price_xxxxx
+STRIPE_PRICE_ID_YEARLY=price_xxxxx
+STRIPE_PRICE_ID_LIFETIME=price_xxxxx   # optional
 ```
 
 ---
