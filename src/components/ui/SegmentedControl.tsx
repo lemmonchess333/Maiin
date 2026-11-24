@@ -235,7 +235,7 @@ function SegmentedControl<T extends string | number>({
                     "text-foreground shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
                 : slim
-                  ? "text-muted-foreground aria-checked:text-white"
+                  ? selected ? "text-white" : "text-muted-foreground"
                   : selected
                     ? cn(
                         // The fill is the selected state: 3:1 or more
