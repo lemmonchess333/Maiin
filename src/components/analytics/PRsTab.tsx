@@ -24,6 +24,8 @@ import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
    the rest. Recent-bests (rolling 30d) already has its own scope
    limit so isn't affected. */
 const LIFT_PR_DEFAULT_LIMIT = 8;
+/** No weight to show: the dash every figure without a value takes. */
+const NO_VALUE = "—";
 
 /* Hist5b pin 4 + 5 — dedicated PRs tab body. Two sport-coded
    sections (Running + Lifting), each with up to three sublabeled
@@ -137,7 +139,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
               formatLoad(pr.weight, liftUnit)
             ) : (
               <span className="text-muted-foreground">
-                — {liftUnitLabel(liftUnit)}
+                {NO_VALUE} {liftUnitLabel(liftUnit)}
               </span>
             )}{" "}
             × {pr.reps}

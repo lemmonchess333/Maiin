@@ -88,6 +88,14 @@ vi.mock("@/components/social/CircleShareSheet", () => ({
   ),
 }));
 
+/* The league line reads its own group (its tests are the league's); here
+   it only has to be told where the finish is. */
+vi.mock("@/features/league/LeagueRiseLine", () => ({
+  default: ({ stage }: { stage: string }) => (
+    <span data-testid="league-line" data-stage={stage} />
+  ),
+}));
+
 const confetti = vi.hoisted(() => Object.assign(vi.fn(), { reset: vi.fn() }));
 vi.mock("canvas-confetti", () => ({ default: confetti }));
 
@@ -332,7 +340,7 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     expect(screen.queryByRole("heading", { name: /saved/i })).toBeNull();
   });
 
-  it("makes a new best the reward: its lift in a gold light, and the sentence", () => {
+  it("makes a new best the reward: its lift on the flat page, and the sentence in gold", () => {
     render(
       <SessionCompleteScreen
         {...screenProps({
@@ -344,10 +352,12 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       />
     );
     expect(register()).toBe("reward");
-    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
-      "data-finish-glow",
-      "achievement"
-    );
+    // No light behind the object (DESIGN_GUIDE §14o): the gold is the
+    // line's figure.
+    expect(
+      document.querySelector("[data-finish-object]")!.firstElementChild
+    ).not.toHaveAttribute("aria-hidden");
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
     expect(line()).toHaveTextContent(
       "You benched 80 kg × 8, a new best by 2.5 kg."
     );
@@ -489,7 +499,8 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       <SessionCompleteScreen {...screenProps({ saved: true, moments: [] })} />
     );
     expect(register()).toBe("summary");
-    expect(document.querySelector("[data-finish-glow]")).toBeNull();
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
+    expect(line()!.querySelector("[class*='-strong']")).toBeNull();
     expect(line()).toHaveTextContent("Next: Legs · Squat focus");
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();
@@ -568,13 +579,11 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
         })}
       />
     );
-    expect(document.querySelector("[data-finish-glow]")).toHaveAttribute(
-      "data-finish-glow",
-      "lifting"
-    );
+    expect(document.body.innerHTML).not.toMatch(/finish-glow|radial-gradient/);
     expect(line()).toHaveTextContent(
       "You’ve trained 7 days in a row. 14 is next."
     );
+    expect(line()!.querySelector(".text-lifting-strong")).not.toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();
   });
@@ -722,5 +731,47 @@ describe("SessionCompleteScreen — what a finished run gets (App1 Q30)", () => 
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     await waitFor(() => expect(shareCard.data).not.toBeNull());
     expect(screen.queryByText("Share to circle")).toBeNull();
+  });
+});
+
+describe("the league line (Run30 call 2)", () => {
+  const stage = () =>
+    screen.getByTestId("league-line").getAttribute("data-stage");
+
+  it("is before the save on the review, so it reads the group first", () => {
+    render(<SessionCompleteScreen {...screenProps()} />);
+    expect(stage()).toBe("before");
+  });
+
+  it("is saving while saving, after a failed save and while queued", () => {
+    const { rerender } = render(
+      <SessionCompleteScreen {...screenProps({ completing: true })} />
+    );
+    expect(stage()).toBe("saving");
+    rerender(
+      <SessionCompleteScreen
+        {...screenProps({ saveStatus: "needs-attention" })}
+      />
+    );
+    expect(stage()).toBe("saving");
+    rerender(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, saveStatus: "queued" })}
+      />
+    );
+    expect(stage()).toBe("saving");
+  });
+
+  it("is on the server once the save has synced", () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          saveStatus: "synced",
+          savedWorkoutId: "w1",
+        })}
+      />
+    );
+    expect(stage()).toBe("onServer");
   });
 });

@@ -54,6 +54,7 @@ import {
   TRAIN,
   runWeekLabel,
   runWeekTabName,
+  sessionCardName,
 } from "../../src/test/journeyScreens";
 
 function templateOf(run: ScheduledRunDay) {
@@ -114,7 +115,7 @@ async function expectTrainExplains(
     })
   ).toBeVisible();
   const card = page.getByRole("region", {
-    name: new RegExp(`— ${runSessionName(template, null, "km")}$`),
+    name: sessionCardName(runSessionName(template, null, "km")),
   });
   await expect(card.getByRole("heading", { level: 3 })).toHaveText(
     runSessionName(template, null, "km")

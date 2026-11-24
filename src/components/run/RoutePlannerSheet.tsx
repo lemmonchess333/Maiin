@@ -272,7 +272,7 @@ export default function RoutePlannerSheet({
 
         <div className="space-y-2 p-4">
           <p className="text-xs text-muted-foreground">
-            Point-to-point distance — segments don’t follow roads.
+            Point-to-point distance. Segments don’t follow roads.
           </p>
           <div className="flex items-center gap-2">
             {/* Undo/clear act on dropped points, so they only appear once

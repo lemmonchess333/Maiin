@@ -1,198 +1,185 @@
 /**
- * Em-dash copy ratchet.
+ * No em dash on screen (DS11 call 2, owner, 23 November 2026).
  *
- * The owner's report was that recent copy "reads more AI". Measured, the
- * count of em dashes in the app went DOWN slightly over the run of work
- * that prompted it (1,309 → 1,274 non-comment lines) — so the character
- * itself was never the problem. What changed is that nearly every string
- * ADDED in that run used the same "statement — explanation" shape, and six
- * of them landed on the two screens a user sees every day. One sentence
- * rhythm repeated at every beat is the tell.
+ * Designers read the "statement — explanation" rhythm as machine-written,
+ * so the app shows none. Every string literal, template and JSX text node
+ * under src/ is read through the TypeScript parser; any em dash in one
+ * fails, with the few exceptions below. Comments are not copy and are not
+ * read.
  *
- * So this is a ratchet, not a ban. Em dashes are correct for a genuine
- * aside and 57 of the 88 files carrying them today have more than one;
- * rewriting those is copy work for its own PR, not a gate. What the gate
- * does is stop the number growing, and stop any single component becoming
- * a new worst case, so the next pass that reaches for the construction has
- * to pick a different one — the middot the app already uses for
- * "fact · fact", or a full stop for two independent statements.
+ * What a sentence takes instead: a full stop between two statements
+ * ("Couldn't save. Check your connection and try again."), a colon before
+ * what a label introduces ("Today: Full Pro access"), the middot between a
+ * thing and its detail ("Pro trial · 5 days left"), "so" for a cause and
+ * "with" for a detail.
  *
- * Lower both numbers when you rewrite copy; never raise either without
- * writing the reason here.
- *
- * The components were never where most of the copy lives. The modules
- * that write a session's reason, a weather tip or the weekly review's
- * verdict are .ts, and they had the shape at its densest: every one of
- * the twenty lines in runSessionExplainer read "Name — explanation", all
- * nine weather tips did, and four of the review's seven verdicts. So the
- * .ts modules have a ratchet of their own, a total only: a worst-file cap
- * would be set by the exercise library's how-to text and the spoken run
- * cues ("Last one — leave nothing!", the genre exception the house voice
- * keeps), and would hold nothing else.
+ * The exceptions, each because it is not copy a person reads:
+ *  - a literal that is the dash alone ("—"), the figure a stat shows when
+ *    it has no value;
+ *  - text passed to `logger` or `console`, which only a developer reads;
+ *  - the stored names the programme generator gives its days, which key a
+ *    person's saved plan, and the saved workout's notes format that
+ *    `workoutTitle` reads up to its first dash. Neither is shown whole:
+ *    `liftDayLabel.ts` names the day on screen;
+ *  - the spoken run cues (`runCueCopy.ts`), which are heard, not read;
+ *  - the performance bullets (`performanceEngine.ts`), the server's copy
+ *    kept for its tests, which no screen shows;
+ *  - the developer labs under `pages/dev/` and the art prompts in
+ *    `formArtProduction.ts`.
+ * A stored string written before this rule, kept only to recognise old
+ * data, spells its dash as an escape (`—`) and so is not counted.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { globSync } from "tinyglobby";
-
-/**
- * 174, down from 240, after the copy pass this ratchet asked for.
- *
- * What the pass found, which is worth knowing before anyone tries to
- * drive this number to zero: of the original 240, twenty were the bare
- * "—" no-value placeholder and about sixty were multi-line template
- * literals the matcher spans rather than real copy. The genuinely
- * rewritable surface was ~140, and this pass took the majority of it.
- *
- * Three shapes accounted for nearly all of it, and they wanted different
- * fixes rather than one substitution: an error and its recovery became
- * two sentences ("Couldn't save. Check your connection and try again."),
- * two facts of equal weight took the middot the app already uses
- * ("Calorie deficit · lose fat, keep muscle"), and a statement followed
- * by a second statement took a full stop. A genuine parenthetical aside
- * was left exactly as it was, because that is what the character is for.
- *
- * 123 once the Together copy pass took the collective card's line, the
- * founding line and the challenge card's progress lines to the middot or
- * to nothing (128 before it: passes since had lowered the count and left
- * this number where it was). 121 once Food's empty diary and its weekly
- * logging focus each said their line in one sentence. 120 once the run
- * plan page's helpers each took one short line, and 119 once the race
- * card's Phase tile, with its "—" for no phase, went. 114 once the
- * Circles section's invite, its goal chooser and its sheet's empty line
- * each took a full stop. 113 once the training-load card's first-use line
- * became two sentences. 106 once the score's explainer took a colon and a
- * full stop (Words1 call 2), counted with the passes since that had left
- * this number where it was.
- */
-const EM_DASH_COPY_BASELINE = 106;
-/** ExerciseHistory, 8, and every one of them the bare "—" placeholder
- *  rather than the construction. Lower this only against real copy. */
-const WORST_FILE_BASELINE = 8;
-/**
- * 331 across the .ts modules, from 343 when they were first counted:
- * seven of runSessionExplainer's twenty, three of the nine weather tips
- * and two of the four review verdicts took another shape. A label and its
- * reason became one sentence ("The whole plan has led to race day."), a
- * cause took "so" ("Windy, so expect a slower pace"), and a statement with
- * its detail took "with" ("A strong week, with training load running
- * high.", since reworded without "load"). The rest stayed: where every line of a set opened the same way,
- * a third reshaped is enough to break the cadence without making a set
- * that reads as nine rewrites. 327 is where the count already stood when
- * the Together copy pass found this number four above it. 322 once the
- * performance verdict's five supporting lines took a full stop ("Quiet
- * week. Log when you're back"): they follow the verb's own full stop, so
- * a dash was a second rhythm inside one line. 319 once the effort cues
- * and the finish screen's all-done line took a full stop too. 315 once the
- * Start a circle options' two descriptions did (the count stood at 317
- * when they were found). 297 once the minutes-based training load's two
- * advisory lines went with its chart (App1 Q16), counted with the passes
- * since that had left this number where it was.
- */
-const EM_DASH_TS_COPY_BASELINE = 297;
+import ts from "typescript";
 
 const SRC = join(process.cwd(), "src");
+const DASH = "—";
+const ENTITY = /&mdash;|&#8212;|&#x2014;/gi;
 
-function stripComments(src: string): string {
-  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+/** Files read whole as not-on-screen, from src/. */
+const EXEMPT_FILES = [
+  "lib/runCueCopy.ts",
+  "lib/performanceEngine.ts",
+  "lib/formArtProduction.ts",
+];
+
+/** Exact literal texts that are stored keys, not copy. */
+const STORED_KEYS = new Set([
+  "Full Body — Squat Focus",
+  "Full Body — Deadlift Focus",
+  "Full Body — Posterior Focus",
+  "Upper — Chest & Back",
+  "Upper — Shoulders & Arms",
+  "Lower — Squat Focus",
+  "Lower — Deadlift Focus",
+  "Push — Chest Focus",
+  "Push — Shoulder Focus",
+  "Pull — Lat Focus",
+  "Pull — Row Focus",
+  "Legs — Squat Focus",
+  "Legs — Deadlift Focus",
+  // A saved workout's notes: "<day> — Programme Week <n>".
+  " — Programme Week ",
+  " — ",
+]);
+
+function isLogCall(node: ts.Node): boolean {
+  for (let p: ts.Node | undefined = node.parent; p; p = p.parent) {
+    if (ts.isCallExpression(p)) {
+      const callee = p.expression;
+      if (
+        ts.isPropertyAccessExpression(callee) &&
+        ts.isIdentifier(callee.expression) &&
+        ["logger", "console"].includes(callee.expression.text)
+      )
+        return true;
+    }
+  }
+  return false;
 }
 
-/**
- * User-visible em-dash copy in one file.
- *
- * Deliberately approximate: quoted and template literals plus JSX text
- * nodes, after comments are stripped. It over-counts a non-rendered string
- * (a test id, a storage key) and under-counts a dash assembled at runtime
- * from parts. Both are fine for a ratchet — it only has to move the same
- * way the copy does.
- */
-function emDashCopy(src: string): string[] {
-  const body = stripComments(src);
-  return [
-    ...(body.match(/"[^"\n]*—[^"\n]*"/g) ?? []),
-    ...(body.match(/`[^`]*—[^`]*`/g) ?? []),
-    ...(body.match(/>[^<>{}\n]*—[^<>{}\n]*</g) ?? []),
-  ];
-}
-
-function componentFiles(): string[] {
-  return globSync("**/*.tsx", { cwd: SRC, absolute: true }).filter(
-    (f) => !f.includes("__tests__")
+/** The em dashes a file shows: each literal or JSX text that carries one,
+ *  with its line. */
+export function emDashCopy(text: string, fileName = "file.tsx"): string[] {
+  const source = ts.createSourceFile(
+    fileName,
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    fileName.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
+  const found: string[] = [];
+  const visit = (node: ts.Node) => {
+    let raw: string | null = null;
+    let cooked = "";
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    ) {
+      raw = node.getText(source);
+      cooked = node.text;
+    } else if (ts.isJsxText(node)) {
+      // JSX text keeps its entities, so "&mdash;" counts as the dash.
+      raw = node.getText(source).replace(ENTITY, DASH);
+      cooked = node.text.replace(ENTITY, DASH);
+    }
+    if (
+      raw !== null &&
+      raw.includes(DASH) &&
+      cooked.trim() !== DASH &&
+      !STORED_KEYS.has(cooked) &&
+      !isLogCall(node)
+    ) {
+      const { line } = source.getLineAndCharacterOfPosition(node.getStart());
+      found.push(`${String(line + 1)}: ${cooked.trim().slice(0, 80)}`);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return found;
 }
 
-/** The .ts modules: copy, engines and helpers alike, since copy is not
- *  kept in one folder. Not the test harnesses under src/test, which no
- *  user reads, nor type declarations. */
-function moduleFiles(): string[] {
-  return globSync("**/*.ts", {
+function sourceFiles(): string[] {
+  return globSync("**/*.{ts,tsx}", {
     cwd: SRC,
-    absolute: true,
-    ignore: ["**/__tests__/**", "**/*.test.ts", "**/*.d.ts", "test/**"],
+    ignore: [
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.d.ts",
+      "test/**",
+      "pages/dev/**",
+      ...EXEMPT_FILES,
+    ],
   });
 }
 
-describe("em-dash copy ratchet", () => {
-  it("the total does not grow", () => {
-    const total = componentFiles().reduce(
-      (sum, f) => sum + emDashCopy(readFileSync(f, "utf8")).length,
-      0
-    );
-    expect(
-      total,
-      `${total} em-dash strings in user-visible copy, baseline ` +
-        `${EM_DASH_COPY_BASELINE}. Prefer the "fact · fact" middot, or a ` +
-        `full stop between two independent statements.`
-    ).toBeLessThanOrEqual(EM_DASH_COPY_BASELINE);
-    if (total < EM_DASH_COPY_BASELINE) {
-      console.warn(
-        `[em-dash ratchet] ${total} < baseline ${EM_DASH_COPY_BASELINE} — lower the baseline to ${total}.`
+describe("no em dash on screen", () => {
+  // Parses every source file, which takes a while on a busy runner.
+  it(
+    "no string, template or JSX text under src/ carries one",
+    { timeout: 60_000 },
+    () => {
+      const files = sourceFiles();
+      expect(
+        files.some((f) => f.endsWith("runSessionExplainer.ts")),
+        "the scan reads no copy modules, so its total proves nothing"
+      ).toBe(true);
+      const hits = files.flatMap((f) =>
+        emDashCopy(readFileSync(join(SRC, f), "utf8"), f).map(
+          (hit) => `src/${f}:${hit}`
+        )
       );
+      expect(
+        hits,
+        "Use a full stop between two statements, a colon before what a " +
+          "label introduces, or the middot between a thing and its detail."
+      ).toEqual([]);
     }
-  });
+  );
 
-  it("the .ts modules' total does not grow", () => {
-    const files = moduleFiles();
-    expect(
-      files.some((f) => f.endsWith("runSessionExplainer.ts")),
-      "the module scan reads no copy modules, so its total proves nothing"
-    ).toBe(true);
-    const total = files.reduce(
-      (sum, f) => sum + emDashCopy(readFileSync(f, "utf8")).length,
-      0
-    );
-    expect(
-      total,
-      `${total} em-dash strings in the .ts modules, baseline ` +
-        `${EM_DASH_TS_COPY_BASELINE}. One sentence, "so" for a cause, ` +
-        `"with" for a detail, or a full stop between two statements.`
-    ).toBeLessThanOrEqual(EM_DASH_TS_COPY_BASELINE);
-    if (total < EM_DASH_TS_COPY_BASELINE) {
-      console.warn(
-        `[em-dash ratchet] .ts ${total} < baseline ${EM_DASH_TS_COPY_BASELINE} — lower the baseline to ${total}.`
-      );
-    }
-  });
-
-  it("no single component becomes a new worst case", () => {
-    const worst = componentFiles()
-      .map((f) => ({
-        file: `src/${f.slice(SRC.length + 1)}`,
-        n: emDashCopy(readFileSync(f, "utf8")).length,
-      }))
-      .filter((r) => r.n > WORST_FILE_BASELINE)
-      .map((r) => `${r.file}: ${r.n}`);
-    expect(
-      worst,
-      `no component may carry more than ${WORST_FILE_BASELINE} em-dash strings`
-    ).toEqual([]);
-  });
-
-  it("counts copy and ignores comments (the measure is not vacuous)", () => {
+  it("finds a dash in copy and passes over the exceptions (the measure is not vacuous)", () => {
     expect(emDashCopy('const a = "Week 1 — building";')).toHaveLength(1);
+    expect(emDashCopy("const a = `Saved — ${n} sets`;")).toHaveLength(1);
+    expect(
+      emDashCopy("const a = <p>Rest day — you are adapting</p>;")
+    ).toHaveLength(1);
     expect(emDashCopy("/* a comment — with a dash */")).toHaveLength(0);
     expect(emDashCopy("// a line comment — with a dash")).toHaveLength(0);
-    expect(emDashCopy("<p>Rest day — you are adapting</p>")).toHaveLength(1);
+    expect(emDashCopy("const a = <p>Saved &mdash; synced</p>;")).toHaveLength(
+      1
+    );
+    expect(emDashCopy("const a = <span>&mdash;</span>;")).toHaveLength(0);
+    expect(emDashCopy('const a = "—";')).toHaveLength(0);
+    expect(emDashCopy('logger.warn("[x] failed — retrying");')).toHaveLength(0);
+    expect(emDashCopy('const a = "Push — Chest Focus";')).toHaveLength(0);
+    expect(emDashCopy('const a = " \\u2014 legacy tail";')).toHaveLength(0);
     expect(emDashCopy('const a = "no dash here";')).toHaveLength(0);
   });
 });

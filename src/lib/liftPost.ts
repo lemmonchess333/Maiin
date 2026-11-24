@@ -17,6 +17,7 @@
 import { EXERCISES } from "@/lib/exercises";
 import { getFormArtCutout, type FormArtCutout } from "@/lib/formArtCutouts";
 import { formatExerciseSummary, NO_SETS_SUMMARY } from "@/lib/exerciseSummary";
+import { generatedDayType } from "@/lib/liftDayLabel";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
@@ -84,7 +85,8 @@ export function liftPostPreview(
   const { done, tonnageKg } = liftFigures(lift);
   return {
     type: "workout",
-    title: lift.title,
+    // A programme day by its type ("Pull"), as the feed names its post.
+    title: generatedDayType(lift.title) ?? lift.title,
     meta: [
       `${done.length} exercise${done.length === 1 ? "" : "s"}`,
       tonnageKg > 0

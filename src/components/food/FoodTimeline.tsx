@@ -199,13 +199,11 @@ export default function FoodTimeline({
   /* An empty day is a row, not the hexagon "nothing yet" block, which is
      for no results and errors (DS4, DESIGN_GUIDE §0 rule 11): the plate a
      meal without a name of its own is drawn with, greyed, and where the
-     day's meals will show. */
+     day's meals will show. It sits on the page: a card would hold only a
+     sentence. */
   if (entries.length === 0) {
     return (
-      <div
-        data-food-diary-empty=""
-        className="flex items-center gap-3 rounded-xl bg-card p-3 card-shadow"
-      >
+      <div data-food-diary-empty="" className="flex items-center gap-3 py-1">
         <img
           src={foodArtUrl("plate")}
           alt=""

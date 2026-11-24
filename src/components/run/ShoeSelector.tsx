@@ -60,7 +60,7 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
     >
       {activeShoes.map((shoe) => (
         <option key={shoe.id} value={shoe.id}>
-          {shoe.name} — {storedKmLabel(shoe.totalKm, unit)}
+          {shoe.name} · {storedKmLabel(shoe.totalKm, unit)}
         </option>
       ))}
     </Select>

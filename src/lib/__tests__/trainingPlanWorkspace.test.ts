@@ -275,7 +275,7 @@ describe("training plan workspace", () => {
     expect(meta(1).some((m) => m.startsWith("Missed"))).toBe(true);
     expect(meta(3).some((m) => m.startsWith("Missed"))).toBe(true);
     // Today and ahead are still planned.
-    expect(meta(4)).toEqual(["Planned · follows your rotation"]);
+    expect(meta(4)).toEqual(["Planned"]);
     for (const day of result.days)
       for (const activity of day.activities)
         if (day.dateKey < "2026-10-30")

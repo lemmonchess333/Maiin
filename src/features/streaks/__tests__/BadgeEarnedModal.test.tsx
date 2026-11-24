@@ -50,7 +50,7 @@ const FORWARD_HOOK = "Come back tomorrow to build your streak.";
 function makeBadge(overrides: Partial<EarnedBadge> = {}): EarnedBadge {
   return {
     id: "first_step",
-    name: "First Step",
+    name: "First log",
     description: "Log your first meal or workout",
     icon: "footprints",
     lucideIcon: "Footprints",
@@ -77,11 +77,11 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
     // Pre-reveal: the moment leads — name/hook not yet shown. They are
     // laid out from the start, out of sight and the accessibility tree,
     // so the break moves nothing.
-    expect(screen.getByText("First Step")).not.toBeVisible();
+    expect(screen.getByText("First log")).not.toBeVisible();
     expect(screen.getByText(FORWARD_HOOK)).not.toBeVisible();
     expect(screen.queryByRole("button", { name: "Nice" })).toBeNull();
     reveal();
-    expect(screen.getByText("First Step")).toBeVisible();
+    expect(screen.getByText("First log")).toBeVisible();
     expect(screen.getByText(FORWARD_HOOK)).toBeVisible();
     expect(screen.getByRole("button", { name: "Nice" })).toBeEnabled();
   });
@@ -91,7 +91,7 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
       <BadgeEarnedModal
         badge={makeBadge({
           id: "week_warrior",
-          name: "Week Warrior",
+          name: "7 days in a row",
           description: "7-day streak",
           tier: "silver",
           threshold: 7,
@@ -100,7 +100,7 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
       />
     );
     reveal();
-    expect(screen.getByText("Week Warrior")).toBeInTheDocument();
+    expect(screen.getByText("7 days in a row")).toBeInTheDocument();
     expect(screen.queryByText(FORWARD_HOOK)).not.toBeInTheDocument();
   });
 
@@ -116,11 +116,11 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
       fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
     expect(screen.getByText(/tap to break the seal/i)).toBeInTheDocument();
     tap(); // 1
-    expect(screen.getByText("First Step")).not.toBeVisible();
+    expect(screen.getByText("First log")).not.toBeVisible();
     tap(); // 2 — still sealed
-    expect(screen.getByText("First Step")).not.toBeVisible();
+    expect(screen.getByText("First log")).not.toBeVisible();
     tap(); // 3 — breaks open
-    expect(screen.getByText("First Step")).toBeVisible();
+    expect(screen.getByText("First log")).toBeVisible();
   });
 
   it("does not dismiss until after the seal is broken", function () {

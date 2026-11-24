@@ -298,7 +298,7 @@ export function applyInjuryFiltersToWorkouts(
       ...ex,
       notes:
         `No safe substitute for ${ex.name} given your ${relevant.join(" + ")} ` +
-        `limitation — consider replacing it manually or reducing load.`,
+        `limitation. Replace it yourself or lower the weight.`,
     };
   }
   return out;
@@ -345,9 +345,15 @@ export const PULL_UP_BAR_EXERCISE_IDS: ReadonlySet<string> = new Set([
 export const RACK_EXERCISE_IDS: ReadonlySet<string> = new Set(["inverted-row"]);
 
 /** The end of the note a lift swapped for the kit carries in a plan the
- *  person has: "Swapped from Barbell Row — not available with your
- *  equipment." */
-const KIT_SWAP_NOTE_TAIL = " — not available with your equipment.";
+ *  person has: "Swapped from Barbell Row, not available with your
+ *  equipment." A plan saved before carries the dashed tail, which is read
+ *  the same way. */
+const KIT_SWAP_NOTE_TAIL = ", not available with your equipment.";
+const LEGACY_KIT_SWAP_NOTE_TAIL = " \u2014 not available with your equipment.";
+const isKitSwapNote = (notes: string | undefined): boolean =>
+  !!notes &&
+  (notes.endsWith(KIT_SWAP_NOTE_TAIL) ||
+    notes.endsWith(LEGACY_KIT_SWAP_NOTE_TAIL));
 
 /**
  * A new plan without the kit swaps' notes. Its lifts were chosen for the
@@ -360,11 +366,11 @@ export function withoutKitSwapNotes(
   workouts: readonly WorkoutDay[]
 ): WorkoutDay[] {
   return workouts.map((day) =>
-    day.exercises.some((ex) => ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL))
+    day.exercises.some((ex) => isKitSwapNote(ex.notes))
       ? {
           ...day,
           exercises: day.exercises.map((ex) => {
-            if (!ex.notes?.endsWith(KIT_SWAP_NOTE_TAIL)) return ex;
+            if (!isKitSwapNote(ex.notes)) return ex;
             const { notes: _swap, ...rest } = ex;
             return rest;
           }),
@@ -587,7 +593,7 @@ export function applyEquipmentFilterToWorkouts(
     return {
       ...ex,
       notes:
-        `${ex.name} needs equipment you don’t have — replace it manually ` +
+        `${ex.name} needs equipment you don’t have. Replace it yourself ` +
         `or use a bodyweight variation.`,
     };
   };

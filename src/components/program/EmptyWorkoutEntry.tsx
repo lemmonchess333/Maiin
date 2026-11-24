@@ -42,7 +42,7 @@ export default function EmptyWorkoutEntry() {
             Empty workout
           </span>{" "}
           <span className="block text-xs text-muted-foreground">
-            Add exercises as you go. Your plan stays as it is.
+            Add exercises as you go.
           </span>
         </span>
         <ChevronRight

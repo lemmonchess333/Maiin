@@ -44,6 +44,8 @@ const FEED_SOURCE_NAMES: Record<FeedSubTab, string> = {
   explore: "Explore",
 };
 
+const NO_POSTS: FeedItem[] = [];
+
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the
    *  following feed's enabled flag and the section render. The view
@@ -138,42 +140,61 @@ export default function FeedView({
               !blockedUsers.has(item.post.authorId))
         )
       : [];
+  /* The Spaces stream is known once the blocks, the joined Spaces and a
+     read of their posts (this visit's or one kept from earlier in the
+     session) are all in. */
+  const spacesKnown = blockedReady && spacesReady && communitiesFeed.loaded;
 
   const activeFeed = feedSubTab === "following" ? followingFeed : exploreFeed;
+  /* Each source keeps what it read, across switches and for the session
+     (`feedSnapshots`), and reads again behind it: the placeholder is only
+     for a source with nothing read yet, as Strava and Instagram skeleton
+     only a first load. Nothing is drawn until the blocks and hidden posts
+     are known (SOCIAL-PRIVACY-01), kept posts included. */
+  const listKnown = blockedReady && activeFeed.loaded;
+  const shownItems = blockedReady ? activeFeed.items : NO_POSTS;
 
   /* Soc5b pin (3): subtle new-content dot on inactive Feed sub-tab.
      Compares each sub-tab's newest visible item createdAt against the
      timestamp last seen by the user (persisted in localStorage per
      sub-tab). Dot never renders on the active sub-tab — content is
      visible directly there. */
+  // Only what can be drawn counts as seen.
+  const followingNewest = blockedReady
+    ? followingFeed.items[0]?.createdAt
+    : undefined;
+  const exploreNewest = blockedReady
+    ? exploreFeed.items[0]?.createdAt
+    : undefined;
   const { followingHasNew, exploreHasNew } = useFeedSubTabFreshness({
     activeSubTab: feedSubTab,
-    followingNewestCreatedAt: followingFeed.items[0]?.createdAt,
-    exploreNewestCreatedAt: exploreFeed.items[0]?.createdAt,
+    followingNewestCreatedAt: followingNewest,
+    exploreNewestCreatedAt: exploreNewest,
     uid: freshnessUid,
   });
 
   // Soc5: capture initial-render duration. renderStartRef takes its
   // timestamp from the post-mount effect (rather than lazy useState
   // which would trip the react-hooks/purity rule for performance.now()
-  // in render). Fires once when activeFeed.loading transitions to
-  // false — the moment the user sees real feed content instead of
-  // skeleton state. Guarded so the event fires at most once per
-  // session, regardless of sub-tab churn.
+  // in render). Fires once when the feed first shows something other
+  // than its placeholder: the posts (or its empty state), or a failed
+  // read. Guarded so the event fires at most once per mount,
+  // regardless of sub-tab churn.
   const renderStartRef = useRef<number>(0);
   const renderReportedRef = useRef(false);
   useEffect(() => {
     renderStartRef.current = performance.now();
   }, []);
+  const feedShown = listKnown || (!!activeFeed.error && !activeFeed.loading);
   useEffect(() => {
-    if (activeFeed.loading || renderReportedRef.current) return;
+    if (!feedShown || renderReportedRef.current) return;
     if (renderStartRef.current === 0) return;
     const ms = performance.now() - renderStartRef.current;
     trackSocialEvent("social_initial_render_ms", {
       durationMs: Math.round(ms),
     });
     renderReportedRef.current = true;
-  }, [activeFeed.loading]);
+  }, [feedShown]);
 
   /* Publish the active feed's refresh into the shell's ref on every
      change so pull-to-refresh always hits the feed the user is
@@ -306,8 +327,8 @@ export default function FeedView({
      same condition the empty state below is drawn on. */
   const exploreQuiet =
     feedSubTab === "explore" &&
-    !activeFeed.loading &&
-    activeFeed.items.length === 0 &&
+    listKnown &&
+    shownItems.length === 0 &&
     !exploreFeed.error;
 
   /* Where the cards that used to sit above the feed go now: the
@@ -318,7 +339,7 @@ export default function FeedView({
     feedSubTab === "following" &&
     followingCount !== null &&
     followingCount >= 1;
-  const pointsSlot = pointsActive ? Math.min(3, activeFeed.items.length) : 0;
+  const pointsSlot = pointsActive ? Math.min(3, shownItems.length) : 0;
 
   /* People to follow, after the second post (or the last, on a shorter
      list, or under the empty state), while the graph is thin: under three follows, the same span
@@ -339,7 +360,7 @@ export default function FeedView({
     blockedUsers,
     joinedSpaceIds
   );
-  const peopleSlot = peopleRowActive ? Math.min(2, activeFeed.items.length) : 0;
+  const peopleSlot = peopleRowActive ? Math.min(2, shownItems.length) : 0;
 
   /* The week card: your own week against last week, unless the week has
      nothing in it yet (a card of zeros says nothing). `followingCount ===
@@ -458,8 +479,8 @@ export default function FeedView({
                 what it is and how Following fills; the posts follow. */}
             {feedSubTab === "explore" && followingCount === 0 && (
               <p className="mb-3 text-small text-muted-foreground">
-                Sessions people shared publicly. Follow anyone to see theirs
-                under Following.
+                Sessions shared publicly. Follow someone to see theirs under
+                Following.
               </p>
             )}
 
@@ -549,36 +570,32 @@ export default function FeedView({
                     </Button>
                   </div>
                 )}
-                {(!blockedReady || !spacesReady || communitiesFeed.loading) &&
-                  visibleSpacePosts.length === 0 && (
-                    <div
-                      className="space-y-3"
-                      aria-live="polite"
-                      aria-label="Loading posts from your Spaces"
-                    >
-                      <ActivityCardSkeleton stagger={0} />
-                      <ActivityCardSkeleton stagger={1} />
-                    </div>
-                  )}
-                {blockedReady &&
-                  spacesReady &&
-                  !communitiesFeed.loading &&
-                  visibleSpacePosts.length === 0 && (
-                    <HexEmptyState
-                      icon={Users}
-                      headline={
-                        joinedSpaceIds.length === 0
-                          ? "Join a space to fill this feed"
-                          : "Your spaces are quiet right now"
-                      }
-                      sub={
-                        joinedSpaceIds.length === 0
-                          ? "Posts from the spaces you join appear here."
-                          : "When members post in your spaces, their posts appear here."
-                      }
-                      action={{ label: "Browse spaces", onClick: openTogether }}
-                    />
-                  )}
+                {!spacesKnown && visibleSpacePosts.length === 0 && (
+                  <div
+                    className="space-y-3"
+                    aria-live="polite"
+                    aria-label="Loading posts from your Spaces"
+                  >
+                    <ActivityCardSkeleton stagger={0} />
+                    <ActivityCardSkeleton stagger={1} />
+                  </div>
+                )}
+                {spacesKnown && visibleSpacePosts.length === 0 && (
+                  <HexEmptyState
+                    icon={Users}
+                    headline={
+                      joinedSpaceIds.length === 0
+                        ? "Join a space to fill this feed"
+                        : "Your spaces are quiet right now"
+                    }
+                    sub={
+                      joinedSpaceIds.length === 0
+                        ? "Posts from the spaces you join appear here."
+                        : "When members post in your spaces, their posts appear here."
+                    }
+                    action={{ label: "Browse spaces", onClick: openTogether }}
+                  />
+                )}
                 {visibleSpacePosts.map((item) => {
                   const def = spaceDef(item.spaceId);
                   if (!def) return null;
@@ -601,7 +618,7 @@ export default function FeedView({
 
             {showActivityList && (
               <div className="space-y-3">
-                {activeFeed.items.map((item, i) => (
+                {shownItems.map((item, i) => (
                   <Fragment key={item.id}>
                     <ActivityCard
                       feedItem={item}
@@ -643,28 +660,26 @@ export default function FeedView({
 
             {/*
             Two different loading states:
-              - Initial load (no items yet) — render 3 staggered
-                skeleton cards so the feed surface has visual weight
-                while waiting for the first batch. Feels dramatically
-                snappier than flashing blank then popping in content.
+              - First load (nothing read yet for this source) — render 3
+                staggered skeleton cards so the feed surface has visual
+                weight while waiting for the first batch. A source read
+                before shows what it read while it reads again.
               - Pagination load (items already present) — keep the
                 small centred spinner; full skeletons below real
                 cards would be visually noisy.
           */}
-            {activeFeed.loading &&
-              activeFeed.items.length === 0 &&
-              showActivityList && (
-                <div
-                  className="space-y-3"
-                  aria-live="polite"
-                  aria-label="Loading feed"
-                >
-                  <ActivityCardSkeleton stagger={0} />
-                  <ActivityCardSkeleton stagger={1} />
-                  <ActivityCardSkeleton stagger={2} />
-                </div>
-              )}
-            {activeFeed.loading && activeFeed.items.length > 0 && (
+            {!listKnown && !activeFeed.error && showActivityList && (
+              <div
+                className="space-y-3"
+                aria-live="polite"
+                aria-label="Loading feed"
+              >
+                <ActivityCardSkeleton stagger={0} />
+                <ActivityCardSkeleton stagger={1} />
+                <ActivityCardSkeleton stagger={2} />
+              </div>
+            )}
+            {activeFeed.loadingMore && shownItems.length > 0 && (
               <div className="flex items-center justify-center py-4">
                 <Spinner size="sm" variant="muted" label="Loading more posts" />
               </div>
@@ -673,7 +688,7 @@ export default function FeedView({
             {/* Infinite scroll sentinel */}
             {activeFeed.hasMore &&
               !activeFeed.loading &&
-              activeFeed.items.length > 0 && (
+              shownItems.length > 0 && (
                 <div ref={sentinelRef} className="h-1" aria-hidden="true" />
               )}
 
@@ -682,8 +697,8 @@ export default function FeedView({
               (Sprint 5) so the empty state would be a duplicate
               "nothing to see here" + "actually, there was an error"
               double message. */}
-            {!activeFeed.loading &&
-              activeFeed.items.length === 0 &&
+            {listKnown &&
+              shownItems.length === 0 &&
               showActivityList &&
               !(feedSubTab === "explore" && exploreFeed.error) && (
                 <div className="mt-6" aria-live="polite">
@@ -731,8 +746,8 @@ export default function FeedView({
 
             {/* With no posts to sit between, the row and the points card
                 follow the empty state rather than leaving the feed. */}
-            {!activeFeed.loading &&
-              activeFeed.items.length === 0 &&
+            {listKnown &&
+              shownItems.length === 0 &&
               showActivityList &&
               !(feedSubTab === "explore" && exploreFeed.error) &&
               ((peopleRowActive && suggestions.people.length > 0) ||

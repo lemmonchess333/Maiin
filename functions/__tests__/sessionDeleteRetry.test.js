@@ -23,6 +23,7 @@ const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const communityGoal = require("../lib/communityGoal");
 const pulse = require("../lib/pulse");
 const segments = require("../lib/segments");
+const liftBoards = require("../lib/liftBoards");
 const sharedCards = require("../lib/sharedCards");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
@@ -91,6 +92,11 @@ beforeEach(() => {
   vi.spyOn(segments, "removeRunEfforts").mockImplementation(async () => {
     reversed.push("segments");
   });
+  // Run30 call 3: a workout's lift efforts go with it.
+  vi.spyOn(liftBoards, "removeWorkoutEfforts").mockImplementation(async () => {
+    reversed.push("lift boards");
+    return { removed: 0 };
+  });
   // Soc17 call 1: the pages of the cards shared from the session.
   vi.spyOn(sharedCards, "removeCardsShowing").mockImplementation(async () => {
     reversed.push("shared cards");
@@ -99,8 +105,9 @@ beforeEach(() => {
 });
 
 /* A run also comes off the community goal and takes its segment efforts
-   (Run26 call 3); a workout has neither. Both come off the live pulse
-   (Soc15), and both take the pages of the cards shared from them (Soc17). */
+   (Run26 call 3); a workout has neither, and takes its lift efforts
+   instead (Run30 call 3). Both come off the live pulse (Soc15), and both
+   take the pages of the cards shared from them (Soc17). */
 const all = (name) =>
   name === "onRunDeleted"
     ? [
@@ -111,7 +118,7 @@ const all = (name) =>
         "segments",
         "shared cards",
       ]
-    : ["challenges", "lifetime", "pulse", "shared cards"];
+    : ["challenges", "lifetime", "pulse", "lift boards", "shared cards"];
 const without = (name, step) => all(name).filter((s) => s !== step);
 
 afterEach(() => vi.restoreAllMocks());

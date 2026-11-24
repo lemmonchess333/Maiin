@@ -204,12 +204,16 @@ describe("Space page", () => {
     expect(await screen.findByText(/km ultra/)).toHaveTextContent(
       "100 km ultra"
     );
-    expect(
-      screen.getByRole("link", { name: "Visit official website" })
-    ).toHaveAttribute(
+    // A race with an entry link links out once, as the entry button.
+    const enter = screen.getByRole("link", { name: /^Enter this race/ });
+    expect(enter).toHaveAttribute(
       "href",
       "https://www.thresholdtrailseries.com/race-to-the-stones/"
     );
+    expect(enter).toHaveAttribute("target", "_blank");
+    expect(
+      screen.queryByRole("link", { name: "Visit official website" })
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Tropos has no plan for this distance/)
     ).not.toBeInTheDocument();
@@ -421,6 +425,48 @@ describe("Space page", () => {
   });
 });
 
+it("sends a runner to the organiser's entry page, outside the app, beside the website (Reg1)", async () => {
+  render(
+    <MemoryRouter initialEntries={["/space/london-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  const enter = await screen.findByRole("link", {
+    name: "Enter this race on the organiser’s website, outside Tropos",
+  });
+  expect(enter).toHaveTextContent("Enter this race");
+  expect(enter).toHaveAttribute(
+    "href",
+    "https://www.londonmarathonevents.co.uk/ballot"
+  );
+  expect(enter).toHaveAttribute("target", "_blank");
+  expect(enter).toHaveAttribute("rel", "noopener noreferrer");
+  expect(screen.getByText("Entry is by ballot.")).toBeInTheDocument();
+  // One link out per race (owner 2026-11-23): the entry button stands in
+  // for the official site, even when the two are different pages.
+  expect(
+    screen.queryByRole("link", { name: "Visit official website" })
+  ).not.toBeInTheDocument();
+});
+
+it("offers no entry button for a race with no entry link", async () => {
+  render(
+    <MemoryRouter initialEntries={["/space/new-york-city-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  expect(
+    await screen.findByRole("link", { name: "Visit official website" })
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: /^Enter this race/ })
+  ).not.toBeInTheDocument();
+});
+
 it("shows an expired race as awaiting its next edition without a training action", async () => {
   vi.setSystemTime(new Date("2099-01-01T12:00:00Z"));
   render(
@@ -439,6 +485,11 @@ it("shows an expired race as awaiting its next edition without a training action
   expect(
     screen.getByRole("link", { name: /Visit official website/i })
   ).toHaveAttribute("href", "https://www.bmw-berlin-marathon.com/en/");
+  // No entry button once the date has passed: the next edition's is not
+  // known, so "Enter this race" could not be true.
+  expect(
+    screen.queryByRole("link", { name: /^Enter this race/ })
+  ).not.toBeInTheDocument();
 });
 
 describe("a restricted account (S4e)", () => {

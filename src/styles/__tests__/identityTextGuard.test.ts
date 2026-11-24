@@ -109,7 +109,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 3(a)), and its distance board's footprints icon with it.
   // 2026-11-12: 39 → 38. The race picker's rows became photo cards, and
   // the selected race's tick takes the date line's `-strong` step.
-  running: 38, // Calendar status icons now use the strong colour step.
+  // 2026-11-23: 38 → 36. Cards1: Progress's Go deeper rows and Lifetime
+  // line carry no icons, so their two footprints went.
+  running: 36, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -146,7 +148,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // the large-text bar as that one is.
   // 17 → 16 with DS10 call 1: the lift plan's equipment icon is the
   // chrome's colour.
-  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-11-23: 16 → 14. Cards1: Progress's Go deeper rows and Lifetime
+  // line carry no icons, so the dumbbell and the trophy went.
+  lifting: 14, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its

@@ -107,15 +107,10 @@ export default function SpacePostCard({
 
   return (
     <article className="rounded-2xl bg-card card-shadow overflow-hidden">
-      {/* Attached-session art — full-bleed top panel, ActivityCard
-          hero grammar (static layers only). */}
+      {/* Attached-session art: a full-bleed top panel on the card's own
+          flat surface, ActivityCard's hero grammar. */}
       {isRunAttach && activity && (
-        <div
-          className="relative h-24 border-b border-border/50"
-          style={{
-            background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
-          }}
-        >
+        <div className="relative h-24 border-b border-border/50">
           {/* The numbers in a row under the route, not over it, as on
               the feed's card: laid over it, a route starting at a corner
               drew its start ring on one. */}
@@ -151,12 +146,7 @@ export default function SpacePostCard({
         </div>
       )}
       {isLiftAttach && activity && (
-        <div
-          className="relative h-24 border-b border-border/50 overflow-hidden"
-          style={{
-            background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-          }}
-        >
+        <div className="relative h-24 border-b border-border/50 overflow-hidden">
           {/* Centred: the volume holds the left corner and the exercise
               count the right, which a drawing at the right covered. */}
           {leadArt ? (

@@ -114,7 +114,7 @@ describe("ActivityCard — who gave props", () => {
     );
     // POSITIVE anchor: the count is there.
     expect(
-      screen.getByRole("button", { name: /props — show list/ })
+      screen.getByRole("button", { name: /props, show list/ })
     ).toBeVisible();
     expect(screen.queryByText(/gave props$/)).toBeNull();
   });
@@ -127,7 +127,7 @@ describe("ActivityCard — Props from", () => {
         <ActivityCard feedItem={item} />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole("button", { name: /props — show list/ }));
+    fireEvent.click(screen.getByRole("button", { name: /props, show list/ }));
     // POSITIVE anchor: the list has loaded, with the friend on it.
     expect(await screen.findByText("Friend")).toBeInTheDocument();
     expect(screen.queryByText("Blocker")).toBeNull();

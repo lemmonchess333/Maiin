@@ -40,9 +40,12 @@ const hiddenPosts = vi.hoisted(() => ({
 vi.mock("@/hooks/useHiddenActivities", () => ({
   useHiddenActivities: () => hiddenPosts,
 }));
+/* One set for every render, as the hook keeps it: a new set each render
+   would make the feeds read again on every render. */
+const noBlocks = vi.hoisted(() => new Set<string>());
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({
-    blocked: new Set(),
+    blocked: noBlocks,
     ready: true,
     addBlocked: vi.fn(),
     removeBlocked: vi.fn(),
@@ -97,13 +100,19 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 import Social from "@/pages/Social";
 import { Timestamp } from "firebase/firestore";
 import {
+  deferReads,
   flushSnapshots,
+  pendingReads,
   readDoc,
   readLog,
+  releaseAllReads,
+  releaseRead,
   resetFirestore,
+  resumeReads,
   seedFirestore,
 } from "@/test/firestoreHarness";
 import { __resetFollowStatesForTests } from "@/hooks/useFollowState";
+import { __resetFeedSnapshotsForTests } from "@/lib/feedSnapshots";
 
 /** Minutes before now, from the clock. */
 const minutesAgo = (m: number) => Timestamp.fromMillis(Date.now() - m * 60_000);
@@ -160,11 +169,150 @@ afterEach(cleanup);
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
-  // The follow state is a session cache; each test is a session.
+  // The follow state and the feeds' kept reads are session caches;
+  // each test is a session.
   __resetFollowStatesForTests();
+  __resetFeedSnapshotsForTests();
   hiddenPosts.hidden = new Set();
   hiddenPosts.ready = true;
   seedBeasPosts();
+});
+
+/* Each source keeps what it read, across switches and for the session
+   (`feedSnapshots`), and reads again behind it. On the phone every switch
+   drew grey cards for about a second, back to a source just seen
+   included, because the placeholder showed whenever a read was in flight
+   with nothing in the list: an empty source, and every source on coming
+   back to Social. */
+describe("A source keeps what it read", () => {
+  const placeholder = () => screen.queryByLabelText("Loading feed");
+  const pick = (name: string) =>
+    fireEvent.click(screen.getByRole("radio", { name }));
+  /** Answer every held read, and hold no more. */
+  const answerReads = () => {
+    resumeReads();
+    releaseAllReads();
+  };
+  afterEach(answerReads);
+
+  it("the first read shows the placeholder; back on Explore its posts show at once while it reads again", async () => {
+    renderSocial("/social?tab=feed&feed=explore");
+    expect(placeholder()).toBeInTheDocument();
+    await waitFor(() => expect(followLinks()).toHaveLength(2));
+    expect(placeholder()).toBeNull();
+
+    pick("Following");
+    expect(
+      await screen.findByText("You don’t follow anyone yet")
+    ).toBeInTheDocument();
+
+    deferReads();
+    pick("Explore");
+    // Anchored on Explore reading again: its read is held.
+    await waitFor(() =>
+      expect(pendingReads().some((p) => p.startsWith("activities"))).toBe(true)
+    );
+    expect(followLinks()).toHaveLength(2);
+    expect(placeholder()).toBeNull();
+  });
+
+  it("an empty source shows its empty state at once when switched back to", async () => {
+    resetFirestore();
+    seedFirestore({ "following/me/users/bea": { uid: "bea" } });
+    renderSocial("/social?tab=feed&feed=following");
+    expect(
+      await screen.findByText("Nothing from people you follow yet")
+    ).toBeInTheDocument();
+    pick("Explore");
+    expect(
+      await screen.findByText("Tropos is quiet right now")
+    ).toBeInTheDocument();
+
+    deferReads();
+    pick("Following");
+    await waitFor(() =>
+      expect(pendingReads().some((p) => p.startsWith("feeds/me"))).toBe(true)
+    );
+    expect(
+      screen.getByText("Nothing from people you follow yet")
+    ).toBeInTheDocument();
+    expect(placeholder()).toBeNull();
+
+    pick("Explore");
+    await waitFor(() =>
+      expect(pendingReads().some((p) => p.startsWith("activities"))).toBe(true)
+    );
+    expect(screen.getByText("Tropos is quiet right now")).toBeInTheDocument();
+    expect(placeholder()).toBeNull();
+  });
+
+  it("a read behind the posts that brings a new one shows it, with no placeholder between", async () => {
+    renderSocial("/social?tab=feed&feed=explore");
+    await waitFor(() => expect(followLinks()).toHaveLength(2));
+    pick("Following");
+
+    seedFirestore({
+      "activities/cal-1": {
+        authorId: "cal",
+        authorName: "Cal",
+        type: "run",
+        visibility: "public",
+        runName: "Tempo",
+        distance: 8000,
+        duration: 2400,
+        kudosCount: 0,
+        commentCount: 0,
+        createdAt: minutesAgo(1),
+      },
+    });
+    pick("Explore");
+    expect(placeholder()).toBeNull();
+    expect(followLinks()).toHaveLength(2);
+    expect(
+      await screen.findByRole("button", { name: "Follow Cal" })
+    ).toBeInTheDocument();
+    expect(followLinks()).toHaveLength(2);
+  });
+
+  it("coming back to Social shows what each source read, while it reads again", async () => {
+    renderSocial("/social?tab=feed&feed=explore");
+    await waitFor(() => expect(followLinks()).toHaveLength(2));
+    cleanup();
+
+    deferReads();
+    renderSocial("/social?tab=feed&feed=explore");
+    expect(followLinks()).toHaveLength(2);
+    expect(placeholder()).toBeNull();
+    await waitFor(() =>
+      expect(pendingReads().some((p) => p.startsWith("activities"))).toBe(true)
+    );
+    expect(followLinks()).toHaveLength(2);
+  });
+
+  it("coming back to Social, the Spaces stream shows once the joined Spaces are known, while its posts are read again", async () => {
+    seedFirestore({
+      "spaces/runners/members/me": { uid: "me", joinedAt: minutesAgo(1440) },
+      "spaces/runners/posts/p1": spacePost("Priya", "First 10K done.", 60),
+    });
+    renderSocial("/social?tab=feed&feed=communities");
+    expect(await screen.findByText("First 10K done.")).toBeInTheDocument();
+    cleanup();
+
+    deferReads();
+    renderSocial("/social?tab=feed&feed=communities");
+    // Answer every read but the posts', until the posts' is the one held.
+    await waitFor(() => {
+      // From the end, so a release does not move the ones still to look at.
+      for (let i = pendingReads().length - 1; i >= 0; i--) {
+        if (!pendingReads()[i].includes("/posts")) releaseRead(i);
+      }
+      expect(pendingReads().some((p) => p.includes("/posts"))).toBe(true);
+    });
+    expect(screen.getByText("First 10K done.")).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Loading posts from your Spaces")
+    ).toBeNull();
+  });
 });
 
 describe("Posts the viewer hid (App1 Q38)", () => {
@@ -200,9 +348,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
   it("the link says Following, Bea's other post loses its link, and the line counts the follow", async () => {
     renderSocial("/social?tab=feed&feed=explore");
     await waitFor(() => expect(followLinks()).toHaveLength(2));
-    expect(
-      screen.getByText(/^Sessions people shared publicly/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/^Sessions shared publicly/)).toBeInTheDocument();
     expect(youFollow()).toBeUndefined();
     // Each post's card, found from its Follow link (newest first).
     const [first, second] = followLinks().map((link) =>
@@ -220,7 +366,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
     expect(followLinks()).toHaveLength(0);
     expect(readDoc("following/me/users/bea")).toBeDefined();
     expect(readDoc("followers/bea/users/me")).toBeDefined();
-    expect(screen.queryByText(/^Sessions people shared publicly/)).toBeNull();
+    expect(screen.queryByText(/^Sessions shared publicly/)).toBeNull();
   });
 });
 

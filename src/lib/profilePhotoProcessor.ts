@@ -87,7 +87,7 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   if (isHeic(file)) {
     throw new ProfilePhotoProcessingError(
       "heic_unsupported",
-      "iPhone HEIC photos aren’t supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG — or take a new one."
+      "iPhone HEIC photos aren’t supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG, or take a new one."
     );
   }
 

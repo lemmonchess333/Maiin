@@ -2,13 +2,22 @@ import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useRingMoveCause } from "@/hooks/useRingMoveCause";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import SwapFade from "@/components/ui/SwapFade";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
-import { loggedFill, WHEEL_SIZE, WHEEL_STROKE } from "@/lib/calorieRingFill";
+import {
+  overshootFill,
+  ringFill,
+  VIEW_SWITCH_SEC,
+  WHEEL_SIZE,
+  WHEEL_STROKE,
+  type CalorieRingMode,
+} from "@/lib/calorieRingFill";
 import { THEME } from "@/lib/theme";
 
-export type CalorieRingMode = "left" | "eaten";
+export type { CalorieRingMode };
 
 interface CalorieRingProps {
   consumed: number;
@@ -17,8 +26,6 @@ interface CalorieRingProps {
   onToggleMode: () => void;
   /** "On pace" / "150 ahead" / "150 behind" / null to suppress */
   trajectoryLabel: string | null;
-  /** Drives celebration drop-shadow. Parent owns the timing. */
-  glowing?: boolean;
   /** How long the arc takes to redraw and the number to count, in ms.
    *  Default 1500. */
   ringDurationMs?: number;
@@ -87,7 +94,6 @@ export default function CalorieRing({
   mode,
   onToggleMode,
   trajectoryLabel,
-  glowing = false,
   ringDurationMs = 1500,
   ringDelayMs = 100,
   drawIn = true,
@@ -117,17 +123,15 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  /* The arc is what is logged, in both modes (Food11 call 5): it grows
-     as food is logged, and nothing logged is the bare grey track. Only
-     the number and its label follow the left and logged switch
-     (`loggedFill` has the reasons). */
-  const fillRatio = loggedFill(consumed, target);
+  /* The arc follows the left and logged switch, as MacroFactor's does
+     (`ringFill` has the reasons): in the logged view it grows as food is
+     logged, from the bare grey track; in the left view it is full with
+     nothing logged and empties as food is logged. */
+  const fillRatio = ringFill(consumed, target, mode);
   const strokeDashoffset = CIRCUMFERENCE * (1 - fillRatio);
 
   // Overshoot lap, in both modes, capped at one extra lap.
-  const overshoot = isOver ? consumed - target : 0;
-  const overshootRatio =
-    isOver && target > 0 ? Math.min(overshoot / target, 1) : 0;
+  const overshootRatio = overshootFill(consumed, target);
   const overlapOffset = CIRCUMFERENCE * (1 - overshootRatio);
   /* Where the sliver's dot sits: the lap's length along the ring, and the
      gap more. A negative offset moves a dash forward. */
@@ -135,6 +139,21 @@ export default function CalorieRing({
 
   const ringDurationSec = ringDurationMs / 1000;
   const ringDelaySec = ringDelayMs / 1000;
+
+  /* A tap on the switch moves the arc to the other view's fill at once
+     and briskly; food moves it on the page's timing (`useRingMoveCause`). */
+  const arcTransition =
+    useRingMoveCause(mode, consumed, target) === "switch"
+      ? {
+          duration: reduce ? 0 : VIEW_SWITCH_SEC,
+          ease: RING_EASE,
+          delay: 0,
+        }
+      : {
+          duration: reduce ? 0 : ringDurationSec,
+          ease: RING_EASE,
+          delay: reduce ? 0 : ringDelaySec,
+        };
   /* The second lap takes as long as the first and starts a moment after
      it, so going over reads as filled, then past, inside the same log
      moment. It ran 1.5 s from 0.6 s whatever the first lap took, so a
@@ -192,12 +211,6 @@ export default function CalorieRing({
           ? "@container w-[264px] max-w-full mx-auto"
           : "w-26 max-w-full shrink-0"
       )}
-      style={{
-        // Celebration glow — the ring's own orange, for the moment a day's
-        // goals are met. Transient; the ring has no ambient loop.
-        filter: glowing ? `drop-shadow(0 0 16px ${COLOR_RING}66)` : undefined,
-        transition: "filter 800ms ease-in-out",
-      }}
     >
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="relative size-full">
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
@@ -223,20 +236,19 @@ export default function CalorieRing({
                 strokeDashoffset: settled ? strokeDashoffset : CIRCUMFERENCE,
               }}
               animate={{ strokeDashoffset }}
-              transition={{
-                duration: reduce ? 0 : ringDurationSec,
-                ease: RING_EASE,
-                delay: reduce ? 0 : ringDelaySec,
-              }}
+              transition={arcTransition}
             />
           )}
           {/* Overshoot lap — in BOTH modes when over target, so the
               logged view does not sit at 100% indistinguishable from
-              "hit the target exactly". It starts a moment after the
-              main ring (`lapTransition`). */}
+              "hit the target exactly", and the left view's empty first
+              lap still shows how far over the day is. It starts a moment
+              after the main ring (`lapTransition`). */}
           {/* The sliver ahead of the second lap's head (LAP_GAP). It
-              travels with the head: the same transition. */}
-          {isOver && (
+              travels with the head: the same transition. Only over a
+              full first lap: on the left view's empty one there is
+              nothing to keep the head apart from. */}
+          {isOver && !isLeftMode && (
             <motion.circle
               data-lap-gap=""
               cx={CENTER}
@@ -283,72 +295,84 @@ export default function CalorieRing({
         aria-hidden="true"
       >
         {hasTarget ? (
-          /* One figure for both modes: a tap counts it from the old value
-             to the new one, as the tiles do. Keyed by mode, it went blank
-             for 200 ms, then counted up from zero for 1.5 s. */
           <div className="flex flex-col items-center">
-            {/* Zero is a real value, not a placeholder: full strength,
-                  like any other number. */}
-            <p
-              className={cn(
-                "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
-                compact
-                  ? "text-2xl"
-                  : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
-              )}
-            >
-              <AnimatedNumber
-                value={displayValue}
-                duration={ringDurationSec}
-                ease={RING_EASE}
-                fromZero={drawIn}
-              />
-            </p>
-            {/* A space in the text between the figure and its words, so
-                they read as words, as the button's name does; the column
-                draws nothing for it. */}{" "}
-            {/* The label is the only mode indicator ("kcal left",
-                  "kcal logged", "kcal over"), in the tiles' register:
-                  plain text. The whole ring is the tap target, and the
-                  macros switch the same way.
+            {/* A tap on the wheel changes what the figure means, not the
+                food: the figure and its words swap with a short
+                crossfade, in step with the macros (`SwapFade`), and are
+                never counted from one to the other: a count from "0
+                logged" to "3,400 left" passed "2,954 left", a figure the
+                day never had. A real change (a log, a delete) counts from
+                the old value to the new, and the first draw counts up
+                from zero. */}
+            <SwapFade swapKey={mode} className="justify-items-center">
+              {(swapped) => (
+                <div className="flex flex-col items-center">
+                  {/* Zero is a real value, not a placeholder: full
+                      strength, like any other number. */}
+                  <p
+                    className={cn(
+                      "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
+                      compact
+                        ? "text-2xl"
+                        : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
+                    )}
+                  >
+                    <AnimatedNumber
+                      value={displayValue}
+                      duration={ringDurationSec}
+                      ease={RING_EASE}
+                      fromZero={drawIn && !swapped}
+                    />
+                  </p>
+                  {/* A space in the text between the figure and its
+                      words, so they read as words, as the button's name
+                      does; the column draws nothing for it. */}{" "}
+                  {/* The label is the only mode indicator ("kcal left",
+                      "kcal logged", "kcal over"), in the tiles' register:
+                      plain text. The whole ring is the tap target, and
+                      the macros switch the same way.
 
-                  Food's wheel adds two things to it (Food11 call 2, from
-                  the research). The target, so the number has both ends
-                  of its range beside it: "kcal left of 2,200" (5 of the
-                  6 food apps with a ring print the goal by the number,
-                  and Apple's gauge rule asks for it). And a small mark
-                  after the words, because nothing else says the wheel
-                  can be tapped: the two apps that switch on a tap both
-                  mark it. DS3 took a swap arrow off this label with the
-                  tag it sat in; this is a 13px grey mark, and Home's
-                  wheel still has none. The label may wrap inside the
-                  ring at larger text. */}
-            <p
-              className={cn(
-                "font-medium text-muted-foreground",
-                hero
-                  ? "mt-2 max-w-[72cqw] text-center text-balance text-sm font-mono tabular-nums"
-                  : "mt-1 text-xs"
+                      Food's wheel adds two things to it (Food11 call 2,
+                      from the research). The target, so the number has
+                      both ends of its range beside it: "kcal left of
+                      2,200" (5 of the 6 food apps with a ring print the
+                      goal by the number, and Apple's gauge rule asks for
+                      it). And a small mark after the words, because
+                      nothing else says the wheel can be tapped: the two
+                      apps that switch on a tap both mark it. DS3 took a
+                      swap arrow off this label with the tag it sat in;
+                      this is a 13px grey mark, and Home's wheel still has
+                      none. The label may wrap inside the ring at larger
+                      text. */}
+                  <p
+                    className={cn(
+                      "font-medium text-muted-foreground",
+                      hero
+                        ? "mt-2 max-w-[72cqw] text-center text-balance text-sm font-mono tabular-nums"
+                        : "mt-1 text-xs"
+                    )}
+                  >
+                    {hero ? (
+                      <>
+                        {labelMode === "over"
+                          ? `${CALORIE_UNIT} over ${formatCalories(target)}`
+                          : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`}
+                        {/* In the line, so it stays beside the last word
+                            when the label wraps, and sized from the text
+                            (13px at the label's 14). */}
+                        <ChevronsUpDown
+                          data-tap-mark=""
+                          className="ml-1 inline-block size-[0.93em] align-[-0.08em]"
+                          aria-hidden="true"
+                        />
+                      </>
+                    ) : (
+                      `${CALORIE_UNIT} ${labelMode}`
+                    )}
+                  </p>
+                </div>
               )}
-            >
-              {hero ? (
-                <>
-                  {labelMode === "over"
-                    ? `${CALORIE_UNIT} over ${formatCalories(target)}`
-                    : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`}
-                  {/* In the line, so it stays beside the last word when
-                      the label wraps, and sized from the text (13px at
-                      the label's 14). */}
-                  <ChevronsUpDown
-                    data-tap-mark=""
-                    className="ml-1 inline-block size-[0.93em] align-[-0.08em]"
-                    aria-hidden="true"
-                  />
-                </>
-              ) : (
-                `${CALORIE_UNIT} ${labelMode}`
-              )}
-            </p>{" "}
+            </SwapFade>{" "}
             {trajectoryLabel && (
               <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                 {trajectoryLabel}

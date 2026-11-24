@@ -32,6 +32,7 @@ import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
@@ -39,6 +40,7 @@ import { postedActivityId, type SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
+import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
 import { IconButton } from "@/components/ui/IconButton";
 import {
@@ -53,7 +55,9 @@ import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
-import TopThreeCard from "../components/run/TopThreeCard";
+import RunResultsCard from "../components/run/RunResultsCard";
+import { useRunSegmentEfforts } from "@/hooks/useRunSegmentEfforts";
+import { FINISH_SEGMENT_WAIT_MS, segmentPlacings } from "@/lib/segments";
 import {
   runPlacings,
   type PlacedRun,
@@ -343,7 +347,7 @@ function InvalidRunReview({
             <p className="text-xs text-muted-foreground text-center">
               {isOnline
                 ? "Saved on this phone · waiting to sync."
-                : "Saved locally — will sync when online."}
+                : "Saved on this phone. Syncs when you’re back online."}
             </p>
           )}
           <button
@@ -766,6 +770,33 @@ export default function RunSummary() {
     () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
+  /* The run's segment results (Run30 call 1). The server times a saved run
+     on its segments a few seconds after the run reaches it (onRunCreated),
+     so the finish listens for them, from the moment this screen's save is
+     on the server and the phone is online, for FINISH_SEGMENT_WAIT_MS, and
+     shows nothing until they arrive. A run saved offline is listened for
+     once it syncs; a run that never syncs while the screen is open shows
+     none. The first time the conditions hold is kept (React's adjust state
+     during render), so going offline after does not drop rows that came. */
+  const [segmentsFor, setSegmentsFor] = useState<string | null>(null);
+  if (
+    segmentsFor === null &&
+    finishFacts !== null &&
+    savedRunId !== null &&
+    saveStatus === "saved" &&
+    isOnline &&
+    !pendingSync &&
+    (state?.points.length ?? 0) > 1
+  )
+    setSegmentsFor(savedRunId);
+  const segmentEfforts = useRunSegmentEfforts(user?.uid, segmentsFor, {
+    listenMs: FINISH_SEGMENT_WAIT_MS,
+  });
+  const segmentResults = useMemo(
+    () => segmentPlacings(segmentEfforts.rows),
+    [segmentEfforts.rows]
+  );
+
   // Keep the run's clock independently of the coordinates privacy zones cut.
   const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
   /* The date the run goes out of the app under (the share card, a GPX's
@@ -1510,7 +1541,7 @@ export default function RunSummary() {
               );
             } else if (alert === "warning") {
               toast.warning(
-                "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
+                "Your shoes are at 85% of their recommended mileage.",
                 { duration: 5000 }
               );
             }
@@ -1799,7 +1830,7 @@ export default function RunSummary() {
                 }
                 picture={
                   points.length > 1 ? undefined : (
-                    <img
+                    <FinishFigure
                       src={runPoseUrl(
                         runPoseFor(
                           activityType === "tempo" ||
@@ -1809,11 +1840,6 @@ export default function RunSummary() {
                             : undefined
                         )
                       )}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                      decoding="async"
-                      className="h-full max-h-80 w-[min(70%,17rem)] object-contain"
                     />
                   )
                 }
@@ -1838,17 +1864,23 @@ export default function RunSummary() {
               splits and climb, and what the runner adds to it. */}
           <div className="h-6" aria-hidden="true" />
 
-          {/* Your top three (Run29): under the reward, the distances this
-              run placed 1st to 3rd at, quiet; a new best is the reward
-              above. Under a reward's sentence it says none of its own. */}
-          {finishFacts && finishFacts.placings.length > 0 && (
-            <div className="mx-4 mb-4">
-              <TopThreeCard
-                placings={finishFacts.placings}
-                rewardAbove={finishLine !== null}
-              />
-            </div>
-          )}
+          {/* Results, as Strava's: under the reward, the distances this
+              run placed 1st to 3rd at (Run29), then its segments that
+              placed (Run30 call 1), which join it when the server has
+              timed them. A new best at a distance is the reward above.
+              Under a reward's sentence it says none of its own. */}
+          {finishFacts &&
+            (finishFacts.placings.length > 0 || segmentResults.length > 0) && (
+              <div className="mx-4 mb-4">
+                <RunResultsCard
+                  placings={finishFacts.placings}
+                  segments={segmentResults}
+                  runId={savedRunId}
+                  unit={unit}
+                  rewardAbove={finishLine !== null}
+                />
+              </div>
+            )}
 
           {/* Offline notice */}
           {!isOnline && !saved && (
@@ -2156,6 +2188,23 @@ export default function RunSummary() {
             </OptionalSummaryBoundary>
           </div>
 
+          {/* The league line (Run30 call 2), under the week as on the lift:
+              it lands seconds after the save, so it goes below the run's
+              figures and pushes none of them down, and it reserves no space
+              when it has nothing to say. Mounted before the save, so it
+              reads the group first; drawn only when the saved run raised
+              your place. */}
+          <LeagueRiseLine
+            className="mx-4 mb-4"
+            stage={
+              saveStatus === "idle" && savedRunId === null
+                ? "before"
+                : saved && savedRunId !== null && !pendingSync
+                  ? "onServer"
+                  : "saving"
+            }
+          />
+
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
               Adherence chip surfaces "Planned" / "Custom" / "Extra"
               against the user's plan when planMetadata is present
@@ -2393,7 +2442,7 @@ export default function RunSummary() {
                 if (!template) return null;
                 return (
                   <p className="text-sm text-muted-foreground">
-                    Next run: {runTemplateName(template.name, unit)} —{" "}
+                    Next run: {runTemplateName(template.name, unit)} ·{" "}
                     {new Date(`${next.date}T12:00:00`).toLocaleDateString(
                       "en-GB",
                       { weekday: "long" }
@@ -2494,7 +2543,7 @@ export default function RunSummary() {
                     {pendingSync
                       ? isOnline
                         ? "Saved on this phone · waiting to sync"
-                        : "Saved locally — will sync when online"
+                        : "Saved on this phone. Syncs when you’re back online"
                       : "Run saved"}
                   </p>
                 </>

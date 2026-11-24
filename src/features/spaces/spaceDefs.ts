@@ -82,6 +82,19 @@ export interface SpaceEventInfo {
   elevation?: "flat" | "rolling" | "hilly";
   /** Official event site (nominative use; no logos/brand assets). */
   websiteUrl: string;
+  /** The organiser's own page for getting a place (Reg1, 23 November
+   *  2026): https, on the race's official domains (`raceOfficialDomains`
+   *  in raceEntry.ts), never a reseller, a ticketing marketplace or an
+   *  affiliate link, and never guessed. Absent means the race page shows
+   *  no entry button. Checked every month by race-entry-link-check.yml. */
+  entryUrl?: string;
+  /** How places are given, only where that rarely changes ("Entry is by
+   *  ballot."). Never a status that moves within an edition, such as
+   *  sold out or opening on a date. */
+  entryNote?: string;
+  /** The organiser's other domains, where its entry page lives on one
+   *  that is not the website's (a rebrand, a parent company's site). */
+  entryDomains?: string[];
 }
 
 export interface SpaceDef {
@@ -133,7 +146,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "new-to-tropos",
     name: "New to Tropos",
-    tagline: "Say hi, ask anything — every athlete here started at zero.",
+    tagline: "Say hi and ask anything. Everyone here started at zero.",
     kind: "interest",
     accent: "brand",
     icon: "sprout",
@@ -141,7 +154,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "hybrid-training",
     name: "Hybrid Training",
-    tagline: "Lift and run in the same week — the Tropos way.",
+    tagline: "Lift and run in the same week.",
     kind: "interest",
     accent: "brand",
     icon: "zap",
@@ -158,7 +171,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "runners",
     name: "Runners",
-    tagline: "Routes, races, paces — everything running.",
+    tagline: "Routes, races and paces.",
     kind: "interest",
     accent: "running",
     icon: "footprints",
@@ -166,8 +179,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "trail-running",
     name: "Trail Running",
-    tagline:
-      "Dirt, hills and long climbs — racing the landscape, not the clock.",
+    tagline: "Dirt, hills and long climbs.",
     kind: "interest",
     accent: "running",
     icon: "mountain",
@@ -175,7 +187,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "lifters",
     name: "Lifters",
-    tagline: "Programmes, PRs and plates — everything strength.",
+    tagline: "Programmes, PRs and plates.",
     kind: "interest",
     accent: "lifting",
     icon: "dumbbell",
@@ -183,7 +195,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   {
     id: "triathlon-multisport",
     name: "Triathlon & Multisport",
-    tagline: "Swim, bike, run — training across disciplines.",
+    tagline: "Swim, bike and run.",
     kind: "interest",
     accent: "running",
     icon: "medal",
@@ -221,6 +233,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.londonmarathonevents.co.uk/london-marathon",
+      entryUrl: "https://www.londonmarathonevents.co.uk/ballot",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
@@ -238,12 +252,13 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.manchestermarathon.co.uk",
+      entryUrl: "https://www.manchestermarathon.co.uk/register-your-interest",
     },
   },
   {
     id: "brighton-marathon",
     name: "Brighton Marathon",
-    tagline: "26.2 by the sea — spring marathon on the south coast.",
+    tagline: "A spring marathon by the sea.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -254,6 +269,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl:
+        "https://www.londonmarathonevents.co.uk/brighton-marathon-weekend",
+      entryUrl:
         "https://www.londonmarathonevents.co.uk/brighton-marathon-weekend",
     },
   },
@@ -271,12 +288,13 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl: "https://www.edinburghmarathon.com",
+      entryUrl: "https://www.edinburghmarathon.com/marathon",
     },
   },
   {
     id: "great-north-run",
     name: "Great North Run",
-    tagline: "The world's biggest half — Newcastle to the sea.",
+    tagline: "The world's biggest half, Newcastle to the sea.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -287,12 +305,14 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-north-run/",
+      entryUrl: "https://www.greatrun.org/events/great-north-run/",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
     id: "the-big-half",
     name: "The Big Half",
-    tagline: "Tower Bridge to Cutty Sark — London's community half.",
+    tagline: "London's community half, Tower Bridge to Cutty Sark.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -304,6 +324,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.londonmarathonevents.co.uk/big-half",
+      entryUrl: "https://www.londonmarathonevents.co.uk/big-half",
     },
   },
   {
@@ -320,6 +341,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.royalparkshalf.com",
+      entryUrl: "https://www.royalparkshalf.com/enter",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
@@ -337,6 +360,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
       elevation: "flat",
       websiteUrl: "https://www.cardiffhalfmarathon.co.uk",
+      entryUrl: "https://www.cardiffhalfmarathon.co.uk/take-part/register/",
     },
   },
   {
@@ -354,6 +378,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.londonmarathonevents.co.uk/london-10000",
+      entryUrl: "https://www.londonmarathonevents.co.uk/london-10000",
     },
   },
   {
@@ -370,6 +395,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-birmingham-run/",
+      entryUrl: "https://www.greatrun.org/events/great-birmingham-run/",
     },
   },
   {
@@ -386,6 +412,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-manchester-run/",
+      entryUrl: "https://www.greatrun.org/events/great-manchester-run/",
     },
   },
   {
@@ -402,6 +429,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runforall.com/events/10k/leeds-10k/",
+      entryUrl: "https://www.runforall.com/events/10k/leeds-10k/",
     },
   },
   // Marathon expansion — dates and sources: docs/proposals/marathon-expansion.md
@@ -420,6 +448,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇬🇧",
       websiteUrl:
         "https://www.runforall.com/events/marathon/yorkshire-marathon/",
+      entryUrl: "https://www.runforall.com/events/marathon/yorkshire-marathon/",
     },
   },
   {
@@ -452,6 +481,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl: "https://www.lochnessmarathon.com/event/loch-ness-marathon/",
+      entryUrl: "https://caledoniangroupevents.co.uk/loch-ness-marathon",
+      entryDomains: ["caledoniangroupevents.co.uk"],
     },
   },
   {
@@ -468,6 +499,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
       websiteUrl: "https://newportwalesmarathon.co.uk/",
+      entryUrl: "https://newportwalesmarathon.co.uk/register-marathon/",
     },
   },
   {
@@ -484,6 +516,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://belfastcitymarathon.com/",
+      entryUrl: "https://belfastcitymarathon.com/",
     },
   },
   {
@@ -500,6 +533,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runforall.com/events/marathon/leeds-marathon/",
+      entryUrl: "https://www.runforall.com/events/marathon/leeds-marathon/",
     },
   },
   {
@@ -516,6 +550,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://mkmarathon.com/mk-marathon/",
+      entryUrl: "https://mkmarathon.com/mk-marathon/",
     },
   },
   {
@@ -532,12 +567,13 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.southamptonmarathon.co.uk/",
+      entryUrl: "https://www.southamptonmarathon.co.uk/",
     },
   },
   {
     id: "new-york-city-marathon",
     name: "New York City Marathon",
-    tagline: "Five boroughs, one marathon — share your New York build-up.",
+    tagline: "Five boroughs, one marathon.",
     kind: "race",
     accent: "running",
     icon: "flag",
@@ -564,6 +600,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "US",
       countryFlag: "🇺🇸",
       websiteUrl: "https://www.chicagomarathon.com/",
+      entryUrl: "https://www.chicagomarathon.com/apply/",
     },
   },
   {
@@ -580,6 +617,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "US",
       countryFlag: "🇺🇸",
       websiteUrl: "https://www.baa.org/races/boston-marathon/",
+      entryUrl: "https://www.baa.org/races/boston-marathon/qualify/",
+      entryNote: "Entry is by qualifying time.",
     },
   },
   {
@@ -596,6 +635,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "FR",
       countryFlag: "🇫🇷",
       websiteUrl: "https://www.asicsmarathondeparis.com/en",
+      entryUrl: "https://www.asicsmarathondeparis.com/en",
     },
   },
   {
@@ -612,6 +652,9 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "DE",
       countryFlag: "🇩🇪",
       websiteUrl: "https://www.bmw-berlin-marathon.com/en/",
+      entryUrl: "https://www.generali-berlin-marathon.com/en/registration/run",
+      entryNote: "Entry is by ballot.",
+      entryDomains: ["generali-berlin-marathon.com"],
     },
   },
   {
@@ -628,6 +671,9 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "IE",
       countryFlag: "🇮🇪",
       websiteUrl: "https://irishlifedublinmarathon.ie/",
+      entryUrl:
+        "https://irishlifedublinmarathon.ie/2027-event-dates-entry-information/",
+      entryNote: "Entry is by ballot.",
     },
   },
   // Winter and spring: the catalogue had nothing between the New York
@@ -647,6 +693,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "ES",
       countryFlag: "🇪🇸",
       websiteUrl: "https://www.valenciaciudaddelrunning.com/en/marathon/",
+      entryUrl:
+        "https://www.valenciaciudaddelrunning.com/en/marathon/info-registration-2026/",
     },
   },
   {
@@ -664,6 +712,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "US",
       countryFlag: "🇺🇸",
       websiteUrl: "https://www.chevronhoustonmarathon.com/",
+      entryUrl: "https://www.chevronhoustonmarathon.com/registration/",
     },
   },
   {
@@ -680,6 +729,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "ES",
       countryFlag: "🇪🇸",
       websiteUrl: "https://www.zurichmaratonsevilla.es/",
+      entryUrl: "https://www.zurichmaratonsevilla.es/zms-inscripciones",
     },
   },
   {
@@ -696,6 +746,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://brightonhalfmarathon.com/",
+      entryUrl: "https://brightonhalfmarathon.com/",
     },
   },
   {
@@ -712,6 +763,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "JP",
       countryFlag: "🇯🇵",
       websiteUrl: "https://www.marathon.tokyo/en/",
+      entryUrl: "https://www.marathon.tokyo/en/participants",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
@@ -728,6 +781,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://cambridgehalfmarathon.com/",
+      entryUrl:
+        "https://cambridgehalfmarathon.com/how-to-take-part/how-to-take-part",
     },
   },
   {
@@ -744,6 +799,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.londonmarathonevents.co.uk/bath-half",
+      entryUrl: "https://www.londonmarathonevents.co.uk/bath-half",
     },
   },
   {
@@ -760,6 +816,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "ES",
       countryFlag: "🇪🇸",
       websiteUrl: "https://zurichmaratobarcelona.es/en/",
+      entryUrl: "https://zurichmaratobarcelona.es/en/",
     },
   },
   {
@@ -776,6 +833,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "AU",
       countryFlag: "🇦🇺",
       websiteUrl: "https://www.tcssydneymarathon.com/marathon",
+      entryUrl: "https://www.tcssydneymarathon.com/sign-up",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
@@ -792,6 +851,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "NL",
       countryFlag: "🇳🇱",
       websiteUrl: "https://www.tcsamsterdammarathon.eu/",
+      entryUrl: "https://www.tcsamsterdammarathon.eu/registration",
     },
   },
   {
@@ -808,6 +868,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "NL",
       countryFlag: "🇳🇱",
       websiteUrl: "https://nnmarathonrotterdam.nl/en/",
+      entryUrl: "https://nnmarathonrotterdam.nl/en/register/",
     },
   },
   {
@@ -824,6 +885,9 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "DK",
       countryFlag: "🇩🇰",
       websiteUrl: "https://copenhagenmarathon.dk/en/",
+      entryUrl:
+        "https://copenhagenmarathon.dk/en/entries-for-copenhagen-marathon-2027-will-be-allocated-through-a-lottery/",
+      entryNote: "Entry is by ballot.",
     },
   },
   {
@@ -840,6 +904,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.oxfordhalf.com/",
+      entryUrl: "https://www.oxfordhalf.com/",
     },
   },
   {
@@ -856,6 +921,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-bristol-run/",
+      entryUrl: "https://www.greatrun.org/events/great-bristol-run/",
     },
   },
   {
@@ -872,6 +938,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl: "https://www.edinburghmarathon.com/5k",
+      entryUrl: "https://www.edinburghmarathon.com/5k",
     },
   },
   {
@@ -889,6 +956,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl:
         "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-5k",
+      entryUrl:
+        "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-5k",
     },
   },
   {
@@ -905,6 +974,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.edinburghmarathon.com/halfmarathon",
+      entryUrl: "https://www.edinburghmarathon.com/halfmarathon",
     },
   },
   {
@@ -921,6 +991,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runbournemouth.com/halfmarathon",
+      entryUrl: "https://www.runbournemouth.com/halfmarathon",
     },
   },
   {
@@ -937,6 +1008,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl:
+        "https://www.runforall.com/events/half-marathon/sheffield-half-marathon/",
+      entryUrl:
         "https://www.runforall.com/events/half-marathon/sheffield-half-marathon/",
     },
   },
@@ -955,6 +1028,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇪🇸",
       websiteUrl:
         "https://www.valenciaciudaddelrunning.com/en/half/half-marathon/",
+      entryUrl:
+        "https://www.valenciaciudaddelrunning.com/en/half/valencia-half-marathon-registration-info/",
     },
   },
   {
@@ -971,6 +1046,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.edinburghmarathon.com/10k",
+      entryUrl: "https://www.edinburghmarathon.com/10k",
     },
   },
   {
@@ -987,6 +1063,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runbournemouth.com/supersonic10k",
+      entryUrl: "https://www.runbournemouth.com/supersonic10k",
     },
   },
   {
@@ -1003,6 +1080,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runforall.com/events/10k/city-of-lincoln-10k/",
+      entryUrl: "https://www.runforall.com/events/10k/city-of-lincoln-10k/",
     },
   },
   {
@@ -1019,6 +1097,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runforall.com/events/10k/york-10k/",
+      entryUrl: "https://www.runforall.com/events/10k/york-10k/",
     },
   },
   {
@@ -1036,6 +1115,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇬🇧",
       websiteUrl:
         "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-10k",
+      entryUrl:
+        "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-10k",
     },
   },
   {
@@ -1052,6 +1133,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runbournemouth.com/supernova5k",
+      entryUrl: "https://www.runbournemouth.com/supernova5k",
     },
   },
   {
@@ -1068,6 +1150,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.supernovarun.com/forthroadbridge",
+      entryUrl: "https://www.supernovarun.com/forthroadbridge",
     },
   },
   {
@@ -1085,6 +1168,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.supernovarun.com/",
+      entryUrl: "https://www.supernovarun.com/",
     },
   },
   {
@@ -1102,6 +1186,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.thresholdtrailseries.com/race-to-the-king/",
+      entryUrl: "https://www.thresholdtrailseries.com/race-to-the-king/",
     },
   },
   {
@@ -1119,6 +1204,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.thresholdtrailseries.com/race-to-the-stones/",
+      entryUrl: "https://www.thresholdtrailseries.com/race-to-the-stones/",
     },
   },
   {
@@ -1136,6 +1222,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.ultrachallenge.com/chiltern-50/",
+      entryUrl: "https://www.ultrachallenge.com/chiltern-50/sign-up-now/",
     },
   },
   {
@@ -1151,6 +1238,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "ZA",
       countryFlag: "🇿🇦",
       websiteUrl: "https://capetownmarathon.com/",
+      entryUrl: "https://capetownmarathon.com/",
+      entryNote: "Entry is by ballot.",
       distance: "marathon",
     },
   },
@@ -1167,6 +1256,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "IT",
       countryFlag: "🇮🇹",
       websiteUrl: "https://www.runromethemarathon.com/",
+      entryUrl: "https://www.runromethemarathon.com/",
       distance: "marathon",
     },
   },
@@ -1200,6 +1290,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "CZ",
       countryFlag: "🇨🇿",
       websiteUrl: "https://www.runczech.com/en/events",
+      entryUrl:
+        "https://www.runczech.com/en/events/vodafone-prague-marathon-2027",
       distance: "marathon",
     },
   },
@@ -1216,6 +1308,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "AT",
       countryFlag: "🇦🇹",
       websiteUrl: "https://www.vienna-marathon.com/?lang=en",
+      entryUrl: "https://www.vienna-marathon.com/?lang=en",
       distance: "marathon",
     },
   },
@@ -1232,6 +1325,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "DE",
       countryFlag: "🇩🇪",
       websiteUrl: "https://www.frankfurt-marathon.com/en/",
+      entryUrl: "https://www.frankfurt-marathon.com/en/",
       distance: "marathon",
     },
   },
@@ -1248,6 +1342,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryCode: "US",
       countryFlag: "🇺🇸",
       websiteUrl: "https://www.honolulumarathon.org/",
+      entryUrl: "https://www.honolulumarathon.org/key-information/how-to-enter",
       distance: "marathon",
     },
   },
@@ -1265,6 +1360,8 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🇺🇸",
       websiteUrl:
         "https://www.mccourtfoundation.org/event/los-angeles-marathon/",
+      entryUrl:
+        "https://www.mccourtfoundation.org/event/los-angeles-marathon/register/",
       distance: "marathon",
     },
   },

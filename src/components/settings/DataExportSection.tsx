@@ -70,10 +70,7 @@ export default function DataExportSection({
   const emailChoices = emailsLive || !!emailConsent;
 
   return (
-    <SettingsGroup
-      title="Export"
-      footer="Each export saves a CSV file you can open in a spreadsheet."
-    >
+    <SettingsGroup title="Export">
       {EXPORTS.map(({ label, key, name }) => (
         <SettingsRow
           key={key}

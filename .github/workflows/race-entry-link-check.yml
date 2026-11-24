@@ -1,0 +1,81 @@
+name: Check race entry links
+
+# Reg1 (23 November 2026): once a month, request every race's entryUrl in
+# spaceDefs.ts (scripts/check-race-entry-links.ts), follow its redirects,
+# and keep one ready-for-agent issue listing the broken ones: an error
+# status, a name that does not resolve, no answer, a redirect off the
+# race's own domains, or a link to an earlier edition. The issue closes
+# itself on a clean run. Scheduled and manual only, never on a pull
+# request: an organiser's site that is down for an hour must not redden
+# an unrelated change.
+
+on:
+  schedule:
+    # The 3rd of each month, 06:41 UTC.
+    - cron: "41 6 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: race-entry-link-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Install, then about 60 requests four at a time with a 20 s limit
+    # each and one retry: 2 to 8 minutes.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Request every entry link
+        id: check
+        run: npx tsx scripts/check-race-entry-links.ts
+      - name: Keep one issue for broken entry links
+        # Runs when the check failed too: a red check is the case the
+        # issue is for. Skipped only when the script wrote no report.
+        if: ${{ always() && hashFiles('race-entry-report.json') != '' }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { broken } = require('./race-entry-report.json');
+            const marker = '<!-- race-entry-link-check -->';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100
+            });
+            const existing = issues.find(i => !i.pull_request && i.body?.includes(marker));
+            if (!broken.length) {
+              if (existing) await github.rest.issues.update({ ...context.repo, issue_number: existing.number, state: 'closed' });
+              return;
+            }
+            const clean = s => String(s).replace(/[|\r\n]/g, ' ');
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [marker,
+              `These race entry links are broken (${run}). Until they are fixed, the race page sends runners to a page that is not there.`,
+              '', '| Race | Link | What is wrong |', '| --- | --- | --- |',
+              ...broken.map(r => `| ${clean(r.name)} (\`${r.id}\`) | ${r.url} | ${clean(r.reason)} |`),
+              '', 'For each race, find the organiser’s current entry page on its own site and put it in `entryUrl` in `src/features/spaces/spaceDefs.ts` (or remove `entryUrl` when there is none: no link means no button). Never a reseller, a ticketing marketplace or an affiliate link. A redirect to another domain the organiser owns goes in `entryDomains`. Merging the fix syncs it to builds already on phones (sync-race-events.yml).'
+            ].join('\n');
+            const title = 'Race entry links are broken';
+            if (existing) {
+              if (existing.body !== body || existing.title !== title) await github.rest.issues.update({ ...context.repo, issue_number: existing.number, title, body });
+            } else {
+              await github.rest.issues.create({ ...context.repo, title, body, labels: ['ready-for-agent'] });
+            }
+      - name: Save the link audit in the run summary
+        if: always()
+        run: |
+          if [ -f race-entry-report.json ]; then
+            echo '### Race entry links' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            node -e 'const r=require("./race-entry-report.json");console.log(JSON.stringify({checked:r.checked,broken:r.broken,unverified:r.unverified},null,2))' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -393,19 +393,14 @@ export default function WaterCard({
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
-              {/* `bg-teal/10` / `text-teal`, not the raw
-                  rgba(82,163,189,0.10) + inline hsl() this carried.
-                  Those were theme-blind literals — the exact leak the
-                  --teal token exists to close (src/index.css:92-98) —
-                  where the peer tile uses THEME.iconBg. (The unit span's
-                  inline hsl(var(--muted-foreground)) below STAYS: that
-                  is the documented JS-context form, not a literal.) */}
-              {/* Gives its room to the label under 9em of tile, as the
-                  weight tile's does, and the plus moves to the tile's
-                  empty foot: at larger text it covered "Water". */}
-              <div className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0 bg-teal/10">
-                <Droplets className="size-3.5 text-teal" aria-hidden="true" />
-              </div>
+              {/* The drop sits bare at the label's size, and gives its
+                  room to the label under 9em of tile, as the weight
+                  tile's does; the plus moves to the tile's empty foot:
+                  at larger text it covered "Water". */}
+              <Droplets
+                className="size-3.5 shrink-0 text-teal @max-[9em]:hidden"
+                aria-hidden="true"
+              />
               {/* SectionLabel, not a hand-rolled label: the weight tile
                   beside it uses the primitive, so this one rendered
                   "Water" in sentence case next to "WEIGHT" in the
@@ -565,22 +560,18 @@ export default function WaterCard({
       </motion.div>
       {ml > 2 * GLASS_ML && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
-        {/* Left cluster (icon + reading) opens the size sheet. */}
+        {/* Left cluster (drop + reading) opens the size sheet. */}
         <button
           type="button"
           onClick={openSheet}
           aria-label={`${shownReading}. Add water, choose a container size.`}
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
-          <div
-            className="size-12 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
-          >
-            <Droplets
-              className="size-5"
-              style={{ color: "hsl(var(--teal))" }}
-            />
-          </div>
+          <Droplets
+            className="size-5 shrink-0"
+            style={{ color: "hsl(var(--teal))" }}
+            aria-hidden="true"
+          />
           <div className="flex-1 min-w-0">
             <SectionLabel>Water</SectionLabel>{" "}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">

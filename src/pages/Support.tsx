@@ -16,7 +16,7 @@ export default function Support() {
   const version =
     typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const mailto = `mailto:support@troposfit.com?subject=${encodeURIComponent(
-    `Tropos support — v${version}`
+    `Tropos support, v${version}`
   )}`;
 
   return (

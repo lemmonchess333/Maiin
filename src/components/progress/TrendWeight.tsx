@@ -189,7 +189,7 @@ export function TrendWeight() {
               {goalDiff != null && (
                 <span className="text-muted-foreground">
                   {" "}
-                  — {goalDiff} {unit} to goal
+                  · {goalDiff} {unit} to goal
                 </span>
               )}
             </>

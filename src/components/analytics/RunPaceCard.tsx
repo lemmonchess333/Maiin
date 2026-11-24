@@ -60,7 +60,7 @@ export default function RunPaceCard({
           Pace by run type
         </h2>
         <p className="text-sm text-muted-foreground">
-          {subtitle} against {comparedWith}, weighted by distance
+          {subtitle} against {comparedWith}
         </p>
       </div>
       <ul className="divide-y divide-border">

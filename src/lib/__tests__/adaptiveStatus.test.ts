@@ -57,7 +57,7 @@ describe("adaptiveCalorieStatus", () => {
     expect(adaptiveCalorieStatusLabel({ kind: "manual" })).toMatch(/Manual/);
     expect(
       adaptiveCalorieStatusLabel({ kind: "adapting", retunedDaysAgo: 0 })
-    ).toMatch(/retuned today/);
+    ).toMatch(/Updated today/);
     expect(
       adaptiveCalorieStatusLabel({ kind: "adapting", retunedDaysAgo: 5 })
     ).toMatch(/5d ago/);
@@ -77,7 +77,7 @@ describe("adaptiveCalorieStatus", () => {
 
 describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", () => {
   /* The line sits beneath Settings → Nutrition's FORMULA figure, and read
-     "Adapting — retuned 3d ago from your real intake + weight" under 2500
+     "Updated 3d ago from your meals and weigh-ins" under 2500
      while Home and Food showed 2919. It asserted the number above it was the
      adapted one; it never was.
 
@@ -89,7 +89,7 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
 
   it("states today's target alongside the baseline", () => {
     const label = adaptiveCalorieStatusLabel(adapting, 2919);
-    expect(label).toContain("retuned 3d ago");
+    expect(label).toContain("Updated 3d ago");
     expect(label).toContain(group(2919));
     expect(label).toMatch(/baseline/i);
   });
@@ -97,7 +97,7 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
   it("says 'today' rather than '0d ago'", () => {
     expect(
       adaptiveCalorieStatusLabel({ kind: "adapting", retunedDaysAgo: 0 }, 2919)
-    ).toContain("retuned today");
+    ).toContain("Updated today");
   });
 
   it("falls back to the original copy when no learned value is available", () => {
@@ -105,9 +105,7 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
     // not gain a redundant second copy of it.
     for (const v of [undefined, null, NaN]) {
       const label = adaptiveCalorieStatusLabel(adapting, v);
-      expect(label).toBe(
-        "Adapting — retuned 3d ago from your real intake + weight."
-      );
+      expect(label).toBe("Updated 3d ago from your meals and weigh-ins.");
     }
   });
 

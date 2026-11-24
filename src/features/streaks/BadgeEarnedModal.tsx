@@ -73,7 +73,7 @@ export function BadgeEarnedContent({
         aria-label={
           revealed
             ? `Badge earned: ${badge.name}`
-            : `New ${badge.tier} badge — tap the seal to break it open`
+            : `New ${badge.tier} badge. Tap the seal to open it`
         }
         initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -86,15 +86,6 @@ export function BadgeEarnedContent({
           border: `1.5px solid ${tier}40`,
         }}
       >
-        {/* Tier wash */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at 50% 32%, ${tier}, transparent 70%)`,
-          }}
-        />
-
         {/* Rotating light rays — bloom in on reveal, behind the badge. */}
         <AnimatePresence>
           {revealed && (

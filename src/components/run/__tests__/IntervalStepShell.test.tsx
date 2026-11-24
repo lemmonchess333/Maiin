@@ -98,7 +98,7 @@ describe("IntervalStepShell — a session of one step", () => {
         onSkip={vi.fn()}
       />
     );
-    expect(screen.getByText("Last step — bring it home.")).toBeInTheDocument();
+    expect(screen.getByText("Last step. Bring it home.")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Skip to the next step" })
     ).toBeInTheDocument();

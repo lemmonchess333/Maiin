@@ -760,7 +760,7 @@ export default function DayPeekCard({
                 <button
                   type="button"
                   onClick={() => setExtrasSheetOpen(true)}
-                  aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open all`}
+                  aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date, open all`}
                   className="inline-flex min-h-11 items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 rounded-md transition active:scale-[0.97]"
                 >
                   <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />

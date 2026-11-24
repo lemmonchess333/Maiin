@@ -7,8 +7,14 @@ import {
   useReducedMotion as useFramerReducedMotion,
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import SwapFade from "@/components/ui/SwapFade";
 import { haptic } from "@/lib/haptic";
-import { loggedFill } from "@/lib/calorieRingFill";
+import {
+  overshootFill,
+  ringFill,
+  VIEW_SWITCH_SEC,
+} from "@/lib/calorieRingFill";
+import { useRingMoveCause } from "@/hooks/useRingMoveCause";
 import { cn } from "@/lib/utils";
 import type { CalorieRingMode } from "./CalorieRing";
 
@@ -82,18 +88,25 @@ export default function MacroColumn({
   const isOver = consumed > target && hasTarget;
   const isLeftMode = mode === "left";
 
-  /* The bar is what is logged, in both modes, as the calorie wheel's arc
-     is (Food11 call 5; `loggedFill` has the reasons and the one rule the
-     wheel, these bars and the Details sheet share). The number and its
-     word beside the bar follow the left and logged switch; the bar does
-     not. */
-  const barFillPct = loggedFill(consumed, target);
+  /* The bar follows the left and logged switch as the calorie wheel's
+     arc does (`ringFill` has the reasons and the one rule the wheel,
+     these bars and the Details sheet share): what is logged in the
+     logged view, what is left in the left view. */
+  const barFillPct = ringFill(consumed, target, mode);
 
-  // Overshoot — only when consumed exceeds target. Capped at one full
-  // extra lap; going 3× over wouldn't read any differently than 2×.
-  // Layered on top of the base bar in a darker shade of the macro
-  // colour, mirroring the calorie ring's overshoot arc (CalorieRing.tsx).
-  const overshootPct = isOver ? Math.min((consumed - target) / target, 1) : 0;
+  // Overshoot — only when consumed exceeds target, in both views. Capped
+  // at one full extra lap; going 3× over wouldn't read any differently
+  // than 2×. Layered on top of the base bar in a darker shade of the
+  // macro colour, mirroring the calorie ring's overshoot arc.
+  const overshootPct = overshootFill(consumed, target);
+
+  /* A tap on the switch moves the bar to the other view's fill at once
+     and briskly, with the wheel; food moves it on the page's timing
+     (`useRingMoveCause`). */
+  const barTransitionSec =
+    useRingMoveCause(mode, consumed, target) === "switch"
+      ? VIEW_SWITCH_SEC
+      : barDurationSec;
 
   // LEFT mode:
   //   under target → remaining   (e.g. "151g left")
@@ -263,7 +276,10 @@ export default function MacroColumn({
      as a subscript. It stays unspaced: grams on the food surface are
      "128g". */
   const FigureTag = row ? "span" : "p";
-  const figure = (
+  /* `swapped`: the left and logged switch has been used since this
+     mounted, so the figure starts at its value rather than counting up
+     from zero (`SwapFade`). */
+  const figure = (swapped: boolean) => (
     <FigureTag
       className={cn(
         "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
@@ -274,7 +290,7 @@ export default function MacroColumn({
         value={displayValue}
         duration={numberDurationSec}
         ease={RING_EASE}
-        fromZero={drawIn}
+        fromZero={drawIn && !swapped}
       />
       <span
         data-macro-unit=""
@@ -295,12 +311,12 @@ export default function MacroColumn({
       bar fades the whole track to reduce visual noise without
       causing a layout jump on first log.
 
-      An empty bar is a macro with nothing logged, in both modes. Only
-      the tile's solid track fades. The row and the compact tile sit
-      beside the calorie wheel on its grey groove, and since the bar and
-      the wheel both start the day empty (Food11 call 5) a faded groove
-      would be 8% grey under a wheel track at 20%: the same "not yet"
-      drawn two ways, on every account's every morning. */
+      An empty bar is nothing drawn on it: nothing logged in the logged
+      view, the target reached in the left one. Only the tile's solid
+      track fades, and not under an overshoot it still carries. The row
+      and the compact tile sit beside the calorie wheel on its grey
+      groove, and a faded groove would be 8% grey under a wheel track at
+      20%: the same "not yet" drawn two ways. */
   const bar = (
     <div
       data-macro-bar=""
@@ -320,7 +336,8 @@ export default function MacroColumn({
             ? "hsl(var(--muted-foreground) / 0.2)"
             : "hsl(var(--muted))",
         boxShadow: row ? undefined : "inset 0 1px 2px rgb(0 0 0 / 0.06)",
-        opacity: barFillPct === 0 && !compact && !row ? 0.4 : 1,
+        opacity:
+          barFillPct === 0 && overshootPct === 0 && !compact && !row ? 0.4 : 1,
       }}
     >
       <motion.div
@@ -329,7 +346,7 @@ export default function MacroColumn({
         initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
         animate={{ width: `${barFillPct * 100}%` }}
         transition={{
-          width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
+          width: { duration: reduce ? 0 : barTransitionSec, ease: RING_EASE },
         }}
       />
       {/* Overshoot overlay — darker shade layered from the left,
@@ -413,27 +430,41 @@ export default function MacroColumn({
               together; a flex box draws nothing for them. */}{" "}
           {/* The figure and its word on one line ("15g left"), wrapping
               the word under the figure when the column is too narrow
-              for both ("logged" at larger text). */}
-          <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1">
-            {figure}{" "}
-            <span className="text-sm text-muted-foreground lowercase">
-              {displayLabel}
-            </span>
-          </span>
+              for both ("logged" at larger text). The left and logged
+              switch swaps them with the wheel's crossfade, never
+              counting from one meaning to the other (`SwapFade`). */}
+          <SwapFade as="span" swapKey={mode} className="mt-0.5">
+            {(swapped) => (
+              <span className="flex flex-wrap items-baseline gap-x-1">
+                {figure(swapped)}{" "}
+                <span className="text-sm text-muted-foreground lowercase">
+                  {displayLabel}
+                </span>
+              </span>
+            )}
+          </SwapFade>
           {bar}
         </>
       ) : (
         <>
           {icon}
-          {figure}
-          {/* Spaces in the text, as the row has, so the tile reads as
-              words ("78g left Protein"). */}{" "}
-          {/* Mode-aware label sits below the big number. Always-rendered
-              rather than conditionally suppressed so the line height stays
-              stable across mode toggles. */}
-          <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-            {displayLabel}
-          </p>{" "}
+          {/* The figure and its word swap together on the left and
+              logged switch, in step with the wheel (`SwapFade`). */}
+          <SwapFade swapKey={mode} className="justify-items-center">
+            {(swapped) => (
+              <div className="flex flex-col items-center">
+                {figure(swapped)}
+                {/* Spaces in the text, as the row has, so the tile reads
+                    as words ("78g left Protein"). */}{" "}
+                {/* Mode-aware label sits below the big number.
+                    Always-rendered rather than conditionally suppressed
+                    so the line height stays stable across mode toggles. */}
+                <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+                  {displayLabel}
+                </p>
+              </div>
+            )}
+          </SwapFade>{" "}
           {bar}
           {/* Macro label — intentionally muted (same tone as the
               `X / Yg` ratio line above) so the card's colour identity is

@@ -1604,7 +1604,7 @@ function moveRunDay(state, profile, command, now) {
   // Guards mirror overrideRunDay's, and for the same reason: a race's date IS
   // the event (RUN-RACE-GUARD-01), and only a planned slot moves.
   if (isRaceRunDay(target)) {
-    failedPrecondition("A race can't be moved — its date is the event.");
+    failedPrecondition("A race can't be moved. Its date is the event.");
   }
   if (!isScheduledRunEditable(getScheduledRunStatus(target)) || target.completed === true || state.manualCompletions?.[command.runDayId]) {
     failedPrecondition("That run can no longer be moved.");

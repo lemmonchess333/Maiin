@@ -135,9 +135,9 @@ test.describe("new person's feed screenshots", () => {
 
     // Following nobody, the feed opens on Explore with one line on how
     // Following fills — and real posts under it, not prompts.
-    await expect(
-      page.getByText(/Sessions people shared publicly/i)
-    ).toBeVisible({ timeout: 25_000 });
+    await expect(page.getByText(/Sessions shared publicly/i)).toBeVisible({
+      timeout: 25_000,
+    });
     await expect(page.getByText("Maya Chen").first()).toBeVisible({
       timeout: 25_000,
     });

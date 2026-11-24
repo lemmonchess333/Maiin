@@ -59,7 +59,7 @@ describe("realignResultMessage", () => {
         totalWeeks: 12,
       })
     ).toBe(
-      "Plan realigned — 12 weeks to your 50-mile race. It’s a tighter build, so expect fewer easy weeks."
+      "Plan realigned: 12 weeks to your 50-mile race. It’s a tighter build, so expect fewer easy weeks."
     );
     expect(
       realignResultMessage({
@@ -67,6 +67,6 @@ describe("realignResultMessage", () => {
         distance: "100k",
         totalWeeks: 18,
       })
-    ).toBe("Plan realigned to today — 18 weeks to your 100K.");
+    ).toBe("Plan realigned to today: 18 weeks to your 100K.");
   });
 });

@@ -11,7 +11,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
-import { heroLead, type HeroLine } from "@/lib/homeHero";
+import { heroLead, type HeroLine, type LastSetsOf } from "@/lib/homeHero";
 import type { ComponentProps } from "react";
 
 const stagger = {
@@ -47,6 +47,7 @@ export default function StackedCTACards({
   freeRunLine = null,
   liftReadiness = null,
   runPlanLocked = null,
+  lastSetsOf,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
@@ -64,6 +65,9 @@ export default function StackedCTACards({
   /** The half, marathon or ultra plan is past its free first week (Q85):
    *  today's planned run offers Pro (`RunCTACard`). */
   runPlanLocked?: ComponentProps<typeof RunCTACard>["planLocked"];
+  /** Last time's counted sets for each lift, as Train's "Last:" line
+   *  reads them (`lastSetsBySlot`), for the lift hero's line. */
+  lastSetsOf: LastSetsOf;
 }) {
   const { lift, run, rest } = session;
   // On a day with both, the run leads when running is the person's aim,
@@ -105,6 +109,7 @@ export default function StackedCTACards({
         unit={liftUnit}
         variant={runLeads ? "compact" : "hero"}
         readiness={runLeads ? null : liftReadiness}
+        lastSetsOf={lastSetsOf}
       />
     </motion.div>
   ) : lift ? (
@@ -185,6 +190,7 @@ export default function StackedCTACards({
               startTarget={rest.startTarget}
               inProgress={rest.inProgress}
               unit={liftUnit}
+              lastSetsOf={lastSetsOf}
             />
           ) : rest.kind === "free-run" ? (
             <RunCTACard

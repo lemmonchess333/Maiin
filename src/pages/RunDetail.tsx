@@ -47,7 +47,7 @@ import BestEffortsCard, {
 import { KEPT_ROUTE_POINTS } from "@/lib/routeSegments";
 import { useRunPlacings } from "@/hooks/useRunPlacings";
 import type { PlacedRun } from "@/lib/runPlacings";
-import { parseSavedRun } from "@/lib/savedRuns";
+import { keptBestEfforts, parseSavedRun } from "@/lib/savedRuns";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -188,7 +188,17 @@ export default function RunDetail() {
   const savedInvalid = run?.isInvalid === true;
   const bestEfforts = useMemo(() => {
     if (savedInvalid) return [];
-    if (Array.isArray(savedEfforts)) return savedEfforts.filter(isBestEffort);
+    /* What the run saved, unless its kept trace has a step faster than
+       any runner, which efforts timed before 2 Nov 2026 crossed: then the rule
+       as it is now, on a trace kept whole, or none (`keptBestEfforts`,
+       which Bests reads too). */
+    const kept = keptBestEfforts({
+      points: keptTrack,
+      distance: keptDistance,
+      bestEfforts: savedEfforts,
+    });
+    if (Array.isArray(savedEfforts) || !kept.splitsStandIn)
+      return kept.efforts.filter(isBestEffort);
     return Array.isArray(keptTrack) &&
       keptTrack.length > 1 &&
       keptTrack.length < KEPT_ROUTE_POINTS
@@ -369,7 +379,7 @@ export default function RunDetail() {
       source: "run",
     });
     toast[ok ? "success" : "error"](
-      ok ? "Route saved — find it in run setup" : "Couldn’t save route"
+      ok ? "Route saved. Find it in run setup" : "Couldn’t save route"
     );
   };
 

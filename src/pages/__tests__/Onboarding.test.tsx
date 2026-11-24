@@ -178,10 +178,8 @@ describe("onboarding chapters and commit", () => {
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     open();
     expect(
-      screen.getByText(
-        "Today shows your plan and what to do next. Start when you’re ready."
-      )
-    ).toBeInTheDocument();
+      screen.queryByText("Next, save your plan to an account.")
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit lift sessions" }));
     fireEvent.click(screen.getByRole("radio", { name: "5" }));
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
@@ -495,10 +493,8 @@ describe("activity-relevant setup", () => {
       screen.queryByRole("region", { name: "First lift preview" })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Today shows your plan and what to do next. Start when you’re ready."
-      )
-    ).toBeInTheDocument();
+      screen.queryByText("Next, save your plan to an account.")
+    ).not.toBeInTheDocument();
     const openWeek = screen.getByRole("region", { name: "Your week shape" });
     expect(openWeek).toHaveTextContent("Free running");
     expect(openWeek).not.toHaveTextContent("0 lifts");

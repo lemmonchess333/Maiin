@@ -143,7 +143,7 @@ describe("the reveal comes from the server's record", () => {
     await waitFor(() =>
       expect(view.result.current.newBadge?.id).toBe("plate_club")
     );
-    expect(view.result.current.newBadge?.name).toBe("Plate Club");
+    expect(view.result.current.newBadge?.name).toBe("One plate");
   });
 
   it("reveals an award earned while the app was closed, from the first read", async () => {

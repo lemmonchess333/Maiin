@@ -17,7 +17,14 @@ vi.mock("@/lib/auth", () => ({ useUid: () => authState.uid }));
 
 import { Timestamp } from "firebase/firestore";
 import { useCommunitiesFeed } from "../useCommunitiesFeed";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  deferReads,
+  releaseAllReads,
+  resetFirestore,
+  resumeReads,
+  seedFirestore,
+} from "@/test/firestoreHarness";
+import { __resetFeedSnapshotsForTests } from "@/lib/feedSnapshots";
 
 /** Hours before now: derived from the clock, so every CI run sees the
  *  same order. */
@@ -47,6 +54,8 @@ const COACH_POST = {
 
 beforeEach(() => {
   resetFirestore();
+  // The kept reads are the session's; each test is a session.
+  __resetFeedSnapshotsForTests();
   authState.uid = "me";
 });
 afterEach(cleanup);
@@ -145,5 +154,58 @@ describe("useCommunitiesFeed", () => {
     await waitFor(() => expect(result.current.items).toHaveLength(2));
     act(() => result.current.remove("runners", "shared-id"));
     expect(keys(result.current.items)).toEqual(["lifters/shared-id"]);
+  });
+});
+
+describe("useCommunitiesFeed — the read kept for the session", () => {
+  afterEach(() => {
+    resumeReads();
+    releaseAllReads();
+  });
+
+  /** The stream read once for `ids`, then left (Social unmounted). */
+  async function readOnceThenLeave(ids: string[]) {
+    seedFirestore({
+      "spaces/runners/posts/p1": memberPost("Priya", "First 10K done.", 2),
+    });
+    const first = renderHook(() => useCommunitiesFeed(true, ids));
+    await waitFor(() =>
+      expect(keys(first.result.current.items)).toEqual(["runners/p1"])
+    );
+    first.unmount();
+  }
+
+  it("coming back to the same Spaces, it starts from that read and reads again behind it", async () => {
+    await readOnceThenLeave(["runners"]);
+    seedFirestore({
+      "spaces/runners/posts/p2": memberPost("Sam", "Easy 5K.", 0),
+    });
+    deferReads();
+    const { result } = renderHook(() => useCommunitiesFeed(true, ["runners"]));
+    expect(keys(result.current.items)).toEqual(["runners/p1"]);
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.loading).toBe(true);
+
+    resumeReads();
+    releaseAllReads();
+    await waitFor(() =>
+      expect(keys(result.current.items)).toEqual(["runners/p2", "runners/p1"])
+    );
+  });
+
+  it("for other Spaces, or another account, it starts from nothing", async () => {
+    await readOnceThenLeave(["runners"]);
+    deferReads();
+    const other = renderHook(() =>
+      useCommunitiesFeed(true, ["runners", "lifters"])
+    );
+    expect(other.result.current.items).toEqual([]);
+    expect(other.result.current.loaded).toBe(false);
+    other.unmount();
+
+    authState.uid = "someone-else";
+    const { result } = renderHook(() => useCommunitiesFeed(true, ["runners"]));
+    expect(result.current.items).toEqual([]);
+    expect(result.current.loaded).toBe(false);
   });
 });
