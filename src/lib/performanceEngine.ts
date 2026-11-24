@@ -628,3 +628,57 @@ export function computePerformanceIndex(
     baseline: bl,
   };
 }
+const HIGH_INTENSITY_RUN_TYPES = new Set([
+  "tempo",
+  "intervals",
+  "interval",
+  "threshold",
+  "race",
+  "speed",
+  "vo2",
+  "repetition",
+]);
+
+/**
+ * Computes the low/high intensity split across runs against Seiler's 80/20 polarized distribution.
+ */
+export function computePolarizedSplit(
+  runs: ReadonlyArray<{ type?: string; durationMin?: number; distanceKm?: number }>,
+): {
+  lowIntensityPct: number;
+  highIntensityPct: number;
+  status: "polarized" | "too_hard" | "all_easy" | "insufficient";
+} {
+  if (runs.length < 3) {
+    return { lowIntensityPct: 0, highIntensityPct: 0, status: "insufficient" };
+  }
+
+  let low = 0;
+  let total = 0;
+
+  for (const run of runs) {
+    const duration = run.durationMin ?? 0;
+    const distance = run.distanceKm ?? 0;
+    const weight = duration > 0 ? duration : distance > 0 ? distance : 1;
+    total += weight;
+    const runType = (run.type ?? "").toLowerCase();
+    if (!HIGH_INTENSITY_RUN_TYPES.has(runType)) {
+      low += weight;
+    }
+  }
+
+  if (total <= 0) {
+    return { lowIntensityPct: 0, highIntensityPct: 0, status: "insufficient" };
+  }
+
+  const lowIntensityPct = Math.round((low / total) * 100);
+  const highIntensityPct = 100 - lowIntensityPct;
+  const status =
+    highIntensityPct === 0
+      ? "all_easy"
+      : highIntensityPct > 25
+        ? "too_hard"
+        : "polarized";
+
+  return { lowIntensityPct, highIntensityPct, status };
+}
