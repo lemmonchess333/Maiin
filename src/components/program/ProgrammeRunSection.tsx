@@ -1431,7 +1431,7 @@ export default function ProgrammeRunSection({
             sport="run"
             eyebrow="Start a run"
             title="Pick your pace today"
-            description="Easy, tempo, intervals or just go."
+            description="Easy, tempo, long or just go."
             meta={[]}
             /* Home's free run draws the easy runner; so does this card,
                as a planned run's does, where it had the icon tile. */
