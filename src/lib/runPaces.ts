@@ -98,7 +98,7 @@ export function vdotFromRace(distanceM: number, timeS: number): number {
   const velocity = distanceM / tMin; // m/min
   const vo2 = vo2AtVelocity(velocity);
   const pct = pctMaxForDuration(tMin);
-  if (pct <= 0) return 0;
+  if (vo2 <= 0 || pct <= 0) return 0;
   return vo2 / pct;
 }
 
@@ -334,7 +334,7 @@ function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
   } else if (fitness.vdot && fitness.vdot > 0) {
     vdot = fitness.vdot;
   }
-  return vdot > 0 ? { vdot, benchmark } : null;
+  return Number.isFinite(vdot) && vdot > 0 && vdot <= MAX_PLAUSIBLE_VDOT ? { vdot, benchmark } : null;
 }
 
 /** The concrete effort Riegel projections run off: the real benchmark when
