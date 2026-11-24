@@ -479,7 +479,7 @@ export function orderForAdjacency(
   backToBacks = false
 ): WorkoutDay[] {
   const n = workouts.length;
-  if (n < 2) return workouts; // nothing to permute
+  if (n < 2 || n > 6) return workouts; // nothing to permute
   // Under three sessions no seam is worth a reorder; the long run's eve is.
   const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
   const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
