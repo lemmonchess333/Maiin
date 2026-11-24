@@ -89,6 +89,8 @@
     0 22px 44px -14px rgba(16, 16, 24, 0.14);
   --ds-shadow-elevated:
     0 8px 28px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --ds-shadow-surface-flat: none;
+  --ds-surface-step: hsl(var(--card) / 0.65);
   /* A chip's edge and a track's cut (DESIGN_GUIDE §14o). The light theme
      draws neither: its surfaces part by lightness and shadow already.
      They are a transparent shadow and never `none`, because `chip-edge`
