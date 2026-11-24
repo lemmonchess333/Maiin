@@ -1586,3 +1586,11 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **No chip behind an icon.** An icon on a row or a tile sits bare at the label's size (14 to 20 pt), in the colour the row already had; where the label says it alone, the icon goes. The tinted rounded square is gone from Settings rows, the notifications tray, Home's Water and Weight tiles and Food's water row.
 - **What stays a card.** Progress's Performance card (the screen's hero), the range summary with its chart and controls, the muscles map (one tap opens Lifting), the two charts on Progress › Food, Home's week and food cards and its tiles, the Settings groups, and every card of a session, a meal or an offer.
 - **Built.** `AnalyticsGoDeeper` (ruled rows: name, its line, chevron), `AnalyticsTrends` and the Lifetime line on the overview; `FoodAverages` and `FoodDaysCard` on Progress › Food; `SettingsRow`, `NotificationsSheet`, `WaterCard`, `WeightTile`, `FoodWaterRow` and the empty diary row. Before and after captures are on the pull request.
+### 14m. Anti-AI visual craft & Runna / Hevy / Strava bar (2026-11-24 override)
+
+- **Flat secondary surfaces:** Reserve dark-mode inset-glow bezels strictly for today's single primary Hero Workout/Run card; render secondary metric tiles (Weekly Summary, Water, Weight) on flat surface-stepped planes (`--ds-border-flat`) separated by `1px` hairlines.
+- **Dominant athletic accent + tabular numerals:** Anchor everyday chrome to one dominant athletic accent with crisp monochrome `tabular-nums` data numerals; confine secondary food/water tints to rings and charts.
+- **Zero obscuring coachmarks:** Never float tutorial tooltips over active inputs, toggles, or headers; use inline scannable badges (`RIR 2`, `Zone 2`) with optional tap-to-learn sheets.
+- **Unified desktop viewport shell:** Enforce one consistent container width across tabs and active session modals (`max-w-md` or deliberate two-column desktop layout) and avoid large vertical voids on paywall/offer screens.
+- **Platform-neutral web copy:** Use `"saved on this device"` instead of `"saved on this phone"` in shared web/PWA chrome.
+  
