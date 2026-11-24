@@ -2407,7 +2407,8 @@ export default function WorkoutSession({
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
-      <GuideHint
+     <div className="flex-1 min-h-0 flex flex-col max-w-lg mx-auto w-full">
+       <GuideHint
         key={setHelpRequest}
         requested={setHelpRequest > 0}
         action={{
@@ -3650,6 +3651,7 @@ export default function WorkoutSession({
           compactGuide
         />
       )}
+    </div>
     </div>
   );
 }
