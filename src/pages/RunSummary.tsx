@@ -32,6 +32,7 @@ import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
@@ -2186,6 +2187,23 @@ export default function RunSummary() {
               </Suspense>
             </OptionalSummaryBoundary>
           </div>
+
+          {/* The league line (Run30 call 2), under the week as on the lift:
+              it lands seconds after the save, so it goes below the run's
+              figures and pushes none of them down, and it reserves no space
+              when it has nothing to say. Mounted before the save, so it
+              reads the group first; drawn only when the saved run raised
+              your place. */}
+          <LeagueRiseLine
+            className="mx-4 mb-4"
+            stage={
+              saveStatus === "idle" && savedRunId === null
+                ? "before"
+                : saved && savedRunId !== null && !pendingSync
+                  ? "onServer"
+                  : "saving"
+            }
+          />
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
               Adherence chip surfaces "Planned" / "Custom" / "Extra"

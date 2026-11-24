@@ -4,6 +4,7 @@ import RenameWorkoutSheet from "@/components/workout/RenameWorkoutSheet";
 import { startLabel } from "@/features/program/sessionStart";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import WeekPulseCard from "@/components/WeekPulseCard";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
@@ -666,6 +667,20 @@ export default function SessionCompleteScreen({
           {/* The week the lift counts for: the day it started, which a
               session begun on Sunday night keeps past midnight. */}
           {saved && <WeekPulseCard sessionDay={liftSessionDay(startedAt)} />}
+          {/* The league line (Run30 call 2): mounted from the review, so it
+              reads the group before the save, and drawn only when the
+              saved session raised your place. */}
+          <LeagueRiseLine
+            stage={
+              saved
+                ? saveStatus === "synced"
+                  ? "onServer"
+                  : "saving"
+                : completing || saveStatus !== undefined
+                  ? "saving"
+                  : "before"
+            }
+          />
           {saved && (
             <CompletionExtras share={share} badge={false} kind="lift" />
           )}

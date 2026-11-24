@@ -14,7 +14,12 @@
  * already there when the day came on screen. Nothing under Reduce
  * Motion.
  */
-import { loggedFill, WHEEL_SIZE, WHEEL_STROKE } from "@/lib/calorieRingFill";
+import {
+  ringFill,
+  WHEEL_SIZE,
+  WHEEL_STROKE,
+  type CalorieRingMode,
+} from "@/lib/calorieRingFill";
 
 /** How long the picture is in the air. */
 export const FLIGHT_MS = 400;
@@ -101,18 +106,21 @@ export interface ScreenBox {
 
 /**
  * Where the wheel's arc ends, on screen, with `calories` of `target`
- * logged: the middle of the arc's line, starting at twelve o'clock and
- * running clockwise, as `CalorieRing` draws it.
+ * logged in the view the wheel is showing: the middle of the arc's line,
+ * starting at twelve o'clock and running clockwise, as `CalorieRing`
+ * draws it. In the logged view the arc then grows from there; in the
+ * left view it shrinks back from there.
  */
 export function arcEndPoint(
   wheel: ScreenBox,
   calories: number,
-  target: number
+  target: number,
+  mode: CalorieRingMode
 ): { x: number; y: number } {
   const radius =
     (wheel.width / 2) *
     ((WHEEL_SIZE / 2 - WHEEL_STROKE / 2) / (WHEEL_SIZE / 2));
-  const angle = 2 * Math.PI * loggedFill(calories, target);
+  const angle = 2 * Math.PI * ringFill(calories, target, mode);
   return {
     x: wheel.left + wheel.width / 2 + radius * Math.sin(angle),
     y: wheel.top + wheel.height / 2 - radius * Math.cos(angle),

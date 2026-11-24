@@ -233,6 +233,26 @@ describe("RunDetail — best efforts", () => {
     expect(isPaceEligible(run)).toBe(true);
   });
 
+  it("does not list a 1K timed across a step faster than any runner (1 Nov)", () => {
+    /* Saved before #3036, the finish timed "1K 4:29" across the catch-up
+       a gap in the fixes made. The kept trace still has the step (445 m
+       more in 30 s), so the saved figure is not believed, and with the
+       step refused no 1K is left in the trace. */
+    const points = track(13, 30).map((p, i) =>
+      i >= 7 ? { ...p, lat: p.lat + 0.004, rawLat: p.rawLat + 0.004 } : p
+    );
+    h.run = savedRun({
+      points,
+      distance: totalDistance(points),
+      bestEfforts: [{ distance: 1000, time: 269, label: "1K" }],
+    });
+    renderDetail();
+    // POSITIVE anchor: the saved run rendered, splits and all.
+    expect(screen.getByRole("region", { name: "Splits" })).toBeVisible();
+    expect(screen.queryByText("4:29")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Best efforts" })).toBeNull();
+  });
+
   it("does not search a thinned track for a run saved before efforts were kept", () => {
     /* 500 kept points of a longer run: a stretch can only start and end
        on one, so its times read slow. A slow figure under "Best efforts"

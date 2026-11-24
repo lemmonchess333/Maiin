@@ -6,6 +6,7 @@ import {
   FLIGHT_MS,
   FLIGHT_WHEEL_HOLD_MS,
 } from "@/lib/foodFlight";
+import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 export interface FoodFlight {
   /** One flight a key: the logged meal's id. */
@@ -55,8 +56,14 @@ export default function FoodLogFlight({
   const picture = useRef<HTMLImageElement>(null);
   /* The latest handlers, for the timers of a flight already started. */
   const handlers = useRef({ onArrive, onDone });
+  /* The view the wheel is showing, read as a flight starts: the arc ends
+     somewhere else in the left view than in the logged one. A switch
+     during a flight does not start it again. */
+  const mode = useCalorieRingMode();
+  const modeNow = useRef(mode);
   useLayoutEffect(() => {
     handlers.current = { onArrive, onDone };
+    modeNow.current = mode;
   });
 
   const key = flight?.key ?? null;
@@ -82,7 +89,7 @@ export default function FoodLogFlight({
       handlers.current.onDone();
       return;
     }
-    const end = arcEndPoint(wheel, fromCalories, target);
+    const end = arcEndPoint(wheel, fromCalories, target, modeNow.current);
     // It rises from the field's text, a third of the way along it.
     const startX = field.left + field.width / 3;
     const startY = field.top + field.height / 2;

@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { render } from "@testing-library/react";
 import FoodLogFlight, { type FoodFlight } from "../FoodLogFlight";
 import { restoreRealTimers } from "@/test/fakeTimers";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 interface StubAnimation {
   keyframes: Keyframe[];
@@ -89,6 +90,7 @@ describe("FoodLogFlight", () => {
   });
 
   it("lands the picture on the end of the arc and starts it at the field", () => {
+    setCalorieRingMode("eaten");
     stubAnimate();
     page();
     render(
@@ -114,6 +116,21 @@ describe("FoodLogFlight", () => {
     expect(from.opacity).toBe(0);
     expect(String(to.transform)).toContain("translate(0px, 0px)");
     expect(to.opacity).toBe(0);
+  });
+
+  it("in the left view lands where that view's arc ends", () => {
+    // A quarter logged leaves three quarters: the left view's arc ends at
+    // nine o'clock, 122.1px left of the wheel's centre at 197,224.
+    setCalorieRingMode("left");
+    stubAnimate();
+    page();
+    render(
+      <FoodLogFlight flight={flight()} onArrive={vi.fn()} onDone={vi.fn()} />
+    );
+    const picture =
+      document.querySelector<HTMLImageElement>("[data-food-flight]")!;
+    expect(parseFloat(picture.style.left)).toBeCloseTo(197 - 122.1 - 22, 1);
+    expect(parseFloat(picture.style.top)).toBeCloseTo(224 - 22, 1);
   });
 
   it("is 400 ms of transform and opacity, and nothing else", () => {

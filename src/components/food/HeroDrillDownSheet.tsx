@@ -1,5 +1,6 @@
 import { Suspense, useState } from "react";
 import type { CalorieRingMode } from "./CalorieRing";
+import { overshootFill, ringFill } from "@/lib/calorieRingFill";
 import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { CalendarDays, Lock } from "lucide-react";
@@ -68,16 +69,16 @@ interface MacroRowProps {
 }
 
 function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
-  const pct = clampPct(consumed, target);
-  const remaining = Math.max(0, Math.round(target - consumed));
   /* Lockstep with the macro that opened this sheet: the bar and its
-     percentage are what is logged, in both modes, as the macro's own bar
-     and the calorie wheel are (Food11 call 5; `loggedFill` has the rule
-     and what happens when the two disagree). */
-  /* The headline follows the switch, as the macro's figure does: what
-     is left in left mode, what is logged in logged mode (Food10 (1)).
-     In left mode the line under the bar carries the grams logged, and
-     the percentage sits beside them. */
+     percentage follow the switch, as the macro's own bar and the calorie
+     wheel do (`ringFill` has the rule, and what happened when two of
+     them disagreed): what is left in left mode, what is logged in logged
+     mode. */
+  const pct = Math.round(ringFill(consumed, target, mode) * 100);
+  const remaining = Math.max(0, Math.round(target - consumed));
+  /* The headline follows the switch too, as the macro's figure does
+     (Food10 (1)). In left mode the line under the bar carries the grams
+     logged, and the bar's percentage sits beside them. */
   const over = consumed > target && target > 0;
   const leftMode = mode === "left";
   return (
@@ -221,7 +222,14 @@ export default function HeroDrillDownSheet({
   const { accent: macroAccent } = useMacroPalette();
   const target = dailyTargets.finalTarget;
   const remaining = target - dailyTotals.calories;
-  const consumedPct = clampPct(dailyTotals.calories, target);
+  /* The calorie bar is drawn as the wheel is (`ringFill`): what is left
+     in left mode, what is logged in logged mode. Past the target the
+     left view's first lap is empty, so the bar shows what is over, in
+     the wheel's deeper second-lap orange. The percentage is the bar's. */
+  const calorieBarPct =
+    mode === "left" && remaining < 0
+      ? Math.round(overshootFill(dailyTotals.calories, target) * 100)
+      : Math.round(ringFill(dailyTotals.calories, target, mode) * 100);
   const showBurnBreakdown = dailyTargets.actualBurn > 0;
 
   const { isPro } = useSubscription();
@@ -263,8 +271,8 @@ export default function HeroDrillDownSheet({
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
                 {/* The figure follows the switch, as each macro row's
-                    does (Food10 (1)); the bar and the percentage are
-                    what is logged in both modes (Food11 call 5). */}
+                    does (Food10 (1)), and so do the bar and the
+                    percentage (`calorieBarPct`). */}
                 <span className="font-figure tabular-nums text-2xl font-extrabold text-foreground">
                   {formatCalories(
                     mode === "left" ? Math.abs(remaining) : dailyTotals.calories
@@ -277,14 +285,14 @@ export default function HeroDrillDownSheet({
                 </span>
               </div>
               <span className="font-mono tabular-nums text-xs text-muted-foreground">
-                {consumedPct}%
+                {calorieBarPct}%
               </span>
             </div>
             <div className="h-2 rounded-full overflow-hidden bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${consumedPct}%`,
+                  width: `${calorieBarPct}%`,
                   /* The calorie ring's colours: orange, and its deeper
                      overshoot orange once the day is over its target. */
                   background:

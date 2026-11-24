@@ -12,7 +12,12 @@ import {
 import type { RestContext } from "@/features/program/restTime";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { liftCardTitle, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
-import { aboutMinutes, focusPhrase, liftHeroLine } from "@/lib/homeHero";
+import {
+  aboutMinutes,
+  focusPhrase,
+  liftHeroLine,
+  type LastSetsOf,
+} from "@/lib/homeHero";
 import type { LiftUnit } from "@/lib/liftLoad";
 import InProgressStrip from "@/components/session/InProgressStrip";
 import SessionHero from "@/components/home/SessionHero";
@@ -21,7 +26,7 @@ import type { SessionInProgress } from "@/lib/sessionsInFlight";
 import type { TodayReadiness } from "@/hooks/useTodayReadiness";
 
 type LiftCardExercise = Partial<PricedExercise> &
-  Partial<Pick<ProgramExercise, "weight" | "lastPerformance" | "repUnit">> & {
+  Partial<Pick<ProgramExercise, "weight" | "instanceId" | "repUnit">> & {
     name: string;
   };
 
@@ -39,7 +44,8 @@ type LiftCardExercise = Partial<PricedExercise> &
  * The picture is the first exercise in the day that has released art,
  * cut out of its black backdrop (`formArtCutouts`), and the line under it
  * is that lift as the plan asks for it today against the last time it was
- * done (`liftHeroLine`). A day with no art shows no picture rather than a
+ * done (`liftHeroLine`), the saved session Train's row lists under it
+ * (`lastSetsOf`). A day with no art shows no picture rather than a
  * stand-in. No rationale: the reasons stay behind "Why this session" on
  * Train (DS4 call 5).
  *
@@ -62,6 +68,7 @@ export default function LiftCTACard({
   unit = "kg",
   variant = "hero",
   readiness = null,
+  lastSetsOf,
 }: {
   nextWorkout: {
     completed?: boolean;
@@ -101,6 +108,9 @@ export default function LiftCTACard({
     easierTarget: string;
     easierSummary: string;
   } | null;
+  /** Last time's counted sets for each lift, as Train's "Last:" line
+   *  reads them (`lastSetsBySlot` over the saved workouts). */
+  lastSetsOf: LastSetsOf;
 }) {
   const state =
     status ??
@@ -129,8 +139,10 @@ export default function LiftCTACard({
      read next session's target against the one just done. */
   const line = useMemo(
     () =>
-      state === "planned" ? liftHeroLine(nextWorkout.exercises, unit) : null,
-    [state, nextWorkout.exercises, unit]
+      state === "planned"
+        ? liftHeroLine(nextWorkout.exercises, unit, lastSetsOf)
+        : null,
+    [state, nextWorkout.exercises, unit, lastSetsOf]
   );
   const focus = muscleGroups ? focusPhrase(muscleGroups) : "";
   /* The day's muscles as words, then its minutes; with no muscles to
