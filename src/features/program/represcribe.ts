@@ -536,3 +536,34 @@ export function blockReleaseLine(input: {
       : `${lead}, at the weights you lift now.`) + fullFirst
   );
 }
+/**
+ * Suggests the next working load (in kg) from observed vs. target RIR
+ * using Helms et al. RIR-based autoregulation step adjustments.
+ */
+export function suggestNextLoadFromRir(
+  currentWeightKg: number,
+  actualRir: number,
+  targetRir: number,
+  unit: "kg" | "lb" = "kg",
+): number {
+  if (
+    !Number.isFinite(currentWeightKg) ||
+    !Number.isFinite(actualRir) ||
+    !Number.isFinite(targetRir) ||
+    currentWeightKg <= 0
+  ) {
+    return currentWeightKg;
+  }
+  const delta = actualRir - targetRir;
+  if (Math.abs(delta) < 2) {
+    return currentWeightKg;
+  }
+  const factor =
+    delta >= 3 ? 1.05 : delta >= 2 ? 1.025 : delta <= -3 ? 0.95 : 0.975;
+  const scaledKg = currentWeightKg * factor;
+  const rounded =
+    unit === "lb"
+      ? lbToKg(Math.round(kgToLb(scaledKg) / 5 + 1e-9) * 5)
+      : Math.round(scaledKg / 2.5) * 2.5;
+  return Math.max(0, rounded);
+}
