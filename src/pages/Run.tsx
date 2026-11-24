@@ -2690,7 +2690,8 @@ export default function Run() {
       className={`fixed inset-0 z-50 flex flex-col pt-[var(--safe-top)]${phase === "waiting" ? " bg-background" : ""}`}
       style={phase === "waiting" ? undefined : { backgroundColor: THEME.bg }}
     >
-      <GuideHint
+      <div className="flex-1 flex flex-col min-h-0 max-w-lg mx-auto w-full">
+        <GuideHint
         key={runHelpRequest}
         requested={runHelpRequest > 0}
         id="first-run"
@@ -3427,6 +3428,7 @@ export default function Run() {
         }}
         onCancel={() => setShowLeaveConfirm(false)}
       />
+      </div>
     </div>
   );
 }

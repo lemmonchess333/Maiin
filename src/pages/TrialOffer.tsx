@@ -145,13 +145,13 @@ export default function TrialOffer() {
 
   return (
     <div
-      className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
+      className="h-dvh md:h-auto md:min-h-dvh md:justify-center flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
       }}
     >
-      <div className="flex-1 overflow-y-auto min-h-0 pt-8 pb-6 space-y-6">
+      <div className="flex-1 md:flex-none overflow-y-auto md:overflow-visible min-h-0 pt-8 pb-6 space-y-6">
         <section className="space-y-3" aria-labelledby="trial-offer-heading">
           <p className="text-sm font-semibold text-primary">
             {TRIAL_OFFER_COPY.kicker}
