@@ -85,7 +85,7 @@ export default function RaceFilterChips({
     <>
       <div
         data-no-page-swipe
-        className="-mx-[16px] flex gap-2 overflow-x-auto px-[16px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-[16px] flex gap-2 overflow-x-auto px-[16px] scroll-pr-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <button
           type="button"
