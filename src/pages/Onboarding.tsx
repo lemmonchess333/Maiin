@@ -1659,7 +1659,7 @@ export default function Onboarding() {
       </header>
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
+        className="flex-1 overflow-y-auto min-h-0 pt-5 pb-12 space-y-6"
       >
         <div
           key={`heading-${step}${declinedHere ? "-declined" : ""}${saveView ? "-save" : ""}`}
