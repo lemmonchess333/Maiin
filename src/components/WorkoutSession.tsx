@@ -201,7 +201,7 @@ import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
   formatKitLoad,
   kitLoadIn,
-  kitLoadToKg,
+  kitLoadToKg, loadGridFor,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useLiftLiveActivity } from "@/hooks/useLiftLiveActivity";
@@ -2927,7 +2927,7 @@ export default function WorkoutSession({
                     (result) =>
                       result.kind === "best" &&
                       result.setKey === `${currentExIndex}:${setIdx}`
-                  ); const rpeNudgeNextIdx = typeof set.rpe === "number" && (set.rpe <= 6.5 || set.rpe >= 9.5) && set.weight > 0 ? currentSets.findIndex((s, i) => i > setIdx && !s.completed && s.type !== "warmup") : -1; const rpeNudgeSign = typeof set.rpe === "number" && set.rpe <= 6.5 ? 1 : -1;
+                  ); const rpeNudgeNextIdx = typeof set.rpe === "number" && (set.rpe <= 6.5 || set.rpe >= 9.5) && set.weight > 0 ? currentSets.findIndex((s, i) => i > setIdx && !s.completed && s.type !== "warmup") : -1; const rpeNudgeSign = typeof set.rpe === "number" && set.rpe <= 6.5 ? 1 : -1; const rpeNudgeGrid = rpeNudgeNextIdx >= 0 && set.weight > 0 && rpeNudgeSign !== 0 ? loadGridFor(currentExercise.exerciseId, false, liftUnit) : null; const rpeNudgeCurrentDisplay = rpeNudgeGrid ? kitLoadIn(set.weight, liftUnit, currentExercise.exerciseId) : 0; const rpeNudgeTargetDisplay = rpeNudgeGrid ? (rpeNudgeSign > 0 ? rpeNudgeGrid.above(rpeNudgeCurrentDisplay) : rpeNudgeGrid.below(rpeNudgeCurrentDisplay)) : null; const rpeNudgeTargetKg = rpeNudgeTargetDisplay !== null && rpeNudgeTargetDisplay !== rpeNudgeCurrentDisplay && rpeNudgeTargetDisplay > 0 ? kitLoadToKg(rpeNudgeTargetDisplay, liftUnit, currentExercise.exerciseId) : null;
                   return (
                     <div
                       key={setIdx}
@@ -3128,7 +3128,7 @@ export default function WorkoutSession({
                                 </span>{" "}
                                 · {rpeReserveWords(set.rpe)}
                               </span>{" "}
-                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (rpeNudgeNextIdx >= 0 ? (<Button variant="ghost" className="px-2 text-xs font-medium text-primary" onClick={() => { haptic(10); updateSetLog(currentExIndex, rpeNudgeNextIdx, "weight", Math.max(0, Math.round((set.weight + rpeNudgeSign * (liftUnit === "lbs" ? 5 / 2.2046226218 : 2.5)) * 100) / 100)); }}>{`Apply ${rpeNudgeSign > 0 ? "+" : "-"}${liftUnit === "lbs" ? "5 lb" : "2.5 kg"} to next set`}</Button>) : (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Easy: add a little next set" : "Max effort: watch form"}</span>))}
+                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (rpeNudgeTargetKg !== null ? (<Button variant="ghost" className="px-2 text-xs font-medium text-primary" onClick={() => { haptic(10); updateSetLog(currentExIndex, rpeNudgeNextIdx, "weight", rpeNudgeTargetKg); }}>{`Apply ${rpeNudgeTargetDisplay} ${liftUnit} to next set`}</Button>) : (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Easy: add a little next set" : "Max effort: watch form"}</span>))}
                               <Button
                                 variant="ghost"
                                 className="px-2 text-xs text-muted-foreground"
