@@ -320,8 +320,8 @@ export default function WaterCard({
   if (compact) {
     return (
       <div
-        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col dark:card-shadow"
-        style={{ boxShadow: iconBoxShadow }}
+        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col border border-border/60"
+        style={{ boxShadow: "var(--ds-shadow-surface-flat)"}}
       >
         {heading}
         <motion.div
