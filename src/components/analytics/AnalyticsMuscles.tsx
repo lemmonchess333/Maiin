@@ -25,10 +25,15 @@ export default function AnalyticsMuscles({
   onOpen: () => void;
 }) {
   if (!Object.values(data).some((sets) => sets > 0)) return null;
-const hasLegsAggregate = "Legs" in data;
+const trainedSet = new Set(
+  Object.entries(data)
+  .filter(([, sets]) => sets > 0)
+    .map(([key]) => CATEGORY_DISPLAY[key] ?? key)
+);
+const hasLegsAggregate = trainedSet.has("Legs");
    const untrained = Object.values(CATEGORY_DISPLAY).filter(
      (muscle) =>
-       !(data[muscle] > 0) &&
+       !trainedSet.has(muscle) &&
        !(
         hasLegsAggregate &&
         (muscle === "Quads & Glutes" || muscle === "Hamstrings & Glutes")
