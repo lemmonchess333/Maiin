@@ -141,6 +141,9 @@ service cloud.firestore {
           && !blockExistsBetween(activity.authorId, request.auth.uid)
         );
     }
+    function hasExactKeys(m, keys) {
+     return m.keys().hasOnly(keys) && m.keys().hasAll(keys);
+    }
 
     /* One moment on a feed post (Soc15, src/lib/postMoments.ts): a map
        whose keys are exactly its kind's, each number in the range
@@ -154,8 +157,7 @@ service cloud.firestore {
         && m.kind is string
         && (
           (m.kind == 'pr'
-            && m.keys().hasOnly(['kind', 'exercise', 'weightKg', 'reps'])
-            && m.keys().hasAll(['kind', 'exercise', 'weightKg', 'reps'])
+            && hasExactKeys(m, ['kind', 'exercise', 'weightKg', 'reps'])
             && m.exercise is string
             && m.exercise.size() > 0
             && m.exercise.size() <= 60
@@ -166,29 +168,24 @@ service cloud.firestore {
             && m.reps >= 1
             && m.reps <= 1000)
           || (m.kind == 'longestRun'
-            && m.keys().hasOnly(['kind', 'meters'])
-            && m.keys().hasAll(['kind', 'meters'])
+            && hasExactKeys(m, ['kind', 'meters'])
             && m.meters is number
             && m.meters > 0
             && m.meters <= 500000)
           || (m.kind == 'firstDistance'
-            && m.keys().hasOnly(['kind', 'meters'])
-            && m.keys().hasAll(['kind', 'meters'])
+            && hasExactKeys(m, ['kind', 'meters'])
             && m.meters in [5000, 10000, 21097, 42195])
           || (m.kind == 'fastestEffort'
-            && m.keys().hasOnly(['kind', 'meters', 'seconds'])
-            && m.keys().hasAll(['kind', 'meters', 'seconds'])
+            && hasExactKeys(m, ['kind', 'meters', 'seconds'])
             && m.meters in [1000, 5000, 10000]
             && m.seconds is number
             && m.seconds > 0
             && m.seconds <= 86400)
           || (m.kind == 'streak'
-            && m.keys().hasOnly(['kind', 'days'])
-            && m.keys().hasAll(['kind', 'days'])
+            && hasExactKeys(m, ['kind', 'days'])
             && m.days in [7, 14, 30, 50, 100, 200, 365])
           || (m.kind == 'planWeek'
-            && m.keys().hasOnly(['kind', 'week', 'weeks'])
-            && m.keys().hasAll(['kind', 'week', 'weeks'])
+            && hasExactKeys(m, ['kind', 'week', 'weeks'])
             && m.week is int
             && m.weeks is int
             && m.week >= 1
