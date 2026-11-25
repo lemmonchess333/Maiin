@@ -25,6 +25,9 @@ export default function AnalyticsMuscles({
   onOpen: () => void;
 }) {
   if (!Object.values(data).some((sets) => sets > 0)) return null;
+  const untrained = Object.entries(data)
+    .filter(([, sets]) => sets === 0)
+    .map(([muscle]) => muscle);
   return (
     <section aria-label="Muscles trained" className="space-y-2">
       <SectionHeading>Muscles trained</SectionHeading>
@@ -42,6 +45,12 @@ export default function AnalyticsMuscles({
         <Suspense fallback={<Skeleton className="h-32 w-full" />}>
           <MuscleHeatMap data={data} variant="compact" />
         </Suspense>
+      {untrained.length > 0 && (
+        <p className="mt-3 pt-2.5 border-t border-border/50 text-xs text-muted-foreground">
+          Not trained in this range: {untrained.slice(0, 3).join(", ")}
+          {untrained.length > 3 ? ` +${untrained.length - 3} more` : ""}
+        </p>
+      )}
       </button>
     </section>
   );
