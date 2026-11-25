@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { captureError } from "@/lib/errorReporting";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
