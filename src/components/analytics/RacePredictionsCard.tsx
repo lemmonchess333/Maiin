@@ -107,6 +107,12 @@ export default function RacePredictionsCard() {
                 {paceMinSec(Math.round(times[key] / km), unit)}{" "}
                 {paceUnitLabel(unit)}
               </p>
+              {key === "marathon" && (!fitness?.vdot || fitness.vdot < 55) && (
+                <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
+                    Durability range: {finishTimeLabel(times[key])} to{" "}
+                  {finishTimeLabel(Math.round(times[key] * 1.05))}
+                  </p>
+              )}
             </div>
           ))}
         </div>
