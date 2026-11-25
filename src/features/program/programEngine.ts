@@ -3340,6 +3340,7 @@ export function advanceWeek(
      an archive that says nothing happened for two months is not the "honest
      record" the unattended-days trade-off was defending; that reasoning is
      about a week the user was PRESENT for and left unfinished. */
+  const restedLifts = state.raceWeek === "race" ? state.workouts.filter((d) => d.skipped && !d.completed).length : 0;
   const history = weekWasTrained
     ? [
         ...(state.weekHistory ?? []),
@@ -3349,6 +3350,7 @@ export function advanceWeek(
           ...(state.currentPhase === "deload"
             ? { lighter: true as const }
             : {}),
+         ...(restedLifts > 0 && state.liftWeekKey ? { weekKey: state.liftWeekKey, restedLifts } : {}),
         },
       ].slice(-8)
     : (state.weekHistory ?? []);
