@@ -136,7 +136,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         {hasPhoto ? (
           <Avatar
             photoURL={profile.photoURL}
-            displayName={name || "You"}
+            displayName={trimmed || "You"}
             fallbackInitial={initials || undefined}
             size="xl"
             className="size-14"
