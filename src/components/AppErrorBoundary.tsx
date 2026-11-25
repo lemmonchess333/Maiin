@@ -35,72 +35,87 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
+      // Sprint 5: hide raw error message + component stack from
+      // users in production. Showing "Cannot read properties of
+      // undefined (reading 'foo')" to a TestFlight user reads as
+      // a crashed app, not a designed error state. The technical
+      // details remain visible in dev so debugging stays fast, and
+      // the full error continues to log via console.error in
+      // componentDidCatch above (line 102) for operator triage.
+      const isDev = import.meta.env.DEV;
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-6 text-foreground">
-          <div className="max-w-md w-full space-y-4 text-center">
-            <h1 className="text-xl font-bold">Something went wrong</h1>
-            <p className="text-sm text-muted-foreground">
-              {import.meta.env.DEV
-                ? this.state.error?.message || "An unexpected error occurred."
-                : "An unexpected error occurred. Please reload to continue."}
+        <div
+          className="min-h-screen bg-background flex items-center justify-center px-6"
+          role="alert"
+        >
+          <div className="text-center space-y-4 max-w-sm w-full">
+            <p className="text-4xl" aria-hidden="true">
+              Warning
             </p>
-            {import.meta.env.DEV && this.state.error?.stack && (
-              <details className="text-left rounded-lg border border-border bg-muted/40 p-3">
-                <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-                  Stack trace
+            <h1 className="text-lg font-bold text-foreground">
+              Something went wrong
+            </h1>
+
+            <p className="text-sm text-muted-foreground break-words">
+              {isDev
+                ? this.state.error?.message || "An unexpected error occurred."
+                : "Try refreshing the app. If it keeps happening, contact support."}
+            </p>
+
+            {isDev && this.state.componentStack && (
+              <details className="text-left bg-card border border-border/50 rounded-xl p-3">
+                <summary className="text-sm font-medium text-foreground cursor-pointer">
+                  Show component trace (dev only)
                 </summary>
-                <pre className="mt-2 max-h-48 overflow-auto text-[10px] leading-snug text-muted-foreground whitespace-pre-wrap break-words">
-                  {this.state.error.stack}
-                  {this.state.componentStack
-                    ? `\n\nComponent stack:${this.state.componentStack}`
-                    : ""}
+                <pre className="mt-2 text-xs leading-snug text-muted-foreground whitespace-pre-wrap break-words">
+                  {this.state.componentStack}
                 </pre>
               </details>
             )}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  this.setState({ hasError: false, error: null, componentStack: null });
-                }}
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium"
-              >
-                Try Again
-              </button>
-              <button
-                type="button"
-                onClick={() => {
+
+            <button
+              type="button"
+              onClick={async () => {
+                // Purge the stale-chunk recovery latch so lazyRetry can
+                // reload-and-retry again on the next failure. Previously
+                // the latch was session-scoped, which meant a user who
+                // hit ONE module-import error (typically post-deploy)
+                // exhausted their one-shot retry and then saw this
+                // error boundary on every subsequent navigation until
+                // they killed the PWA.
+                try {
+                  sessionStorage.removeItem("chunk-retry");
+                } catch {
+                  // Private mode / storage disabled — fine, the flag
+                  // was unreachable anyway.
+                }
+                if ("caches" in window) {
                   try {
-                    sessionStorage.setItem("fitcircle_chunk_retry", "1");
-                    const u = new URL(window.location.href);
-                    u.searchParams.set("_cb", String(Date.now()));
-                    if ("caches" in window) {
-                      caches
-                        .keys()
-                        .then((names) => Promise.all(names.map((n) => caches.delete(n))))
-                        .finally(() => window.location.replace(u.toString()));
-                    } else {
-                      window.location.replace(u.toString());
-                    }
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map((k) => caches.delete(k)));
                   } catch {
-                    window.location.reload();
+                    // CacheStorage unavailable — ignore and proceed to reload.
                   }
-                }}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
-              >
-                Reload App
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  this.setState({ hasError: false, error: null, componentStack: null });
-                  window.location.hash = "#/home";
-                }}
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground"
-              >
-                Go Home
-              </button>
-            </div>
+                }
+                const url = new URL(window.location.href);
+                url.searchParams.set("_cb", String(Date.now()));
+                window.location.replace(url.toString());
+              }}
+              className="w-full px-6 py-3 rounded-xl bg-primary-strong text-primary-foreground font-medium text-sm"
+            >
+              Reload App
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                this.setState({ hasError: false, error: null, componentStack: null });
+                window.location.hash = "#/home";
+              }}
+              className="w-full px-6 py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm"
+            >
+              Go Home
+            </button>
           </div>
         </div>
       );
