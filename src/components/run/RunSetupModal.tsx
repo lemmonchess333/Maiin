@@ -241,10 +241,6 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
     </div>
   );
 }
-function heatPaceSlowdownPct(tempC: number, humidityPct: number): number {
-  if (!Number.isFinite(tempC) || tempC <= 15) return 0;
-  return Math.min(12, Math.round((0.3 * (tempC - 15) + (tempC >= 18 && Number.isFinite(humidityPct) && humidityPct > 60 ? 0.05 * (humidityPct - 60) : 0)) * 10) / 10);
-}
 
 export default function RunSetupModal({
   onStart,
@@ -586,7 +582,6 @@ export default function RunSetupModal({
                   <p className="text-xs text-muted-foreground mt-0.5">{line}</p>
                 );
               })()}
-             {heatPaceSlowdownPct(weather.temperature, weather.humidity) >= 2 && (<p className="text-xs text-muted-foreground mt-0.5">{`Heat pace cue: ease target pace by about ${Math.round(heatPaceSlowdownPct(weather.temperature, weather.humidity))}%`}</p>)}
               {/* MET Norway's licence (CC BY 4.0) asks for this wherever
                   its weather is shown. */}
               <p className="text-xs text-muted-foreground mt-0.5">
