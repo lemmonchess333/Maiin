@@ -40,7 +40,7 @@ import { raceLongRunReach } from "@/features/program/raceWeeksAhead";
 import { raceOutOfReach } from "@/features/program/runPlanTiming";
 import type { UserProfile } from "@/lib/auth";
 import { resolveDistanceUnit, type DistanceUnit } from "@/lib/distanceUnits";
-import { distanceLabel } from "@/lib/runLabels";
+import { distanceLabel, storedKmLabel } from "@/lib/runLabels";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
   track as trackLifecycleEvent,
@@ -283,6 +283,7 @@ export default function FellBehindSheet({
                 ? `${ledger.realRunCount} of ${ledger.weeklyTarget} runs (${Math.round(ledger.completedRatio * 100)}%)`
                 : "It’s been a while between runs"}
           </p>
+        {checked && raceCheck && raceCheck.longestKm > 0 && (<p className="text-xs text-muted-foreground mt-0.5">{`Safe next long run cap: up to ${storedKmLabel(raceCheck.longestKm * 1.1, raceCheck.unit, true, 1)} (+10% over your 4-week max).`}</p>)}
         </div>
       </div>
 

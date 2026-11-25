@@ -3128,6 +3128,7 @@ export default function WorkoutSession({
                                 </span>{" "}
                                 · {rpeReserveWords(set.rpe)}
                               </span>{" "}
+                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Next set: try +2.5% to +5%" : "Next set: consider -2.5% to -5%"}</span>)}
                               <Button
                                 variant="ghost"
                                 className="px-2 text-xs text-muted-foreground"
