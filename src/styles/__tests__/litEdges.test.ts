@@ -67,7 +67,7 @@ const EXEMPT: { file: string; has?: string; why: string }[] = [
     why: "the paywall's plans: the border is their edge and the selection",
   },
   {
-    file: "src/App.tsx",
+    file: "src/components/AppErrorBoundary.tsx",
     has: "text-left bg-card border border-border/50 rounded-xl p-3",
     why: "the crash screen's details",
   },
