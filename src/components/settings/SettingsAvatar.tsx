@@ -37,15 +37,8 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
   const [busy, setBusy] = useState<"uploading" | "removing" | null>(null);
 
   const hasPhoto = !!profile.photoURL;
-  const name = profile.displayName || "";
-  const initials = name
-    ? name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "";
+  const trimmed = (profile.displayName || "").trim();
+  const initials = trimmed ? Array.from(trimmed)[0].toUpperCase() : "";
 
   const handlePick = useCallback(() => {
     fileRef.current?.click();
