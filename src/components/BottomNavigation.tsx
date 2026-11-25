@@ -46,7 +46,7 @@ export default function BottomNavigation({
         page-navigation pattern. Removing the role rather than
         implementing a half-tablist that would confuse screen
         readers. */}
-        <div className="bottom-nav-frost max-w-md mx-auto flex items-stretch rounded-full p-[4px]">
+        <div className="bottom-nav-frost max-w-md md:max-w-lg mx-auto flex items-stretch rounded-full p-[4px]">
           {tabs.map((tab) => {
             const hasDot = tab.to === "/social" && socialNewActivity;
             const Icon = tab.icon;
