@@ -2696,7 +2696,7 @@ export default function Run() {
         requested={runHelpRequest > 0}
         id="first-run"
         layer="session"
-        placement="top"
+        placement="bottom"
         when={
           phase === "waiting" &&
           arrival === "done" &&

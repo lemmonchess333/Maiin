@@ -854,7 +854,7 @@ function ProgramInner() {
             key={orderHelpRequest}
             requested={orderHelpRequest > 0}
             id="train-order"
-            placement="top"
+            placement="bottom"
             when={
               liftSelectorCells.length > 1 &&
               !session.sessionOpen &&
