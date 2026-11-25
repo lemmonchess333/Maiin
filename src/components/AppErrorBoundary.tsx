@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { captureError } from "@/lib/errorReporting";
-
+import { Button } from "@/components/ui/button";
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
@@ -73,7 +73,7 @@ export class ErrorBoundary extends Component<
               </details>
             )}
 
-            <button
+            <Button
               type="button"
               onClick={async () => {
                 // Purge the stale-chunk recovery latch so lazyRetry can
@@ -104,18 +104,18 @@ export class ErrorBoundary extends Component<
               className="w-full px-6 py-3 rounded-xl bg-primary-strong text-primary-foreground font-medium text-sm"
             >
               Reload App
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={() => {
                 this.setState({ hasError: false, error: null, componentStack: null });
-                window.location.hash = "#/home";
+                window.location.assign(import.meta.env.BASE_URL);
               }}
               className="w-full px-6 py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm"
             >
-              Go Home
-            </button>
+              Go home
+            </Button>
           </div>
         </div>
       );
