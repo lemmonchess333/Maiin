@@ -5,9 +5,9 @@ on:
   workflow_call:
     inputs:
       skip_tests:
-      default: false
-      required: false
-      type: boolean
+        default: false
+        required: false  
+        type: boolean
       
 permissions:
   contents: read
