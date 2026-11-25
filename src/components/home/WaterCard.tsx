@@ -321,7 +321,6 @@ export default function WaterCard({
     return (
       <div
         className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col border border-border/60 dark:border-transparent dark:card-shadow"
-        style={{ boxShadow: "var(--ds-shadow-surface-flat)"}}
       >
         {heading}
         <motion.div

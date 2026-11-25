@@ -4,7 +4,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import { haptic } from "@/lib/haptic";
-
+import { CATEGORY_DISPLAY } from "./muscleGroupTaxonomy";
 /* The body diagrams carry their own chunk (`body-highlighter`); the
    overview should not pull it into the page's first paint. */
 const MuscleHeatMap = lazyRetry(
@@ -25,9 +25,15 @@ export default function AnalyticsMuscles({
   onOpen: () => void;
 }) {
   if (!Object.values(data).some((sets) => sets > 0)) return null;
-  const untrained = Object.entries(data)
-    .filter(([, sets]) => sets === 0)
-    .map(([muscle]) => muscle);
+const hasLegsAggregate = "Legs" in data;
+   const untrained = Object.values(CATEGORY_DISPLAY).filter(
+     (muscle) =>
+       !(data[muscle] > 0) &&
+       !(
+        hasLegsAggregate &&
+        (muscle === "Quads & Glutes" || muscle === "Hamstrings & Glutes")
+        )
+        );
   return (
     <section aria-label="Muscles trained" className="space-y-2">
       <SectionHeading>Muscles trained</SectionHeading>

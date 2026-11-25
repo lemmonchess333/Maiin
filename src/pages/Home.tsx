@@ -1454,8 +1454,8 @@ export default function Home() {
                 size: "compact",
                 padded: false,
                 className: "space-y-2 px-4 pt-3.5 pb-3 border border-border/60 dark:border-transparent dark:card-shadow",
-              })} style={{ boxShadow: "var(--ds-shadow-surface-flat)" }}
-            >
+               })}
+              >
               <WeekSessions
                 done={weekSessionCount.done}
                 of={weekSessionCount.of}
