@@ -306,9 +306,6 @@ export default function WaterCard({
     </Suspense>
   );
 
-  const iconBoxShadow = hasWater
-    ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
-    : "var(--ds-shadow-card)";
   const fillBg = hasWater ? waterFillBackground(fillPercent) : "transparent";
 
   /* The tile's heading, so Home's cards can be stepped through by heading.
@@ -544,8 +541,7 @@ export default function WaterCard({
 
   return (
     <div
-      className="relative overflow-hidden p-4 rounded-xl bg-card dark:card-shadow"
-      style={{ boxShadow: iconBoxShadow }}
+      className="relative overflow-hidden p-4 rounded-xl bg-card border border-border/60 dark:border-transparent dark:card-shadow"
     >
       {heading}
       <motion.div
