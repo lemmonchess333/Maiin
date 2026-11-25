@@ -104,7 +104,6 @@ export default function WeightTile({
         }}
         aria-label={weightAriaLabel}
         className="p-3 rounded-xl text-left transition-transform motion-safe:active:scale-[0.97] bg-card border border-border/60 dark:border-transparent dark:card-shadow h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        style={{ boxShadow: "var(--ds-shadow-surface-flat)" }}
       >
         <div className="flex items-center gap-2 mb-1.5">
           <Scale
