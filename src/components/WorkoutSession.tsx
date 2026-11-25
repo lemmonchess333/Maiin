@@ -2927,7 +2927,7 @@ export default function WorkoutSession({
                     (result) =>
                       result.kind === "best" &&
                       result.setKey === `${currentExIndex}:${setIdx}`
-                  );
+                  ); const rpeNudgeNextIdx = typeof set.rpe === "number" && (set.rpe <= 6.5 || set.rpe >= 9.5) && set.weight > 0 ? currentSets.findIndex((s, i) => i > setIdx && !s.completed && s.type !== "warmup") : -1; const rpeNudgeSign = typeof set.rpe === "number" && set.rpe <= 6.5 ? 1 : -1;
                   return (
                     <div
                       key={setIdx}
@@ -3046,7 +3046,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           )}
                         />
                         <input
@@ -3067,7 +3067,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           )}
                         />
                         {/* Keyed by exercise as well as set: a return to an
@@ -3128,7 +3128,7 @@ export default function WorkoutSession({
                                 </span>{" "}
                                 · {rpeReserveWords(set.rpe)}
                               </span>{" "}
-                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Next set: try +2.5% to +5%" : "Next set: consider -2.5% to -5%"}</span>)}
+                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (rpeNudgeNextIdx >= 0 ? (<Button variant="ghost" className="px-2 text-xs font-medium text-primary" onClick={() => { haptic(10); updateSetLog(currentExIndex, rpeNudgeNextIdx, "weight", Math.max(0, Math.round((set.weight + rpeNudgeSign * (liftUnit === "lbs" ? 5 / 2.2046226218 : 2.5)) * 100) / 100)); }}>{`Apply ${rpeNudgeSign > 0 ? "+" : "-"}${liftUnit === "lbs" ? "5 lb" : "2.5 kg"} to next set`}</Button>) : (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Easy: add a little next set" : "Max effort: watch form"}</span>))}
                               <Button
                                 variant="ghost"
                                 className="px-2 text-xs text-muted-foreground"
