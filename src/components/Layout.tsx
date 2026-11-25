@@ -321,7 +321,7 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md mx-auto px-[16px] py-6 sm:py-7"
+        className="max-w-md md:max-w-lg mx-auto px-[16px] py-6 sm:py-7"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >
