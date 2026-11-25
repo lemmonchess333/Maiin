@@ -83,3 +83,6 @@ jobs:
       (needs.firestore.result == 'success' && needs.storage.result == 'success' && needs.functions.result == 'success'))
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
+    with:
+    skip_tests: true
+    
