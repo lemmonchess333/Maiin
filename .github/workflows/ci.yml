@@ -123,6 +123,8 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - name: Check Cloud Functions syntax
+        run: npm --prefix functions run check:syntax
       # package.json's `test:verifiers` runs these same two commands, so
       # `npm run verify` runs them before a push. The guard
       # requiredCheckComposition.test.ts holds that script to this step,
