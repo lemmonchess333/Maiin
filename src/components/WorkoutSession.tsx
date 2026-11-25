@@ -3128,7 +3128,7 @@ export default function WorkoutSession({
                                 </span>{" "}
                                 · {rpeReserveWords(set.rpe)}
                               </span>{" "}
-                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (rpeNudgeNextIdx >= 0 ? (<Button variant="ghost" className="px-2 text-xs font-medium text-primary" onClick={() => { haptic(10); updateSetLog(currentExIndex, rpeNudgeNextIdx, "weight", Math.max(0, Math.round((set.weight + rpeNudgeSign * (liftUnit === "lbs" ? 5 / 2.2046226218 : 2.5)) * 100) / 100)); }}>{`Apply ${rpeNudgeSign > 0 ? "+" : "-"}${liftUnit === "lbs" ? "5 lb" : "2.5 kg"} to next set`}</Button>) : (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Easy — add a little next set" : "Max effort — watch form"}</span>))}
+                              {(set.rpe <= 6.5 || set.rpe >= 9.5) && (rpeNudgeNextIdx >= 0 ? (<Button variant="ghost" className="px-2 text-xs font-medium text-primary" onClick={() => { haptic(10); updateSetLog(currentExIndex, rpeNudgeNextIdx, "weight", Math.max(0, Math.round((set.weight + rpeNudgeSign * (liftUnit === "lbs" ? 5 / 2.2046226218 : 2.5)) * 100) / 100)); }}>{`Apply ${rpeNudgeSign > 0 ? "+" : "-"}${liftUnit === "lbs" ? "5 lb" : "2.5 kg"} to next set`}</Button>) : (<span className="text-xs text-muted-foreground">{set.rpe <= 6.5 ? "Easy: add a little next set" : "Max effort: watch form"}</span>))}
                               <Button
                                 variant="ghost"
                                 className="px-2 text-xs text-muted-foreground"
