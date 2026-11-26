@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   importGpxRun: vi.fn(),
   importWorkoutsCsv: vi.fn(),
   importBodyweightCsv: vi.fn(),
+  importFullBackupJson: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -37,6 +38,16 @@ vi.mock("@/lib/bodyweightCsvImport", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/jsonArchiveImport", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/jsonArchiveImport")>();
+  return {
+    ...actual,
+    importFullBackupJson: (...args: unknown[]) =>
+      mocks.importFullBackupJson(...args),
+  };
+});
+
 vi.mock("@/lib/toast", () => ({
   toast: {
     success: (...args: unknown[]) => mocks.toastSuccess(...args),
@@ -48,6 +59,7 @@ vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
 import { GpxImportError } from "@/lib/gpxImport";
 import { WorkoutCsvImportError } from "@/lib/workoutCsvImport";
 import { BodyweightCsvImportError } from "@/lib/bodyweightCsvImport";
+import { JsonArchiveImportError } from "@/lib/jsonArchiveImport";
 import DataImportSection from "../DataImportSection";
 
 const USER = { uid: "u-1" } as User;
@@ -57,7 +69,7 @@ beforeEach(() => {
 });
 
 describe("DataImportSection", () => {
-  it("renders GPX run, lifting CSV, and weight CSV import actions", () => {
+  it("renders GPX run, lifting CSV, weight CSV, and backup JSON import actions", () => {
     render(<DataImportSection user={USER} />);
     expect(
       screen.getByRole("button", { name: /import gpx run/i })
@@ -67,6 +79,9 @@ describe("DataImportSection", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /import weight csv/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /import backup json/i })
     ).toBeInTheDocument();
   });
 
@@ -257,6 +272,62 @@ describe("DataImportSection", () => {
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith(
         "No valid weigh-ins were found in this CSV file."
+      )
+    );
+  });
+
+  it("restores a selected backup JSON file and reports total record count", async () => {
+    mocks.importFullBackupJson.mockResolvedValue({
+      workouts: 4,
+      runs: 3,
+      meals: 12,
+      bodyweight: 7,
+      totalItems: 26,
+    });
+
+    const { container } = render(
+      <DataImportSection user={USER} weightKg={78} />
+    );
+    const input = container.querySelector(
+      'input[data-import-kind="archive-json"]'
+    ) as HTMLInputElement;
+    const file = new File(['{"schemaVersion":1}'], "backup.json", {
+      type: "application/json",
+    });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.importFullBackupJson).toHaveBeenCalledWith(
+        "u-1",
+        '{"schemaVersion":1}',
+        { weightKg: 78 }
+      )
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
+        "Restored 26 records from backup"
+      )
+    );
+  });
+
+  it("surfaces JsonArchiveImportError messages directly to the user", async () => {
+    mocks.importFullBackupJson.mockRejectedValue(
+      new JsonArchiveImportError(
+        "ARCHIVE_INVALID_JSON",
+        "This file isn’t a valid JSON backup."
+      )
+    );
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="archive-json"]'
+    ) as HTMLInputElement;
+    const file = new File(["{bad"], "bad.json", { type: "application/json" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "This file isn’t a valid JSON backup."
       )
     );
   });
