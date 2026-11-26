@@ -402,7 +402,8 @@ describe("DS ratchets — surface-level drift", () => {
   // field asks for no meal.
   // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
   // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
-  const RAW_BUTTON_BASELINE = 293;
+  // 293 → 292: locked in after prior Button-primitive migration freed one slot.
+  const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -723,7 +724,9 @@ describe("DS ratchets — surface-level drift", () => {
      and 32px — and 60 half-step stacks (0.5 / 1.5 / 2.5) sat across the
      tree. The five route pages and the shell are pinned to the scale
      outright; the rest of the tree is ratcheted. */
-  const HALF_STEP_STACK_BASELINE = 56;
+  // 56 → 33: burned down 23 half-step stacks across 15 components/pages to
+  // whole-step space-y-1 / space-y-2.
+  const HALF_STEP_STACK_BASELINE = 33;
   it("half-step vertical stacks (space-y-0.5 / 1.5 / 2.5) do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

@@ -13,7 +13,10 @@ import {
   isTrailRace,
   isUltraDistance,
 } from "@/features/program/runPlanTiming";
-import type { RaceDistance } from "@/features/program/programTypes";
+import type {
+  RaceDistance,
+  RoadRaceDistance,
+} from "@/features/program/programTypes";
 import type { RunPlan } from "@/features/program/runScheduler";
 import {
   paceTableFromFitness,
@@ -32,7 +35,7 @@ import type { RunTemplate } from "./workoutTemplates";
  * and taper.
  */
 export interface RaceTarget {
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RoadRaceDistance;
   targetTimeS: number;
   /**
    * A2 feasibility gate — the runner's current VDOT from the FULL

@@ -190,7 +190,7 @@ export default function RouteSetupSection({
           <SectionHeading size="compact" className="mb-1.5 px-1">
             Saved routes
           </SectionHeading>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {routes.map((r) => (
               <li
                 key={r.id}

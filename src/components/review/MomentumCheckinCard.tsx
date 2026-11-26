@@ -79,7 +79,7 @@ function ExperienceScale({
   onChange: (next: number | null) => void;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <p className="text-sm font-semibold text-foreground">{label}</p>
       <div className="flex gap-2" role="group" aria-label={label}>
         {EXPERIENCE_SCALE.map((n) => (

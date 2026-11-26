@@ -196,7 +196,7 @@ export default function WaterSizeSheet({
         {drinks && drinks.length > 0 && onRemoveDrink && (
           <div className="border-t border-border/50 pt-3 space-y-1">
             <SectionLabel>Today&rsquo;s drinks</SectionLabel>
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {drinks.map((drink) => (
                 <li key={drink.id} className="flex items-center gap-3">
                   <span

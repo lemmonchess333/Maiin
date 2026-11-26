@@ -177,7 +177,7 @@ export default function MacroDistribution({
             </p>
           </div>
         </div>
-        <div className="min-w-[min(100%,10em)] flex-1 space-y-1.5">
+        <div className="min-w-[min(100%,10em)] flex-1 space-y-2">
           {data.map((d) => (
             <div
               key={d.name}
