@@ -22,7 +22,7 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
@@ -132,7 +132,7 @@ export default function Tooltip({
                  (regression: the Programme running-icon coachmark rendered
                  top-left over the title). With no transform-animated value,
                  motion leaves `style.transform` intact. */
-              <motion.div
+              <m.div
                 ref={refs.setFloating}
                 id={id}
                 role="tooltip"
@@ -154,7 +154,7 @@ export default function Tooltip({
                   height={6}
                   className="fill-card [&>path:first-of-type]:stroke-border [&>path:last-of-type]:stroke-card"
                 />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>,
           portalTarget

@@ -4,19 +4,24 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 // framer-motion → plain divs
 vi.mock("framer-motion", function () {
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: function (_target: any, prop: string) {
+        return function (props: any) {
+          const { variants: _v, ...rest } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        };
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: function (_target: any, prop: string) {
-          return function (props: any) {
-            const { variants: _v, ...rest } = props;
-            const Tag = prop === "create" ? "div" : prop;
-            return <Tag {...rest} />;
-          };
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
   };
 });
 

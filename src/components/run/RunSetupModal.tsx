@@ -27,7 +27,7 @@ import {
   CloudSnow,
   CloudLightning,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
@@ -522,7 +522,7 @@ export default function RunSetupModal({
 
         {/* Weather strip */}
         {!weatherLoading && weather && (
-          <motion.div
+          <m.div
             initial={motionSafe({ opacity: 0, y: -4 })}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 p-3 rounded-xl"
@@ -561,7 +561,7 @@ export default function RunSetupModal({
                 const tip = getRunningTip(weather, config.activityType);
                 if (!tip) return null;
                 return (
-                  <motion.p
+                  <m.p
                     key={config.activityType}
                     initial={motionSafe({ opacity: 0 })}
                     animate={{ opacity: 1 }}
@@ -569,7 +569,7 @@ export default function RunSetupModal({
                     className="text-xs text-muted-foreground"
                   >
                     {tip}
-                  </motion.p>
+                  </m.p>
                 );
               })()}
               {/* On a hot day the heat line (heatAdjustment.ts); the tip above
@@ -588,7 +588,7 @@ export default function RunSetupModal({
                 {WEATHER_CREDIT}
               </p>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* A hot day's offer for the planned run, while the run is still
@@ -673,7 +673,7 @@ export default function RunSetupModal({
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
           {config.activityType === "intervals" && !fixedSession && (
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
@@ -708,7 +708,7 @@ export default function RunSetupModal({
               </button>
               <AnimatePresence>
                 {showCustomise && (
-                  <motion.div
+                  <m.div
                     id="interval-customise-panel"
                     initial={motionSafe({ opacity: 0, height: 0 })}
                     animate={{ opacity: 1, height: "auto" }}
@@ -798,10 +798,10 @@ export default function RunSetupModal({
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
@@ -1235,7 +1235,7 @@ export default function RunSetupModal({
 
         <AnimatePresence>
           {showAdvanced && (
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
@@ -1322,7 +1322,7 @@ export default function RunSetupModal({
                   </div>
                 </>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { formatSigned, withSign } from "@/utils/formatters";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { AGE_YEARS, parseAgeYears } from "@/lib/bodyMetrics";
 import { profileAge } from "@/lib/age";
@@ -476,7 +476,7 @@ export default function NutritionSection({
               <span className="text-xs font-medium text-foreground">
                 Daily target
               </span>
-              <motion.span
+              <m.span
                 key={tdee.targetCalories}
                 initial={{ opacity: 0.5, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -484,7 +484,7 @@ export default function NutritionSection({
                 className="text-sm font-bold text-foreground"
               >
                 {formatCalories(tdee.targetCalories)} {CALORIE_UNIT}
-              </motion.span>
+              </m.span>
             </div>
             {/* D6 — is this target engine-adapted, manual, or formula? So the
                 user can tell what's learning vs what they own. */}
@@ -535,7 +535,7 @@ export default function NutritionSection({
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <motion.div
+            <m.div
               key={`protein-${split.protein}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
@@ -551,9 +551,9 @@ export default function NutritionSection({
                 <MacroSwatch color={macroAccent.protein} />
                 protein
               </p>
-            </motion.div>
+            </m.div>
             <div className="w-px h-6 bg-border/50" />
-            <motion.div
+            <m.div
               key={`carbs-${split.carbs}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
@@ -569,9 +569,9 @@ export default function NutritionSection({
                 <MacroSwatch color={macroAccent.carbs} />
                 carbs
               </p>
-            </motion.div>
+            </m.div>
             <div className="w-px h-6 bg-border/50" />
-            <motion.div
+            <m.div
               key={`fat-${split.fat}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
@@ -587,7 +587,7 @@ export default function NutritionSection({
                 <MacroSwatch color={macroAccent.fat} />
                 fat
               </p>
-            </motion.div>
+            </m.div>
           </div>
 
           {/* The pace picker can produce a target too small to hold bodyweight

@@ -4,7 +4,7 @@ import {
   useCalorieRingMode,
   setCalorieRingMode,
 } from "@/hooks/useCalorieRingMode";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ChevronRight, Share2 } from "lucide-react";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth, useUidForStorageKey } from "@/lib/auth";
@@ -267,7 +267,7 @@ export default function FoodHeroCard({
         <div className="absolute left-0 top-0 max-w-[40%]">
           <AnimatePresence mode="wait">
             {showCelebrationCaption ? (
-              <motion.p
+              <m.p
                 key="celebration"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -279,7 +279,7 @@ export default function FoodHeroCard({
                 }}
               >
                 {celebrationCaptionText}
-              </motion.p>
+              </m.p>
             ) : null}
           </AnimatePresence>
         </div>

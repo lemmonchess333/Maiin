@@ -17,7 +17,7 @@ import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Search, X, Plus, Check, ArrowLeftRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { haptic } from "@/lib/haptic";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
@@ -338,7 +338,7 @@ export default function ExercisePicker({
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
+          <m.div
             key="picker-backdrop"
             initial={motionSafe({ opacity: 0 })}
             animate={{ opacity: 1 }}
@@ -349,7 +349,7 @@ export default function ExercisePicker({
             onClick={handleClose}
           />
 
-          <motion.div
+          <m.div
             key="picker-modal"
             ref={pickerRef}
             role="dialog"
@@ -381,7 +381,7 @@ export default function ExercisePicker({
             {/* Discard confirmation */}
             <AnimatePresence>
               {showDiscardConfirm && (
-                <motion.div
+                <m.div
                   initial={motionSafe({ height: 0, opacity: 0 })}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={motionSafe({ height: 0, opacity: 0 })}
@@ -413,7 +413,7 @@ export default function ExercisePicker({
                       </Button>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
@@ -439,7 +439,7 @@ export default function ExercisePicker({
               </div>
               <AnimatePresence>
                 {searchQuery && (
-                  <motion.div
+                  <m.div
                     data-motion-driven
                     initial={motionSafe({ opacity: 0, width: 0 })}
                     animate={{ opacity: 1, width: "auto" }}
@@ -450,7 +450,7 @@ export default function ExercisePicker({
                     <Button variant="ghost" onClick={cancelSearch}>
                       Cancel
                     </Button>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -549,7 +549,7 @@ export default function ExercisePicker({
                 done by its row's circle. */}
             <AnimatePresence>
               {!pickAction && batchCount > 0 && (
-                <motion.div
+                <m.div
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
@@ -565,10 +565,10 @@ export default function ExercisePicker({
                     Add {batchCount} exercise
                     {batchCount !== 1 ? "s" : ""}
                   </Button>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </m.div>
 
           {/* Exercise detail shares the Form content with the history page.
               Adding here commits this exercise and any list selections;

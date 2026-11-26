@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { animate, m, useMotionValue, useTransform } from "framer-motion";
 import { Camera } from "lucide-react";
 
 /** The Scan button's corner radius (IconButton's rounded-xl). */
@@ -108,21 +108,21 @@ export default function ScanGrow({
   }, [release, opacity]);
 
   return (
-    <motion.div
+    <m.div
       aria-hidden
       data-testid="scan-grow"
       className="pointer-events-none fixed inset-0 z-[61]"
       style={{ opacity }}
     >
-      <motion.div
+      <m.div
         className="absolute inset-0 origin-top-left overflow-hidden bg-black"
         style={{ x, y, scaleX, scaleY, borderRadius }}
       >
-        <motion.div
+        <m.div
           className="absolute inset-0 bg-nutrition-fill"
           style={{ opacity: orange }}
         />
-        <motion.div
+        <m.div
           className="absolute left-1/2 top-1/2 text-white"
           style={{
             x: "-50%",
@@ -133,8 +133,8 @@ export default function ScanGrow({
           }}
         >
           <Camera className="size-6" />
-        </motion.div>
-      </motion.div>
-    </motion.div>
+        </m.div>
+      </m.div>
+    </m.div>
   );
 }

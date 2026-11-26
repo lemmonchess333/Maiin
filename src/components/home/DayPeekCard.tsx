@@ -19,7 +19,7 @@ import {
 } from "@/lib/runSessionExplainer";
 import { Suspense, useState } from "react";
 import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Dumbbell,
@@ -466,7 +466,7 @@ export default function DayPeekCard({
   const overflowCount = Math.max(0, extras.length - EXTRAS_VISIBLE_CAP);
   const hasExtras = extras.length > 0;
   return (
-    <motion.div
+    <m.div
       initial={motionSafe({ opacity: 0, height: 0 })}
       animate={{ opacity: 1, height: "auto" }}
       exit={motionSafe({ opacity: 0, height: 0 })}
@@ -815,7 +815,7 @@ export default function DayPeekCard({
           extras={extras}
         />
       </Suspense>
-    </motion.div>
+    </m.div>
   );
 }
 

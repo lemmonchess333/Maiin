@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +109,7 @@ export default function ProgressRing({
           strokeWidth={stroke}
         />
         {clamped > 0 && (
-          <motion.circle
+          <m.circle
             cx={size / 2}
             cy={size / 2}
             r={r}

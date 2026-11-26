@@ -31,7 +31,7 @@ import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
 import { layoutKey } from "@/lib/sessionPages";
 import { useUid } from "@/lib/auth";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { useDesktopNavShortcuts } from "@/hooks/useDesktopNavShortcuts";
@@ -226,7 +226,7 @@ export default function Layout() {
       <div aria-live="polite">
         <AnimatePresence>
           {(!isOnline || queueCount > 0) && (
-            <motion.div
+            <m.div
               key="pending-sync"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -278,10 +278,10 @@ export default function Layout() {
                   </Button>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           )}
           {isOnline && wasOffline && queueCount === 0 && (
-            <motion.div
+            <m.div
               key="back-online"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -299,7 +299,7 @@ export default function Layout() {
                 <Check className="size-3.5 shrink-0" aria-hidden="true" />
                 <span>Back online</span>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

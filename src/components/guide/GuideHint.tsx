@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   arrow,
   autoUpdate,
@@ -243,7 +243,7 @@ export default function GuideHint({
       {/* The bubble and its arrow fade in together. Read out by taking
           focus, with its words as the dialog's description, rather than
           as a live region as well, which would say it twice. */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
@@ -289,7 +289,7 @@ export default function GuideHint({
           strokeWidth={1}
           className="fill-card [&>path:first-of-type]:stroke-border [&>path:last-of-type]:stroke-card"
         />
-      </motion.div>
+      </m.div>
     </div>,
     document.body
   );

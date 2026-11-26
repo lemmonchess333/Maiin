@@ -18,7 +18,7 @@ import { useAuth, useUid } from "@/lib/auth";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
@@ -2114,7 +2114,7 @@ export default function Food() {
       {/* The wheel, then the week it belongs to, then the macros (Food11
           call 4), 8px apart as one group. The week strip sat above the
           calorie card until then, a section of its own. */}
-      <motion.div variants={pageItemVariant} className="space-y-2">
+      <m.div variants={pageItemVariant} className="space-y-2">
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
@@ -2157,7 +2157,7 @@ export default function Food() {
             }}
           />
         )}
-      </motion.div>
+      </m.div>
       <FoodLogFlight
         flight={foodFlight}
         onArrive={logFlight.arrive}
@@ -2198,7 +2198,7 @@ export default function Food() {
           one calm data-derived line in the session's colour; no separate
           flow, no prescription, finalTarget unchanged. */}
       {refuelSport && isToday && (
-        <motion.div variants={pageItemVariant}>
+        <m.div variants={pageItemVariant}>
           <div
             className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
               refuelSport === "run" ? "bg-running/10" : "bg-lifting/10"
@@ -2250,7 +2250,7 @@ export default function Food() {
               }
             />
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Logging group: the composer and slot, then the eligible usual.
@@ -2261,7 +2261,7 @@ export default function Food() {
           one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
           wide, that the Scan button clears the tab bar and that the usual
           row's Log comes after it. */}
-      <motion.div variants={pageItemVariant}>
+      <m.div variants={pageItemVariant}>
         <FoodComposerCard
           /* Photo logging gated for this tier: one line under the field
              says why the camera is locked and where Pro is. Mounted only
@@ -2328,7 +2328,7 @@ export default function Food() {
           when
           onClose={() => setComposerHintClosed(true)}
         />
-      </motion.div>
+      </m.div>
       {usual && (
         /* One row: what and how much on the left, Edit and Log on the
            right. It sits under the composer, where on a 390x844 phone it
@@ -2505,7 +2505,7 @@ export default function Food() {
           mealSlotFor, shown in each row's caption, and moved via the
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
-      <motion.div variants={pageItemVariant} className="space-y-3">
+      <m.div variants={pageItemVariant} className="space-y-3">
         {/* Keyed by day, as the hero above is: a new day is a new list,
             not the old day's rows folding away among the new ones. */}
         <FoodTimeline
@@ -2550,7 +2550,7 @@ export default function Food() {
             <FoodWaterRow date={selectedDate} />
           </Suspense>
         </SectionErrorBoundary>
-      </motion.div>
+      </m.div>
 
       <Suspense fallback={null}>
         <ManualFoodLogger

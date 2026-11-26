@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -109,7 +109,7 @@ export default function LeagueResultReveal({
   }, [onDone]);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -121,7 +121,7 @@ export default function LeagueResultReveal({
       {/* A rise's rays. */}
       <AnimatePresence>
         {rose && (
-          <motion.div
+          <m.div
             key="rays"
             aria-hidden="true"
             className="pointer-events-none fixed left-1/2 top-[34%] size-[560px] -ml-[280px] -mt-[280px]"
@@ -152,7 +152,7 @@ export default function LeagueResultReveal({
           Your league week
         </p>
 
-        <motion.div
+        <m.div
           aria-hidden="true"
           initial={
             reduce
@@ -171,9 +171,9 @@ export default function LeagueResultReveal({
           }
         >
           <TierBadge tier={tier} size={BADGE} />
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="w-full min-w-0 space-y-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -207,9 +207,9 @@ export default function LeagueResultReveal({
             {weekOfLine(result.weekKey)}
             {fell ? " · A new week has started" : ""}
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="w-full space-y-2 pt-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -233,8 +233,8 @@ export default function LeagueResultReveal({
           >
             Done
           </Button>
-        </motion.div>
+        </m.div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

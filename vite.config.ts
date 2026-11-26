@@ -208,8 +208,9 @@ function chunkFor(id: string) {
   if (!id.includes("node_modules")) return undefined;
   if (id.includes("node_modules/recharts/")) return "charts";
   if (id.includes("node_modules/maplibre-gl/")) return "maplibre";
-  if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id))
-    return "motion";
+  // framer-motion / motion-dom / motion-utils are left unpinned so Rolldown
+  // naturally splits `domAnimation` (loaded by MotionRoot) from `domMax`
+  // drag/layout projection (loaded only by MotionMaxRoot on Food/Comments).
   if (id.includes("node_modules/date-fns/")) return "date-fns";
   if (id.includes("node_modules/@zxing/")) return "barcode";
   if (id.includes("node_modules/react-body-highlighter/"))

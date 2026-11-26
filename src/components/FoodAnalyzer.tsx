@@ -14,7 +14,7 @@ import {
   type FoodFavourite,
 } from "@/hooks/useFoodFavourites";
 import { RotateCcw, Check, Plus, Minus, Download, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Drawer } from "vaul";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
@@ -228,9 +228,9 @@ const SAVED_FLASH_MS = 500;
 function AnimatedCalories({ value }: { value: number }) {
   const display = useCountUp(value);
   return (
-    <motion.span className="text-xl font-extrabold font-figure tabular-nums">
+    <m.span className="text-xl font-extrabold font-figure tabular-nums">
       {display}
-    </motion.span>
+    </m.span>
   );
 }
 
@@ -1294,7 +1294,7 @@ export default function FoodAnalyzer({
                     );
                     if (item.removed) {
                       return (
-                        <motion.div
+                        <m.div
                           key={`${item.name}-${i}-removed`}
                           initial={reducedMotion ? false : { opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -1319,11 +1319,11 @@ export default function FoodAnalyzer({
                             <RotateCcw className="size-3" />
                             Restore
                           </button>
-                        </motion.div>
+                        </m.div>
                       );
                     }
                     return (
-                      <motion.div
+                      <m.div
                         key={`${item.name}-${i}`}
                         initial={reducedMotion ? false : { opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1394,7 +1394,7 @@ export default function FoodAnalyzer({
                             <X className="size-3.5" />
                           </button>
                         )}
-                      </motion.div>
+                      </m.div>
                     );
                   })}
                 </div>

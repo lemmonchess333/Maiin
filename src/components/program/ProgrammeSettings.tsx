@@ -37,7 +37,7 @@
 import { appErrorMessage } from "@/lib/callableErrors";
 import { rollingGoalOf } from "@/features/program/programMaintenance";
 import { useId, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Dialog } from "@/components/ui/Dialog";
 import {
   Target,
@@ -204,7 +204,7 @@ function SettingsOptionCard({
   // a browser without container queries keeps the designed card.
   return (
     <div className="@container">
-      <motion.button
+      <m.button
         data-motion-driven
         type="button"
         onClick={onSelect}
@@ -259,7 +259,7 @@ function SettingsOptionCard({
             style={{ color: THEME.chrome.text }}
           />
         ) : null}
-      </motion.button>
+      </m.button>
     </div>
   );
 }
