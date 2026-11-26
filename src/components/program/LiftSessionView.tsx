@@ -1074,7 +1074,7 @@ export default function LiftSessionView({
 
               {/* ── Completed Session Summary ── */}
               {status === "completed" && (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2 dark:card-shadow dark:border-transparent">
+                <div className="rounded-2xl border border-border bg-card p-4 space-y-2 dark:card-shadow dark:border-transparent">
                   <p className="text-sm text-muted-foreground">
                     {completedWorkoutId
                       ? "Your recorded sets and actual totals are ready to view."

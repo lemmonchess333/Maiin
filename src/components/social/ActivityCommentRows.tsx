@@ -66,9 +66,7 @@ export default function ActivityCommentRows({
                     the column is too narrow for both (large text on a
                     small phone) rather than running past the edge. */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                  <p className="text-caption text-muted-foreground">
-                    {timeAgo}
-                  </p>
+                  <p className="text-micro text-muted-foreground">{timeAgo}</p>
                   {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
                   hit area toward the 44px floor without bloating the
                   row visually (the sibling flame's -m trick). */}

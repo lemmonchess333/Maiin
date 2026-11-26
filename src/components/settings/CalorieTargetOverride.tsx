@@ -88,7 +88,7 @@ export default function CalorieTargetOverride({
         value > 0 &&
         value < MIN_TARGET_CALORIES && (
           <p
-            className="text-caption leading-snug mt-2"
+            className="text-micro leading-snug mt-2"
             style={{ color: "hsl(var(--warning-strong))" }}
           >
             Below the{" "}

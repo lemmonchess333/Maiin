@@ -103,7 +103,7 @@ function ExperienceScale({
           </button>
         ))}
       </div>
-      <div className="flex justify-between text-caption text-muted-foreground">
+      <div className="flex justify-between text-micro text-muted-foreground">
         <span>Not at all</span>
         <span>Completely</span>
       </div>

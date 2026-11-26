@@ -580,7 +580,7 @@ export default function ExerciseHistory() {
                       {pr.weightKg > 0 && !isBodyweight && (
                         <>
                           {" "}
-                          <span className="text-caption font-normal text-muted-foreground">
+                          <span className="text-micro font-normal text-muted-foreground">
                             {unitLabel}
                           </span>
                         </>
@@ -701,7 +701,7 @@ export default function ExerciseHistory() {
                           {/* The PR chip every other best wears. White on
                               the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
+                            <span className="text-micro font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               Best
                             </span>
                           )}

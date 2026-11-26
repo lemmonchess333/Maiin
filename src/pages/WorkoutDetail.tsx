@@ -224,7 +224,7 @@ function ExerciseRecord({
                 {bests?.has(i) && (
                   <span
                     aria-hidden="true"
-                    className="ml-auto text-caption font-semibold text-achievement-strong"
+                    className="ml-auto text-micro font-semibold text-achievement-strong"
                   >
                     Best
                   </span>

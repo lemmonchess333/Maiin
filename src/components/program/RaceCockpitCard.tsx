@@ -119,7 +119,7 @@ export default function RaceCockpitCard({
     <section
       aria-label="Race plan"
       className={cn(
-        "rounded-xl bg-card p-4 space-y-4 surface-flat",
+        "rounded-2xl bg-card p-4 space-y-4 surface-flat",
         placePhoto && "overflow-hidden"
       )}
     >

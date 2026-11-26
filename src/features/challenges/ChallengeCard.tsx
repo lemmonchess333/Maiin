@@ -466,7 +466,7 @@ export function ChallengeCard({
                   )}{" "}
                   together
                 </p>
-                <p className="text-caption text-center text-muted-foreground">
+                <p className="text-micro text-center text-muted-foreground">
                   You contributed{" "}
                   {formatChallengeValue(
                     challenge.metric,

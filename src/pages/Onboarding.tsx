@@ -2461,7 +2461,7 @@ export default function Onboarding() {
             <div className="space-y-5">
               {runningFirst ? (
                 <section
-                  className="rounded-2xl bg-card card-shadow p-5 space-y-3"
+                  className="rounded-2xl bg-card card-shadow p-4 space-y-3"
                   aria-label="First run preview"
                 >
                   <SectionLabel className="text-running-strong">

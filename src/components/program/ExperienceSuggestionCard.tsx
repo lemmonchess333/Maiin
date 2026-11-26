@@ -99,7 +99,7 @@ export default function ExperienceSuggestionCard({
           ))}
         </div>
 
-        <p className="mt-2 text-caption text-muted-foreground">{copy.basis}</p>
+        <p className="mt-2 text-micro text-muted-foreground">{copy.basis}</p>
       </details>
 
       <div className="mt-3 flex gap-2">

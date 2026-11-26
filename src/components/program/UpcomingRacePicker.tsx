@@ -161,7 +161,7 @@ export default function UpcomingRacePicker({
                         list shows it: its cover on the right, fading into
                         the card under the words. */}
                     <RacePlacePhoto spaceId={race.id} />
-                    <span className="relative flex items-center gap-1.5 text-caption font-semibold text-running-strong">
+                    <span className="relative flex items-center gap-1.5 text-micro font-semibold text-running-strong">
                       {isSelected && (
                         <Check className="size-3.5 shrink-0" aria-hidden />
                       )}

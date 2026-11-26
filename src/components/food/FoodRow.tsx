@@ -243,7 +243,7 @@ export default function FoodRow({
           )}
           {group.wasEdited && (
             <span
-              className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+              className="flex items-center gap-0.5 text-micro font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
               aria-label="Edited"
               title="Edited"
             >
@@ -255,7 +255,7 @@ export default function FoodRow({
         {subLabel && (
           /* Wraps rather than truncates: it is short, and cutting it
              at large text sizes cut the time ("Dinner · 8:15 …"). */
-          <p className="text-caption text-muted-foreground break-words mt-0.5">
+          <p className="text-micro text-muted-foreground break-words mt-0.5">
             {subLabel}
           </p>
         )}
@@ -399,7 +399,7 @@ export default function FoodRow({
           style={{ opacity: deletePanelOpacity }}
         >
           <span
-            className="flex flex-col items-center justify-center gap-1 text-caption font-medium"
+            className="flex flex-col items-center justify-center gap-1 text-micro font-medium"
             style={{ width: Math.abs(OPEN_OFFSET) }}
           >
             <Trash2

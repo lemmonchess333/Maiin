@@ -329,7 +329,7 @@ describe("FoodTimeline — portion identity", () => {
 
 describe("FoodTimeline — the portion on each row", () => {
   const caption = (name: string) =>
-    rowFor(name)?.querySelector("p.text-caption")?.textContent ?? null;
+    rowFor(name)?.querySelector("p.text-micro")?.textContent ?? null;
   const one = (portionSize: string) => [
     {
       name: "Food",

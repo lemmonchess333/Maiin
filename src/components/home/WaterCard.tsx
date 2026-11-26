@@ -538,7 +538,7 @@ export default function WaterCard({
   }
 
   return (
-    <div className="relative overflow-hidden p-4 rounded-xl bg-card surface-flat">
+    <div className="relative overflow-hidden p-4 rounded-2xl bg-card surface-flat">
       {heading}
       <m.div
         className="absolute inset-0 pointer-events-none rounded-xl"
