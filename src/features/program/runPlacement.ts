@@ -1,5 +1,4 @@
 import { weekPosition } from "@/lib/dateHelpers";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
 
 const gap = (a: number, b: number) =>
   Math.min(Math.abs(a - b), 7 - Math.abs(a - b));
@@ -18,7 +17,7 @@ export function chooseQualityRunSlots({
   availableDays: readonly number[];
   longDay: number;
   count: 1 | 2;
-  weekSchedule: readonly ScheduleDay[];
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>;
   /** Run26 (2): other demanding days the week already holds (an ultra's
    *  back-to-back run), kept apart from as the long run is. */
   otherDemanding?: readonly number[];
@@ -180,4 +179,30 @@ export function longRunDaysOf(
   if (longDay === null) return [];
   const pair = backToBacks ? backToBackDayOf(weekSchedule) : null;
   return pair === null ? [longDay] : [longDay, pair];
+}
+
+/**
+ * The weekdays a plan's quality run(s) fall on (tempo / intervals), using
+ * `chooseQualityRunSlots` on the non-long run days. Requires at least 2 run
+ * days; picks 2 quality slots when the week holds 5+ run days, else 1.
+ */
+export function qualityRunDaysOf(
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>,
+  backToBacks = false
+): number[] {
+  const runDays = runDaysOf(weekSchedule);
+  if (runDays.length < 2) return [];
+  const longDay = longRunDayOf(weekSchedule);
+  if (longDay === null) return [];
+  const pair = backToBacks ? backToBackDayOf(weekSchedule) : null;
+  const availableDays = runDays.filter((d) => d !== longDay && d !== pair);
+  if (availableDays.length === 0) return [];
+  const count: 1 | 2 = runDays.length >= 5 ? 2 : 1;
+  return chooseQualityRunSlots({
+    availableDays,
+    longDay,
+    count,
+    weekSchedule,
+    otherDemanding: pair !== null ? [pair] : [],
+  });
 }

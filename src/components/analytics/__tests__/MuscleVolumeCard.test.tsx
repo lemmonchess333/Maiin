@@ -118,4 +118,27 @@ describe("MuscleVolumeCard", () => {
     render(<MuscleVolumeCard rows={[]} weeks={0} focus="Build muscle" />);
     expect(screen.getByText("After your first full week")).toBeVisible();
   });
+
+  it("toggles between Full (1×) and Indirect (0.5×) synergist counting when fractionalRows is provided", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    render(
+      <MuscleVolumeCard
+        rows={[row("Chest", 12), row("Triceps", 12)]}
+        fractionalRows={[row("Chest", 12), row("Triceps", 6)]}
+        weeks={2}
+        focus="Build muscle"
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Full (1×)" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByText(/Triceps: 12 sets a week/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Indirect (0.5×)" }));
+    expect(
+      screen.getByRole("radio", { name: "Indirect (0.5×)" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText(/Triceps: 6 sets a week/)).toBeInTheDocument();
+  });
 });

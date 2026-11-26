@@ -1609,7 +1609,13 @@ export default function History() {
                     {/* Predictions are a today-snapshot (see the card's
                         carve-out footnote), so an empty WINDOW doesn't
                         hide them — only an empty lifetime does. */}
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                   </>
                 ) : runs.length === 0 ? (
                   /* The page's empty start keeps its domain's colour in the
@@ -1676,32 +1682,34 @@ export default function History() {
                         }
                       />
                     </SectionErrorBoundary>
-                {polarizedSplit.status !== "insufficient" && (
-                  <div className="border-t border-border pt-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium text-foreground">
-                        Intensity balance (80/20)
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {polarizedSplit.status === "polarized"
-                          ? "On target for 80/20"
-                          : polarizedSplit.status === "too_hard"
-                            ? "High-intensity share is high"
-                            : "All easy aerobic volume"}
-                      </span>
-                    </div>
-                    <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${polarizedSplit.lowIntensityPct}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground font-mono tabular-nums">
-                      <span>Easy {polarizedSplit.lowIntensityPct}%</span>
-                      <span>Hard {polarizedSplit.highIntensityPct}%</span>
-                    </div>
-                  </div>
-                )}
+                    {polarizedSplit.status !== "insufficient" && (
+                      <div className="border-t border-border pt-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <span className="font-medium text-foreground">
+                            Intensity balance (80/20)
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {polarizedSplit.status === "polarized"
+                              ? "On target for 80/20"
+                              : polarizedSplit.status === "too_hard"
+                                ? "High-intensity share is high"
+                                : "All easy aerobic volume"}
+                          </span>
+                        </div>
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{
+                              width: `${polarizedSplit.lowIntensityPct}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono tabular-nums">
+                          <span>Easy {polarizedSplit.lowIntensityPct}%</span>
+                          <span>Hard {polarizedSplit.highIntensityPct}%</span>
+                        </div>
+                      </div>
+                    )}
                     <SectionErrorBoundary sectionName="fastest-kilometres">
                       <FastestKilometresCard
                         rows={runningInsight.efforts}
@@ -1719,7 +1727,13 @@ export default function History() {
                         comparedWith={previousRangeLabel(timeRange)}
                       />
                     </SectionErrorBoundary>
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                     <ShoeMileageSection />
                   </>
                 )}
@@ -1797,6 +1811,7 @@ export default function History() {
                     <SectionErrorBoundary sectionName="muscle-volume">
                       <MuscleVolumeCard
                         rows={liftingInsight.muscles}
+                        fractionalRows={liftingInsight.musclesFractional}
                         weeks={liftingInsight.muscleWeeks}
                         focus={focusLabel(liftGoal ?? "general")}
                       />
