@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Dumbbell, Scale, Upload } from "lucide-react";
+import { Dumbbell, FileJson, Scale, Upload } from "lucide-react";
 import type { User } from "firebase/auth";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
@@ -9,6 +9,7 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 const MAX_GPX_BYTES = 15 * 1024 * 1024;
 const MAX_CSV_BYTES = 10 * 1024 * 1024;
 const MAX_WEIGHT_CSV_BYTES = 5 * 1024 * 1024;
+const MAX_ARCHIVE_JSON_BYTES = 25 * 1024 * 1024;
 
 interface DataImportSectionProps {
   user: User | null;
@@ -32,9 +33,11 @@ export default function DataImportSection({
   const [importingGpx, setImportingGpx] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
   const [importingWeight, setImportingWeight] = useState(false);
+  const [importingArchive, setImportingArchive] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
+  const archiveInputRef = useRef<HTMLInputElement>(null);
 
   const handleGpxChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -161,6 +164,45 @@ export default function DataImportSection({
     }
   };
 
+  const handleArchiveJsonChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_ARCHIVE_JSON_BYTES) {
+      toast.error("This backup file is too large to import.");
+      return;
+    }
+
+    setImportingArchive(true);
+    try {
+      const jsonText = await file.text();
+      const { JsonArchiveImportError, importFullBackupJson } =
+        await import("@/lib/jsonArchiveImport");
+      try {
+        const result = await importFullBackupJson(user.uid, jsonText, {
+          weightKg,
+        });
+        const unit = result.totalItems === 1 ? "record" : "records";
+        toast.success(`Restored ${result.totalItems} ${unit} from backup`);
+      } catch (err) {
+        if (err instanceof JsonArchiveImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t restore this backup file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setImportingArchive(false);
+    }
+  };
+
   return (
     <SettingsGroup title="Import">
       <input
@@ -193,6 +235,16 @@ export default function DataImportSection({
         tabIndex={-1}
         onChange={handleWeightCsvChange}
       />
+      <input
+        ref={archiveInputRef}
+        type="file"
+        data-import-kind="archive-json"
+        accept=".json,application/json"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleArchiveJsonChange}
+      />
       <SettingsRow
         icon={Upload}
         label="Import GPX run"
@@ -219,6 +271,15 @@ export default function DataImportSection({
         chevron={false}
         disabled={importingWeight || !user}
         onClick={() => weightInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={FileJson}
+        label="Import backup JSON"
+        description="Restore workouts, runs, meals and weight from a Tropos backup"
+        value={importingArchive ? "Restoring…" : undefined}
+        chevron={false}
+        disabled={importingArchive || !user}
+        onClick={() => archiveInputRef.current?.click()}
       />
     </SettingsGroup>
   );
