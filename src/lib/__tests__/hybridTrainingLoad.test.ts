@@ -139,4 +139,92 @@ describe("computeHybridTrainingLoad", () => {
     });
     expect(res.status).toBe("insufficient");
   });
+
+  it("does not falsely flag a consistent 21-day cold-start athlete as overreaching", () => {
+    const workouts = [];
+    const runs = [];
+    // Steady alternating training for the first 21 days only (no prior history).
+    for (let d = 20; d >= 0; d -= 2) {
+      if (d % 4 === 0) workouts.push(makeLift(d, 16, 8));
+      else runs.push(makeRun(d, 40 * 60, "easy"));
+    }
+    const res = computeHybridTrainingLoad({
+      workouts,
+      runs,
+      todayKey: TODAY,
+    });
+    expect(res.status).toBe("optimal");
+    expect(Math.abs(res.form)).toBeLessThan(8);
+    expect(res.series).toHaveLength(21);
+    expect(res.series.some((p) => p.liftLoad > 0)).toBe(true);
+    expect(res.series.some((p) => p.runLoad > 0)).toBe(true);
+  });
+
+  it("projects upcoming plan load and race-day taper freshness when a race is within 21 days", () => {
+    const workouts = [];
+    const runs = [];
+    for (let d = 48; d >= 0; d -= 2) {
+      if (d % 4 === 0) workouts.push(makeLift(d, 16, 8));
+      else runs.push(makeRun(d, 50 * 60, "tempo"));
+    }
+    const raceDate = localDateString(
+      addLocalDays(new Date(2026, 9, 20, 12, 0, 0), 10)
+    );
+    const res = computeHybridTrainingLoad({
+      workouts,
+      runs,
+      todayKey: TODAY,
+      programState: {
+        goal: "recomp",
+        currentPhase: "Taper",
+        weekNumber: 8,
+        splitType: "upper_lower",
+        updatedAt: Date.now(),
+        workouts: [
+          {
+            dayName: "Upper",
+            dayType: "upper",
+            completed: false,
+            exercises: [
+              {
+                exerciseId: "bench-press",
+                instanceId: "bp-1",
+                name: "Bench Press",
+                movementCategory: "horizontal_push",
+                sets: 4,
+                reps: 6,
+                weight: 80,
+                restSeconds: 120,
+                progressionType: "linear",
+                lastSuccessfulWeight: 80,
+                lastAttemptedWeight: 80,
+                consecutiveFailures: 0,
+                plateauCount: 0,
+                performanceHistory: [],
+                lastPerformance: {
+                  sets: 4,
+                  reps: 6,
+                  weight: 80,
+                  completed: true,
+                },
+              },
+            ],
+          },
+        ],
+        runDays: [
+          { dayIndex: 2, templateId: "easy_30min", type: "easy" },
+          { dayIndex: 4, templateId: "easy_30min", type: "easy" },
+          { dayIndex: 6, templateId: "race", type: "race", date: raceDate },
+        ],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "half_marathon", targetDate: raceDate },
+        } as never,
+      },
+    });
+    expect(res.projectedSeries.length).toBeGreaterThanOrEqual(14);
+    expect(res.raceDayProjection).not.toBeNull();
+    expect(res.raceDayProjection?.date).toBe(raceDate);
+    expect(res.raceDayProjection!.form).toBeGreaterThan(res.form);
+  });
 });

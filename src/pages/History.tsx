@@ -33,6 +33,7 @@ import {
 } from "@/lib/historyAccess";
 import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { useTrainingFuelData } from "@/hooks/useTrainingFuelData";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
@@ -807,6 +808,7 @@ export default function History() {
    * Reads the same effective targets Home and Food render, so the number on
    * this page cannot disagree with the number on those. */
   const effectiveTargets = useEffectiveTargets();
+  const trainingFuel = useTrainingFuelData(uid, range.todayKey);
   const macroTargets = {
     calories: effectiveTargets.finalTarget,
     protein: effectiveTargets.protein,
@@ -1483,6 +1485,7 @@ export default function History() {
                       workouts={workouts}
                       runs={runs}
                       todayKey={range.todayKey}
+                      programState={trainingFuel.program}
                     />
                   </Suspense>
                   {trainingMonotony.status !== "insufficient" && (

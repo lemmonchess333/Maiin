@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   computeTrainingMonotony,
   MONOTONY_MIN_ACTIVE_DAYS,
+  runLoadAU,
+  workoutLoadAU,
 } from "../trainingMonotony";
 import type { Workout } from "../savedWorkouts";
 import type { SavedRun } from "../savedRuns";
@@ -158,5 +160,68 @@ describe("computeTrainingMonotony", () => {
       todayKey: "not-a-date",
     });
     expect(result.status).toBe("insufficient");
+  });
+
+  it("uses HR zone-weighted TRIMP when coverage >= 50% and falls back below 50%", () => {
+    const pureZ2 = runLoadAU(
+      makeRun(TODAY, 40, "easy", {
+        heartRate: {
+          averageBpm: 142,
+          maxBpm: 152,
+          coverage: 0.92,
+          zoneSeconds: [0, 2200, 0, 0, 0],
+          maxHr: 190,
+        },
+      })
+    );
+    const highZoneDrift = runLoadAU(
+      makeRun(TODAY, 40, "easy", {
+        heartRate: {
+          averageBpm: 172,
+          maxBpm: 184,
+          coverage: 0.92,
+          zoneSeconds: [0, 0, 200, 1200, 800],
+          maxHr: 190,
+        },
+      })
+    );
+    const lowCoverage = runLoadAU(
+      makeRun(TODAY, 40, "easy", {
+        heartRate: {
+          averageBpm: 178,
+          maxBpm: 185,
+          coverage: 0.35,
+          zoneSeconds: [0, 0, 0, 0, 840],
+          maxHr: 190,
+        },
+      })
+    );
+    expect(pureZ2).toBeCloseTo(40, 1);
+    expect(highZoneDrift).toBeGreaterThan(60);
+    expect(lowCoverage).toBeCloseTo(40, 1);
+  });
+
+  it("weights isolation sets lower than multi-joint compound sets", () => {
+    const compound = workoutLoadAU(makeWorkout(TODAY, 10, 8));
+    const isolation = workoutLoadAU({
+      exercises: [
+        {
+          exerciseId: "bicep-curl",
+          exerciseName: "Dumbbell Bicep Curl",
+          category: "Arms",
+          caloriesBurned: 60,
+          sets: Array.from({ length: 10 }, (_, idx) => ({
+            setNumber: idx + 1,
+            reps: 12,
+            weightKg: 14,
+            type: "working" as const,
+            rpe: 8,
+          })),
+        },
+      ],
+    });
+    expect(compound).toBeCloseTo(25, 1);
+    expect(isolation).toBeCloseTo(16.25, 2);
+    expect(isolation).toBeLessThan(compound);
   });
 });
