@@ -993,4 +993,13 @@ describe("computeAndWritePerformance — scores against the target the user saw"
       /scoringCalories\s*=\s*resolvedTarget\s*\?\s*resolvedTarget\.value\s*:\s*null/
     );
   });
+
+  it("acquires the cooldown lock transactionally and clears nextAllowedAt on error", () => {
+    expect(SOURCE).toMatch(
+      /async function acquireCooldownLock\(uid\)[\s\S]*?db\.runTransaction/
+    );
+    expect(SOURCE).toMatch(
+      /async function releaseLock\(uid, ok, error\)[\s\S]*?if \(!ok\)\s*\{[\s\S]*?nextAllowedAt\s*=\s*admin\.firestore\.Timestamp\.fromMillis\(0\)/
+    );
+  });
 });

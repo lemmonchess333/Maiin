@@ -243,9 +243,15 @@ async function recountSpaceWeek(
 }
 
 async function recountAll(db, pairs, { now }) {
+  let firstError = null;
   for (const [spaceId, weekKey] of pairs) {
-    await recountSpaceWeek(db, spaceId, weekKey, { now });
+    try {
+      await recountSpaceWeek(db, spaceId, weekKey, { now });
+    } catch (err) {
+      if (!firstError) firstError = err;
+    }
   }
+  if (firstError) throw firstError;
 }
 
 /**
@@ -267,8 +273,8 @@ async function refreshMemberWeeks(
   if (spaceIds.length === 0) return { recounted: 0 };
   const pairs = [];
   for (const weekKey of weekKeys) {
-    await writeCredits(db, uid, spaceIds, weekKey, { now });
-    spaceIds.forEach((spaceId) => pairs.push([spaceId, weekKey]));
+    const changed = await writeCredits(db, uid, spaceIds, weekKey, { now });
+    changed.forEach((spaceId) => pairs.push([spaceId, weekKey]));
   }
   await recountAll(db, pairs, { now });
   return { recounted: pairs.length };
@@ -306,8 +312,8 @@ async function syncMemberWeeks(db, spaceId, uid, { now = Date.now() } = {}) {
   weeks.add(await userCurrentWeekKey(db, uid, now));
   const pairs = [];
   for (const weekKey of [...weeks].sort()) {
-    await writeCredits(db, uid, [spaceId], weekKey, { now });
-    pairs.push([spaceId, weekKey]);
+    const changed = await writeCredits(db, uid, [spaceId], weekKey, { now });
+    changed.forEach((id) => pairs.push([id, weekKey]));
   }
   await recountAll(db, pairs, { now });
   return { recounted: pairs.length };
@@ -332,8 +338,8 @@ async function syncAuthorWeeks(db, uid, { now = Date.now() } = {}) {
   joined.forEach((spaceId) => add(spaceId, current));
   const pairs = [];
   for (const [weekKey, spaces] of [...byWeek].sort()) {
-    await writeCredits(db, uid, [...spaces], weekKey, { now });
-    [...spaces].sort().forEach((spaceId) => pairs.push([spaceId, weekKey]));
+    const changed = await writeCredits(db, uid, [...spaces], weekKey, { now });
+    changed.sort().forEach((spaceId) => pairs.push([spaceId, weekKey]));
   }
   await recountAll(db, pairs, { now });
   return { recounted: pairs.length };

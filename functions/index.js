@@ -1575,7 +1575,7 @@ const aiConsent = require("./lib/aiConsent");
 const foodPhotoDetail = require("./lib/foodPhotoDetail");
 
 exports.analyzeFood = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  .runWith({ ...DEFAULT_HTTP_CAP, memory: "512MB", timeoutSeconds: 60 })
   .https.onRequest((req, res) => {
     corsForAiEndpoints(req, res, async (corsError) => {
       if (corsError) {
@@ -1760,6 +1760,7 @@ exports.analyzeFood = functions
 
         const response = await fetch(url, {
           method: "POST",
+          signal: AbortSignal.timeout(45_000),
           headers: {
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
@@ -2004,6 +2005,7 @@ exports.analyzeFoodText = functions
         // instruction segment. See lib/foodTextRequest.js.
         const response = await fetch(url, {
           method: "POST",
+          signal: AbortSignal.timeout(45_000),
           headers: {
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
