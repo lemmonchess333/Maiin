@@ -1,28 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  batchSet: vi.fn(),
-  batchCommit: vi.fn(),
-  doc: vi.fn((_db: unknown, col: string, id: string) => ({
-    path: `${col}/${id}`,
-  })),
+vi.mock("firebase/firestore");
+vi.mock("@/lib/firebase", () => ({ db: {} }));
+
+const queueMocks = vi.hoisted(() => ({
   queueDurableWritesBatch: vi.fn(),
 }));
-
-vi.mock("firebase/firestore", () => ({
-  doc: (...args: unknown[]) =>
-    mocks.doc(...(args as [unknown, string, string])),
-  writeBatch: () => ({
-    set: (...args: unknown[]) => mocks.batchSet(...args),
-    commit: () => mocks.batchCommit(),
-  }),
-}));
-vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/offlineQueue", () => ({
   queueDurableWritesBatch: (...args: unknown[]) =>
-    mocks.queueDurableWritesBatch(...args),
+    queueMocks.queueDurableWritesBatch(...args),
 }));
 
+import {
+  batchLog,
+  failNextFirestore,
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 import {
   BULK_IMPORT_BATCH_SIZE,
   commitBulkImportWrites,
@@ -39,8 +34,8 @@ function makeEntries(count: number, merge = false): BulkImportEntry[] {
 }
 
 beforeEach(() => {
+  resetFirestore();
   vi.clearAllMocks();
-  mocks.batchCommit.mockResolvedValue(undefined);
   Object.defineProperty(globalThis, "navigator", {
     value: { onLine: true },
     configurable: true,
@@ -49,6 +44,9 @@ beforeEach(() => {
 
 describe("commitBulkImportWrites", () => {
   it("chunks writes into 450-op Firestore writeBatches and reports progress", async () => {
+    seedFirestore({
+      "users/u-1/meals/csv-0": { existingTag: "keep" },
+    });
     const entries = makeEntries(BULK_IMPORT_BATCH_SIZE + 50, true);
     const progress: { written: number; total: number }[] = [];
 
@@ -57,18 +55,18 @@ describe("commitBulkImportWrites", () => {
     );
 
     expect(written).toBe(500);
-    expect(mocks.batchCommit).toHaveBeenCalledTimes(2);
-    expect(mocks.batchSet).toHaveBeenCalledTimes(500);
-    expect(mocks.batchSet).toHaveBeenCalledWith(
-      { path: "users/u-1/meals/csv-0" },
-      expect.objectContaining({ foodName: "Meal 0" }),
-      { merge: true }
-    );
+    expect(batchLog()).toHaveLength(2);
+    expect(batchLog()[0]).toHaveLength(BULK_IMPORT_BATCH_SIZE);
+    expect(batchLog()[1]).toHaveLength(50);
+    expect(readDoc("users/u-1/meals/csv-0")).toMatchObject({
+      existingTag: "keep",
+      foodName: "Meal 0",
+    });
     expect(progress).toEqual([
       { written: 450, total: 500 },
       { written: 500, total: 500 },
     ]);
-    expect(mocks.queueDurableWritesBatch).not.toHaveBeenCalled();
+    expect(queueMocks.queueDurableWritesBatch).not.toHaveBeenCalled();
   });
 
   it("enqueues all entries in one offline batch when navigator.onLine is false", async () => {
@@ -82,40 +80,38 @@ describe("commitBulkImportWrites", () => {
     const written = await commitBulkImportWrites("u-1", entries, onProgress);
 
     expect(written).toBe(12);
-    expect(mocks.batchCommit).not.toHaveBeenCalled();
-    expect(mocks.queueDurableWritesBatch).toHaveBeenCalledOnce();
-    expect(mocks.queueDurableWritesBatch).toHaveBeenCalledWith("u-1", entries);
+    expect(batchLog()).toHaveLength(0);
+    expect(queueMocks.queueDurableWritesBatch).toHaveBeenCalledOnce();
+    expect(queueMocks.queueDurableWritesBatch).toHaveBeenCalledWith(
+      "u-1",
+      entries
+    );
     expect(onProgress).toHaveBeenCalledWith({ written: 12, total: 12 });
   });
 
   it("falls back to queueDurableWritesBatch on transient network errors mid-import", async () => {
-    mocks.batchCommit
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(
-        Object.assign(new Error("unavailable"), { code: "unavailable" })
-      );
-
     const entries = makeEntries(BULK_IMPORT_BATCH_SIZE + 25);
-    await commitBulkImportWrites("u-1", entries);
 
-    expect(mocks.batchCommit).toHaveBeenCalledTimes(2);
-    expect(mocks.queueDurableWritesBatch).toHaveBeenCalledOnce();
-    expect(mocks.queueDurableWritesBatch).toHaveBeenCalledWith(
+    await commitBulkImportWrites("u-1", entries, ({ written }) => {
+      if (written === BULK_IMPORT_BATCH_SIZE) {
+        failNextFirestore("commit", { code: "unavailable" });
+      }
+    });
+
+    expect(batchLog()).toHaveLength(1);
+    expect(queueMocks.queueDurableWritesBatch).toHaveBeenCalledOnce();
+    expect(queueMocks.queueDurableWritesBatch).toHaveBeenCalledWith(
       "u-1",
       entries.slice(BULK_IMPORT_BATCH_SIZE)
     );
   });
 
   it("rethrows permanent Firestore errors such as permission-denied", async () => {
-    mocks.batchCommit.mockRejectedValueOnce(
-      Object.assign(new Error("Missing or insufficient permissions"), {
-        code: "permission-denied",
-      })
-    );
+    failNextFirestore("commit", { code: "permission-denied" });
 
     await expect(commitBulkImportWrites("u-1", makeEntries(3))).rejects.toThrow(
-      /permissions/i
+      /permission-denied/i
     );
-    expect(mocks.queueDurableWritesBatch).not.toHaveBeenCalled();
+    expect(queueMocks.queueDurableWritesBatch).not.toHaveBeenCalled();
   });
 });
