@@ -791,20 +791,9 @@ async function persistParsedRun(
 }
 
 /**
- * Parses a GPX file and queues it durably into `users/{uid}/runs/{importId}`
+ * Parses a GPX or TCX run file and queues it durably into `users/{uid}/runs`
  * using the canonical `runDocument` builder so History, RunDetail, splits,
  * maps, HR zones, and exports all read it seamlessly.
- */
-export async function importGpxRun(
-  uid: string,
-  xml: string,
-  options: ParseGpxOptions = {}
-): Promise<ImportedGpxRunSummary> {
-  return persistParsedRun(uid, parseGpxRun(xml, options));
-}
-
-/**
- * Parses a GPX or TCX run file and queues it durably into `users/{uid}/runs`.
  */
 export async function importRunFile(
   uid: string,

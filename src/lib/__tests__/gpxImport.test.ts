@@ -13,7 +13,6 @@ vi.mock("@/lib/offlineQueue", () => ({
 
 import {
   GpxImportError,
-  importGpxRun,
   importRunFile,
   parseGpxRun,
   parseRunFile,
@@ -205,10 +204,10 @@ describe("parseGpxRun", () => {
   });
 });
 
-describe("importGpxRun", () => {
+describe("importRunFile (GPX)", () => {
   it("writes a canonical run document to users/{uid}/runs/{importId} and flushes", async () => {
     const xml = buildSampleGpx({ name: "Strava Tempo" });
-    const summary = await importGpxRun("u-123", xml, {
+    const summary = await importRunFile("u-123", xml, {
       weightKg: 72,
       maxHr: 192,
     });
