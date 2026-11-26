@@ -54,29 +54,31 @@ export default function HybridLoadCard({
 
   return (
     <Card size="compact" tone="flat" className="space-y-3">
-      <div className="flex items-baseline justify-between gap-2 text-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-sm">
         <span className="font-medium text-foreground">Fitness and form</span>
         <span className="text-xs text-muted-foreground">{statusLabel}</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">Fitness</p>
-          <p className="text-lg font-bold font-figure tabular-nums text-foreground">
-            {load.fitness.toFixed(1)}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Fatigue</p>
-          <p className="text-lg font-bold font-figure tabular-nums text-foreground">
-            {load.fatigue.toFixed(1)}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Form</p>
-          <p className="text-lg font-bold font-figure tabular-nums text-foreground">
-            {formatSigned(load.form)}
-          </p>
+      <div className="@container">
+        <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Fitness</p>
+            <p className="text-lg font-bold font-figure tabular-nums text-foreground">
+              {load.fitness.toFixed(1)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Fatigue</p>
+            <p className="text-lg font-bold font-figure tabular-nums text-foreground">
+              {load.fatigue.toFixed(1)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Form</p>
+            <p className="text-lg font-bold font-figure tabular-nums text-foreground">
+              {formatSigned(load.form)}
+            </p>
+          </div>
         </div>
       </div>
 

@@ -66,5 +66,9 @@ describe("HybridLoadCard", () => {
     expect(
       screen.getByText(/Combined lifting and running/)
     ).toBeInTheDocument();
+
+    const grid = screen.getByText("Fitness").parentElement?.parentElement;
+    expect(grid?.className).toContain("@max-[17em]:grid-cols-1");
+    expect(grid?.parentElement?.className).toContain("@container");
   });
 });
