@@ -29,6 +29,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
+import { buildProgressionPreview } from "@/features/program/progressionPreview";
 import { getFormArtCutout } from "@/lib/formArtCutouts";
 import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
@@ -735,6 +736,39 @@ export default function SessionCompleteScreen({
               </div>
             </Card>
           )}
+
+          {(() => {
+            if (!saved || !planWeek || sessionVariant === "easier_today")
+              return null;
+            const progressionItems = buildProgressionPreview(
+              exercises,
+              setLogs,
+              liftUnit
+            );
+            if (progressionItems.length === 0) return null;
+            return (
+              <Card size="compact" tone="flat" className="space-y-2">
+                <SectionHeading size="compact" as="h3">
+                  Next session
+                </SectionHeading>
+                <ul className="space-y-2">
+                  {progressionItems.map((item) => (
+                    <li
+                      key={item.exerciseId}
+                      className="flex items-baseline justify-between gap-3 text-sm"
+                    >
+                      <span className="min-w-0 truncate text-foreground">
+                        {item.name}
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                        {item.detail}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            );
+          })()}
 
           <details className="group space-y-4">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">

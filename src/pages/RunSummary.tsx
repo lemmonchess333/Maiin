@@ -163,7 +163,7 @@ import {
   WifiOff,
   CheckCircle,
   Trophy,
-  ChevronLeft,
+  ArrowLeft,
   AlertCircle,
   Pencil,
   Share,
@@ -1748,7 +1748,7 @@ export default function RunSummary() {
           variant="secondary"
           className="bg-background/85 backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-background!"
           onClick={() => navigate(-1)}
-          icon={<ChevronLeft className="size-5" aria-hidden="true" />}
+          icon={<ArrowLeft className="size-4" aria-hidden="true" />}
         />
       </div>
 
