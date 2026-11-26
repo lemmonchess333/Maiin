@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
+import { cn } from "@/lib/utils";
 import { WifiOff, Check, CloudUpload } from "lucide-react";
 import {
   FoodTabIcon,
@@ -182,7 +183,7 @@ export default function Layout() {
 
   return (
     <div
-      className="min-h-screen transition-colors"
+      className={cn("min-h-screen transition-colors", !hideNav && "lg:pl-56")}
       style={{
         paddingTop: "var(--safe-top)",
         paddingBottom: hideNav
@@ -321,7 +322,7 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md md:max-w-lg mx-auto px-[16px] py-6 sm:py-7"
+        className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto px-[16px] py-6 sm:py-7 lg:pb-10"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >

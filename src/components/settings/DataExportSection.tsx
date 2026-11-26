@@ -4,6 +4,7 @@ import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
 import {
   exportWorkoutsCSV,
+  exportRunsCSV,
   exportMealsCSV,
   exportBodyweightCSV,
   csvFile,
@@ -28,6 +29,7 @@ interface DataExportSectionProps {
 
 const EXPORTS = [
   { label: "Export workouts", key: "workouts", name: "Workouts" },
+  { label: "Export runs", key: "runs", name: "Runs" },
   { label: "Export meals", key: "meals", name: "Meals" },
   { label: "Export bodyweight", key: "bodyweight", name: "Bodyweight" },
 ] as const;
@@ -85,6 +87,7 @@ export default function DataExportSection({
             try {
               let csv: string;
               if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
+              else if (key === "runs") csv = await exportRunsCSV(user.uid);
               else if (key === "meals") csv = await exportMealsCSV(user.uid);
               else csv = await exportBodyweightCSV(user.uid);
               await deliver(

@@ -35,9 +35,12 @@ export default function BottomNavigation({
     <nav
       aria-label="Main navigation"
       data-tab-bar
-      className="bottom-nav-frame fixed bottom-0 left-0 right-0 z-30"
+      className="bottom-nav-frame fixed bottom-0 left-0 right-0 z-30 lg:top-0 lg:right-auto lg:w-56 lg:border-r lg:border-border/60 lg:bg-card/85"
     >
       <>
+        <div className="hidden lg:flex items-center px-5 pt-6 pb-4">
+          <span className="ds-wordmark text-foreground">Tropos</span>
+        </div>
         {/* The wrapping <nav aria-label="Main navigation"> on the
         parent element already gives this surface the correct
         semantics. The Codex PR added role="tablist" but a real
@@ -46,7 +49,7 @@ export default function BottomNavigation({
         page-navigation pattern. Removing the role rather than
         implementing a half-tablist that would confuse screen
         readers. */}
-        <div className="bottom-nav-frost max-w-md md:max-w-lg mx-auto flex items-stretch rounded-full p-[4px]">
+        <div className="bottom-nav-frost max-w-md md:max-w-lg mx-auto flex items-stretch rounded-full p-[4px] lg:max-w-none lg:mx-0 lg:flex-col lg:gap-1 lg:rounded-none lg:px-3 lg:py-2">
           {tabs.map((tab) => {
             const hasDot = tab.to === "/social" && socialNewActivity;
             const Icon = tab.icon;
@@ -101,7 +104,7 @@ export default function BottomNavigation({
                   // doesn't push siblings off-screen. Active state comes
                   // from activeTabForPath; Link also preserves aria-current
                   // on owned routes such as /user/:uid outside /social.
-                  "bottom-nav-link relative flex-1 min-w-0 min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-full py-1.5 motion-safe:transition-colors",
+                  "bottom-nav-link relative flex-1 min-w-0 min-h-[54px] flex flex-col items-center justify-center gap-1 rounded-full py-1.5 motion-safe:transition-colors lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:min-h-[44px] lg:rounded-xl lg:px-3.5 lg:py-2.5",
                   isActive
                     ? "bottom-nav-link--active"
                     : "text-foreground hover:bg-muted/45"
@@ -116,7 +119,7 @@ export default function BottomNavigation({
                         main thread just as the next page mounted
                         (DESIGN_GUIDE §14h). */}
                     {isActive && (
-                      <div className="bottom-nav-pill absolute inset-0 rounded-full ring-1 ring-inset ring-primary/15 z-0" />
+                      <div className="bottom-nav-pill absolute inset-0 rounded-full lg:rounded-xl ring-1 ring-inset ring-primary/15 z-0" />
                     )}
                     <div className="bottom-nav-icon relative z-10">
                       {/* DS3's own tab icons: an outline, and a
@@ -139,7 +142,7 @@ export default function BottomNavigation({
                     </div>
                     <span
                       className={cn(
-                        "bottom-nav-label relative z-10 max-w-full",
+                        "bottom-nav-label relative z-10 max-w-full lg:text-sm",
                         isActive ? "font-semibold" : "font-medium"
                       )}
                     >

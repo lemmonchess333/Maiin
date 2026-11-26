@@ -22,10 +22,12 @@ import type { User } from "firebase/auth";
 import { isTitleCase } from "@/lib/__tests__/copyCasing.test";
 
 const exportWorkoutsCSV = vi.fn().mockResolvedValue("w-csv");
+const exportRunsCSV = vi.fn().mockResolvedValue("r-csv");
 const exportMealsCSV = vi.fn().mockResolvedValue("m-csv");
 const exportBodyweightCSV = vi.fn().mockResolvedValue("b-csv");
 vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: (...a: unknown[]) => exportWorkoutsCSV(...a),
+  exportRunsCSV: (...a: unknown[]) => exportRunsCSV(...a),
   exportMealsCSV: (...a: unknown[]) => exportMealsCSV(...a),
   exportBodyweightCSV: (...a: unknown[]) => exportBodyweightCSV(...a),
   csvFile: (content: string, name: string) =>
@@ -108,10 +110,11 @@ describe("DataExportSection — email choices (App1 Q55)", () => {
 });
 
 describe("DataExportSection", () => {
-  it("offers all three exports", () => {
+  it("offers all four exports", () => {
     render(<DataExportSection user={USER} />);
     for (const label of [
       /export workouts/i,
+      /export runs/i,
       /export meals/i,
       /export bodyweight/i,
     ]) {
@@ -149,12 +152,27 @@ describe("DataExportSection", () => {
     expect(file.name).toMatch(/^tropos-workouts-\d{4}-\d{2}-\d{2}\.csv$/);
     expect(file.type).toBe("text/csv");
     expect(await file.text()).toBe("w-csv");
+    expect(exportRunsCSV).not.toHaveBeenCalled();
     expect(exportMealsCSV).not.toHaveBeenCalled();
     expect(exportBodyweightCSV).not.toHaveBeenCalled();
   });
 
+  it("routes Export runs to exportRunsCSV", async () => {
+    render(<DataExportSection user={USER} />);
+    fireEvent.click(screen.getByRole("button", { name: /export runs/i }));
+
+    await waitFor(() => expect(exportRunsCSV).toHaveBeenCalledWith("u1"));
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    const file = sharedFile();
+    expect(file.name).toMatch(/^tropos-runs-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(await file.text()).toBe("r-csv");
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("Runs exported")
+    );
+  });
+
   it("routes each button to its OWN exporter", async () => {
-    // Three near-identical buttons built from one map — a copy-paste slip
+    // Near-identical buttons built from one map — a copy-paste slip
     // that exported meals under the bodyweight label would be invisible.
     render(<DataExportSection user={USER} />);
     fireEvent.click(screen.getByRole("button", { name: /export bodyweight/i }));

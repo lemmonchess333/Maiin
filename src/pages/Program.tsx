@@ -66,6 +66,8 @@ import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import type { RaceDistance } from "@/features/program/programTypes";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import { buildWeekPlanIcs, icsFile } from "@/lib/planCalendarIcs";
+import { shareFile } from "@/lib/shareFile";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   CalendarRange,
@@ -1254,6 +1256,30 @@ function ProgramInner() {
                     </span>
                   </span>
                 </button>
+                {(profile?.weekSchedule?.length ?? 0) > 0 && (
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={async () => {
+                      setShowOverflow(false);
+                      haptic();
+                      const ics = buildWeekPlanIcs({
+                        schedule: profile?.weekSchedule ?? [],
+                        workouts: programState?.workouts ?? [],
+                        referenceDate: parseLocalDate(todayKey),
+                      });
+                      const file = icsFile(ics, `tropos-week-${todayKey}.ics`);
+                      const outcome = await shareFile(file);
+                      if (outcome === "shared" || outcome === "downloaded") {
+                        toast.success("Week exported to calendar");
+                      } else if (outcome === "failed") {
+                        toast.error("Couldn’t export calendar. Try again.");
+                      }
+                    }}
+                  >
+                    Export week to calendar
+                  </Button>
+                )}
               </div>
             </motion.div>
           </>
