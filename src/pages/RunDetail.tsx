@@ -527,7 +527,7 @@ export default function RunDetail() {
                 className="mt-0.5 shrink-0 text-warning-strong"
                 aria-hidden="true"
               />
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
                   {describeRouteConfidence(
                     (run.routeQuality as RouteQuality).confidence
@@ -549,7 +549,7 @@ export default function RunDetail() {
               className="mt-0.5 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">
                 Saved despite invalid metrics
               </p>

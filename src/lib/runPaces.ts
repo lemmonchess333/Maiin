@@ -14,13 +14,15 @@
  * translation downstream). Distances in **metres**, times in **seconds**.
  */
 
+import type { RoadRaceDistance } from "@/features/program/programTypes";
+
 export type RunIntensity =
   "easy" | "marathon" | "threshold" | "interval" | "repetition";
 
 /** [faster, slower] sec/km — a band, like Runna shows. */
 export type PaceBand = [number, number];
 
-export type RaceDistanceKey = "5k" | "10k" | "half" | "marathon";
+export type RaceDistanceKey = RoadRaceDistance;
 
 export interface PaceTable {
   vdot: number;

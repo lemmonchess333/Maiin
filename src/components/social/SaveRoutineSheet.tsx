@@ -164,7 +164,7 @@ export default function SaveRoutineSheet({
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Name input */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label
             htmlFor="routine-name"
             className="text-xs font-medium text-muted-foreground"
@@ -185,11 +185,11 @@ export default function SaveRoutineSheet({
                 Capped at 6 visible rows so the sheet stays compact;
                 a longer routine still saves all exercises, just shows
                 "+ N more" below the visible six. */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
             Exercises ({previewExercises.length})
           </p>
-          <div className="rounded-xl bg-muted/40 p-3 space-y-1.5">
+          <div className="rounded-xl bg-muted/40 p-3 space-y-2">
             {previewExercises.slice(0, 6).map((ex, i) => (
               <div
                 key={i}
