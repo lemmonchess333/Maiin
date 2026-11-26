@@ -1521,7 +1521,13 @@ export default function History() {
                     {/* Predictions are a today-snapshot (see the card's
                         carve-out footnote), so an empty WINDOW doesn't
                         hide them — only an empty lifetime does. */}
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                   </>
                 ) : runs.length === 0 ? (
                   /* The page's empty start keeps its domain's colour in the
@@ -1633,7 +1639,13 @@ export default function History() {
                         comparedWith={previousRangeLabel(timeRange)}
                       />
                     </SectionErrorBoundary>
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                     <ShoeMileageSection />
                   </>
                 )}
@@ -1711,6 +1723,7 @@ export default function History() {
                     <SectionErrorBoundary sectionName="muscle-volume">
                       <MuscleVolumeCard
                         rows={liftingInsight.muscles}
+                        fractionalRows={liftingInsight.musclesFractional}
                         weeks={liftingInsight.muscleWeeks}
                         focus={focusLabel(liftGoal ?? "general")}
                       />

@@ -334,7 +334,9 @@ function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
   } else if (fitness.vdot && fitness.vdot > 0) {
     vdot = fitness.vdot;
   }
-  return Number.isFinite(vdot) && vdot > 0 && vdot <= MAX_PLAUSIBLE_VDOT ? { vdot, benchmark } : null;
+  return Number.isFinite(vdot) && vdot > 0 && vdot <= MAX_PLAUSIBLE_VDOT
+    ? { vdot, benchmark }
+    : null;
 }
 
 /** The concrete effort Riegel projections run off: the real benchmark when
@@ -368,6 +370,44 @@ export function predictedRaceTimesFromFitness(
     out[key] = Math.round(predictRaceTimeS(ref, RACE_DISTANCES_M[key]));
   }
   return out;
+}
+
+/**
+ * Mileage-adjusted marathon durability range (Vickers & Vertosick 2016,
+ * Model 1). Uses the runner's recent weekly volume when available, capping the
+ * slow bound at +12% over the Riegel prediction and suppressing gaps under
+ * 2 minutes. When recent weekly mileage is unavailable, falls back to +5%
+ * for runners under VDOT 55.
+ */
+export function marathonDurabilityRange(
+  fitness: RunFitnessInput | null | undefined,
+  recentWeeklyKm?: number | null
+): { fastS: number; slowS: number } | null {
+  const resolved = resolveFitnessVdot(fitness);
+  if (!resolved) return null;
+  const times = predictedRaceTimesFromFitness(fitness);
+  if (!times) return null;
+
+  const fastS = times.marathon;
+  if (
+    typeof recentWeeklyKm === "number" &&
+    Number.isFinite(recentWeeklyKm) &&
+    recentWeeklyKm > 0
+  ) {
+    const halfS = times.half;
+    const riegelSpeed = 42195 / (halfS * Math.pow(42195 / 21097.5, 1.07));
+    const speed =
+      0.16018617 +
+      0.83076202 * riegelSpeed +
+      0.06423826 * (recentWeeklyKm / 1.609 / 10);
+    if (!(speed > 0)) return null;
+    const slowS = Math.min(Math.round(42195 / speed), Math.round(fastS * 1.12));
+    return slowS - fastS >= 120 ? { fastS, slowS } : null;
+  }
+
+  if (resolved.vdot >= 55) return null;
+  const slowS = Math.round(fastS * 1.05);
+  return slowS - fastS >= 120 ? { fastS, slowS } : null;
 }
 
 /** Approximate the 5K time a VDOT predicts (for race-pace synthesis when only
@@ -639,6 +679,9 @@ export interface BenchmarkEffort {
   /** Run27 (14): run on a hot or extreme day (`RunConfig.hotDay`), so it
    *  may raise a benchmark and never lowers one (`heatHoldsBenchmark`). */
   hotDay?: boolean;
+  /** Steep climb (>= 15 m/km gain), so it may raise a benchmark and never
+   *  lowers one (`heatHoldsBenchmark`). */
+  hillyRun?: boolean;
 }
 
 /** The VDOT an effort implies: a race by its finish, a tempo by its pace. */
@@ -675,16 +718,20 @@ export function bestEffort(
  * (Ely 2007; El Helou 2012; running-evidence.md §4.12), so a hot run under
  * the benchmark says the day was hot, not that the runner is less fit,
  * and the benchmark stays. A hot run over it still raises it: it was run
- * with the heat against it. Every reader of the best effort asks this
- * (the pace offer, a runner's first paces, the benchmark the app derives),
- * so a hot run lowers none of them. With no benchmark (`currentVdot` 0)
- * there is nothing to lower.
+ * with the heat against it. Steeply hilly efforts (`hillyRun`) are held the
+ * same way so climbs never lower VDOT while raw pace remains benchmark truth.
+ * Every reader of the best effort asks this (the pace offer, a runner's first
+ * paces, the benchmark the app derives), so a hot or hilly run lowers none of
+ * them. With no benchmark (`currentVdot` 0) there is nothing to lower.
  */
 export function heatHoldsBenchmark(
   best: { effort: BenchmarkEffort; vdot: number },
   currentVdot: number
 ): boolean {
-  return best.effort.hotDay === true && best.vdot < currentVdot;
+  return (
+    (best.effort.hotDay === true || best.effort.hillyRun === true) &&
+    best.vdot < currentVdot
+  );
 }
 
 /** The VDOT a stored benchmark stands at: its own, else its race's; 0 with

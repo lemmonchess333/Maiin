@@ -217,6 +217,8 @@ export interface LiftingPageFigures {
   muscleWeeks: number;
   /** Sets a week per muscle against the bands for the person's focus. */
   muscles: MuscleWeekVolume[];
+  /** Same tally with synergists weighted at 0.5× (optional view toggle). */
+  musclesFractional: MuscleWeekVolume[];
   /** The usual week's kilograms, which the volume bars stand against. */
   averageKg: number | null;
 }
@@ -258,6 +260,12 @@ export function liftingPageFigures(
       weekKeys,
       primaryGoal,
       targets,
+    }),
+    musclesFractional: performedWeeklyVolume(completedWorkouts, {
+      weekKeys,
+      primaryGoal,
+      targets,
+      secondaryWeight: 0.5,
     }),
     averageKg: usualBinAmount(bins, (b) => b.volumeKg, {
       sinceKey,
@@ -525,15 +533,13 @@ function recordRows<R extends RecordRun>(
       ? rankedEfforts(topThreeFrom, effort.meters)
           .filter((ranked) => ranked.run !== effort.run)
           .slice(0, 2)
-          .map(
-            (ranked, index): RunnerUpRow => ({
-              place: index === 0 ? 2 : 3,
-              label: EFFORT_NAMES[effort.meters] ?? "",
-              value: finishTimeLabel(ranked.seconds),
-              date: day(ranked.run),
-              runId: ranked.run.id,
-            })
-          )
+          .map((ranked, index): RunnerUpRow => ({
+            place: index === 0 ? 2 : 3,
+            label: EFFORT_NAMES[effort.meters] ?? "",
+            value: finishTimeLabel(ranked.seconds),
+            date: day(ranked.run),
+            runId: ranked.run.id,
+          }))
       : [];
     if (runnersUp.length > 0) rows[rows.length - 1].runnersUp = runnersUp;
   }

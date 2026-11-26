@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
+  marathonDurabilityRange,
   predictedRaceTimesFromFitness,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
@@ -56,11 +57,16 @@ const SOURCE_LABEL: Record<string, string> = {
   estimate: "estimated",
 };
 
-export default function RacePredictionsCard() {
+export default function RacePredictionsCard({
+  recentWeeklyKm = null,
+}: {
+  recentWeeklyKm?: number | null;
+} = {}) {
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   const fitness = profile?.runFitness ?? null;
   const times = predictedRaceTimesFromFitness(fitness);
+  const durability = marathonDurabilityRange(fitness, recentWeeklyKm);
 
   if (!times) {
     return (
@@ -107,11 +113,11 @@ export default function RacePredictionsCard() {
                 {paceMinSec(Math.round(times[key] / km), unit)}{" "}
                 {paceUnitLabel(unit)}
               </p>
-              {key === "marathon" && (!fitness?.vdot || fitness.vdot < 55) && (
+              {key === "marathon" && durability && (
                 <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
-                    Durability range: {finishTimeLabel(times[key])} to{" "}
-                  {finishTimeLabel(Math.round(times[key] * 1.05))}
-                  </p>
+                  Durability range: {finishTimeLabel(durability.fastS)} to{" "}
+                  {finishTimeLabel(durability.slowS)}
+                </p>
               )}
             </div>
           ))}
