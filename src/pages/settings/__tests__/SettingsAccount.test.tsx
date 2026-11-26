@@ -104,7 +104,7 @@ describe("SettingsAccount composition", () => {
     // and the one that silently removes a user right.
     renderPage();
     expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
-      4
+      5
     );
     expect(
       screen.getByRole("button", { name: /recently deleted meals/i })

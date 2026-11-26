@@ -65,11 +65,7 @@ import { blockOfferBlockedByRace } from "@/features/program/represcribe";
 import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import type { RaceDistance } from "@/features/program/programTypes";
-import {
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { buildWeekPlanIcs, icsFile } from "@/lib/planCalendarIcs";
 import { shareFile } from "@/lib/shareFile";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
@@ -1270,11 +1266,9 @@ function ProgramInner() {
                       const ics = buildWeekPlanIcs({
                         schedule: profile?.weekSchedule ?? [],
                         workouts: programState?.workouts ?? [],
+                        referenceDate: parseLocalDate(todayKey),
                       });
-                      const file = icsFile(
-                        ics,
-                        `tropos-week-${localDateString()}.ics`
-                      );
+                      const file = icsFile(ics, `tropos-week-${todayKey}.ics`);
                       const outcome = await shareFile(file);
                       if (outcome === "shared" || outcome === "downloaded") {
                         toast.success("Week exported to calendar");
