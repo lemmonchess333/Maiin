@@ -31,7 +31,7 @@ export default function DataImportSection({
   maxHeartRate,
   age,
 }: DataImportSectionProps) {
-  const [importingGpx, setImportingGpx] = useState(false);
+  const [gpxStatus, setGpxStatus] = useState<string | null>(null);
   const [csvStatus, setCsvStatus] = useState<string | null>(null);
   const [weightStatus, setWeightStatus] = useState<string | null>(null);
   const [nutritionStatus, setNutritionStatus] = useState<string | null>(null);
@@ -51,46 +51,93 @@ export default function DataImportSection({
   const handleGpxChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
-    // Reset so picking the same file again still fires onChange.
+    const files = Array.from(event.target.files ?? []);
+    // Reset so picking the same file(s) again still fires onChange.
     event.target.value = "";
-    if (!file || !user) return;
+    if (files.length === 0 || !user) return;
 
-    if (file.size > MAX_GPX_BYTES) {
-      toast.error("This file is too large to import.");
+    if (files.length === 1) {
+      const [file] = files;
+      if (file.size > MAX_GPX_BYTES) {
+        toast.error("This file is too large to import.");
+        return;
+      }
+
+      setGpxStatus("Importing…");
+      try {
+        const xml = await file.text();
+        const [{ GpxImportError, importRunFile }, { distanceLabel2 }] =
+          await Promise.all([
+            import("@/lib/gpxImport"),
+            import("@/lib/runLabels"),
+          ]);
+        try {
+          const result = await importRunFile(user.uid, xml, {
+            weightKg,
+            maxHr: maxHeartRate ?? undefined,
+            age,
+          });
+          toast.success(
+            `Imported ${distanceLabel2(result.distance, distanceUnit)} run`
+          );
+        } catch (err) {
+          if (err instanceof GpxImportError) {
+            toast.error(err.message);
+          } else {
+            toast.error("Couldn’t import this run file. Try again.");
+            logger.error(err);
+          }
+        }
+      } catch (err) {
+        toast.error("Couldn’t read this file. Try again.");
+        logger.error(err);
+      } finally {
+        setGpxStatus(null);
+      }
       return;
     }
 
-    setImportingGpx(true);
+    setGpxStatus(formatProgress("Importing", 0, files.length));
     try {
-      const xml = await file.text();
-      const [{ GpxImportError, importRunFile }, { distanceLabel2 }] =
-        await Promise.all([
-          import("@/lib/gpxImport"),
-          import("@/lib/runLabels"),
-        ]);
-      try {
-        const result = await importRunFile(user.uid, xml, {
-          weightKg,
-          maxHr: maxHeartRate ?? undefined,
-          age,
-        });
-        toast.success(
-          `Imported ${distanceLabel2(result.distance, distanceUnit)} run`
-        );
-      } catch (err) {
-        if (err instanceof GpxImportError) {
-          toast.error(err.message);
-        } else {
-          toast.error("Couldn’t import this run file. Try again.");
-          logger.error(err);
+      const { GpxImportError, importRunFile } = await import("@/lib/gpxImport");
+      let imported = 0;
+      let skipped = 0;
+
+      for (let i = 0; i < files.length; i += 1) {
+        const file = files[i];
+        setGpxStatus(formatProgress("Importing", i + 1, files.length));
+        if (file.size > MAX_GPX_BYTES) {
+          skipped += 1;
+          continue;
+        }
+        try {
+          const xml = await file.text();
+          await importRunFile(user.uid, xml, {
+            weightKg,
+            maxHr: maxHeartRate ?? undefined,
+            age,
+          });
+          imported += 1;
+        } catch (err) {
+          skipped += 1;
+          if (!(err instanceof GpxImportError)) {
+            logger.error(err);
+          }
         }
       }
+
+      if (imported === 0) {
+        toast.error("Couldn’t import any of these run files.");
+      } else {
+        const unit = imported === 1 ? "run" : "runs";
+        const suffix = skipped > 0 ? ` (${skipped} skipped)` : "";
+        toast.success(`Imported ${imported} ${unit}${suffix}`);
+      }
     } catch (err) {
-      toast.error("Couldn’t read this file. Try again.");
+      toast.error("Couldn’t import these run files. Try again.");
       logger.error(err);
     } finally {
-      setImportingGpx(false);
+      setGpxStatus(null);
     }
   };
 
@@ -263,6 +310,7 @@ export default function DataImportSection({
       <input
         ref={gpxInputRef}
         type="file"
+        multiple
         data-import-kind="gpx"
         accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml,application/xml,text/xml"
         className="hidden"
@@ -312,11 +360,11 @@ export default function DataImportSection({
       />
       <SettingsRow
         icon={Upload}
-        label="Import GPX or TCX run"
-        description="Add runs from Strava, Garmin, Coros or other apps"
-        value={importingGpx ? "Importing…" : undefined}
+        label="Import GPX or TCX runs"
+        description="Add one or more runs from Strava, Garmin, Coros or other apps"
+        value={gpxStatus ?? undefined}
         chevron={false}
-        disabled={importingGpx || !user}
+        disabled={gpxStatus !== null || !user}
         onClick={() => gpxInputRef.current?.click()}
       />
       <SettingsRow
