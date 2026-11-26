@@ -189,6 +189,111 @@ describe("DataImportSection", () => {
     expect(mocks.importRunFile).not.toHaveBeenCalled();
   });
 
+  it("imports multiple selected GPX/TCX files in one batch", async () => {
+    mocks.importRunFile.mockResolvedValue({
+      runId: "gpx-1",
+      name: "Run",
+      distance: 5000,
+      duration: 1500,
+      date: "2026-10-12",
+      hasHeartRate: false,
+    });
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="gpx"]'
+    ) as HTMLInputElement;
+    expect(input.multiple).toBe(true);
+
+    const files = [
+      new File(["<gpx>1</gpx>"], "a.gpx", { type: "application/gpx+xml" }),
+      new File(["<gpx>2</gpx>"], "b.tcx", { type: "application/xml" }),
+      new File(["<gpx>3</gpx>"], "c.gpx", { type: "application/gpx+xml" }),
+    ];
+    fireEvent.change(input, { target: { files } });
+
+    await waitFor(() => expect(mocks.importRunFile).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Imported 3 runs")
+    );
+  });
+
+  it("skips invalid or oversized files in a multi-file batch and reports the summary", async () => {
+    mocks.importRunFile
+      .mockResolvedValueOnce({
+        runId: "gpx-1",
+        name: "Run 1",
+        distance: 5000,
+        duration: 1500,
+        date: "2026-10-12",
+        hasHeartRate: false,
+      })
+      .mockRejectedValueOnce(
+        new GpxImportError("GPX_INVALID_XML", "Invalid GPX")
+      )
+      .mockResolvedValueOnce({
+        runId: "gpx-2",
+        name: "Run 2",
+        distance: 8000,
+        duration: 2400,
+        date: "2026-10-13",
+        hasHeartRate: false,
+      });
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="gpx"]'
+    ) as HTMLInputElement;
+    const huge = new File(["x"], "huge.gpx", { type: "application/gpx+xml" });
+    Object.defineProperty(huge, "size", { value: 20 * 1024 * 1024 });
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["<gpx>1</gpx>"], "ok1.gpx", {
+            type: "application/gpx+xml",
+          }),
+          new File(["bad"], "bad.gpx", { type: "application/gpx+xml" }),
+          huge,
+          new File(["<gpx>2</gpx>"], "ok2.tcx", { type: "application/xml" }),
+        ],
+      },
+    });
+
+    await waitFor(() => expect(mocks.importRunFile).toHaveBeenCalledTimes(3));
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith(
+        "Imported 2 runs (2 skipped)"
+      )
+    );
+  });
+
+  it("shows an error toast when every file in a multi-file run batch fails", async () => {
+    mocks.importRunFile.mockRejectedValue(
+      new GpxImportError("GPX_INVALID_XML", "Invalid GPX")
+    );
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="gpx"]'
+    ) as HTMLInputElement;
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["bad1"], "bad1.gpx", { type: "application/gpx+xml" }),
+          new File(["bad2"], "bad2.tcx", { type: "application/xml" }),
+        ],
+      },
+    });
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Couldn’t import any of these run files."
+      )
+    );
+  });
+
   it("imports a selected lifting CSV file and reports workout count", async () => {
     mocks.importWorkoutsCsv.mockResolvedValue({
       source: "hevy",
