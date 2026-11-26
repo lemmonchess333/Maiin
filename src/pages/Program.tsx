@@ -68,7 +68,9 @@ import type { RaceDistance } from "@/features/program/programTypes";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { buildWeekPlanIcs, icsFile } from "@/lib/planCalendarIcs";
 import { shareFile } from "@/lib/shareFile";
-import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
+const ScheduleLayoutSheet = lazyRetry(
+  () => import("@/components/program/ScheduleLayoutSheet")
+);
 import {
   CalendarRange,
   Dumbbell,
@@ -1077,15 +1079,19 @@ function ProgramInner() {
           hook) only mounts while the sheet is open. That's the
           hydration guarantee: each open is a fresh hook mount that
           re-reads the current profile. */}
-      <ScheduleLayoutSheet
-        open={editLayoutOpen}
-        onClose={() => setEditLayoutOpen(false)}
-        profile={profile}
-        programState={programState}
-        updateProfile={updateProfile}
-        refreshRunSchedule={refreshRunSchedule}
-        regenerateProgram={regenerateProgram}
-      />
+      {editLayoutOpen && (
+        <Suspense fallback={null}>
+          <ScheduleLayoutSheet
+            open={editLayoutOpen}
+            onClose={() => setEditLayoutOpen(false)}
+            profile={profile}
+            programState={programState}
+            updateProfile={updateProfile}
+            refreshRunSchedule={refreshRunSchedule}
+            regenerateProgram={regenerateProgram}
+          />
+        </Suspense>
+      )}
 
       {/* Overflow Menu Sheet */}
       <AnimatePresence>

@@ -474,7 +474,7 @@ describe("Food — copy an entry to another day", () => {
     );
     openRow(/^Chicken & rice .*, edit$/);
     fireEvent.click(
-      screen.getByRole("button", { name: "Copy to another day" })
+      await screen.findByRole("button", { name: "Copy to another day" })
     );
     fireEvent.click(
       await screen.findByRole("button", { name: "Log to Today" })
@@ -502,7 +502,7 @@ describe("Food — one food of an entry of several", () => {
     api.meals = [dish()];
     renderFood();
     openRow(/^Chicken, Rice, Oil .*, edit$/);
-    fireEvent.change(screen.getByLabelText("Grams of Chicken"), {
+    fireEvent.change(await screen.findByLabelText("Grams of Chicken"), {
       target: { value: "150" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Remove Oil" }));
