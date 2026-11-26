@@ -61,8 +61,12 @@ vi.mock("@/hooks/useAccountDeletionStatus", () => ({
 vi.mock("@/lib/settingsAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: vi.fn().mockResolvedValue(""),
+  exportRunsCSV: vi.fn().mockResolvedValue(""),
   exportMealsCSV: vi.fn().mockResolvedValue(""),
   exportBodyweightCSV: vi.fn().mockResolvedValue(""),
+  exportAllDataJSON: vi.fn().mockResolvedValue("{}"),
+  csvFile: vi.fn(),
+  jsonFile: vi.fn(),
   downloadCSV: vi.fn(),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -82,8 +86,10 @@ function renderPage(duringSetup = false) {
 
 const EXPORTS = [
   /^export workouts/i,
+  /^export runs/i,
   /^export meals/i,
   /^export bodyweight/i,
+  /^export all data/i,
   // The answers to the two emails a person can choose (App1 Q55).
   /^export email choices/i,
 ];
@@ -104,7 +110,7 @@ describe("SettingsAccount composition", () => {
     // and the one that silently removes a user right.
     renderPage();
     expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
-      5
+      6
     );
     expect(
       screen.getByRole("button", { name: /recently deleted meals/i })
