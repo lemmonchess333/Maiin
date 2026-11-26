@@ -150,7 +150,7 @@ export default function BottomNavigation({
                     </span>
                     <kbd
                       aria-hidden="true"
-                      className="relative z-10 ml-auto hidden lg:inline-flex text-xs font-mono tabular-nums text-muted-foreground/70"
+                      className="relative z-10 ml-auto hidden lg:inline-flex text-xs font-mono tabular-nums text-muted-foreground"
                     >
                       {tabIndex + 1}
                     </kbd>
