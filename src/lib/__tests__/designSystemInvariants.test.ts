@@ -726,7 +726,8 @@ describe("DS ratchets — surface-level drift", () => {
      outright; the rest of the tree is ratcheted. */
   // 56 → 33: burned down 23 half-step stacks across 15 components/pages to
   // whole-step space-y-1 / space-y-2.
-  const HALF_STEP_STACK_BASELINE = 33;
+  // 33 → 12: burned down 21 more unconflicted half-step stacks across 18 files.
+  const HALF_STEP_STACK_BASELINE = 12;
   it("half-step vertical stacks (space-y-0.5 / 1.5 / 2.5) do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

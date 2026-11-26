@@ -371,7 +371,7 @@ export default function NutritionSection({
 
         {/* Weekly pace — only meaningful when not maintaining */}
         {goalPlan.direction !== "maintain" && (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
               Weekly pace ({goalPlan.direction === "lose" ? "loss" : "gain"})
             </p>

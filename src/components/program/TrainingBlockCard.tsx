@@ -680,7 +680,7 @@ export default function TrainingBlockCard({
                 minus sign, and "never a guilt trip" is one of this surface's
                 locked constraints. */}
             {review.anchors.some((a) => a.endE1rm) && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <SectionLabel>Main lifts</SectionLabel>
                 {review.anchors
                   .filter((a) => a.endE1rm)

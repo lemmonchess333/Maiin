@@ -300,7 +300,7 @@ export default function Diagnostics() {
               {pending.map((n) => (
                 <div
                   key={n.id}
-                  className="rounded-lg bg-muted px-3 py-2 text-xs font-mono space-y-0.5"
+                  className="rounded-lg bg-muted px-3 py-2 text-xs font-mono space-y-1"
                 >
                   <p className="text-foreground">
                     #{n.id} {n.title ?? "<no title>"}
