@@ -167,6 +167,9 @@ const MuscleHeatMap = lazyRetry(
 const MacroDistribution = lazyRetry(
   () => import("@/components/analytics/MacroDistribution")
 );
+const HybridLoadCard = lazyRetry(
+  () => import("@/components/analytics/HybridLoadCard")
+);
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
 );
@@ -1475,6 +1478,13 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
+                  <Suspense fallback={null}>
+                    <HybridLoadCard
+                      workouts={workouts}
+                      runs={runs}
+                      todayKey={range.todayKey}
+                    />
+                  </Suspense>
                   {trainingMonotony.status !== "insufficient" && (
                     <Card size="compact" tone="flat" className="space-y-2">
                       <div className="flex items-baseline justify-between gap-2 text-sm">
