@@ -86,6 +86,7 @@ import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { isRunDateKey } from "@/lib/runExecutionEvidence";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 const RenameRunSheet = lazyRetry(
   () => import("@/components/run/RenameRunSheet")
@@ -96,6 +97,10 @@ const SegmentMaker = lazyRetry(() => import("@/components/run/SegmentMaker"));
    drawn, so the card's code can too. */
 const RunSegmentEfforts = lazyRetry(
   () => import("@/components/run/RunSegmentEfforts")
+);
+/* The runner's shoe list loads asynchronously after the page has drawn. */
+const RunDetailShoeCard = lazyRetry(
+  () => import("@/components/run/RunDetailShoeCard")
 );
 
 /**
@@ -693,6 +698,30 @@ export default function RunDetail() {
               </div>
             )}
           </Card>
+        )}
+
+        {/* Shoe attribution: view or edit the running shoe for this session,
+            so imported GPX/TCX runs or mis-attributed runs feed shoe mileage. */}
+        {user && runId && (
+          <Suspense fallback={null}>
+            <RunDetailShoeCard
+              uid={user.uid}
+              runId={runId}
+              storedShoeId={
+                typeof run.shoeId === "string"
+                  ? run.shoeId
+                  : typeof (run.runConfig as { shoeId?: unknown } | undefined)
+                        ?.shoeId === "string"
+                    ? ((run.runConfig as { shoeId: string }).shoeId ?? null)
+                    : null
+              }
+              distanceMeters={
+                typeof run.distance === "number" ? run.distance : 0
+              }
+              volumeEligible={isVolumeEligible(run)}
+              unit={unit}
+            />
+          </Suspense>
         )}
 
         {/* The finish screen's two cards, in its order: best efforts,

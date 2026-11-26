@@ -36,6 +36,7 @@ vi.mock("@/lib/auth", () => ({
     user: { uid: "runner" },
     profile: { displayName: "Runner", darkMode: false },
   }),
+  useUid: () => "runner",
 }));
 vi.mock("@/hooks/useSessionDoc", () => ({
   useSessionDoc: () => ({
@@ -49,6 +50,14 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 }));
 vi.mock("@/hooks/usePrivacyZones", () => ({
   usePrivacyZones: () => ({ zones: [], loading: false, error: null }),
+}));
+vi.mock("@/hooks/useShoes", () => ({
+  useShoes: () => ({
+    shoes: [],
+    activeShoes: [],
+    defaultShoe: null,
+    loading: false,
+  }),
 }));
 vi.mock("@/hooks/useShareRoute", () => ({ useShareRoute: () => vi.fn() }));
 vi.mock("@/hooks/useSavedRoutes", () => ({
