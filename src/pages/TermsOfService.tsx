@@ -3,7 +3,7 @@ import LegalBack from "@/components/legal/LegalBack";
 export default function TermsOfService() {
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto px-4 py-6 space-y-6">
         <LegalBack />
 
         <div>
