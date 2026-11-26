@@ -67,7 +67,7 @@ export default function MinVersionGate({ children }: { children: ReactNode }) {
         <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10">
           <RefreshCw className="size-5 text-primary" aria-hidden="true" />
         </div>
-        <h1 className="text-xl font-extrabold text-foreground">
+        <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
           Update required
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">

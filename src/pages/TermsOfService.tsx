@@ -7,7 +7,7 @@ export default function TermsOfService() {
         <LegalBack />
 
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
             Terms of Service
           </h1>
           <p className="text-xs text-muted-foreground mt-1">

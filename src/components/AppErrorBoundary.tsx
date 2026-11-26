@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<
             <p className="text-4xl" aria-hidden="true">
               Warning
             </p>
-            <h1 className="text-lg font-bold text-foreground">
+            <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
               Something went wrong
             </h1>
 
@@ -109,7 +109,11 @@ export class ErrorBoundary extends Component<
             <Button
               type="button"
               onClick={() => {
-                this.setState({ hasError: false, error: null, componentStack: null });
+                this.setState({
+                  hasError: false,
+                  error: null,
+                  componentStack: null,
+                });
                 window.location.assign(import.meta.env.BASE_URL);
               }}
               className="w-full px-6 py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm"

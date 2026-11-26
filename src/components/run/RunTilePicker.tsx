@@ -105,7 +105,9 @@ export default function RunTilePicker({
           icon={<ArrowLeft className="size-5" />}
           onClick={onBack}
         />
-        <h1 className="ml-1 text-lg font-bold">Start a run</h1>
+        <h1 className="ml-1 text-h1 leading-tight tracking-tight font-extrabold">
+          Start a run
+        </h1>
         {gpsSignal && <div className="ml-auto">{gpsSignal}</div>}
       </header>
       {onHelp && (
