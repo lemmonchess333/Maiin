@@ -186,8 +186,8 @@ export default function RouteSetupSection({
       </div>
 
       {routes.length > 0 && (
-        <div>
-          <SectionHeading size="compact" className="mb-1.5 px-1">
+        <div className="space-y-2">
+          <SectionHeading size="compact" className="px-1">
             Saved routes
           </SectionHeading>
           <ul className="space-y-2">

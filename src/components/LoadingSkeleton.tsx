@@ -80,7 +80,7 @@ export function ActivityCardSkeleton({ stagger = 0 }: { stagger?: number }) {
         {/* Author row — avatar + name + time */}
         <div className="flex items-center gap-3">
           <Skeleton className="size-10 rounded-full" stagger={stagger} />
-          <div className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-2">
             <Skeleton className="h-3 w-24" stagger={stagger + 1} />
             <Skeleton className="h-2.5 w-14" stagger={stagger + 1} />
           </div>
@@ -219,7 +219,7 @@ export function PerformanceCardSkeleton() {
           the bar, and the line under it. */}
       <div className="space-y-4">
         {[0, 1].map((i) => (
-          <div key={i} className="space-y-1.5">
+          <div key={i} className="space-y-2">
             <div className="flex items-baseline justify-between gap-x-3">
               <LineBar
                 as="span"
@@ -437,7 +437,7 @@ export function SocialSkeleton() {
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
               <Bar className="size-10 rounded-full" />
-              <div className="flex-1 space-y-1.5">
+              <div className="flex-1 space-y-2">
                 <Bar className="h-3 w-24" />
                 <Bar className="h-2.5 w-14" />
               </div>

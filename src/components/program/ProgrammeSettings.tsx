@@ -168,15 +168,11 @@ interface ProgrammeSettingsProps {
   activeBlockFocus?: PrimaryGoal;
 }
 
-/* Programme-settings convenience wrapper — each field group opens with a
-   compact section heading and a consistent mb-2. Delegates to the shared
-   SectionHeading primitive so the treatment can't drift. */
+/* Programme-settings convenience wrapper — delegates to the shared
+   SectionHeading primitive so the treatment can't drift; each field
+   group wrapper owns the vertical stack spacing (`space-y-2`). */
 function GroupHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <SectionHeading size="compact" className="mb-2">
-      {children}
-    </SectionHeading>
-  );
+  return <SectionHeading size="compact">{children}</SectionHeading>;
 }
 
 interface SettingsOptionCardProps {
@@ -886,7 +882,7 @@ export default function ProgrammeSettings({
           three groups take no title above them (`ProgrammeSettingsGroup`).
           Group 1: the goal. */}
       <ProgrammeSettingsGroup>
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Training focus</GroupHeading>
           {activeBlockFocus ? (
             /* Blk2: a block OWNS the focus while it runs, so this becomes a
@@ -922,7 +918,7 @@ export default function ProgrammeSettings({
           )}
         </div>
 
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Experience</GroupHeading>
           <div className="space-y-2">
             {EXPERIENCE_OPTIONS.map((opt, i) => (
@@ -942,7 +938,7 @@ export default function ProgrammeSettings({
 
       {/* Group 2: the week. */}
       <ProgrammeSettingsGroup>
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Lift days per week</GroupHeading>
           <SegmentedControl
             ariaLabel="Lift days per week"
@@ -956,7 +952,7 @@ export default function ProgrammeSettings({
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Session length</GroupHeading>
           <SegmentedControl
             ariaLabel="Minutes per lift session"
@@ -968,7 +964,7 @@ export default function ProgrammeSettings({
             onChange={setSessionMinutes}
             className="@container"
           />
-          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+          <p className="text-xs leading-snug text-muted-foreground">
             Warm-ups and rests included.
           </p>
         </div>
@@ -976,7 +972,7 @@ export default function ProgrammeSettings({
         {/* Pgm5 (Q1): split is a derived DISPLAY — the coach sets it from your
             weekly training days; the user expresses preference via lift-days +
             the exercise editor, not a split toggle. */}
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Split</GroupHeading>
           <div className="rounded-xl bg-muted px-3 py-2.5 chip-edge">
             <p className="text-sm font-medium text-foreground">
@@ -1059,7 +1055,7 @@ export default function ProgrammeSettings({
 
       {/* Group 3: what the plan works around. */}
       <ProgrammeSettingsGroup>
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Equipment access</GroupHeading>
           <div className="space-y-2">
             {EQUIPMENT_OPTIONS.map((opt, i) => (
@@ -1123,7 +1119,7 @@ export default function ProgrammeSettings({
           )}
         </div>
 
-        <div>
+        <div className="space-y-2">
           <GroupHeading>Injuries</GroupHeading>
           <div className="space-y-2">
             {INJURY_OPTIONS.map((opt, i) => (

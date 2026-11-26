@@ -328,7 +328,7 @@ function InvalidRunReview({
   return (
     <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       {/* Announce the saved heading without repeating the pre-save warning. */}
-      <div className="space-y-1.5" aria-live="polite">
+      <div className="space-y-2" aria-live="polite">
         <p className="text-base font-semibold text-foreground">{heading}</p>
         {bodyCopy && (
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -2403,7 +2403,7 @@ export default function RunSummary() {
                 and saving without touching it is fine. The notes field
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <SectionHeading size="compact" className="px-1">
                   How did it feel?
                 </SectionHeading>

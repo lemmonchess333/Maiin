@@ -808,15 +808,13 @@ export default function RunSetupModal({
         {/* Goal — for non-interval runs, and not on the treadmill, which
             has no live distance to hold a goal against */}
         {config.activityType !== "intervals" && !onTreadmill && (
-          <div>
+          <div className="space-y-2">
             {/* Visible-label rename only ("Target (optional)" → "Goal").
                 The internal `target.type` config field is unchanged
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-            <SectionHeading size="compact" className="mb-2">
-              Goal
-            </SectionHeading>
+            <SectionHeading size="compact">Goal</SectionHeading>
             {/* Goal type — shared SegmentedControl (tone=running). Was a
                   hand-rolled pill row that hardcoded the coral hex and used
                   rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the
