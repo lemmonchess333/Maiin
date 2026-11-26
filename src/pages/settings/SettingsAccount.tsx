@@ -134,6 +134,7 @@ export default function SettingsAccount({
                 liftWeightUnit={
                   profile?.liftingWeightUnit ?? profile?.preferredWeightUnit
                 }
+                bodyWeightUnit={profile?.preferredWeightUnit}
                 weightKg={profile?.weightKg}
                 maxHeartRate={profile?.maxHeartRate}
                 age={profile?.age}
