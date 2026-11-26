@@ -62,7 +62,7 @@ describe("motion buttons opt out of the global button transition", () => {
     let seen = 0;
     for (const file of walk(resolve(repoRoot, "src"))) {
       const src = blankComments(readFileSync(file, "utf8"));
-      for (const m of src.matchAll(/<motion\.([a-z]+)\b/g)) {
+      for (const m of src.matchAll(/<(?:motion|m)\.([a-z]+)\b/g)) {
         const tag = openingTag(src, m.index!);
         const isButton = m[1] === "button" || /role="button"/.test(tag);
         if (!isButton) continue;
