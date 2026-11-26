@@ -4,6 +4,7 @@ import type { User } from "firebase/auth";
 
 const mocks = vi.hoisted(() => ({
   importGpxRun: vi.fn(),
+  importWorkoutsCsv: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -16,6 +17,15 @@ vi.mock("@/lib/gpxImport", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/workoutCsvImport", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/workoutCsvImport")>();
+  return {
+    ...actual,
+    importWorkoutsCsv: (...args: unknown[]) => mocks.importWorkoutsCsv(...args),
+  };
+});
+
 vi.mock("@/lib/toast", () => ({
   toast: {
     success: (...args: unknown[]) => mocks.toastSuccess(...args),
@@ -25,6 +35,7 @@ vi.mock("@/lib/toast", () => ({
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
 
 import { GpxImportError } from "@/lib/gpxImport";
+import { WorkoutCsvImportError } from "@/lib/workoutCsvImport";
 import DataImportSection from "../DataImportSection";
 
 const USER = { uid: "u-1" } as User;
@@ -34,10 +45,13 @@ beforeEach(() => {
 });
 
 describe("DataImportSection", () => {
-  it("renders the Import GPX run action", () => {
+  it("renders both Import GPX run and Import lifting CSV actions", () => {
     render(<DataImportSection user={USER} />);
     expect(
       screen.getByRole("button", { name: /import gpx run/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /import lifting csv/i })
     ).toBeInTheDocument();
   });
 
@@ -61,7 +75,7 @@ describe("DataImportSection", () => {
       />
     );
     const input = container.querySelector(
-      'input[type="file"]'
+      'input[accept*=".gpx"]'
     ) as HTMLInputElement;
     const file = new File(["<gpx></gpx>"], "run.gpx", {
       type: "application/gpx+xml",
@@ -90,7 +104,7 @@ describe("DataImportSection", () => {
 
     const { container } = render(<DataImportSection user={USER} />);
     const input = container.querySelector(
-      'input[type="file"]'
+      'input[accept*=".gpx"]'
     ) as HTMLInputElement;
     const file = new File(["not gpx"], "bad.gpx", { type: "text/plain" });
     fireEvent.change(input, { target: { files: [file] } });
@@ -102,10 +116,10 @@ describe("DataImportSection", () => {
     );
   });
 
-  it("rejects oversized files before reading them", async () => {
+  it("rejects oversized GPX files before reading them", async () => {
     const { container } = render(<DataImportSection user={USER} />);
     const input = container.querySelector(
-      'input[type="file"]'
+      'input[accept*=".gpx"]'
     ) as HTMLInputElement;
     const bigFile = new File(["x"], "huge.gpx", {
       type: "application/gpx+xml",
@@ -119,5 +133,62 @@ describe("DataImportSection", () => {
       )
     );
     expect(mocks.importGpxRun).not.toHaveBeenCalled();
+  });
+
+  it("imports a selected lifting CSV file and reports workout count", async () => {
+    mocks.importWorkoutsCsv.mockResolvedValue({
+      source: "hevy",
+      importedCount: 3,
+      totalSets: 42,
+      earliestDate: "2026-10-01",
+      latestDate: "2026-10-12",
+    });
+
+    const { container } = render(
+      <DataImportSection user={USER} liftWeightUnit="lbs" weightKg={80} />
+    );
+    const input = container.querySelector(
+      'input[accept*=".csv"]'
+    ) as HTMLInputElement;
+    const file = new File(["Date,Exercise\n"], "hevy.csv", {
+      type: "text/csv",
+    });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.importWorkoutsCsv).toHaveBeenCalledWith(
+        "u-1",
+        "Date,Exercise\n",
+        {
+          weightKg: 80,
+          defaultWeightUnit: "lbs",
+        }
+      )
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Imported 3 workouts")
+    );
+  });
+
+  it("surfaces WorkoutCsvImportError messages directly to the user", async () => {
+    mocks.importWorkoutsCsv.mockRejectedValue(
+      new WorkoutCsvImportError(
+        "CSV_UNRECOGNIZED_FORMAT",
+        "Couldn’t recognise this CSV format. Export workouts from Hevy, Strong or Tropos and try again."
+      )
+    );
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[accept*=".csv"]'
+    ) as HTMLInputElement;
+    const file = new File(["foo,bar"], "bad.csv", { type: "text/csv" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Couldn’t recognise this CSV format. Export workouts from Hevy, Strong or Tropos and try again."
+      )
+    );
   });
 });

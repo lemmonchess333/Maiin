@@ -131,6 +131,9 @@ export default function SettingsAccount({
               <DataImportSection
                 user={user}
                 distanceUnit={profile?.preferredDistanceUnit}
+                liftWeightUnit={
+                  profile?.liftingWeightUnit ?? profile?.preferredWeightUnit
+                }
                 weightKg={profile?.weightKg}
                 maxHeartRate={profile?.maxHeartRate}
                 age={profile?.age}
