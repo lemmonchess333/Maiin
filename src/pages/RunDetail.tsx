@@ -390,6 +390,31 @@ export default function RunDetail() {
     );
   };
 
+  const exportThisRunTcx = async () => {
+    const { exportRunTcx } = await import("@/lib/exportRunTcx");
+    const startedAtMs =
+      (run.startedAt as { toDate?: () => Date } | undefined)
+        ?.toDate?.()
+        ?.getTime() ??
+      run.points?.[0]?.timestamp ??
+      (date ? date.getTime() - (run.duration ?? 0) * 1000 : Date.now());
+    const hr = run.heartRate as
+      { averageBpm?: number; maxBpm?: number } | undefined;
+    await exportRunTcx({
+      heading,
+      fileLabel: `${heading} · ${distanceLabel(run.distance, unit)}`,
+      hasGpsTrace,
+      points: run.points ?? [],
+      privacy,
+      startedAtMs,
+      distanceMeters: typeof run.distance === "number" ? run.distance : 0,
+      durationSeconds: typeof run.duration === "number" ? run.duration : 0,
+      calories: typeof run.calories === "number" ? run.calories : undefined,
+      avgHeartRate: hr?.averageBpm,
+      maxHeartRate: hr?.maxBpm,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Map — full bleed, tall */}
@@ -813,6 +838,18 @@ export default function RunDetail() {
             )}
           </div>
         )}
+
+        {/* TCX export works for both outdoor GPS and indoor treadmill runs. */}
+        <div className="@container">
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => void exportThisRunTcx()}
+          >
+            <Share2 className="size-4 @max-[7em]:hidden" aria-hidden="true" />
+            Export TCX
+          </Button>
+        </div>
 
         {/* ADR-0012. Last on the page and behind a confirm: a records
             correction for a mis-log, not a primary action. A phone-in-
