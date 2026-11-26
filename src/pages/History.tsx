@@ -8,7 +8,7 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { useMeals } from "@/hooks/useMeals";
@@ -1245,7 +1245,7 @@ export default function History() {
           stacked three control rows under the title (52 + 44 + 52 pt,
           40% of the first screen with the tab bar; §14m rules 17-18). */}
       {(filter !== "analytics" || view === "overview") && (
-        <motion.div variants={pageItemVariant}>
+        <m.div variants={pageItemVariant}>
           <FilterPills
             filter={filter}
             setFilter={(next) => {
@@ -1255,7 +1255,7 @@ export default function History() {
               });
             }}
           />
-        </motion.div>
+        </m.div>
       )}
 
       <Suspense

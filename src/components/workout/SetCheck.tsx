@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /** The overshoot the box lands with, and the ease the check is drawn on. */
@@ -73,7 +73,7 @@ export default function SetCheck({
       onClick={onEdit}
       className="mx-auto flex min-h-[44px] w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl transition-transform active:scale-95"
     >
-      <motion.span
+      <m.span
         key={ticks}
         data-testid="set-check-mark"
         initial={fresh ? { scale: 0.72 } : false}
@@ -93,14 +93,14 @@ export default function SetCheck({
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <motion.path
+          <m.path
             d="M4 12l5 5L20 6"
             initial={fresh ? { pathLength: 0 } : false}
             animate={{ pathLength: 1 }}
             transition={{ duration: 0.22, ease: DRAW, delay: 0.09 }}
           />
         </svg>
-      </motion.span>
+      </m.span>
       {best && (
         <span className="text-caption font-semibold leading-none text-achievement-strong">
           Best

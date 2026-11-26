@@ -47,7 +47,7 @@ import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import BrandMark from "@/components/ui/BrandMark";
 import { Sparkles, X } from "lucide-react";
@@ -1265,14 +1265,14 @@ export default function Home() {
               <StreakFlame
                 streak={streak}
                 bounce={streakBounce}
-                display={<motion.span>{streakDisplay}</motion.span>}
+                display={<m.span>{streakDisplay}</m.span>}
               />
             </button>
           ) : (
             <StreakFlame
               streak={streak}
               bounce={streakBounce}
-              display={<motion.span>{streakDisplay}</motion.span>}
+              display={<m.span>{streakDisplay}</m.span>}
             />
           )}
           {/* Settings opens from the user's own avatar (DS3): the photo when
@@ -1387,7 +1387,7 @@ export default function Home() {
           home-declutter 4a — sessions FIRST. Today's lift, run or rest is
           the page's primary action and leads. A group, so its name is
           one a screen reader can use: a name on a roleless div is not. */}
-      <motion.div
+      <m.div
         role="group"
         aria-label="Today’s training"
         variants={{
@@ -1429,13 +1429,13 @@ export default function Home() {
             </SectionErrorBoundary>
           </TrackSectionView>
         )}
-      </motion.div>
+      </m.div>
 
       {/* The week folds into the hero (DS4 call 5): a card one step down
           from it, the week's sessions done and the next one over seven
           segments, each a day that opens its peek. */}
       {showWeekStrip && (
-        <motion.div
+        <m.div
           ref={weekStripRef}
           variants={{
             hidden: { opacity: 0, y: 12 },
@@ -1506,7 +1506,7 @@ export default function Home() {
               )}
             </AnimatePresence>
           </SectionErrorBoundary>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Run9's starter goal reached: a plain Done under today's session,
@@ -1523,7 +1523,7 @@ export default function Home() {
           Routed through the education lane so it doesn't stack with the
           explainer banners (#995). */}
       {welcomeCard.visible && firstWeekState && (
-        <motion.div
+        <m.div
           variants={{
             hidden: { opacity: 0, y: 8 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1534,7 +1534,7 @@ export default function Home() {
             onDismiss={dismissCoachMarks}
             onOpen={openFirstWeekItem}
           />
-        </motion.div>
+        </m.div>
       )}
 
       {newBadge && !badgeOpen && (
@@ -1559,7 +1559,7 @@ export default function Home() {
         <RemindersQuietCard />
       </SectionErrorBoundary>
 
-      <motion.div
+      <m.div
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1582,11 +1582,11 @@ export default function Home() {
             />
           </SectionErrorBoundary>
         </TrackSectionView>
-      </motion.div>
+      </m.div>
 
       {/* Water and weight share a row; items-stretch keeps the pair
           equal-height. */}
-      <motion.div
+      <m.div
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1625,7 +1625,7 @@ export default function Home() {
             weightTrend={weightTrend}
           />
         </SectionErrorBoundary>
-      </motion.div>
+      </m.div>
 
       <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks

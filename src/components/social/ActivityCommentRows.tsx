@@ -1,5 +1,6 @@
 import { IconButton } from "@/components/ui/IconButton";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
+import MotionMaxRoot from "@/components/MotionMaxRoot";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import type { CommentReaction } from "@/lib/socialApi";
 import { getTimeAgo } from "@/lib/timeAgo";
@@ -24,7 +25,7 @@ export default function ActivityCommentRows({
 }) {
   const { comments, viewerUid, deletingId, setPanel, react } = thread;
   return (
-    <>
+    <MotionMaxRoot>
       {/* initial={false}: the thread opens settled; a comment added or
           deleted while it is open still animates. */}
       <AnimatePresence initial={false}>
@@ -35,7 +36,7 @@ export default function ActivityCommentRows({
           const isOwn = viewerUid === c.authorId;
 
           return (
-            <motion.div
+            <m.div
               key={c.id}
               layout
               initial={{ opacity: 0, y: 10 }}
@@ -140,7 +141,7 @@ export default function ActivityCommentRows({
                   className="size-[44px] text-muted-foreground"
                 />
               ) : null}
-            </motion.div>
+            </m.div>
           );
         })}
       </AnimatePresence>
@@ -154,6 +155,6 @@ export default function ActivityCommentRows({
           Load more comments
         </button>
       )}
-    </>
+    </MotionMaxRoot>
   );
 }

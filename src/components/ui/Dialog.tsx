@@ -39,7 +39,7 @@
  */
 import { useEffect, useEffectEvent, useId } from "react";
 import type { ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBackDismiss } from "@/lib/backDismiss";
@@ -170,7 +170,7 @@ export function Dialog({
     <AnimatePresence>
       {open ? (
         <>
-          <motion.div
+          <m.div
             className={cn("fixed inset-0 bg-black/50 z-50", overlayClassName)}
             role="presentation"
             onClick={closeOnBackdrop ? onClose : undefined}
@@ -179,7 +179,7 @@ export function Dialog({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           />
-          <motion.div
+          <m.div
             ref={ref}
             role={role}
             aria-modal="true"
@@ -233,7 +233,7 @@ export function Dialog({
             <div className={cn(title || description ? "mt-3" : null)}>
               {children}
             </div>
-          </motion.div>
+          </m.div>
         </>
       ) : null}
     </AnimatePresence>

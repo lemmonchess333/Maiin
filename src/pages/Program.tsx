@@ -80,7 +80,7 @@ import {
   FastForward,
   ArrowUpDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import PageShell from "@/components/ui/PageShell";
 import { splitLabel } from "@/features/program/programEngine";
@@ -1091,14 +1091,14 @@ function ProgramInner() {
       <AnimatePresence>
         {showOverflow && (
           <>
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
               exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 bg-black/50 z-40"
               onClick={() => setShowOverflow(false)}
             />
-            <motion.div
+            <m.div
               ref={overflowRef}
               role="dialog"
               aria-modal="true"
@@ -1281,7 +1281,7 @@ function ProgramInner() {
                   </Button>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

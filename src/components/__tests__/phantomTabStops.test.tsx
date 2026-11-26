@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
+import MotionRoot from "../MotionRoot";
 import { HomeTabIcon, TrainTabIcon } from "@/components/icons/TabIcons";
 import BottomNavigation from "../BottomNavigation";
 import RestDayCard from "../home/RestDayCard";
@@ -19,7 +20,7 @@ import { BADGE_DEFINITIONS } from "@/features/streaks/badges";
  *     }
  *
  * — where `isElementKeyboardAccessible` is a set of BUTTON / INPUT /
- * SELECT / TEXTAREA / A. So every `whileTap` on a `motion.div` puts a
+ * SELECT / TEXTAREA / A. So every `whileTap` on a `m.div` puts a
  * real stop in the tab order, and because a bare div carries no role and
  * no name, a screen reader lands on it and announces nothing.
  *
@@ -31,9 +32,10 @@ import { BADGE_DEFINITIONS } from "@/features/streaks/badges";
  *
  * THIS SUITE DOES NOT MOCK framer-motion, and that is the whole point.
  * The house harness stubs it out — `StackedCTACards.test.tsx` renders
- * `motion.*` as plain elements with `whileTap` destructured away — so
+ * `m.*` as plain elements with `whileTap` destructured away — so
  * the components' own tests cannot see this defect by construction. The
- * real library has to run for the tab stop to exist at all.
+ * real library (with `MotionRoot`'s `LazyMotion`) has to run for the tab
+ * stop to exist at all.
  */
 
 vi.mock("@/features/streaks/useStreaks", () => ({
@@ -90,24 +92,26 @@ function phantomStops(root: HTMLElement): string[] {
 }
 
 describe("the detector itself", () => {
-  it("flags a bare motion.div carrying whileTap", () => {
+  it("flags a bare m.div carrying whileTap", () => {
     /* Without this the suite below could pass by finding nothing —
        a wrong selector, a stubbed library, a render that threw early.
        This is the exact shape the three fixes removed, so it has to
        still be caught here. */
     const { container } = render(
-      <motion.div whileTap={{ scale: 0.9 }}>
+      <m.div whileTap={{ scale: 0.9 }}>
         <span aria-hidden="true" />
-      </motion.div>
+      </m.div>,
+      { wrapper: MotionRoot }
     );
     expect(phantomStops(container)).toHaveLength(1);
   });
 
   it("does not flag the same element once it opts out", () => {
     const { container } = render(
-      <motion.div tabIndex={-1} whileTap={{ scale: 0.9 }}>
+      <m.div tabIndex={-1} whileTap={{ scale: 0.9 }}>
         <span aria-hidden="true" />
-      </motion.div>
+      </m.div>,
+      { wrapper: MotionRoot }
     );
     expect(phantomStops(container)).toEqual([]);
   });
@@ -117,7 +121,8 @@ describe("the detector itself", () => {
        badge tile carry their own copy, so a nameless-only rule reported
        both as clean while framer-motion had made them focusable. */
     const { container } = render(
-      <motion.div whileTap={{ scale: 0.9 }}>Take it easy</motion.div>
+      <m.div whileTap={{ scale: 0.9 }}>Take it easy</m.div>,
+      { wrapper: MotionRoot }
     );
     expect(phantomStops(container)).toHaveLength(1);
   });
@@ -127,7 +132,8 @@ describe("the detector itself", () => {
       <div>
         <div tabIndex={0} role="button" aria-label="Deliberate widget" />
         <button type="button">Real control</button>
-      </div>
+      </div>,
+      { wrapper: MotionRoot }
     );
     expect(phantomStops(container)).toEqual([]);
   });
@@ -145,7 +151,8 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
           pathname="/"
           socialNewActivity={false}
         />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: MotionRoot }
     );
     expect(phantomStops(container)).toEqual([]);
   });
@@ -164,7 +171,8 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
           pathname="/"
           socialNewActivity={false}
         />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: MotionRoot }
     );
     const links = [...container.querySelectorAll("a")];
     expect(links).toHaveLength(2);
@@ -175,7 +183,7 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
   });
 
   it("the rest-day card", () => {
-    const { container } = render(<RestDayCard />);
+    const { container } = render(<RestDayCard />, { wrapper: MotionRoot });
     expect(phantomStops(container)).toEqual([]);
   });
 
@@ -183,7 +191,8 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
     const { container } = render(
       <MemoryRouter>
         <BadgeGrid />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: MotionRoot }
     );
     // A grid with nothing rendered would pass vacuously.
     expect(container.textContent).not.toBe("");

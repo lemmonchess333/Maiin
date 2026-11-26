@@ -62,16 +62,21 @@ vi.mock("framer-motion", () => {
     } = props;
     return rest;
   };
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: (_t: any, tag: string) => (props: any) => {
+        const Tag = tag as any;
+        return <Tag {...strip(props)} />;
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: (_t: any, tag: string) => (props: any) => {
-          const Tag = tag as any;
-          return <Tag {...strip(props)} />;
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
     AnimatePresence: ({ children }: any) => children,
     useReducedMotion: () => true,
   };

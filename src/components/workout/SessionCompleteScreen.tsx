@@ -24,7 +24,7 @@ import { liftSessionDay } from "@/lib/liftCompletion";
 import { sessionWork, setsFigure, workFigure } from "@/lib/liftFigures";
 import { ChevronDown, ChevronRight, Share, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
@@ -406,7 +406,7 @@ export default function SessionCompleteScreen({
     : `${dayLabel} · ${finishKicker(startedAt, endedAt)}`;
 
   return (
-    <motion.div
+    <m.div
       /* No fade under Reduce Motion: the screen is there at once, as every
          entrance inside it already is. */
       initial={reduce ? false : { opacity: 0 }}
@@ -567,7 +567,7 @@ export default function SessionCompleteScreen({
               little large and settling, and their trophy after them
               (Pol1). */}
           {listedBests.length > 0 && (
-            <motion.section
+            <m.section
               aria-labelledby="session-new-bests"
               className="space-y-2 origin-top"
               initial={reduce ? false : { opacity: 0, scale: 0.94 }}
@@ -614,7 +614,7 @@ export default function SessionCompleteScreen({
                         </p>
                       )}
                     </div>
-                    <motion.span
+                    <m.span
                       className="shrink-0"
                       initial={
                         reduce ? false : { opacity: 0, scale: 0.4, rotate: -18 }
@@ -630,11 +630,11 @@ export default function SessionCompleteScreen({
                         className="size-5 text-achievement"
                         aria-hidden="true"
                       />
-                    </motion.span>
+                    </m.span>
                   </div>
                 ))}
               </Card>
-            </motion.section>
+            </m.section>
           )}
 
           {/* The badge this session earned sits with its new bests, the
@@ -926,7 +926,7 @@ export default function SessionCompleteScreen({
           />
         </Suspense>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 

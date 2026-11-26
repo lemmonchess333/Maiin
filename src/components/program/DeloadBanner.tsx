@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Flame, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
@@ -196,7 +196,7 @@ export default function DeloadBanner({
   return (
     <AnimatePresence>
       {shouldRender && (
-        <motion.div
+        <m.div
           initial={
             prefersReducedMotion ? false : { opacity: 0, y: -8, height: 0 }
           }
@@ -283,7 +283,7 @@ export default function DeloadBanner({
               </div>
             )}
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

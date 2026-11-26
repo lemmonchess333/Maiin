@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   animate,
-  motion,
+  m,
   useMotionValue,
   useTransform,
   type PanInfo,
 } from "framer-motion";
+import MotionMaxRoot from "@/components/MotionMaxRoot";
 import { Pencil, Trash2 } from "lucide-react";
 import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import { haptic } from "@/lib/haptic";
@@ -369,7 +370,7 @@ export default function FoodRow({
      the row's own would unmount with the row, which would vanish in one
      frame while the rows below jumped up (Pol1). */
   return (
-    <motion.div
+    <m.div
       className="relative overflow-hidden"
       data-food-row
       /* Swipe-to-delete owns the horizontal gesture here. Marking the
@@ -388,57 +389,59 @@ export default function FoodRow({
           right edge so they stay put as the row slides past OPEN_OFFSET.
           Tapping the exposed strip deletes.
         */}
-      <motion.button
-        data-motion-driven
-        type="button"
-        onClick={onDelete}
-        aria-label={`Delete ${actionName}`}
-        className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
-        style={{ opacity: deletePanelOpacity }}
-      >
-        <span
-          className="flex flex-col items-center justify-center gap-1 text-caption font-medium"
-          style={{ width: Math.abs(OPEN_OFFSET) }}
+      <MotionMaxRoot>
+        <m.button
+          data-motion-driven
+          type="button"
+          onClick={onDelete}
+          aria-label={`Delete ${actionName}`}
+          className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
+          style={{ opacity: deletePanelOpacity }}
         >
-          <Trash2
-            className="size-[18px]"
-            strokeWidth={1.75}
-            aria-hidden="true"
-          />
-          Delete
-        </span>
-      </motion.button>
+          <span
+            className="flex flex-col items-center justify-center gap-1 text-caption font-medium"
+            style={{ width: Math.abs(OPEN_OFFSET) }}
+          >
+            <Trash2
+              className="size-[18px]"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+            Delete
+          </span>
+        </m.button>
 
-      {/* Draggable row content on top. Tapping it opens the edit sheet
-            (or closes the row when already swiped open). */}
-      <motion.div
-        data-motion-driven
-        drag="x"
-        dragDirectionLock
-        dragConstraints={{ left: OPEN_OFFSET, right: 0 }}
-        dragElastic={{ left: 0.7, right: 0 }}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        onTap={handleTap}
-        dragMomentum={false}
-        style={{ x }}
-        animate={{ x: targetX }}
-        transition={SETTLE}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onEdit?.();
-          }
-        }}
-        className={cn(
-          "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
-        )}
-      >
-        {rowInner}
-        {rowNameDetails}
-      </motion.div>
-    </motion.div>
+        {/* Draggable row content on top. Tapping it opens the edit sheet
+              (or closes the row when already swiped open). */}
+        <m.div
+          data-motion-driven
+          drag="x"
+          dragDirectionLock
+          dragConstraints={{ left: OPEN_OFFSET, right: 0 }}
+          dragElastic={{ left: 0.7, right: 0 }}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          onTap={handleTap}
+          dragMomentum={false}
+          style={{ x }}
+          animate={{ x: targetX }}
+          transition={SETTLE}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onEdit?.();
+            }
+          }}
+          className={cn(
+            "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
+          )}
+        >
+          {rowInner}
+          {rowNameDetails}
+        </m.div>
+      </MotionMaxRoot>
+    </m.div>
   );
 }

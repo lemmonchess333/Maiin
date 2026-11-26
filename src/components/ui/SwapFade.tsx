@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
@@ -43,7 +43,7 @@ export default function SwapFade({
   const [swapped, setSwapped] = useState(false);
   if (!swapped && swapKey !== firstKey) setSwapped(true);
 
-  const Cell = as === "span" ? motion.span : motion.div;
+  const Cell = as === "span" ? m.span : m.div;
   const Grid = as;
   return (
     <Grid className={cn("grid", className)}>

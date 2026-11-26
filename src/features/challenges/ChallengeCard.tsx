@@ -1,5 +1,5 @@
 import { useState, type ComponentType, type CSSProperties } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Clock,
@@ -438,7 +438,7 @@ export function ChallengeCard({
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
                   <div className="h-2 rounded-full track-cut overflow-hidden">
-                    <motion.div
+                    <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
                       transition={{ duration: 0.6 }}
@@ -514,7 +514,7 @@ export function ChallengeCard({
                 bar. */}
             <div className="relative pt-1 pb-7">
               <div className="h-2 rounded-full track-cut overflow-hidden">
-                <motion.div
+                <m.div
                   initial={{ width: 0 }}
                   animate={{
                     width:
@@ -657,7 +657,7 @@ export function ChallengeCard({
       {/* Expanded leaderboard */}
       <AnimatePresence>
         {expanded && (
-          <motion.div
+          <m.div
             initial={motionSafe({ height: 0, opacity: 0 })}
             animate={{ height: "auto", opacity: 1 }}
             exit={motionSafe({ height: 0, opacity: 0 })}
@@ -707,7 +707,7 @@ export function ChallengeCard({
                 );
               })}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

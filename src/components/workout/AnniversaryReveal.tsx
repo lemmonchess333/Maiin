@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import ShareCardRenderer from "@/components/share/ShareCardRenderer";
@@ -105,7 +105,7 @@ export default function AnniversaryReveal({
   }, [sharing, words.card.share]);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -115,7 +115,7 @@ export default function AnniversaryReveal({
       data-kind={anniversary.kind}
     >
       {/* Its rays. */}
-      <motion.div
+      <m.div
         aria-hidden="true"
         className="pointer-events-none fixed left-1/2 top-[34%] size-[560px] -ml-[280px] -mt-[280px]"
         style={{
@@ -144,7 +144,7 @@ export default function AnniversaryReveal({
         </p>
 
         {/* The medallion: the figure, in the achievement's colour. */}
-        <motion.div
+        <m.div
           aria-hidden="true"
           className="flex flex-col items-center justify-center rounded-full"
           style={{
@@ -176,9 +176,9 @@ export default function AnniversaryReveal({
           <span className="mt-1 text-small font-semibold text-stage-muted">
             {words.unit}
           </span>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="w-full min-w-0 space-y-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -199,9 +199,9 @@ export default function AnniversaryReveal({
           <p className="text-body text-stage-foreground text-pretty">
             {words.line}
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="w-full space-y-2 pt-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -224,7 +224,7 @@ export default function AnniversaryReveal({
           >
             Done
           </Button>
-        </motion.div>
+        </m.div>
       </div>
 
       <ShareCardRenderer
@@ -243,6 +243,6 @@ export default function AnniversaryReveal({
           figureUnit: words.unit,
         }}
       />
-    </motion.div>
+    </m.div>
   );
 }

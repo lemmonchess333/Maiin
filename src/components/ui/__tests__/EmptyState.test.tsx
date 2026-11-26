@@ -4,8 +4,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Activity } from "lucide-react";
 
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
+vi.mock("framer-motion", () => {
+  const motionProxy = new Proxy(
     {},
     {
       get: (_t: any, prop: string) => (props: any) => {
@@ -14,8 +14,15 @@ vi.mock("framer-motion", () => ({
         return <Tag {...rest} />;
       },
     }
-  ),
-}));
+  );
+  return {
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => <>{children}</>,
+    domAnimation: {},
+    domMax: {},
+  };
+});
 // Default: motion NOT reduced (exercise the animated path).
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => false }));
 

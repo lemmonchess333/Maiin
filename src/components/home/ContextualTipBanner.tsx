@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
@@ -79,7 +79,7 @@ export default function ContextualTipBanner({
   return (
     <AnimatePresence>
       {shouldRender && (
-        <motion.div
+        <m.div
           initial={
             prefersReducedMotion ? false : { opacity: 0, y: -6, height: 0 }
           }
@@ -122,7 +122,7 @@ export default function ContextualTipBanner({
               <X aria-hidden="true" className="size-4" />
             </button>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

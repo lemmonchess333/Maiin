@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import type { EarnedBadge } from "./badges";
 import {
   BADGE_ART,
@@ -52,7 +52,7 @@ export function BadgeEarnedContent({
   const tier = TIER_COLORS[badge.tier];
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -66,7 +66,7 @@ export function BadgeEarnedContent({
       // skip the moment). Post-reveal: a backdrop tap dismisses.
       onClick={revealed ? onDismiss : tapSeal}
     >
-      <motion.div
+      <m.div
         ref={focusTrapRef}
         role={inline ? "region" : "dialog"}
         aria-modal={inline ? undefined : true}
@@ -89,7 +89,7 @@ export function BadgeEarnedContent({
         {/* Rotating light rays — bloom in on reveal, behind the badge. */}
         <AnimatePresence>
           {revealed && (
-            <motion.div
+            <m.div
               key="rays"
               aria-hidden="true"
               className="absolute left-1/2 top-[34%] pointer-events-none"
@@ -132,7 +132,7 @@ export function BadgeEarnedContent({
             Done is disabled, so the focus trap counts only the seal. */}
         <div className="relative w-full space-y-4">
           <SealPrompt seal={seal} className="absolute inset-x-0 top-0" />
-          <motion.div
+          <m.div
             className="relative z-10 space-y-1"
             style={{ visibility: revealed ? "visible" : "hidden" }}
             aria-hidden={!revealed}
@@ -152,9 +152,9 @@ export function BadgeEarnedContent({
                 Come back tomorrow to build your streak.
               </p>
             )}
-          </motion.div>
+          </m.div>
 
-          <motion.button
+          <m.button
             data-motion-driven
             type="button"
             disabled={!revealed}
@@ -171,10 +171,10 @@ export function BadgeEarnedContent({
             className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             Nice
-          </motion.button>
+          </m.button>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 

@@ -3,8 +3,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import type { PantrySuggestion } from "../FoodSuggestionsDropdown";
 
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
+vi.mock("framer-motion", () => {
+  const motionProxy = new Proxy(
     {},
     {
       get: (_t: any, prop: string) => (props: any) => {
@@ -13,8 +13,15 @@ vi.mock("framer-motion", () => ({
         return <Tag {...rest} />;
       },
     }
-  ),
-}));
+  );
+  return {
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => <>{children}</>,
+    domAnimation: {},
+    domMax: {},
+  };
+});
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import FoodSuggestionsDropdown, {

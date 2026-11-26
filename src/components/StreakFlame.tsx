@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   flamePaletteFor,
@@ -108,7 +108,7 @@ export function StreakFlame({
   const palette = flamePaletteFor(streak);
 
   return (
-    <motion.div
+    <m.div
       key={streak}
       initial={bounce ? { scale: 1.15 } : undefined}
       animate={celebrate ? { scale: [1, 1.2, 1] } : { scale: 1 }}
@@ -133,6 +133,6 @@ export function StreakFlame({
       >
         {display ?? streak}
       </span>
-    </motion.div>
+    </m.div>
   );
 }

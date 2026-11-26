@@ -2,7 +2,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -407,7 +407,7 @@ export default function ExerciseHistory() {
   const hasOnlyOneSession = allSessions.length === 1;
 
   return (
-    <motion.div
+    <m.div
       className={`space-y-4 pt-2 pb-8 ${ONE_CARD_RADIUS}`}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
@@ -744,6 +744,6 @@ export default function ExerciseHistory() {
           </div>
         </>
       )}
-    </motion.div>
+    </m.div>
   );
 }

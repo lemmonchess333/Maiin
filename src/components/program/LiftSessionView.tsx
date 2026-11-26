@@ -65,7 +65,7 @@ import {
   Repeat,
   Trash2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import type { Exercise } from "@/lib/exercises";
 import type { Workout } from "@/lib/savedWorkouts";
@@ -605,7 +605,7 @@ export default function LiftSessionView({
   return (
     <>
       <div className="space-y-3" {...pagerProps}>
-        <motion.div key={idx} {...dayEntrance}>
+        <m.div key={idx} {...dayEntrance}>
           {selectedWorkout && (
             <div className="space-y-3">
               {/* ── Session hero — shared command-card chrome
@@ -780,13 +780,13 @@ export default function LiftSessionView({
               )}
             </div>
           )}
-        </motion.div>
+        </m.div>
         {/* Train's week notices sit under the day's session, as Home's
             banners sit under its hero (DS4, §14m rule 1: the session's top
             within 260pt). Outside the day's animation, so they hold still
             while the days are swiped, and are counted once. */}
         {between}
-        <motion.div key={idx} {...dayEntrance}>
+        <m.div key={idx} {...dayEntrance}>
           {selectedWorkout && (
             <div className="space-y-3">
               {/* PROGRAM-ADAPT-01, post-de-interception home: the
@@ -1099,21 +1099,21 @@ export default function LiftSessionView({
               {after}
             </div>
           )}
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ── Context Menu ── */}
       <AnimatePresence>
         {contextMenu && (
           <>
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
               exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 z-[200]"
               onClick={() => setContextMenu(null)}
             />
-            <motion.div
+            <m.div
               ref={contextMenuRef}
               role="menu"
               aria-label={`Options for ${
@@ -1196,7 +1196,7 @@ export default function LiftSessionView({
                 />{" "}
                 Move down
               </button>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

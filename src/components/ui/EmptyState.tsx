@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -108,7 +108,7 @@ export function EmptyState({
           aria-hidden="true"
           style={{ display: "block" }}
         >
-          <motion.polygon
+          <m.polygon
             points={HEX_POINTS}
             stroke={accent}
             strokeOpacity={0.5}
@@ -118,7 +118,7 @@ export function EmptyState({
             {...hexAnim}
           />
           {!Icon && (
-            <motion.polyline
+            <m.polyline
               points={CHEVRON}
               stroke={accent}
               strokeOpacity={0.7}
@@ -130,7 +130,7 @@ export function EmptyState({
           )}
         </svg>
         {Icon && (
-          <motion.div
+          <m.div
             className="absolute inset-0 flex items-center justify-center"
             {...innerAnim}
           >
@@ -140,7 +140,7 @@ export function EmptyState({
               strokeWidth={1.75}
               aria-hidden="true"
             />
-          </motion.div>
+          </m.div>
         )}
       </div>
       <div className="space-y-1.5">

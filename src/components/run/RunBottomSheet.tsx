@@ -6,7 +6,7 @@ import {
   useId,
   type ReactNode,
 } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
+import { m, useMotionValue, animate } from "framer-motion";
 import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
 import {
@@ -485,7 +485,7 @@ export default function RunBottomSheet({
           (its Recenter brings the runner back), and a tap on it raises
           the panel through `expandRequest` (DESIGN_GUIDE
           §14h). The grip still raises it by keyboard. */}
-      <motion.div
+      <m.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
           top,
@@ -1037,7 +1037,7 @@ export default function RunBottomSheet({
         {isSplitsView && (
           <SplitsList splits={splits} distance={distance} unit={unit} />
         )}
-      </motion.div>
+      </m.div>
       {/* Sprint 3: stop-confirmation migrated onto the shared <Dialog>
           primitive. Pre-Sprint-3 this modal had no escape-to-close
           handler — useFocusTrap was wired but Escape did nothing.

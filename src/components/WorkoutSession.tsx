@@ -83,7 +83,7 @@ import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Dialog } from "@/components/ui/Dialog";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import {
   lastSetsByExercise,
@@ -3469,7 +3469,7 @@ export default function WorkoutSession({
             from the rows behind it (a backdrop root, §14o). */}
           <AnimatePresence initial={false}>
             {rest && (
-              <motion.div
+              <m.div
                 key="rest"
                 /* A fade, no rise: it arrives after every set, and a 26 px
                  rise there out-moved the new best above it
@@ -3494,7 +3494,7 @@ export default function WorkoutSession({
                   onStop={stopRest}
                   onAnnounce={announceRest}
                 />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>
