@@ -42,7 +42,7 @@ describe("exportWorkoutsCSV", () => {
       },
     ]);
     expect(await exportWorkoutsCSV(UID)).toContain(
-      '2026-09-07,"\'=1+1",1,80,8,"\'+1+1"'
+      '2026-09-07,"\'=1+1",1,80,8,"\'+1+1",'
     );
   });
   it("keeps a circuit (Circ1) as one row: its name, rounds done and seconds", async () => {
@@ -68,17 +68,17 @@ describe("exportWorkoutsCSV", () => {
     ]);
     const lines = (await exportWorkoutsCSV(UID)).split("\n");
     expect(lines).toEqual([
-      "Date,Exercise,Set,Weight (kg),Reps,Type",
-      `2026-09-07,"${circuit.name}",2,0,580,circuit`,
+      "Date,Exercise,Set,Weight (kg),Reps,Type,RPE",
+      `2026-09-07,"${circuit.name}",2,0,580,circuit,`,
     ]);
   });
 
   it("returns header row when no workouts", async () => {
     const csv = await exportWorkoutsCSV("user1");
-    expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type");
+    expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type,RPE");
   });
 
-  it("formats workout data correctly", async () => {
+  it("formats workout data and optional RPE correctly", async () => {
     seedIn(WORKOUTS, [
       {
         date: "2025-01-15",
@@ -86,7 +86,7 @@ describe("exportWorkoutsCSV", () => {
           {
             exerciseName: "Bench Press",
             sets: [
-              { weightKg: 80, reps: 8, type: "working" },
+              { weightKg: 80, reps: 8, type: "working", rpe: 7.5 },
               { weightKg: 85, reps: 6, type: "working" },
             ],
           },
@@ -96,8 +96,8 @@ describe("exportWorkoutsCSV", () => {
     const csv = await exportWorkoutsCSV("user1");
     const lines = csv.split("\n");
     expect(lines).toHaveLength(3); // header + 2 sets
-    expect(lines[1]).toBe('2025-01-15,"Bench Press",1,80,8,working');
-    expect(lines[2]).toBe('2025-01-15,"Bench Press",2,85,6,working');
+    expect(lines[1]).toBe('2025-01-15,"Bench Press",1,80,8,working,7.5');
+    expect(lines[2]).toBe('2025-01-15,"Bench Press",2,85,6,working,');
   });
 
   it("escapes double quotes in exercise names", async () => {

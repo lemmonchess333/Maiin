@@ -95,7 +95,6 @@ import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
 import type { SwapToKeep } from "@/components/workout/KeepSwapSheet";
-import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -212,6 +211,9 @@ import { liftArtFor } from "@/lib/liveActivityArt";
 // opened: the workout screen's chunk has no room to spare.
 const ExerciseMenuSheet = lazyRetry(
   () => import("@/components/workout/ExerciseMenuSheet")
+);
+const PlateCalculatorSheet = lazyRetry(
+  () => import("@/components/workout/PlateCalculatorSheet")
 );
 // The screen of a session with no exercises yet, which most never show.
 const EmptySessionScreen = lazyRetry(
@@ -364,6 +366,8 @@ interface Props {
   /** The session length the plan is built for
    *  (`programState.sessionMinutes`): a 30-minute plan rests less. */
   sessionMinutes?: number;
+  /** Whether the plan uses fractional small plates (1.25 kg / 2.5 lb barbell steps). */
+  smallPlates?: boolean;
   progressionBaseline?: ProgramExercise[];
   /** Every lift of the plan, each in its slot: a lift starts from the last
    *  session that ran its slot (`lastSetsBySlot`). Train passes it; a saved
@@ -403,6 +407,7 @@ export default function WorkoutSession({
   sessionVariant,
   deloadWeek = false,
   sessionMinutes,
+  smallPlates = false,
   progressionBaseline,
   planLifts,
   programmeContext,
@@ -1138,13 +1143,12 @@ export default function WorkoutSession({
   const isBarbell = currentExercise
     ? getExerciseById(currentExercise.exerciseId)?.equipment === "Barbell"
     : false;
-  // Barbell plate breakdown for the prescribed weight, a read-only hint. The
-  // standard set runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
+  // Barbell plate breakdown for the prescribed weight, a read-only hint.
   const plateLoad = useMemo(() => {
     if (!currentExercise || currentExercise.weight <= 0 || !isBarbell)
       return null;
-    return platesInKit(currentExercise.weight, liftUnit);
-  }, [currentExercise, isBarbell, liftUnit]);
+    return platesInKit(currentExercise.weight, liftUnit, { smallPlates });
+  }, [currentExercise, isBarbell, liftUnit, smallPlates]);
 
   const currentSets = setLogs[currentExIndex] ?? [];
   // Warm-ups are optional, so the session's progress counts the sets that
@@ -2949,7 +2953,8 @@ export default function WorkoutSession({
                             set.weight,
                             set.rpe,
                             currentExercise.exerciseId,
-                            liftUnit
+                            liftUnit,
+                            smallPlates
                           )
                         : null;
                     const rpeNudgeLabel =
@@ -3710,15 +3715,20 @@ export default function WorkoutSession({
         )}
         {addPicker}
 
-        <PlateCalculatorSheet
-          open={showPlates}
-          onClose={() => setShowPlates(false)}
-          weightKg={
-            currentSets[currentSetIndex]?.weight ||
-            currentSets.find((st) => st.weight > 0)?.weight ||
-            0
-          }
-        />
+        {showPlates && (
+          <Suspense fallback={null}>
+            <PlateCalculatorSheet
+              open
+              onClose={() => setShowPlates(false)}
+              weightKg={
+                currentSets[currentSetIndex]?.weight ||
+                currentSets.find((st) => st.weight > 0)?.weight ||
+                0
+              }
+              smallPlates={smallPlates}
+            />
+          </Suspense>
+        )}
 
         {currentExercise?.name && (
           <ExerciseFormSheet
