@@ -157,7 +157,9 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
+import { Card } from "@/components/ui/Card";
 import { computePolarizedSplit } from "@/lib/polarizedSplit";
+import { computeTrainingMonotony } from "@/lib/trainingMonotony";
 
 const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
@@ -684,6 +686,15 @@ export default function History() {
   const range = useMemo(
     () => historyRange(rangeDays, { createdAt: profile?.createdAt, now }),
     [rangeDays, profile?.createdAt, now]
+  );
+  const trainingMonotony = useMemo(
+    () =>
+      computeTrainingMonotony({
+        workouts,
+        runs,
+        todayKey: range.todayKey,
+      }),
+    [workouts, runs, range.todayKey]
   );
   const { startKey, joinedInRange } = range;
   const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
@@ -1464,6 +1475,35 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
+                  {trainingMonotony.status !== "insufficient" && (
+                    <Card size="compact" tone="flat" className="space-y-2">
+                      <div className="flex items-baseline justify-between gap-2 text-sm">
+                        <span className="font-medium text-foreground">
+                          Training load pattern
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                          Monotony {trainingMonotony.monotony.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {trainingMonotony.status === "high"
+                          ? "Daily load has been very similar over the last 7 days. Mixing in lighter or rest days helps recovery."
+                          : trainingMonotony.status === "moderate"
+                            ? "Steady day-to-day load over the last 7 days. Keep easy sessions genuinely easy."
+                            : "Good mix of harder and lighter days across the last 7 days."}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {trainingMonotony.hasLift && trainingMonotony.hasRun
+                          ? "Combined lifting and running"
+                          : "Last 7 days"}{" "}
+                        ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {trainingMonotony.activeDays}
+                        </span>{" "}
+                        active days
+                      </p>
+                    </Card>
+                  )}
                 </ArrivalFade>
               )}
 

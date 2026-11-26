@@ -145,12 +145,14 @@ import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import {
   clearHeartRateSession,
+  getHeartRateSession,
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
 import {
   heartRateCoverageBand,
   maxHrFromAge,
   summarizeHeartRate,
+  type HeartRateSample,
 } from "@/lib/hrZones";
 import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
@@ -462,6 +464,9 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // In-memory only (cleared automatically on unmount) so Export GPX can still
+  // emit Garmin gpxtpx:hr extensions after Save clears the session store.
+  const capturedHeartRateSamplesRef = useRef<HeartRateSample[]>([]);
   // The age the zones' estimate reads: from the year of birth, else an
   // older account's age (App1, Q57).
   const ageYears = profileAge(profile);
@@ -473,8 +478,9 @@ export default function RunSummary() {
       return;
     let active = true;
     void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
-      .then(({ samples, activeIntervals }) => {
+      .then(async ({ samples, activeIntervals }) => {
         if (!active) return;
+        if (samples.length > 0) capturedHeartRateSamplesRef.current = samples;
         const measuredMax = profile?.maxHeartRate ?? 0;
         const maxHr =
           measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
@@ -484,7 +490,21 @@ export default function RunSummary() {
           maxHr,
           state.elapsed
         );
-        if (summary) setHeartRatePreview(summary);
+        if (summary) {
+          const { computeAerobicDecoupling } =
+            await import("@/lib/aerobicDecoupling");
+          if (!active) return;
+          const decoupling = computeAerobicDecoupling({
+            samples,
+            activeIntervals,
+            points: state.points ?? [],
+            activityType: state.runConfig?.activityType,
+            movingSecondsOverride: state.elapsed,
+          });
+          setHeartRatePreview(
+            decoupling ? { ...summary, decoupling } : summary
+          );
+        }
       })
       .catch((error) =>
         logger.warn("[RunSummary] Heart rate unavailable", error)
@@ -496,6 +516,8 @@ export default function RunSummary() {
     user?.uid,
     state?.identity,
     state?.elapsed,
+    state?.points,
+    state?.runConfig?.activityType,
     profile?.maxHeartRate,
     ageYears,
   ]);
@@ -1354,16 +1376,33 @@ export default function RunSummary() {
             setSaveStatus("idle");
             return;
           }
+          if (captured.samples.length > 0) {
+            capturedHeartRateSamplesRef.current = captured.samples;
+          }
           const measuredMax = profile?.maxHeartRate ?? 0;
           const maxHr =
             measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
-          heartRate = summarizeHeartRate(
+          const rawHeartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,
             maxHr,
             elapsed
           );
-          if (heartRate) setHeartRatePreview(heartRate);
+          if (rawHeartRate) {
+            const { computeAerobicDecoupling } =
+              await import("@/lib/aerobicDecoupling");
+            const decoupling = computeAerobicDecoupling({
+              samples: captured.samples,
+              activeIntervals: captured.activeIntervals,
+              points: state.points ?? [],
+              activityType,
+              movingSecondsOverride: elapsed,
+            });
+            heartRate = decoupling
+              ? { ...rawHeartRate, decoupling }
+              : rawHeartRate;
+            setHeartRatePreview(heartRate);
+          }
         } catch (error) {
           logger.warn("[RunSave] Heart rate unavailable:", error);
         }
@@ -1648,12 +1687,21 @@ export default function RunSummary() {
       toast.error("Couldn’t check your privacy settings. Try again");
       return;
     }
+    const hrSamples =
+      capturedHeartRateSamplesRef.current.length > 0
+        ? capturedHeartRateSamplesRef.current
+        : user?.uid && state?.identity
+          ? getHeartRateSession(user.uid, state.identity.sessionId).samples
+          : undefined;
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     // The raw fixes, cut by the privacy zones on those coordinates.
     const gpx = toGPX(
       exportTrace(state?.points ?? [], privacyZones),
-      `Tropos Run ${formatDayMonthYear(runDate)}`
+      `Tropos Run ${formatDayMonthYear(runDate)}`,
+      hrSamples && hrSamples.length > 0
+        ? { heartRateSamples: hrSamples }
+        : undefined
     );
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
