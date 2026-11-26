@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { User } from "firebase/auth";
 
 const mocks = vi.hoisted(() => ({
-  importGpxRun: vi.fn(),
+  importRunFile: vi.fn(),
   importWorkoutsCsv: vi.fn(),
   importBodyweightCsv: vi.fn(),
   importFullBackupJson: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock("@/lib/gpxImport", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/gpxImport")>();
   return {
     ...actual,
-    importGpxRun: (...args: unknown[]) => mocks.importGpxRun(...args),
+    importRunFile: (...args: unknown[]) => mocks.importRunFile(...args),
   };
 });
 
@@ -69,10 +69,10 @@ beforeEach(() => {
 });
 
 describe("DataImportSection", () => {
-  it("renders GPX run, lifting CSV, weight CSV, and backup JSON import actions", () => {
+  it("renders GPX/TCX run, lifting CSV, weight CSV, and backup JSON import actions", () => {
     render(<DataImportSection user={USER} />);
     expect(
-      screen.getByRole("button", { name: /import gpx run/i })
+      screen.getByRole("button", { name: /import gpx or tcx run/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /import lifting csv/i })
@@ -85,9 +85,9 @@ describe("DataImportSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("imports a selected GPX file and reports the distance in the user’s unit", async () => {
-    mocks.importGpxRun.mockResolvedValue({
-      runId: "gpx-12345678",
+  it("imports a selected GPX or TCX file and reports the distance in the user’s unit", async () => {
+    mocks.importRunFile.mockResolvedValue({
+      runId: "tcx-12345678",
       name: "Morning 5K",
       distance: 5020,
       duration: 1500,
@@ -107,17 +107,26 @@ describe("DataImportSection", () => {
     const input = container.querySelector(
       'input[data-import-kind="gpx"]'
     ) as HTMLInputElement;
-    const file = new File(["<gpx></gpx>"], "run.gpx", {
-      type: "application/gpx+xml",
-    });
+    expect(input.accept).toContain(".tcx");
+    const file = new File(
+      ["<TrainingCenterDatabase></TrainingCenterDatabase>"],
+      "run.tcx",
+      {
+        type: "application/vnd.garmin.tcx+xml",
+      }
+    );
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() =>
-      expect(mocks.importGpxRun).toHaveBeenCalledWith("u-1", "<gpx></gpx>", {
-        weightKg: 72,
-        maxHr: 190,
-        age: 30,
-      })
+      expect(mocks.importRunFile).toHaveBeenCalledWith(
+        "u-1",
+        "<TrainingCenterDatabase></TrainingCenterDatabase>",
+        {
+          weightKg: 72,
+          maxHr: 190,
+          age: 30,
+        }
+      )
     );
     await waitFor(() =>
       expect(mocks.toastSuccess).toHaveBeenCalledWith("Imported 5.02 km run")
@@ -125,10 +134,10 @@ describe("DataImportSection", () => {
   });
 
   it("surfaces GpxImportError messages directly to the user", async () => {
-    mocks.importGpxRun.mockRejectedValue(
+    mocks.importRunFile.mockRejectedValue(
       new GpxImportError(
         "GPX_INVALID_XML",
-        "This file isn’t a valid GPX track."
+        "This file isn’t a valid GPX or TCX run."
       )
     );
 
@@ -136,23 +145,23 @@ describe("DataImportSection", () => {
     const input = container.querySelector(
       'input[data-import-kind="gpx"]'
     ) as HTMLInputElement;
-    const file = new File(["not gpx"], "bad.gpx", { type: "text/plain" });
+    const file = new File(["not gpx"], "bad.tcx", { type: "text/plain" });
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith(
-        "This file isn’t a valid GPX track."
+        "This file isn’t a valid GPX or TCX run."
       )
     );
   });
 
-  it("rejects oversized GPX files before reading them", async () => {
+  it("rejects oversized GPX/TCX files before reading them", async () => {
     const { container } = render(<DataImportSection user={USER} />);
     const input = container.querySelector(
       'input[data-import-kind="gpx"]'
     ) as HTMLInputElement;
-    const bigFile = new File(["x"], "huge.gpx", {
-      type: "application/gpx+xml",
+    const bigFile = new File(["x"], "huge.tcx", {
+      type: "application/xml",
     });
     Object.defineProperty(bigFile, "size", { value: 20 * 1024 * 1024 });
     fireEvent.change(input, { target: { files: [bigFile] } });
@@ -162,7 +171,7 @@ describe("DataImportSection", () => {
         "This file is too large to import."
       )
     );
-    expect(mocks.importGpxRun).not.toHaveBeenCalled();
+    expect(mocks.importRunFile).not.toHaveBeenCalled();
   });
 
   it("imports a selected lifting CSV file and reports workout count", async () => {

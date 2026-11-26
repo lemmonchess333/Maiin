@@ -55,13 +55,13 @@ export default function DataImportSection({
     setImportingGpx(true);
     try {
       const xml = await file.text();
-      const [{ GpxImportError, importGpxRun }, { distanceLabel2 }] =
+      const [{ GpxImportError, importRunFile }, { distanceLabel2 }] =
         await Promise.all([
           import("@/lib/gpxImport"),
           import("@/lib/runLabels"),
         ]);
       try {
-        const result = await importGpxRun(user.uid, xml, {
+        const result = await importRunFile(user.uid, xml, {
           weightKg,
           maxHr: maxHeartRate ?? undefined,
           age,
@@ -73,7 +73,7 @@ export default function DataImportSection({
         if (err instanceof GpxImportError) {
           toast.error(err.message);
         } else {
-          toast.error("Couldn’t import this GPX file. Try again.");
+          toast.error("Couldn’t import this run file. Try again.");
           logger.error(err);
         }
       }
@@ -209,7 +209,7 @@ export default function DataImportSection({
         ref={gpxInputRef}
         type="file"
         data-import-kind="gpx"
-        accept=".gpx,application/gpx+xml,application/xml,text/xml"
+        accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml,application/xml,text/xml"
         className="hidden"
         aria-hidden="true"
         tabIndex={-1}
@@ -247,8 +247,8 @@ export default function DataImportSection({
       />
       <SettingsRow
         icon={Upload}
-        label="Import GPX run"
-        description="Add runs from Strava, Garmin or other apps"
+        label="Import GPX or TCX run"
+        description="Add runs from Strava, Garmin, Coros or other apps"
         value={importingGpx ? "Importing…" : undefined}
         chevron={false}
         disabled={importingGpx || !user}
