@@ -11,7 +11,13 @@ vi.mock("@/lib/offlineQueue", () => ({
   flushQueue: (...args: unknown[]) => mocks.flushQueue(...args),
 }));
 
-import { GpxImportError, importGpxRun, parseGpxRun } from "@/lib/gpxImport";
+import {
+  GpxImportError,
+  importRunFile,
+  parseGpxRun,
+  parseRunFile,
+  parseTcxRun,
+} from "@/lib/gpxImport";
 
 /**
  * Generates a realistic GPX 1.1 track moving north at ~111 m per 0.001 deg lat.
@@ -198,10 +204,10 @@ describe("parseGpxRun", () => {
   });
 });
 
-describe("importGpxRun", () => {
+describe("importRunFile (GPX)", () => {
   it("writes a canonical run document to users/{uid}/runs/{importId} and flushes", async () => {
     const xml = buildSampleGpx({ name: "Strava Tempo" });
-    const summary = await importGpxRun("u-123", xml, {
+    const summary = await importRunFile("u-123", xml, {
       weightKg: 72,
       maxHr: 192,
     });
@@ -222,5 +228,164 @@ describe("importGpxRun", () => {
     expect(payload.notes).toBe("Imported from GPX");
     expect(payload.points.length).toBeGreaterThan(0);
     expect(mocks.flushQueue).toHaveBeenCalledOnce();
+  });
+});
+
+function buildSampleTcx({
+  notes = "Garmin Tempo",
+  pointCount = 60,
+  stepSec = 10,
+  stepLat = 0.0003,
+  includePosition = true,
+  includeHr = true,
+  splitTrackAt = -1,
+  pauseGapSec = 0,
+  startIso = "2026-10-14T07:30:00Z",
+}: {
+  notes?: string;
+  pointCount?: number;
+  stepSec?: number;
+  stepLat?: number;
+  includePosition?: boolean;
+  includeHr?: boolean;
+  splitTrackAt?: number;
+  pauseGapSec?: number;
+  startIso?: string;
+} = {}): string {
+  const startMs = Date.parse(startIso);
+  let elapsedOffsetMs = 0;
+  const track1: string[] = [];
+  const track2: string[] = [];
+
+  for (let i = 0; i < pointCount; i++) {
+    if (i === splitTrackAt) {
+      elapsedOffsetMs += pauseGapSec * 1000;
+    }
+    const ts = new Date(
+      startMs + i * stepSec * 1000 + elapsedOffsetMs
+    ).toISOString();
+    const lat = 51.5 + i * stepLat;
+    const lon = -0.12;
+    const alt = 30 + (i % 10 < 5 ? i * 0.4 : (i - 1) * 0.4);
+    const distM = i * 33.3;
+    const hr = Math.round(146 + (14 * i) / Math.max(1, pointCount - 1));
+    const pt = `          <Trackpoint>
+            <Time>${ts}</Time>${
+              includePosition
+                ? `
+            <Position>
+              <LatitudeDegrees>${lat.toFixed(6)}</LatitudeDegrees>
+              <LongitudeDegrees>${lon.toFixed(6)}</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>${alt.toFixed(1)}</AltitudeMeters>`
+                : ""
+            }
+            <DistanceMeters>${distM.toFixed(1)}</DistanceMeters>${
+              includeHr
+                ? `
+            <HeartRateBpm><Value>${hr}</Value></HeartRateBpm>`
+                : ""
+            }
+          </Trackpoint>`;
+    if (splitTrackAt > 0 && i >= splitTrackAt) track2.push(pt);
+    else track1.push(pt);
+  }
+
+  const totalTimeSec = (pointCount - 1) * stepSec;
+  const totalDistM = (pointCount - 1) * 33.3;
+  const tracksXml =
+    track2.length > 0
+      ? `        <Track>\n${track1.join("\n")}\n        </Track>\n        <Track>\n${track2.join("\n")}\n        </Track>`
+      : `        <Track>\n${track1.join("\n")}\n        </Track>`;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Activities>
+    <Activity Sport="Running">
+      <Id>${startIso}</Id>
+      <Notes>${notes}</Notes>
+      <Lap StartTime="${startIso}">
+        <TotalTimeSeconds>${totalTimeSec}</TotalTimeSeconds>
+        <DistanceMeters>${totalDistM.toFixed(1)}</DistanceMeters>
+${tracksXml}
+      </Lap>
+    </Activity>
+  </Activities>
+</TrainingCenterDatabase>`;
+}
+
+describe("parseTcxRun & importRunFile", () => {
+  it("parses outdoor GPS TCX tracks with elevation, splits, HR zones, and multi-track pauses", () => {
+    const xml = buildSampleTcx({
+      notes: "Coros &amp; Hills",
+      pointCount: 60,
+      stepSec: 10,
+      stepLat: 0.0003,
+      splitTrackAt: 30,
+      pauseGapSec: 240,
+    });
+
+    const parsed = parseTcxRun(xml, { weightKg: 70, maxHr: 190 });
+    expect(parsed.source).toBe("tcx");
+    expect(parsed.place).toBeUndefined();
+    expect(parsed.name).toBe("Coros & Hills");
+    expect(parsed.importId).toMatch(/^tcx-[0-9a-f]{8}$/);
+    expect(parsed.points).toHaveLength(60);
+    expect(parsed.points[30].breakBefore).toBe(true);
+    // 59 steps * 10 s minus the 10 s inter-track gap (240 s pause excluded)
+    expect(parsed.duration).toBe(580);
+    expect(parsed.distance).toBeGreaterThan(1800);
+    expect(parsed.splits.length).toBeGreaterThanOrEqual(1);
+    expect(parsed.heartRate).not.toBeNull();
+    expect(parsed.heartRate!.averageBpm).toBeGreaterThanOrEqual(146);
+    expect(parsed.heartRate!.averageBpm).toBeLessThanOrEqual(160);
+  });
+
+  it("parses indoor treadmill TCX files without GPS positions and preserves HR", async () => {
+    const xml = buildSampleTcx({
+      notes: "Treadmill Easy",
+      pointCount: 31,
+      stepSec: 20, // 600 s = 10 min
+      includePosition: false,
+      includeHr: true,
+    });
+
+    const parsed = parseRunFile(xml, { weightKg: 72, maxHr: 192 });
+    expect(parsed.source).toBe("tcx");
+    expect(parsed.place).toBe("treadmill");
+    expect(parsed.points).toEqual([]);
+    expect(parsed.distance).toBe(999);
+    expect(parsed.duration).toBe(600);
+    expect(parsed.heartRate).not.toBeNull();
+
+    const summary = await importRunFile("u-123", xml, {
+      weightKg: 72,
+      maxHr: 192,
+    });
+    expect(summary.runId).toBe(parsed.importId);
+    expect(summary.hasHeartRate).toBe(true);
+    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
+      "u-123",
+      "users/u-123/runs",
+      parsed.importId,
+      expect.objectContaining({
+        place: "treadmill",
+        notes: "Imported from TCX",
+        distance: 999,
+      })
+    );
+    expect(mocks.flushQueue).toHaveBeenCalledOnce();
+  });
+
+  it("auto-detects GPX vs TCX in parseRunFile and rejects unrecognized XML", () => {
+    const gpx = buildSampleGpx({ name: "Auto GPX" });
+    const tcx = buildSampleTcx({ notes: "Auto TCX" });
+
+    expect(parseRunFile(gpx).importId).toMatch(/^gpx-[0-9a-f]{8}$/);
+    expect(parseRunFile(tcx).importId).toMatch(/^tcx-[0-9a-f]{8}$/);
+    expect(() => parseRunFile("<unknown/>")).toThrowError(GpxImportError);
+    expect(() =>
+      parseTcxRun("<TrainingCenterDatabase></TrainingCenterDatabase>")
+    ).toThrow(/GPS points or lap data/i);
   });
 });
