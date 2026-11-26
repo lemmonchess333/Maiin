@@ -703,3 +703,18 @@ describe("RunDetail — segments (Run26 call 3)", () => {
     expect(screen.queryByRole("button", { name: "Make a segment" })).toBeNull();
   });
 });
+
+describe("RunDetail — TCX export", () => {
+  it("offers Export TCX for both outdoor GPS runs and indoor treadmill runs without GPS", () => {
+    h.run = savedRun({});
+    const { unmount } = renderDetail();
+    expect(screen.getByRole("button", { name: "Export GPX" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
+    unmount();
+
+    h.run = savedRun({ place: "treadmill", points: [] });
+    renderDetail();
+    expect(screen.queryByRole("button", { name: "Export GPX" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
+  });
+});
