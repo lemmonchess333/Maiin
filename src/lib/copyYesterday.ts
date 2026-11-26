@@ -1,5 +1,6 @@
 import type { Meal } from "@/hooks/useMeals";
 import type { MealCopySelection } from "./mealCopy";
+import { isActiveMealDoc } from "./mealTotals";
 
 export interface CopyPreviousDayPlan {
   selections: MealCopySelection[];
@@ -18,7 +19,8 @@ export function buildCopyPreviousDay(
   excludedIds?: ReadonlySet<string>
 ): CopyPreviousDayPlan | null {
   const eligible = previousMeals.filter(
-    (meal) => !meal.deletedAt && (!excludedIds || !excludedIds.has(meal.id))
+    (meal) =>
+      isActiveMealDoc(meal) && (!excludedIds || !excludedIds.has(meal.id))
   );
   if (eligible.length === 0) return null;
 
