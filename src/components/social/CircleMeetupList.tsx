@@ -16,7 +16,13 @@
  * (`meetupWhen`); names come from the Circle's own member docs.
  */
 import { useState } from "react";
-import { CalendarPlus, Dumbbell, Footprints, MapPin } from "lucide-react";
+import {
+  Calendar,
+  CalendarPlus,
+  Dumbbell,
+  Footprints,
+  MapPin,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import {
@@ -161,6 +167,21 @@ export default function CircleMeetupList({
                   </div>
                 ) : (
                   <div className="flex flex-wrap justify-end gap-2">
+                    {(going || organiser) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={busy}
+                        leftIcon={<Calendar className="size-3.5" aria-hidden />}
+                        onClick={() => {
+                          void import("@/features/goalSpace/meetupCalendar").then(
+                            ({ downloadMeetupIcs }) => downloadMeetupIcs(m)
+                          );
+                        }}
+                      >
+                        Add to calendar
+                      </Button>
+                    )}
                     {!organiser &&
                       (going ? (
                         <Button
