@@ -611,14 +611,12 @@ async function deleteAccount({
           );
           // Sequential by design (tombstone must commit before its
           // binding delete); binding count per user is 1 in practice.
-          // eslint-disable-next-line no-await-in-loop
           await firestore.collection("deletedBillingIdentities").doc(hash).set({
             provider: "apple",
             reason: "account-deletion",
             createdAt: now,
             expiresAt: billingRetentionUntil,
           });
-          // eslint-disable-next-line no-await-in-loop
           await bindingDoc.ref.delete();
         } catch (e) {
           // A missing HMAC secret retains the protected provider binding,

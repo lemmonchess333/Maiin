@@ -222,7 +222,7 @@ function figure(value, max) {
  *  reads every space as a space, since it splits words on spaces alone. */
 function words(value, max, containsProfanity) {
   if (typeof value !== "string") return undefined;
-  const trimmed = value.trim().replace(/[^\S ]+/g, " ");
+  const trimmed = value.trim().replace(/[^\S\u00a0]+/g, " ");
   if (!trimmed || trimmed.length > max) return undefined;
   if (
     typeof containsProfanity === "function" &&
@@ -510,7 +510,6 @@ async function removeCardsShowing({ firestore, field, id, uid }) {
   for (let i = 0; i < refs.length; i += 400) {
     const batch = firestore.batch();
     for (const ref of refs.slice(i, i + 400)) batch.delete(ref);
-    // eslint-disable-next-line no-await-in-loop
     await batch.commit();
   }
   return refs.length;

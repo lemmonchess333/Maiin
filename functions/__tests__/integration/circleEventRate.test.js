@@ -81,7 +81,6 @@ suite("Circle events and their notices", () => {
   it("past twenty in an hour, the event comes out and nobody is told", async () => {
     for (let i = 0; i < 20; i++) {
       // A session needs no notice, so these count without fanning out.
-      // eslint-disable-next-line no-await-in-loop
       await publish(`s${i}`, "session_completed", null);
     }
     const twentyFirst = await publish("e21");

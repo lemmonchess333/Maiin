@@ -41,6 +41,7 @@ import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
+import { buildCopyPreviousDay } from "@/lib/copyYesterday";
 import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
@@ -612,6 +613,46 @@ export default function Food() {
         : todaysMeals.filter((m) => !pendingDeleteIds.has(m.id)),
     [todaysMeals, pendingDeleteIds]
   );
+
+  const previousDayKey = useMemo(
+    () => format(addDays(parseLocalDate(selectedDate), -1), "yyyy-MM-dd"),
+    [selectedDate]
+  );
+  const previousDayMeals = getMealsForDate(previousDayKey);
+  const previousDayCopy = useMemo(
+    () =>
+      buildCopyPreviousDay(previousDayMeals, selectedDate, pendingDeleteIds),
+    [previousDayMeals, selectedDate, pendingDeleteIds]
+  );
+  const [copyingPreviousDay, setCopyingPreviousDay] = useState(false);
+
+  const handleCopyPreviousDay = async () => {
+    if (!uid || !previousDayCopy || copyingPreviousDay) return;
+    setCopyingPreviousDay(true);
+    try {
+      const result = await copySelectedMeals(
+        uid,
+        selectedDate,
+        previousDayCopy.selections
+      );
+      if (result.created.length > 0) {
+        haptic(15);
+        const count = result.created.length;
+        notifyMealsLogged(
+          uid,
+          result.created.map((entry) => entry.id),
+          `Copied ${count} ${count === 1 ? "meal" : "meals"} from ${isToday ? "yesterday" : "the day before"}`,
+          { path: "copy" }
+        );
+      }
+      if (result.error !== null) {
+        logger.error("[copy-previous-day] Failed:", result.error);
+        toast.error("Couldn’t copy meals. Try again.");
+      }
+    } finally {
+      setCopyingPreviousDay(false);
+    }
+  };
 
   // The day's totals, from the meals on screen: the ring and macro columns
   // drop the moment an entry is deleted and come back if it is undone. The
@@ -2476,6 +2517,30 @@ export default function Food() {
           onEdit={setEditingGroup}
           isToday={isToday}
         />
+
+        {visibleTodaysMeals.length === 0 &&
+          !mealsLoading &&
+          previousDayCopy &&
+          uid && (
+            <Button
+              variant="secondary"
+              fullWidth
+              loading={copyingPreviousDay}
+              onClick={() => void handleCopyPreviousDay()}
+            >
+              <span>
+                {isToday
+                  ? "Copy yesterday’s meals"
+                  : "Copy the day before’s meals"}{" "}
+                <span className="font-mono tabular-nums text-muted-foreground">
+                  ({previousDayCopy.mealCount}{" "}
+                  {previousDayCopy.mealCount === 1 ? "meal" : "meals"} ·{" "}
+                  {formatCalories(previousDayCopy.totalCalories)} {CALORIE_UNIT}
+                  )
+                </span>
+              </span>
+            </Button>
+          )}
 
         {/* Water for the day on screen, past days included (Mob2, call
             2). Isolated: a failed water read costs this row, not the
