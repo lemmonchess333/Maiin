@@ -3263,7 +3263,7 @@ export default function WorkoutSession({
             bottom of the list, under Up next, these lines read as loose
             notes rather than the numbers for the sets above. */}
           {currentExercise && (
-            <div className="-mt-2 space-y-0.5 px-1 text-xs text-muted-foreground">
+            <div className="-mt-2 space-y-1 px-1 text-xs text-muted-foreground">
               <p>
                 Target: {currentExercise.sets}&times;
                 {formatRepTarget(currentExercise)}

@@ -284,8 +284,8 @@ export default function WeeklyChallengeCard({
 
         {/* Secondary: the challenge's own leaders. */}
         {leaders.length > 0 && (
-          <>
-            <SectionHeading as="h3" size="compact" className="mt-4 mb-2">
+          <div className="pt-1 space-y-2">
+            <SectionHeading as="h3" size="compact">
               Leading this week
             </SectionHeading>
             <ol className="space-y-1" aria-label="Leading this week">
@@ -310,7 +310,7 @@ export default function WeeklyChallengeCard({
                 </li>
               ))}
             </ol>
-          </>
+          </div>
         )}
       </div>
     </div>

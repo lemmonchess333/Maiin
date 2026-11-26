@@ -85,7 +85,7 @@ function Spinner({
       <Loader2
         aria-hidden="true"
         className={cn(
-          "animate-spin",
+          "motion-safe:animate-spin",
           SIZE_CLASSES[size],
           VARIANT_CLASSES[variant]
         )}

@@ -1464,7 +1464,7 @@ export default function ProgrammeRunSection({
               these two lines fade in once useRunningStats resolves.
               No spinner is shown over the Start CTA above. */}
           {runsLoading ? (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div
                 className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "70%" }}

@@ -451,12 +451,17 @@ describe("DS ratchets — surface-level drift", () => {
 
   // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
   // is the Tailwind spelling of that promise. `animate-none` is a reset,
-  // not an animation, and is excluded.
-  const UNGUARDED_ANIMATION_BASELINE = 8;
+  // not an animation, and is excluded. Comments are stripped so JSDoc
+  // history notes don't count as live classes.
+  // Floor is 0: every animate-* class in code is now motion-safe:-guarded.
+  const UNGUARDED_ANIMATION_BASELINE = 0;
   it("animate-* classes without a motion-safe: prefix do not increase", () => {
     const { total, byFile } = scan((src) => {
+      const code = src
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/\/\/[^\n]*/g, " ");
       let n = 0;
-      for (const m of src.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
+      for (const m of code.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
         if (!m[1] && m[2] !== "none") n++;
       }
       return n;
@@ -724,10 +729,9 @@ describe("DS ratchets — surface-level drift", () => {
      and 32px — and 60 half-step stacks (0.5 / 1.5 / 2.5) sat across the
      tree. The five route pages and the shell are pinned to the scale
      outright; the rest of the tree is ratcheted. */
-  // 56 → 33: burned down 23 half-step stacks across 15 components/pages to
-  // whole-step space-y-1 / space-y-2.
-  // 33 → 12: burned down 21 more unconflicted half-step stacks across 18 files.
-  const HALF_STEP_STACK_BASELINE = 12;
+  // 56 → 33 → 12 → 0: fully burned down — every vertical stack is now on
+  // whole-step spacing. Floor is 0: any half-step space-y-* fails.
+  const HALF_STEP_STACK_BASELINE = 0;
   it("half-step vertical stacks (space-y-0.5 / 1.5 / 2.5) do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
@@ -762,13 +766,11 @@ describe("DS ratchets — surface-level drift", () => {
   /* A section heading carries no margin of its own — its group's stack
      places it. A heading that brings `mt-6 mb-2` to a container that
      already spaces its children is how one page ends up with 56px between
-     sections while another gets 16. Analytics is fully burned down (its
-     four page sections and PerformanceSection all take their placement
-     from a `space-y-2` section stack); the five left are Shoes, run
-     setup, route setup, the challenge list and Programme settings' field
-     groups. Counted across `SectionHeading` and the legacy section-tier
+     sections while another gets 16. Fully burned down — every section
+     heading now takes placement from its parent stack. Floor is 0.
+     Counted across `SectionHeading` and the legacy section-tier
      label, so neither picks the habit up. Multi-line openers included. */
-  const SECTION_LABEL_MARGIN_BASELINE = 5;
+  const SECTION_LABEL_MARGIN_BASELINE = 0;
   it("section headings with their own vertical margin do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

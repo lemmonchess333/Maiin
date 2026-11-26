@@ -175,7 +175,7 @@ export function Banner({
       >
         {icon ?? <IconComponent className="size-4" />}
       </span>
-      <div className="col-start-2 row-start-1 min-w-0 space-y-0.5 @max-[16em]:col-start-1 @max-[16em]:col-end-3">
+      <div className="col-start-2 row-start-1 min-w-0 space-y-1 @max-[16em]:col-start-1 @max-[16em]:col-end-3">
         {title ? (
           <p className="font-semibold text-foreground">{title}</p>
         ) : null}
