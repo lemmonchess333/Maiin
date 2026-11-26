@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Dumbbell, Upload } from "lucide-react";
+import { Dumbbell, Scale, Upload } from "lucide-react";
 import type { User } from "firebase/auth";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
@@ -8,11 +8,13 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 
 const MAX_GPX_BYTES = 15 * 1024 * 1024;
 const MAX_CSV_BYTES = 10 * 1024 * 1024;
+const MAX_WEIGHT_CSV_BYTES = 5 * 1024 * 1024;
 
 interface DataImportSectionProps {
   user: User | null;
   distanceUnit?: DistanceUnit;
   liftWeightUnit?: "kg" | "lbs";
+  bodyWeightUnit?: "kg" | "lbs";
   weightKg?: number;
   maxHeartRate?: number | null;
   age?: number;
@@ -22,14 +24,17 @@ export default function DataImportSection({
   user,
   distanceUnit = "km",
   liftWeightUnit = "kg",
+  bodyWeightUnit = "kg",
   weightKg,
   maxHeartRate,
   age,
 }: DataImportSectionProps) {
   const [importingGpx, setImportingGpx] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
+  const [importingWeight, setImportingWeight] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const weightInputRef = useRef<HTMLInputElement>(null);
 
   const handleGpxChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -117,11 +122,51 @@ export default function DataImportSection({
     }
   };
 
+  const handleWeightCsvChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_WEIGHT_CSV_BYTES) {
+      toast.error("This file is too large to import.");
+      return;
+    }
+
+    setImportingWeight(true);
+    try {
+      const csvText = await file.text();
+      const { BodyweightCsvImportError, importBodyweightCsv } =
+        await import("@/lib/bodyweightCsvImport");
+      try {
+        const result = await importBodyweightCsv(user.uid, csvText, {
+          defaultWeightUnit: bodyWeightUnit,
+        });
+        const unit = result.importedCount === 1 ? "weigh-in" : "weigh-ins";
+        toast.success(`Imported ${result.importedCount} ${unit}`);
+      } catch (err) {
+        if (err instanceof BodyweightCsvImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t import this CSV file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setImportingWeight(false);
+    }
+  };
+
   return (
     <SettingsGroup title="Import">
       <input
         ref={gpxInputRef}
         type="file"
+        data-import-kind="gpx"
         accept=".gpx,application/gpx+xml,application/xml,text/xml"
         className="hidden"
         aria-hidden="true"
@@ -131,11 +176,22 @@ export default function DataImportSection({
       <input
         ref={csvInputRef}
         type="file"
+        data-import-kind="workout-csv"
         accept=".csv,text/csv,text/plain"
         className="hidden"
         aria-hidden="true"
         tabIndex={-1}
         onChange={handleCsvChange}
+      />
+      <input
+        ref={weightInputRef}
+        type="file"
+        data-import-kind="weight-csv"
+        accept=".csv,text/csv,text/plain"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleWeightCsvChange}
       />
       <SettingsRow
         icon={Upload}
@@ -154,6 +210,15 @@ export default function DataImportSection({
         chevron={false}
         disabled={importingCsv || !user}
         onClick={() => csvInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={Scale}
+        label="Import weight CSV"
+        description="Add weigh-ins from Happy Scale, Withings, Renpho or Tropos"
+        value={importingWeight ? "Importing…" : undefined}
+        chevron={false}
+        disabled={importingWeight || !user}
+        onClick={() => weightInputRef.current?.click()}
       />
     </SettingsGroup>
   );
