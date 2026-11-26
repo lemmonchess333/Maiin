@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Dumbbell, FileJson, Scale, Upload } from "lucide-react";
+import { Dumbbell, FileJson, Scale, Upload, Utensils } from "lucide-react";
 import type { User } from "firebase/auth";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
@@ -9,6 +9,7 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 const MAX_GPX_BYTES = 15 * 1024 * 1024;
 const MAX_CSV_BYTES = 10 * 1024 * 1024;
 const MAX_WEIGHT_CSV_BYTES = 5 * 1024 * 1024;
+const MAX_NUTRITION_CSV_BYTES = 10 * 1024 * 1024;
 const MAX_ARCHIVE_JSON_BYTES = 25 * 1024 * 1024;
 
 interface DataImportSectionProps {
@@ -33,10 +34,12 @@ export default function DataImportSection({
   const [importingGpx, setImportingGpx] = useState(false);
   const [importingCsv, setImportingCsv] = useState(false);
   const [importingWeight, setImportingWeight] = useState(false);
+  const [importingNutrition, setImportingNutrition] = useState(false);
   const [importingArchive, setImportingArchive] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
+  const nutritionInputRef = useRef<HTMLInputElement>(null);
   const archiveInputRef = useRef<HTMLInputElement>(null);
 
   const handleGpxChange = async (
@@ -164,6 +167,43 @@ export default function DataImportSection({
     }
   };
 
+  const handleNutritionCsvChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_NUTRITION_CSV_BYTES) {
+      toast.error("This file is too large to import.");
+      return;
+    }
+
+    setImportingNutrition(true);
+    try {
+      const csvText = await file.text();
+      const { NutritionCsvImportError, importNutritionCsv } =
+        await import("@/lib/nutritionCsvImport");
+      try {
+        const result = await importNutritionCsv(user.uid, csvText);
+        const unit = result.importedCount === 1 ? "meal" : "meals";
+        toast.success(`Imported ${result.importedCount} ${unit}`);
+      } catch (err) {
+        if (err instanceof NutritionCsvImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t import this CSV file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setImportingNutrition(false);
+    }
+  };
+
   const handleArchiveJsonChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -236,6 +276,16 @@ export default function DataImportSection({
         onChange={handleWeightCsvChange}
       />
       <input
+        ref={nutritionInputRef}
+        type="file"
+        data-import-kind="nutrition-csv"
+        accept=".csv,text/csv,text/plain"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleNutritionCsvChange}
+      />
+      <input
         ref={archiveInputRef}
         type="file"
         data-import-kind="archive-json"
@@ -271,6 +321,15 @@ export default function DataImportSection({
         chevron={false}
         disabled={importingWeight || !user}
         onClick={() => weightInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={Utensils}
+        label="Import nutrition CSV"
+        description="Add meals from MyFitnessPal, Cronometer, Lose It! or Tropos"
+        value={importingNutrition ? "Importing…" : undefined}
+        chevron={false}
+        disabled={importingNutrition || !user}
+        onClick={() => nutritionInputRef.current?.click()}
       />
       <SettingsRow
         icon={FileJson}

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   importRunFile: vi.fn(),
   importWorkoutsCsv: vi.fn(),
   importBodyweightCsv: vi.fn(),
+  importNutritionCsv: vi.fn(),
   importFullBackupJson: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -38,6 +39,16 @@ vi.mock("@/lib/bodyweightCsvImport", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/nutritionCsvImport", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/nutritionCsvImport")>();
+  return {
+    ...actual,
+    importNutritionCsv: (...args: unknown[]) =>
+      mocks.importNutritionCsv(...args),
+  };
+});
+
 vi.mock("@/lib/jsonArchiveImport", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/lib/jsonArchiveImport")>();
@@ -59,6 +70,7 @@ vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
 import { GpxImportError } from "@/lib/gpxImport";
 import { WorkoutCsvImportError } from "@/lib/workoutCsvImport";
 import { BodyweightCsvImportError } from "@/lib/bodyweightCsvImport";
+import { NutritionCsvImportError } from "@/lib/nutritionCsvImport";
 import { JsonArchiveImportError } from "@/lib/jsonArchiveImport";
 import DataImportSection from "../DataImportSection";
 
@@ -69,7 +81,7 @@ beforeEach(() => {
 });
 
 describe("DataImportSection", () => {
-  it("renders GPX/TCX run, lifting CSV, weight CSV, and backup JSON import actions", () => {
+  it("renders GPX/TCX run, lifting CSV, weight CSV, nutrition CSV, and backup JSON import actions", () => {
     render(<DataImportSection user={USER} />);
     expect(
       screen.getByRole("button", { name: /import gpx or tcx run/i })
@@ -79,6 +91,9 @@ describe("DataImportSection", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /import weight csv/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /import nutrition csv/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /import backup json/i })
@@ -337,6 +352,57 @@ describe("DataImportSection", () => {
     await waitFor(() =>
       expect(mocks.toastError).toHaveBeenCalledWith(
         "This file isn’t a valid JSON backup."
+      )
+    );
+  });
+
+  it("imports a selected nutrition CSV file and reports meal count", async () => {
+    mocks.importNutritionCsv.mockResolvedValue({
+      importedCount: 8,
+      earliestDate: "2026-10-18",
+      latestDate: "2026-10-21",
+    });
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="nutrition-csv"]'
+    ) as HTMLInputElement;
+    const file = new File(["Date,Meal,Calories\n"], "meals.csv", {
+      type: "text/csv",
+    });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.importNutritionCsv).toHaveBeenCalledWith(
+        "u-1",
+        "Date,Meal,Calories\n"
+      )
+    );
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith("Imported 8 meals")
+    );
+  });
+
+  it("surfaces NutritionCsvImportError messages directly to the user", async () => {
+    mocks.importNutritionCsv.mockRejectedValue(
+      new NutritionCsvImportError(
+        "CSV_NO_ENTRIES",
+        "No valid meal entries were found in this CSV."
+      )
+    );
+
+    const { container } = render(<DataImportSection user={USER} />);
+    const input = container.querySelector(
+      'input[data-import-kind="nutrition-csv"]'
+    ) as HTMLInputElement;
+    const file = new File(["Date,Meal,Calories\n"], "empty.csv", {
+      type: "text/csv",
+    });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "No valid meal entries were found in this CSV."
       )
     );
   });
