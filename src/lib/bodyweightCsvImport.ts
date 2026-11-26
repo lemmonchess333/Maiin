@@ -164,11 +164,11 @@ function buildLocalDate(
   return { date: localDateString(dt), ms: dt.getTime() };
 }
 
-function applyMeridiem(hour: number, meridiem: string | undefined): number {
-  if (!meridiem) return hour;
-  const upper = meridiem.toUpperCase();
-  if (upper === "AM") return hour === 12 ? 0 : hour;
-  if (upper === "PM") return hour === 12 ? 12 : hour + 12;
+function applyMeridiem(hour: number, meridiemLead: string | undefined): number {
+  if (!meridiemLead) return hour;
+  const lead = meridiemLead.toLowerCase();
+  if (lead === "a") return hour === 12 ? 0 : hour;
+  if (lead === "p") return hour === 12 ? 12 : hour + 12;
   return hour;
 }
 
@@ -176,9 +176,9 @@ function parseWeighInDate(raw: string): { date: string; ms: number } | null {
   const s = raw.trim();
   if (!s) return null;
 
-  // YYYY-MM-DD or YYYY/MM/DD with optional time + optional AM/PM
+  // YYYY-MM-DD or YYYY/MM/DD with optional time and optional 12-hour suffix
   const isoLocal =
-    /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(
+    /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?)?$/i.exec(
       s
     );
   if (isoLocal) {
@@ -198,9 +198,9 @@ function parseWeighInDate(raw: string): { date: string; ms: number } | null {
     );
   }
 
-  // Renpho / US month-first: "Oct 12, 2026 7:15:00 AM" or "Oct 12, 2026"
+  // Renpho / US month-first: "Oct 12, 2026 7:15:00 ..." or "Oct 12, 2026"
   const monthFirst =
-    /^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(
+    /^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?)?$/i.exec(
       s
     );
   if (monthFirst) {
@@ -226,7 +226,7 @@ function parseWeighInDate(raw: string): { date: string; ms: number } | null {
 
   // Day-first named month: "12 Oct 2026, 07:15"
   const dayFirst =
-    /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(
+    /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?)?$/i.exec(
       s
     );
   if (dayFirst) {
@@ -252,7 +252,7 @@ function parseWeighInDate(raw: string): { date: string; ms: number } | null {
 
   // Slash date: MM/DD/YYYY (or DD/MM/YYYY when first component > 12)
   const slash =
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:([ap])\.?m\.?)?)?$/i.exec(
       s
     );
   if (slash) {
