@@ -868,6 +868,31 @@ export default function WorkoutSession({
 
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
+  const DRAFT_DEBOUNCE_MS = 350;
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDraftWriteRef = useRef<(() => void) | null>(null);
+  const lastImmediateDraftSigRef = useRef<string | null>(null);
+
+  const cancelPendingDraft = useCallback(() => {
+    if (draftTimerRef.current !== null) {
+      clearTimeout(draftTimerRef.current);
+      draftTimerRef.current = null;
+    }
+    pendingDraftWriteRef.current = null;
+  }, []);
+
+  const flushPendingDraft = useCallback(() => {
+    if (draftTimerRef.current !== null) {
+      clearTimeout(draftTimerRef.current);
+      draftTimerRef.current = null;
+    }
+    const pending = pendingDraftWriteRef.current;
+    pendingDraftWriteRef.current = null;
+    if (pending && !liftFinishView(finishRef.current).locked) {
+      pending();
+    }
+  }, []);
+
   useEffect(() => {
     const hasProgress = setLogs.some((exSets) =>
       exSets.some((s) => s.completed)
@@ -882,29 +907,63 @@ export default function WorkoutSession({
       prescription.exercises.length !== initialDay.exercises.length ||
       (prescription.supersets?.length ?? 0) > 0 ||
       (prescription.swaps?.length ?? 0) > 0;
+    const completedSig = setLogs
+      .map(
+        (exSets) =>
+          `${exSets.length}:${exSets.map((s) => (s.completed ? "1" : "0")).join("")}`
+      )
+      .join("|");
+    const immediateSig = `${completedSig}::${currentExIndex}::${Object.keys(skippedRows).join(",")}::${prescription.exercises.length}::${prescription.supersets?.length ?? 0}::${prescription.swaps?.length ?? 0}`;
+
     if (
       !hasProgress &&
       !reshaped &&
       !hasRecoveryDraft.current &&
       !hasEnteredValues.current
-    )
+    ) {
+      lastImmediateDraftSigRef.current = immediateSig;
+      cancelPendingDraft();
       return;
-    if (liftFinishView(finishRef.current).locked) return;
-    const stored = saveDraft({
-      dayIndex,
-      dayName: day.dayName,
-      setLogs,
-      exerciseNotes,
-      elapsedSeconds: elapsedSecondsSince(sessionStartedAt),
-      currentExIndex,
-      completionId: completionIdRef.current,
-      completionCommandId: completionCommandIdRef.current,
-      startedAt: originalStartedAt,
-      prescription,
-      skippedRows,
-      programmeContext: sessionProgrammeContext,
-    });
-    if (stored) hasRecoveryDraft.current = true;
+    }
+    if (liftFinishView(finishRef.current).locked) {
+      cancelPendingDraft();
+      return;
+    }
+
+    const persistNow = () => {
+      const stored = saveDraft({
+        dayIndex,
+        dayName: day.dayName,
+        setLogs,
+        exerciseNotes,
+        elapsedSeconds: elapsedSecondsSince(sessionStartedAt),
+        currentExIndex,
+        completionId: completionIdRef.current,
+        completionCommandId: completionCommandIdRef.current,
+        startedAt: originalStartedAt,
+        prescription,
+        skippedRows,
+        programmeContext: sessionProgrammeContext,
+      });
+      if (stored) hasRecoveryDraft.current = true;
+    };
+
+    if (lastImmediateDraftSigRef.current !== immediateSig) {
+      lastImmediateDraftSigRef.current = immediateSig;
+      cancelPendingDraft();
+      persistNow();
+      return;
+    }
+
+    // Typing weights, reps, or notes inside the current exercise debounces
+    // localStorage writes while guaranteeing a synchronous flush on hide/unmount.
+    pendingDraftWriteRef.current = persistNow;
+    if (draftTimerRef.current !== null) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(() => {
+      draftTimerRef.current = null;
+      pendingDraftWriteRef.current = null;
+      if (!liftFinishView(finishRef.current).locked) persistNow();
+    }, DRAFT_DEBOUNCE_MS);
   }, [
     setLogs,
     skippedRows,
@@ -918,7 +977,24 @@ export default function WorkoutSession({
     originalStartedAt,
     sessionProgrammeContext,
     sessionStartedAt,
+    cancelPendingDraft,
   ]);
+
+  // Flush any debounced keystroke draft before backgrounding or unmount (and
+  // before the leave-toast effect below inspects hasRecoveryDraft).
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushPendingDraft();
+    };
+    const onPageHide = () => flushPendingDraft();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      flushPendingDraft();
+    };
+  }, [flushPendingDraft]);
 
   const formatElapsed = formatClock;
 
@@ -1306,31 +1382,66 @@ export default function WorkoutSession({
      properties, not state: no render for them. */
   const dockRef = useRef<HTMLDivElement | null>(null);
   const dockObserver = useRef<ResizeObserver | null>(null);
+  const observedListRef = useRef<HTMLElement | null>(null);
+  const dockCacheRef = useRef({
+    dockH: -1,
+    listH: -1,
+    scrollTop: -1,
+    clientH: -1,
+    scrollH: -1,
+  });
   const writeDock = useCallback(() => {
     const list = contentRef.current;
     const dock = dockRef.current;
     if (!list || !dock) return;
-    const set = (el: HTMLElement, name: string, px: number) => {
+    // Batch all geometry reads up front so unchanged keystroke commits skip
+    // style writes and forced synchronous reflows.
+    const natural = dock.offsetHeight;
+    const listH = list.offsetHeight;
+    const scrollTop = list.scrollTop;
+    const clientH = list.clientHeight;
+    const scrollH = list.scrollHeight;
+    const cached = dockCacheRef.current;
+    if (
+      cached.dockH === natural &&
+      cached.listH === listH &&
+      cached.scrollTop === scrollTop &&
+      cached.clientH === clientH &&
+      cached.scrollH === scrollH
+    ) {
+      return;
+    }
+    const set = (el: HTMLElement, name: string, px: number): boolean => {
       const value = `${Math.round(px)}px`;
-      if (el.style.getPropertyValue(name) !== value)
+      if (el.style.getPropertyValue(name) !== value) {
         el.style.setProperty(name, value);
+        return true;
+      }
+      return false;
     };
     // The margin first, so the list's box stops depending on the dock...
-    const natural = dock.offsetHeight;
-    set(list, "--dock-h", natural);
-    set(dock, "--dock-h", natural);
-    // ...then that box is the dock's ceiling, and its height again if the
-    // ceiling held it.
-    set(dock, "--dock-room", list.offsetHeight);
-    const height = dock.offsetHeight;
+    const listDockHChanged = set(list, "--dock-h", natural);
+    const dockOwnHChanged = set(dock, "--dock-h", natural);
+    const dockHChanged = listDockHChanged || dockOwnHChanged;
+    // ...then that box is the dock's ceiling, and its height again only if
+    // either property changed and could have clamped the dock.
+    const settledListH = dockHChanged ? list.offsetHeight : listH;
+    const roomChanged = set(dock, "--dock-room", settledListH);
+    const height = dockHChanged || roomChanged ? dock.offsetHeight : natural;
     if (height !== natural) {
       set(list, "--dock-h", height);
       set(dock, "--dock-h", height);
     }
+    const finalScrollH =
+      dockHChanged || height !== natural ? list.scrollHeight : scrollH;
     const room = parseFloat(list.style.getPropertyValue("--dock-pad")) || 0;
-    const roomInView =
-      list.scrollTop + list.clientHeight - (list.scrollHeight - room);
+    const roomInView = scrollTop + clientH - (finalScrollH - room);
     set(list, "--dock-pad", Math.max(height + 16, roomInView));
+    cached.dockH = height;
+    cached.listH = settledListH;
+    cached.scrollTop = scrollTop;
+    cached.clientH = clientH;
+    cached.scrollH = finalScrollH;
   }, []);
   /* On a scroll, only room that is being held needs a look: the common
      scroll reads nothing. */
@@ -1347,6 +1458,14 @@ export default function WorkoutSession({
     (node: HTMLDivElement | null) => {
       dockObserver.current?.disconnect();
       dockObserver.current = null;
+      observedListRef.current = null;
+      dockCacheRef.current = {
+        dockH: -1,
+        listH: -1,
+        scrollTop: -1,
+        clientH: -1,
+        scrollH: -1,
+      };
       dockRef.current = node;
       if (node && typeof ResizeObserver !== "undefined") {
         const observer = new ResizeObserver(() => {
@@ -1360,7 +1479,10 @@ export default function WorkoutSession({
   );
   useLayoutEffect(() => {
     const list = contentRef.current;
-    if (list) dockObserver.current?.observe(list);
+    if (list && dockObserver.current && observedListRef.current !== list) {
+      dockObserver.current.observe(list);
+      observedListRef.current = list;
+    }
     writeDock();
   });
   useLayoutEffect(() => {
@@ -2160,6 +2282,7 @@ export default function WorkoutSession({
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
+        cancelPendingDraft();
         clearDraft(completionIdRef.current);
         sendFinish({ type: "acknowledged", workoutId: receipt.workoutId });
         // The badges this workout earns (first_pr from its new bests, the
@@ -2245,6 +2368,8 @@ export default function WorkoutSession({
   };
 
   const handleStartFresh = () => {
+    cancelPendingDraft();
+    lastImmediateDraftSigRef.current = null;
     hasRecoveryDraft.current = false;
     hasEnteredValues.current = false;
     // A fresh start is the session as it was set out: the draft's swaps,
