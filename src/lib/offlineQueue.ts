@@ -130,25 +130,22 @@ function saveQueue(queue: QueuedWrite[]) {
     notifyQueue();
     return;
   }
-  // Never evict an accepted durable meal to make space for another write.
-  if (queue.some((item) => item.durable))
-    throw new Error(
-      "Couldn’t save on this phone. Free device storage and retry."
-    );
   // A refused write with no storage at all is not a full store: there is
   // nothing to shed into, and every shed would be reported as a drop.
-  if (!isAvailable()) return;
-  // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
-  // shedding one at a time until it fits — the previous code lopped
-  // off the whole oldest HALF in one go and, on a second failure,
-  // cleared the queue ENTIRELY (silent bulk data loss). Every drop
-  // is reported so an exhausted/blocked sync is diagnosable rather
-  // than vanishing. Newest writes are kept (most likely still
-  // relevant); a dropped queued create can't duplicate because the
-  // creates are now idempotent by stable id (see queueWrite).
+  if (!isAvailable()) {
+    if (queue.some((item) => item.durable))
+      throw new Error(
+        "Couldn’t save on this phone. Free device storage and retry."
+      );
+    return;
+  }
+  // CORE-01: quota exceeded. Shed the oldest non-durable item one at a time
+  // until it fits while never evicting accepted durable records.
   const working = [...queue];
   while (working.length > 0) {
-    const dropped = working.shift();
+    const idx = working.findIndex((item) => !item.durable);
+    if (idx === -1) break;
+    const [dropped] = working.splice(idx, 1);
     captureError(
       new Error("OfflineQueue: quota exceeded, dropped one queued write"),
       "network",
@@ -158,12 +155,21 @@ function saveQueue(queue: QueuedWrite[]) {
         remaining: working.length,
       }
     );
-    // Still too big — shed the next-oldest and retry.
-    if (writeJson(QUEUE_KEY, working)) return;
+    // Still too big — shed the next-oldest non-durable entry and retry.
+    if (writeJson(QUEUE_KEY, working)) {
+      notifyQueue();
+      return;
+    }
   }
+  // Never evict an accepted durable record to make space for another write.
+  if (working.some((item) => item.durable))
+    throw new Error(
+      "Couldn’t save on this phone. Free device storage and retry."
+    );
   // Nothing fit even when empty — remove the key so a corrupt giant
   // value can't wedge every future write.
   remove(QUEUE_KEY);
+  notifyQueue();
 }
 
 export function queueWrite(
@@ -465,13 +471,36 @@ function refusedForGood(e: unknown): boolean {
  */
 let flushChain: Promise<unknown> = Promise.resolve();
 
+async function withCrossTabQueueLock<T>(
+  uid: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  if (locks && typeof locks.request === "function") {
+    return (await locks.request(`tropos:offline-queue:${uid}`, () =>
+      fn()
+    )) as T;
+  }
+  return fn();
+}
+
+/** Immediately retire a single item id from the latest stored queue so a
+ *  mid-flush tab close cannot replay already-landed writes on restart. */
+function retireQueueItem(id: string) {
+  const current = getQueue();
+  const next = current.filter((entry) => entry.id !== id);
+  if (next.length !== current.length) {
+    saveQueue(next);
+  }
+}
+
 /**
  * Flush queued writes for `uid`. Items belonging to other uids are
  * left in the queue for the next time that user signs back in.
  * Returns the count successfully flushed.
  */
 export function flushQueue(db: Firestore, uid: string): Promise<number> {
-  const run = () => flushQueueOnce(db, uid);
+  const run = () => withCrossTabQueueLock(uid, () => flushQueueOnce(db, uid));
   const result = flushChain.then(run, run);
   // Swallow only for the CHAIN's copy — the returned promise still
   // rejects for the caller.
@@ -506,35 +535,38 @@ export function getRefusedSaveCount(uid: string): number {
  * different queues. Resolves to the number of records discarded.
  */
 export function discardRefusedSaves(uid: string): Promise<number> {
-  const run = async () => {
-    const queue = getQueue();
-    const refused = refusedDocuments(queue, uid);
-    if (refused.size === 0) return 0;
-    const discarded = queue.filter(
-      (item) =>
-        item.uid === uid && refused.has(`${item.collectionPath}/${item.docId}`)
-    );
-    if (
-      !writeJson(
-        QUEUE_KEY,
-        queue.filter((item) => !discarded.includes(item))
+  const run = () =>
+    withCrossTabQueueLock(uid, async () => {
+      const queue = getQueue();
+      const refused = refusedDocuments(queue, uid);
+      if (refused.size === 0) return 0;
+      const discarded = queue.filter(
+        (item) =>
+          item.uid === uid &&
+          refused.has(`${item.collectionPath}/${item.docId}`)
+      );
+      if (
+        !writeJson(
+          QUEUE_KEY,
+          queue.filter((item) => !discarded.includes(item))
+        )
       )
-    )
-      throw new Error("Couldn’t update this phone. Try again.");
-    notifyQueue();
-    const completions = discarded
-      .filter((item) => item.workoutCompletion)
-      .map(
-        (item) => (decode(item.data) as { completionId?: unknown }).completionId
-      )
-      .filter((id): id is string => typeof id === "string");
-    if (completions.length > 0) {
-      const { clearCompletedWorkoutDraft } =
-        await import("@/hooks/useWorkoutDraft");
-      for (const id of completions) clearCompletedWorkoutDraft(uid, id);
-    }
-    return refused.size;
-  };
+        throw new Error("Couldn’t update this phone. Try again.");
+      notifyQueue();
+      const completions = discarded
+        .filter((item) => item.workoutCompletion)
+        .map(
+          (item) =>
+            (decode(item.data) as { completionId?: unknown }).completionId
+        )
+        .filter((id): id is string => typeof id === "string");
+      if (completions.length > 0) {
+        const { clearCompletedWorkoutDraft } =
+          await import("@/hooks/useWorkoutDraft");
+        for (const id of completions) clearCompletedWorkoutDraft(uid, id);
+      }
+      return refused.size;
+    });
   const result = flushChain.then(run, run);
   flushChain = result.catch(() => {});
   return result;
@@ -545,8 +577,6 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   if (queue.length === 0) return 0;
 
   let flushed = 0;
-  const landed = new Set<string>();
-  const dropped = new Set<string>();
   // Documents with a save the rules refused for good still queued against
   // them. A later write to the same document waits behind it (a meal's
   // Undo behind its create, a session's notes behind its save); a write to
@@ -631,7 +661,10 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
           }
         }
       }
-      landed.add(item.id);
+      // Checkpoint immediately by subtracting this single id from the latest
+      // stored queue so items queued mid-flush stay intact and a tab close
+      // cannot replay already-landed items.
+      retireQueueItem(item.id);
       flushed++;
     } catch (e) {
       captureError(
@@ -654,34 +687,13 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
         if (target) refused.add(target);
       } else if (forGood) {
         // A best-effort write no flush can land, retried on every one.
-        dropped.add(item.id);
+        retireQueueItem(item.id);
       } else if (target) {
         waiting.add(target);
       }
     }
   }
 
-  // Re-read and SUBTRACT, rather than writing back the snapshot taken
-  // before the loop.
-  //
-  // Every iteration above awaits a network round trip, and `queueWrite`
-  // runs synchronously against localStorage — so a write queued while a
-  // flush is in flight is already persisted by the time the loop ends.
-  // Writing back a list derived from the pre-loop snapshot deleted it,
-  // silently and permanently: the user came back online, opened the app,
-  // logged a meal during the flush, and the meal was gone. The window is
-  // as long as the queue takes to drain, which on a slow reconnect is
-  // exactly when the user is most likely to be logging.
-  //
-  // Subtracting the ids that landed is right for the same reason it is
-  // safe: items that FAILED, items belonging to another uid, and items
-  // queued mid-flush were all never removed to begin with, so they need
-  // no explicit preservation and cannot be resurrected by a stale copy.
-  if (landed.size > 0 || dropped.size > 0) {
-    saveQueue(
-      getQueue().filter((item) => !landed.has(item.id) && !dropped.has(item.id))
-    );
-  }
   return flushed;
 }
 
