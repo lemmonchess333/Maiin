@@ -122,8 +122,11 @@ export default function TodayEnergy({
   return (
     <section
       aria-label="Today’s food"
-      className={cardClasses({ className: "@container rounded-xl border border-border/60" })}>
-      
+      className={cardClasses({
+        tone: "flat",
+        className: "@container rounded-xl",
+      })}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-bold text-foreground">Food</h2>
         {/* The one way into the food log: nutrition-tinted, a full 44px

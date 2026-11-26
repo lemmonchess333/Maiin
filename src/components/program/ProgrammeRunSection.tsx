@@ -1603,7 +1603,11 @@ export default function ProgrammeRunSection({
               waits while the 30-minute goal is offered, and while the
               starter goal's Done shows, which offer their own next goal. */}
           {!rollingOfferDismissed && !starterOffered && !starterDoneShowing && (
-            <Card size="compact" className="flex items-center gap-3 shadow-none border border-border/60 dark:border-transparent dark:card-shadow">
+            <Card
+              size="compact"
+              tone="flat"
+              className="flex items-center gap-3"
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -1647,7 +1651,11 @@ export default function ProgrammeRunSection({
               It waits while the starter goal's Done shows: that card already
               offers the next goal. */}
           {!setRaceGoalDismissed && !starterDoneShowing && (
-            <Card size="compact" className="flex items-center gap-3 shadow-none border border-border/60 dark:border-transparent dark:card-shadow">
+            <Card
+              size="compact"
+              tone="flat"
+              className="flex items-center gap-3"
+            >
               <button
                 type="button"
                 onClick={() => {

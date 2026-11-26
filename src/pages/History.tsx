@@ -157,95 +157,7 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
-interface PolarizedSplitRun {
-  type?: string | null;
-  runType?: string | null;
-  workoutType?: string | null;
-  duration?: number | null;
-  durationMin?: number | null;
-  distance?: number | null;
-  distanceKm?: number | null;
-}
-
-interface PolarizedSplitResult {
-  lowIntensityPct: number;
-  highIntensityPct: number;
-  runCount: number;
-  status: "polarized" | "too_hard" | "all_easy" | "insufficient";
-}
-
-const HIGH_INTENSITY_RUN_TYPES = new Set([
-  "tempo",
-  "intervals",
-  "interval",
-  "threshold",
-  "race",
-  "speed",
-  "vo2",
-  "repetition",
-  "fartlek",
-]);
-
-/**
- * Computes Seiler 80/20 polarized intensity distribution across logged runs.
- */
-function computePolarizedSplit(
-  runs: ReadonlyArray<PolarizedSplitRun>
-): PolarizedSplitResult {
-  if (runs.length < 3) {
-    return {
-      lowIntensityPct: 0,
-      highIntensityPct: 0,
-      runCount: runs.length,
-      status: "insufficient",
-    };
-  }
-  let low = 0;
-  let high = 0;
-  for (const run of runs) {
-    const weight =
-      typeof run.durationMin === "number" && run.durationMin > 0
-        ? run.durationMin
-        : typeof run.duration === "number" && run.duration > 0
-          ? run.duration / 60
-          : typeof run.distanceKm === "number" && run.distanceKm > 0
-            ? run.distanceKm
-            : typeof run.distance === "number" && run.distance > 0
-              ? run.distance / 1000
-              : 1;
-    const rawType = (run.type ?? run.runType ?? run.workoutType ?? "")
-      .toString()
-      .toLowerCase();
-    if (HIGH_INTENSITY_RUN_TYPES.has(rawType)) {
-      high += weight;
-    } else {
-      low += weight;
-    }
-  }
-  const total = low + high;
-  if (total <= 0) {
-    return {
-      lowIntensityPct: 0,
-      highIntensityPct: 0,
-      runCount: runs.length,
-      status: "insufficient",
-    };
-  }
-  const lowIntensityPct = Math.round((low / total) * 100);
-  const highIntensityPct = 100 - lowIntensityPct;
-  const status =
-    highIntensityPct === 0
-      ? "all_easy"
-      : highIntensityPct > 25
-        ? "too_hard"
-        : "polarized";
-  return {
-    lowIntensityPct,
-    highIntensityPct,
-    runCount: runs.length,
-    status,
-  };
-}
+import { computePolarizedSplit } from "@/lib/polarizedSplit";
 
 const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
@@ -1676,32 +1588,34 @@ export default function History() {
                         }
                       />
                     </SectionErrorBoundary>
-                {polarizedSplit.status !== "insufficient" && (
-                  <div className="border-t border-border pt-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium text-foreground">
-                        Intensity balance (80/20)
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {polarizedSplit.status === "polarized"
-                          ? "On target for 80/20"
-                          : polarizedSplit.status === "too_hard"
-                            ? "High-intensity share is high"
-                            : "All easy aerobic volume"}
-                      </span>
-                    </div>
-                    <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${polarizedSplit.lowIntensityPct}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground font-mono tabular-nums">
-                      <span>Easy {polarizedSplit.lowIntensityPct}%</span>
-                      <span>Hard {polarizedSplit.highIntensityPct}%</span>
-                    </div>
-                  </div>
-                )}
+                    {polarizedSplit.status !== "insufficient" && (
+                      <div className="border-t border-border pt-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <span className="font-medium text-foreground">
+                            Intensity balance (80/20)
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {polarizedSplit.status === "polarized"
+                              ? "On target for 80/20"
+                              : polarizedSplit.status === "too_hard"
+                                ? "High-intensity share is high"
+                                : "All easy aerobic volume"}
+                          </span>
+                        </div>
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{
+                              width: `${polarizedSplit.lowIntensityPct}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono tabular-nums">
+                          <span>Easy {polarizedSplit.lowIntensityPct}%</span>
+                          <span>Hard {polarizedSplit.highIntensityPct}%</span>
+                        </div>
+                      </div>
+                    )}
                     <SectionErrorBoundary sectionName="fastest-kilometres">
                       <FastestKilometresCard
                         rows={runningInsight.efforts}
