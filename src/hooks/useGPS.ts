@@ -19,6 +19,9 @@ export type GPSSignalQuality =
 
 interface GPSState {
   points: GPSPoint[];
+  /** Monotonic revision counter bumped on every trail change so consumers can
+   *  memoize without O(N) array cloning on every GPS fix. */
+  pointsVersion: number;
   currentPoint: GPSPoint | null;
   distance: number;
   isTracking: boolean;
@@ -88,6 +91,7 @@ function getSignalQuality(accuracy: number | null): GPSSignalQuality {
 export function useGPS(elapsedSeconds = 0) {
   const [state, setState] = useState<GPSState>({
     points: [],
+    pointsVersion: 0,
     currentPoint: null,
     distance: 0,
     isTracking: false,
@@ -285,9 +289,10 @@ export function useGPS(elapsedSeconds = 0) {
       setState((s) => ({
         ...s,
         lastFixAt: null,
+        points: pointsRef.current,
+        pointsVersion: s.pointsVersion + 1,
         ...(first
           ? {
-              points: [first],
               currentPoint: first,
               distance: 0,
               isTracking: true,
@@ -400,7 +405,8 @@ export function useGPS(elapsedSeconds = 0) {
             pointsRef.current.push(point);
             setState((s) => ({
               ...s,
-              points: [...pointsRef.current],
+              points: pointsRef.current,
+              pointsVersion: s.pointsVersion + 1,
               currentPoint: point,
               distance: distanceRef.current,
               isTracking: true,
@@ -427,7 +433,8 @@ export function useGPS(elapsedSeconds = 0) {
           pointsRef.current.push(point);
           setState((s) => ({
             ...s,
-            points: [...pointsRef.current],
+            points: pointsRef.current,
+            pointsVersion: s.pointsVersion + 1,
             currentPoint: point,
             distance: distanceRef.current,
             isTracking: true,
@@ -449,7 +456,8 @@ export function useGPS(elapsedSeconds = 0) {
             provisionalStartRef.current = false;
             setState((s) => ({
               ...s,
-              points: [point],
+              points: pointsRef.current,
+              pointsVersion: s.pointsVersion + 1,
               currentPoint: point,
               distance: 0,
               isTracking: true,
@@ -498,7 +506,8 @@ export function useGPS(elapsedSeconds = 0) {
         pointsRef.current.push(point);
         setState((s) => ({
           ...s,
-          points: [...pointsRef.current],
+          points: pointsRef.current,
+          pointsVersion: s.pointsVersion + 1,
           currentPoint: point,
           distance: distanceRef.current,
           isTracking: true,
@@ -702,7 +711,8 @@ export function useGPS(elapsedSeconds = 0) {
     );
     setState((s) => ({
       ...s,
-      points: [...pointsRef.current],
+      points: pointsRef.current,
+      pointsVersion: s.pointsVersion + 1,
       currentPoint: lastRestored ?? s.currentPoint,
       distance: distanceRef.current,
       // lastFixAt stays at the restored point's timestamp so the

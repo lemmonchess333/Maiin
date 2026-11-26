@@ -59,6 +59,8 @@ interface RunBottomSheetProps {
   elapsed: number;
   distance: number;
   points: GPSPoint[];
+  /** Monotonic revision counter bumped when live GPS fixes append to `points`. */
+  pointsVersion?: number;
   formatTime: (s: number) => string;
   onPause: () => void;
   onLock: () => void;
@@ -340,6 +342,7 @@ export default function RunBottomSheet({
   elapsed,
   distance,
   points,
+  pointsVersion,
   formatTime,
   onPause,
   onLock,
@@ -459,23 +462,33 @@ export default function RunBottomSheet({
 
   const pace =
     distance < 10 ? "--:--" : paceMinSec((elapsed / distance) * 1000, unit);
+  const trailKey = pointsVersion ?? points.length;
   /* Rolling 30s pace = "what am I doing right now" — the live signal
      runners actually want during a run. The all-time average lags
      badly once you've banked a few km, so it's demoted to a small
      "AVG" caption beneath the live pace. The post-run summary still
      records the all-time average — that's the right number for the
      historical entry. */
-  const livePaceS =
-    isPaused || paceHeld ? null : rollingPaceSeconds(points, 30);
+  const rawRollingPaceS = useMemo(
+    () => rollingPaceSeconds(points, 30),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey]
+  );
+  const livePaceS = isPaused || paceHeld ? null : rawRollingPaceS;
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
-  const elevation = totalElevationGain(points);
+  const elevation = useMemo(
+    () => totalElevationGain(points),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey]
+  );
   /* Live splits are cut on the READER's lap — a mile runner watching the
      strip wants mile splits, not kilometres relabelled. The SAVED record
      stays metric (Run.tsx uses SPLIT_LAP_IS_METRIC); this is display. */
   const splits = useMemo(
     () => calculateSplits(points, lapMetresFor(unit)),
-    [points, unit]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey, unit]
   );
 
   return (
