@@ -184,7 +184,9 @@ export default function RunLaunchCard({
                 {eyebrow}
               </p>
               <div className="flex items-baseline gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold truncate">{name}</h1>
+                <h1 className="text-h1 leading-tight tracking-tight font-extrabold truncate">
+                  {name}
+                </h1>
                 {distanceKm != null && (
                   <span className="text-xl font-bold font-mono tabular-nums text-running">
                     {distanceKm} km

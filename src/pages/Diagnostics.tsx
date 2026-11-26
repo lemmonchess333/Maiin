@@ -220,8 +220,8 @@ export default function Diagnostics() {
   return (
     <div className="min-h-screen bg-background px-4 pt-[calc(var(--safe-top)+3rem)] pb-24">
       <div className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-extrabold text-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
             Diagnostics
           </h1>
           <Link

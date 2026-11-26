@@ -493,7 +493,11 @@ describe("DS ratchets — surface-level drift", () => {
   // has no way off the token at all.
   // 20 since a shared post's and card's pages draw their one heading
   // through `SharedLanding` (owner's layout, 22 Nov 2026).
-  const OFF_SCALE_H1_BASELINE = 20;
+  // 20 → 8: migrated all 12 grandfathered text-lg / text-xl / text-2xl page
+  // headings (Terms, Privacy, Support, Diagnostics, Moderation, ExerciseHistory,
+  // MinVersionGate, AppErrorBoundary, RunTilePicker, RunLaunchCard) onto text-h1;
+  // only bespoke display/hero/sr-only headings remain.
+  const OFF_SCALE_H1_BASELINE = 8;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
   // The website's own headline (troposfit.com, App1 Q52): a hero at the
   // website's scale, 36 px on a phone and 56 px at 1440, where the app's

@@ -25,7 +25,9 @@ export default function Support() {
         <LegalBack />
 
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">Support</h1>
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
+            Support
+          </h1>
           <p className="text-xs text-muted-foreground mt-1">
             We usually reply within a couple of days.
           </p>
