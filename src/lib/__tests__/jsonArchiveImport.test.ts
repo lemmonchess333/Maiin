@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  queueDurableWrite: vi.fn(),
-  flushQueue: vi.fn().mockResolvedValue(undefined),
+  commitBulkImportWrites: vi.fn().mockResolvedValue(0),
 }));
 
-vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/offlineQueue", () => ({
-  queueDurableWrite: (...args: unknown[]) => mocks.queueDurableWrite(...args),
-  flushQueue: (...args: unknown[]) => mocks.flushQueue(...args),
+vi.mock("@/lib/bulkImportWrite", () => ({
+  commitBulkImportWrites: (...args: unknown[]) =>
+    mocks.commitBulkImportWrites(...args),
 }));
 
 import {
@@ -175,31 +173,41 @@ describe("importFullBackupJson", () => {
       bodyweight: 2,
       totalItems: 6,
     });
-    expect(mocks.queueDurableWrite).toHaveBeenCalledTimes(6);
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "user-1",
-      "users/user-1/workouts",
-      expect.stringMatching(/^json-[0-9a-f]{8}$/),
-      expect.objectContaining({ date: "2026-10-20" })
+    expect(mocks.commitBulkImportWrites).toHaveBeenCalledOnce();
+    const [uid, writes] = mocks.commitBulkImportWrites.mock.calls[0];
+    expect(uid).toBe("user-1");
+    expect(writes).toHaveLength(6);
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        collectionPath: "users/user-1/workouts",
+        docId: expect.stringMatching(/^json-[0-9a-f]{8}$/),
+        data: expect.objectContaining({ date: "2026-10-20" }),
+      })
     );
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "user-1",
-      "users/user-1/runs",
-      expect.stringMatching(/^json-[0-9a-f]{8}$/),
-      expect.objectContaining({ date: "2026-10-21", distance: 8500 })
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        collectionPath: "users/user-1/runs",
+        docId: expect.stringMatching(/^json-[0-9a-f]{8}$/),
+        data: expect.objectContaining({ date: "2026-10-21", distance: 8500 }),
+      })
     );
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "user-1",
-      "users/user-1/meals",
-      expect.stringMatching(/^json-[0-9a-f]{8}$/),
-      expect.objectContaining({ date: "2026-10-22", totalCalories: 520 })
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        collectionPath: "users/user-1/meals",
+        docId: expect.stringMatching(/^json-[0-9a-f]{8}$/),
+        data: expect.objectContaining({
+          date: "2026-10-22",
+          totalCalories: 520,
+        }),
+      })
     );
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "user-1",
-      "users/user-1/bodyweightLogs",
-      "2026-10-21",
-      expect.objectContaining({ date: "2026-10-21", weight: 75.8 })
+    expect(writes).toContainEqual(
+      expect.objectContaining({
+        collectionPath: "users/user-1/bodyweightLogs",
+        docId: "2026-10-21",
+        merge: true,
+        data: expect.objectContaining({ date: "2026-10-21", weight: 75.8 }),
+      })
     );
-    expect(mocks.flushQueue).toHaveBeenCalledWith({}, "user-1");
   });
 });

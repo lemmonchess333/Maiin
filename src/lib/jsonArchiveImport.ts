@@ -8,8 +8,11 @@
  * bodyweight) queued through Tropos's durable offline write queue.
  */
 import { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
+import {
+  commitBulkImportWrites,
+  type BulkImportEntry,
+  type BulkImportProgress,
+} from "@/lib/bulkImportWrite";
 import { localDateString } from "@/lib/dateHelpers";
 import { matchCatalogExercise } from "@/lib/workoutCsvImport";
 import { estimateLiftBurn, estimateRunBurn } from "@/lib/workoutBurn";
@@ -46,6 +49,8 @@ export interface ParseJsonArchiveOptions {
   weightKg?: number;
   /** Local "YYYY-MM-DD" upper bound for bodyweight entries. */
   todayKey?: string;
+  /** Optional progress callback as write batches commit. */
+  onProgress?: (progress: BulkImportProgress) => void;
 }
 
 export interface RestoredWorkoutRecord {
@@ -475,29 +480,45 @@ export async function importFullBackupJson(
 ): Promise<ImportedJsonArchiveSummary> {
   const archive = parseFullBackupJson(jsonText, options);
 
+  const writes: BulkImportEntry[] = [];
   for (const w of archive.workouts) {
-    queueDurableWrite(uid, `users/${uid}/workouts`, w.docId, w.data);
+    writes.push({
+      collectionPath: `users/${uid}/workouts`,
+      docId: w.docId,
+      data: w.data,
+    });
   }
   for (const r of archive.runs) {
-    queueDurableWrite(uid, `users/${uid}/runs`, r.docId, r.data);
+    writes.push({
+      collectionPath: `users/${uid}/runs`,
+      docId: r.docId,
+      data: r.data,
+    });
   }
   for (const m of archive.meals) {
-    queueDurableWrite(uid, `users/${uid}/meals`, m.docId, m.data);
+    writes.push({
+      collectionPath: `users/${uid}/meals`,
+      docId: m.docId,
+      data: m.data,
+    });
   }
   for (const bw of archive.bodyweight) {
     const ts = Timestamp.fromMillis(bw.timestampMs);
-    queueDurableWrite(uid, `users/${uid}/bodyweightLogs`, bw.docId, {
-      date: bw.date,
-      weight: bw.weightKg,
-      source: "import",
-      createdAt: ts,
-      updatedAt: ts,
+    writes.push({
+      collectionPath: `users/${uid}/bodyweightLogs`,
+      docId: bw.docId,
+      merge: true,
+      data: {
+        date: bw.date,
+        weight: bw.weightKg,
+        source: "import",
+        createdAt: ts,
+        updatedAt: ts,
+      },
     });
   }
 
-  if (typeof navigator === "undefined" || navigator.onLine !== false) {
-    await flushQueue(db, uid).catch(() => {});
-  }
+  await commitBulkImportWrites(uid, writes, options.onProgress);
 
   return {
     workouts: archive.workouts.length,

@@ -10,8 +10,11 @@
  * warm up immediately from existing history.
  */
 import { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
+import {
+  commitBulkImportWrites,
+  type BulkImportEntry,
+  type BulkImportProgress,
+} from "@/lib/bulkImportWrite";
 import { localDateString } from "@/lib/dateHelpers";
 import { lbToKg, stonePoundsToKg } from "@/lib/weightUnits";
 
@@ -37,6 +40,8 @@ export interface ParseBodyweightCsvOptions {
   defaultWeightUnit?: "kg" | "lbs";
   /** Local "YYYY-MM-DD" upper bound; future dates are ignored. */
   todayKey?: string;
+  /** Optional progress callback as write batches commit. */
+  onProgress?: (progress: BulkImportProgress) => void;
 }
 
 export interface ParsedBodyweightEntry {
@@ -494,20 +499,23 @@ export async function importBodyweightCsv(
 ): Promise<ImportedBodyweightSummary> {
   const parsed = parseBodyweightCsv(csvText, options);
 
-  for (const entry of parsed.entries) {
+  const writes: BulkImportEntry[] = parsed.entries.map((entry) => {
     const ts = Timestamp.fromMillis(entry.timestampMs);
-    queueDurableWrite(uid, `users/${uid}/bodyweightLogs`, entry.date, {
-      date: entry.date,
-      weight: entry.weightKg,
-      source: "import",
-      createdAt: ts,
-      updatedAt: ts,
-    });
-  }
+    return {
+      collectionPath: `users/${uid}/bodyweightLogs`,
+      docId: entry.date,
+      merge: true,
+      data: {
+        date: entry.date,
+        weight: entry.weightKg,
+        source: "import",
+        createdAt: ts,
+        updatedAt: ts,
+      },
+    };
+  });
 
-  if (typeof navigator === "undefined" || navigator.onLine !== false) {
-    await flushQueue(db, uid).catch(() => {});
-  }
+  await commitBulkImportWrites(uid, writes, options.onProgress);
 
   return {
     importedCount: parsed.entries.length,

@@ -32,15 +32,21 @@ export default function DataImportSection({
   age,
 }: DataImportSectionProps) {
   const [importingGpx, setImportingGpx] = useState(false);
-  const [importingCsv, setImportingCsv] = useState(false);
-  const [importingWeight, setImportingWeight] = useState(false);
-  const [importingNutrition, setImportingNutrition] = useState(false);
-  const [importingArchive, setImportingArchive] = useState(false);
+  const [csvStatus, setCsvStatus] = useState<string | null>(null);
+  const [weightStatus, setWeightStatus] = useState<string | null>(null);
+  const [nutritionStatus, setNutritionStatus] = useState<string | null>(null);
+  const [archiveStatus, setArchiveStatus] = useState<string | null>(null);
   const gpxInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
   const nutritionInputRef = useRef<HTMLInputElement>(null);
   const archiveInputRef = useRef<HTMLInputElement>(null);
+
+  const formatProgress = (
+    verb: string,
+    written: number,
+    total: number
+  ): string => (total > 0 ? `${verb} ${written}/${total}…` : `${verb}…`);
 
   const handleGpxChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -100,7 +106,7 @@ export default function DataImportSection({
       return;
     }
 
-    setImportingCsv(true);
+    setCsvStatus("Importing…");
     try {
       const csvText = await file.text();
       const { WorkoutCsvImportError, importWorkoutsCsv } =
@@ -109,6 +115,8 @@ export default function DataImportSection({
         const result = await importWorkoutsCsv(user.uid, csvText, {
           weightKg,
           defaultWeightUnit: liftWeightUnit,
+          onProgress: ({ written, total }) =>
+            setCsvStatus(formatProgress("Importing", written, total)),
         });
         const unit = result.importedCount === 1 ? "workout" : "workouts";
         toast.success(`Imported ${result.importedCount} ${unit}`);
@@ -124,7 +132,7 @@ export default function DataImportSection({
       toast.error("Couldn’t read this file. Try again.");
       logger.error(err);
     } finally {
-      setImportingCsv(false);
+      setCsvStatus(null);
     }
   };
 
@@ -140,7 +148,7 @@ export default function DataImportSection({
       return;
     }
 
-    setImportingWeight(true);
+    setWeightStatus("Importing…");
     try {
       const csvText = await file.text();
       const { BodyweightCsvImportError, importBodyweightCsv } =
@@ -148,6 +156,8 @@ export default function DataImportSection({
       try {
         const result = await importBodyweightCsv(user.uid, csvText, {
           defaultWeightUnit: bodyWeightUnit,
+          onProgress: ({ written, total }) =>
+            setWeightStatus(formatProgress("Importing", written, total)),
         });
         const unit = result.importedCount === 1 ? "weigh-in" : "weigh-ins";
         toast.success(`Imported ${result.importedCount} ${unit}`);
@@ -163,7 +173,7 @@ export default function DataImportSection({
       toast.error("Couldn’t read this file. Try again.");
       logger.error(err);
     } finally {
-      setImportingWeight(false);
+      setWeightStatus(null);
     }
   };
 
@@ -179,13 +189,16 @@ export default function DataImportSection({
       return;
     }
 
-    setImportingNutrition(true);
+    setNutritionStatus("Importing…");
     try {
       const csvText = await file.text();
       const { NutritionCsvImportError, importNutritionCsv } =
         await import("@/lib/nutritionCsvImport");
       try {
-        const result = await importNutritionCsv(user.uid, csvText);
+        const result = await importNutritionCsv(user.uid, csvText, {
+          onProgress: ({ written, total }) =>
+            setNutritionStatus(formatProgress("Importing", written, total)),
+        });
         const unit = result.importedCount === 1 ? "meal" : "meals";
         toast.success(`Imported ${result.importedCount} ${unit}`);
       } catch (err) {
@@ -200,7 +213,7 @@ export default function DataImportSection({
       toast.error("Couldn’t read this file. Try again.");
       logger.error(err);
     } finally {
-      setImportingNutrition(false);
+      setNutritionStatus(null);
     }
   };
 
@@ -216,7 +229,7 @@ export default function DataImportSection({
       return;
     }
 
-    setImportingArchive(true);
+    setArchiveStatus("Restoring…");
     try {
       const jsonText = await file.text();
       const { JsonArchiveImportError, importFullBackupJson } =
@@ -224,6 +237,8 @@ export default function DataImportSection({
       try {
         const result = await importFullBackupJson(user.uid, jsonText, {
           weightKg,
+          onProgress: ({ written, total }) =>
+            setArchiveStatus(formatProgress("Restoring", written, total)),
         });
         const unit = result.totalItems === 1 ? "record" : "records";
         toast.success(`Restored ${result.totalItems} ${unit} from backup`);
@@ -239,7 +254,7 @@ export default function DataImportSection({
       toast.error("Couldn’t read this file. Try again.");
       logger.error(err);
     } finally {
-      setImportingArchive(false);
+      setArchiveStatus(null);
     }
   };
 
@@ -308,36 +323,36 @@ export default function DataImportSection({
         icon={Dumbbell}
         label="Import lifting CSV"
         description="Add workouts from Hevy, Strong or Tropos"
-        value={importingCsv ? "Importing…" : undefined}
+        value={csvStatus ?? undefined}
         chevron={false}
-        disabled={importingCsv || !user}
+        disabled={csvStatus !== null || !user}
         onClick={() => csvInputRef.current?.click()}
       />
       <SettingsRow
         icon={Scale}
         label="Import weight CSV"
         description="Add weigh-ins from Happy Scale, Withings, Renpho or Tropos"
-        value={importingWeight ? "Importing…" : undefined}
+        value={weightStatus ?? undefined}
         chevron={false}
-        disabled={importingWeight || !user}
+        disabled={weightStatus !== null || !user}
         onClick={() => weightInputRef.current?.click()}
       />
       <SettingsRow
         icon={Utensils}
         label="Import nutrition CSV"
         description="Add meals from MyFitnessPal, Cronometer, Lose It! or Tropos"
-        value={importingNutrition ? "Importing…" : undefined}
+        value={nutritionStatus ?? undefined}
         chevron={false}
-        disabled={importingNutrition || !user}
+        disabled={nutritionStatus !== null || !user}
         onClick={() => nutritionInputRef.current?.click()}
       />
       <SettingsRow
         icon={FileJson}
         label="Import backup JSON"
         description="Restore workouts, runs, meals and weight from a Tropos backup"
-        value={importingArchive ? "Restoring…" : undefined}
+        value={archiveStatus ?? undefined}
         chevron={false}
-        disabled={importingArchive || !user}
+        disabled={archiveStatus !== null || !user}
         onClick={() => archiveInputRef.current?.click()}
       />
     </SettingsGroup>

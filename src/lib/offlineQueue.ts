@@ -215,6 +215,41 @@ export function queueDurableWrite(
   notifyQueue();
 }
 
+/**
+ * Atomically enqueues a batch of durable writes in a single localStorage
+ * read/write cycle (avoiding O(N²) serialization on bulk offline imports).
+ */
+export function queueDurableWritesBatch(
+  uid: string,
+  entries: readonly {
+    collectionPath: string;
+    docId: string;
+    data: Record<string, unknown>;
+    merge?: boolean;
+  }[]
+) {
+  if (entries.length === 0) return;
+  const queue = getQueue();
+  const now = Date.now();
+  for (const entry of entries) {
+    queue.push({
+      id: crypto.randomUUID(),
+      uid,
+      collectionPath: entry.collectionPath,
+      docId: entry.docId,
+      merge: entry.merge ?? false,
+      data: encode(stripUndefined(entry.data)) as Record<string, unknown>,
+      timestamp: now,
+      durable: true,
+    });
+  }
+  if (!writeJson(QUEUE_KEY, queue))
+    throw new Error(
+      "Couldn’t save on this phone. Free device storage and retry."
+    );
+  notifyQueue();
+}
+
 export function pendingDocumentWrites(uid: string, collectionPath: string) {
   return getQueue()
     .filter(
