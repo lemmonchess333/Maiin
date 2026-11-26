@@ -70,7 +70,7 @@ export default function RacePredictionsCard({
 
   if (!times) {
     return (
-      <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
+      <div className="p-4 rounded-2xl bg-card surface-flat mt-2">
         <EmptyState
           compact
           icon={Timer}
@@ -91,7 +91,7 @@ export default function RacePredictionsCard({
   const sourceLabel = fitness?.source ? SOURCE_LABEL[fitness.source] : null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
+    <div className="p-4 rounded-2xl bg-card surface-flat mt-2">
       <div className="flex items-center gap-2 mb-3">
         <Timer className="size-4 text-running" aria-hidden="true" />
         <h3 className="text-base font-bold text-foreground">

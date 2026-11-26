@@ -9,7 +9,9 @@ import {
   exportRunsCSV,
   exportMealsCSV,
   exportBodyweightCSV,
+  exportAllDataJSON,
   csvFile,
+  jsonFile,
 } from "../export";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
@@ -366,5 +368,105 @@ describe("csvFile", () => {
     expect(file.name).toBe("test.csv");
     expect(file.type).toBe("text/csv");
     expect(await file.text()).toBe("Date,Weight (kg)\n2026-10-04,82.5");
+  });
+});
+
+describe("exportAllDataJSON & jsonFile", () => {
+  it("combines workouts (with RPE), valid runs, active meals, and bodyweight into schemaVersion 1 JSON", async () => {
+    seedIn(WORKOUTS, [
+      {
+        date: "2026-10-04",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 80, reps: 8, type: "working", rpe: 8 }],
+          },
+        ],
+      },
+    ]);
+    seedIn(RUNS, [
+      {
+        date: "2026-10-04",
+        completedAt: { toDate: () => new Date("2026-10-04T08:00:00Z") },
+        distance: 5000,
+        duration: 1500,
+        avgPace: 300,
+        elevationGain: 45,
+        activityType: "easy",
+      },
+      {
+        date: "2026-10-03",
+        completedAt: { toDate: () => new Date("2026-10-03T08:00:00Z") },
+        distance: 100,
+        duration: 20,
+        avgPace: 200,
+        activityType: "freerun",
+        isInvalid: true,
+        savedAnyway: false,
+      },
+    ]);
+    seedIn(MEALS, [
+      {
+        date: "2026-10-04",
+        createdAt: 2,
+        foodName: "Oats",
+        totalCalories: 420,
+        totalProtein: 18,
+        totalCarbs: 62,
+        totalFat: 10,
+      },
+      {
+        date: "2026-10-04",
+        createdAt: 1,
+        foodName: "Deleted",
+        totalCalories: 900,
+        deletedAt: "2026-10-04T10:00:00.000Z",
+      },
+    ]);
+    seedIn(BODYWEIGHT, [{ date: "2026-10-04", weight: 78.4 }]);
+
+    const raw = await exportAllDataJSON(UID);
+    const parsed = JSON.parse(raw);
+
+    expect(parsed.schemaVersion).toBe(1);
+    expect(typeof parsed.exportedAt).toBe("string");
+    expect(parsed.workouts).toEqual([
+      {
+        date: "2026-10-04",
+        exercises: [
+          {
+            name: "Bench Press",
+            sets: [{ set: 1, weightKg: 80, reps: 8, type: "working", rpe: 8 }],
+          },
+        ],
+      },
+    ]);
+    expect(parsed.runs).toHaveLength(1);
+    expect(parsed.runs[0]).toMatchObject({
+      date: "2026-10-04",
+      distanceKm: 5,
+      durationSec: 1500,
+      avgPaceSecPerKm: 300,
+      elevationGainM: 45,
+      activityType: "easy",
+    });
+    expect(parsed.meals).toEqual([
+      {
+        date: "2026-10-04",
+        name: "Oats",
+        calories: 420,
+        proteinG: 18,
+        carbsG: 62,
+        fatG: 10,
+      },
+    ]);
+    expect(parsed.bodyweight).toEqual([{ date: "2026-10-04", weightKg: 78.4 }]);
+  });
+
+  it("wraps JSON archive with application/json mime type", async () => {
+    const file = jsonFile('{"schemaVersion":1}', "tropos-all-data.json");
+    expect(file.name).toBe("tropos-all-data.json");
+    expect(file.type).toBe("application/json");
+    expect(await file.text()).toBe('{"schemaVersion":1}');
   });
 });

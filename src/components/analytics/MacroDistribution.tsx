@@ -72,7 +72,7 @@ export default function MacroDistribution({
   const pct = (name: string) => pctByName.get(name) ?? 0;
 
   return (
-    <div className="p-4 rounded-2xl bg-card card-shadow">
+    <div className="p-4 rounded-2xl bg-card surface-flat">
       <SectionLabel className="mb-3">Macro distribution</SectionLabel>
       {/* The legend goes under the ring when the two no longer fit side
           by side (larger text): the ring is 6rem, and at double size it

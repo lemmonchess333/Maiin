@@ -25,13 +25,17 @@ const exportWorkoutsCSV = vi.fn().mockResolvedValue("w-csv");
 const exportRunsCSV = vi.fn().mockResolvedValue("r-csv");
 const exportMealsCSV = vi.fn().mockResolvedValue("m-csv");
 const exportBodyweightCSV = vi.fn().mockResolvedValue("b-csv");
+const exportAllDataJSON = vi.fn().mockResolvedValue('{"schemaVersion":1}');
 vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: (...a: unknown[]) => exportWorkoutsCSV(...a),
   exportRunsCSV: (...a: unknown[]) => exportRunsCSV(...a),
   exportMealsCSV: (...a: unknown[]) => exportMealsCSV(...a),
   exportBodyweightCSV: (...a: unknown[]) => exportBodyweightCSV(...a),
+  exportAllDataJSON: (...a: unknown[]) => exportAllDataJSON(...a),
   csvFile: (content: string, name: string) =>
     new File([content], name, { type: "text/csv" }),
+  jsonFile: (content: string, name: string) =>
+    new File([content], name, { type: "application/json" }),
 }));
 
 const shareFile = vi.fn();
@@ -168,6 +172,21 @@ describe("DataExportSection", () => {
     expect(await file.text()).toBe("r-csv");
     await waitFor(() =>
       expect(toastSuccess).toHaveBeenCalledWith("Runs exported")
+    );
+  });
+
+  it("routes Export all data to exportAllDataJSON as a .json archive", async () => {
+    render(<DataExportSection user={USER} />);
+    fireEvent.click(screen.getByRole("button", { name: /export all data/i }));
+
+    await waitFor(() => expect(exportAllDataJSON).toHaveBeenCalledWith("u1"));
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    const file = sharedFile();
+    expect(file.name).toMatch(/^tropos-all-data-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(file.type).toBe("application/json");
+    expect(await file.text()).toBe('{"schemaVersion":1}');
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("All data exported")
     );
   });
 
