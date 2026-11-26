@@ -94,7 +94,7 @@ export default function CircleMeetupList({
                       }
                     />
                   </span>
-                  <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-sm font-semibold text-foreground break-words">
                       {m.title}
                     </p>

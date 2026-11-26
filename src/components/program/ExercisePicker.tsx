@@ -488,7 +488,7 @@ export default function ExercisePicker({
                 recentExercises.length > 0 && (
                   <>
                     <SectionLabel className="pt-1 pb-2">Recent</SectionLabel>
-                    <div className="space-y-1.5 mb-4">
+                    <div className="space-y-2 mb-4">
                       {recentExercises.map((exercise) => (
                         <ExerciseRow
                           key={`recent-${exercise.id}`}
@@ -516,7 +516,7 @@ export default function ExercisePicker({
                   ? `Results · ${filteredExercises.length}`
                   : `${selectedCategory === "All" ? "All" : selectedCategory} · ${filteredExercises.length} exercises`}
               </SectionLabel>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {filteredExercises.map((exercise) => (
                   <ExerciseRow
                     key={exercise.id}
