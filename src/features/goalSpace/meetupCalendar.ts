@@ -102,7 +102,7 @@ export function meetupToIcs(
   return lines.map(foldIcsLine).join("\r\n") + "\r\n";
 }
 
-/** Builds a safe filename like `tropos-saturday-long-run-2026-10-17.ics`. */
+/** Builds a safe `.ics` filename from the meet-up title and UTC date. */
 export function meetupIcsFilename(meetup: CircleMeetup): string {
   const slug = meetup.title
     .toLowerCase()
