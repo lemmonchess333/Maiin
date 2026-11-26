@@ -322,7 +322,7 @@ export default function AdminModeration() {
 
   if (!uid) {
     return (
-      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md mx-auto">
+      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md md:max-w-lg mx-auto">
         <h1 className="text-xl font-extrabold mb-2">Moderation</h1>
         <p className="text-sm text-muted-foreground">Sign in to continue.</p>
       </div>
@@ -330,7 +330,7 @@ export default function AdminModeration() {
   }
   if (!isAdmin) {
     return (
-      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md mx-auto">
+      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md md:max-w-lg mx-auto">
         <div className="rounded-xl border border-border bg-card p-6 text-center">
           <ShieldAlert className="size-8 text-muted-foreground mx-auto mb-3" />
           <h1 className="text-xl font-extrabold">Not authorised</h1>

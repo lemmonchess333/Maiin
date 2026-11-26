@@ -420,7 +420,7 @@ export default function SessionCompleteScreen({
           on a long one. The footer owns the safe area once it shows. */}
       <div
         className={cn(
-          "max-w-md mx-auto px-5 min-h-full flex flex-col",
+          "max-w-md md:max-w-lg mx-auto px-5 min-h-full flex flex-col",
           !saved && "pb-[calc(2rem+var(--safe-bottom))]"
         )}
       >

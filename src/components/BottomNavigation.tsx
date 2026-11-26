@@ -50,7 +50,7 @@ export default function BottomNavigation({
         implementing a half-tablist that would confuse screen
         readers. */}
         <div className="bottom-nav-frost max-w-md md:max-w-lg mx-auto flex items-stretch rounded-full p-[4px] lg:max-w-none lg:mx-0 lg:flex-col lg:gap-1 lg:rounded-none lg:px-3 lg:py-2">
-          {tabs.map((tab) => {
+          {tabs.map((tab, tabIndex) => {
             const hasDot = tab.to === "/social" && socialNewActivity;
             const Icon = tab.icon;
             const isActive = activeTab === tab.to;
@@ -148,6 +148,12 @@ export default function BottomNavigation({
                     >
                       {tab.label}
                     </span>
+                    <kbd
+                      aria-hidden="true"
+                      className="relative z-10 ml-auto hidden lg:inline-flex text-xs font-mono tabular-nums text-muted-foreground/70"
+                    >
+                      {tabIndex + 1}
+                    </kbd>
                   </>
                 }
               </Link>

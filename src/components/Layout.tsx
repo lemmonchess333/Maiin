@@ -34,6 +34,7 @@ import { useUid } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { useDesktopNavShortcuts } from "@/hooks/useDesktopNavShortcuts";
 import {
   Suspense,
   useEffect,
@@ -161,6 +162,7 @@ export default function Layout() {
   const tabRoutes = tabs.map((t) => t.to);
   const { onTouchStart: onSwipeStart, onTouchEnd: onSwipeEnd } =
     useSwipeNavigation(tabRoutes, location.pathname);
+  useDesktopNavShortcuts(tabRoutes, location.pathname, !hideNav);
 
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
