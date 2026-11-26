@@ -10,10 +10,11 @@ import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
  * deleted meals. During setup, and while a deletion is pending, the page
  * is the sign-in and the way out alone.
  */
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   HEALTH_CONSENT_STEP,
   loadOnboardingDraft,
@@ -30,6 +31,10 @@ import AiUsageSection from "@/components/settings/AiUsageSection";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import DataExportSection from "@/components/settings/DataExportSection";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
+
+const DataImportSection = lazyRetry(
+  () => import("@/components/settings/DataImportSection")
+);
 
 export default function SettingsAccount({
   duringSetup = false,
@@ -122,6 +127,15 @@ export default function SettingsAccount({
               user={user}
               emailConsent={profile?.emailConsent}
             />
+            <Suspense fallback={null}>
+              <DataImportSection
+                user={user}
+                distanceUnit={profile?.preferredDistanceUnit}
+                weightKg={profile?.weightKg}
+                maxHeartRate={profile?.maxHeartRate}
+                age={profile?.age}
+              />
+            </Suspense>
             <SettingsGroup title="Recently deleted">
               <SettingsRow
                 icon={Trash2}
