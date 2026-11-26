@@ -2,6 +2,7 @@ import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { workoutCircuit } from "@/features/circuit/savedCircuit";
 
 /** CSV quoting protects cell boundaries; an apostrophe also keeps untrusted
@@ -68,6 +69,33 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
         );
       });
     }
+  }
+
+  return rows.join("\n");
+}
+
+export async function exportRunsCSV(uid: string): Promise<string> {
+  const runs = await fetchSavedRuns(uid, { all: true });
+  const rows = [
+    "Date,Type,Distance (km),Duration (s),Avg pace (s/km),Elevation gain (m),Calories,Place,Effort",
+  ];
+
+  for (const run of runs) {
+    if (run.isInvalid && !run.savedAnyway) continue;
+    const distanceKm = Math.round((run.distance / 1000) * 100) / 100;
+    rows.push(
+      [
+        csvCell(run.day),
+        csvCell(run.activityType || run.type || "run"),
+        csvCell(distanceKm),
+        csvCell(Math.round(run.duration)),
+        csvCell(Math.round(run.avgPace)),
+        csvCell(Math.round(run.elevationGain)),
+        csvCell(Math.round(run.calories)),
+        csvCell(run.place ?? ""),
+        csvCell(run.relativeEffort ?? ""),
+      ].join(",")
+    );
   }
 
   return rows.join("\n");

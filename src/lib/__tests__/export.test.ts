@@ -6,6 +6,7 @@ vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 import {
   exportWorkoutsCSV,
+  exportRunsCSV,
   exportMealsCSV,
   exportBodyweightCSV,
   csvFile,
@@ -14,6 +15,7 @@ import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
 const UID = "user1";
 const WORKOUTS = `users/${UID}/workouts`;
+const RUNS = `users/${UID}/runs`;
 const MEALS = `users/${UID}/meals`;
 const BODYWEIGHT = `users/${UID}/bodyweightLogs`;
 
@@ -140,6 +142,64 @@ describe("exportWorkoutsCSV", () => {
     const csv = await exportWorkoutsCSV("user1");
     const lines = csv.split("\n");
     expect(lines).toHaveLength(1); // header only
+  });
+});
+
+describe("exportRunsCSV", () => {
+  const HEADER =
+    "Date,Type,Distance (km),Duration (s),Avg pace (s/km),Elevation gain (m),Calories,Place,Effort";
+
+  it("returns header row when no runs exist", async () => {
+    expect(await exportRunsCSV(UID)).toBe(HEADER);
+  });
+
+  it("exports valid runs, skips invalid runs unless savedAnyway, and neutralizes formulas", async () => {
+    seedIn(RUNS, [
+      {
+        date: "2026-11-24",
+        completedAt: { toDate: () => new Date("2026-11-24T08:00:00Z") },
+        activityType: "tempo",
+        distance: 8450,
+        duration: 2400,
+        avgPace: 284,
+        elevationGain: 62,
+        calories: 580,
+        place: "treadmill",
+        relativeEffort: "matched",
+      },
+      {
+        date: "2026-11-23",
+        completedAt: { toDate: () => new Date("2026-11-23T08:00:00Z") },
+        activityType: "easy",
+        distance: 5000,
+        duration: 1800,
+        avgPace: 360,
+        elevationGain: 10,
+        calories: 320,
+        isInvalid: true,
+      },
+      {
+        date: "2026-11-22",
+        completedAt: { toDate: () => new Date("2026-11-22T08:00:00Z") },
+        activityType: "=CMD()",
+        distance: 5000,
+        duration: 1700,
+        avgPace: 340,
+        elevationGain: 15,
+        calories: 310,
+        isInvalid: true,
+        savedAnyway: true,
+      },
+    ]);
+
+    const csv = await exportRunsCSV(UID);
+    const lines = csv.split("\n");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe(HEADER);
+    expect(lines[1]).toBe(
+      "2026-11-24,tempo,8.45,2400,284,62,580,treadmill,matched"
+    );
+    expect(lines[2]).toBe('2026-11-22,"\'=CMD()",5,1700,340,15,310,,');
   });
 });
 
