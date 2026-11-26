@@ -194,7 +194,7 @@ export default function PrivacySection({
           {privacyZones.map((z) => (
             <div
               key={z.id}
-              className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
+              className="flex items-center justify-between p-3 rounded-xl bg-card chip-edge"
             >
               <div>
                 <p className="text-xs font-medium text-foreground">{z.name}</p>
@@ -347,7 +347,7 @@ export default function PrivacySection({
                 {blockedUsersList.map((bu) => (
                   <div
                     key={bu.uid}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-card chip-edge"
+                    className="flex items-center justify-between p-3 rounded-xl bg-card chip-edge"
                   >
                     <span className="text-xs font-medium text-foreground">
                       {bu.displayName ?? "Name unavailable"}

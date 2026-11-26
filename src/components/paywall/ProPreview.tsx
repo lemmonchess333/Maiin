@@ -14,7 +14,7 @@ interface Props {
 function TargetFrame() {
   return (
     <div
-      className="rounded-2xl border border-border bg-card p-3 space-y-3 dark:card-shadow dark:border-transparent"
+      className="rounded-xl border border-border bg-card p-3 space-y-3 dark:card-shadow dark:border-transparent"
       role="img"
       aria-label={`Sample: a calorie target of 2,336 ${CALORIE_UNIT}, adapted down by 120 ${CALORIE_UNIT} this week from the weight trend`}
     >
@@ -53,7 +53,7 @@ function TargetFrame() {
         </div>
       </div>
       <div className="space-y-1" aria-hidden="true">
-        <div className="flex justify-between text-caption text-muted-foreground">
+        <div className="flex justify-between text-micro text-muted-foreground">
           <span>Logged today</span>
           <span className="font-mono tabular-nums">1,412 / 2,336</span>
         </div>

@@ -214,13 +214,13 @@ function ScheduleLayoutSheetBody({
                   className="grid grid-cols-2 gap-2"
                   aria-label="Before and after training days"
                 >
-                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
+                  <div className="rounded-xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Lift days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.lifts} → {preview.after.lifts}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
+                  <div className="rounded-xl border border-border bg-card p-3 dark:card-shadow dark:border-transparent">
                     <SectionLabel>Run days</SectionLabel>
                     <p className="mt-1 text-base font-bold font-mono tabular-nums">
                       {preview.before.runs} → {preview.after.runs}
@@ -423,7 +423,7 @@ function ScheduleLayoutSheetBody({
                         is lifting's, so it takes lifting's step. */}
                     <span
                       className={cn(
-                        "text-caption font-bold leading-none",
+                        "text-micro font-bold leading-none",
                         s.type === "lift" || s.type === "both"
                           ? "text-lifting-strong"
                           : s.type === "run"

@@ -94,7 +94,7 @@ export default function LeaderboardRow({
           hierarchy here; weight would break the rule. */}
       <span className="ml-auto shrink-0 whitespace-nowrap text-body font-bold font-mono tabular-nums">
         {value.toLocaleString()}{" "}
-        <span className="text-caption text-muted-foreground font-normal">
+        <span className="text-caption font-mono tabular-nums text-muted-foreground font-normal">
           {unit}
         </span>
       </span>

@@ -569,7 +569,7 @@ describe("DS ratchets — surface-level drift", () => {
      modals and the empty states — they adopt the primitive as they are
      touched. */
   const CARD_PAIRINGS = new Set(["rounded-2xl p-4", "rounded-xl p-3"]);
-  const OFF_PAIRING_CARD_BASELINE = 32;
+  const OFF_PAIRING_CARD_BASELINE = 0;
   const CARD_PRIMITIVE = "src/components/ui/cardClasses.ts";
   it("hand-rolled bg-card surfaces off the two card pairings do not increase", () => {
     const { total, byFile } = scan((src) => {
@@ -824,7 +824,7 @@ describe("type tiers", () => {
      (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
      The count holds the remaining word uses and may only fall. */
-  const CAPTION_WORDS_BASELINE = 58;
+  const CAPTION_WORDS_BASELINE = 0;
   it("text-caption on words does not increase (words sit on text-micro)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

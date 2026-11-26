@@ -464,7 +464,7 @@ export default function RunSetupModal({
             run type: the type above stays the session (a planned run's
             own), and this switch says it is run on a treadmill, with no
             GPS and the distance typed in at the end (TreadmillMode). */}
-        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+        <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
           <div className="min-w-0">
             <p className="text-sm text-foreground">On a treadmill</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -715,7 +715,7 @@ export default function RunSetupModal({
                     exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
+                    <div className="p-4 rounded-2xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           {
@@ -851,7 +851,7 @@ export default function RunSetupModal({
         {config.target.type !== "none" &&
           config.activityType !== "intervals" &&
           !onTreadmill && (
-            <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
+            <div className="p-4 rounded-2xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
               {config.target.type === "distance" &&
                 (() => {
                   /* Preset chips — selecting a preset populates the
@@ -1261,7 +1261,7 @@ export default function RunSetupModal({
                 .map((setting) => (
                   <div
                     key={setting.key}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
+                    className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
                   >
                     <span className="text-sm">{setting.label}</span>
                     <Toggle
@@ -1289,7 +1289,7 @@ export default function RunSetupModal({
                       the user's choice. */}
                   {!requiresManualDistance(config) &&
                     config.target.type === "pace" && (
-                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                         <span className="text-sm">Pace alerts</span>
                         <Toggle
                           checked={config.paceAlerts}
@@ -1300,7 +1300,7 @@ export default function RunSetupModal({
                         />
                       </div>
                     )}
-                  <div className="p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+                  <div className="p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
                       <span className="text-xs text-muted-foreground font-mono tabular-nums">

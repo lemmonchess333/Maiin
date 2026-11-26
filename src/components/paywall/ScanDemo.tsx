@@ -982,7 +982,7 @@ function LogRow({
       <div className="flex min-w-0 flex-1 items-center justify-between">
         <div className="mr-2 min-w-0 flex-1">
           <p className="truncate text-sm text-foreground">{name}</p>
-          <p className="mt-0.5 truncate text-caption text-muted-foreground">
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">
             {meal}
             {" · "}
             <span className="font-mono tabular-nums">{time}</span>

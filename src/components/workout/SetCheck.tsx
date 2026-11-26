@@ -102,7 +102,7 @@ export default function SetCheck({
         </svg>
       </m.span>
       {best && (
-        <span className="text-caption font-semibold leading-none text-achievement-strong">
+        <span className="text-micro font-semibold leading-none text-achievement-strong">
           Best
         </span>
       )}

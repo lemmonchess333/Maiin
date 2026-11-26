@@ -172,7 +172,7 @@ export default function MacroDistribution({
             <p className="text-xs font-extrabold font-figure leading-none text-foreground">
               {formatCalories(avgCalories)}
             </p>
-            <p className="text-caption leading-none text-muted-foreground mt-0.5">
+            <p className="text-micro leading-none text-muted-foreground mt-0.5">
               {CALORIE_UNIT}/day
             </p>
           </div>

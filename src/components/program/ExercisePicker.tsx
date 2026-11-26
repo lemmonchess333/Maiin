@@ -747,7 +747,7 @@ function ExerciseRow({
           <p className="text-sm font-semibold text-foreground truncate">
             {exercise.name}
           </p>
-          <p className="text-caption text-muted-foreground truncate mt-0.5">
+          <p className="text-micro text-muted-foreground truncate mt-0.5">
             {exercise.muscleGroup} · {exercise.equipment}
           </p>
         </div>
@@ -756,7 +756,7 @@ function ExerciseRow({
           batch-add flow is built on; the 44px target is the button, the
           32px circle is its visual. */}
       {isCurrent ? (
-        <span className="w-16 shrink-0 text-center text-caption font-semibold text-muted-foreground">
+        <span className="w-16 shrink-0 text-center text-micro font-semibold text-muted-foreground">
           Current
         </span>
       ) : pickAction ? (

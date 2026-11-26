@@ -1913,7 +1913,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-caption text-warning-strong -mt-1 italic">
+                      <p className="text-micro text-warning-strong -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
@@ -2056,7 +2056,7 @@ export default function History() {
                             {distanceUnitLabel(unit)}
                           </span>
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           {lifetimeTotals.runCount}{" "}
                           {lifetimeTotals.runCount === 1 ? "run" : "runs"}
                         </dd>
@@ -2072,7 +2072,7 @@ export default function History() {
                             </span>
                           )}
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
                           {/* "lifts", as the figure beside it says "runs":
                               the range card's "sessions" counts both. */}
@@ -2087,7 +2087,7 @@ export default function History() {
                             {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
                           </span>
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           logged
                         </dd>
                       </div>

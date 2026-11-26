@@ -224,7 +224,7 @@ export default function ProgrammeWeekSelector({
               className="flex flex-col items-center flex-1 min-w-11"
             >
               {cell.topLabel !== undefined && (
-                <span className="text-caption text-muted-foreground mb-0.5">
+                <span className="text-micro text-muted-foreground mb-0.5">
                   {cell.topLabel}
                 </span>
               )}
@@ -320,7 +320,7 @@ export default function ProgrammeWeekSelector({
               <span
                 data-cell-label
                 className={cn(
-                  "text-caption font-semibold text-center leading-tight block",
+                  "text-micro font-semibold text-center leading-tight block",
                   sport === "run"
                     ? cn(
                         "max-w-[calc(100%_+_0.25rem)] @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter",

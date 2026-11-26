@@ -176,7 +176,7 @@ export default function WeeklyVolumeCard({
                   {sets}
                 </span>
                 <span
-                  className="text-caption w-20 shrink-0 text-right"
+                  className="text-micro w-20 shrink-0 text-right"
                   style={{ color: STATUS_TEXT[status] }}
                 >
                   {STATUS_LABEL[status]}

@@ -294,7 +294,7 @@ export function BadgeGrid() {
                         color={tierColor}
                       />
                     ) : (
-                      <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
+                      <p className="text-micro text-muted-foreground mt-1 line-clamp-2">
                         {badgeDescription(badge, liftUnit)}
                       </p>
                     )}
