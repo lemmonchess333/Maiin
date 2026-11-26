@@ -47,7 +47,7 @@ export interface TrainingMonotonyResult {
   hasRun: boolean;
 }
 
-function runLoadAU(
+export function runLoadAU(
   run: Pick<
     SavedRun,
     | "duration"
@@ -79,7 +79,7 @@ function runLoadAU(
   return minutes * baseFactor * effortFactor;
 }
 
-function workoutLoadAU(workout: Pick<Workout, "exercises">): number {
+export function workoutLoadAU(workout: Pick<Workout, "exercises">): number {
   const circuit = workoutCircuit(workout as Workout);
   if (circuit) {
     const mins =
