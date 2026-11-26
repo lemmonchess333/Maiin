@@ -243,3 +243,83 @@ export function chartWaitLine(
     ? `Log ${left} ${word} for the chart`
     : `Log ${left} more ${word} for the chart`;
 }
+
+const PUSH_MUSCLES = new Set(["Chest", "FrontDelts", "Triceps"]);
+const PULL_MUSCLES = new Set(["Lats", "UpperBack", "RearDelts", "Biceps"]);
+const PUSH_PULL_RATIO_THRESHOLD = 1.5;
+const PUSH_MIN_SETS = 10;
+const PUSH_NO_PULL_MIN_SETS = 12;
+const QUAD_HAM_RATIO_THRESHOLD = 2.0;
+const QUAD_MIN_SETS = 8;
+const QUAD_NO_HAM_MIN_SETS = 10;
+
+function formatSetsCount(n: number): string {
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+/**
+ * Quiet antagonist balance readings for `MuscleVolumeCard`: flags sustained
+ * Push:Pull (> 1.5×) or Quad:Hamstring (> 2×) volume skews once weekly sets
+ * clear a meaningful floor, and stays silent when balanced or sparse.
+ */
+export function antagonistBalanceReadings(
+  rows: readonly { muscle: string; setsPerWeek: number }[]
+): string[] {
+  const notes: string[] = [];
+
+  let hasPush = false;
+  let hasPull = false;
+  let pushSets = 0;
+  let pullSets = 0;
+  let quadSets: number | null = null;
+  let hamSets: number | null = null;
+
+  for (const row of rows) {
+    const sets = Math.max(
+      0,
+      Number.isFinite(row.setsPerWeek) ? row.setsPerWeek : 0
+    );
+    if (PUSH_MUSCLES.has(row.muscle)) {
+      hasPush = true;
+      pushSets += sets;
+    } else if (PULL_MUSCLES.has(row.muscle)) {
+      hasPull = true;
+      pullSets += sets;
+    }
+    if (row.muscle === "Quads") quadSets = sets;
+    if (row.muscle === "Hamstrings") hamSets = sets;
+  }
+
+  if (hasPush && hasPull) {
+    if (pullSets > 0 && pushSets >= PUSH_MIN_SETS) {
+      const ratio = pushSets / pullSets;
+      if (ratio > PUSH_PULL_RATIO_THRESHOLD) {
+        notes.push(
+          `Push sets are ${ratio.toFixed(1)}× pull (${formatSetsCount(pushSets)} vs ${formatSetsCount(pullSets)} a week).`
+        );
+      }
+    } else if (pullSets === 0 && pushSets >= PUSH_NO_PULL_MIN_SETS) {
+      notes.push(
+        `${formatSetsCount(pushSets)} push sets a week with no pull sets yet.`
+      );
+    }
+  }
+
+  if (quadSets !== null && hamSets !== null) {
+    if (hamSets > 0 && quadSets >= QUAD_MIN_SETS) {
+      const ratio = quadSets / hamSets;
+      if (ratio > QUAD_HAM_RATIO_THRESHOLD) {
+        notes.push(
+          `Quad sets are ${ratio.toFixed(1)}× hamstrings (${formatSetsCount(quadSets)} vs ${formatSetsCount(hamSets)} a week).`
+        );
+      }
+    } else if (hamSets === 0 && quadSets >= QUAD_NO_HAM_MIN_SETS) {
+      notes.push(
+        `${formatSetsCount(quadSets)} quad sets a week with no hamstring sets yet.`
+      );
+    }
+  }
+
+  return notes;
+}

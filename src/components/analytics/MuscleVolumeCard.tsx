@@ -2,7 +2,10 @@ import { useState } from "react";
 import Card from "@/components/ui/Card";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { cn } from "@/lib/utils";
-import { muscleRangeReading } from "@/lib/historyReadings";
+import {
+  antagonistBalanceReadings,
+  muscleRangeReading,
+} from "@/lib/historyReadings";
 import {
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
@@ -76,6 +79,7 @@ export default function MuscleVolumeCard({
     ) * 1.08;
   const pct = (n: number) => `${Math.min(100, (n / axisMax) * 100)}%`;
   const below = activeRows.filter((r) => r.status === "low");
+  const balanceNotes = antagonistBalanceReadings(activeRows);
 
   return (
     <Card as="section" aria-label="Sets per muscle" className="space-y-3">
@@ -194,6 +198,19 @@ export default function MuscleVolumeCard({
           );
         })}
       </ul>
+
+      {balanceNotes.length > 0 && (
+        <div className="border-t border-border/50 pt-3 space-y-1">
+          {balanceNotes.map((note) => (
+            <p
+              key={note}
+              className="text-xs font-mono tabular-nums text-muted-foreground leading-relaxed"
+            >
+              {note}
+            </p>
+          ))}
+        </div>
+      )}
 
       <p
         className="flex items-center gap-2 text-xs text-muted-foreground"
