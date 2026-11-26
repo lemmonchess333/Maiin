@@ -476,6 +476,8 @@ describe("recovering coaching and checkpoint durability", () => {
         h.gps.points = [point(0, T0), point(metres, T0 + elapsed * 1000)];
         view.rerender(tree());
       }
+      // Advance the 5s periodic checkpoint after the final mid-segment tick.
+      act(() => vi.advanceTimersByTime(5000));
       expect(
         screen.getByText("Recovery two", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
@@ -650,6 +652,10 @@ describe("recovering coaching and checkpoint durability", () => {
       try {
         h.timer.elapsed = 900;
         view.rerender(tree());
+        // Steady-state 1s timer ticks stay on the 5s interval instead of
+        // synchronously writing localStorage on every second.
+        expect(refused).not.toHaveBeenCalled();
+        act(() => vi.advanceTimersByTime(5000));
         const notice = screen.getByText(
           /Latest progress couldn’t be saved for recovery/
         );
@@ -666,6 +672,7 @@ describe("recovering coaching and checkpoint durability", () => {
         refused.mockRestore();
         h.timer.elapsed = 901;
         view.rerender(tree());
+        act(() => vi.advanceTimersByTime(5000));
         expect(
           screen.queryByText(/Latest progress couldn’t be saved for recovery/)
         ).toBeNull();

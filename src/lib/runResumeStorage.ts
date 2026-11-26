@@ -234,11 +234,13 @@ export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
     }
   }
 
-  // Only the previous partial chunk and any brand-new chunks are
-  // dirty; earlier chunks are sealed and identical.
-  const firstDirty = sameRun
-    ? Math.floor(prior!.pointCount / RUN_RESUME_CHUNK_SIZE)
-    : 0;
+  // Only the previous partial chunk and any brand-new chunks are dirty
+  // during an active/paused append; on finish, moving-time reconciliation can
+  // stamp pausedMs onto points in earlier sealed chunks, so rewrite from 0.
+  const firstDirty =
+    sameRun && snapshot.phase !== "finished"
+      ? Math.floor(prior!.pointCount / RUN_RESUME_CHUNK_SIZE)
+      : 0;
   for (let i = firstDirty; i < newChunks; i++) {
     const slice = snapshot.points.slice(
       i * RUN_RESUME_CHUNK_SIZE,
