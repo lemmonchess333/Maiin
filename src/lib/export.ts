@@ -23,7 +23,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
   // synced: it is the user's data from the moment they finished it.
   const workouts = await fetchSavedWorkouts(uid, { all: true });
 
-  const rows = ["Date,Exercise,Set,Weight (kg),Reps,Type"];
+  const rows = ["Date,Exercise,Set,Weight (kg),Reps,Type,RPE"];
 
   // Older workouts named an exercise `name` and a set's load `weight`.
   type ExportedExercise = {
@@ -34,6 +34,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
       weight?: number;
       reps?: number;
       type?: string;
+      rpe?: number;
     }[];
   };
   for (const w of workouts) {
@@ -50,6 +51,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
           csvCell(0),
           csvCell(circuit.activeSeconds),
           csvCell("circuit"),
+          csvCell(""),
         ].join(",")
       );
       continue;
@@ -57,6 +59,10 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     for (const ex of w.exercises as unknown as ExportedExercise[]) {
       if (!Array.isArray(ex.sets)) continue;
       ex.sets.forEach((set, i) => {
+        const rpeCell =
+          typeof set.rpe === "number" && Number.isFinite(set.rpe)
+            ? set.rpe
+            : "";
         rows.push(
           [
             csvCell(w.date),
@@ -65,6 +71,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
             csvCell(set.weightKg ?? set.weight ?? 0),
             csvCell(set.reps ?? 0),
             csvCell(set.type || "working"),
+            csvCell(rpeCell),
           ].join(",")
         );
       });

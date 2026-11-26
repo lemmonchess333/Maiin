@@ -114,6 +114,7 @@ export default function LiftSessionOverlays({
               hardRunBefore={hardRunBefore}
               deloadWeek={programState.currentPhase === "deload"}
               sessionMinutes={programState.sessionMinutes}
+              smallPlates={programState.settings?.smallPlates === true}
               day={
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }

@@ -17,8 +17,13 @@ import type { LiftUnit } from "./liftLoad";
 import { kgToLb } from "./weightUnits";
 
 export const DEFAULT_BAR_KG = 20;
+/** Women's / technique bar in metric kits. */
+export const LIGHT_BAR_KG = 15;
 /** Per-side plate denominations, descending (standard metric gym set). */
 export const DEFAULT_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
+/** Metric set with fractional small plates (0.625 kg/side → 1.25 kg barbell step).
+ *  Every larger plate is an exact integer multiple of 0.625, preserving greedy exactness. */
+export const MICRO_PLATES_KG = [...DEFAULT_PLATES_KG, 0.625];
 
 export interface PlateBreakdown {
   bar: number;
@@ -63,7 +68,18 @@ export function platesPerSide(
 
 /** An lb gym's bar and plates (Lift18). */
 export const LB_BAR = 45;
+/** Women's / technique bar in lb kits. */
+export const LIGHT_BAR_LB = 35;
 export const LB_PLATES = [45, 35, 25, 10, 5, 2.5];
+/** Imperial set with fractional small plates (1.25 lb/side → 2.5 lb barbell step). */
+export const MICRO_PLATES_LB = [...LB_PLATES, 1.25];
+
+export interface PlatesInKitOptions {
+  /** Include fractional microplates matching `programState.settings.smallPlates`. */
+  smallPlates?: boolean;
+  /** Override bar weight in the lifter's unit (e.g. 15 kg or 35 lb). */
+  barWeight?: number;
+}
 
 /**
  * A target stored in kg, broken into the lifter's own bar and plates: the
@@ -72,9 +88,29 @@ export const LB_PLATES = [45, 35, 25, 10, 5, 2.5];
  */
 export function platesInKit(
   targetKg: number,
-  unit: LiftUnit
+  unit: LiftUnit,
+  options?: PlatesInKitOptions
 ): PlateBreakdown | null {
-  if (unit === "kg") return platesPerSide(targetKg);
+  const smallPlates = options?.smallPlates === true;
+  if (unit === "kg") {
+    const bar =
+      typeof options?.barWeight === "number" &&
+      Number.isFinite(options.barWeight) &&
+      options.barWeight > 0
+        ? options.barWeight
+        : DEFAULT_BAR_KG;
+    return platesPerSide(
+      targetKg,
+      bar,
+      smallPlates ? MICRO_PLATES_KG : DEFAULT_PLATES_KG
+    );
+  }
+  const bar =
+    typeof options?.barWeight === "number" &&
+    Number.isFinite(options.barWeight) &&
+    options.barWeight > 0
+      ? options.barWeight
+      : LB_BAR;
   const target = Math.round(kgToLb(targetKg) * 100) / 100;
-  return platesPerSide(target, LB_BAR, LB_PLATES);
+  return platesPerSide(target, bar, smallPlates ? MICRO_PLATES_LB : LB_PLATES);
 }
