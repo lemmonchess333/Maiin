@@ -1586,11 +1586,12 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **No chip behind an icon.** An icon on a row or a tile sits bare at the label's size (14 to 20 pt), in the colour the row already had; where the label says it alone, the icon goes. The tinted rounded square is gone from Settings rows, the notifications tray, Home's Water and Weight tiles and Food's water row.
 - **What stays a card.** Progress's Performance card (the screen's hero), the range summary with its chart and controls, the muscles map (one tap opens Lifting), the two charts on Progress › Food, Home's week and food cards and its tiles, the Settings groups, and every card of a session, a meal or an offer.
 - **Built.** `AnalyticsGoDeeper` (ruled rows: name, its line, chevron), `AnalyticsTrends` and the Lifetime line on the overview; `FoodAverages` and `FoodDaysCard` on Progress › Food; `SettingsRow`, `NotificationsSheet`, `WaterCard`, `WeightTile`, `FoodWaterRow` and the empty diary row. Before and after captures are on the pull request.
-### 14m. Athletic Hierarchy & Visual Restraint (2026-11-24)
+
+### 14s. Athletic Hierarchy & Visual Restraint (2026-11-24)
 
 Benchmarked against Runna, Hevy, and Strava:
 
-1. **Hero-only bezel chrome.** Reserve elevated inset-bezel card chrome strictly for the single primary Hero Workout/Run card; render secondary metric groups on flat surface-stepped planes or separated by `1px` hairlines (`--ds-shadow-surface-flat`, `--ds-surface-step`).
+1. **Hero-only bezel chrome.** Reserve elevated inset-bezel card chrome strictly for the single primary Hero Workout/Run card; render secondary metric groups on flat surface-stepped planes (`tone="flat"` / `surface-flat`) or separated by `1px` hairlines.
 2. **Tabular numerals & single accent.** Lead with oversized tabular numerals (`font-variant-numeric: tabular-nums`) and one dominant athletic accent per screen; keep food/water semantic hues inside rings/charts rather than tinting full cards.
 3. **Zero-clutter guidance.** Avoid placing floating coachmark tooltips over interactive inputs, headers, or toggles; prefer inline micro-signals (`RIR 2`, `Zone 2`) and optional tap-to-learn sheets.
 4. **Unified desktop container.** Use one consistent desktop container width across standard tabs, Active Workout, and `/run`.

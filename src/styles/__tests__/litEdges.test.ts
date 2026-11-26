@@ -187,7 +187,8 @@ const exempt = (f: Found) =>
 
 const has = (f: Found, test: (c: string) => boolean) => f.classes.some(test);
 const radius = (c: string) => /^rounded-(lg|xl|2xl)$/.test(c);
-const edged = (c: string) => /(^|:)card-shadow$/.test(c) || c === "chip-edge";
+const edged = (c: string) =>
+  /(^|:)card-shadow$/.test(c) || c === "chip-edge" || c === "surface-flat";
 const ownShadow = (c: string) => /^(dark:)?shadow-(lg|xl|2xl)$/.test(c);
 const where = (f: Found) => `${f.file}:${f.line}`;
 

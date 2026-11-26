@@ -316,9 +316,7 @@ export default function WaterCard({
 
   if (compact) {
     return (
-      <div
-        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col border border-border/60 dark:border-transparent dark:card-shadow"
-      >
+      <div className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col surface-flat">
         {heading}
         <motion.div
           className="absolute inset-0 pointer-events-none rounded-xl"
@@ -540,9 +538,7 @@ export default function WaterCard({
   }
 
   return (
-    <div
-      className="relative overflow-hidden p-4 rounded-xl bg-card border border-border/60 dark:border-transparent dark:card-shadow"
-    >
+    <div className="relative overflow-hidden p-4 rounded-xl bg-card surface-flat">
       {heading}
       <motion.div
         className="absolute inset-0 pointer-events-none rounded-xl"

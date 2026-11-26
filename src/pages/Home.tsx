@@ -1452,10 +1452,11 @@ export default function Home() {
             <div
               className={cardClasses({
                 size: "compact",
+                tone: "flat",
                 padded: false,
-                className: "space-y-2 px-4 pt-3.5 pb-3 border border-border/60 dark:border-transparent dark:card-shadow",
-               })}
-              >
+                className: "space-y-2 px-4 pt-3.5 pb-3",
+              })}
+            >
               <WeekSessions
                 done={weekSessionCount.done}
                 of={weekSessionCount.of}
