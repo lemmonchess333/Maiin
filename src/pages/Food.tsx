@@ -62,10 +62,13 @@ const loadServingSizeDrawer = () =>
   import("@/components/nutrition/ServingSizeDrawer").then((m) => ({
     default: m.ServingSizeDrawer,
   }));
+const loadEditServingsSheet = () =>
+  import("@/components/food/EditServingsSheet");
 const CopyEntrySheet = lazyRetry(loadCopyEntrySheet);
 const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
 const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
 const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
+const EditServingsSheet = lazyRetry(loadEditServingsSheet);
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 /* The water row reads the water hook, which Home's glass reads too.
    Loaded on its own, the hook goes into a chunk of its own rather than
@@ -109,7 +112,6 @@ import { useLocalHour } from "@/hooks/useLocalHour";
 import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
-import EditServingsSheet from "@/components/food/EditServingsSheet";
 import {
   entryPortion,
   mealFromItems,
@@ -312,6 +314,7 @@ export default function Food() {
         loadServingSizeDrawer,
         loadQuickMealPortionSheet,
         loadCopyEntrySheet,
+        loadEditServingsSheet,
       ])
         void load().catch(() => {});
     }, 1500);
@@ -2612,86 +2615,88 @@ export default function Food() {
         </Suspense>
       )}
       {editingGroup && (
-        <EditServingsSheet
-          key={editingGroup.id}
-          source={{
-            foodName: editingGroup.foodName,
-            currentCount: editingGroup.meals.length,
-            currentTotalCalories: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalCalories),
-              0
-            ),
-            currentTotalProtein: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalProtein),
-              0
-            ),
-            currentTotalCarbs: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalCarbs),
-              0
-            ),
-            currentTotalFat: editingGroup.meals.reduce(
-              (s, m) => s + safeNum(m.totalFat),
-              0
-            ),
-            // F5a: if all docs in the group share one slot, that's
-            // the current. Mixed-state groups (rare, e.g. user moved
-            // one of two duplicates) get null so the picker renders
-            // un-selected and any pick snaps the whole group to that
-            // slot.
-            currentMeal: (() => {
-              const first = editingGroup.meals[0]?.meal ?? null;
-              const allSame = editingGroup.meals.every(
-                (m) => (m.meal ?? null) === first
-              );
-              return allSame ? first : null;
-            })(),
-            /* A row of one entry is corrected by amount; a row of
-               repeats keeps the stepper that repeats or removes them. */
-            currentPortion:
-              editingGroup.meals.length === 1
-                ? entryPortion(editingGroup.meals[0])
-                : null,
-            /* One entry of several foods is corrected food by food. */
-            currentItems:
-              editingGroup.meals.length === 1 &&
-              (editingGroup.meals[0].items?.length ?? 0) > 1
-                ? editingGroup.meals[0].items
-                : null,
-          }}
-          onCancel={() => setEditingGroup(null)}
-          onSave={applyServingsChange}
-          onCopy={() => {
-            setCopyingEntries(editingGroup.meals);
-            setEditingGroup(null);
-          }}
-          /* The day without this row, which the sheet adds back at the
-             edited amount. */
-          day={{
-            ...dayBudget,
-            calories:
-              dayBudget.calories -
-              editingGroup.meals.reduce(
+        <Suspense fallback={null}>
+          <EditServingsSheet
+            key={editingGroup.id}
+            source={{
+              foodName: editingGroup.foodName,
+              currentCount: editingGroup.meals.length,
+              currentTotalCalories: editingGroup.meals.reduce(
                 (s, m) => s + safeNum(m.totalCalories),
                 0
               ),
-            protein:
-              dayBudget.protein -
-              editingGroup.meals.reduce(
+              currentTotalProtein: editingGroup.meals.reduce(
                 (s, m) => s + safeNum(m.totalProtein),
                 0
               ),
-          }}
-          onDelete={() => {
-            // Reuse the same optimistic-hide + Undo-toast path the
-            // swipe uses, then close the sheet. Capture ids before the
-            // state clear since editingGroup is nulled synchronously.
-            handleDeleteMeal(
-              editingGroup.meals.map((m) => m.id),
-              editingGroup.foodName
-            );
-            setEditingGroup(null);
-          }}
-        />
+              currentTotalCarbs: editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalCarbs),
+                0
+              ),
+              currentTotalFat: editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalFat),
+                0
+              ),
+              // F5a: if all docs in the group share one slot, that's
+              // the current. Mixed-state groups (rare, e.g. user moved
+              // one of two duplicates) get null so the picker renders
+              // un-selected and any pick snaps the whole group to that
+              // slot.
+              currentMeal: (() => {
+                const first = editingGroup.meals[0]?.meal ?? null;
+                const allSame = editingGroup.meals.every(
+                  (m) => (m.meal ?? null) === first
+                );
+                return allSame ? first : null;
+              })(),
+              /* A row of one entry is corrected by amount; a row of
+                 repeats keeps the stepper that repeats or removes them. */
+              currentPortion:
+                editingGroup.meals.length === 1
+                  ? entryPortion(editingGroup.meals[0])
+                  : null,
+              /* One entry of several foods is corrected food by food. */
+              currentItems:
+                editingGroup.meals.length === 1 &&
+                (editingGroup.meals[0].items?.length ?? 0) > 1
+                  ? editingGroup.meals[0].items
+                  : null,
+            }}
+            onCancel={() => setEditingGroup(null)}
+            onSave={applyServingsChange}
+            onCopy={() => {
+              setCopyingEntries(editingGroup.meals);
+              setEditingGroup(null);
+            }}
+            /* The day without this row, which the sheet adds back at the
+               edited amount. */
+            day={{
+              ...dayBudget,
+              calories:
+                dayBudget.calories -
+                editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalCalories),
+                  0
+                ),
+              protein:
+                dayBudget.protein -
+                editingGroup.meals.reduce(
+                  (s, m) => s + safeNum(m.totalProtein),
+                  0
+                ),
+            }}
+            onDelete={() => {
+              // Reuse the same optimistic-hide + Undo-toast path the
+              // swipe uses, then close the sheet. Capture ids before the
+              // state clear since editingGroup is nulled synchronously.
+              handleDeleteMeal(
+                editingGroup.meals.map((m) => m.id),
+                editingGroup.foodName
+              );
+              setEditingGroup(null);
+            }}
+          />
+        </Suspense>
       )}
       {/* Suspicious-value override prompt for the NL parse path.
           AI-parsed and locally-parsed entries with a single item

@@ -288,7 +288,7 @@ describe("WorkoutDetail", () => {
       await screen.findByRole("button", { name: "Save as routine" })
     );
     // Named after the session, as the post's save names it.
-    expect(screen.getByLabelText("Name")).toHaveValue("Push");
+    expect(await screen.findByLabelText("Name")).toHaveValue("Push");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() =>
       expect(

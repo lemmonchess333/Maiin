@@ -69,11 +69,7 @@ import SupersetTag from "@/components/workout/SupersetTag";
 
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
-import ShareCardSheet from "@/components/share/ShareCardSheet";
-import CircleShareSheet from "@/components/social/CircleShareSheet";
-import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
-import SaveRoutineSheet from "@/components/social/SaveRoutineSheet";
 import { workoutExercisesToRoutine } from "@/lib/savedRoutines";
 
 import { useLiftUnit } from "@/hooks/useLiftUnit";
@@ -85,10 +81,21 @@ import {
   type Workout,
 } from "@/hooks/useWorkouts";
 
-/* Correcting a workout, with its rules for what a correction may change,
-   loads when it is opened: most visits to this page only read it. */
+/* Secondary sheets load only when opened: most visits to this page only read it. */
 const CorrectWorkoutSheet = lazyRetry(
   () => import("@/components/workout/CorrectWorkoutSheet")
+);
+const ShareCardSheet = lazyRetry(
+  () => import("@/components/share/ShareCardSheet")
+);
+const CircleShareSheet = lazyRetry(
+  () => import("@/components/social/CircleShareSheet")
+);
+const WorkoutFeedShareSheet = lazyRetry(
+  () => import("@/components/workout/WorkoutFeedShareSheet")
+);
+const SaveRoutineSheet = lazyRetry(
+  () => import("@/components/social/SaveRoutineSheet")
 );
 
 /** Working sets only. Warm-ups are logged on the same list but are not the
@@ -526,48 +533,60 @@ function WorkoutDetailContent() {
         </Suspense>
       )}
       {user && routineOpen && (
-        <SaveRoutineSheet
-          open
-          onClose={() => setRoutineOpen(false)}
-          defaultName={title}
-          {...(sharedActivityId ? { sourceActivityId: sharedActivityId } : {})}
-          sourceAuthorId={user.uid}
-          sourceAuthorName={profile?.displayName || "Athlete"}
-          sourceWorkoutName={title}
-          exercises={routineExercises}
-        />
+        <Suspense fallback={null}>
+          <SaveRoutineSheet
+            open
+            onClose={() => setRoutineOpen(false)}
+            defaultName={title}
+            {...(sharedActivityId
+              ? { sourceActivityId: sharedActivityId }
+              : {})}
+            sourceAuthorId={user.uid}
+            sourceAuthorName={profile?.displayName || "Athlete"}
+            sourceWorkoutName={title}
+            exercises={routineExercises}
+          />
+        </Suspense>
       )}
-      <ShareCardSheet
-        open={cardOpen}
-        onOpenChange={setCardOpen}
-        data={{
-          template: "lift",
-          handle: profile?.displayName || "Athlete",
-          date: shortDate,
-          // Shared to the feed: the card links to the post while public.
-          postId: sharedActivityId ?? undefined,
-          // Any other card's page goes with the workout (Soc17).
-          workoutId,
-          totalVolumeKg: tonnage,
-          totalReps,
-          exerciseCount: exercises.length,
-          durationSec: (workout.durationMinutes ?? 0) * 60,
-        }}
-      />
+      {cardOpen && (
+        <Suspense fallback={null}>
+          <ShareCardSheet
+            open={cardOpen}
+            onOpenChange={setCardOpen}
+            data={{
+              template: "lift",
+              handle: profile?.displayName || "Athlete",
+              date: shortDate,
+              // Shared to the feed: the card links to the post while public.
+              postId: sharedActivityId ?? undefined,
+              // Any other card's page goes with the workout (Soc17).
+              workoutId,
+              totalVolumeKg: tonnage,
+              totalReps,
+              exerciseCount: exercises.length,
+              durationSec: (workout.durationMinutes ?? 0) * 60,
+            }}
+          />
+        </Suspense>
+      )}
 
       {user && circleOpen && (
-        <CircleShareSheet open onOpenChange={setCircleOpen} uid={user.uid} />
+        <Suspense fallback={null}>
+          <CircleShareSheet open onOpenChange={setCircleOpen} uid={user.uid} />
+        </Suspense>
       )}
 
       {user && feedOpen && (
-        <WorkoutFeedShareSheet
-          open
-          onOpenChange={setFeedOpen}
-          uid={user.uid}
-          workout={workout}
-          title={title}
-          onShared={(id) => setSharedOverride({ doc: workout, id })}
-        />
+        <Suspense fallback={null}>
+          <WorkoutFeedShareSheet
+            open
+            onOpenChange={setFeedOpen}
+            uid={user.uid}
+            workout={workout}
+            title={title}
+            onShared={(id) => setSharedOverride({ doc: workout, id })}
+          />
+        </Suspense>
       )}
     </div>
   );

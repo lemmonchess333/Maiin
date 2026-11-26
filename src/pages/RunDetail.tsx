@@ -51,7 +51,9 @@ import { keptBestEfforts, parseSavedRun } from "@/lib/savedRuns";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
-import ShareCardSheet from "@/components/share/ShareCardSheet";
+const ShareCardSheet = lazyRetry(
+  () => import("@/components/share/ShareCardSheet")
+);
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
@@ -815,39 +817,43 @@ export default function RunDetail() {
       )}
 
       {/* S1 share-card system — customization sheet + new renderer */}
-      <ShareCardSheet
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        data={{
-          template: "run",
-          handle: profile?.displayName ?? "Athlete",
-          date:
-            date?.toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }) ?? "",
-          // Shared to the feed: the card links to the post while public.
-          postId:
-            typeof run.sharedActivityId === "string"
-              ? run.sharedActivityId
-              : undefined,
-          // Any other card's page goes with the run (Soc17).
-          runId,
-          points: sharedPoints,
-          distanceKm: run.distance / 1000,
-          durationSec: run.duration,
-          paceSecPerKm: avgPace,
-          elevationM: run.elevationGain ?? undefined,
-          /* The card's rows follow the same recut-not-relabel rule as the
-             chart above it — `displaySplits` is already in the sharer's
-             unit, and `paceSeconds` is sec/km either way. */
-          splits: displaySplits.map((s) => ({
-            lap: s.km,
-            paceSecPerKm: s.paceSeconds,
-          })),
-        }}
-      />
+      {shareOpen && (
+        <Suspense fallback={null}>
+          <ShareCardSheet
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            data={{
+              template: "run",
+              handle: profile?.displayName ?? "Athlete",
+              date:
+                date?.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }) ?? "",
+              // Shared to the feed: the card links to the post while public.
+              postId:
+                typeof run.sharedActivityId === "string"
+                  ? run.sharedActivityId
+                  : undefined,
+              // Any other card's page goes with the run (Soc17).
+              runId,
+              points: sharedPoints,
+              distanceKm: run.distance / 1000,
+              durationSec: run.duration,
+              paceSecPerKm: avgPace,
+              elevationM: run.elevationGain ?? undefined,
+              /* The card's rows follow the same recut-not-relabel rule as the
+                 chart above it — `displaySplits` is already in the sharer's
+                 unit, and `paceSeconds` is sec/km either way. */
+              splits: displaySplits.map((s) => ({
+                lap: s.km,
+                paceSecPerKm: s.paceSeconds,
+              })),
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
