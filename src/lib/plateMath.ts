@@ -114,3 +114,80 @@ export function platesInKit(
   const target = Math.round(kgToLb(targetKg) * 100) / 100;
   return platesPerSide(target, bar, smallPlates ? MICRO_PLATES_LB : LB_PLATES);
 }
+
+export interface WarmupStep {
+  /** Short step tag such as "Bar", "50%", "70%", "85%". */
+  label: string;
+  /** Suggested repetitions for this warm-up set. */
+  reps: number;
+  /** Exactly loadable barbell weight in the lifter's unit (`kg` or `lb`). */
+  weight: number;
+  /** Per-side plate breakdown for this warm-up weight. */
+  breakdown: PlateBreakdown;
+}
+
+const WARMUP_TARGETS: readonly {
+  label: string;
+  ratio: number;
+  reps: number;
+}[] = [
+  { label: "50%", ratio: 0.5, reps: 5 },
+  { label: "70%", ratio: 0.7, reps: 3 },
+  { label: "85%", ratio: 0.85, reps: 1 },
+];
+
+/**
+ * Builds a monotonically increasing, kit-loadable warm-up ramp leading up to
+ * a working barbell weight (empty bar × 8, ~50% × 5, ~70% × 3, ~85% × 1).
+ * Duplicate loads and loads at or above the working weight are omitted so
+ * lighter working sets still get a sensible progression.
+ */
+export function buildWarmupRamp(
+  workWeightKg: number,
+  unit: LiftUnit,
+  options?: PlatesInKitOptions
+): WarmupStep[] {
+  const work = platesInKit(workWeightKg, unit, options);
+  if (!work || work.loadable <= work.bar) return [];
+
+  const smallPlates = options?.smallPlates === true;
+  const plates =
+    unit === "kg"
+      ? smallPlates
+        ? MICRO_PLATES_KG
+        : DEFAULT_PLATES_KG
+      : smallPlates
+        ? MICRO_PLATES_LB
+        : LB_PLATES;
+  const smallestPlate = Math.min(...plates);
+  const step = smallestPlate * 2;
+  const { bar } = work;
+
+  const steps: WarmupStep[] = [];
+  const seen = new Set<number>();
+
+  const pushStep = (label: string, reps: number, rawWeight: number) => {
+    const snapped =
+      Math.round((bar + Math.round((rawWeight - bar) / step) * step) * 100) /
+      100;
+    const clamped = Math.max(bar, snapped);
+    if (clamped >= work.loadable || seen.has(clamped)) return;
+    const breakdown = platesPerSide(clamped, bar, plates);
+    if (!breakdown || breakdown.loadable >= work.loadable) return;
+    if (seen.has(breakdown.loadable)) return;
+    seen.add(breakdown.loadable);
+    steps.push({
+      label,
+      reps,
+      weight: breakdown.loadable,
+      breakdown,
+    });
+  };
+
+  pushStep("Bar", 8, bar);
+  for (const { label, ratio, reps } of WARMUP_TARGETS) {
+    pushStep(label, reps, work.loadable * ratio);
+  }
+
+  return steps;
+}

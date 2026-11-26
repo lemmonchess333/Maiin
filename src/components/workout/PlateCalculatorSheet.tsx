@@ -1,7 +1,9 @@
 import { useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import {
+  buildWarmupRamp,
   DEFAULT_BAR_KG,
   LB_BAR,
   LIGHT_BAR_KG,
@@ -10,6 +12,7 @@ import {
 } from "@/lib/plateMath";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { formatLoad, liftUnitLabel } from "@/lib/liftLoad";
+import { cn } from "@/lib/utils";
 
 interface PlateCalculatorSheetProps {
   open: boolean;
@@ -34,16 +37,17 @@ export default function PlateCalculatorSheet({
   smallPlates = false,
 }: PlateCalculatorSheetProps) {
   const titleId = useId();
+  const warmupListId = useId();
   const unit = useLiftUnit();
   const label = liftUnitLabel(unit);
   const [useLightBar, setUseLightBar] = useState(false);
+  const [showWarmup, setShowWarmup] = useState(false);
   const standardBar = unit === "lbs" ? LB_BAR : DEFAULT_BAR_KG;
   const lightBar = unit === "lbs" ? LIGHT_BAR_LB : LIGHT_BAR_KG;
   const bar = useLightBar ? lightBar : standardBar;
-  const breakdown = platesInKit(weightKg, unit, {
-    smallPlates,
-    barWeight: bar,
-  });
+  const kitOptions = { smallPlates, barWeight: bar };
+  const breakdown = platesInKit(weightKg, unit, kitOptions);
+  const warmupSteps = buildWarmupRamp(weightKg, unit, kitOptions);
 
   return (
     <Dialog open={open} onClose={onClose} labelledBy={titleId} size="sm">
@@ -123,6 +127,62 @@ export default function PlateCalculatorSheet({
             </span>
             .
           </p>
+        )}
+
+        {warmupSteps.length > 0 && (
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              fullWidth
+              aria-expanded={showWarmup}
+              aria-controls={warmupListId}
+              className="justify-between px-1 text-foreground"
+              onClick={() => setShowWarmup((openState) => !openState)}
+            >
+              <span>Warm-up ramp</span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+                <span className="font-mono tabular-nums">
+                  {warmupSteps.length}{" "}
+                  {warmupSteps.length === 1 ? "set" : "sets"}
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4 transition-transform motion-reduce:transition-none",
+                    showWarmup && "rotate-180"
+                  )}
+                />
+              </span>
+            </Button>
+
+            {showWarmup && (
+              <ol id={warmupListId} className="space-y-2">
+                {warmupSteps.map((step) => (
+                  <li
+                    key={step.label}
+                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 rounded-xl bg-muted/50 px-3 py-2 text-xs"
+                  >
+                    <span className="font-semibold text-foreground">
+                      <span className="font-mono tabular-nums">
+                        {step.weight} {label} × {step.reps}
+                      </span>{" "}
+                      <span className="font-normal text-muted-foreground">
+                        ({step.label})
+                      </span>
+                    </span>
+                    <span className="font-mono tabular-nums text-lifting-strong">
+                      {step.breakdown.perSide.length === 0
+                        ? "Bar only"
+                        : step.breakdown.perSide
+                            .map(({ plate, count }) => `${count}×${plate}`)
+                            .join(" + ")}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         )}
 
         <Button variant="outline" className="w-full" onClick={onClose}>

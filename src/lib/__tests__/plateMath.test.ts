@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   platesPerSide,
   platesInKit,
+  buildWarmupRamp,
   DEFAULT_BAR_KG,
   LIGHT_BAR_KG,
   LIGHT_BAR_LB,
@@ -107,5 +108,44 @@ describe("platesInKit with smallPlates and light bars", () => {
       remainder: 0,
       loadable: 125,
     });
+  });
+});
+
+describe("buildWarmupRamp", () => {
+  it("builds bar, 50%, 70%, and 85% loadable steps for a 100 kg working set", () => {
+    const ramp = buildWarmupRamp(100, "kg");
+    expect(ramp.map((s) => [s.label, s.weight, s.reps])).toEqual([
+      ["Bar", 20, 8],
+      ["50%", 50, 5],
+      ["70%", 70, 3],
+      ["85%", 85, 1],
+    ]);
+    expect(ramp[0].breakdown.perSide).toEqual([]);
+    expect(ramp[1].breakdown.perSide).toEqual([{ plate: 15, count: 1 }]);
+  });
+
+  it("deduplicates steps that round to the empty bar on lighter working weights", () => {
+    // 40 kg: 50% = 20 kg duplicates the bar, so only Bar, 70% (27.5), 85% (35) remain.
+    const ramp = buildWarmupRamp(40, "kg");
+    expect(ramp.map((s) => [s.label, s.weight])).toEqual([
+      ["Bar", 20],
+      ["70%", 27.5],
+      ["85%", 35],
+    ]);
+  });
+
+  it("returns an empty ramp when working weight is at or below the bar", () => {
+    expect(buildWarmupRamp(20, "kg")).toEqual([]);
+    expect(buildWarmupRamp(15, "kg")).toEqual([]);
+  });
+
+  it("respects lb kits, light bars, and smallPlates rounding steps", () => {
+    const ramp = buildWarmupRamp(lbToKg(225), "lbs", {
+      barWeight: LIGHT_BAR_LB,
+      smallPlates: true,
+    });
+    expect(ramp[0]).toMatchObject({ label: "Bar", weight: 35, reps: 8 });
+    expect(ramp.every((s) => s.breakdown.remainder === 0)).toBe(true);
+    expect(ramp.every((s) => s.weight < 225)).toBe(true);
   });
 });
