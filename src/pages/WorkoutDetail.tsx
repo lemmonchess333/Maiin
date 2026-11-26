@@ -185,6 +185,14 @@ function ExerciseRecord({
               type === "dropset" || type === "failure"
                 ? `, ${SET_TYPE_COPY[type].name.toLowerCase()}`
                 : "";
+            const rpe =
+              typeof set.rpe === "number" &&
+              Number.isFinite(set.rpe) &&
+              set.rpe > 0
+                ? Number.isInteger(set.rpe)
+                  ? String(set.rpe)
+                  : set.rpe.toFixed(1)
+                : null;
             return (
               /* The result drops under the set's badge when the two no
                  longer fit (larger text), and wraps at its spaces, rather
@@ -200,8 +208,16 @@ function ExerciseRecord({
                 >
                   {result.shown}
                 </span>
+                {rpe && (
+                  <span
+                    aria-hidden="true"
+                    className="text-xs font-medium font-mono tabular-nums text-muted-foreground"
+                  >
+                    RPE {rpe}
+                  </span>
+                )}
                 <span className="sr-only">
-                  {`${setName(sets, i)}${kind}: ${result.spoken}${bests?.has(i) ? ", a new best" : ""}`}
+                  {`${setName(sets, i)}${kind}: ${result.spoken}${rpe ? `, RPE ${rpe}` : ""}${bests?.has(i) ? ", a new best" : ""}`}
                 </span>
                 {/* Gold means a new best and nothing else (DS3), marked
                     as the workout screen's tick marks it. */}
