@@ -8,9 +8,12 @@
  * `queueDurableWrite` + `flushQueue`.
  */
 import { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import {
+  commitBulkImportWrites,
+  type BulkImportEntry,
+  type BulkImportProgress,
+} from "@/lib/bulkImportWrite";
 import { localDateString } from "@/lib/dateHelpers";
-import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
 
 const MAX_MEALS = 5000;
 
@@ -29,6 +32,8 @@ export class NutritionCsvImportError extends Error {
 export interface ParseNutritionCsvOptions {
   /** Override today's YYYY-MM-DD key for deterministic testing. */
   todayKey?: string;
+  /** Optional progress callback as write batches commit. */
+  onProgress?: (progress: BulkImportProgress) => void;
 }
 
 export interface ParsedMealRecord {
@@ -467,15 +472,18 @@ export async function importNutritionCsv(
 
   let earliestDate = meals[0].date;
   let latestDate = meals[0].date;
+  const writes: BulkImportEntry[] = [];
   for (const m of meals) {
     if (m.date < earliestDate) earliestDate = m.date;
     if (m.date > latestDate) latestDate = m.date;
-    queueDurableWrite(uid, `users/${uid}/meals`, m.docId, m.data);
+    writes.push({
+      collectionPath: `users/${uid}/meals`,
+      docId: m.docId,
+      data: m.data,
+    });
   }
 
-  if (typeof navigator === "undefined" || navigator.onLine !== false) {
-    await flushQueue(db, uid).catch(() => {});
-  }
+  await commitBulkImportWrites(uid, writes, options.onProgress);
 
   return {
     importedCount: meals.length,

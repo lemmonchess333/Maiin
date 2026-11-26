@@ -9,8 +9,11 @@
  * durable writes into `users/{uid}/workouts/csv-<hash>`.
  */
 import { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
+import {
+  commitBulkImportWrites,
+  type BulkImportEntry,
+  type BulkImportProgress,
+} from "@/lib/bulkImportWrite";
 import { localDateString } from "@/lib/dateHelpers";
 import { EXERCISES, type Exercise } from "@/lib/exercises";
 import { lbToKg } from "@/lib/weightUnits";
@@ -43,6 +46,8 @@ export interface ParseWorkoutCsvOptions {
   weightKg?: number;
   /** Default unit when a CSV header omits kg/lbs (e.g. Strong bare `Weight`). */
   defaultWeightUnit?: "kg" | "lbs";
+  /** Optional progress callback as write batches commit. */
+  onProgress?: (progress: BulkImportProgress) => void;
 }
 
 export interface ParsedCsvWorkout {
@@ -904,6 +909,7 @@ export async function importWorkoutsCsv(
 
   let earliestDate = parsed.workouts[0].date;
   let latestDate = parsed.workouts[0].date;
+  const writes: BulkImportEntry[] = [];
 
   for (const w of parsed.workouts) {
     if (w.date < earliestDate) earliestDate = w.date;
@@ -920,12 +926,14 @@ export async function importWorkoutsCsv(
       createdAt: Timestamp.fromMillis(w.startedAtMs),
     };
 
-    queueDurableWrite(uid, `users/${uid}/workouts`, w.importId, docData);
+    writes.push({
+      collectionPath: `users/${uid}/workouts`,
+      docId: w.importId,
+      data: docData,
+    });
   }
 
-  if (typeof navigator === "undefined" || navigator.onLine !== false) {
-    await flushQueue(db, uid).catch(() => {});
-  }
+  await commitBulkImportWrites(uid, writes, options.onProgress);
 
   return {
     source: parsed.source,

@@ -213,10 +213,11 @@ describe("DataImportSection", () => {
       expect(mocks.importWorkoutsCsv).toHaveBeenCalledWith(
         "u-1",
         "Date,Exercise\n",
-        {
+        expect.objectContaining({
           weightKg: 80,
           defaultWeightUnit: "lbs",
-        }
+          onProgress: expect.any(Function),
+        })
       )
     );
     await waitFor(() =>
@@ -268,9 +269,10 @@ describe("DataImportSection", () => {
       expect(mocks.importBodyweightCsv).toHaveBeenCalledWith(
         "u-1",
         "Date,Weight\n",
-        {
+        expect.objectContaining({
           defaultWeightUnit: "lbs",
-        }
+          onProgress: expect.any(Function),
+        })
       )
     );
     await waitFor(() =>
@@ -324,7 +326,10 @@ describe("DataImportSection", () => {
       expect(mocks.importFullBackupJson).toHaveBeenCalledWith(
         "u-1",
         '{"schemaVersion":1}',
-        { weightKg: 78 }
+        expect.objectContaining({
+          weightKg: 78,
+          onProgress: expect.any(Function),
+        })
       )
     );
     await waitFor(() =>
@@ -375,7 +380,10 @@ describe("DataImportSection", () => {
     await waitFor(() =>
       expect(mocks.importNutritionCsv).toHaveBeenCalledWith(
         "u-1",
-        "Date,Meal,Calories\n"
+        "Date,Meal,Calories\n",
+        expect.objectContaining({
+          onProgress: expect.any(Function),
+        })
       )
     );
     await waitFor(() =>

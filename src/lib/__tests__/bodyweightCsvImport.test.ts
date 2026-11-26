@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  queueDurableWrite: vi.fn(),
-  flushQueue: vi.fn().mockResolvedValue(undefined),
+  commitBulkImportWrites: vi.fn().mockResolvedValue(0),
 }));
 
-vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/offlineQueue", () => ({
-  queueDurableWrite: (...args: unknown[]) => mocks.queueDurableWrite(...args),
-  flushQueue: (...args: unknown[]) => mocks.flushQueue(...args),
+vi.mock("@/lib/bulkImportWrite", () => ({
+  commitBulkImportWrites: (...args: unknown[]) =>
+    mocks.commitBulkImportWrites(...args),
 }));
 
 import {
@@ -121,17 +119,21 @@ describe("importBodyweightCsv", () => {
       earliestDate: "2026-10-10",
       latestDate: "2026-10-12",
     });
-    expect(mocks.queueDurableWrite).toHaveBeenCalledTimes(2);
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "user-1",
-      "users/user-1/bodyweightLogs",
-      "2026-10-10",
+    expect(mocks.commitBulkImportWrites).toHaveBeenCalledOnce();
+    const [uid, writes] = mocks.commitBulkImportWrites.mock.calls[0];
+    expect(uid).toBe("user-1");
+    expect(writes).toHaveLength(2);
+    expect(writes[0]).toEqual(
       expect.objectContaining({
-        date: "2026-10-10",
-        weight: 77.2,
-        source: "import",
+        collectionPath: "users/user-1/bodyweightLogs",
+        docId: "2026-10-10",
+        merge: true,
+        data: expect.objectContaining({
+          date: "2026-10-10",
+          weight: 77.2,
+          source: "import",
+        }),
       })
     );
-    expect(mocks.flushQueue).toHaveBeenCalledWith({}, "user-1");
   });
 });

@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  queueDurableWrite: vi.fn(),
-  flushQueue: vi.fn().mockResolvedValue(undefined),
+  commitBulkImportWrites: vi.fn().mockResolvedValue(0),
 }));
 
-vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/offlineQueue", () => ({
-  queueDurableWrite: (...args: unknown[]) => mocks.queueDurableWrite(...args),
-  flushQueue: (...args: unknown[]) => mocks.flushQueue(...args),
+vi.mock("@/lib/bulkImportWrite", () => ({
+  commitBulkImportWrites: (...args: unknown[]) =>
+    mocks.commitBulkImportWrites(...args),
 }));
 
 import {
@@ -121,17 +119,20 @@ describe("importNutritionCsv", () => {
       earliestDate: "2026-10-18",
       latestDate: "2026-10-20",
     });
-    expect(mocks.queueDurableWrite).toHaveBeenCalledTimes(2);
-    expect(mocks.queueDurableWrite).toHaveBeenCalledWith(
-      "u-1",
-      "users/u-1/meals",
-      expect.stringMatching(/^csv-[0-9a-f]{8}$/),
+    expect(mocks.commitBulkImportWrites).toHaveBeenCalledOnce();
+    const [uid, writes] = mocks.commitBulkImportWrites.mock.calls[0];
+    expect(uid).toBe("u-1");
+    expect(writes).toHaveLength(2);
+    expect(writes[0]).toEqual(
       expect.objectContaining({
-        date: "2026-10-18",
-        foodName: "Oats",
-        totalCalories: 450,
+        collectionPath: "users/u-1/meals",
+        docId: expect.stringMatching(/^csv-[0-9a-f]{8}$/),
+        data: expect.objectContaining({
+          date: "2026-10-18",
+          foodName: "Oats",
+          totalCalories: 450,
+        }),
       })
     );
-    expect(mocks.flushQueue).toHaveBeenCalledWith({}, "u-1");
   });
 });
