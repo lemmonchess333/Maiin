@@ -220,10 +220,11 @@ export default function HybridLoadCard({
       {chartRows.length >= 2 && (
         <div className="space-y-2">
           <div
+            role="img"
             className="h-[152px] w-full"
             aria-label="Fitness and fatigue trajectory"
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={152}>
               <ComposedChart
                 data={chartRows}
                 margin={{ top: 6, right: 4, bottom: 0, left: -16 }}
