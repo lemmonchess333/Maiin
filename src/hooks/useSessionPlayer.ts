@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { isWorkSegment, type SessionSegment } from "@/lib/runSegments";
+import { buildSegmentLapSplits, type RunLapSplit } from "@/lib/runLaps";
 import {
   sessionPlayerSignature,
   validateSessionPlayerCheckpoint,
@@ -74,6 +75,8 @@ export interface SessionPlayer {
     totalElapsed: number,
     totalDistance: number
   ) => WorkPortion | null;
+  /** Per-segment splits derived from the recorded segment start anchors. */
+  lapSplits: (totalElapsed: number, totalDistance: number) => RunLapSplit[];
 }
 
 /** Seconds and metres in a session's work segments. */
@@ -275,6 +278,12 @@ export function useSessionPlayer(
     [segs, segmentStarts]
   );
 
+  const lapSplits = useCallback(
+    (totalElapsed: number, totalDistance: number): RunLapSplit[] =>
+      buildSegmentLapSplits(segs, segmentStarts, totalElapsed, totalDistance),
+    [segs, segmentStarts]
+  );
+
   const current =
     state.index >= 0 && state.index < segs.length ? segs[state.index] : null;
   const next =
@@ -294,5 +303,6 @@ export function useSessionPlayer(
     tick,
     skip,
     workPortion,
+    lapSplits,
   };
 }

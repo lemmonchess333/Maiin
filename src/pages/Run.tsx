@@ -235,7 +235,13 @@ import {
   distanceValue,
   paceBandLabel,
   paceLabel,
+  paceMinSec,
 } from "../lib/runLabels";
+import {
+  buildManualLapSplits,
+  lapPaceSecondsPerKm,
+  type LapAnchor,
+} from "@/lib/runLaps";
 import {
   startRunActivity,
   updateRunActivity,
@@ -245,6 +251,7 @@ import { toast } from "../lib/toast";
 import {
   SPLIT_LAP_IS_METRIC,
   distanceUnitLabel,
+  paceUnitLabel,
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -252,7 +259,7 @@ import { useWatchSnapshotBeat } from "@/hooks/useWatchSnapshotBeat";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
-import { formatDuration } from "@/utils/formatters";
+import { formatClock, formatDuration } from "@/utils/formatters";
 import { goBackOr } from "@/lib/backNavigation";
 import { RESUME_PARAM } from "@/lib/resumeParam";
 import { runModeWithPlan } from "@/features/program/programMaintenance";
@@ -389,6 +396,7 @@ export default function Run() {
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [manualLapAnchors, setManualLapAnchors] = useState<LapAnchor[]>([]);
   const [manualDistanceDraft, setManualDistanceDraft] =
     useState<ManualDistanceDraft | null>(null);
   const manualDistanceDraftRef = useRef<ManualDistanceDraft | null>(null);
@@ -1318,6 +1326,7 @@ export default function Run() {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
     replaceManualDistanceDraft(null);
+    setManualLapAnchors([]);
     audioCues.prime();
     await wakeLock.request();
     if (user && auth.currentUser?.uid !== uid) return;
@@ -2360,6 +2369,17 @@ export default function Run() {
         })
       : null;
 
+    const structuredLapSplits = resumedRef.current
+      ? []
+      : player.lapSplits(timer.elapsed, gps.distance);
+    const manualLapSplits = buildManualLapSplits(
+      manualLapAnchors,
+      moving.seconds,
+      finalDistance
+    );
+    const lapSplits =
+      manualLapSplits.length > 0 ? manualLapSplits : structuredLapSplits;
+
     const finish: StoredRunFinish = {
       finishedAt,
       watchCompanionUsed: watchConnectedRef.current,
@@ -2376,6 +2396,7 @@ export default function Run() {
         resumedRef.current || requiresManualDistance(runConfig)
           ? null
           : player.workPortion(timer.elapsed, gps.distance),
+      ...(lapSplits.length > 0 ? { lapSplits } : {}),
     };
     const previousRevision = watchRevisionRef.current;
     if (watchEligible && identityRef.current) watchRevisionRef.current += 1;
@@ -2442,9 +2463,36 @@ export default function Run() {
         // unverifiable resume (`resumedRef`) or when only the final whole-run distance
         // is known. Manual step completion is not a measured work distance.
         workPortion: finish.workPortion,
+        lapSplits: finish.lapSplits,
       },
     });
     return true;
+  };
+
+  const handleManualLap = () => {
+    const distanceNow = requiresManualDistance(runConfig)
+      ? treadmillDistance
+      : gps.distance;
+    const elapsedNow = timer.elapsed;
+    const prev = manualLapAnchors[manualLapAnchors.length - 1] ?? {
+      elapsed: 0,
+      distance: 0,
+    };
+    const lapSec = Math.max(0, Math.round(elapsedNow - prev.elapsed));
+    const lapDist = Math.max(0, Math.round(distanceNow - prev.distance));
+    if (lapSec <= 0 && lapDist <= 0) return;
+    const lapNum = manualLapAnchors.length + 1;
+    setManualLapAnchors((anchors) => [
+      ...anchors,
+      { elapsed: elapsedNow, distance: distanceNow },
+    ]);
+    haptic("medium");
+    const pace = lapPaceSecondsPerKm(lapDist, lapSec);
+    toast(
+      pace !== null
+        ? `Lap ${lapNum} · ${paceMinSec(pace, unit)} ${paceUnitLabel(unit)}`
+        : `Lap ${lapNum} · ${formatClock(lapSec)}`
+    );
   };
 
   const handlePause = () => {
@@ -3392,6 +3440,8 @@ export default function Run() {
                   haptic("success");
                   finishRun();
                 }}
+                onLap={!sessionSegments ? handleManualLap : undefined}
+                manualLapCount={manualLapAnchors.length}
                 /* Sub-threshold runs route home immediately — there's
                nothing meaningful to lose. Valid runs hit the
                ConfirmDialog "Discard this run?" gate before tearing
