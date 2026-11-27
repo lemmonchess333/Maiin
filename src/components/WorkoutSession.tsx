@@ -13,6 +13,7 @@ import {
   useCallback,
   useMemo,
   Suspense,
+  type ReactNode,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import {
@@ -106,8 +107,15 @@ import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import {
   restSecondsFor,
+  WARMUP_REST_SECONDS,
   warmupRestSecondsFor,
 } from "@/features/program/restTime";
+import {
+  formatRestChipLabel,
+  readExerciseRestOverrides,
+  writeExerciseRestOverride,
+  type ExerciseRestOverrides,
+} from "@/lib/exerciseRestOverrides";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
@@ -236,6 +244,12 @@ void loadCompleteScreen().catch(() => {});
 void loadKeepSwapSheet().catch(() => {});
 const SessionCompleteScreen = lazyRetry(loadCompleteScreen);
 const KeepSwapSheet = lazyRetry(loadKeepSwapSheet);
+const IsometricHoldTimer = lazyRetry(
+  () => import("@/components/workout/IsometricHoldTimer")
+);
+const ExerciseRestSheet = lazyRetry(
+  () => import("@/components/workout/ExerciseRestSheet")
+);
 
 interface WorkoutDay {
   dayName: string;
@@ -395,6 +409,8 @@ interface Props {
   /** Opened from a Resume tap (the In progress strip): a draft found for
    *  this session carries on without asking "Resume workout?" again. */
   resumeDraft?: boolean;
+  /** Optional host-specific post-save slot (e.g. routine template sync). */
+  completionExtras?: ReactNode;
 }
 
 export default function WorkoutSession({
@@ -418,6 +434,7 @@ export default function WorkoutSession({
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
+  completionExtras,
 }: Props) {
   const { user, profile } = useAuth();
   // Loads are stored in kg; the lifter reads and types them in this unit.
@@ -1315,24 +1332,54 @@ export default function WorkoutSession({
      prior inline `navigator.vibrate(pattern)` was a no-op on iOS
      Safari — the Vibrate API has never shipped there. */
 
+  const [restOverridesByUid, setRestOverridesByUid] = useState<
+    Record<string, ExerciseRestOverrides>
+  >({});
+  const [restSheetOpen, setRestSheetOpen] = useState(false);
+  const restOverrideUid = user?.uid ?? "__anon__";
+  const restOverrides = useMemo(
+    () =>
+      restOverridesByUid[restOverrideUid] ??
+      readExerciseRestOverrides(user?.uid),
+    [restOverridesByUid, restOverrideUid, user?.uid]
+  );
+  const updateExerciseRest = useCallback(
+    (exerciseId: string, seconds: number | null) => {
+      const next = writeExerciseRestOverride(user?.uid, exerciseId, seconds);
+      setRestOverridesByUid((prev) => ({ ...prev, [restOverrideUid]: next }));
+    },
+    [user?.uid, restOverrideUid]
+  );
+
   /* A warm-up is briefly rested (`WARMUP_REST_SECONDS`), as the plan's
-     session length counts it; a working set gets the lift's full rest. */
+     session length counts it; a working set gets the per-exercise override
+     when set, otherwise the lift's planned rest. */
   const startRest = useCallback(
     (exercise: ProgramExercise | undefined, afterWarmup = false) => {
+      const customSeconds = exercise
+        ? restOverrides[exercise.exerciseId]
+        : undefined;
+      const workingTarget = exercise
+        ? customSeconds && customSeconds > 0
+          ? customSeconds
+          : restSecondsFor(exercise, { fixedRest, sessionMinutes })
+        : fixedRest && fixedRest > 0
+          ? fixedRest
+          : DEFAULT_REST_SECONDS;
+      const target =
+        exercise && afterWarmup
+          ? customSeconds && customSeconds > 0
+            ? Math.min(WARMUP_REST_SECONDS, customSeconds)
+            : warmupRestSecondsFor(exercise, { fixedRest, sessionMinutes })
+          : workingTarget;
       setRest({
         id: ++restSequence.current,
         startedAt: Date.now(),
-        target: exercise
-          ? afterWarmup
-            ? warmupRestSecondsFor(exercise, { fixedRest, sessionMinutes })
-            : restSecondsFor(exercise, { fixedRest, sessionMinutes })
-          : fixedRest && fixedRest > 0
-            ? fixedRest
-            : DEFAULT_REST_SECONDS,
+        target,
       });
       haptic(50);
     },
-    [fixedRest, sessionMinutes]
+    [fixedRest, sessionMinutes, restOverrides]
   );
 
   const stopRest = useCallback(() => setRest(null), []);
@@ -2491,6 +2538,7 @@ export default function WorkoutSession({
           }
           onLogFood={onLogFood}
           savedWorkoutId={savedWorkoutId ?? undefined}
+          completionExtras={completionExtras}
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -2875,22 +2923,51 @@ export default function WorkoutSession({
                    then "Set 1 of 3", not "Set 4 of 6". */
                   const counts = setCounts(currentSets, currentSetIndex);
                   const warm = currentSets[currentSetIndex].type === "warmup";
+                  const defaultRestSec = currentExercise
+                    ? restSecondsFor(currentExercise, {
+                        fixedRest,
+                        sessionMinutes,
+                      })
+                    : DEFAULT_REST_SECONDS;
+                  const activeRestSec = currentExercise
+                    ? (restOverrides[currentExercise.exerciseId] ??
+                      defaultRestSec)
+                    : defaultRestSec;
                   return (
-                    <p className="text-sm text-muted-foreground">
-                      {warm ? "Warm-up" : "Set"}{" "}
-                      <span className="font-mono tabular-nums">
-                        {setOrdinal(currentSets, currentSetIndex)}
-                      </span>{" "}
-                      of{" "}
-                      <span className="font-mono tabular-nums">
-                        {counts.total}
-                      </span>{" "}
-                      ·{" "}
-                      <span className="font-mono tabular-nums">
-                        {counts.done}
-                      </span>{" "}
-                      done
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {warm ? "Warm-up" : "Set"}{" "}
+                        <span className="font-mono tabular-nums">
+                          {setOrdinal(currentSets, currentSetIndex)}
+                        </span>{" "}
+                        of{" "}
+                        <span className="font-mono tabular-nums">
+                          {counts.total}
+                        </span>{" "}
+                        ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {counts.done}
+                        </span>{" "}
+                        done
+                      </p>
+                      {currentExercise && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Rest timer for ${currentExercise.name}: ${formatRestChipLabel(activeRestSec)}`}
+                          onClick={() => {
+                            haptic("light");
+                            setRestSheetOpen(true);
+                          }}
+                          className="-my-2 gap-1 rounded-full px-2.5 text-xs font-medium text-muted-foreground"
+                        >
+                          <Timer className="size-3.5" aria-hidden="true" />
+                          <span className="font-mono tabular-nums">
+                            {formatRestChipLabel(activeRestSec)}
+                          </span>
+                        </Button>
+                      )}
+                    </div>
                   );
                 })()}
               {/* Backlog #4 — effort cue as words (operator-approved copy set).
@@ -2930,6 +3007,29 @@ export default function WorkoutSession({
               })()}
             </div>
           </div>
+
+          {/* Live stopwatch for timed isometric holds (planks, dead hangs,
+            wall sits): lazy-loaded only when the active exercise uses
+            seconds so normal rep-based sessions pay zero bundle cost. */}
+          {currentExercise?.repUnit === "seconds" &&
+            currentSets[currentSetIndex] && (
+              <Suspense fallback={null}>
+                <IsometricHoldTimer
+                  key={`${safeExIndex}-${currentSetIndex}`}
+                  targetSeconds={
+                    currentSets[currentSetIndex].reps || currentExercise.reps
+                  }
+                  onApplySeconds={(seconds) =>
+                    updateSetLog(
+                      currentExIndex,
+                      currentSetIndex,
+                      "reps",
+                      seconds
+                    )
+                  }
+                />
+              </Suspense>
+            )}
 
           {/* The last note on this exercise stays above the sets: it is
             usually a setting to read before lifting ("Level 8, 6.0
@@ -3851,6 +3951,26 @@ export default function WorkoutSession({
                 0
               }
               smallPlates={smallPlates}
+            />
+          </Suspense>
+        )}
+
+        {restSheetOpen && currentExercise && (
+          <Suspense fallback={null}>
+            <ExerciseRestSheet
+              open
+              exerciseName={currentExercise.name}
+              defaultSeconds={restSecondsFor(currentExercise, {
+                fixedRest,
+                sessionMinutes,
+              })}
+              overrideSeconds={
+                restOverrides[currentExercise.exerciseId] ?? null
+              }
+              onSelect={(seconds) =>
+                updateExerciseRest(currentExercise.exerciseId, seconds)
+              }
+              onClose={() => setRestSheetOpen(false)}
             />
           </Suspense>
         )}

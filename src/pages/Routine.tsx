@@ -6,7 +6,13 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { auth } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
+import {
+  diffCompletedRoutine,
+  getSavedRoutine,
+  updateSavedRoutine,
+  type SavedRoutine,
+  type SavedRoutineExercise,
+} from "../lib/savedRoutines";
 import {
   ROUTINE_DAY_INDEX,
   ROUTINE_DRAFT_EPOCH,
@@ -16,9 +22,14 @@ import {
 import { RESUME_PARAM } from "../lib/resumeParam";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import WorkoutSession from "../components/WorkoutSession";
 import { keepTitleWhole } from "@/lib/workoutLabels";
 import { recoveryFoodPath } from "@/lib/recoveryFood";
+import { haptic } from "@/lib/haptic";
+import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -62,6 +73,11 @@ export default function Routine() {
   // A read that failed is not a routine that doesn't exist.
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [pendingTemplateSync, setPendingTemplateSync] = useState<{
+    exercises: SavedRoutineExercise[];
+    summary: string;
+    status: "pending" | "saving" | "updated";
+  } | null>(null);
 
   // The uid, not the user object: a new object for the same account is not
   // a reason to read again, and each read re-renders.
@@ -141,6 +157,7 @@ export default function Routine() {
       // what was done, as a programme workout's does, not the routine as
       // written. A failure throws to the workout screen, which keeps the
       // session and says so.
+      const ran = sessionData.prescription?.exercises ?? synthDay.exercises;
       const { committed: _noPlan, ...receipt } = await completeLift({
         uid: user.uid,
         author: {
@@ -151,7 +168,7 @@ export default function Routine() {
         source: "routine",
         completionId: sessionData.completionId,
         startedAt: sessionData.startedAt,
-        ran: sessionData.prescription?.exercises ?? synthDay.exercises,
+        ran,
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
         supersets: sessionData.prescription?.supersets,
@@ -167,10 +184,58 @@ export default function Routine() {
         extra: { routineId: routine.id, routineName: routine.name },
         moments: sessionData.moments,
       });
+
+      const diff = diffCompletedRoutine(
+        routine.exercises,
+        ran,
+        sessionData.setLogs
+      );
+      if (diff.changed) {
+        setPendingTemplateSync({
+          exercises: diff.updatedExercises,
+          summary: diff.summary,
+          status: "pending",
+        });
+      }
+
       return receipt;
     },
     [user, routine, synthDay, profile]
   );
+
+  const applyTemplateSync = useCallback(async () => {
+    if (!uid || !routine || !pendingTemplateSync) return;
+    if (pendingTemplateSync.status !== "pending") return;
+    setPendingTemplateSync((prev) =>
+      prev ? { ...prev, status: "saving" } : prev
+    );
+    try {
+      await updateSavedRoutine(uid, routine.id, {
+        name: routine.name,
+        exercises: pendingTemplateSync.exercises,
+      });
+      setRoutine((prev) =>
+        prev
+          ? {
+              ...prev,
+              sourceAuthorId: uid,
+              exercises: pendingTemplateSync.exercises,
+            }
+          : prev
+      );
+      setPendingTemplateSync((prev) =>
+        prev ? { ...prev, status: "updated" } : prev
+      );
+      haptic("light");
+      toast.success("Routine updated");
+    } catch (err) {
+      logger.error("[Routine] template sync failed", err);
+      setPendingTemplateSync((prev) =>
+        prev ? { ...prev, status: "pending" } : prev
+      );
+      toast.error("Couldn’t update routine. Try again.");
+    }
+  }, [uid, routine, pendingTemplateSync]);
 
   if (loading) {
     return (
@@ -224,6 +289,33 @@ export default function Routine() {
     );
   }
 
+  const templateSyncNotice = pendingTemplateSync ? (
+    <Card size="compact" className="space-y-3 text-left">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">
+          {pendingTemplateSync.status === "updated"
+            ? "Saved routine updated"
+            : `Update ${routine.name}?`}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {pendingTemplateSync.status === "updated"
+            ? "Next time you run this routine, it will open with today’s exercises and targets."
+            : pendingTemplateSync.summary}
+        </p>
+      </div>
+      {pendingTemplateSync.status !== "updated" && (
+        <Button
+          variant="secondary"
+          fullWidth
+          loading={pendingTemplateSync.status === "saving"}
+          onClick={() => void applyTemplateSync()}
+        >
+          Update saved routine
+        </Button>
+      )}
+    </Card>
+  ) : undefined;
+
   return (
     <WorkoutSession
       day={synthDay}
@@ -236,6 +328,7 @@ export default function Routine() {
         navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
       }
       onLogFood={() => navigate(recoveryFoodPath("lift"), { replace: true })}
+      completionExtras={templateSyncNotice}
       resumeDraft={resumeOnOpen}
     />
   );
