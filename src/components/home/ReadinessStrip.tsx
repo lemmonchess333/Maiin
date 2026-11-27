@@ -28,16 +28,16 @@ export default function ReadinessStrip({
   readiness,
   feel,
   onFeel,
-  onEasier,
-  easierSummary,
+  onEasier = null,
+  easierSummary = "",
   onConnectBody = null,
 }: {
   readiness: Readiness;
   feel: Feel | null;
   onFeel: (feel: Feel | null) => void;
-  onEasier: () => void;
+  onEasier?: (() => void) | null;
   /** What the easier session changes ("one set less per lift, lighter loads"). */
-  easierSummary: string;
+  easierSummary?: string;
   /** Pro on the phone, before Health has been asked: one quiet link to add
    *  sleep and heart. Null hides it. */
   onConnectBody?: (() => Promise<void>) | null;
@@ -103,7 +103,7 @@ export default function ReadinessStrip({
           </>
         )}
       </p>
-      {readiness.offerEasier && (
+      {readiness.offerEasier && onEasier && (
         /* A quiet text link, not a button shape: Start stays the hero's
            one filled control (§14m rule 21), and the link reads as the
            sentence it is. */
@@ -118,8 +118,13 @@ export default function ReadinessStrip({
           <span>
             <span className="font-semibold text-foreground underline underline-offset-2">
               Go easier today
-            </span>{" "}
-            <span className="text-muted-foreground">· {easierSummary}</span>
+            </span>
+            {easierSummary && (
+              <>
+                {" "}
+                <span className="text-muted-foreground">· {easierSummary}</span>
+              </>
+            )}
           </span>
         </button>
       )}

@@ -72,6 +72,16 @@ interface RunLaunchCardProps {
   /** The work pace as a range, in place of the one pace, once the run is
    *  adjusted for heat. */
   paceRange?: string | null;
+  /** Readiness step-down offer on a hard run (e.g. leg day yesterday, low
+   *  readiness feel, or Apple Health sleep/HR signal): offers a calm one-tap
+   *  swap to an easy run while keeping Start as the primary button. */
+  readiness?: {
+    word: string;
+    line: string | null;
+    swapLabel: string;
+    swapSummary: string;
+    onSwap: () => void;
+  } | null;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
@@ -104,6 +114,7 @@ export default function RunLaunchCard({
   gpsSignal,
   heat = null,
   paceRange = null,
+  readiness = null,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const name = runSessionName(workout, racePace, unit);
@@ -235,6 +246,27 @@ export default function RunLaunchCard({
             adjust={heat.adjust}
             swap={heat.swap}
           />
+        )}
+
+        {readiness && (
+          <div
+            role="note"
+            aria-label="Readiness"
+            className="rounded-xl bg-muted/40 border border-border/50 px-3.5 py-3 space-y-2"
+          >
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {readiness.word}
+                {readiness.line ? ` · ${readiness.line}` : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {readiness.swapSummary}
+              </p>
+            </div>
+            <Button variant="outline" fullWidth onClick={readiness.onSwap}>
+              {readiness.swapLabel}
+            </Button>
+          </div>
         )}
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />

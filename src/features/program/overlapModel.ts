@@ -500,10 +500,12 @@ export function sessionsBeforeQualityRuns(
 export function orderForAdjacency(
   workouts: WorkoutDay[],
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
-  backToBacks = false
+  backToBacks = false,
+  options?: { pinFirst?: boolean }
 ): WorkoutDay[] {
   const n = workouts.length;
   if (n < 2 || n > 6) return workouts; // nothing to permute
+  if (options?.pinFirst && n < 3) return workouts;
   // Under three sessions no seam is worth a reorder; the long run's eve is.
   const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
   const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
@@ -555,7 +557,11 @@ export function orderForAdjacency(
       permute([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]]);
     }
   };
-  permute(identity, []);
+  if (options?.pinFirst) {
+    permute(identity.slice(1), [identity[0]]);
+  } else {
+    permute(identity, []);
+  }
 
   return best === identity ? workouts : best.map((i) => workouts[i]);
 }

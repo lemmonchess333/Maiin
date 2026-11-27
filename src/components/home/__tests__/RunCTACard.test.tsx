@@ -179,3 +179,47 @@ describe("RunCTACard — an interval session's rest", () => {
     expect(heroLine(240)).toBe("3 min easy between");
   });
 });
+
+describe("RunCTACard — bidirectional readiness strip", () => {
+  it("shows leg-day-yesterday readiness and navigates to easierTarget on Go easier today", () => {
+    const navigate = vi.fn();
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={runDay("tempo_20", "tempo")}
+        startTarget={runStartTarget(runDay("tempo_20", "tempo"))}
+        navigate={navigate}
+        readiness={{
+          today: {
+            feel: null,
+            setFeel: vi.fn(),
+            readiness: {
+              word: "Steady",
+              line: "Leg day yesterday, before today’s hard run",
+              reasons: [
+                {
+                  kind: "leg_day_yesterday",
+                  weight: "mild",
+                  text: "Leg day yesterday, before today’s hard run",
+                },
+              ],
+              offerEasier: true,
+            },
+          },
+          easierTarget: "/run?easier=1",
+          easierSummary: "swap to an easy run",
+        }}
+      />
+    );
+    expect(screen.getByText("Steady")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Leg day yesterday, before today’s hard run/)
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Go easier today · swap to an easy run",
+      })
+    );
+    expect(navigate).toHaveBeenCalledWith("/run?easier=1");
+  });
+});

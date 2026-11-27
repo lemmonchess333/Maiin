@@ -3285,6 +3285,11 @@ export function advanceWeek(
      *  save's re-fit for a new length does. A block's focus moves reps,
      *  never sets, so it isn't this. */
     primaryGoal?: PrimaryGoal;
+    /** Weekly schedule so rollover preserves leg/long-run separation after
+     *  rotating unfinished sessions to the front. */
+    weekSchedule?: ReadonlyArray<{ day: number; type: string }> | null;
+    /** Whether the plan carries ultra weekend back-to-back runs. */
+    backToBacks?: boolean;
   } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
@@ -3340,7 +3345,10 @@ export function advanceWeek(
      an archive that says nothing happened for two months is not the "honest
      record" the unattended-days trade-off was defending; that reasoning is
      about a week the user was PRESENT for and left unfinished. */
-  const restedLifts = state.raceWeek === "race" ? state.workouts.filter((d) => d.skipped && !d.completed).length : 0;
+  const restedLifts =
+    state.raceWeek === "race"
+      ? state.workouts.filter((d) => d.skipped && !d.completed).length
+      : 0;
   const history = weekWasTrained
     ? [
         ...(state.weekHistory ?? []),
@@ -3350,7 +3358,9 @@ export function advanceWeek(
           ...(state.currentPhase === "deload"
             ? { lighter: true as const }
             : {}),
-         ...(restedLifts > 0 && state.liftWeekKey ? { weekKey: state.liftWeekKey, restedLifts } : {}),
+          ...(restedLifts > 0 && state.liftWeekKey
+            ? { weekKey: state.liftWeekKey, restedLifts }
+            : {}),
         },
       ].slice(-8)
     : (state.weekHistory ?? []);
@@ -3466,6 +3476,29 @@ export function advanceWeek(
   const upNext = nextUpIndex(state);
   if (upNext > 0) {
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
+  }
+  if (options.weekSchedule && raceWeek !== "race") {
+    const backToBacks = options.backToBacks === true;
+    const allFinished =
+      weekWasTrained &&
+      state.workouts.every((day) => day.completed || day.skipped);
+    if (upNext > 0) {
+      // Keep Lift4's opening session pinned at index 0 while re-optimising
+      // the remaining slots so lower-body lifts stay off the eve of long or
+      // quality runs and back-to-back lower-back overlap stays minimised.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          pinFirst: true,
+        }
+      );
+    } else if (allFinished) {
+      // A fully completed week starts clean, healing any rotation carried
+      // from an earlier partial week back to the zero-collision order.
+      workouts = orderForAdjacency(workouts, options.weekSchedule, backToBacks);
+    }
   }
   if (raceWeek === "race") {
     workouts = raceWeekSession(

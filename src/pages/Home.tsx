@@ -102,7 +102,10 @@ import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import { useTodayReadiness } from "@/hooks/useTodayReadiness";
+import {
+  isScheduledHardRun,
+  useTodayReadiness,
+} from "@/hooks/useTodayReadiness";
 import { useBodySignals } from "@/hooks/useBodySignals";
 import {
   buildEasierSession,
@@ -614,10 +617,16 @@ export default function Home() {
   // Steady or Go easy day. Free; sleep and heart from Apple Health join it
   // for Pro on the phone once Health is asked (Q76, as recommended).
   const heroLift = session.lift;
+  const heroRun = session.run;
+  const heroRunHard = isScheduledHardRun(heroRun?.runDay);
   const bodySignals = useBodySignals(isPro);
   const todayReadiness = useTodayReadiness(
     heroLift?.workout ?? undefined,
-    bodySignals.signals
+    bodySignals.signals,
+    {
+      todayHardRun: heroRunHard,
+      recentWorkouts: workouts,
+    }
   );
   const liftReadiness = useMemo(() => {
     const day = heroLift?.workout;
@@ -648,6 +657,29 @@ export default function Home() {
     bodySignals.connect,
     session.restContext,
     programState,
+  ]);
+  const runReadiness = useMemo(() => {
+    if (
+      !heroRun ||
+      !heroRun.runDay ||
+      heroRun.completed ||
+      heroRun.inProgress ||
+      !heroRunHard
+    ) {
+      return null;
+    }
+    return {
+      today: todayReadiness,
+      connectBody: bodySignals.canConnect ? bodySignals.connect : null,
+      easierTarget: "/run?easier=1",
+      easierSummary: "swap to an easy run",
+    };
+  }, [
+    heroRun,
+    heroRunHard,
+    todayReadiness,
+    bodySignals.canConnect,
+    bodySignals.connect,
   ]);
   // The hero's words around the session (homeHero.ts): the kicker beside
   // the date, the week's count and the next session beside the segments.
@@ -1416,6 +1448,7 @@ export default function Home() {
               <StackedCTACards
                 session={session}
                 liftReadiness={liftReadiness}
+                runReadiness={runReadiness}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}

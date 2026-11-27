@@ -223,6 +223,12 @@ import type {
   HeatPanelSwap,
 } from "../components/run/HeatPanel";
 import type { RunSetupHeat } from "../components/run/RunSetupModal";
+import {
+  isScheduledHardRun,
+  useTodayReadiness,
+} from "../hooks/useTodayReadiness";
+import { useBodySignals } from "../hooks/useBodySignals";
+import { useSubscription } from "../lib/subscription";
 import { haptic } from "../lib/haptic";
 import {
   distanceLabel,
@@ -1215,6 +1221,52 @@ export default function Run() {
               : "",
           swapMinutes: heatSwapKind === "easy" ? heatSwapMinutes : null,
           longSwap: heatSwapKind === "longEasy",
+        }
+      : null;
+
+  const { isPro } = useSubscription();
+  const launchIsHardRun = isScheduledHardRun(launchWorkout);
+  const checkLaunchReadiness =
+    phase === "waiting" && canFastLaunch && launchIsHardRun;
+  const bodySignals = useBodySignals(isPro && checkLaunchReadiness);
+  const runReadiness = useTodayReadiness(undefined, bodySignals.signals, {
+    todayHardRun: checkLaunchReadiness,
+  });
+  const startReadinessEasySwap = () => {
+    const base = buildLaunchConfig(
+      planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    if (heatSwapMinutes !== null) {
+      handleStart(heatSwapConfig(base, heatSwapMinutes));
+      return;
+    }
+    if (structuredLongRun) {
+      handleStart(heatLongSwapConfig(base));
+      return;
+    }
+    const easyMinutes = Math.max(
+      25,
+      Math.round(((launchWorkout?.estimatedDuration ?? 45) * 0.65) / 5) * 5
+    );
+    handleStart(heatSwapConfig(base, easyMinutes));
+  };
+  const launchReadiness =
+    launchIsHardRun &&
+    runReadiness.readiness.offerEasier &&
+    runReadiness.readiness.word !== null
+      ? {
+          word: runReadiness.readiness.word,
+          line: runReadiness.readiness.line,
+          swapLabel: "Run easy instead",
+          swapSummary:
+            heatSwapMinutes !== null
+              ? `Easy ${heatSwapMinutes} min instead of today’s harder effort`
+              : structuredLongRun
+                ? "Keep today’s long run easy all the way"
+                : "Shorter easy run to absorb recent leg load",
+          onSwap: startReadinessEasySwap,
         }
       : null;
 
@@ -2769,6 +2821,7 @@ export default function Run() {
                     ? heatTarget.pace
                     : null
                 }
+                readiness={launchReadiness}
               />
             ) : forceModal || targetRoute != null ? (
               <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
