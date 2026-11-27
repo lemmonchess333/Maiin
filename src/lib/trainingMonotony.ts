@@ -28,8 +28,25 @@ const HIGH_INTENSITY_RUN_TYPES = new Set([
   "fartlek",
 ]);
 
-/** Arbitrary load units per working lift set (~16 sets = 40 AU ≈ 40-min easy run). */
+/** Arbitrary load units per working compound set (~16 sets = 40 AU ≈ 40-min easy run). */
 const LOAD_PER_WORKING_SET = 2.5;
+/** Single-joint isolation sets create less systemic fatigue than multi-joint compounds. */
+const ISOLATION_SET_FACTOR = 0.65;
+/** Minimum HR coverage ratio (matching hrZones.ts ZONE_COVERAGE_MIN) for TRIMP. */
+const HR_LOAD_COVERAGE_MIN = 0.5;
+/** Zone intensity weights normalized so Zone 2 easy aerobic running = 1.0 AU/min. */
+const HR_ZONE_WEIGHTS = [0.65, 1.0, 1.25, 1.55, 1.95] as const;
+
+const ISOLATION_EXERCISE_PATTERN =
+  /\b(curl|curls|extension|extensions|fly|flye|flyes|pec\s*deck|crossover|raise|raises|pushdown|pushdowns|kickback|kickbacks|calf|calves|shrug|shrugs|face\s*pull|face\s*pulls|straight[- ]arm\s*pulldown|pullover|pullovers|abduction|adduction|wrist|forearm|crunch|crunches|sit[- ]up|plank|dead\s*bug|pallof|woodchop)\b/i;
+
+function isIsolationExercise(exercise: {
+  exerciseId?: string;
+  exerciseName?: string;
+}): boolean {
+  const label = `${exercise.exerciseId ?? ""} ${exercise.exerciseName ?? ""}`;
+  return ISOLATION_EXERCISE_PATTERN.test(label);
+}
 
 export type TrainingMonotonyStatus =
   "insufficient" | "varied" | "moderate" | "high";
@@ -57,6 +74,7 @@ export function runLoadAU(
     | "relativeEffort"
     | "isInvalid"
     | "savedAnyway"
+    | "heartRate"
   >
 ): number {
   if (run.isInvalid && !run.savedAnyway) return 0;
@@ -67,6 +85,30 @@ export function runLoadAU(
         ? (run.distance / 1000) * 6
         : 0;
   if (minutes <= 0) return 0;
+
+  // Prefer HR zone-weighted TRIMP when heart-rate coverage is >= 50%.
+  const hr = run.heartRate;
+  if (
+    hr &&
+    Number.isFinite(hr.coverage) &&
+    hr.coverage >= HR_LOAD_COVERAGE_MIN &&
+    Array.isArray(hr.zoneSeconds) &&
+    hr.zoneSeconds.length === 5
+  ) {
+    let totalZoneSec = 0;
+    let weightedSec = 0;
+    for (let z = 0; z < 5; z += 1) {
+      const sec = hr.zoneSeconds[z];
+      if (Number.isFinite(sec) && sec > 0) {
+        totalZoneSec += sec;
+        weightedSec += sec * HR_ZONE_WEIGHTS[z];
+      }
+    }
+    if (totalZoneSec > 0) {
+      const meanIntensity = weightedSec / totalZoneSec;
+      return minutes * meanIntensity;
+    }
+  }
 
   const rawType = (run.activityType ?? run.type ?? "").trim().toLowerCase();
   const baseFactor = HIGH_INTENSITY_RUN_TYPES.has(rawType) ? 1.35 : 1.0;
@@ -89,26 +131,24 @@ export function workoutLoadAU(workout: Pick<Workout, "exercises">): number {
     return mins * 1.15;
   }
 
-  let workingSets = 0;
-  let rpeSum = 0;
-  let rpeCount = 0;
+  let totalLoad = 0;
   for (const ex of workout.exercises ?? []) {
     if (!Array.isArray(ex.sets)) continue;
+    const mechanicFactor = isIsolationExercise(ex) ? ISOLATION_SET_FACTOR : 1.0;
     for (const set of ex.sets) {
       if (set.type === "warmup") continue;
-      workingSets += 1;
-      if (typeof set.rpe === "number" && Number.isFinite(set.rpe)) {
-        rpeSum += set.rpe;
-        rpeCount += 1;
-      }
+      const rpeFactor =
+        typeof set.rpe === "number" && Number.isFinite(set.rpe)
+          ? set.rpe >= 9
+            ? 1.2
+            : set.rpe <= 7
+              ? 0.85
+              : 1.0
+          : 1.0;
+      totalLoad += LOAD_PER_WORKING_SET * mechanicFactor * rpeFactor;
     }
   }
-  if (workingSets === 0) return 0;
-
-  const avgRpe = rpeCount > 0 ? rpeSum / rpeCount : null;
-  const rpeFactor =
-    avgRpe == null ? 1.0 : avgRpe >= 9 ? 1.2 : avgRpe <= 7 ? 0.85 : 1.0;
-  return workingSets * LOAD_PER_WORKING_SET * rpeFactor;
+  return totalLoad;
 }
 
 export interface ComputeTrainingMonotonyInput {
@@ -124,6 +164,7 @@ export interface ComputeTrainingMonotonyInput {
     | "relativeEffort"
     | "isInvalid"
     | "savedAnyway"
+    | "heartRate"
   >[];
   /** Local "YYYY-MM-DD" anchor for the final day of the 7-day rolling window. */
   todayKey: string;

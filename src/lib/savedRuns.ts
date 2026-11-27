@@ -108,6 +108,15 @@ export interface RunSummaryItem {
    *  post compares its own with them (Soc15), and Bests and the Running
    *  page list the fastest (`runEffortSeconds`). */
   bestEfforts?: { distance: number; time: number }[];
+  /** Optional heart-rate zone summary saved on HR-tracked runs, read by
+   *  hybrid training load (TRIMP) calculations. */
+  heartRate?: {
+    averageBpm: number;
+    maxBpm: number;
+    coverage: number;
+    zoneSeconds: [number, number, number, number, number];
+    maxHr: number;
+  };
 }
 
 /** A saved run as every reader sees it. */
@@ -381,6 +390,37 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
     ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
     ...(data.racePrediction?.v === 1 ? { goalRace: true } : {}),
+    ...(heartRateSummaryOf(data.heartRate)
+      ? { heartRate: heartRateSummaryOf(data.heartRate)! }
+      : {}),
+  };
+}
+
+function heartRateSummaryOf(
+  value: unknown
+): RunSummaryItem["heartRate"] | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const hr = value as {
+    averageBpm?: unknown;
+    maxBpm?: unknown;
+    coverage?: unknown;
+    zoneSeconds?: unknown;
+    maxHr?: unknown;
+  };
+  if (
+    !measured(hr.coverage) ||
+    !Array.isArray(hr.zoneSeconds) ||
+    hr.zoneSeconds.length !== 5 ||
+    !hr.zoneSeconds.every((z) => measured(z))
+  ) {
+    return undefined;
+  }
+  return {
+    averageBpm: finite(hr.averageBpm),
+    maxBpm: finite(hr.maxBpm),
+    coverage: hr.coverage,
+    zoneSeconds: hr.zoneSeconds as [number, number, number, number, number],
+    maxHr: finite(hr.maxHr),
   };
 }
 

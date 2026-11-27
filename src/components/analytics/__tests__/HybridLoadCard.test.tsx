@@ -1,7 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, beforeAll } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import HybridLoadCard from "../HybridLoadCard";
+
+beforeAll(() => {
+  if (typeof globalThis.ResizeObserver === "undefined") {
+    globalThis.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
+});
 
 const TODAY = "2026-10-20";
 
@@ -20,7 +30,7 @@ describe("HybridLoadCard", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders Fitness, Fatigue, Form, and combined lifting + running provenance", () => {
+  it("renders Fitness, Fatigue, Form, trajectory chart, and combined lifting + running provenance", async () => {
     const workouts = [];
     const runs = [];
     for (let d = 42; d >= 0; d -= 2) {
@@ -58,16 +68,52 @@ describe("HybridLoadCard", () => {
       }
     }
 
-    render(<HybridLoadCard workouts={workouts} runs={runs} todayKey={TODAY} />);
-    expect(screen.getByText("Fitness and form")).toBeInTheDocument();
-    expect(screen.getByText("Fitness")).toBeInTheDocument();
-    expect(screen.getByText("Fatigue")).toBeInTheDocument();
+    const raceDate = localDateString(
+      addLocalDays(new Date(2026, 9, 20, 12, 0, 0), 10)
+    );
+    render(
+      <HybridLoadCard
+        workouts={workouts}
+        runs={runs}
+        todayKey={TODAY}
+        programState={{
+          goal: "recomp",
+          currentPhase: "Taper",
+          weekNumber: 8,
+          splitType: "upper_lower",
+          updatedAt: Date.now(),
+          workouts: [],
+          runDays: [
+            { dayIndex: 2, templateId: "easy_30min", type: "easy" },
+            { dayIndex: 6, templateId: "race", type: "race", date: raceDate },
+          ],
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "half_marathon", targetDate: raceDate },
+          } as never,
+        }}
+      />
+    );
+    expect(await screen.findByText("Fitness and form")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Fitness and fatigue trajectory")
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Fitness").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Fatigue").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Form")).toBeInTheDocument();
+    expect(screen.getByText(/Race day/)).toBeInTheDocument();
     expect(
       screen.getByText(/Combined lifting and running/)
     ).toBeInTheDocument();
 
-    const grid = screen.getByText("Fitness").parentElement?.parentElement;
+    const toggle = screen.getByRole("button", { name: "Hide forecast" });
+    fireEvent.click(toggle);
+    expect(screen.queryByText(/Race day/)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Show forecast" })
+    ).toBeInTheDocument();
+
+    const grid = screen.getByText("Form").parentElement?.parentElement;
     expect(grid?.className).toContain("@max-[17em]:grid-cols-1");
     expect(grid?.parentElement?.className).toContain("@container");
   });
