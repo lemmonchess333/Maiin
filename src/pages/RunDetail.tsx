@@ -18,6 +18,7 @@ import {
   Repeat,
   Pencil,
   Spline,
+  Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -80,6 +81,7 @@ import {
 import { parseGoalRaceRecord } from "@/lib/racePrediction";
 import { elapsedSecondsOf, raceSeconds, runTimeStat } from "@/lib/runElapsed";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
+import { parseRunLapSplits } from "@/lib/runLaps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
@@ -91,6 +93,7 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 const RenameRunSheet = lazyRetry(
   () => import("@/components/run/RenameRunSheet")
 );
+const RunCropSheet = lazyRetry(() => import("@/components/run/RunCropSheet"));
 /* Loaded on the first tap of "Make a segment", not with the page. */
 const SegmentMaker = lazyRetry(() => import("@/components/run/SegmentMaker"));
 /* The run's segment efforts arrive from the server after the page has
@@ -159,8 +162,14 @@ export default function RunDetail() {
   const [renameOpen, setRenameOpen] = useState(false);
   /* The sheet loads on the first tap of the pencil, not with the page. */
   const [renameWanted, setRenameWanted] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropWanted, setCropWanted] = useState(false);
   /* The name just saved, shown before the page reads the run again. */
   const [renamed, setRenamed] = useState<string | null>(null);
+  const lapSplits = useMemo(
+    () => parseRunLapSplits(run?.lapSplits),
+    [run?.lapSplits]
+  );
   const [replaying, setReplaying] = useState(false);
   /* The stretch being made a segment (Run26 call 3); null while the maker
      is closed. The map draws it, and a tap on the map moves its nearer
@@ -756,8 +765,13 @@ export default function RunDetail() {
         <Suspense fallback={null}>
           <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
         </Suspense>
-        {displaySplits.length > 0 && (
-          <SplitsTable splits={displaySplits} lapUnit={lapUnit} unit={unit} />
+        {(displaySplits.length > 0 || lapSplits.length > 0) && (
+          <SplitsTable
+            splits={displaySplits}
+            lapUnit={lapUnit}
+            unit={unit}
+            lapSplits={lapSplits}
+          />
         )}
 
         {/* Elevation profile */}
@@ -820,21 +834,39 @@ export default function RunDetail() {
             {/* Run26 call 3: a segment is cut from an outdoor run with GPS
                 that counts. Opens under the map, which scrolls into view. */}
             {user && runId && isOutdoorGpsRun(kind) && !run.isInvalid && (
-              <Button
-                variant="outline"
-                fullWidth
-                disabled={segmentRange !== null}
-                onClick={() => {
-                  setSegmentRange(defaultStretch(run.points));
-                  window.scrollTo({ top: 0 });
-                }}
-              >
-                <Spline
-                  className="size-4 @max-[7em]:hidden"
-                  aria-hidden="true"
-                />
-                Make a segment
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={segmentRange !== null}
+                  onClick={() => {
+                    setSegmentRange(defaultStretch(run.points));
+                    window.scrollTo({ top: 0 });
+                  }}
+                >
+                  <Spline
+                    className="size-4 @max-[7em]:hidden"
+                    aria-hidden="true"
+                  />
+                  Make a segment
+                </Button>
+                {Array.isArray(run.points) && run.points.length >= 4 && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setCropWanted(true);
+                      setCropOpen(true);
+                    }}
+                  >
+                    <Scissors
+                      className="size-4 @max-[7em]:hidden"
+                      aria-hidden="true"
+                    />
+                    Crop route
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -881,6 +913,26 @@ export default function RunDetail() {
           />
         </Suspense>
       )}
+
+      {user &&
+        runId &&
+        cropWanted &&
+        Array.isArray(run.points) &&
+        run.points.length >= 4 && (
+          <Suspense fallback={null}>
+            <RunCropSheet
+              key={cropOpen ? "open" : "closed"}
+              open={cropOpen}
+              onOpenChange={setCropOpen}
+              uid={user.uid}
+              runId={runId}
+              points={run.points as GPSPoint[]}
+              weightKg={profile?.weightKg || 70}
+              unit={unit}
+              onCropped={retryRun}
+            />
+          </Suspense>
+        )}
 
       {/* S1 share-card system — customization sheet + new renderer */}
       {shareOpen && (

@@ -89,6 +89,7 @@ import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
 import { pinnedWorkPace } from "../lib/runSegments";
 import type { WorkPortion } from "../hooks/useSessionPlayer";
+import type { RunLapSplit } from "@/lib/runLaps";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -432,6 +433,8 @@ interface RunData {
   /** The time and distance in the session's work segments
    *  (`useSessionPlayer`), null for a run with none. */
   workPortion?: WorkPortion | null;
+  /** Per-interval or manual lap splits captured during the run. */
+  lapSplits?: RunLapSplit[];
 }
 
 export default function RunSummary() {
@@ -1456,6 +1459,7 @@ export default function RunSummary() {
         invalidReason: invalidReason ?? null,
         routeQuality: state.routeQuality ?? null,
         workPortion: state.workPortion ?? null,
+        lapSplits: state.lapSplits,
         shoeId: effectiveShoeId,
         bestEfforts,
         name: nameToSave,
@@ -2336,12 +2340,13 @@ export default function RunSummary() {
           {/* Splits: one table, lap, pace and climb, with a bar per lap
               for its speed, and the only view of the laps here. A saved
               run shows the same table. */}
-          {displaySplits.length > 0 && (
+          {(displaySplits.length > 0 || (state.lapSplits?.length ?? 0) > 0) && (
             <div className="px-4 mb-4">
               <SplitsTable
                 splits={displaySplits}
                 lapUnit={lapUnit}
                 unit={unit}
+                lapSplits={state.lapSplits}
               />
             </div>
           )}

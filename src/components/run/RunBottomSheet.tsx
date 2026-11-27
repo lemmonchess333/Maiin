@@ -34,6 +34,8 @@ import {
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { type ZoneNumber } from "../../lib/hrZones";
+import { Flag } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
@@ -73,6 +75,9 @@ interface RunBottomSheetProps {
   onResume: () => void;
   onStop: () => void;
   onDiscard?: () => void;
+  /** Optional live manual-lap handler; renders a calm Lap button while active. */
+  onLap?: () => void;
+  manualLapCount?: number;
   /* Drives the End-run dialog's primary-action choice. When the live
      run is sub-threshold (the misclick case: tapped Stop at 0:05/0km),
      surface Discard run as the red primary CTA and demote ending the
@@ -351,6 +356,8 @@ export default function RunBottomSheet({
   onResume,
   onStop,
   onDiscard,
+  onLap,
+  manualLapCount = 0,
   isInvalid = false,
   intervalDisplay,
   weightKg,
@@ -795,6 +802,34 @@ export default function RunBottomSheet({
             </div>
 
             {intervalDisplay}
+
+            {!isPaused && onLap && (
+              <div className="flex justify-center flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={
+                    manualLapCount > 0
+                      ? `Mark lap ${manualLapCount + 1}`
+                      : "Mark lap"
+                  }
+                  onClick={onLap}
+                  className="rounded-full border border-white/15 bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/15"
+                >
+                  <Flag className="size-3.5" aria-hidden="true" />
+                  {manualLapCount > 0 ? (
+                    <span>
+                      Lap{" "}
+                      <span className="font-mono tabular-nums">
+                        {manualLapCount + 1}
+                      </span>
+                    </span>
+                  ) : (
+                    "Lap"
+                  )}
+                </Button>
+              </div>
+            )}
 
             {/* Sprint 7: controls migrated to <RunControlButton>.
                 Each button now carries a compile-time-required

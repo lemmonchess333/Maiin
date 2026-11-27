@@ -41,6 +41,7 @@
 
 import type { GPSPoint, Split } from "./gps";
 import type { RouteQuality } from "./routeQuality";
+import { parseRunLapSplits, type RunLapSplit } from "./runLaps";
 import {
   parseRunSessionIdentity,
   type RunSessionIdentity,
@@ -117,6 +118,7 @@ export interface StoredRunFinish {
   intervalData?: RunConfig["intervals"];
   routeQuality: RouteQuality | null;
   workPortion: { seconds: number; meters: number } | null;
+  lapSplits?: RunLapSplit[];
 }
 
 export interface StoredRun {
@@ -578,5 +580,12 @@ function parseStoredRunFinish(value: unknown): StoredRunFinish | null {
     !Number.isFinite(finish.elevationGain)
   )
     return null;
-  return value as StoredRunFinish;
+  const parsedLaps =
+    finish.lapSplits !== undefined
+      ? parseRunLapSplits(finish.lapSplits)
+      : undefined;
+  return {
+    ...(value as StoredRunFinish),
+    ...(parsedLaps && parsedLaps.length > 0 ? { lapSplits: parsedLaps } : {}),
+  };
 }
