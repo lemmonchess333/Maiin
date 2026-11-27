@@ -33,8 +33,10 @@ import LiftPurpose from "@/components/program/LiftPurpose";
 import OutgrownDayNotice from "@/components/program/OutgrownDayNotice";
 import { hasOutgrown, outgrownDayKey } from "@/features/program/outgrownDay";
 import { isLongDayKept, keepLongDay } from "@/lib/keptLongDays";
+import { readJson, scopedKey, writeJson } from "@/lib/localStore";
 import { pickLiftAdvice } from "@/lib/programNotices";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import PlateauCoachingNotice from "@/components/program/PlateauCoachingNotice";
 import SupersetBlock from "@/components/program/SupersetBlock";
 import { pairRuns } from "@/features/program/pairSlot";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
@@ -211,6 +213,31 @@ export default function LiftSessionView({
   // once; the device keeps it after (`keptLongDays`).
   const [keptDay, setKeptDay] = useState<string | null>(null);
   const [rebuildingDays, setRebuildingDays] = useState(false);
+
+  const plateauStoreKey = user?.uid
+    ? scopedKey("tropos-plateau-dismissed", user.uid)
+    : null;
+  const [dismissedByStore, setDismissedByStore] = useState<
+    Record<string, string[]>
+  >({});
+  const dismissedPlateaus = useMemo(() => {
+    if (!plateauStoreKey) return [];
+    return (
+      dismissedByStore[plateauStoreKey] ??
+      readJson<string[]>(plateauStoreKey, [])
+    );
+  }, [dismissedByStore, plateauStoreKey]);
+  const dismissPlateau = (key: string) => {
+    if (!plateauStoreKey) return;
+    setDismissedByStore((prev) => {
+      const current =
+        prev[plateauStoreKey] ?? readJson<string[]>(plateauStoreKey, []);
+      if (current.includes(key)) return prev;
+      const next = [...current, key].slice(-40);
+      writeJson(plateauStoreKey, next);
+      return { ...prev, [plateauStoreKey]: next };
+    });
+  };
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -976,6 +1003,26 @@ export default function LiftSessionView({
                               />
                             </div>
                           </SortableExerciseRow>
+                          {!isViewingHistory &&
+                            (ex.plateauCount ?? 0) >= 2 &&
+                            !dismissedPlateaus.includes(
+                              `${ex.exerciseId}:${ex.plateauCount}`
+                            ) && (
+                              <PlateauCoachingNotice
+                                exerciseName={ex.name}
+                                onSwap={() =>
+                                  setReplaceTarget({
+                                    dayIndex: idx,
+                                    exIndex: i,
+                                  })
+                                }
+                                onDismiss={() =>
+                                  dismissPlateau(
+                                    `${ex.exerciseId}:${ex.plateauCount}`
+                                  )
+                                }
+                              />
+                            )}
                         </div>
                       );
                       /* Lift22: a pair the plan wrote stands in its own

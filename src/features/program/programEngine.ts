@@ -25,6 +25,7 @@ import {
   type RaceBlockWeek,
 } from "./weekPrescription";
 import { loadsTheLegs } from "./easierToday";
+import { effortCueFor } from "./effortCue";
 import {
   pickExercise,
   pickAccessory,
@@ -2959,6 +2960,12 @@ export function applySessionSets(
   const uncalibrated =
     !isBodyweight && (exercise.weight === 0 || lifted === null);
 
+  const exemptLastSet =
+    effortCueFor(exercise, { isLastSet: true, deloadWeek: false })?.kind ===
+    "push";
+  const effort = hardestEffort(read, { exemptLastSet });
+  const rpeOk = effort === undefined || effort < RPE_HOLD_THRESHOLD;
+
   const progressed = (ex: ProgramExercise) =>
     withRecordedReps(
       applyProgression(
@@ -2966,7 +2973,7 @@ export function applySessionSets(
         weakest,
         read.weight,
         smallPlates,
-        hardestEffort(read),
+        effort,
         missCounts,
         date,
         unit,
@@ -2978,8 +2985,8 @@ export function applySessionSets(
   const { lowered: _line, ...base } = exercise;
 
   // Climbing back to where the plan lowered the lift from: a step a session
-  // that is not a miss, at most to that weight, and the rep target as it
-  // was. At it or past it, the usual rules take over from the weight lifted.
+  // that is not a miss and not redlined on RPE, at most to that weight, and
+  // the rep target as it was. At it or past it, the usual rules take over.
   if (
     lowering?.unit === "kg" &&
     !uncalibrated &&
@@ -2991,6 +2998,12 @@ export function applySessionSets(
       lowered: { ...lowering, shown: true as const },
     };
     if (outcome === "miss") return progressed(climbing);
+    if (!rpeOk) {
+      return {
+        ...recorded(climbing, read, reps, false, date),
+        weight: lifted,
+      };
+    }
     const weight = Math.min(
       lowering.from,
       loadGridFor(exercise.exerciseId, smallPlates, unit).above(lifted)
@@ -3340,7 +3353,10 @@ export function advanceWeek(
      an archive that says nothing happened for two months is not the "honest
      record" the unattended-days trade-off was defending; that reasoning is
      about a week the user was PRESENT for and left unfinished. */
-  const restedLifts = state.raceWeek === "race" ? state.workouts.filter((d) => d.skipped && !d.completed).length : 0;
+  const restedLifts =
+    state.raceWeek === "race"
+      ? state.workouts.filter((d) => d.skipped && !d.completed).length
+      : 0;
   const history = weekWasTrained
     ? [
         ...(state.weekHistory ?? []),
@@ -3350,7 +3366,9 @@ export function advanceWeek(
           ...(state.currentPhase === "deload"
             ? { lighter: true as const }
             : {}),
-         ...(restedLifts > 0 && state.liftWeekKey ? { weekKey: state.liftWeekKey, restedLifts } : {}),
+          ...(restedLifts > 0 && state.liftWeekKey
+            ? { weekKey: state.liftWeekKey, restedLifts }
+            : {}),
         },
       ].slice(-8)
     : (state.weekHistory ?? []);
