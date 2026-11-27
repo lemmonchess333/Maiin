@@ -658,4 +658,36 @@ describe("degenerate plans stay safe", () => {
     const beyond = longRunKmForWeek({ ...args, weekIndex: 99 });
     expect(beyond).toBeLessThanOrEqual(32);
   });
+
+  it("caps this week's long run at +2 km above the trailing 21-day longest completed run when no runningBaseline is set", () => {
+    const uncapped = generateRacePlanV2({
+      recentLayoff: "none",
+      weekSchedule: generateSchedule(2, 4),
+      raceGoal: { distance: "marathon", targetDate: targetDate(112) },
+      weeklyRunDays: 4,
+      currentDate: CURRENT,
+      weekStart: WEEK_START,
+      tuning: { volume: "standard", difficulty: "standard" },
+    });
+    const uncappedLong = uncapped.weeks[0].find((r) => r.type === "long");
+    expect(LONG_KM_BY_ID.get(uncappedLong!.templateId)!).toBeGreaterThanOrEqual(
+      14
+    );
+
+    const capped = generateRacePlanV2({
+      recentLayoff: "none",
+      weekSchedule: generateSchedule(2, 4),
+      raceGoal: { distance: "marathon", targetDate: targetDate(112) },
+      weeklyRunDays: 4,
+      currentDate: CURRENT,
+      weekStart: WEEK_START,
+      tuning: { volume: "standard", difficulty: "standard" },
+      recentRuns: [
+        { date: "2026-05-24", distance: 8000, duration: 2880 },
+        { date: "2026-05-28", distance: 6000, duration: 2160 },
+      ],
+    });
+    const cappedLong = capped.weeks[0].find((r) => r.type === "long");
+    expect(LONG_KM_BY_ID.get(cappedLong!.templateId)!).toBeLessThanOrEqual(10);
+  });
 });

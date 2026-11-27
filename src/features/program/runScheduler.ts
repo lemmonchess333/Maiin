@@ -33,6 +33,7 @@ import {
   timeOnFeetLongId,
 } from "@/lib/workoutTemplates";
 import {
+  longestCompletedRunInWindow,
   recentPace,
   recentRunning,
   returnWeekKey,
@@ -3227,6 +3228,13 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     // it, which only the taper's walk of the build builds, and the weeks
     // ahead go by the calendar, as if followed.
     const weekKey = week[0]?.weekKey;
+    const isCuttingWeek = (() => {
+      if (!weekKey) return false;
+      const index = wholeWeeksBetween(blockWeekZero, weekKey);
+      if (index < 0 || index >= blockWeeks) return false;
+      const phase = phaseOf(index);
+      return phase === "taper" || phase === "race";
+    })();
     const fitted = fitWeekToRunningBaseline(
       limited,
       baseline,
@@ -3250,15 +3258,56 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         : null,
       climbPace,
       // A taper or race week cuts its running (deep dive D13).
-      (() => {
-        if (!weekKey) return false;
-        const index = wholeWeeksBetween(blockWeekZero, weekKey);
-        if (index < 0 || index >= blockWeeks) return false;
-        const phase = phaseOf(index);
-        return phase === "taper" || phase === "race";
-      })()
+      isCuttingWeek
     );
-    return fitted.map((row, index) => {
+    // Trailing 21-day long-run safety cap: when no explicit runningBaseline
+    // bounds the climb, cap this week's planned long run at +2 km (or +15 min
+    // on a time-on-feet ladder) above the runner's longest completed run in
+    // the previous 21 days so missed or eased weeks never trigger a sharp jump.
+    const recentCap =
+      !baseline &&
+      !isCuttingWeek &&
+      input.recentRuns &&
+      weekKey &&
+      weekKey === thisWeekKey &&
+      weekKey <= runsReadOn
+        ? longestCompletedRunInWindow(input.recentRuns, weekKey)
+        : null;
+    const capped = recentCap
+      ? fitted.map((row) => {
+          if (
+            row.type !== "long" ||
+            row.completed ||
+            row.userOverride ||
+            (row.status && row.status !== "planned")
+          ) {
+            return row;
+          }
+          const tmpl = RUN_TEMPLATES.find((t) => t.id === row.templateId);
+          if (!tmpl || tmpl.config.backToBack) return row;
+          if (ladder.inTime) {
+            const capMinutes = recentCap.longestMinutes + 15;
+            if (plannedRunMinutes(tmpl, climbPace) <= capMinutes) return row;
+            const cappedId = longTierForKm(
+              capMinutes,
+              climbPace,
+              longCeiling,
+              ladder
+            );
+            return cappedId === row.templateId
+              ? row
+              : { ...row, templateId: cappedId };
+          }
+          const plannedKm = tmpl.config.targetDistanceKm;
+          const capKm = recentCap.longestKm + 2;
+          if (!plannedKm || plannedKm <= capKm) return row;
+          const cappedId = longTierForKm(capKm, climbPace, longCeiling, ladder);
+          return cappedId === row.templateId
+            ? row
+            : { ...row, templateId: cappedId };
+        })
+      : fitted;
+    return capped.map((row, index) => {
       const rd =
         row === week[index]
           ? row

@@ -12,6 +12,7 @@
  * Pure module: no React, no Firestore, no clock reads.
  */
 import { haversine, isImpossibleStep, type GPSPoint } from "./gps";
+import { minettiRelativeCost } from "./gradeAdjustedPace";
 import {
   isHeartRateSourceKind,
   MAX_HEART_RATE_SAMPLE_AGE_MS,
@@ -25,6 +26,19 @@ import {
 
 /** Minimum moving duration (seconds) before cardiac drift is meaningful. */
 export const DECOUPLING_MIN_MOVING_SECONDS = 30 * 60;
+
+/**
+ * Initial warm-up moving time excluded before splitting into halves so early
+ * HR ramp-up from resting never depresses the first-half HR average and
+ * fabricates artificial cardiac drift. Runs ≥ 40 min trim the first 10 min;
+ * shorter qualifying runs (30–40 min) trim the first 5 min.
+ */
+const WARMUP_LONG_THRESHOLD_SECONDS = 40 * 60;
+const WARMUP_TRIM_LONG_MS = 10 * 60 * 1000;
+const WARMUP_TRIM_SHORT_MS = 5 * 60 * 1000;
+
+/** Minimum step length (metres) before applying elevation grade scaling. */
+const MIN_GRADE_STEP_M = 5;
 
 /** Minimum GPS distance (metres) required in each half. */
 const MIN_HALF_DISTANCE_M = 500;
@@ -63,6 +77,29 @@ function mergeIntervals(
     }
   }
   return merged;
+}
+
+/** Drop the first `skipMs` of moving time across possibly paused intervals. */
+function trimInitialMovingMs(
+  merged: readonly ActiveRunInterval[],
+  skipMs: number
+): ActiveRunInterval[] {
+  if (skipMs <= 0) return merged.map((interval) => ({ ...interval }));
+  let remaining = skipMs;
+  const trimmed: ActiveRunInterval[] = [];
+  for (const interval of merged) {
+    const len = interval.endMs - interval.startMs;
+    if (remaining >= len) {
+      remaining -= len;
+      continue;
+    }
+    trimmed.push({
+      startMs: interval.startMs + remaining,
+      endMs: interval.endMs,
+    });
+    remaining = 0;
+  }
+  return trimmed;
 }
 
 function splitAtMovingMidpoint(merged: readonly ActiveRunInterval[]): {
@@ -137,10 +174,44 @@ function halfHeartRate(
   };
 }
 
+/** 3-point moving average of finite altitudes to damp single-fix GPS jitter. */
+function smoothAltitudes(points: readonly GPSPoint[]): Array<number | null> {
+  return points.map((pt, i) => {
+    if (typeof pt.altitude !== "number" || !Number.isFinite(pt.altitude)) {
+      return null;
+    }
+    let sum = pt.altitude;
+    let count = 1;
+    const prev = points[i - 1];
+    if (
+      prev &&
+      !pt.breakBefore &&
+      typeof prev.altitude === "number" &&
+      Number.isFinite(prev.altitude)
+    ) {
+      sum += prev.altitude;
+      count += 1;
+    }
+    const next = points[i + 1];
+    if (
+      next &&
+      !next.breakBefore &&
+      typeof next.altitude === "number" &&
+      Number.isFinite(next.altitude)
+    ) {
+      sum += next.altitude;
+      count += 1;
+    }
+    return sum / count;
+  });
+}
+
 function halfDistances(
   points: readonly GPSPoint[],
+  trimmedStartMs: number,
   midpointMs: number
 ): { firstM: number; secondM: number } {
+  const altitudes = smoothAltitudes(points);
   let firstM = 0;
   let secondM = 0;
   for (let i = 1; i < points.length; i += 1) {
@@ -152,10 +223,22 @@ function halfDistances(
     const dtSec = (curr.timestamp - prev.timestamp) / 1000;
     if (dtSec <= 0 || isImpossibleStep(stepM, dtSec)) continue;
     const stepMidMs = (prev.timestamp + curr.timestamp) / 2;
+    if (stepMidMs < trimmedStartMs) continue;
+
+    // Grade-adjusted effective distance via Minetti (2002) relative cost so
+    // an uphill first half and downhill second half do not fabricate drift.
+    let effectiveM = stepM;
+    const prevAlt = altitudes[i - 1];
+    const currAlt = altitudes[i];
+    if (stepM >= MIN_GRADE_STEP_M && prevAlt !== null && currAlt !== null) {
+      const grade = (currAlt - prevAlt) / stepM;
+      effectiveM = stepM * minettiRelativeCost(grade);
+    }
+
     if (stepMidMs < midpointMs) {
-      firstM += stepM;
+      firstM += effectiveM;
     } else {
-      secondM += stepM;
+      secondM += effectiveM;
     }
   }
   return { firstM, secondM };
@@ -176,9 +259,10 @@ export interface ComputeAerobicDecouplingInput {
 }
 
 /**
- * Compute first-half vs second-half pace-to-HR decoupling for a steady GPS run.
- * Returns `null` whenever the run is too short, non-steady (intervals/race),
- * lacks GPS distance in either half, or has < 50% HR coverage in either half.
+ * Compute first-half vs second-half grade-adjusted pace-to-HR decoupling for a
+ * steady GPS run after trimming the initial warm-up HR lag. Returns `null`
+ * whenever the run is too short, non-steady (intervals/race), lacks GPS
+ * distance in either half, or has < 50% HR coverage in either half.
  */
 export function computeAerobicDecoupling({
   samples,
@@ -210,7 +294,14 @@ export function computeAerobicDecoupling({
     return null;
   }
 
-  const split = splitAtMovingMidpoint(merged);
+  const warmupSkipMs =
+    intervalMovingMs / 1000 >= WARMUP_LONG_THRESHOLD_SECONDS
+      ? WARMUP_TRIM_LONG_MS
+      : WARMUP_TRIM_SHORT_MS;
+  const steadyIntervals = trimInitialMovingMs(merged, warmupSkipMs);
+  if (steadyIntervals.length === 0) return null;
+
+  const split = splitAtMovingMidpoint(steadyIntervals);
   if (!split) return null;
 
   const seen = new Set<string>();
@@ -250,7 +341,12 @@ export function computeAerobicDecoupling({
     return null;
   }
 
-  const { firstM, secondM } = halfDistances(points, split.midpointMs);
+  const trimmedStartMs = steadyIntervals[0].startMs;
+  const { firstM, secondM } = halfDistances(
+    points,
+    trimmedStartMs,
+    split.midpointMs
+  );
   if (firstM < MIN_HALF_DISTANCE_M || secondM < MIN_HALF_DISTANCE_M) {
     return null;
   }

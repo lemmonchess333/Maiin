@@ -83,6 +83,13 @@ function tierForVolume(reps: number): LiftVolumeTier {
   return "high";
 }
 
+/** Volume tier for a single scheduled lift workout day. */
+export function liftVolumeTierForDay(
+  day: WorkoutDay | undefined
+): LiftVolumeTier {
+  return tierForVolume(dayLiftVolume(day));
+}
+
 /**
  * Translate the engine's program state into nutrition training signals.
  *

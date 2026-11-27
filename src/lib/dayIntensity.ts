@@ -17,7 +17,10 @@
  * MORE carbs than a low-volume strength day, as it should.
  */
 import { localDateString } from "./dateHelpers";
-import { trainingSignalsForNutrition } from "./trainingSignals";
+import {
+  liftVolumeTierForDay,
+  trainingSignalsForNutrition,
+} from "./trainingSignals";
 import { HARD_RUN_TYPES } from "@/features/program/programTypes";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ScheduleDay } from "./scheduleUtils";
@@ -147,11 +150,14 @@ function runLimb(
   return null;
 }
 
+/** Monday-first index (Mon = 0 .. Sun = 6) matching the program engine's slot order. */
+const weekPos = (weekday: number): number => (weekday + 6) % 7;
+
 /**
- * Lift-limb tier — applied on scheduled lift/both days. Uses Prompt A's
- * program-level signals as the per-day proxy: deload pulls DOWN, high volume
- * pushes UP. (Per-WorkoutDay resolution is deferred; the program's heaviest
- * planned day is a stable, conservative proxy for "how hard is lifting".)
+ * Lift-limb tier — applied on scheduled lift/both days. Resolves the specific
+ * `WorkoutDay` mapped to `weekday`'s Monday-first lift slot so a high-volume
+ * leg day fuels HARD while a light arm/core day fuels EASY, falling back to
+ * the program-level volume tier when that slot is absent.
  */
 function liftLimb(
   weekday: number,
@@ -165,8 +171,21 @@ function liftLimb(
 
   const sig = trainingSignalsForNutrition(program);
   if (sig.isDeload) return "EASY"; // deload pulls the tier down
-  if (sig.liftVolumeTier === "high") return "HARD"; // high volume up
-  if (sig.liftVolumeTier === "low") return "EASY";
+
+  const liftWeekdays = weekSchedule
+    .filter((d) => d.type === "lift" || d.type === "both")
+    .map((d) => d.day)
+    .sort((a, b) => weekPos(a) - weekPos(b));
+  const slot = liftWeekdays.indexOf(weekday);
+  const dayWorkout =
+    slot >= 0 && Array.isArray(program?.workouts)
+      ? program.workouts[slot]
+      : undefined;
+  const dayTier = liftVolumeTierForDay(dayWorkout);
+  const volumeTier = dayTier !== "none" ? dayTier : sig.liftVolumeTier;
+
+  if (volumeTier === "high") return "HARD"; // high volume up
+  if (volumeTier === "low") return "EASY";
   return "MODERATE"; // moderate, or scheduled-lift with unknown volume
 }
 

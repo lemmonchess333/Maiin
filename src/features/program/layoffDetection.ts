@@ -410,3 +410,33 @@ export function recentPace(
 ): number | null {
   return recentRunning(runs, shiftDays(todayKey, 1)).paceSPerKm;
 }
+
+/**
+ * Longest eligible completed run inside the trailing `windowDays` (default 21)
+ * strictly before `beforeKey`, or null when no eligible runs exist in that
+ * window. Used to cap scheduled long runs against sudden volume spikes when no
+ * explicit running baseline is bounding the climb.
+ */
+export function longestCompletedRunInWindow(
+  runs: readonly DatedRun[],
+  beforeKey: string,
+  windowDays = LAYOFF_DETRAINED_DAYS
+): { longestKm: number; longestMinutes: number } | null {
+  const from = shiftDays(beforeKey, -windowDays);
+  const recent = eligibleRuns(runs).filter(
+    (run) => run.date! >= from && run.date! < beforeKey
+  );
+  if (recent.length === 0) return null;
+  const longestKm = Math.max(
+    ...recent.map(
+      (run) => (typeof run.distance === "number" ? run.distance : 0) / 1000
+    )
+  );
+  const longestMinutes = Math.max(
+    ...recent.map(
+      (run) => (typeof run.duration === "number" ? run.duration : 0) / 60
+    )
+  );
+  if (longestKm <= 0 && longestMinutes <= 0) return null;
+  return { longestKm, longestMinutes };
+}

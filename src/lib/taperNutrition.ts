@@ -14,7 +14,13 @@
  */
 import { parseLocalDate, localDateString } from "./dateHelpers";
 import { clamp } from "@/lib/utils";
-import { floorTargetCalories } from "./macroConstants";
+import {
+  floorTargetCalories,
+  GOAL_CALORIE_OFFSET,
+  offsetFromWeeklyRate,
+} from "./macroConstants";
+import { getNutritionPhase } from "./nutritionPhase";
+import { attestedWeeklyRateKg } from "./goalWeightPlan";
 import { TAPER_WEEKS_BY_DISTANCE } from "@/features/program/runPlanTiming";
 import type { UserProfile } from "./auth";
 
@@ -29,6 +35,18 @@ export const CARB_LOAD_BUMP = 0.05;
 export const POST_RACE_EXCLUDE_DAYS = 7;
 /** Fallback taper length when the race distance is unrecognised. */
 const DEFAULT_TAPER_WEEKS = 2;
+/**
+ * Race distances long enough (>~75–90 min) for multi-day glycogen
+ * supercompensation to be physiologically justified. Shorter races (5K, 10K)
+ * do not need a 3-day carb-load surplus.
+ */
+const CARB_LOAD_DISTANCES = new Set([
+  "half",
+  "marathon",
+  "50k",
+  "50mi",
+  "100k",
+]);
 
 export type TaperPhase = "taper" | "carb_load" | "race";
 
@@ -45,6 +63,7 @@ export interface TaperOverride {
 interface RaceContext {
   raceDate: Date; // local midnight
   taperWeeks: number;
+  distance: string;
 }
 
 function raceContext(
@@ -62,7 +81,19 @@ function raceContext(
   if (!raceDate || Number.isNaN(raceDate.getTime())) return null;
   const taperWeeks =
     TAPER_WEEKS_BY_DISTANCE[rg.distance] ?? DEFAULT_TAPER_WEEKS;
-  return { raceDate, taperWeeks };
+  return { raceDate, taperWeeks, distance: rg.distance };
+}
+
+/**
+ * Signed goal calorie offset baked into `baseCalories` (negative on a cut).
+ * Mirrors `useAdaptiveTdee`'s `goalCalorieOffset` through `attestedWeeklyRateKg`
+ * so unsigned legacy rates can never flip a cut into a surplus.
+ */
+function goalDeficitOffset(profile: UserProfile | null | undefined): number {
+  const rate = attestedWeeklyRateKg(profile);
+  if (rate !== null) return offsetFromWeeklyRate(rate);
+  const phase = getNutritionPhase(profile);
+  return GOAL_CALORIE_OFFSET[phase] ?? 0;
 }
 
 /** Whole local-calendar days from `date` until the race (negative = past). */
@@ -76,12 +107,15 @@ function daysUntilRace(date: Date, raceDate: Date): number {
  * user isn't in an active race-prep taper window (LIFT_ONLY, no race, race
  * already passed, or still in base/build) — the caller then uses the normal
  * flat/learned target. `baseCalories` is the pre-taper target (formula base or
- * learned value); the taper move is applied on top of it.
+ * learned value); during a race taper, active cut deficits are paused by
+ * anchoring off maintenance (`maintenanceCalories` when supplied, otherwise
+ * restoring the cut offset) so a taper never compounds on top of a deficit.
  */
 export function resolveTaper(
   date: Date,
   profile: UserProfile | null | undefined,
-  baseCalories: number
+  baseCalories: number,
+  maintenanceCalories?: number | null
 ): TaperOverride | null {
   const ctx = raceContext(profile);
   if (!ctx) return null;
@@ -91,17 +125,40 @@ export function resolveTaper(
   const taperWindowDays = ctx.taperWeeks * 7;
   if (days > taperWindowDays) return null; // still base/build
 
-  // Final days → carb LOAD: restore + bump calories, fat floored (HARD split),
-  // carbs maximised.
+  // Pause an active cut deficit during race taper so a 5-10% volume contraction
+  // never stacks on top of a caloric deficit right before race day.
+  const deficitOffset = goalDeficitOffset(profile);
+  const inCut = deficitOffset < 0 && !profile?.customCalorieTarget;
+  const anchorCalories = inCut
+    ? typeof maintenanceCalories === "number" &&
+      Number.isFinite(maintenanceCalories) &&
+      maintenanceCalories > baseCalories
+      ? maintenanceCalories
+      : baseCalories - deficitOffset
+    : baseCalories;
+
+  // Final days → carb LOAD for half marathon and longer: restore + bump
+  // calories, fat floored (HARD split), carbs maximised. Shorter races
+  // (5K / 10K) hold maintenance on race day without a 3-day carb-load surplus.
   if (days <= CARB_LOAD_DAYS) {
-    return {
-      phase: days === 0 ? "race" : "carb_load",
-      taperedCalories: Math.round(baseCalories * (1 + CARB_LOAD_BUMP)),
-      carbLoad: true,
-      // Descriptive of the race-week PLAN, not an assertion the user's macros
-      // changed (the move is Pro-gated — see useEffectiveTargets).
-      annotation: "Race week, carb load",
-    };
+    if (CARB_LOAD_DISTANCES.has(ctx.distance)) {
+      return {
+        phase: days === 0 ? "race" : "carb_load",
+        taperedCalories: Math.round(anchorCalories * (1 + CARB_LOAD_BUMP)),
+        carbLoad: true,
+        // Descriptive of the race-week PLAN, not an assertion the user's macros
+        // changed (the move is Pro-gated — see useEffectiveTargets).
+        annotation: "Race week, carb load",
+      };
+    }
+    if (days === 0) {
+      return {
+        phase: "race",
+        taperedCalories: Math.round(anchorCalories),
+        carbLoad: false,
+        annotation: "Race day",
+      };
+    }
   }
 
   // Taper weeks → calories contract proportional to the volume drop (deeper as
@@ -110,27 +167,13 @@ export function resolveTaper(
   const cut = TAPER_CUT_MIN + (TAPER_CUT_MAX - TAPER_CUT_MIN) * p;
   return {
     phase: "taper",
-    /* Floored. The taper is the THIRD writer of the day's calorie target —
-       `calculateTDEE` and the adaptive learned path are the other two, and
-       both run `floorTargetCalories`, each under a comment saying a deficit
-       "can never" push the target below `min(maintenance, 1200)`. This one
-       multiplied straight through, so it could: a user the rate-derived
-       floor had already clamped TO 1200 (small frame, cut band — maintenance
-       ~1600 less a 550 deficit is 1050 before flooring) came out of the
-       deepest taper week at 1080.
-
-       Floored against `baseCalories` rather than maintenance because that is
-       what this function is given, and it yields the same number wherever it
-       matters: the pre-taper target is itself already floored, so for anyone
-       at or above 1200 this clamps at exactly 1200. Below it — a
-       `customCalorieTarget` the user set themselves, which `tdee.ts`
-       deliberately leaves alone — the taper simply doesn't reduce further,
-       which is the conservative reading of the same rule. It can never
-       raise: the floor is `min(baseCalories, 1200) <= baseCalories`, and the
-       tapered value is below `baseCalories` by construction. */
+    /* Floored against `anchorCalories` (which equals `baseCalories` outside a
+       cut) so a user already clamped at 1200 never drops beneath 1200, and a
+       custom target below 1200 holds at its own number without being pushed
+       upwards. */
     taperedCalories: floorTargetCalories(
-      Math.round(baseCalories * (1 - cut)),
-      baseCalories
+      Math.round(anchorCalories * (1 - cut)),
+      anchorCalories
     ),
     carbLoad: false,
     annotation: "Taper week",
