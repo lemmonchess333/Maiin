@@ -500,13 +500,17 @@ export function sessionsBeforeQualityRuns(
 export function orderForAdjacency(
   workouts: WorkoutDay[],
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
-  backToBacks = false
+  backToBacks = false,
+  options?: { pinFirst?: boolean; runEvesOnly?: boolean }
 ): WorkoutDay[] {
   const n = workouts.length;
   if (n < 2 || n > 6) return workouts; // nothing to permute
+  if (options?.pinFirst && n < 3) return workouts;
+  const runEvesOnly = options?.runEvesOnly === true;
   // Under three sessions no seam is worth a reorder; the long run's eve is.
-  const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
-  const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
+  const adjacency = runEvesOnly || n < 3 ? [] : backToBackPairs(schedule, n);
+  const wrapAdjacent =
+    !runEvesOnly && n >= 3 && weekWrapsBackToBack(schedule, n);
   const eves = sessionsBeforeLongRuns(schedule, n, backToBacks);
   const qualityEves = sessionsBeforeQualityRuns(schedule, n, backToBacks);
   if (
@@ -522,18 +526,20 @@ export function orderForAdjacency(
     for (const eve of eves) total += legSets(workouts[order[eve]]);
     for (const qEve of qualityEves)
       total += legSets(workouts[order[qEve]]) * 0.5;
-    for (let i = 0; i + 1 < order.length; i += 1) {
-      if (!adjacency[i]) continue; // only back-to-back seams are penalised
-      total += posteriorChainOverlap(
-        workouts[order[i]],
-        workouts[order[i + 1]]
-      );
-    }
-    if (wrapAdjacent) {
-      total += posteriorChainOverlap(
-        workouts[order[order.length - 1]],
-        workouts[order[0]]
-      );
+    if (!runEvesOnly) {
+      for (let i = 0; i + 1 < order.length; i += 1) {
+        if (!adjacency[i]) continue; // only back-to-back seams are penalised
+        total += posteriorChainOverlap(
+          workouts[order[i]],
+          workouts[order[i + 1]]
+        );
+      }
+      if (wrapAdjacent) {
+        total += posteriorChainOverlap(
+          workouts[order[order.length - 1]],
+          workouts[order[0]]
+        );
+      }
     }
     return total;
   };
@@ -555,7 +561,11 @@ export function orderForAdjacency(
       permute([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]]);
     }
   };
-  permute(identity, []);
+  if (options?.pinFirst) {
+    permute(identity.slice(1), [identity[0]]);
+  } else {
+    permute(identity, []);
+  }
 
   return best === identity ? workouts : best.map((i) => workouts[i]);
 }

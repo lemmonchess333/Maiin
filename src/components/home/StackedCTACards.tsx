@@ -46,6 +46,7 @@ export default function StackedCTACards({
   liftUnit = "kg",
   freeRunLine = null,
   liftReadiness = null,
+  runReadiness = null,
   runPlanLocked = null,
   lastSetsOf,
 }: {
@@ -62,6 +63,9 @@ export default function StackedCTACards({
   /** Readiness for the lift hero (`useTodayReadiness`); the compact card
    *  under a run hero shows none. */
   liftReadiness?: ComponentProps<typeof LiftCTACard>["readiness"];
+  /** Readiness for the run hero (`useTodayReadiness`); the compact card
+   *  under a lift hero shows none. */
+  runReadiness?: ComponentProps<typeof RunCTACard>["readiness"];
   /** The half, marathon or ultra plan is past its free first week (Q85):
    *  today's planned run offers Pro (`RunCTACard`). */
   runPlanLocked?: ComponentProps<typeof RunCTACard>["planLocked"];
@@ -90,6 +94,7 @@ export default function StackedCTACards({
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
         planLocked={runPlanLocked}
+        readiness={runLeads ? runReadiness : null}
       />
     </m.div>
   );

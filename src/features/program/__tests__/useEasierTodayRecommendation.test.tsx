@@ -9,6 +9,7 @@ import {
   seedFirestore,
 } from "@/test/firestoreHarness";
 import { queueDurableWrite, flushQueue } from "@/lib/offlineQueue";
+import { writeFeel } from "@/lib/readinessFeel";
 import { useEasierTodayRecommendation } from "../useEasierTodayRecommendation";
 import type { WorkoutDay } from "../programTypes";
 
@@ -42,6 +43,7 @@ function run(overrides: Record<string, unknown> = {}) {
   };
 }
 beforeEach(() => {
+  localStorage.clear();
   resetFirestore();
   owner.currentUser = { uid: "runner" };
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -143,6 +145,27 @@ describe("the next lifting session uses performed run evidence", () => {
     await waitFor(() => expect(result.current?.recommended).toBe(true));
     owner.currentUser = { uid: "other" };
     rerender();
+    expect(result.current?.recommended).toBe(false);
+  });
+
+  it("reflects today's tired or rough morning readiness feel on Train", async () => {
+    const { result } = renderHook(() => useEasierTodayRecommendation(upper));
+    await flushSnapshots();
+    expect(result.current?.recommended).toBe(false);
+
+    act(() => writeFeel("runner", "2026-09-13", "tired"));
+    expect(result.current).toEqual({
+      recommended: true,
+      reason: "you said you’re tired today",
+    });
+
+    act(() => writeFeel("runner", "2026-09-13", "rough"));
+    expect(result.current).toEqual({
+      recommended: true,
+      reason: "you said you feel rough today",
+    });
+
+    act(() => writeFeel("runner", "2026-09-13", "good"));
     expect(result.current?.recommended).toBe(false);
   });
 });

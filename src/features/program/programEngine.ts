@@ -3298,6 +3298,11 @@ export function advanceWeek(
      *  save's re-fit for a new length does. A block's focus moves reps,
      *  never sets, so it isn't this. */
     primaryGoal?: PrimaryGoal;
+    /** Weekly schedule so rollover preserves leg/long-run separation after
+     *  rotating unfinished sessions to the front. */
+    weekSchedule?: ReadonlyArray<{ day: number; type: string }> | null;
+    /** Whether the plan carries ultra weekend back-to-back runs. */
+    backToBacks?: boolean;
   } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
@@ -3484,6 +3489,36 @@ export function advanceWeek(
   const upNext = nextUpIndex(state);
   if (upNext > 0) {
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
+  }
+  if (options.weekSchedule && raceWeek !== "race") {
+    const backToBacks = options.backToBacks === true;
+    const allFinished =
+      weekWasTrained &&
+      state.workouts.every((day) => day.completed || day.skipped);
+    if (upNext > 0) {
+      // Keep Lift4's opening session pinned at index 0 while pulling
+      // lower-body lifts off the eve of long or quality runs.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          pinFirst: true,
+          runEvesOnly: true,
+        }
+      );
+    } else if (allFinished) {
+      // A fully completed week starts clean, pulling any rotated leg session
+      // back off long/quality run eves without disturbing pure lifting splits.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          runEvesOnly: true,
+        }
+      );
+    }
   }
   if (raceWeek === "race") {
     workouts = raceWeekSession(
