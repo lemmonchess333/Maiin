@@ -659,22 +659,32 @@ describe("degenerate plans stay safe", () => {
     expect(beyond).toBeLessThanOrEqual(32);
   });
 
-  it("caps this week's long run at +2 km above the trailing 21-day longest completed run when no runningBaseline is set", () => {
-    const uncapped = generateRacePlanV2({
-      recentLayoff: "none",
+  it("caps a returning runner's long run at +2 km above their trailing 21-day longest completed run without perturbing steady runners", () => {
+    const returningCapped = generateRacePlanV2({
+      recentLayoff: "detrained",
       weekSchedule: generateSchedule(2, 4),
-      raceGoal: { distance: "marathon", targetDate: targetDate(112) },
+      raceGoal: { distance: "half", targetDate: targetDate(84) },
       weeklyRunDays: 4,
       currentDate: CURRENT,
       weekStart: WEEK_START,
       tuning: { volume: "standard", difficulty: "standard" },
+      // Came back two weeks ago, but only ran 4-5 km easy runs and skipped the
+      // opening long runs — calendar re-entry must not climb past the floor.
+      recentRuns: [
+        { date: "2026-04-05", distance: 12000, duration: 4200 },
+        { date: "2026-05-18", distance: 4000, duration: 1500 },
+        { date: "2026-05-24", distance: 5000, duration: 1850 },
+        { date: "2026-05-29", distance: 5000, duration: 1850 },
+      ],
     });
-    const uncappedLong = uncapped.weeks[0].find((r) => r.type === "long");
-    expect(LONG_KM_BY_ID.get(uncappedLong!.templateId)!).toBeGreaterThanOrEqual(
-      14
+    const returningLong = returningCapped.weeks[0].find(
+      (r) => r.type === "long"
+    );
+    expect(LONG_KM_BY_ID.get(returningLong!.templateId)!).toBeLessThanOrEqual(
+      8
     );
 
-    const capped = generateRacePlanV2({
+    const steady = generateRacePlanV2({
       recentLayoff: "none",
       weekSchedule: generateSchedule(2, 4),
       raceGoal: { distance: "marathon", targetDate: targetDate(112) },
@@ -687,7 +697,9 @@ describe("degenerate plans stay safe", () => {
         { date: "2026-05-28", distance: 6000, duration: 2160 },
       ],
     });
-    const cappedLong = capped.weeks[0].find((r) => r.type === "long");
-    expect(LONG_KM_BY_ID.get(cappedLong!.templateId)!).toBeLessThanOrEqual(10);
+    const steadyLong = steady.weeks[0].find((r) => r.type === "long");
+    expect(LONG_KM_BY_ID.get(steadyLong!.templateId)!).toBeGreaterThanOrEqual(
+      14
+    );
   });
 });

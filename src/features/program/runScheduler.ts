@@ -3260,11 +3260,20 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       // A taper or race week cuts its running (deep dive D13).
       isCuttingWeek
     );
-    // Trailing 21-day long-run safety cap: when no explicit runningBaseline
-    // bounds the climb, cap this week's planned long run at +2 km (or +15 min
-    // on a time-on-feet ladder) above the runner's longest completed run in
-    // the previous 21 days so missed or eased weeks never trigger a sharp jump.
+    // Trailing 21-day long-run safety cap for returning runners: during a
+    // layoff re-entry without an explicit runningBaseline, calendar weeks back
+    // cannot climb past +2 km (or +15 min on a time-on-feet ladder) above the
+    // runner's longest completed run in the previous 21 days (floored at the
+    // return opening rung). Steady mid-block runners (`recentLayoff === "none"`
+    // with no return gap) keep their scheduled build week untouched.
+    const returningFromGap =
+      returnWeek !== null || input.recentLayoff !== "none";
+    const returnFloorSize =
+      baseLongRung >= 0
+        ? (ladder.tiers[Math.max(0, baseLongRung - 1)]?.size ?? 0)
+        : 0;
     const recentCap =
+      returningFromGap &&
       !baseline &&
       !isCuttingWeek &&
       input.recentRuns &&
@@ -3286,7 +3295,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           const tmpl = RUN_TEMPLATES.find((t) => t.id === row.templateId);
           if (!tmpl || tmpl.config.backToBack) return row;
           if (ladder.inTime) {
-            const capMinutes = recentCap.longestMinutes + 15;
+            const capMinutes = Math.max(
+              returnFloorSize,
+              recentCap.longestMinutes + 15
+            );
             if (plannedRunMinutes(tmpl, climbPace) <= capMinutes) return row;
             const cappedId = longTierForKm(
               capMinutes,
@@ -3299,7 +3311,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               : { ...row, templateId: cappedId };
           }
           const plannedKm = tmpl.config.targetDistanceKm;
-          const capKm = recentCap.longestKm + 2;
+          const capKm = Math.max(returnFloorSize, recentCap.longestKm + 2);
           if (!plannedKm || plannedKm <= capKm) return row;
           const cappedId = longTierForKm(capKm, climbPace, longCeiling, ladder);
           return cappedId === row.templateId
