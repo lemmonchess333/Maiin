@@ -140,7 +140,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "owner-marathon": [
     "derived-low",
     "easy-nag",
-    "lift:acsm-coverage:chest",
     "lift:acsm-coverage:posterior",
     "lift:acsm-coverage:quads",
     "long-share",

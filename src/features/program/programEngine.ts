@@ -3483,21 +3483,28 @@ export function advanceWeek(
       weekWasTrained &&
       state.workouts.every((day) => day.completed || day.skipped);
     if (upNext > 0) {
-      // Keep Lift4's opening session pinned at index 0 while re-optimising
-      // the remaining slots so lower-body lifts stay off the eve of long or
-      // quality runs and back-to-back lower-back overlap stays minimised.
+      // Keep Lift4's opening session pinned at index 0 while pulling
+      // lower-body lifts off the eve of long or quality runs.
       workouts = orderForAdjacency(
         workouts,
         options.weekSchedule,
         backToBacks,
         {
           pinFirst: true,
+          runEvesOnly: true,
         }
       );
     } else if (allFinished) {
-      // A fully completed week starts clean, healing any rotation carried
-      // from an earlier partial week back to the zero-collision order.
-      workouts = orderForAdjacency(workouts, options.weekSchedule, backToBacks);
+      // A fully completed week starts clean, pulling any rotated leg session
+      // back off long/quality run eves without disturbing pure lifting splits.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          runEvesOnly: true,
+        }
+      );
     }
   }
   if (raceWeek === "race") {
