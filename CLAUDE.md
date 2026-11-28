@@ -418,6 +418,13 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   had drifted by 3–7× (87 components → 319, 31 hooks → 75, 46 lib modules →
   198). A number nothing checks is a claim that rots; prefer describing the
   shape, or add a test that pins the number.
+- Property tests (`*.property.test.ts`) state what must hold for every input
+  and let fast-check look for a counterexample: the week's layout and
+  counts, the trace's distance and splits, moving time, the macro split,
+  unit round trips, the weight grids. Call `assertProperty` from
+  `src/test/property.ts`, which fixes the seed so CI never reddens at
+  random; explore with `FC_SEED=7 FC_RUNS=2000`. A new property is done
+  when a bug planted in the code it covers makes it fail.
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
 **CI runs the same suite five ways, and knowing that changes what you
