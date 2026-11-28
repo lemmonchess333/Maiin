@@ -18,6 +18,8 @@ import {
   detectBestEfforts,
   estimateRunCalories,
   haversine,
+  isImpossibleStep,
+  MAX_PLAUSIBLE_SPEED_MPS,
   totalDistance,
   totalElevationGain,
   type GPSPoint,
@@ -40,7 +42,11 @@ export type GpxImportErrorCode =
   | "GPX_INVALID_XML"
   | "GPX_TOO_FEW_POINTS"
   | "GPX_NO_TIMESTAMPS"
-  | "GPX_TOO_SHORT";
+  | "GPX_TOO_SHORT"
+  /** The file names a sport that is not running (`importedSport`). */
+  | "GPX_NOT_A_RUN"
+  /** It moves faster than anyone runs for a minute or more. */
+  | "GPX_TOO_FAST";
 
 export class GpxImportError extends Error {
   readonly code: GpxImportErrorCode;
@@ -87,6 +93,104 @@ export interface ImportedGpxRunSummary {
   duration: number;
   date: string;
   hasHeartRate: boolean;
+}
+
+/**
+ * The sport a file names, as far as an import cares: a run, or what else
+ * it is. `null` when the file names none, or only a word that says
+ * nothing about the sport ("Other" in Garmin's GPX, "generic"): such a
+ * file is read as the run it was offered as, and the speed check
+ * (`SUSTAINED_TOO_FAST_SECONDS`) still stands guard.
+ *
+ * Tropos has no walk or hike, so those are refused with the rest. GPX
+ * carries the sport in `<trk><type>`, as a word (Garmin Connect:
+ * "running", "trail_running", "cycling", "road_biking", "walking",
+ * "hiking") or as Strava's number, read by experiment since Strava
+ * publishes none (Stack Overflow 61903437): 9 Run and 53 Virtual Run;
+ * 1 Ride, 17 Virtual Ride and 18 E-Bike Ride; 10 Walk; 4 Hike.
+ */
+export type ImportedSport = "run" | "ride" | "walk" | "hike" | "other";
+
+const STRAVA_TYPE_NUMBERS: Readonly<Record<string, ImportedSport>> = {
+  "9": "run",
+  "53": "run",
+  "1": "ride",
+  "17": "ride",
+  "18": "ride",
+  "10": "walk",
+  "4": "hike",
+};
+
+/** Words that name no sport, so a file carrying one is not refused. */
+const UNSTATED_SPORT_WORDS = new Set([
+  "",
+  "other",
+  "generic",
+  "unknown",
+  "uncategorized",
+  "uncategorised",
+  "activity",
+  "all",
+]);
+
+export function importedSport(raw: string | undefined): ImportedSport | null {
+  const word = (raw ?? "").trim().toLowerCase();
+  if (UNSTATED_SPORT_WORDS.has(word)) return null;
+  if (/^\d+$/.test(word)) return STRAVA_TYPE_NUMBERS[word] ?? "other";
+  if (/run|jog/.test(word)) return "run";
+  if (/bik|cycl|ride|bicycl/.test(word)) return "ride";
+  if (/walk/.test(word)) return "walk";
+  if (/hik/.test(word)) return "hike";
+  return "other";
+}
+
+/** Why a file of another sport is refused, in the import's own words. */
+const NOT_A_RUN_MESSAGES: Readonly<
+  Record<Exclude<ImportedSport, "run">, string>
+> = {
+  ride: "This file is a bike ride. Only runs can be imported.",
+  walk: "This file is a walk. Only runs can be imported.",
+  hike: "This file is a hike. Only runs can be imported.",
+  other: "This file is from another sport. Only runs can be imported.",
+};
+
+function refuseUnlessRun(sport: ImportedSport | null): void {
+  if (sport === null || sport === "run") return;
+  throw new GpxImportError("GPX_NOT_A_RUN", NOT_A_RUN_MESSAGES[sport]);
+}
+
+/**
+ * How long a track may move faster than anyone runs before it is refused,
+ * in seconds. The bound is `MAX_PLAUSIBLE_SPEED_MPS` (12 m/s, 43 km/h),
+ * the one a live run drops a fix past and a saved run's best efforts are
+ * checked against (`keptBestEfforts`). A step or two past it is a GPS
+ * glitch; a minute of it is a car or a train. A Tropos heuristic.
+ */
+export const SUSTAINED_TOO_FAST_SECONDS = 60;
+
+const TOO_FAST_MESSAGE =
+  "This file moves faster than anyone can run. Only runs can be imported.";
+
+/** Throws when consecutive steps faster than any runner add up to a minute. */
+function refuseSustainedTooFast(points: readonly RawTrackPoint[]): void {
+  let stretchSeconds = 0;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const pt = points[i];
+    const seconds = (pt.timestamp - prev.timestamp) / 1000;
+    if (
+      pt.breakBefore ||
+      !(seconds > 0) ||
+      !isImpossibleStep(haversine(prev.lat, prev.lon, pt.lat, pt.lon), seconds)
+    ) {
+      stretchSeconds = 0;
+      continue;
+    }
+    stretchSeconds += seconds;
+    if (stretchSeconds >= SUSTAINED_TOO_FAST_SECONDS) {
+      throw new GpxImportError("GPX_TOO_FAST", TOO_FAST_MESSAGE);
+    }
+  }
 }
 
 function decodeXmlEntities(raw: string): string {
@@ -223,6 +327,7 @@ function buildParsedRunFromTrackPoints(
       `This ${meta.formatLabel} file doesn’t include valid timestamps.`
     );
   }
+  refuseSustainedTooFast(ordered);
 
   // Convert into Tropos GPSPoints, accumulating pause time across explicit
   // segment breaks so moving time and splits exclude stopped segments.
@@ -392,6 +497,7 @@ export function parseGpxRun(
   const name =
     extractFirstTagText(trkHeader, "name") ??
     (metadataMatch ? extractFirstTagText(metadataMatch[1], "name") : undefined);
+  refuseUnlessRun(importedSport(extractFirstTagText(trkHeader, "type")));
 
   const segments: string[] = [];
   for (const m of trkBlock.matchAll(TRKSEG_RE)) {
@@ -491,8 +597,16 @@ export function parseTcxRun(
     const sport = (parseAttrString(m[1] ?? "", "Sport") ?? "").toLowerCase();
     activities.push({ sport, body: m[2] ?? "" });
   }
+  // A multisport file is read for its run. With none, the first activity
+  // says what the file is; TCX's Sport is Running, Biking or Other.
   const chosenActivity =
-    activities.find((a) => a.sport === "running") ?? activities[0];
+    activities.find((a) => importedSport(a.sport) === "run") ?? activities[0];
+  if (chosenActivity) {
+    const sport = chosenActivity.sport.trim().toLowerCase();
+    refuseUnlessRun(
+      sport === "other" ? "other" : importedSport(chosenActivity.sport)
+    );
+  }
   const activityBody = chosenActivity ? chosenActivity.body : xml;
 
   const notesText = extractFirstTagText(activityBody, "Notes");
@@ -668,6 +782,11 @@ export function parseTcxRun(
       "GPX_TOO_SHORT",
       "Imported runs must be at least 100 m."
     );
+  }
+  // No track to check step by step: the laps' distance over their time is
+  // the speed, as a treadmill run typed in is judged (`getInvalidRunReason`).
+  if (distance / duration > MAX_PLAUSIBLE_SPEED_MPS) {
+    throw new GpxImportError("GPX_TOO_FAST", TOO_FAST_MESSAGE);
   }
 
   const finishedAt =

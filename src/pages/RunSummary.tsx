@@ -498,7 +498,7 @@ export default function RunSummary() {
             samples,
             activeIntervals,
             points: state.points ?? [],
-            activityType: state.runConfig?.activityType,
+            plan: state.runConfig,
             movingSecondsOverride: state.elapsed,
           });
           setHeartRatePreview(
@@ -1392,7 +1392,7 @@ export default function RunSummary() {
               samples: captured.samples,
               activeIntervals: captured.activeIntervals,
               points: state.points ?? [],
-              activityType,
+              plan: runConfig,
               movingSecondsOverride: elapsed,
             });
             heartRate = decoupling

@@ -71,6 +71,7 @@ import {
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
 import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
+import { isSteadyRunPlan, type RunPacePlan } from "@/lib/steadyRun";
 import RacePredictionResult from "@/components/run/RacePredictionResult";
 import {
   defaultStretch,
@@ -686,7 +687,14 @@ export default function RunDetail() {
           actualS={raceSeconds(run.duration, recordedElapsed)}
         />
 
-        <HeartRateSummaryCard summary={run.heartRate} />
+        <HeartRateSummaryCard
+          summary={run.heartRate}
+          steady={isSteadyRunPlan(
+            (run.runConfig as RunPacePlan | null | undefined) ?? {
+              activityType: run.activityType as string | undefined,
+            }
+          )}
+        />
 
         {/* No splits: say why, once, where the split bars would be.
             Splits are per-kilometre (or per-mile) segments of the GPS
@@ -929,6 +937,14 @@ export default function RunDetail() {
               points={run.points as GPSPoint[]}
               weightKg={profile?.weightKg || 70}
               unit={unit}
+              lapSplits={lapSplits}
+              recordingStartedAtMs={
+                (
+                  run.recordingStartedAt as
+                    { toMillis?: () => number } | undefined
+                )?.toMillis?.() ?? null
+              }
+              hasHeartRate={run.heartRate != null}
               onCropped={retryRun}
             />
           </Suspense>

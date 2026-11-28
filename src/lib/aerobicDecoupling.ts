@@ -13,6 +13,7 @@
  */
 import { haversine, isImpossibleStep, type GPSPoint } from "./gps";
 import { minettiRelativeCost } from "./gradeAdjustedPace";
+import { isSteadyRunPlan, type RunPacePlan } from "./steadyRun";
 import {
   isHeartRateSourceKind,
   MAX_HEART_RATE_SAMPLE_AGE_MS,
@@ -46,17 +47,6 @@ const MIN_HALF_DISTANCE_M = 500;
 /** Discard implausible values caused by dropout or extended walk stops. */
 const MIN_PLAUSIBLE_PCT = -25;
 const MAX_PLAUSIBLE_PCT = 50;
-
-/** Session types where pace and HR naturally surge/recover rather than hold steady. */
-const EXCLUDED_ACTIVITY_TYPES = new Set([
-  "intervals",
-  "interval",
-  "race",
-  "speed",
-  "vo2",
-  "repetition",
-  "fartlek",
-]);
 
 function mergeIntervals(
   activeIntervals: readonly ActiveRunInterval[]
@@ -254,25 +244,27 @@ export interface ComputeAerobicDecouplingInput {
   samples: readonly HeartRateSample[];
   activeIntervals: readonly ActiveRunInterval[];
   points: readonly GPSPoint[];
-  activityType?: string | null;
+  /** The run's plan (its config). Drift is read only for a steady run
+   *  (`isSteadyRunPlan`); none is a run with no plan, read as steady. */
+  plan?: RunPacePlan | null;
   movingSecondsOverride?: number;
 }
 
 /**
  * Compute first-half vs second-half grade-adjusted pace-to-HR decoupling for a
  * steady GPS run after trimming the initial warm-up HR lag. Returns `null`
- * whenever the run is too short, non-steady (intervals/race), lacks GPS
+ * whenever the run is too short, asks for a change of pace
+ * (`isSteadyRunPlan`), lacks GPS
  * distance in either half, or has < 50% HR coverage in either half.
  */
 export function computeAerobicDecoupling({
   samples,
   activeIntervals,
   points,
-  activityType,
+  plan,
   movingSecondsOverride,
 }: ComputeAerobicDecouplingInput): AerobicDecouplingSummary | null {
-  const normalizedType = (activityType ?? "").trim().toLowerCase();
-  if (EXCLUDED_ACTIVITY_TYPES.has(normalizedType)) return null;
+  if (!isSteadyRunPlan(plan)) return null;
 
   const merged = mergeIntervals(activeIntervals);
   if (merged.length === 0) return null;

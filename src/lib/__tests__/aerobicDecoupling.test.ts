@@ -94,7 +94,7 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points,
-      activityType: "easy",
+      plan: { activityType: "easy" },
     });
 
     expect(result).not.toBeNull();
@@ -116,7 +116,7 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points,
-      activityType: "long",
+      plan: { activityType: "long" },
     });
 
     expect(result).not.toBeNull();
@@ -137,7 +137,7 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points,
-      activityType: "long",
+      plan: { activityType: "long" },
     });
 
     expect(result).not.toBeNull();
@@ -163,7 +163,7 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points,
-      activityType: "easy",
+      plan: { activityType: "easy" },
     });
 
     expect(result).not.toBeNull();
@@ -180,7 +180,7 @@ describe("computeAerobicDecoupling", () => {
       samples: buildHrSamples(durationSec, 145, 155),
       activeIntervals,
       points: buildPoints(durationSec, 3.0, 3.0),
-      activityType: "easy",
+      plan: { activityType: "easy" },
     });
     expect(result).toBeNull();
   });
@@ -198,7 +198,7 @@ describe("computeAerobicDecoupling", () => {
         samples,
         activeIntervals,
         points,
-        activityType: "intervals",
+        plan: { activityType: "intervals" },
       })
     ).toBeNull();
     expect(
@@ -206,7 +206,7 @@ describe("computeAerobicDecoupling", () => {
         samples,
         activeIntervals,
         points,
-        activityType: "race",
+        plan: { activityType: "race" },
       })
     ).toBeNull();
   });
@@ -223,7 +223,7 @@ describe("computeAerobicDecoupling", () => {
         samples: firstHalfOnly,
         activeIntervals,
         points: buildPoints(durationSec, 3.0, 3.0),
-        activityType: "easy",
+        plan: { activityType: "easy" },
       })
     ).toBeNull();
   });
@@ -255,7 +255,7 @@ describe("computeAerobicDecoupling", () => {
       samples: [...watchSamples, ...strapSamples],
       activeIntervals,
       points,
-      activityType: "easy",
+      plan: { activityType: "easy" },
     });
 
     expect(result).not.toBeNull();
@@ -284,7 +284,7 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points,
-      activityType: "easy",
+      plan: { activityType: "easy" },
     });
 
     expect(result).not.toBeNull();
@@ -335,11 +335,153 @@ describe("computeAerobicDecoupling", () => {
       samples,
       activeIntervals,
       points: pts,
-      activityType: "long",
+      plan: { activityType: "long" },
     });
 
     expect(result).not.toBeNull();
     expect(result!.status).toBe("steady");
     expect(Math.abs(result!.pct)).toBeLessThan(3);
+  });
+});
+
+/* Drift is read only for a run meant to hold one pace (the 28 November
+   audit, Appendix I). A tempo held exactly, 10 minutes at 6:00 /km, 20 at
+   4:30 and 15 at 6:15, read 16.4% and was saved on the run as
+   "Noticeable second-half drift". */
+describe("drift is read only for steady runs", () => {
+  /** Phases of a run: seconds, speed and the heart rate across them. */
+  function phased(
+    phases: { sec: number; mps: number; fromBpm: number; toBpm: number }[]
+  ) {
+    const points: GPSPoint[] = [];
+    const samples: HeartRateSample[] = [];
+    let lat = 51.5;
+    let t = 0;
+    points.push({
+      lat,
+      lon: -0.1,
+      rawLat: lat,
+      rawLon: -0.1,
+      timestamp: START_MS,
+      altitude: 10,
+      accuracy: 5,
+      speed: phases[0].mps,
+    });
+    for (const phase of phases) {
+      for (let s = 0; s < phase.sec; s += 5) {
+        t += 5;
+        lat += (phase.mps * 5) / 111_195;
+        points.push({
+          lat,
+          lon: -0.1,
+          rawLat: lat,
+          rawLon: -0.1,
+          timestamp: START_MS + t * 1000,
+          altitude: 10,
+          accuracy: 5,
+          speed: phase.mps,
+        });
+        samples.push({
+          at: START_MS + t * 1000,
+          bpm: Math.round(
+            phase.fromBpm + ((phase.toBpm - phase.fromBpm) * s) / phase.sec
+          ),
+          source: "apple-watch",
+        });
+      }
+    }
+    return {
+      points,
+      samples,
+      activeIntervals: [{ startMs: START_MS, endMs: START_MS + t * 1000 }],
+    };
+  }
+
+  const tempo = phased([
+    { sec: 600, mps: 1000 / 360, fromBpm: 135, toBpm: 150 },
+    { sec: 1200, mps: 1000 / 270, fromBpm: 168, toBpm: 168 },
+    { sec: 900, mps: 1000 / 375, fromBpm: 150, toBpm: 150 },
+  ]);
+  const steady = phased([{ sec: 2700, mps: 3, fromBpm: 145, toBpm: 148 }]);
+
+  it("reads no drift for a tempo run, which was saved as high drift", () => {
+    // The same beats read as an easy run do drift: the tempo is what changes.
+    expect(
+      computeAerobicDecoupling({ ...tempo, plan: { activityType: "easy" } })
+        ?.status
+    ).toBe("high_drift");
+    expect(
+      computeAerobicDecoupling({ ...tempo, plan: { activityType: "tempo" } })
+    ).toBeNull();
+  });
+
+  it.each(["intervals", "race", "fartlek", "threshold"])(
+    "reads no drift for a %s run",
+    (activityType) => {
+      expect(
+        computeAerobicDecoupling({ ...steady, plan: { activityType } })
+      ).toBeNull();
+    }
+  );
+
+  it("reads no drift for a run whose plan changes pace, whatever its type", () => {
+    const strides = [
+      { type: "warmup" },
+      { type: "easy" },
+      { type: "hard" },
+      { type: "recovery" },
+      { type: "cooldown" },
+    ];
+    expect(
+      computeAerobicDecoupling({
+        ...steady,
+        plan: { activityType: "easy", segments: strides },
+      })
+    ).toBeNull();
+    expect(
+      computeAerobicDecoupling({
+        ...steady,
+        plan: {
+          activityType: "freerun",
+          intervals: { reps: 6, restDuration: 90 },
+        },
+      })
+    ).toBeNull();
+    expect(
+      computeAerobicDecoupling({
+        ...steady,
+        plan: {
+          activityType: "guided",
+          guidedWorkout: { segments: [{ type: "easy" }, { type: "hard" }] },
+        },
+      })
+    ).toBeNull();
+    // A guided run with no steps to read is not known to be steady.
+    expect(
+      computeAerobicDecoupling({ ...steady, plan: { activityType: "guided" } })
+    ).toBeNull();
+  });
+
+  it("reads drift for an easy, long, free or unplanned run that holds its pace", () => {
+    for (const plan of [
+      { activityType: "easy" },
+      { activityType: "long", segments: [{ type: "easy" }] },
+      { activityType: "freerun" },
+      {
+        activityType: "guided",
+        guidedWorkout: {
+          segments: [
+            { type: "warmup" },
+            { type: "easy" },
+            { type: "cooldown" },
+          ],
+        },
+      },
+      null,
+    ]) {
+      expect(computeAerobicDecoupling({ ...steady, plan })?.status).toBe(
+        "steady"
+      );
+    }
   });
 });

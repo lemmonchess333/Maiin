@@ -18,6 +18,7 @@ const {
   communityGoalMeters,
   creditRunToCommunityGoals,
   reverseRunFromCommunityGoals,
+  reconcileRunInCommunityGoals,
   backfillCommunityGoal,
 } = require("../lib/communityGoal");
 const { USER_SUBCOLLECTIONS } = require("../accountDeletion");
@@ -354,5 +355,59 @@ describe("wiring", () => {
 
   it("account deletion sweeps the person's credits", () => {
     expect(USER_SUBCOLLECTIONS).toContain("communityGoal");
+  });
+});
+
+/* A run cropped on its page (the 28 November audit, #3593): its credit
+   follows the run as it is stored now. */
+describe("a run whose track changed", () => {
+  const correct = (uid, runId) =>
+    reconcileRunInCommunityGoals(db, { uid, runId, fieldValue });
+  const edit = (uid, runId, data) =>
+    db.data.set(`users/${uid}/runs/${runId}`, data);
+
+  it("moves the goal, the tally and the credit by the difference", async () => {
+    await saveRun("ana", "r1", run("2026-11-03", 12000));
+    await saveRun("ana", "r2", run("2026-11-04", 3000));
+    edit("ana", "r1", run("2026-11-03", 5200));
+    await expect(correct("ana", "r1")).resolves.toBe(1);
+    expect(goal()).toMatchObject({
+      collectiveMeters: 8200,
+      collectiveRunners: 1,
+    });
+    expect(db.data.get(`users/ana/communityGoal/${GOAL}`)).toMatchObject({
+      runs: 2,
+      meters: 8200,
+    });
+    // Delivered again: already true.
+    await expect(correct("ana", "r1")).resolves.toBe(0);
+    expect(goal().collectiveMeters).toBe(8200);
+  });
+
+  it("corrects a goal that has ended, as a delete would", async () => {
+    await saveRun("ana", "r1", run("2026-10-20", 10000));
+    edit("ana", "r1", run("2026-10-20", 6000));
+    await correct("ana", "r1");
+    expect(goal(OCTOBER_GOAL).collectiveMeters).toBe(6000);
+  });
+
+  it("takes the credit back from a run that stopped counting", async () => {
+    await saveRun("ana", "r1", run("2026-11-03", 5000));
+    edit("ana", "r1", { ...run("2026-11-03", 5000), isInvalid: true });
+    await correct("ana", "r1");
+    expect(goal()).toMatchObject({
+      collectiveMeters: 0,
+      collectiveRunners: 0,
+    });
+  });
+
+  it("credits a run that was never counted, once", async () => {
+    edit("ana", "r1", run("2026-11-03", 4000));
+    await correct("ana", "r1");
+    await correct("ana", "r1");
+    expect(goal()).toMatchObject({
+      collectiveMeters: 4000,
+      collectiveRunners: 1,
+    });
   });
 });
