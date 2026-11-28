@@ -70,7 +70,7 @@ export function raceLinkAfterDistance(
  * another or goes back: the race, its distance, and the one thing they may
  * need to change. Null when there is nothing to say (no name was taken).
  *
- * Draft words for the owner (23 November 2026).
+ * Owner's words, approved 28 November 2026.
  */
 export function droppedRaceNotice(dropped: DroppedRace | null): string | null {
   const name = dropped?.name.trim();
