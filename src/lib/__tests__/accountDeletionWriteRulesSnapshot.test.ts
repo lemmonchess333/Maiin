@@ -222,6 +222,9 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // reading the deletion state in their transaction; the executor sweeps
   // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
   "match /pulse/{dateKey}",
+  // Setup counts: a day's totals with no identifier, written only by the
+  // server (countSetupStep, onAuthUserCreated); no client reads or writes.
+  "match /setupCounts/{dateKey}",
   // Run27 call 11: a Space's members' sessions and its week. No client
   // writes either. The rows route a public post to the Spaces its author
   // is in, and the week is a figure that names no one; the triggers that

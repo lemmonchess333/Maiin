@@ -1,3 +1,5 @@
+import { setUsageAnalytics } from "@/lib/analyticsProvider";
+import { accountSharesUsageAnalytics } from "@/lib/usageAnalytics";
 import { Suspense, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -41,7 +43,7 @@ function Checking() {
  * to Account and back does not read again.
  */
 export default function HealthConsentRoutes() {
-  const { user, refreshProfile, signOut } = useAuth();
+  const { user, profile, refreshProfile, signOut, updateProfile } = useAuth();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -87,6 +89,17 @@ export default function HealthConsentRoutes() {
           element={
             <HealthConsentGate
               uid={user.uid}
+              analyticsOff={
+                profile ? !accountSharesUsageAnalytics(profile) : false
+              }
+              onTurnOffAnalytics={async () => {
+                // As the Settings switch: this device at once, then the
+                // account; a save that fails puts the device back.
+                setUsageAnalytics(false);
+                const saved = await updateProfile({ usageAnalytics: false });
+                if (!saved.ok) setUsageAnalytics(true);
+                return saved.ok;
+              }}
               onAgreed={async () => {
                 // What the last read said: the gate says so if none showed
                 // the agreement.

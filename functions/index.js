@@ -774,6 +774,8 @@ function assertDisplayNameAllowed(displayName) {
    older ones included, now takes this journey in the app. */
 const ONE_ACTIVATION_JOURNEY_VERSION = 2;
 
+// Share usage analytics carried from setup (lib/setupAnalyticsChoice.js).
+const setupAnalyticsChoice = require("./lib/setupAnalyticsChoice");
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -822,6 +824,17 @@ exports.completeOnboarding = functions
         throw new functions.https.HttpsError(
           "invalid-argument",
           emailOptIn.error
+        );
+      }
+      // Share usage analytics turned off in setup, before the account
+      // (the agreement's Turn off), outside profileData as the email
+      // opt-in is (lib/setupAnalyticsChoice.js).
+      const setupAnalytics =
+        setupAnalyticsChoice.readSetupUsageAnalytics(data);
+      if (setupAnalytics.error) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          setupAnalytics.error
         );
       }
       // Every account takes the one first-week journey (App1, whole-app
@@ -1072,6 +1085,14 @@ exports.completeOnboarding = functions
           ONE_ACTIVATION_JOURNEY_VERSION;
         if (onboardingPlatform) {
           nextProfileData.onboardingPlatform = onboardingPlatform;
+        }
+        // The account's own answer, if it has one, stands.
+        const usageAnalytics = setupAnalyticsChoice.usageAnalyticsToWrite(
+          setupAnalytics.answer,
+          existingData
+        );
+        if (usageAnalytics !== undefined) {
+          nextProfileData.usageAnalytics = usageAnalytics;
         }
         if (emailOptIn.optIn) {
           const consent = emailConsent.applyEmailConsent(
@@ -8654,6 +8675,9 @@ exports.onPublicProfileIdentityChanged = functions
     return null;
   });
 
+// Setup counts: plain daily totals, no identifier (lib/setupCounts.js).
+const setupCounts = require("./lib/setupCounts");
+
 /**
  * A new Auth account (any sign-in: email, Google, Apple). When its email
  * or sign-in id belonged to a restricted account that was deleted within
@@ -8677,6 +8701,21 @@ exports.onAuthUserCreated = functions
       now: Date.now(),
       logger: functions.logger,
     });
+    // The day's count of accounts made (lib/setupCounts.js): no uid, a
+    // number. Last, and never thrown, so a retry of the restriction above
+    // is the only retry, and an account is counted once.
+    try {
+      await setupCounts.addSetupCount({
+        db,
+        FieldValue: admin.firestore.FieldValue,
+        step: "account_created",
+        nowMs: Date.now(),
+      });
+    } catch (err) {
+      functions.logger.warn("onAuthUserCreated.setupCountFailed", {
+        message: String((err && err.message) || err),
+      });
+    }
     return null;
   });
 
@@ -9439,6 +9478,40 @@ exports.setEmailConsent = require("./email/emailConsent").setEmailConsent;
 const updateEmails = require("./updateEmails");
 exports.hourlyEmailSweep = updateEmails.hourlyEmailSweep;
 exports.emailUnsubscribe = updateEmails.emailUnsubscribe;
+
+// ══════════════════════════════════════════════
+// Setup counts (owner, 23 November 2026)
+// ══════════════════════════════════════════════
+//
+// How many times a day the welcome was shown and setup was started, as
+// plain totals with no identifier (lib/setupCounts.js). Anyone may send a
+// step, signed in or not, from the web or the iPhone; the body names the
+// step and nothing else is read. The ten-instance tier and each
+// instance's own allowance bound a flood without asking who sent it.
+const allowSetupCount = setupCounts.stepAllowance();
+exports.countSetupStep = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onRequest((req, res) => {
+    corsForAiEndpoints(req, res, async (corsError) => {
+      if (corsError) {
+        res.status(403).end();
+        return;
+      }
+      try {
+        await setupCounts.serveSetupCount(req, res, {
+          db: admin.firestore(),
+          FieldValue: admin.firestore.FieldValue,
+          allow: allowSetupCount,
+          now: Date.now,
+        });
+      } catch (err) {
+        functions.logger.warn("countSetupStep.failed", {
+          message: String((err && err.message) || err),
+        });
+        if (!res.headersSent) res.status(204).end();
+      }
+    });
+  });
 
 // ══════════════════════════════════════════════
 // A shared post's public page (App1, Q50 and Q51)

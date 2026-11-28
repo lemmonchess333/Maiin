@@ -61,6 +61,9 @@ const HOLDS_NO_ONE: Record<string, string> = {
   // Soc15: the live pulse. Each person's credits are userPulseCredits.
   pulse:
     "pulse/{day}: how many sessions were saved for a day across Tropos, a count",
+  // Setup counts (owner, 23 November 2026), sent with no identifier.
+  setupCounts:
+    "setupCounts/{day}: how many times a day the welcome was shown, setup started and an account made, totals with no identifier",
   // Run27 call 11: a Space's week. Each member's credits are userSpaceWeeks.
   weeks:
     "spaces/{spaceId}/weeks/{weekKey}: how many members of a Space trained in a week, their sessions and metres, counted from the credits, so a deleted account drops out on the next count",

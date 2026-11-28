@@ -52,6 +52,13 @@ const { complete, refresh, signOut } = vi.hoisted(() => ({
   refresh: vi.fn().mockResolvedValue(undefined),
   signOut: vi.fn().mockResolvedValue(undefined),
 }));
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import {
+  USAGE_ANALYTICS_NOTICE,
+  USAGE_ANALYTICS_OFF_NOTICE,
+  USAGE_ANALYTICS_TURN_OFF,
+  usageAnalyticsOnThisDevice,
+} from "@/lib/usageAnalytics";
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "setup-test", email: "test@example.com" },
@@ -66,6 +73,10 @@ vi.mock("@/lib/firestoreWrite", () => ({
   setDocGuarded: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/analyticsProvider", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/analyticsProvider")>()),
+  noteAnalyticsNoticeShown: vi.fn(),
+}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 /* A race date about seven months ahead, from the clock: a literal here
@@ -2230,6 +2241,18 @@ describe("the agreement to store health details", () => {
     fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
   };
 
+  /* Google Analytics hears nothing before this step, whose line says what
+     it counts and how to turn it off (owner, 23 November 2026). */
+  it("carries the analytics line, and lets analytics run only from here", () => {
+    vi.mocked(noteAnalyticsNoticeShown).mockClear();
+    open();
+    expect(noteAnalyticsNoticeShown).not.toHaveBeenCalled();
+    cleanup();
+    toAgreement();
+    expect(screen.getByText(USAGE_ANALYTICS_NOTICE)).toBeInTheDocument();
+    expect(noteAnalyticsNoticeShown).toHaveBeenCalled();
+  });
+
   it("asks before the limitations, in its own words, with its own button", () => {
     toAgreement();
     expect(healthStep()).toHaveFocus();
@@ -2291,6 +2314,45 @@ describe("the agreement to store health details", () => {
     expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
       "healthDataConsent"
     );
+  });
+
+  /* The line ends in Turn off (owner, 23 November 2026): this phone stops
+     at once, and the plan carries the choice to the account. */
+  it("Turn off stops analytics on this phone, and the plan carries it to the account", async () => {
+    toAgreement();
+    expect(usageAnalyticsOnThisDevice()).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: USAGE_ANALYTICS_TURN_OFF })
+    );
+    expect(usageAnalyticsOnThisDevice()).toBe(false);
+    expect(screen.getByText(USAGE_ANALYTICS_OFF_NOTICE)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: USAGE_ANALYTICS_TURN_OFF })
+    ).not.toBeInTheDocument();
+    cleanup();
+
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0].usageAnalytics).toBe(false);
+    expect(complete.mock.calls[0][0].profileData).not.toHaveProperty(
+      "usageAnalytics"
+    );
+  });
+
+  it("sends no analytics answer with the plan when it was left on", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][0]).not.toHaveProperty("usageAnalytics");
+  });
+
+  it("says somebody's earlier Turn off on this phone, with Settings as the way back", () => {
+    localStorage.setItem("tropos.usageAnalytics.off", "1");
+    toAgreement();
+    expect(screen.getByText(USAGE_ANALYTICS_OFF_NOTICE)).toBeInTheDocument();
   });
 
   it("says why on Not now, and offers going back, deleting the account and signing out", async () => {
