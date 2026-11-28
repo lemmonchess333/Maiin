@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 7528641,
+  "total": 7549224,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -372,7 +372,7 @@
     "PostPhotoViewer": 8274,
     "postShareLink": 306,
     "preload-helper": 1525,
-    "PrivacyPolicy": 27238,
+    "PrivacyPolicy": 47821,
     "privacyZones": 1094,
     "profanityFilter": 93613,
     "Program": 108556,

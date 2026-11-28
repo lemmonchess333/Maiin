@@ -11,10 +11,14 @@ import LegalBack from "@/components/legal/LegalBack";
  *  the health data screen asks for (legal audit 3.1, owner's lock Priv1):
  *  in setup, or once on the next open for an account made before it. Sex
  *  is not special category data under UK GDPR, so it sits with the plan
- *  (contract), not in the health row. The analytics row names the Share
- *  usage analytics switch (Priv1). The chosen emails, shared card pages,
- *  setup counts and reminder answers have their own rows (owner, 23
- *  November 2026). The wording of each basis is the owner's call. */
+ *  (contract), not in the health row. The analytics row rests on the
+ *  statistical-purposes exception the Data (Use and Access) Act 2025 added
+ *  to PECR (Priv1 call 2; owner, 23 November 2026) and names its two ways
+ *  to object: Turn off on the agreement's line and the Share usage
+ *  analytics switch. Crash and error reports, which follow neither, have a
+ *  row of their own. The chosen emails, shared card pages, setup counts and
+ *  reminder answers have their own rows (owner, 23 November 2026). The
+ *  wording of each basis is the owner's call. */
 const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
   {
     purpose:
@@ -59,9 +63,14 @@ const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
     basis: "Legitimate interests: not sending you reminders you do not want.",
   },
   {
-    purpose: "Usage analytics, and crash and error reports",
+    purpose: "Usage analytics (Google Analytics)",
     basis:
-      "Legitimate interests: knowing how the app is used and fixing what breaks. You can turn usage analytics off in Settings > Social & privacy, and object to the rest (section 5).",
+      "Legitimate interests: knowing how the app is used so we can improve it. The Data (Use and Access) Act 2025 lets an app store and read what analytics needs on your device without asking first, when it is used for statistics to improve the app, you are told, and you have a simple, free way to object. The health-details agreement tells you, and you can object with Turn off there or with Share usage analytics in Settings > Social & privacy.",
+  },
+  {
+    purpose: "Crash and error reports",
+    basis:
+      "Legitimate interests: finding and fixing what breaks. You can object to them (section 5).",
   },
   {
     purpose:
@@ -328,8 +337,9 @@ export default function PrivacyPolicy() {
                 which screens and features you use, and events such as finishing
                 a workout, a run or a scan, from the health-details agreement in
                 setup on, tied to an identifier for this installation of the
-                app, not to your account. They carry no
-                figure about your body, food or training. Your account also
+                app, not to your account. They carry no figure about your body,
+                food or training. Google Analytics adds an approximate location
+                and your device’s type and model (section 2). Your account also
                 keeps when you saved your first session, when you trained in
                 your fourth week, and when your first trial and first paid
                 period began, and which of these your phone has already sent to
@@ -415,52 +425,68 @@ export default function PrivacyPolicy() {
               Events from your food diary carry counts, such as how many rows a
               day shows, never what is in them. It receives no figure about your
               body, food, sleep, heart or training, such as a weight, calories,
-              a distance, a pace or a score. Google also works out an
-              approximate location, such as the country or city, from your
-              connection. Analytics never receives your email address, your
-              name, GPS routes, what you type about meals, the names of your
-              foods, or your notes.
+              a distance, a pace or a score. Google Analytics also works out an
+              approximate location, such as your city and country, from your
+              connection’s IP address. Google uses the IP address to work this
+              out and does not store it. It also records details of your device,
+              such as its type, model and operating system. Analytics never
+              receives your email address, your name, GPS routes, what you type
+              about meals, the names of your foods, or your notes.
             </p>
             <p>
               It also receives a few events about your first days, each sent
               once: your account made and how (Apple, Google or email), setup
-              finished, and the trial offer seen. And once for each account, with how many
-              days after setup each came: your first saved session and whether
-              it was a lift or a run, a session in your fourth week, and your
-              first trial and first paid period, with whether each was bought in
-              the app or on the web. None of them carries your name, your email
-              address or a figure about you.
+              finished, and the trial offer seen. And once for each account,
+              with how many days after setup each came: your first saved session
+              and whether it was a lift or a run, a session in your fourth week,
+              and your first trial and first paid period, with whether each was
+              bought in the app or on the web. None of them carries your name,
+              your email address or a figure about you.
             </p>
             <p>
               <strong className="text-foreground">
                 When analytics starts.
               </strong>{" "}
-              Google Analytics, in the iPhone app and on the web, counts how
-              the app is used so we can improve it. It starts at the
-              health-details agreement in setup, which says so, or when you
-              sign in to an account that has agreed. Nothing is sent to Google
-              before that screen, and after you sign out nothing is sent until
-              you reach it again or sign in. Before it, our own server counts
-              only how many times a day the welcome screen is shown and setup
-              is started, and how many accounts are made: totals with no
-              identifier, sent without reading anything from your phone, which
-              cannot be linked to you and are deleted after about 13 months.
-              Google’s data sharing settings, Google signals and ad
-              personalisation are off for Tropos, so Google uses this data only
-              to give us the analytics.
+              Google Analytics, in the iPhone app and on the web, counts how the
+              app is used so we can improve it. It starts at the health-details
+              agreement (in setup, or on its own screen for an account made
+              before it), which has a line saying so that ends in Turn off, or
+              when you sign in to an account that has agreed. Nothing is sent to
+              Google Analytics before that line, and after you sign out nothing
+              is sent until you reach it again or sign in. Before it, our own
+              server counts only how many times a day the welcome screen is
+              shown and setup is started, and how many accounts are made: totals
+              with no identifier, sent without reading anything from your phone,
+              which cannot be linked to you and are deleted after about 13
+              months. These counts never go to Google Analytics.
+            </p>
+            <p>
+              <strong className="text-foreground">
+                What Google does with it.
+              </strong>{" "}
+              Google processes this data to give us the analytics. We have
+              turned off Google signals, ad personalisation and the sharing of
+              this data with Google’s other products and services, and no Google
+              Ads account is linked. Google may use our analytics data, combined
+              with other apps’ data in totals that cannot identify you, to
+              provide benchmarks and improve its services. Tropos does not use
+              analytics for advertising.
             </p>
             <p>
               <strong className="text-foreground">
                 Turning analytics off.
               </strong>{" "}
               Usage analytics is on from there until you turn it off, with Turn
-              off on that screen or with Share usage analytics in Settings &gt;
-              Social &amp; privacy. Off, the phone or browser you are using stops
-              sending anything to Google Analytics at once, and your account
-              keeps the choice so your other devices follow it once you sign in
-              on them. If you turn it off in setup before you have an account,
-              the account keeps that choice when it is made. Crash and error reports are
-              not analytics and do not follow this switch.
+              off on that line or with Share usage analytics in Settings &gt;
+              Social &amp; privacy. Off, the phone or browser you are using
+              stops sending anything to Google Analytics at once, and your
+              account keeps the choice so your other devices follow it once you
+              sign in on them. If you turn it off in setup before you have an
+              account, the account you save your plan to keeps that choice,
+              unless it already had a choice of its own. If you sign in to an
+              account that already has a plan, that account’s setting applies,
+              which is on unless it was turned off there. Crash and error
+              reports are not analytics and do not follow this switch.
             </p>
             <p>
               We do not use your data for advertising, Tropos shows no adverts,
@@ -634,8 +660,9 @@ export default function PrivacyPolicy() {
                 Social &amp; privacy
               </li>
               <li>
-                Turn usage analytics off at any time, with Share usage analytics
-                in Settings &gt; Social &amp; privacy
+                Turn usage analytics off at any time, with Turn off on the
+                health-details agreement or Share usage analytics in Settings
+                &gt; Social &amp; privacy
               </li>
               <li>
                 Object to any other use of your data where we rely on legitimate
@@ -763,9 +790,12 @@ export default function PrivacyPolicy() {
                 cancellation request is kept until it is resolved. Deletion also
                 leaves the records of Apple’s subscription notifications, kept
                 so each is handled once. Outside Tropos, RevenueCat keeps its
-                subscription records, Stripe keeps its records of any purchase
-                made on the web, and Google keeps analytics data under its
-                Google Analytics retention settings, each under its own policy.
+                subscription records and Stripe keeps its records of any
+                purchase made on the web, each under its own policy. Google
+                Analytics deletes event-level data after 2 months, and
+                user-level data, what it holds about an installation of the app,
+                after 14 months. Its reports of totals are not deleted. Our
+                setup counts are deleted after about 13 months (section 2).
               </li>
               <li>
                 <strong className="text-foreground">

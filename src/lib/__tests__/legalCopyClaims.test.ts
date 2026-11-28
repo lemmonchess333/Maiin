@@ -29,6 +29,10 @@ import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
 import { redactPageUrl } from "@/lib/analyticsRedaction";
 import { HEALTH_CONSENT_COPY } from "@/lib/healthConsent";
+import {
+  USAGE_ANALYTICS_NOTICE,
+  USAGE_ANALYTICS_TURN_OFF,
+} from "@/lib/usageAnalytics";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -1335,15 +1339,14 @@ describe("what shipped after the draft, as the code on main does it", () => {
 describe("nothing goes to Google before the agreement screen", () => {
   const PROVIDER = collapsed("../analyticsProvider.ts");
 
-  it("the policy says when analytics starts, what is counted before it, and that Google acts only for us", () => {
+  it("the policy says when analytics starts and what is counted before it", () => {
     const analytics = policySection(
       "2. How We Use Your Data",
       "3. Data Storage"
     );
     for (const claim of [
-      /It starts at the health-details agreement in setup, which says so, or when you sign in to an account that has agreed\. Nothing is sent to Google before that screen, and after you sign out nothing is sent until you reach it again or sign in\./,
+      /It starts at the health-details agreement \(in setup, or on its own screen for an account made before it\), which has a line saying so that ends in Turn off, or when you sign in to an account that has agreed\. Nothing is sent to Google Analytics before that line, and after you sign out nothing is sent until you reach it again or sign in\./,
       /our own server counts only how many times a day the welcome screen is shown and setup is started, and how many accounts are made: totals with no identifier, sent without reading anything from your phone, which cannot be linked to you and are deleted after about 13 months\./,
-      /Google’s data sharing settings, Google signals and ad personalisation are off for Tropos, so Google uses this data only to give us the analytics\./,
     ]) {
       expect(analytics).toMatch(claim);
     }
@@ -1391,26 +1394,30 @@ describe("nothing goes to Google before the agreement screen", () => {
     ]) {
       expect(read(screen)).toMatch(/<AnalyticsNotice\b/);
     }
-    expect(
-      read("../../components/healthConsent/AnalyticsNotice.tsx")
-    ).toMatch(/\{USAGE_ANALYTICS_NOTICE\}/);
+    expect(read("../../components/healthConsent/AnalyticsNotice.tsx")).toMatch(
+      /\{USAGE_ANALYTICS_NOTICE\}/
+    );
   });
 
   it("Turn off on that screen stops it at once, and setup's choice reaches the account", () => {
     expect(PRIVACY_PROSE).toMatch(
-      /with Turn off on that screen or with Share usage analytics in Settings &gt; Social &amp; privacy\. Off, the phone or browser you are using stops sending anything to Google Analytics at once/
+      /with Turn off on that line or with Share usage analytics in Settings &gt; Social &amp; privacy\. Off, the phone or browser you are using stops sending anything to Google Analytics at once/
     );
     expect(PRIVACY_PROSE).toMatch(
-      /If you turn it off in setup before you have an account, the account keeps that choice when it is made\./
+      /If you turn it off in setup before you have an account, the account you save your plan to keeps that choice, unless it already had a choice of its own\./
     );
     // The line's Turn off is on both screens and turns this device off.
-    const NOTICE = collapsed("../../components/healthConsent/AnalyticsNotice.tsx");
+    const NOTICE = collapsed(
+      "../../components/healthConsent/AnalyticsNotice.tsx"
+    );
     expect(NOTICE).toMatch(/onClick=\{onTurnOff\}/);
     const SETUP = collapsed("../../pages/Onboarding.tsx");
     expect(SETUP).toMatch(
       /const turnOffAnalytics = \(\) => \{ setUsageAnalytics\(false\);/
     );
-    expect(SETUP).toMatch(/<AnalyticsNotice off=\{analyticsOff\} onTurnOff=\{turnOffAnalytics\}/);
+    expect(SETUP).toMatch(
+      /<AnalyticsNotice off=\{analyticsOff\} onTurnOff=\{turnOffAnalytics\}/
+    );
     // Setup sends it with the plan, and the server writes it onto an
     // account that has no answer of its own.
     expect(SETUP).toMatch(
@@ -1439,7 +1446,9 @@ describe("nothing goes to Google before the agreement screen", () => {
     const CLIENT = collapsed("../setupCounts.ts");
     expect(CLIENT).toMatch(/credentials: "omit"/);
     expect(CLIENT).toMatch(/body: JSON\.stringify\(\{ step \}\)/);
-    expect(CLIENT).not.toMatch(/localStore|localStorage|httpsCallable|getToken/);
+    expect(CLIENT).not.toMatch(
+      /localStore|localStorage|httpsCallable|getToken/
+    );
     const SERVER = FUNCTIONS("setupCounts.js");
     expect(SERVER).toMatch(
       /\[step\]: FieldValue\.increment\(1\), updatedAt: FieldValue\.serverTimestamp\(\), expiresAt: setupCountsExpiresAt\(key\),/
@@ -1451,14 +1460,164 @@ describe("nothing goes to Google before the agreement screen", () => {
   });
 });
 
+/* Google Analytics as the owner set it up in GA4 Admin on 23 November 2026,
+   recorded in the backlog's row "GA4 set up as the owner chose", and the
+   statistical-purposes footing (Priv1 call 2). The console is not code, so
+   the row is what these read: change a setting, change the row, and these
+   fail until the policy says the same. */
+describe("Google Analytics as the owner set it up, and why the law allows it", () => {
+  const ga4Row = () => {
+    const backlog = collapsed("../../../docs/qa/pre-launch-backlog.md");
+    const start = backlog.indexOf(
+      "**GA4 set up as the owner chose (23 November 2026).**"
+    );
+    expect(start).toBeGreaterThan(-1);
+    return backlog.slice(start, backlog.indexOf("- [ ]", start));
+  };
+  const analytics = () =>
+    policySection("2. How We Use Your Data", "3. Data Storage");
+
+  it("names what Google Analytics works out, as the App Store label declares it", () => {
+    // The label and the privacy manifest declare coarse location for
+    // analytics, from the IP address.
+    expect(collapsed("../../../docs/app-store/listing.md")).toMatch(
+      /\| Location \| Coarse location \| Analytics \| The city and country Google Analytics works out from the IP address \|/
+    );
+    const manifest = collapsed("../../../ios/App/App/PrivacyInfo.xcprivacy");
+    expect(manifest).toMatch(
+      /<string>NSPrivacyCollectedDataTypeCoarseLocation<\/string>.*?<string>NSPrivacyCollectedDataTypePurposeAnalytics<\/string>/
+    );
+    for (const claim of [
+      /Google Analytics also works out an approximate location, such as your city and country, from your connection’s IP address\. Google uses the IP address to work this out and does not store it\./,
+      /It also records details of your device, such as its type, model and operating system\./,
+    ]) {
+      expect(analytics()).toMatch(claim);
+    }
+    expect(analytics()).not.toMatch(
+      /such as the country or city, from your connection\./
+    );
+    // Section 1's inventory points at it.
+    expect(
+      policySection(
+        "Usage Data and Analytics Identifiers:",
+        "Notification Token"
+      )
+    ).toMatch(
+      /Google Analytics adds an approximate location and your device’s type and model \(section 2\)\./
+    );
+  });
+
+  it("says what Google does with the data, as GA4's sharing settings stand", () => {
+    expect(ga4Row()).toMatch(/Google products and services off/);
+    expect(ga4Row()).toMatch(
+      /Modelling contributions and business insights, Technical support and Recommendations on/
+    );
+    expect(ga4Row()).toMatch(/ads personalisation off for every region/);
+    expect(ga4Row()).toMatch(/no Google Ads link/);
+    for (const claim of [
+      /We have turned off Google signals, ad personalisation and the sharing of this data with Google’s other products and services, and no Google Ads account is linked\./,
+      /Google may use our analytics data, combined with other apps’ data in totals that cannot identify you, to provide benchmarks and improve its services\./,
+      /Tropos does not use analytics for advertising\./,
+    ]) {
+      expect(analytics()).toMatch(claim);
+    }
+    // With Modelling contributions on, Google is not only our analyst.
+    expect(PRIVACY_PROSE).not.toMatch(
+      /so Google uses this data only to give us the analytics/
+    );
+  });
+
+  it("gives analytics' retention and the setup counts' at the console's and the code's numbers", () => {
+    expect(ga4Row()).toMatch(/event data 2 months and user data 14 months/);
+    const keepDays = Number(
+      /const KEEP_DAYS = (\d+);/.exec(FUNCTIONS("setupCounts.js"))?.[1]
+    );
+    const months = Math.round(keepDays / (365.25 / 12));
+    expect(months).toBe(13);
+    const retention = policySection("Data retention:", "One limit on erasure");
+    for (const claim of [
+      /Google Analytics deletes event-level data after 2 months, and user-level data, what it holds about an installation of the app, after 14 months\. Its reports of totals are not deleted\./,
+      new RegExp(
+        `Our setup counts are deleted after about ${months} months \\(section 2\\)\\.`
+      ),
+    ]) {
+      expect(retention).toMatch(claim);
+    }
+    expect(retention).not.toMatch(
+      /under its Google Analytics retention settings/
+    );
+  });
+
+  it("rests analytics on the statistical-purposes exception, with the two ways to object the app has", () => {
+    // The two ways: the line's Turn off and the Settings switch.
+    expect(USAGE_ANALYTICS_TURN_OFF).toBe("Turn off");
+    expect(read("../../components/settings/UsageAnalyticsGroup.tsx")).toMatch(
+      /label="Share usage analytics"/
+    );
+    // The line tells the person what is counted, by whom and why.
+    expect(USAGE_ANALYTICS_NOTICE).toMatch(
+      /^Tropos counts how the app is used with Google Analytics, to improve it\./
+    );
+    expect(read("../usageAnalytics.ts")).toMatch(
+      /PECR lets analytics\s+\* used only to improve the service run without asking first/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /purpose: "Usage analytics \(Google Analytics\)", basis: "Legitimate interests: knowing how the app is used so we can improve it\. The Data \(Use and Access\) Act 2025 lets an app store and read what analytics needs on your device without asking first, when it is used for statistics to improve the app, you are told, and you have a simple, free way to object\. The health-details agreement tells you, and you can object with Turn off there or with Share usage analytics in Settings > Social & privacy\."/
+    );
+    // Crash reports follow neither, so they have a row of their own.
+    expect(PRIVACY_PROSE).toMatch(
+      /purpose: "Crash and error reports", basis: "Legitimate interests: finding and fixing what breaks\./
+    );
+    expect(PRIVACY_PROSE).not.toMatch(
+      /"Usage analytics, and crash and error reports"/
+    );
+    // Section 5 names both ways too.
+    expect(policySection("5. Your Rights", "6. GDPR Compliance")).toMatch(
+      /Turn usage analytics off at any time, with Turn off on the health-details agreement or Share usage analytics in Settings &gt; Social &amp; privacy/
+    );
+  });
+
+  it("the setup counts never reach Google Analytics, and an account with a plan keeps its own setting", () => {
+    const FIRST_RUN = read("../firstRunEvents.ts");
+    for (const event of ["welcome_viewed", "setup_started"]) {
+      expect(FIRST_RUN).not.toMatch(new RegExp(`track\\("${event}"`));
+    }
+    expect(collapsed("../setupCounts.ts")).not.toMatch(
+      /analyticsClient|logAnalyticsEvent|track\(/
+    );
+    expect(analytics()).toMatch(/These counts never go to Google Analytics\./);
+    // An account that already has a plan keeps it, and setup sends it
+    // nothing; the account's setting, on unless it says false, then wins
+    // on the device once it loads.
+    expect(collapsed("../../pages/Onboarding.tsx")).toMatch(
+      /if \(stored\?\.data\(\)\?\.onboardingComplete === true\) \{ await keepPlan\(\); return; \}/
+    );
+    expect(read("../usageAnalytics.ts")).toMatch(
+      /return profile\.usageAnalytics !== false;/
+    );
+    expect(read("../../hooks/useAccountUsageAnalytics.ts")).toMatch(
+      /if \(shares !== null\) setUsageAnalytics\(shares\);/
+    );
+    expect(analytics()).toMatch(
+      /If you sign in to an account that already has a plan, that account’s setting applies, which is on unless it was turned off there\./
+    );
+  });
+});
+
 describe("section 7: the web checkout is RevenueCat Billing with Stripe", () => {
   it("names RevenueCat Billing and Stripe, and no other payment processor", () => {
     const thirdParties = policySection(
       "7. Third-Party Services",
       "8. Health & Fitness Data"
     );
-    expect(thirdParties).toMatch(/runs the checkout on the web \(RevenueCat Billing\)/);
-    expect(thirdParties).toMatch(/takes the payment for Pro bought on the web, through RevenueCat’s checkout\./);
-    expect(PRIVACY_PROSE).not.toMatch(/Paddle|Lemon Squeezy|merchant of record/i);
+    expect(thirdParties).toMatch(
+      /runs the checkout on the web \(RevenueCat Billing\)/
+    );
+    expect(thirdParties).toMatch(
+      /takes the payment for Pro bought on the web, through RevenueCat’s checkout\./
+    );
+    expect(PRIVACY_PROSE).not.toMatch(
+      /Paddle|Lemon Squeezy|merchant of record/i
+    );
   });
 });
