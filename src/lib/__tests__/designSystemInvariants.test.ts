@@ -628,7 +628,7 @@ describe("DS ratchets — surface-level drift", () => {
      At the start of the sweep (28 November 2026) the app had 130 raised
      cards: 74 `Card` and `cardClasses()` uses and 56 hand-drawn, 120 of
      them outside the heroes. The first PR flattened Progress, Food, Home,
-     Social and League (67 left); the second takes the count to 0. A new
+     Social and League (65 left); the second takes the count to 0. A new
      hero is a screen's one primary card: name it below, with the screen
      it leads, rather than raising the baseline. */
   const RAISED_CARDS: Record<string, { uses: number; why: string }> = {
@@ -661,7 +661,7 @@ describe("DS ratchets — surface-level drift", () => {
       why: "Share: the card being shared",
     },
   };
-  const RAISED_CARD_BASELINE = 67;
+  const RAISED_CARD_BASELINE = 65;
   const CARD_PRIMITIVE_TSX = "src/components/ui/Card.tsx";
 
   function raisedCardUses(src: string, rel: string): number {
