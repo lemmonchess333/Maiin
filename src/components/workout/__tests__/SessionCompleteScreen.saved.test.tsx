@@ -182,6 +182,42 @@ it("uses the same kettlebell unit in a first-logged record", () => {
   );
 });
 
+/* Lift4 (3): "No 'Next time' list". The plan's next weights show on the
+   next session, where they are set; a second copy of the rule on the
+   finish screen said 62.5 kg where the plan set 61.25 kg, and 67.5 kg
+   after 65, 60, 60 × 8 where the plan set 62.5 kg. */
+it("lists no next-session weights on a saved plan session", () => {
+  const squat = {
+    ...bench,
+    name: "Back Squat",
+    exerciseId: "back-squat",
+    instanceId: "i-squat",
+    weight: 60,
+  } as unknown as ProgramExercise;
+  render(
+    <SessionCompleteScreen
+      {...screenProps({
+        saved: true,
+        planWeek: true,
+        exercises: [squat],
+        setLogs: [
+          [
+            { reps: 8, weight: 65, completed: true, type: "working" },
+            { reps: 8, weight: 60, completed: true, type: "working" },
+            { reps: 8, weight: 60, completed: true, type: "working" },
+          ],
+        ],
+        prResults: new Map(),
+      })}
+    />
+  );
+  expect(screen.getByText("Session details")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Next session" })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/next time/i)).not.toBeInTheDocument();
+});
+
 function screenProps(
   props: Partial<Parameters<typeof SessionCompleteScreen>[0]> = {}
 ) {

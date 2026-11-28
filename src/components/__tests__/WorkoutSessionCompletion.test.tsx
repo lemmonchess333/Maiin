@@ -85,8 +85,15 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({
   toast: { error: h.error, success: h.success, message: h.message },
 }));
+/* The sheet draws itself in its own suite; here, what it is handed. */
+const plateSheet = vi.hoisted(() => ({
+  props: null as null | { warmups?: { weight: number; reps: number }[] },
+}));
 vi.mock("@/components/workout/PlateCalculatorSheet", () => ({
-  default: () => null,
+  default: (props: { warmups?: { weight: number; reps: number }[] }) => {
+    plateSheet.props = props;
+    return null;
+  },
 }));
 vi.mock("@/lib/restTimerNotification", () => ({
   restNotificationDelaySeconds: () => 0,
@@ -2815,6 +2822,88 @@ describe("the RPE row", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     await vi.waitFor(() => expect(log).toHaveBeenCalledTimes(1));
     expect(log.mock.calls[0][1]?.setLogs?.[0][0].rpe).toBe(6.5);
+  });
+});
+
+/* Lift4 (6): "no 'try X kg' chip". An effort says how many reps were left
+   and nothing about the next set's weight: the plan moves the weight. A
+   low or a top rating used to offer "Apply 62.5 kg to next set", and a
+   10 on the last set of an isolation, which Lift4 (5) asks for, answered
+   "Max effort: watch form". */
+describe("an effort rating names the reps left and no weight", () => {
+  it("offers no next-set weight after an easy set", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+      sets: 3,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    const row = screen.getByRole("radiogroup", { name: "RPE for set 1" });
+    fireEvent.click(within(row).getByRole("radio", { name: "6" }));
+    expect(screen.getByText(/4\+ to spare/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /next set/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/next set/i)).not.toBeInTheDocument();
+  });
+
+  it("says nothing more after a set taken to the limit", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "lateral-raise",
+      name: "Lateral Raise",
+      weight: 8,
+      sets: 3,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    for (const set of [1, 3]) {
+      const row = screen.getByRole("radiogroup", {
+        name: `RPE for set ${set}`,
+      });
+      fireEvent.click(within(row).getByRole("radio", { name: "10" }));
+    }
+    expect(screen.getAllByText(/nothing left/)).toHaveLength(2);
+    expect(
+      screen.queryByRole("button", { name: /next set/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/watch form/i)).not.toBeInTheDocument();
+  });
+});
+
+/* One warm-up ramp on one screen (Lift4 (5)): the plate sheet plates up
+   the warm-up sets the session lists for the lift, and works out none of
+   its own. For 100 kg × 8 the session lists bar × 10, 50 × 5 and 70 × 3;
+   the sheet used to list bar × 8, 50 × 5, 70 × 3 and 85 × 1 over it. */
+describe("the plate sheet's warm-ups are the session's", () => {
+  it("hands the sheet the warm-up sets the session lists", async () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 100,
+      reps: 8,
+      sets: 3,
+    });
+    const sessionRamp = [1, 2, 3].map(
+      (n) =>
+        (
+          screen.getByRole("spinbutton", {
+            name: `Warm-up ${n} weight`,
+          }) as HTMLInputElement
+        ).value
+    );
+    expect(sessionRamp).toEqual(["20", "50", "70"]);
+    plateSheet.props = null;
+    fireEvent.click(screen.getByRole("button", { name: "Plate calculator" }));
+    await vi.waitFor(() => expect(plateSheet.props).not.toBeNull());
+    // Read through a cast: the assignment above narrows it to null.
+    const handed = plateSheet.props as {
+      warmups?: { weight: number; reps: number }[];
+    } | null;
+    expect(handed?.warmups).toEqual([
+      { weight: 20, reps: 10 },
+      { weight: 50, reps: 5 },
+      { weight: 70, reps: 3 },
+    ]);
   });
 });
 

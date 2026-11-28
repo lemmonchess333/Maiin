@@ -3,7 +3,6 @@ import { ChevronDown } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import {
-  buildWarmupRamp,
   DEFAULT_BAR_KG,
   LB_BAR,
   LIGHT_BAR_KG,
@@ -20,6 +19,14 @@ interface PlateCalculatorSheetProps {
   weightKg: number;
   /** Whether the lifter's plan has small plates (1.25 kg / 2.5 lb barbell steps). */
   smallPlates?: boolean;
+  /**
+   * The exercise's warm-up sets as the session lists them, in kg: the rows
+   * `warmupRamp` built from its working weight and reps (Lift4 (5)), with
+   * any change the lifter made to them. The sheet plates up these rows and
+   * never works out a ramp of its own, so the two can't disagree on one
+   * screen. None for an exercise the session gives no warm-up.
+   */
+  warmups?: readonly { weight: number; reps: number }[];
 }
 
 /**
@@ -28,13 +35,15 @@ interface PlateCalculatorSheetProps {
  * weight on a standard (20 kg / 45 lb) or lighter (15 kg / 35 lb) bar,
  * honouring `smallPlates` when enabled; when the weight isn't exactly
  * loadable, says so and names the nearest loadable weight instead of
- * pretending.
+ * pretending. Below it, the session's own warm-up sets for the exercise,
+ * each with its plates.
  */
 export default function PlateCalculatorSheet({
   open,
   onClose,
   weightKg,
   smallPlates = false,
+  warmups = [],
 }: PlateCalculatorSheetProps) {
   const titleId = useId();
   const warmupListId = useId();
@@ -47,7 +56,10 @@ export default function PlateCalculatorSheet({
   const bar = useLightBar ? lightBar : standardBar;
   const kitOptions = { smallPlates, barWeight: bar };
   const breakdown = platesInKit(weightKg, unit, kitOptions);
-  const warmupSteps = buildWarmupRamp(weightKg, unit, kitOptions);
+  const warmupSteps = warmups.map((set) => ({
+    ...set,
+    breakdown: platesInKit(set.weight, unit, kitOptions),
+  }));
 
   return (
     <Dialog open={open} onClose={onClose} labelledBy={titleId} size="sm">
@@ -158,26 +170,23 @@ export default function PlateCalculatorSheet({
 
             {showWarmup && (
               <ol id={warmupListId} className="space-y-2">
-                {warmupSteps.map((step) => (
+                {warmupSteps.map((step, index) => (
                   <li
-                    key={step.label}
+                    key={index}
                     className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 rounded-xl bg-muted/50 px-3 py-2 text-xs"
                   >
-                    <span className="font-semibold text-foreground">
-                      <span className="font-mono tabular-nums">
-                        {step.weight} {label} × {step.reps}
-                      </span>{" "}
-                      <span className="font-normal text-muted-foreground">
-                        ({step.label})
+                    <span className="font-mono font-semibold tabular-nums text-foreground">
+                      {formatLoad(step.weight, unit)} × {step.reps}
+                    </span>
+                    {step.breakdown && (
+                      <span className="font-mono tabular-nums text-lifting-strong">
+                        {step.breakdown.perSide.length === 0
+                          ? "Bar only"
+                          : step.breakdown.perSide
+                              .map(({ plate, count }) => `${count}×${plate}`)
+                              .join(" + ")}
                       </span>
-                    </span>
-                    <span className="font-mono tabular-nums text-lifting-strong">
-                      {step.breakdown.perSide.length === 0
-                        ? "Bar only"
-                        : step.breakdown.perSide
-                            .map(({ plate, count }) => `${count}×${plate}`)
-                            .join(" + ")}
-                    </span>
+                    )}
                   </li>
                 ))}
               </ol>
