@@ -126,7 +126,7 @@ export default function WeekPreview({
             aria-label={`${DAY_LABELS[day]}: ${openWeek ? "open day" : type === "both" ? "lift and run" : type}`}
             onClick={() => setSelected(selected === day ? null : day)}
             className={cn(
-              "@container w-full min-w-0 min-h-[64px] px-0 flex-col gap-1 text-caption",
+              "@container w-full min-w-0 min-h-[64px] px-0 flex-col gap-1 text-micro",
               selected === day && "bg-muted ring-1 ring-primary"
             )}
           >

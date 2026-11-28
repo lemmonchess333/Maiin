@@ -4,7 +4,7 @@ import { Lock, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import { haptic } from "@/lib/haptic";
 import { readString, writeString } from "@/lib/localStore";
-import { track } from "@/lib/paywallAnalytics";
+import { track } from "@/lib/paywallAnalytics"; import { canSellInThisBuild } from "@/lib/purchaseProvider";
 import { useProCtaLabel } from "@/hooks/useProCtaLabel";
 
 /**
@@ -42,7 +42,7 @@ interface Props {
 
 export default function FoodProHint({ limit, isUnlimited, loading }: Props) {
   const navigate = useNavigate();
-  const ctaLabel = useProCtaLabel();
+  const rawCtaLabel = useProCtaLabel(); const ctaLabel = canSellInThisBuild() ? rawCtaLabel : "See Pro";
   const [dismissed, setDismissed] = useState(
     () => readString(DISMISSED_KEY) === "1"
   );

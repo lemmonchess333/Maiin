@@ -362,7 +362,12 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     // carb load" with flat macros (the conversion hook); Pro sees it applied.
     let taperActive = false;
     const taper = profile
-      ? resolveTaper(targetDate, profile, finalTarget)
+      ? resolveTaper(
+          targetDate,
+          profile,
+          finalTarget,
+          adaptiveSource === "learned" ? learnedMaintenance : null
+        )
       : null;
     // Nutr4: a manual override outranks the taper exactly as it outranks the
     // learned target (`resolveTargetSource`: the user pinned a number — never

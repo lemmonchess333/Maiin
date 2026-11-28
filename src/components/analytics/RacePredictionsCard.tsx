@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
+  marathonDurabilityRange,
   predictedRaceTimesFromFitness,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
@@ -56,15 +57,20 @@ const SOURCE_LABEL: Record<string, string> = {
   estimate: "estimated",
 };
 
-export default function RacePredictionsCard() {
+export default function RacePredictionsCard({
+  recentWeeklyKm = null,
+}: {
+  recentWeeklyKm?: number | null;
+} = {}) {
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   const fitness = profile?.runFitness ?? null;
   const times = predictedRaceTimesFromFitness(fitness);
+  const durability = marathonDurabilityRange(fitness, recentWeeklyKm);
 
   if (!times) {
     return (
-      <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
+      <div className="p-4 rounded-2xl bg-card surface-flat mt-2">
         <EmptyState
           compact
           icon={Timer}
@@ -85,7 +91,7 @@ export default function RacePredictionsCard() {
   const sourceLabel = fitness?.source ? SOURCE_LABEL[fitness.source] : null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
+    <div className="p-4 rounded-2xl bg-card surface-flat mt-2">
       <div className="flex items-center gap-2 mb-3">
         <Timer className="size-4 text-running" aria-hidden="true" />
         <h3 className="text-base font-bold text-foreground">
@@ -107,6 +113,12 @@ export default function RacePredictionsCard() {
                 {paceMinSec(Math.round(times[key] / km), unit)}{" "}
                 {paceUnitLabel(unit)}
               </p>
+              {key === "marathon" && durability && (
+                <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
+                  Durability range: {finishTimeLabel(durability.fastS)} to{" "}
+                  {finishTimeLabel(durability.slowS)}
+                </p>
+              )}
             </div>
           ))}
         </div>

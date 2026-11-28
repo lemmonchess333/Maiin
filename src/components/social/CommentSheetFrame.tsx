@@ -109,7 +109,7 @@ export function CommentListStatus({
     );
   if (status === "empty")
     return (
-      <div className="text-center py-8 space-y-1.5">
+      <div className="text-center py-8 space-y-1">
         <p className="text-sm font-medium text-foreground">No comments yet</p>
         <p className="text-xs text-muted-foreground">
           Be the first to leave a comment

@@ -46,13 +46,13 @@ function renderRing({
 }
 
 /**
- * Which way the arc runs (Food11 call 5): it is what is logged, in both
- * modes, and only the number follows the left and logged switch. In
- * "left" the arc used to start full and empty as food was logged, so a
- * day with nothing logged was a fully orange wheel, and 410 kcal left of
- * 2,200 was a wheel 19% full under a week mark 81% full.
+ * Which way the arc runs: it follows the left and logged switch, as
+ * MacroFactor's does (`ringFill`; owner, 23 November 2026, reversing
+ * Food11 call 5). Logged fills with what is logged from the grey track;
+ * left starts full and empties. Past the target the left view's first
+ * lap is empty and the deeper second lap shows what is over, in both.
  */
-describe("CalorieRing — the arc is what is logged, in both modes", () => {
+describe("CalorieRing — the arc follows the left and logged switch", () => {
   /** The share of the circle the orange arc covers, 0 to 1. */
   function arcShare(container: HTMLElement) {
     const arc = container.querySelector(
@@ -62,39 +62,89 @@ describe("CalorieRing — the arc is what is logged, in both modes", () => {
     const hidden = Number(arc.getAttribute("stroke-dashoffset"));
     return 1 - hidden / around;
   }
+  /** The share the deeper second lap covers, or 0 with none drawn. */
+  function lapShare(container: HTMLElement) {
+    const lap = container.querySelector(
+      `circle[stroke="${THEME.calorieRing.deep}"]`
+    );
+    if (!lap) return 0;
+    const around = Number(lap.getAttribute("stroke-dasharray"));
+    return 1 - Number(lap.getAttribute("stroke-dashoffset")) / around;
+  }
+  const drawn = (consumed: number, mode: CalorieRingMode) => {
+    const { container } = renderRing({
+      consumed,
+      target: 2200,
+      mode,
+      drawIn: false,
+    });
+    return { arc: arcShare(container), lap: lapShare(container) };
+  };
 
-  it.each(["left", "eaten"] as const)(
-    "%s: nothing logged is the bare grey track",
-    (mode) => {
-      const { container } = renderRing({ consumed: 0, mode, drawIn: false });
-      expect(arcShare(container)).toBe(0);
-    }
-  );
+  it.each([
+    // [logged, logged view, left view]
+    [0, 0, 1],
+    [550, 0.25, 0.75],
+    [1790, 0.8136, 0.1864],
+    [2200, 1, 0],
+  ])("%i of 2,200: logged %f full, left %f full", (consumed, logged, left) => {
+    expect(drawn(consumed, "eaten").arc).toBeCloseTo(logged, 3);
+    expect(drawn(consumed, "left").arc).toBeCloseTo(left, 3);
+    expect(drawn(consumed, "eaten").lap).toBe(0);
+    expect(drawn(consumed, "left").lap).toBe(0);
+  });
 
-  it.each(["left", "eaten"] as const)(
-    "%s: 1,790 of 2,200 is a wheel 81% full",
-    (mode) => {
-      const { container } = renderRing({
-        consumed: 1790,
-        target: 2200,
-        mode,
-        drawIn: false,
-      });
-      expect(arcShare(container)).toBeCloseTo(0.8136, 3);
-    }
-  );
+  it("over the target: logged is a full first lap, left an empty one, and both show the excess", () => {
+    // 2,750 of 2,200: 550 over, a quarter lap.
+    expect(drawn(2750, "eaten")).toEqual({ arc: 1, lap: 0.25 });
+    expect(drawn(2750, "left")).toEqual({ arc: 0, lap: 0.25 });
+  });
 
-  it.each(["left", "eaten"] as const)(
-    "%s: the target reached is a full wheel",
-    (mode) => {
-      const { container } = renderRing({
-        consumed: 2000,
-        mode,
-        drawIn: false,
-      });
-      expect(arcShare(container)).toBe(1);
-    }
-  );
+  it("a tap moves the arc to the other view's fill", () => {
+    const { container, rerender } = renderRing({
+      consumed: 550,
+      target: 2200,
+      mode: "eaten",
+      drawIn: false,
+    });
+    expect(arcShare(container)).toBeCloseTo(0.25, 3);
+    rerender(
+      <CalorieRing
+        consumed={550}
+        target={2200}
+        mode="left"
+        onToggleMode={() => {}}
+        trajectoryLabel={null}
+        drawIn={false}
+      />
+    );
+    return vi.waitFor(() => expect(arcShare(container)).toBeCloseTo(0.75, 3));
+  });
+
+  it("a tap is answered at once, whatever the page's own timing for a log", async () => {
+    // Home's wheel waits and grows slowly on a log; a tap does not wait.
+    const ring = (consumed: number, mode: CalorieRingMode) => (
+      <CalorieRing
+        consumed={consumed}
+        target={2200}
+        mode={mode}
+        onToggleMode={() => {}}
+        trajectoryLabel={null}
+        ringDurationMs={4000}
+        ringDelayMs={1000}
+        drawIn={false}
+      />
+    );
+    const { container, rerender } = render(ring(550, "eaten"));
+    rerender(ring(550, "left"));
+    await new Promise((r) => setTimeout(r, 700));
+    expect(arcShare(container)).toBeCloseTo(0.75, 2);
+
+    // A log on the same wheel is still waiting at the same moment.
+    rerender(ring(1100, "left"));
+    await new Promise((r) => setTimeout(r, 700));
+    expect(arcShare(container)).toBeCloseTo(0.75, 2);
+  });
 
   it("LEFT mode still counts the number down while the arc fills", () => {
     renderRing({ consumed: 1790, target: 2200, drawIn: false });
@@ -207,14 +257,27 @@ describe("CalorieRing — the second lap's head stands clear of the first lap", 
     container.querySelector<SVGCircleElement>("[data-lap-gap]");
 
   it("draws no sliver on a day at or under its target", () => {
-    expect(gap(renderRing({ consumed: 1790 }).container)).toBeNull();
-    expect(gap(renderRing({ consumed: 2000 }).container)).toBeNull();
+    expect(
+      gap(renderRing({ consumed: 1790, mode: "eaten" }).container)
+    ).toBeNull();
+    expect(
+      gap(renderRing({ consumed: 2000, mode: "eaten" }).container)
+    ).toBeNull();
+  });
+
+  it("draws none in the left view, whose first lap is empty past the target", () => {
+    const { container } = renderRing({ consumed: 2600, mode: "left" });
+    expect(gap(container)).toBeNull();
+    expect(
+      container.querySelector(`circle[stroke="${THEME.calorieRing.deep}"]`)
+    ).not.toBeNull();
   });
 
   it("sets a dot of the ring's own width just ahead of the lap's head", () => {
     const { container } = renderRing({
       consumed: 2600,
       target: 2000,
+      mode: "eaten",
       drawIn: false,
     });
     const dot = gap(container)!;
@@ -241,10 +304,10 @@ describe("CalorieRing — the second lap's head stands clear of the first lap", 
   });
 
   it("is the colour of what the wheel stands on", () => {
-    const page = gap(renderRing({ consumed: 2600 }).container)!;
+    const page = gap(renderRing({ consumed: 2600, mode: "eaten" }).container)!;
     expect(page.style.stroke).toBe("hsl(var(--background))");
     const onCard = gap(
-      renderRing({ consumed: 2600, size: "compact" }).container
+      renderRing({ consumed: 2600, mode: "eaten", size: "compact" }).container
     )!;
     expect(onCard.style.stroke).toBe("hsl(var(--card))");
   });

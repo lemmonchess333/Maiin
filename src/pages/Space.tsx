@@ -284,7 +284,7 @@ function RaceEventHeader({
       )}
 
       {entry && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <a
             href={entry.url}
             target="_blank"
@@ -692,7 +692,7 @@ export default function Space() {
               {def.name}
             </h1>
             <p
-              className={`text-caption font-medium mt-1 ${
+              className={`text-micro font-medium mt-1 ${
                 photo ? "text-white" : "text-muted-foreground"
               }`}
             >

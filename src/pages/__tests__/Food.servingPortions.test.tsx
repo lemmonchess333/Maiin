@@ -139,7 +139,7 @@ describe("serving preview and saved portion", () => {
       </MemoryRouter>
     );
     openPortion(300);
-    fireEvent.change(screen.getByLabelText("Servings"), {
+    fireEvent.change(await screen.findByLabelText("Servings"), {
       target: { value: "2" },
     });
     expect(screen.getByText(/~ 600 kcal/)).toBeInTheDocument();
@@ -176,7 +176,7 @@ describe("serving preview and saved portion", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: /^Rice .*, edit$/ }), {
       key: "Enter",
     });
-    fireEvent.change(screen.getByLabelText("Grams"), {
+    fireEvent.change(await screen.findByLabelText("Grams"), {
       target: { value: "150" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -213,7 +213,7 @@ describe("serving preview and saved portion", () => {
       </MemoryRouter>
     );
     openPortion(600);
-    fireEvent.click(screen.getByLabelText("Decrease servings"));
+    fireEvent.click(await screen.findByLabelText("Decrease servings"));
     expect(screen.getByText(/~ 300 kcal/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await act(async () => {
@@ -242,7 +242,7 @@ describe("serving preview and saved portion", () => {
       </MemoryRouter>
     );
     openPortion(600);
-    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
+    fireEvent.change(await screen.findByLabelText("Per-serving calories"), {
       target: { value: "250" },
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
@@ -256,21 +256,31 @@ describe("serving preview and saved portion", () => {
   });
 });
 
-
 it("adds a requested serving only once when Save is tapped twice in one frame", async () => {
   api.meals = [meal("one", 200), meal("two", 200)];
   let finish!: (value: { id: string }) => void;
-  api.createMealEntry.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
-  render(<MemoryRouter><Food /></MemoryRouter>);
+  api.createMealEntry.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  render(
+    <MemoryRouter>
+      <Food />
+    </MemoryRouter>
+  );
   openPortion(400);
-  fireEvent.click(screen.getByLabelText("Increase servings"));
+  fireEvent.click(await screen.findByLabelText("Increase servings"));
   const save = screen.getByRole("button", { name: "Save" });
   act(() => {
     save.click();
     save.click();
   });
   expect(api.createMealEntry).toHaveBeenCalledTimes(1);
-  await act(async () => { finish({ id: "third" }); });
+  await act(async () => {
+    finish({ id: "third" });
+  });
   expect(api.notifyMealsLogged).toHaveBeenCalledTimes(1);
   expect(api.notifyMealsLogged.mock.calls[0][1]).toEqual(["third"]);
 });
@@ -278,17 +288,32 @@ it("adds a requested serving only once when Save is tapped twice in one frame", 
 it("keeps an unsaved portion correction after failure and saves it on retry", async () => {
   api.meals = [meal("one", 200)];
   api.editMeal.mockRejectedValueOnce(new Error("unavailable"));
-  render(<MemoryRouter><Food /></MemoryRouter>);
+  render(
+    <MemoryRouter>
+      <Food />
+    </MemoryRouter>
+  );
   openPortion(200);
-  fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "2" } });
+  fireEvent.change(await screen.findByLabelText("Servings"), {
+    target: { value: "2" },
+  });
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(api.editMeal).toHaveBeenCalledTimes(1));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeEnabled());
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled()
+  );
   expect(screen.getByLabelText("Servings")).toHaveValue("2");
   expect(api.createMealEntry).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(api.editMeal).toHaveBeenCalledTimes(2));
   expect(api.editMeal.mock.calls[1]).toEqual(api.editMeal.mock.calls[0]);
-  expect(api.editMeal.mock.calls[1]).toEqual(["one", expect.objectContaining({ totalCalories: 400 })]);
-  await waitFor(() => expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument());
+  expect(api.editMeal.mock.calls[1]).toEqual([
+    "one",
+    expect.objectContaining({ totalCalories: 400 }),
+  ]);
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Save" })
+    ).not.toBeInTheDocument()
+  );
 });

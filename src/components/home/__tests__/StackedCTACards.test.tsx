@@ -6,43 +6,48 @@ import { MemoryRouter } from "react-router-dom";
 
 // Mock framer-motion to render plain divs, preserving key/children
 vi.mock("framer-motion", function () {
-  return {
-    motion: new Proxy(
-      {},
-      {
-        get: function (_target: any, prop: string) {
-          if (prop === "create") {
-            return function (Component: any) {
-              return function (props: any) {
-                const {
-                  initial: _i,
-                  animate: _a,
-                  exit: _e,
-                  transition: _t,
-                  variants: _v,
-                  whileTap: _w,
-                  ...rest
-                } = props;
-                return <Component {...rest} />;
-              };
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: function (_target: any, prop: string) {
+        if (prop === "create") {
+          return function (Component: any) {
+            return function (props: any) {
+              const {
+                initial: _i,
+                animate: _a,
+                exit: _e,
+                transition: _t,
+                variants: _v,
+                whileTap: _w,
+                ...rest
+              } = props;
+              return <Component {...rest} />;
             };
-          }
-          return function (props: any) {
-            const {
-              initial: _i,
-              animate: _a,
-              exit: _e,
-              transition: _t,
-              variants: _v,
-              whileTap: _w,
-              ...rest
-            } = props;
-            const Tag = prop;
-            return <Tag {...rest} />;
           };
-        },
-      }
-    ),
+        }
+        return function (props: any) {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _t,
+            variants: _v,
+            whileTap: _w,
+            ...rest
+          } = props;
+          const Tag = prop;
+          return <Tag {...rest} />;
+        };
+      },
+    }
+  );
+  return {
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
     AnimatePresence: function ({ children }: any) {
       return children;
     },
@@ -140,7 +145,12 @@ const restDay = (
 function renderCards(session: TodaySession = bothDay(), navigate = vi.fn()) {
   return render(
     <MemoryRouter>
-      <StackedCTACards unit="km" session={session} navigate={navigate} />
+      <StackedCTACards
+        unit="km"
+        session={session}
+        navigate={navigate}
+        lastSetsOf={() => undefined}
+      />
     </MemoryRouter>
   );
 }
@@ -669,6 +679,7 @@ describe("rest day — what else it can offer", function () {
       <MemoryRouter>
         <StackedCTACards
           unit="km"
+          lastSetsOf={() => undefined}
           session={restDay({
             kind: "free-run",
             startTarget: runStartTarget(null),

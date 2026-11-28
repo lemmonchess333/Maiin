@@ -1,6 +1,11 @@
+import { useState } from "react";
 import Card from "@/components/ui/Card";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { cn } from "@/lib/utils";
-import { muscleRangeReading } from "@/lib/historyReadings";
+import {
+  antagonistBalanceReadings,
+  muscleRangeReading,
+} from "@/lib/historyReadings";
 import {
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
@@ -37,16 +42,23 @@ const DOT: Record<VolumeStatus, string> = {
  */
 export default function MuscleVolumeCard({
   rows,
+  fractionalRows,
   weeks,
   focus,
 }: {
   rows: readonly MuscleWeekVolume[];
+  /** Optional 0.5× synergist view alongside the ADR-0010 1× default. */
+  fractionalRows?: readonly MuscleWeekVolume[];
   /** How many whole weeks the averages cover; 0 before the user's first
    *  whole week, when the card says so rather than averaging a part. */
   weeks: number;
   /** The user's lifting focus, as Settings names it: "Build muscle". */
   focus: string;
 }) {
+  const [countingMode, setCountingMode] = useState<"full" | "fractional">(
+    "full"
+  );
+
   if (weeks === 0) {
     return (
       <Card as="section" aria-label="Sets per muscle" className="space-y-1">
@@ -57,23 +69,44 @@ export default function MuscleVolumeCard({
       </Card>
     );
   }
-  if (rows.length === 0) return null;
+  const hasFractional = Boolean(fractionalRows && fractionalRows.length > 0);
+  const activeRows =
+    countingMode === "fractional" && hasFractional ? fractionalRows! : rows;
+  if (activeRows.length === 0) return null;
   const axisMax =
-    Math.max(...rows.map((r) => Math.max(r.landmark.high, r.setsPerWeek))) *
-    1.08;
+    Math.max(
+      ...activeRows.map((r) => Math.max(r.landmark.high, r.setsPerWeek))
+    ) * 1.08;
   const pct = (n: number) => `${Math.min(100, (n / axisMax) * 100)}%`;
-  const below = rows.filter((r) => r.status === "low");
+  const below = activeRows.filter((r) => r.status === "low");
+  const balanceNotes = antagonistBalanceReadings(activeRows);
 
   return (
     <Card as="section" aria-label="Sets per muscle" className="space-y-3">
-      <div>
-        <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
-        <p className="text-sm text-muted-foreground">
-          {weeks === 1
-            ? "Your last full week"
-            : `Weekly average, ${weeks} weeks`}
-          . Your focus: {focus}.
-        </p>
+      <div className="space-y-2">
+        <div>
+          <h2 className="text-base font-bold text-foreground">
+            Sets per muscle
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {weeks === 1
+              ? "Your last full week"
+              : `Weekly average, ${weeks} weeks`}
+            . Your focus: {focus}.
+          </p>
+        </div>
+        {hasFractional && (
+          <SegmentedControl
+            ariaLabel="Synergist set counting"
+            value={countingMode}
+            onChange={setCountingMode}
+            layout="fill-wrap"
+            options={[
+              { value: "full", label: "Full (1×)" },
+              { value: "fractional", label: "Indirect (0.5×)" },
+            ]}
+          />
+        )}
       </div>
 
       <p
@@ -86,7 +119,7 @@ export default function MuscleVolumeCard({
             range" and "Below range: abs" carried no number, and the
             words rules ask a verdict for one and what it is out of. */}
         {muscleRangeReading({
-          total: rows.length,
+          total: activeRows.length,
           below: below.map((r) => JUDGEMENT_MUSCLE_LABEL[r.muscle]),
           namedMax: NAMED_BELOW,
         })}
@@ -98,7 +131,7 @@ export default function MuscleVolumeCard({
           narrow), then the range bar, the count and the status word.
           Wide-first. */}
       <ul className="@container space-y-2">
-        {rows.map((row) => {
+        {activeRows.map((row) => {
           const label = JUDGEMENT_MUSCLE_LABEL[row.muscle];
           const verdict =
             row.status === "low"
@@ -165,6 +198,19 @@ export default function MuscleVolumeCard({
           );
         })}
       </ul>
+
+      {balanceNotes.length > 0 && (
+        <div className="border-t border-border/50 pt-3 space-y-1">
+          {balanceNotes.map((note) => (
+            <p
+              key={note}
+              className="text-xs font-mono tabular-nums text-muted-foreground leading-relaxed"
+            >
+              {note}
+            </p>
+          ))}
+        </div>
+      )}
 
       <p
         className="flex items-center gap-2 text-xs text-muted-foreground"

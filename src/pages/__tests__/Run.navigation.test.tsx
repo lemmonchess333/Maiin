@@ -51,6 +51,7 @@ vi.mock("@/hooks/useSessionPlayer", () => ({
     segments: [],
     current: null,
     workPortion: () => null,
+    lapSplits: () => [],
   }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));

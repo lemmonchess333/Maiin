@@ -3,25 +3,30 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 
 vi.mock("framer-motion", function () {
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: function (_target: any, prop: string) {
+        return function (props: any) {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _t,
+            ...rest
+          } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        };
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: function (_target: any, prop: string) {
-          return function (props: any) {
-            const {
-              initial: _i,
-              animate: _a,
-              exit: _e,
-              transition: _t,
-              ...rest
-            } = props;
-            const Tag = prop === "create" ? "div" : prop;
-            return <Tag {...rest} />;
-          };
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
     AnimatePresence: function ({ children }: any) {
       return <>{children}</>;
     },

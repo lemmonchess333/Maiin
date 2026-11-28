@@ -8,7 +8,7 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { useMeals } from "@/hooks/useMeals";
@@ -33,6 +33,7 @@ import {
 } from "@/lib/historyAccess";
 import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { useTrainingFuelData } from "@/hooks/useTrainingFuelData";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
@@ -157,11 +158,18 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
+import { Card } from "@/components/ui/Card";
+import { computePolarizedSplit } from "@/lib/polarizedSplit";
+import { computeTrainingMonotony } from "@/lib/trainingMonotony";
+
 const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
 );
 const MacroDistribution = lazyRetry(
   () => import("@/components/analytics/MacroDistribution")
+);
+const HybridLoadCard = lazyRetry(
+  () => import("@/components/analytics/HybridLoadCard")
 );
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
@@ -633,6 +641,7 @@ export default function History() {
     failed: runsError,
     refresh: refreshRuns,
   } = useRunningStats(rangeDays);
+  const polarizedSplit = useMemo(() => computePolarizedSplit(runs), [runs]);
   // Lifetime totals below need EVERY workout, not just the newest 50.
   const { workouts, loading: workoutsLoading } = useWorkouts({
     coverage: "complete",
@@ -681,6 +690,15 @@ export default function History() {
   const range = useMemo(
     () => historyRange(rangeDays, { createdAt: profile?.createdAt, now }),
     [rangeDays, profile?.createdAt, now]
+  );
+  const trainingMonotony = useMemo(
+    () =>
+      computeTrainingMonotony({
+        workouts,
+        runs,
+        todayKey: range.todayKey,
+      }),
+    [workouts, runs, range.todayKey]
   );
   const { startKey, joinedInRange } = range;
   const historyReturnTo = `/history${searchParams.size ? `?${searchParams}` : ""}`;
@@ -790,6 +808,7 @@ export default function History() {
    * Reads the same effective targets Home and Food render, so the number on
    * this page cannot disagree with the number on those. */
   const effectiveTargets = useEffectiveTargets();
+  const trainingFuel = useTrainingFuelData(uid, range.todayKey);
   const macroTargets = {
     calories: effectiveTargets.finalTarget,
     protein: effectiveTargets.protein,
@@ -1231,7 +1250,7 @@ export default function History() {
           stacked three control rows under the title (52 + 44 + 52 pt,
           40% of the first screen with the tab bar; §14m rules 17-18). */}
       {(filter !== "analytics" || view === "overview") && (
-        <motion.div variants={pageItemVariant}>
+        <m.div variants={pageItemVariant}>
           <FilterPills
             filter={filter}
             setFilter={(next) => {
@@ -1241,7 +1260,7 @@ export default function History() {
               });
             }}
           />
-        </motion.div>
+        </m.div>
       )}
 
       <Suspense
@@ -1461,6 +1480,43 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
+                  <Suspense fallback={null}>
+                    <HybridLoadCard
+                      workouts={workouts}
+                      runs={runs}
+                      todayKey={range.todayKey}
+                      programState={trainingFuel.program}
+                    />
+                  </Suspense>
+                  {trainingMonotony.status !== "insufficient" && (
+                    <Card size="compact" tone="flat" className="space-y-2">
+                      <div className="flex items-baseline justify-between gap-2 text-sm">
+                        <span className="font-medium text-foreground">
+                          Training load pattern
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                          Monotony {trainingMonotony.monotony.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {trainingMonotony.status === "high"
+                          ? "Daily load has been very similar over the last 7 days. Mixing in lighter or rest days helps recovery."
+                          : trainingMonotony.status === "moderate"
+                            ? "Steady day-to-day load over the last 7 days. Keep easy sessions genuinely easy."
+                            : "Good mix of harder and lighter days across the last 7 days."}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {trainingMonotony.hasLift && trainingMonotony.hasRun
+                          ? "Combined lifting and running"
+                          : "Last 7 days"}{" "}
+                        ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {trainingMonotony.activeDays}
+                        </span>{" "}
+                        active days
+                      </p>
+                    </Card>
+                  )}
                 </ArrivalFade>
               )}
 
@@ -1518,7 +1574,13 @@ export default function History() {
                     {/* Predictions are a today-snapshot (see the card's
                         carve-out footnote), so an empty WINDOW doesn't
                         hide them — only an empty lifetime does. */}
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                   </>
                 ) : runs.length === 0 ? (
                   /* The page's empty start keeps its domain's colour in the
@@ -1585,6 +1647,34 @@ export default function History() {
                         }
                       />
                     </SectionErrorBoundary>
+                    {polarizedSplit.status !== "insufficient" && (
+                      <div className="border-t border-border pt-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <span className="font-medium text-foreground">
+                            Intensity balance (80/20)
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {polarizedSplit.status === "polarized"
+                              ? "On target for 80/20"
+                              : polarizedSplit.status === "too_hard"
+                                ? "High-intensity share is high"
+                                : "All easy aerobic volume"}
+                          </span>
+                        </div>
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{
+                              width: `${polarizedSplit.lowIntensityPct}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono tabular-nums">
+                          <span>Easy {polarizedSplit.lowIntensityPct}%</span>
+                          <span>Hard {polarizedSplit.highIntensityPct}%</span>
+                        </div>
+                      </div>
+                    )}
                     <SectionErrorBoundary sectionName="fastest-kilometres">
                       <FastestKilometresCard
                         rows={runningInsight.efforts}
@@ -1602,7 +1692,13 @@ export default function History() {
                         comparedWith={previousRangeLabel(timeRange)}
                       />
                     </SectionErrorBoundary>
-                    <RacePredictionsCard />
+                    <RacePredictionsCard
+                      recentWeeklyKm={
+                        runningInsight.averageM != null
+                          ? runningInsight.averageM / 1000
+                          : null
+                      }
+                    />
                     <ShoeMileageSection />
                   </>
                 )}
@@ -1680,6 +1776,7 @@ export default function History() {
                     <SectionErrorBoundary sectionName="muscle-volume">
                       <MuscleVolumeCard
                         rows={liftingInsight.muscles}
+                        fractionalRows={liftingInsight.musclesFractional}
                         weeks={liftingInsight.muscleWeeks}
                         focus={focusLabel(liftGoal ?? "general")}
                       />
@@ -1819,7 +1916,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-caption text-warning-strong -mt-1 italic">
+                      <p className="text-micro text-warning-strong -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
@@ -1962,7 +2059,7 @@ export default function History() {
                             {distanceUnitLabel(unit)}
                           </span>
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           {lifetimeTotals.runCount}{" "}
                           {lifetimeTotals.runCount === 1 ? "run" : "runs"}
                         </dd>
@@ -1978,7 +2075,7 @@ export default function History() {
                             </span>
                           )}
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
                           {/* "lifts", as the figure beside it says "runs":
                               the range card's "sessions" counts both. */}
@@ -1993,7 +2090,7 @@ export default function History() {
                             {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
                           </span>
                         </dd>
-                        <dd className="text-caption text-muted-foreground mt-0.5">
+                        <dd className="text-micro text-muted-foreground mt-0.5">
                           logged
                         </dd>
                       </div>

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { BadgeEarnedContent } from "@/features/streaks/BadgeEarnedModal";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -20,7 +20,7 @@ export default function SessionBadge() {
   return (
     <AnimatePresence initial={false}>
       {newBadge && (
-        <motion.div
+        <m.div
           key={newBadge.id}
           variants={{ folded: { height: 0, opacity: 0 } }}
           exit={reduce ? undefined : "folded"}
@@ -38,7 +38,7 @@ export default function SessionBadge() {
             onDismiss={dismissNewBadge}
             inline
           />
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

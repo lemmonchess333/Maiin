@@ -139,6 +139,18 @@ export default function CompactRestTimer({
           </div>
         )}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          {!done && target - seconds > 0 && (
+            <Button
+              variant="secondary"
+              className={cn("whitespace-nowrap", SECONDARY_ON_CARD_EDGE)}
+              aria-label="Remove 15 seconds of rest"
+              onClick={() => onExtend(-15)}
+            >
+              <span>
+                −<span className="font-mono tabular-nums">15</span> s
+              </span>
+            </Button>
+          )}
           <Button
             variant="secondary"
             className={cn("whitespace-nowrap", SECONDARY_ON_CARD_EDGE)}

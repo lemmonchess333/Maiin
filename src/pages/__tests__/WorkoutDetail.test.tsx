@@ -288,7 +288,7 @@ describe("WorkoutDetail", () => {
       await screen.findByRole("button", { name: "Save as routine" })
     );
     // Named after the session, as the post's save names it.
-    expect(screen.getByLabelText("Name")).toHaveValue("Push");
+    expect(await screen.findByLabelText("Name")).toHaveValue("Push");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() =>
       expect(
@@ -453,5 +453,42 @@ describe("WorkoutDetail — the sets that were new bests", () => {
     // The fly has one session behind it: far past it, still no best.
     expect(screen.getByText("Set 1: 30 kg, 12 reps")).toBeTruthy();
     expect(screen.getAllByText("Best")).toHaveLength(1);
+  });
+
+  it("surfaces logged RPE beside the set result and in the accessible readout", async () => {
+    seedFirestore({
+      "users/u1/workouts/w-rpe": {
+        date: "2026-08-02",
+        dayName: "Lower",
+        durationMinutes: 45,
+        totalVolumeKg: 1500,
+        exercises: [
+          {
+            exerciseId: "barbell-squat",
+            exerciseName: "Barbell Back Squat",
+            category: "legs",
+            caloriesBurned: 0,
+            sets: [
+              { setNumber: 1, reps: 5, weightKg: 100, type: "working", rpe: 8 },
+              {
+                setNumber: 2,
+                reps: 5,
+                weightKg: 105,
+                type: "working",
+                rpe: 8.5,
+              },
+              { setNumber: 3, reps: 5, weightKg: 105, type: "working" },
+            ],
+          },
+        ],
+      },
+    });
+    renderAt("w-rpe");
+    await screen.findByText("Barbell Back Squat");
+    expect(screen.getByText("RPE 8")).toBeTruthy();
+    expect(screen.getByText("RPE 8.5")).toBeTruthy();
+    expect(screen.getByText("Set 1: 100 kg, 5 reps, RPE 8")).toBeTruthy();
+    expect(screen.getByText("Set 2: 105 kg, 5 reps, RPE 8.5")).toBeTruthy();
+    expect(screen.getByText("Set 3: 105 kg, 5 reps")).toBeTruthy();
   });
 });

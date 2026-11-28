@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -126,7 +126,7 @@ export default function MedalReveal({
   }, [medal, sharing]);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -140,7 +140,7 @@ export default function MedalReveal({
       {/* Its rays, blooming in on the break. */}
       <AnimatePresence>
         {revealed && (
-          <motion.div
+          <m.div
             key="rays"
             aria-hidden="true"
             className="pointer-events-none fixed left-1/2 top-[34%] size-[560px] -ml-[280px] -mt-[280px]"
@@ -172,14 +172,14 @@ export default function MedalReveal({
         aria-labelledby={revealed ? titleId : undefined}
         className="relative mx-auto flex min-h-full w-full max-w-sm flex-col items-center justify-center gap-4 px-4 pt-[calc(var(--safe-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+24px)] text-center"
       >
-        <motion.p
+        <m.p
           className="text-small font-semibold text-stage-muted"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: reduce ? 0 : 0.15 }}
         >
           New medal
-        </motion.p>
+        </m.p>
 
         <SealStage
           seal={seal}
@@ -205,7 +205,7 @@ export default function MedalReveal({
             className="w-full space-y-4"
             style={{ visibility: revealed ? "visible" : "hidden" }}
           >
-            <motion.div
+            <m.div
               className="w-full min-w-0 space-y-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: revealed ? 1 : 0 }}
@@ -234,9 +234,9 @@ export default function MedalReveal({
                   ? ` · Still running. ${medalEndsLine(medal)}`
                   : ""}
               </p>
-            </motion.div>
+            </m.div>
 
-            <motion.div
+            <m.div
               className="w-full space-y-2 pt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: revealed ? 1 : 0 }}
@@ -261,7 +261,7 @@ export default function MedalReveal({
               >
                 Done
               </Button>
-            </motion.div>
+            </m.div>
           </div>
         </div>
       </div>
@@ -272,6 +272,6 @@ export default function MedalReveal({
         liftUnit={liftUnit}
         distanceUnit={distanceUnit}
       />
-    </motion.div>
+    </m.div>
   );
 }

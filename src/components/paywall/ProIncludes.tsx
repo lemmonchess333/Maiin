@@ -8,7 +8,7 @@ export default function ProIncludes({ className }: { className?: string }) {
   return (
     <ul
       aria-label="What Pro includes"
-      className={cn("space-y-1.5 text-sm text-foreground", className)}
+      className={cn("space-y-2 text-sm text-foreground", className)}
     >
       {PRO_INCLUDES.map((line) => (
         <li key={line} className="flex items-start gap-1.5">

@@ -72,7 +72,7 @@ export default function MacroDistribution({
   const pct = (name: string) => pctByName.get(name) ?? 0;
 
   return (
-    <div className="p-4 rounded-2xl bg-card card-shadow">
+    <div className="p-4 rounded-2xl bg-card surface-flat">
       <SectionLabel className="mb-3">Macro distribution</SectionLabel>
       {/* The legend goes under the ring when the two no longer fit side
           by side (larger text): the ring is 6rem, and at double size it
@@ -172,12 +172,12 @@ export default function MacroDistribution({
             <p className="text-xs font-extrabold font-figure leading-none text-foreground">
               {formatCalories(avgCalories)}
             </p>
-            <p className="text-caption leading-none text-muted-foreground mt-0.5">
+            <p className="text-micro leading-none text-muted-foreground mt-0.5">
               {CALORIE_UNIT}/day
             </p>
           </div>
         </div>
-        <div className="min-w-[min(100%,10em)] flex-1 space-y-1.5">
+        <div className="min-w-[min(100%,10em)] flex-1 space-y-2">
           {data.map((d) => (
             <div
               key={d.name}

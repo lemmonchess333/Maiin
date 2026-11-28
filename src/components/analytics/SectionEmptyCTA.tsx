@@ -32,7 +32,7 @@ export default function SectionEmptyCTA({
   variant,
 }: Props) {
   return (
-    <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
+    <div className="p-4 rounded-2xl bg-card flex items-center gap-3 surface-flat">
       {icon}
       <div className="flex-1">
         <p className="text-sm font-medium text-foreground">{text}</p>

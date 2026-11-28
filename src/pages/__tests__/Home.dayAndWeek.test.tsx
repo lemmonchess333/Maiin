@@ -29,7 +29,7 @@ const h = vi.hoisted(() => ({
   streak: 0,
   profile: null as any,
   programState: null as any,
-  workouts: [] as Array<{ id: string; date: string }>,
+  workouts: [] as Array<{ id: string; date: string; exercises: unknown[] }>,
   meals: [] as Array<{ id: string; date: string; calories?: number }>,
   mealsLoading: false,
   mealsError: null as string | null,
@@ -62,16 +62,21 @@ vi.mock("framer-motion", () => {
     } = props;
     return rest;
   };
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: (_t: any, tag: string) => (props: any) => {
+        const Tag = tag as any;
+        return <Tag {...strip(props)} />;
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: (_t: any, tag: string) => (props: any) => {
-          const Tag = tag as any;
-          return <Tag {...strip(props)} />;
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
     AnimatePresence: ({ children }: any) => children,
     useReducedMotion: () => true,
   };
@@ -500,7 +505,9 @@ describe("Home — the date follows the clock", () => {
     });
     const lateSunday = new Date(2026, 8, 27, 23, 59, 30);
     const thisMonday = addLocalDays(lateSunday, -6);
-    h.workouts = [{ id: "w1", date: localDateString(thisMonday) }];
+    h.workouts = [
+      { id: "w1", date: localDateString(thisMonday), exercises: [] },
+    ];
     pinClock(lateSunday);
     renderHome();
     expect(weekCount()).toBe("1 of 2 sessions this week");

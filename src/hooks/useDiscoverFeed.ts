@@ -3,6 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useMemo,
   useRef,
 } from "react";
 import { getDiscoverFeed, batchGetKudos } from "../lib/socialApi";
@@ -11,6 +12,18 @@ import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 import type { FeedItem } from "./useSocialFeed";
 import { activityToFeedItem } from "@/lib/activityFeedItem";
+import {
+  readFeedSnapshot,
+  visibleFeedItems,
+  writeFeedSnapshot,
+} from "@/lib/feedSnapshots";
+
+/** What the session keeps of Explore's last read (`feedSnapshots`). */
+interface ExploreSnapshot {
+  items: FeedItem[];
+  hasMore: boolean;
+}
+const SOURCE = "explore";
 
 export function useDiscoverFeed(
   enabled = true,
@@ -18,11 +31,27 @@ export function useDiscoverFeed(
   hiddenActivityIds?: Set<string>
 ) {
   const uid = useUid();
-  const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  /* Read earlier this session, Explore starts from that read, shown at
+     once, and reads again behind it (`feedSnapshots`). */
+  const [items, setItems] = useState<FeedItem[]>(
+    () => readFeedSnapshot<ExploreSnapshot>(uid, SOURCE)?.items ?? []
+  );
+  /* True once a read has landed for this account, here or earlier in the
+     session: the list (empty or not) is known, and a read in flight is a
+     refresh behind it, not a reason for a placeholder. */
+  const [loaded, setLoaded] = useState(
+    () => readFeedSnapshot<ExploreSnapshot>(uid, SOURCE) !== undefined
+  );
+  /* What is in flight: the first page again ("refresh", also the state
+     before the first read starts) or the next page ("more"). */
+  const [inFlight, setInFlight] = useState<"refresh" | "more" | null>(
+    "refresh"
+  );
   const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(
+    () => readFeedSnapshot<ExploreSnapshot>(uid, SOURCE)?.hasMore ?? true
+  );
 
   /* SOCIAL-PRIVACY-01 — uid + generation ownership (see useSocialFeed).
      The discover feed is public, but its kudos-status enrichment is
@@ -33,11 +62,17 @@ export function useDiscoverFeed(
      land; each load commits only if it still owns the current
      generation. */
   const genRef = useRef(0);
+  /* The latest read wins: a refresh started while another read is in
+     flight supersedes it, so an older answer never lands over a newer
+     one. */
+  const readRef = useRef(0);
   const [ownerUid, setOwnerUid] = useState<string | null>(uid);
   if (ownerUid !== uid) {
+    const kept = readFeedSnapshot<ExploreSnapshot>(uid, SOURCE);
     setOwnerUid(uid);
-    setItems([]);
-    setHasMore(true);
+    setItems(kept?.items ?? []);
+    setHasMore(kept?.hasMore ?? true);
+    setLoaded(kept !== undefined);
   }
   useLayoutEffect(() => {
     genRef.current++;
@@ -48,8 +83,10 @@ export function useDiscoverFeed(
     async (refresh = false) => {
       if (!enabled) return;
       const myGen = genRef.current;
-      const isCurrent = () => genRef.current === myGen;
-      setLoading(true);
+      const myRead = ++readRef.current;
+      const isCurrent = () =>
+        genRef.current === myGen && readRef.current === myRead;
+      setInFlight(refresh ? "refresh" : "more");
       setError(null);
       try {
         const result = await getDiscoverFeed(
@@ -115,16 +152,23 @@ export function useDiscoverFeed(
         }
         lastDocRef.current = result.lastDoc;
         setHasMore(rawItems.length === 20);
+        setLoaded(true);
       } catch (e) {
         if (!isCurrent()) return;
         const msg = e instanceof Error ? e.message : String(e);
         setError(msg);
         captureError(e instanceof Error ? e : new Error(msg), "network");
       }
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) setInFlight(null);
     },
     [uid, enabled, blockedUsers, hiddenActivityIds]
   );
+
+  /* Keep the read for the session, so Explore comes back with it. */
+  useEffect(() => {
+    if (!uid || !loaded) return;
+    writeFeedSnapshot<ExploreSnapshot>(uid, SOURCE, { items, hasMore });
+  }, [uid, loaded, items, hasMore]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -134,9 +178,23 @@ export function useDiscoverFeed(
     init();
   }, [loadFeed, enabled]);
 
+  const loading = inFlight !== null;
+
+  /* Posts kept from an earlier read, filtered against the blocks and
+     hidden posts as they are now. */
+  const visible = useMemo(
+    () => visibleFeedItems(items, blockedUsers, hiddenActivityIds),
+    [items, blockedUsers, hiddenActivityIds]
+  );
+
   return {
-    items,
+    items: visible,
+    /** A read has landed for this account: the list is known. */
+    loaded,
+    /** A read is in flight: the first page again, or the next page. */
     loading,
+    /** The next page is being read (for the spinner under the list). */
+    loadingMore: inFlight === "more",
     hasMore,
     error,
     refresh: () => loadFeed(true),

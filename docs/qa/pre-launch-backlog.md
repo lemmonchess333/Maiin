@@ -10,6 +10,29 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## One last time for a lift, and no best from a GPS catch-up (2026-11-23)
+
+Home's hero and Train's session card set today's lift against the saved
+session Train's row lists (`lastSetsBySlot`, `lastTimeOf`); a loaded lift's
+sets saved with no weight read as reps; and a run whose kept trace has a
+step faster than any runner keeps none of the efforts it saved before the
+2 Nov detector fix (`keptBestEfforts`). The unit tests pin each; only the
+owner's own account holds the 1 Nov run and the Pull A that showed them.
+
+- [ ] **Home and Train name one last time.** On the owner's account, Home's
+      Pull A hero and Train's Pull A card. Passing: both lines say the same
+      thing against last time, and it is the row's "Last:" weight (with
+      "Last: 60 kg × 10, 10" under Barbell Row, the line reads "25 kg less
+      than last time", not 7.5).
+- [ ] **No dash for a missing weight.** Train's Pull A, Rope Tricep
+      Pushdown. Passing: "Last: 10, 10 reps".
+- [ ] **The 1 Nov 1K is gone.** Progress → Bests. Passing: no "Fastest 1K
+      4:29" on either card; Fastest 1K is 6:50 · 16 Aug, or a later run's;
+      the 1 Nov run's page shows no 4:29 under Best efforts (a 1K at its
+      own pace if it kept its whole trace, none if the trace was thinned).
+      If the 4:29 is still there, the run's kept trace had no step past
+      12 m/s: note its point count, and the catch-up needs another reading.
+
 ## Enter this race opens the organiser's page (Reg1, 2026-11-23)
 
 A race's page has "Enter this race", a link to the organiser's own entry
@@ -1264,10 +1287,11 @@ deploy and two real accounts can confirm the rest.
       sweep.
 - [ ] **The workouts saved before it, backfilled once.** After the row
       above passes (the functions deployed and `lifters.uid` Enabled), run
-      `node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb`
-      with a service account: a dry run, which writes nothing and prints
-      the accounts, workouts and lifters it read. Then the same with
-      `apply` added. Passing: it ends with `"dryRun": false` and an
+      the Backfill lift boards workflow (Actions, or a dated line in
+      `.github/backfill-lift-boards.request` on main), which runs
+      `functions/scripts/backfill-lift-boards.js` as a dry run, printing
+      the accounts, workouts and lifters it read, then with `apply`.
+      Passing: it ends with `"dryRun": false` and an
       `entriesWritten` count, and a second `apply` run changes nothing
       (it is safe beside the live triggers). Put the date here:
       not yet.
@@ -7763,7 +7787,7 @@ has been deployed, and no phone or messaging app has opened a card's link.
       shows the figures with no line and nothing where it was.
 - [ ] **Previews in Messages and WhatsApp.** Paste a card's link into
       Messages and into WhatsApp. Passing: each preview reads "<first
-              name>’s workout on Tropos" (run, day, week) with the card's figures in
+                      name>’s workout on Tropos" (run, day, week) with the card's figures in
       a sentence under it and the app icon, and says no figure the sharer
       hid.
 - [ ] **A cancelled share leaves nothing.** Open the share sheet, tap Share,
@@ -7804,3 +7828,31 @@ has been deployed, and no phone or messaging app has opened a card's link.
       window. Passing: the same layout, "<first name> shared a run" (or a
       workout), the button reads "Join Tropos" and opens the App Store, and
       View Source has no invite code.
+
+## The league line on a finish (Run30 call 2, 2026-11-23)
+
+Affects: the lift finish (`SessionCompleteScreen`) and the run finish
+(`RunSummary`), each of which now mounts `LeagueRiseLine`
+(`src/features/league/`). For someone in a league group it reads the
+group's standings from the server before the save, then listens for 15 s
+(`LEAGUE_LINE_WAIT_MS`) once the session is on the server for the session
+trigger's recompute, and shows "Up to 4th of 18" only when the session
+raised their place and half the group has scored (`placeRise`). No server
+change. Unit-tested; no group of 10 exists yet, so nobody has seen it on a
+phone.
+
+- [ ] **A rise shows, within the window.** In a league group of 10 or more
+      with at least half scored, save a planned lift that lifts your points
+      past someone's, then a run that does. Passing: within 15 s of each
+      save, under "Your week so far", a row with the tier's shield,
+      "<Tier> league" and "Up to <place> of <size>"; tapping it opens the
+      league page with you at that place.
+- [ ] **No rise, no row.** Save a session beyond the week's plan (points
+      stay at 100), and one that ties the person above who reached the
+      points first. Passing: nothing, after 15 s or ever.
+- [ ] **A cold trigger.** After the functions have been idle for an hour,
+      save a session that rises. Note how long the row takes; if it often
+      misses 15 s, widen `LEAGUE_LINE_WAIT_MS`.
+- [ ] **Offline.** Open the finish with the phone in Airplane Mode, save,
+      then reconnect. Passing: nothing shows (the group could not be read
+      before the save).

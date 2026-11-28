@@ -1,5 +1,5 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
-import { motion, type Easing, type Transition } from "framer-motion";
+import { m, type Easing, type Transition } from "framer-motion";
 import {
   Beef,
   Camera,
@@ -184,7 +184,13 @@ const FLIGHT_START = {
   x: FIELD_BOX.left + FIELD_BOX.width / 3,
   y: FIELD_BOX.top + FIELD_BOX.height / 2,
 };
-const FLIGHT_END = arcEndPoint(WHEEL_BOX, DAY.before.calories, DAY.target);
+/* The demo's wheel shows what is left (`Wheel`). */
+const FLIGHT_END = arcEndPoint(
+  WHEEL_BOX,
+  DAY.before.calories,
+  DAY.target,
+  "left"
+);
 const FLIGHT_EASE = [0.4, 0, 0.2, 1] as const;
 /** What flies: our drawing of the dish, as the page reads it from the
  *  meal's names. */
@@ -425,7 +431,7 @@ function CameraScreen() {
   );
   const pan = times(0, PAN_FROM, PAN_MID, PAN_TO, 3.0, 3.1, SHUTTER, LOOP_S);
   return (
-    <motion.div
+    <m.div
       className="absolute inset-0 z-30 overflow-hidden bg-black text-white"
       animate={{ opacity: [1, 1, 0, 0, 1] }}
       transition={{
@@ -442,7 +448,7 @@ function CameraScreen() {
     >
       {/* The live camera: a handheld pan from the corner of the table to
           the whole plate, a little drift, then still for the shutter. */}
-      <motion.img
+      <m.img
         src={rigatoniUrl}
         alt=""
         draggable={false}
@@ -529,7 +535,7 @@ function CameraScreen() {
             className="flex size-[72px] items-center justify-center rounded-full border-[5px]"
             style={{ borderColor: THEME.food.scan }}
           >
-            <motion.span
+            <m.span
               // eslint-disable-next-line no-restricted-syntax -- a camera shutter is white in both themes
               className="size-[60px] rounded-full bg-white"
               animate={{ scale: [1, 1, 0.86, 1, 1] }}
@@ -553,7 +559,7 @@ function CameraScreen() {
       </div>
 
       {/* The shutter's flash. */}
-      <motion.div
+      <m.div
         // eslint-disable-next-line no-restricted-syntax -- a camera flash is white in both themes
         className="absolute inset-0 bg-white"
         initial={{ opacity: 0 }}
@@ -567,7 +573,7 @@ function CameraScreen() {
 
       {/* Reading, as the scanner draws it: the still over its own
           blurred colours, orange corners, the laser, the stage lines. */}
-      <motion.div
+      <m.div
         data-beat="reading"
         className="absolute inset-0 isolate flex flex-col items-center justify-center gap-6 overflow-hidden bg-black/85 px-8"
         initial={{ opacity: 0 }}
@@ -596,7 +602,7 @@ function CameraScreen() {
             />
           ))}
           <div className="absolute inset-0 overflow-hidden rounded-3xl">
-            <motion.div
+            <m.div
               className="absolute inset-0"
               initial={{ opacity: 0, y: "-100%" }}
               animate={{
@@ -631,21 +637,21 @@ function CameraScreen() {
                   boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
                 }}
               />
-            </motion.div>
+            </m.div>
           </div>
         </div>
         <div className="relative flex h-5 w-full items-center justify-center">
           {STAGE_LINES.map((line) => (
-            <motion.p
+            <m.p
               key={line.text}
               className="absolute text-base font-semibold"
               initial={{ opacity: 0 }}
               {...shown(line.from, line.to - 0.12, 0.12)}
             >
               {line.text}
-            </motion.p>
+            </m.p>
           ))}
-          <motion.p
+          <m.p
             className="absolute inline-flex items-center gap-1.5 text-base font-semibold"
             style={{ color: THEME.semantic.nutrition }}
             initial={{ opacity: 0 }}
@@ -653,10 +659,10 @@ function CameraScreen() {
           >
             <Check className="size-4" strokeWidth={3} />
             Done
-          </motion.p>
+          </m.p>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 
@@ -673,13 +679,13 @@ function ResultSheet({ live }: { live: boolean }) {
   );
   return (
     <>
-      <motion.div
+      <m.div
         className="absolute inset-0 z-20 bg-black/50"
         style={live ? undefined : { opacity: 1 }}
         initial={live ? { opacity: 0 } : false}
         {...(live ? shown(CAMERA_CLOSE, SHEET_DOWN, 0.3) : {})}
       />
-      <motion.div
+      <m.div
         data-beat={live ? "result" : undefined}
         className="absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-2xl bg-background pb-[34px]"
         initial={live ? { y: "100%" } : false}
@@ -791,16 +797,16 @@ function ResultSheet({ live }: { live: boolean }) {
             Log to {r.meal}
             {live && (
               <>
-                <motion.span
+                <m.span
                   className="absolute inset-0 flex items-center justify-center gap-2"
                   style={{ background: "hsl(var(--nutrition-fill))" }}
                   initial={{ opacity: 0 }}
                   {...shown(SAVED, SHEET_DOWN + 0.4, 0.1)}
                 >
                   <Check className="size-4" /> Saved
-                </motion.span>
+                </m.span>
                 {/* The tap. */}
-                <motion.span
+                <m.span
                   className="absolute left-1/2 top-1/2 -ml-8 -mt-8 size-16 rounded-full bg-stage-foreground/60"
                   initial={{ opacity: 0 }}
                   animate={{
@@ -824,7 +830,7 @@ function ResultSheet({ live }: { live: boolean }) {
             )}
           </span>
         </div>
-      </motion.div>
+      </m.div>
     </>
   );
 }
@@ -879,16 +885,16 @@ function BeforeAfter({
   if (!live) return <div className={className}>{before}</div>;
   return (
     <div className={cn("grid", className)}>
-      <motion.div className="col-start-1 row-start-1" {...until(COUNT)}>
+      <m.div className="col-start-1 row-start-1" {...until(COUNT)}>
         {before}
-      </motion.div>
-      <motion.div
+      </m.div>
+      <m.div
         className="col-start-1 row-start-1"
         initial={{ opacity: 0 }}
         {...from(COUNT)}
       >
         {after}
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -976,7 +982,7 @@ function LogRow({
       <div className="flex min-w-0 flex-1 items-center justify-between">
         <div className="mr-2 min-w-0 flex-1">
           <p className="truncate text-sm text-foreground">{name}</p>
-          <p className="mt-0.5 truncate text-caption text-muted-foreground">
+          <p className="mt-0.5 truncate text-micro text-muted-foreground">
             {meal}
             {" · "}
             <span className="font-mono tabular-nums">{time}</span>
@@ -1013,7 +1019,7 @@ function Flight() {
     times: times(0, FLY, FLY + FLIGHT_S, LOOP_S),
   };
   return (
-    <motion.img
+    <m.img
       src={FLIGHT_ART}
       alt=""
       draggable={false}
@@ -1067,7 +1073,7 @@ function FoodScreen({ live }: { live: boolean }) {
       data-screen="food"
       className="absolute inset-0 overflow-hidden bg-background text-foreground"
     >
-      <motion.div
+      <m.div
         className="space-y-4 px-4 pt-[78px]"
         animate={live ? { y: [0, 0, SCROLL_Y, SCROLL_Y] } : undefined}
         transition={
@@ -1169,7 +1175,7 @@ function FoodScreen({ live }: { live: boolean }) {
           {/* The new row, there once the meal is counted. Reduced motion
               shows the moment before Log, so the row is not there yet. */}
           {live && (
-            <motion.div
+            <m.div
               data-beat="logged"
               className="border-b border-border/40"
               initial={{ opacity: 0 }}
@@ -1183,7 +1189,7 @@ function FoodScreen({ live }: { live: boolean }) {
                 time={NOW}
                 calories={r.calories}
               />
-            </motion.div>
+            </m.div>
           )}
           {/* The day's earlier rows stand under the heading until the
               meal is counted, then move down a row for it, as the diary's
@@ -1191,7 +1197,7 @@ function FoodScreen({ live }: { live: boolean }) {
               animated here), so without the move the card showed a gap
               where the row was going to be: it is on the first screen
               since Food11, where it was behind the tab bar before. */}
-          <motion.div
+          <m.div
             initial={live ? { y: -LOG_ROW_H } : false}
             animate={live ? { y: [-LOG_ROW_H, -LOG_ROW_H, 0, 0] } : undefined}
             transition={
@@ -1220,9 +1226,9 @@ function FoodScreen({ live }: { live: boolean }) {
                 calories={650}
               />
             </div>
-          </motion.div>
+          </m.div>
         </div>
-      </motion.div>
+      </m.div>
 
       {live && <Flight />}
 
@@ -1323,7 +1329,7 @@ export default function ScanDemo() {
           transform: "scale(var(--scan-demo-scale, 0.49))",
         }}
       >
-        <motion.div
+        <m.div
           className="absolute"
           style={{
             left: PHONE_LEFT,
@@ -1399,7 +1405,7 @@ export default function ScanDemo() {
             {live && <CameraScreen />}
             <span className="absolute left-1/2 top-[11px] z-40 h-9 w-[84px] -translate-x-1/2 rounded-full bg-black" />
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );

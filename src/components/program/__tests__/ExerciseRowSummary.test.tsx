@@ -28,7 +28,9 @@ describe("ExerciseThumb — each exercise's picture", () => {
   });
 
   it("shows the released Close Grip Bench drawing", () => {
-    const { container } = render(<ExerciseThumb exerciseId="close-grip-bench" />);
+    const { container } = render(
+      <ExerciseThumb exerciseId="close-grip-bench" />
+    );
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
@@ -323,6 +325,56 @@ describe("ExerciseRowSummary — one row's words", () => {
       />
     );
     expect(container).toHaveTextContent("Last: 100 kg × 5 · 90 kg × 5, 5");
+  });
+
+  it("gives sets saved with no weight their reps, with no dash for the weight", () => {
+    /* A Rope Tricep Pushdown saved without a weight read "Last: — × 10,
+       10": a dash for the missing figure inside a line of words (DS11
+       call 2), and "×" multiplying nothing. Reps alone, as the rest band
+       names a set with no load ("12 reps"). */
+    const { container, rerender } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "rope-tricep-pushdown",
+          name: "Rope Tricep Pushdown",
+          reps: 10,
+          weight: 12.5,
+        })}
+        lastSets={[
+          { weightKg: 0, reps: 10 },
+          { weightKg: 0, reps: 10 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 10, 10 reps");
+    expect(container).not.toHaveTextContent("—");
+    expect(container).not.toHaveTextContent(/Last:.*×/);
+    // A weight the session moved off, then sets with none.
+    rerender(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "rope-tricep-pushdown",
+          name: "Rope Tricep Pushdown",
+        })}
+        lastSets={[
+          { weightKg: 15, reps: 10 },
+          { weightKg: 0, reps: 12 },
+          { weightKg: 0, reps: 12 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 15 kg × 10 · 12, 12 reps");
+    // A single rep is one rep.
+    rerender(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "rope-tricep-pushdown",
+          name: "Rope Tricep Pushdown",
+        })}
+        lastSets={[{ weightKg: 0, reps: 1 }]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 1 rep");
   });
 
   it("lists a bodyweight lift's and a hold's sets too", () => {

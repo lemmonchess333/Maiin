@@ -62,7 +62,7 @@ import {
   rescaleForSwap,
 } from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
-import { longRunDaysOf } from "./runPlacement";
+import { longRunDaysOf, qualityRunDaysOf } from "./runPlacement";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
 export const EXPENSIVE_PATTERNS: ReadonlySet<MovementCategory> = new Set([
@@ -445,6 +445,30 @@ export function sessionsBeforeLongRuns(
 }
 
 /**
+ * Which lift sessions fall the day before a quality run (tempo / intervals),
+ * excluding any index already counted by `sessionsBeforeLongRuns` so long
+ * runs keep priority.
+ */
+export function sessionsBeforeQualityRuns(
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
+  sessionCount: number,
+  backToBacks = false
+): number[] {
+  if (!schedule || schedule.length === 0) return [];
+  const longEves = new Set(
+    sessionsBeforeLongRuns(schedule, sessionCount, backToBacks)
+  );
+  const liftDays = [...schedule]
+    .filter((d) => d.type === "lift" || d.type === "both")
+    .map((d) => weekPosition(d.day))
+    .sort((a, b) => a - b)
+    .slice(0, sessionCount);
+  return qualityRunDaysOf(schedule, backToBacks)
+    .map((day) => liftDays.indexOf((weekPosition(day) + 6) % 7))
+    .filter((at) => at >= 0 && !longEves.has(at));
+}
+
+/**
  * Reorder the week so the sessions that land on BACK-TO-BACK days aren't the
  * two that load the same posterior chain hardest (M6), and so the session the
  * day before the long run is the one with the least leg work in it (Lift13).
@@ -476,32 +500,46 @@ export function sessionsBeforeLongRuns(
 export function orderForAdjacency(
   workouts: WorkoutDay[],
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
-  backToBacks = false
+  backToBacks = false,
+  options?: { pinFirst?: boolean; runEvesOnly?: boolean }
 ): WorkoutDay[] {
   const n = workouts.length;
-  if (n < 2) return workouts; // nothing to permute
+  if (n < 2 || n > 6) return workouts; // nothing to permute
+  if (options?.pinFirst && n < 3) return workouts;
+  const runEvesOnly = options?.runEvesOnly === true;
   // Under three sessions no seam is worth a reorder; the long run's eve is.
-  const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
-  const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
+  const adjacency = runEvesOnly || n < 3 ? [] : backToBackPairs(schedule, n);
+  const wrapAdjacent =
+    !runEvesOnly && n >= 3 && weekWrapsBackToBack(schedule, n);
   const eves = sessionsBeforeLongRuns(schedule, n, backToBacks);
-  if (!adjacency.some(Boolean) && !wrapAdjacent && eves.length === 0)
+  const qualityEves = sessionsBeforeQualityRuns(schedule, n, backToBacks);
+  if (
+    !adjacency.some(Boolean) &&
+    !wrapAdjacent &&
+    eves.length === 0 &&
+    qualityEves.length === 0
+  )
     return workouts;
 
   const cost = (order: number[]) => {
     let total = 0;
     for (const eve of eves) total += legSets(workouts[order[eve]]);
-    for (let i = 0; i + 1 < order.length; i += 1) {
-      if (!adjacency[i]) continue; // only back-to-back seams are penalised
-      total += posteriorChainOverlap(
-        workouts[order[i]],
-        workouts[order[i + 1]]
-      );
-    }
-    if (wrapAdjacent) {
-      total += posteriorChainOverlap(
-        workouts[order[order.length - 1]],
-        workouts[order[0]]
-      );
+    for (const qEve of qualityEves)
+      total += legSets(workouts[order[qEve]]) * 0.5;
+    if (!runEvesOnly) {
+      for (let i = 0; i + 1 < order.length; i += 1) {
+        if (!adjacency[i]) continue; // only back-to-back seams are penalised
+        total += posteriorChainOverlap(
+          workouts[order[i]],
+          workouts[order[i + 1]]
+        );
+      }
+      if (wrapAdjacent) {
+        total += posteriorChainOverlap(
+          workouts[order[order.length - 1]],
+          workouts[order[0]]
+        );
+      }
     }
     return total;
   };
@@ -523,7 +561,11 @@ export function orderForAdjacency(
       permute([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]]);
     }
   };
-  permute(identity, []);
+  if (options?.pinFirst) {
+    permute(identity.slice(1), [identity[0]]);
+  } else {
+    permute(identity, []);
+  }
 
   return best === identity ? workouts : best.map((i) => workouts[i]);
 }

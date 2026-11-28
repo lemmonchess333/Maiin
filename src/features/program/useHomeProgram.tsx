@@ -5,11 +5,11 @@ import {
   useState,
   type ComponentType,
 } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { logger } from "@/lib/logger";
+import { subscribeProgramState } from "@/lib/programStateStore";
 import { homeProgramSnapshot } from "./homeProgramSnapshot";
 import { runModeWithPlan } from "./programMaintenance";
 import { fetchRecentRuns } from "./fetchRecentLayoff";
@@ -142,23 +142,13 @@ export function useHomeProgram() {
   useEffect(() => {
     if (!uid || !profile) return;
     let active = true;
-    const stop = onSnapshot(
-      doc(db, "users", uid, "programState", "current"),
-      // The wait below needs the server's answer, and when the cache
-      // already knows the document is missing that answer changes only
-      // `fromCache`: Firestore delivers it to this listener only because
-      // it asks for metadata changes. Without this, Home stayed on its
-      // placeholder for good.
-      { includeMetadataChanges: true },
+    const stop = subscribeProgramState(
+      uid,
       (value) => {
         if (!active) return;
         // An empty cache is not proof that a new programme needs generating.
-        if (!value.exists() && value.metadata.fromCache) return;
-        const read = homeProgramSnapshot(
-          value.exists() ? (value.data() as ProgramState) : null,
-          profile,
-          today
-        );
+        if (!value.exists && value.fromCache) return;
+        const read = homeProgramSnapshot(value.data, profile, today);
         setSnapshot({ uid, ...read });
         if (read.needsMaintenance)
           void prepare().then(

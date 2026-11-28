@@ -628,6 +628,42 @@ it("keeps a note entered before completing any set", async () => {
   );
 });
 
+it("debounces rapid note typing and flushes synchronously when the tab hides", async () => {
+  const session = await open();
+  await doFirstSet();
+  const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+  const originalVisibility = Object.getOwnPropertyDescriptor(
+    document,
+    "visibilityState"
+  );
+  try {
+    const notes = screen.getByRole("textbox", { name: "Exercise notes" });
+    fireEvent.change(notes, { target: { value: "P" } });
+    fireEvent.change(notes, { target: { value: "Pi" } });
+    fireEvent.change(notes, { target: { value: "Pin 5" } });
+    // Typing alone does not write synchronously on every keystroke.
+    expect(setItemSpy).not.toHaveBeenCalled();
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+    expect(draft()?.exerciseNotes[0]).toBe("Pin 5");
+  } finally {
+    if (originalVisibility) {
+      Object.defineProperty(document, "visibilityState", originalVisibility);
+    } else {
+      delete (document as { visibilityState?: unknown }).visibilityState;
+    }
+    setItemSpy.mockRestore();
+    session.unmount();
+  }
+});
+
 it("keeps an added set before completing any set", async () => {
   const session = await open();
   fireEvent.click(screen.getByRole("button", { name: "Add set" }));

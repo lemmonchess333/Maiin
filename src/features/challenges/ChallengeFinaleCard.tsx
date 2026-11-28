@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Trophy, X } from "lucide-react";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { THEME } from "@/lib/theme";
@@ -62,7 +62,7 @@ export function ChallengeFinaleCard({
     : -1;
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative rounded-2xl bg-card border overflow-hidden p-4"
@@ -157,6 +157,6 @@ export function ChallengeFinaleCard({
         onClose={() => setMedalOpen(false)}
         trophyCaseHref={selfUid ? "/user/" + selfUid : undefined}
       />
-    </motion.div>
+    </m.div>
   );
 }

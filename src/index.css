@@ -205,6 +205,10 @@
   box-shadow: var(--ds-shadow-card);
 }
 
+@utility surface-flat {
+  @apply border border-border/60 shadow-none dark:border-transparent dark:shadow-[var(--ds-shadow-card)];
+}
+
 /* A chip's or a pill button's lit edge, and a progress track cut into its
    card (DESIGN_GUIDE §14o). Both go through Tailwind's shadow variable
    rather than writing `box-shadow` themselves, so a focus ring or a

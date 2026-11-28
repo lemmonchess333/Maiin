@@ -118,4 +118,69 @@ describe("MuscleVolumeCard", () => {
     render(<MuscleVolumeCard rows={[]} weeks={0} focus="Build muscle" />);
     expect(screen.getByText("After your first full week")).toBeVisible();
   });
+
+  it("toggles between Full (1×) and Indirect (0.5×) synergist counting when fractionalRows is provided", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    render(
+      <MuscleVolumeCard
+        rows={[row("Chest", 12), row("Triceps", 12)]}
+        fractionalRows={[row("Chest", 12), row("Triceps", 6)]}
+        weeks={2}
+        focus="Build muscle"
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Full (1×)" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByText(/Triceps: 12 sets a week/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Indirect (0.5×)" }));
+    expect(
+      screen.getByRole("radio", { name: "Indirect (0.5×)" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText(/Triceps: 6 sets a week/)).toBeInTheDocument();
+  });
+
+  it("shows quiet antagonist balance notes when push:pull or quad:hamstring is skewed", () => {
+    render(
+      <MuscleVolumeCard
+        rows={[
+          row("Chest", 14),
+          row("Triceps", 6),
+          row("Lats", 6),
+          row("UpperBack", 4),
+          row("Quads", 12),
+          row("Hamstrings", 4),
+        ]}
+        weeks={3}
+        focus="Build muscle"
+      />
+    );
+    expect(
+      screen.getByText("Push sets are 2.0× pull (20 vs 10 a week).")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Quad sets are 3.0× hamstrings (12 vs 4 a week).")
+    ).toBeInTheDocument();
+  });
+
+  it("stays quiet when antagonist pairs are balanced", () => {
+    render(
+      <MuscleVolumeCard
+        rows={[
+          row("Chest", 10),
+          row("Triceps", 4),
+          row("Lats", 8),
+          row("UpperBack", 6),
+          row("Quads", 10),
+          row("Hamstrings", 8),
+        ]}
+        weeks={3}
+        focus="Build muscle"
+      />
+    );
+    expect(screen.queryByText(/Push sets are/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Quad sets are/)).not.toBeInTheDocument();
+  });
 });

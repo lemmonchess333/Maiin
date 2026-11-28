@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { groupLastSets, lastSetsByExercise, lastSetsBySlot } from "../lastSets";
+import {
+  groupLastSets,
+  lastSetsByExercise,
+  lastSetsBySlot,
+  lastTimeOf,
+} from "../lastSets";
 import type { WorkoutExercise, WorkoutSet } from "@/lib/savedWorkouts";
 import type { SavedProgrammeCompletion } from "@/lib/workoutCompletion";
 
@@ -235,5 +240,45 @@ describe("groupLastSets", () => {
 
   it("gives nothing for no sets", () => {
     expect(groupLastSets([])).toEqual([]);
+  });
+});
+
+describe("lastTimeOf", () => {
+  it("is the weight most sets were lifted at, and their reps", () => {
+    // Train's row read "Last: 60 kg × 10, 10" while Home's hero said
+    // 42.5 kg: the hero read the plan's own record, not these sets.
+    expect(
+      lastTimeOf([
+        { weightKg: 60, reps: 10 },
+        { weightKg: 60, reps: 10 },
+      ])
+    ).toEqual({ weightKg: 60, reps: 10 });
+  });
+
+  it("follows the working weight past a top set, as the plan does", () => {
+    // 100 kg × 5 then 90 kg × 5, 4: the plan follows 90 kg.
+    expect(
+      lastTimeOf([
+        { weightKg: 100, reps: 5 },
+        { weightKg: 90, reps: 5 },
+        { weightKg: 90, reps: 4 },
+      ])
+    ).toEqual({ weightKg: 90, reps: 4 });
+  });
+
+  it("takes the heavier weight at a tie, and the reps rounded down", () => {
+    expect(
+      lastTimeOf([
+        { weightKg: 60, reps: 12 },
+        { weightKg: 65, reps: 9 },
+        { weightKg: 65, reps: 8 },
+        { weightKg: 60, reps: 11 },
+      ])
+    ).toEqual({ weightKg: 65, reps: 8 });
+  });
+
+  it("is nothing with no sets", () => {
+    expect(lastTimeOf([])).toBeNull();
+    expect(lastTimeOf(undefined)).toBeNull();
   });
 });

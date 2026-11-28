@@ -167,7 +167,7 @@ export default function ReportForm({
         <div
           role="radiogroup"
           aria-label="Report category"
-          className="space-y-1.5"
+          className="space-y-2"
         >
           {CATEGORIES.map((c) => {
             const isSelected = category === c.value;
@@ -258,7 +258,7 @@ export default function ReportForm({
 
       {/* Action checkboxes — what to do with this report. */}
       {category ? (
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 space-y-2">
           <ActionCheckbox
             label="Send to review team"
             description="Admins review and may hide, restrict, or remove."

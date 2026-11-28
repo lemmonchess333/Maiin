@@ -116,6 +116,13 @@ vi.mock("@/hooks/usePrivacyZones", () => ({
     confirmZones: async () => [],
   }),
 }));
+/* The league line reads its own group (its tests are the league's); here
+   it only has to be told where the finish is (Run30 call 2). */
+vi.mock("@/features/league/LeagueRiseLine", () => ({
+  default: ({ stage }: { stage: string }) => (
+    <span data-testid="league-line" data-stage={stage} />
+  ),
+}));
 const net = vi.hoisted(() => ({ online: true }));
 vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => ({ isOnline: net.online }),
@@ -667,6 +674,18 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("tells the league line it is before the save, then saving while queued", async () => {
+    renderUnsaved();
+    const stage = () =>
+      screen.getByTestId("league-line").getAttribute("data-stage");
+    await screen.findByRole("heading", { name: "Run done", level: 1 });
+    expect(stage()).toBe("before");
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    await screen.findByRole("button", { name: RUN.done });
+    expect(queued()).toHaveLength(1);
+    expect(stage()).toBe("saving");
   });
 
   it("counts a Watch run as one, with how much of it the heart rate covered", async () => {
@@ -2049,5 +2068,24 @@ describe("RunSummary — results", () => {
         navOnline.mockRestore();
       }
     });
+  });
+});
+
+describe("RunSummary — the league line (Run30 call 2)", () => {
+  it("opened on a saved run's receipt, it is past the save from the start", async () => {
+    renderSummary();
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.getByTestId("league-line").getAttribute("data-stage")).toBe(
+      "onServer"
+    );
+  });
+
+  it("comes below the run's figures, so landing late pushes none of them down", async () => {
+    renderSummary();
+    const pace = await screen.findByText("Average pace");
+    const line = screen.getByTestId("league-line");
+    expect(
+      pace.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });

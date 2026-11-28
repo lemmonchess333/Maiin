@@ -9,28 +9,33 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 // framer-motion → plain elements (strip animation props)
 vi.mock("framer-motion", function () {
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: function (_t: any, prop: string) {
+        return function (props: any) {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _tr,
+            variants: _v,
+            whileTap: _w,
+            layout: _l,
+            ...rest
+          } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        };
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: function (_t: any, prop: string) {
-          return function (props: any) {
-            const {
-              initial: _i,
-              animate: _a,
-              exit: _e,
-              transition: _tr,
-              variants: _v,
-              whileTap: _w,
-              layout: _l,
-              ...rest
-            } = props;
-            const Tag = prop === "create" ? "div" : prop;
-            return <Tag {...rest} />;
-          };
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => children,
+    domAnimation: {},
+    domMax: {},
     AnimatePresence: function ({ children }: any) {
       return children;
     },

@@ -39,6 +39,8 @@ const trackMock = vi.fn();
 vi.mock("@/lib/paywallAnalytics", () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
+const canSellInThisBuildMock = vi.fn(() => true);
+vi.mock("@/lib/purchaseProvider", () => ({ canSellInThisBuild: () => canSellInThisBuildMock() }));
 
 import FoodProHint from "../FoodProHint";
 
@@ -55,6 +57,7 @@ beforeEach(() => {
   trackMock.mockReset();
   authProfileMock.mockReset();
   authProfileMock.mockReturnValue({ hasUsedTrial: true });
+  canSellInThisBuildMock.mockReset(); canSellInThisBuildMock.mockReturnValue(true);
   window.localStorage.clear();
 });
 afterEach(cleanup);
@@ -101,7 +104,8 @@ describe("FoodProHint — copy and destination", () => {
       screen.getByRole("button", { name: "Try Pro free" })
     ).toBeInTheDocument();
   });
-
+  it('renders "See Pro" instead of "Try Pro free" when canSellInThisBuild returns false', () => { authProfileMock.mockReturnValue({ hasUsedTrial: false }); canSellInThisBuildMock.mockReturnValue(false); renderHint(); expect(screen.getByRole("button", { name: "See Pro" })).toBeInTheDocument(); expect(screen.queryByRole("button", { name: "Try Pro free" })).toBeNull(); });
+  
   it("a lapsed free week reads as the trial having been used, even before the server stamped the flag", () => {
     authProfileMock.mockReturnValue({
       hasUsedTrial: false,

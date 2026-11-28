@@ -415,7 +415,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             type="button"
             onClick={handleRestore}
             disabled={loading}
-            className="block mx-auto text-caption text-muted-foreground underline underline-offset-2 disabled:opacity-50"
+            className="block mx-auto text-micro text-muted-foreground underline underline-offset-2 disabled:opacity-50"
           >
             Restore purchases
           </button>

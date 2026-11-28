@@ -203,7 +203,7 @@ export default function WorkoutFeedShareSheet({
           // Unlike the post-save composer there is no queue behind this —
           // the workout is already saved and this page will still be here
           // later, so deferring is honest and losing nothing.
-          <p className="text-caption text-muted-foreground text-center">
+          <p className="text-micro text-muted-foreground text-center">
             You’re offline. Come back to this workout when you’re connected.
           </p>
         )}

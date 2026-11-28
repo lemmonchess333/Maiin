@@ -51,7 +51,7 @@ import type {
 } from "./programTypes";
 import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import { raceWeekFromToday, type RaceWeekStart } from "./racePlanContinuation";
-import { clampPlanWeek } from "./runPlanTiming";
+import { clampPlanWeek, weekendHoldsBackToBacks } from "./runPlanTiming";
 import {
   generateRacePlanV2,
   runTuningFromProfile,
@@ -675,6 +675,11 @@ export function rollRunWeeks(
           {
             raceLegTrim: profile.raceLegTrim === true,
             primaryGoal: profile.primaryGoal,
+            weekSchedule: profile.weekSchedule,
+            backToBacks: weekendHoldsBackToBacks(
+              profile.runMode,
+              profile.raceGoal
+            ),
           }
         );
     advanced.runDays = runs.runDays;
@@ -713,6 +718,8 @@ export function rollLiftWeeks(
     const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
     rolling = advanceWeek(rolling, profile.experience, nextKey, undefined, {
       primaryGoal: profile.primaryGoal,
+      weekSchedule: profile.weekSchedule,
+      backToBacks: weekendHoldsBackToBacks(profile.runMode, profile.raceGoal),
     });
     weeks++;
   }

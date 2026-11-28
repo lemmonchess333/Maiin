@@ -124,6 +124,60 @@ describe("resolveTaper — calorie override", () => {
       )
     ).toBeNull();
   });
+
+  it("does not apply a 3-day carb-load surplus for 5K or 10K races", () => {
+    for (const distance of ["5k", "10k"] as const) {
+      const p1 = makeProfile({
+        runMode: "race_prep",
+        raceGoal: { distance, targetDate: dayKey(1) },
+      });
+      const eve = resolveTaper(TODAY, p1, BASE)!;
+      expect(eve.carbLoad).toBe(false);
+      expect(eve.phase).toBe("taper");
+      expect(eve.taperedCalories).toBeLessThan(BASE);
+
+      const p0 = makeProfile({
+        runMode: "race_prep",
+        raceGoal: { distance, targetDate: dayKey(0) },
+      });
+      const raceDay = resolveTaper(TODAY, p0, BASE)!;
+      expect(raceDay.phase).toBe("race");
+      expect(raceDay.carbLoad).toBe(false);
+      expect(raceDay.taperedCalories).toBe(BASE);
+    }
+  });
+
+  it("pauses active cut deficits during race taper by anchoring off maintenance", () => {
+    const cutter = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "half", targetDate: dayKey(6) },
+      program: { goal: "cut", currentPhase: "cut" },
+      targetCalories: 2000,
+    });
+    // Without pausing the cut, -10% on 2000 would drop to ~1800. Anchoring off
+    // maintenance (2000 + 500 = 2500) keeps taper intake in the ~2250–2375 band.
+    const midTaper = resolveTaper(TODAY, cutter, 2000)!;
+    expect(midTaper.phase).toBe("taper");
+    expect(midTaper.taperedCalories).toBeGreaterThan(2200);
+    expect(midTaper.taperedCalories).toBeLessThan(2500);
+
+    // Explicit learned maintenance overrides the formula offset anchor.
+    const withLearned = resolveTaper(TODAY, cutter, 2000, 2600)!;
+    expect(withLearned.taperedCalories).toBeGreaterThan(
+      midTaper.taperedCalories
+    );
+
+    // Carb-load for a cutter also anchors off maintenance, not the cut target.
+    const carbLoadCutter = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: dayKey(1) },
+      program: { goal: "cut", currentPhase: "cut" },
+      targetCalories: 2000,
+    });
+    const load = resolveTaper(TODAY, carbLoadCutter, 2000, 2500)!;
+    expect(load.carbLoad).toBe(true);
+    expect(load.taperedCalories).toBe(Math.round(2500 * 1.05));
+  });
 });
 
 describe("isAdaptiveExcludedDate — taper/race/post-race window", () => {

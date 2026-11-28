@@ -139,6 +139,7 @@ const EXPECTED = {
     kind: "http",
     maxInstances: 100,
     secrets: [],
+    timeoutSeconds: 60,
   },
   // A shared post's public page behind Hosting's /activity/** rewrite
   // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
@@ -1023,5 +1024,9 @@ describe("functions trigger metadata snapshot", () => {
     expect(fns.weeklyLeagueTurn.__endpoint.scheduleTrigger.timeZone).toBe(
       "Etc/UTC"
     );
+  });
+
+  it("analyzeFood allocates 512MB for base64 image handling", () => {
+    expect(fns.analyzeFood.__endpoint.availableMemoryMb).toBe(512);
   });
 });

@@ -30,6 +30,7 @@ import {
   addDocGuarded,
   deleteDocGuarded,
   setDocGuarded,
+  updateDocGuarded,
 } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { postedExercises } from "@/lib/liftPost";
@@ -291,4 +292,100 @@ export function activityExercisesToRoutine(
         typeof e.targetWeightKg === "number" ? e.targetWeightKg : 0,
     };
   });
+}
+
+/**
+ * Update a saved routine's name and exercise list. Once the user edits their
+ * own routine (or syncs it from their own completed session), mark
+ * `sourceAuthorId: uid` so their own target weights are preserved on reload
+ * instead of being treated as an external member's redacted copy.
+ */
+export async function updateSavedRoutine(
+  uid: string,
+  routineId: string,
+  patch: {
+    name: string;
+    exercises: SavedRoutineExercise[];
+  }
+): Promise<void> {
+  await updateDocGuarded(doc(db, "users", uid, "savedRoutines", routineId), {
+    name: patch.name,
+    exercises: patch.exercises,
+    sourceAuthorId: uid,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export interface RoutineDiffResult {
+  changed: boolean;
+  updatedExercises: SavedRoutineExercise[];
+  summary: string;
+}
+
+/**
+ * Compare a completed routine session's working sets against the saved
+ * routine blueprint. Returns `changed: true` with the rebuilt exercise list
+ * when exercises were added, removed, reordered, or completed with different
+ * working set counts, reps, or weights.
+ */
+export function diffCompletedRoutine(
+  saved: readonly SavedRoutineExercise[],
+  ran: readonly { name: string; exerciseId?: string }[],
+  setLogs: readonly (readonly {
+    weight: number;
+    reps: number;
+    completed: boolean;
+    type?: string;
+  }[])[]
+): RoutineDiffResult {
+  const workoutRows: WorkoutExercise[] = ran.map((ex, i) => ({
+    exerciseId: ex.exerciseId ?? "",
+    exerciseName: ex.name,
+    category: "Other",
+    caloriesBurned: 0,
+    sets: (setLogs[i] ?? [])
+      .filter((s) => s.completed && s.type !== "warmup")
+      .map((s, idx) => ({
+        setNumber: idx + 1,
+        weightKg: s.weight,
+        reps: s.reps,
+        ...(s.type ? { type: s.type } : {}),
+      })),
+  }));
+  const updatedExercises = workoutExercisesToRoutine(workoutRows);
+  if (updatedExercises.length === 0) {
+    return { changed: false, updatedExercises: [], summary: "" };
+  }
+
+  let changedCount = 0;
+  const lengthChanged = updatedExercises.length !== saved.length;
+  const maxLen = Math.max(updatedExercises.length, saved.length);
+  for (let i = 0; i < maxLen; i += 1) {
+    const a = saved[i];
+    const b = updatedExercises[i];
+    if (!a || !b) {
+      changedCount += 1;
+      continue;
+    }
+    const sameIdentity =
+      a.exerciseId && b.exerciseId
+        ? a.exerciseId === b.exerciseId
+        : a.name.trim().toLowerCase() === b.name.trim().toLowerCase();
+    const sameTargets =
+      a.setCount === b.setCount &&
+      a.targetReps === b.targetReps &&
+      Math.abs((a.targetWeightKg || 0) - (b.targetWeightKg || 0)) <= 0.01;
+    if (!sameIdentity || !sameTargets) {
+      changedCount += 1;
+    }
+  }
+
+  if (!lengthChanged && changedCount === 0) {
+    return { changed: false, updatedExercises, summary: "" };
+  }
+
+  const summary = lengthChanged
+    ? `Now ${updatedExercises.length} ${updatedExercises.length === 1 ? "exercise" : "exercises"} (was ${saved.length}).`
+    : `${changedCount} ${changedCount === 1 ? "exercise" : "exercises"} updated from what you lifted today.`;
+  return { changed: true, updatedExercises, summary };
 }

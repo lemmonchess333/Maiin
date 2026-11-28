@@ -58,7 +58,7 @@ export default function LoadAgainstUsual({
   return (
     <ul className="space-y-4" aria-label="Against your usual week">
       {measures.map((m) => (
-        <li key={m.key} className="space-y-1.5">
+        <li key={m.key} className="space-y-2">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
               <span

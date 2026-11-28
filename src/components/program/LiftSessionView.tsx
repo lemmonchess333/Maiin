@@ -33,8 +33,10 @@ import LiftPurpose from "@/components/program/LiftPurpose";
 import OutgrownDayNotice from "@/components/program/OutgrownDayNotice";
 import { hasOutgrown, outgrownDayKey } from "@/features/program/outgrownDay";
 import { isLongDayKept, keepLongDay } from "@/lib/keptLongDays";
+import { readJson, scopedKey, writeJson } from "@/lib/localStore";
 import { pickLiftAdvice } from "@/lib/programNotices";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import PlateauCoachingNotice from "@/components/program/PlateauCoachingNotice";
 import SupersetBlock from "@/components/program/SupersetBlock";
 import { pairRuns } from "@/features/program/pairSlot";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
@@ -65,7 +67,7 @@ import {
   Repeat,
   Trash2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import type { Exercise } from "@/lib/exercises";
 import type { Workout } from "@/lib/savedWorkouts";
@@ -201,7 +203,7 @@ export default function LiftSessionView({
 
   // Every counted set from the last session each lift of the plan ran in
   // its slot, for the rows' "Last:" line (`lastSetsBySlot`). The workout
-  // screen reads the same.
+  // screen and the session card's line read the same, as Home's hero does.
   const lastSetsOf = useMemo(
     () => lastSetsBySlot(recentWorkouts, planLifts),
     [recentWorkouts, planLifts]
@@ -211,6 +213,31 @@ export default function LiftSessionView({
   // once; the device keeps it after (`keptLongDays`).
   const [keptDay, setKeptDay] = useState<string | null>(null);
   const [rebuildingDays, setRebuildingDays] = useState(false);
+
+  const plateauStoreKey = user?.uid
+    ? scopedKey("tropos-plateau-dismissed", user.uid)
+    : null;
+  const [dismissedByStore, setDismissedByStore] = useState<
+    Record<string, string[]>
+  >({});
+  const dismissedPlateaus = useMemo(() => {
+    if (!plateauStoreKey) return [];
+    return (
+      dismissedByStore[plateauStoreKey] ??
+      readJson<string[]>(plateauStoreKey, [])
+    );
+  }, [dismissedByStore, plateauStoreKey]);
+  const dismissPlateau = (key: string) => {
+    if (!plateauStoreKey) return;
+    setDismissedByStore((prev) => {
+      const current =
+        prev[plateauStoreKey] ?? readJson<string[]>(plateauStoreKey, []);
+      if (current.includes(key)) return prev;
+      const next = [...current, key].slice(-40);
+      writeJson(plateauStoreKey, next);
+      return { ...prev, [plateauStoreKey]: next };
+    });
+  };
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -580,12 +607,14 @@ export default function LiftSessionView({
   });
 
   // The session card's line, Home's (`liftHeroLine`), for a day still to
-  // train; a done or missed day is its record, not a prescription.
+  // train; a done or missed day is its record, not a prescription. Last
+  // time is the one the rows below list (`lastSetsOf`).
   const sessionLine =
     selectedWorkout && status !== "completed" && !missed
       ? liftHeroLine(
           selectedWorkout.exercises,
-          resolveLiftUnit(profile?.liftingWeightUnit)
+          resolveLiftUnit(profile?.liftingWeightUnit),
+          lastSetsOf
         )
       : null;
 
@@ -603,7 +632,7 @@ export default function LiftSessionView({
   return (
     <>
       <div className="space-y-3" {...pagerProps}>
-        <motion.div key={idx} {...dayEntrance}>
+        <m.div key={idx} {...dayEntrance}>
           {selectedWorkout && (
             <div className="space-y-3">
               {/* ── Session hero — shared command-card chrome
@@ -778,13 +807,13 @@ export default function LiftSessionView({
               )}
             </div>
           )}
-        </motion.div>
+        </m.div>
         {/* Train's week notices sit under the day's session, as Home's
             banners sit under its hero (DS4, §14m rule 1: the session's top
             within 260pt). Outside the day's animation, so they hold still
             while the days are swiped, and are counted once. */}
         {between}
-        <motion.div key={idx} {...dayEntrance}>
+        <m.div key={idx} {...dayEntrance}>
           {selectedWorkout && (
             <div className="space-y-3">
               {/* PROGRAM-ADAPT-01, post-de-interception home: the
@@ -974,6 +1003,26 @@ export default function LiftSessionView({
                               />
                             </div>
                           </SortableExerciseRow>
+                          {!isViewingHistory &&
+                            (ex.plateauCount ?? 0) >= 2 &&
+                            !dismissedPlateaus.includes(
+                              `${ex.exerciseId}:${ex.plateauCount}`
+                            ) && (
+                              <PlateauCoachingNotice
+                                exerciseName={ex.name}
+                                onSwap={() =>
+                                  setReplaceTarget({
+                                    dayIndex: idx,
+                                    exIndex: i,
+                                  })
+                                }
+                                onDismiss={() =>
+                                  dismissPlateau(
+                                    `${ex.exerciseId}:${ex.plateauCount}`
+                                  )
+                                }
+                              />
+                            )}
                         </div>
                       );
                       /* Lift22: a pair the plan wrote stands in its own
@@ -1072,7 +1121,7 @@ export default function LiftSessionView({
 
               {/* ── Completed Session Summary ── */}
               {status === "completed" && (
-                <div className="rounded-xl border border-border bg-card p-4 space-y-2 dark:card-shadow dark:border-transparent">
+                <div className="rounded-2xl border border-border bg-card p-4 space-y-2 dark:card-shadow dark:border-transparent">
                   <p className="text-sm text-muted-foreground">
                     {completedWorkoutId
                       ? "Your recorded sets and actual totals are ready to view."
@@ -1097,21 +1146,21 @@ export default function LiftSessionView({
               {after}
             </div>
           )}
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ── Context Menu ── */}
       <AnimatePresence>
         {contextMenu && (
           <>
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
               exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 z-[200]"
               onClick={() => setContextMenu(null)}
             />
-            <motion.div
+            <m.div
               ref={contextMenuRef}
               role="menu"
               aria-label={`Options for ${
@@ -1194,7 +1243,7 @@ export default function LiftSessionView({
                 />{" "}
                 Move down
               </button>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

@@ -1012,7 +1012,7 @@ function ActivityCard({
             (`postMomentLines`). At large text the tile stands above the
             words, as the PR line's icon does below. */}
         {moments.length > 0 && (
-          <ul className="mb-3 space-y-2.5">
+          <ul className="mb-3 space-y-2">
             {moments.map((moment, i) => {
               const lines = postMomentLines(moment, {
                 distanceUnit: unit,

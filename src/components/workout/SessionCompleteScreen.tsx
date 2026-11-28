@@ -1,9 +1,10 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import StartTimeSheet from "@/components/workout/StartTimeSheet";
 import RenameWorkoutSheet from "@/components/workout/RenameWorkoutSheet";
 import { startLabel } from "@/features/program/sessionStart";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import WeekPulseCard from "@/components/WeekPulseCard";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
@@ -23,11 +24,12 @@ import { liftSessionDay } from "@/lib/liftCompletion";
 import { sessionWork, setsFigure, workFigure } from "@/lib/liftFigures";
 import { ChevronDown, ChevronRight, Share, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
+import { buildProgressionPreview } from "@/features/program/progressionPreview";
 import { getFormArtCutout } from "@/lib/formArtCutouts";
 import FinishFigure from "@/components/workout/FinishFigure";
 import FinishHero from "@/components/workout/FinishHero";
@@ -122,6 +124,8 @@ interface SessionCompleteScreenProps {
   /** The saved workout's id, once saved: a shared card's page goes with
    *  it (Soc17 call 1). */
   savedWorkoutId?: string;
+  /** Optional host-specific post-save slot (e.g. routine template sync). */
+  completionExtras?: ReactNode;
 }
 
 export default function SessionCompleteScreen({
@@ -149,6 +153,7 @@ export default function SessionCompleteScreen({
   moments = null,
   firstOfSport = false,
   savedWorkoutId,
+  completionExtras,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -404,7 +409,7 @@ export default function SessionCompleteScreen({
     : `${dayLabel} · ${finishKicker(startedAt, endedAt)}`;
 
   return (
-    <motion.div
+    <m.div
       /* No fade under Reduce Motion: the screen is there at once, as every
          entrance inside it already is. */
       initial={reduce ? false : { opacity: 0 }}
@@ -418,7 +423,7 @@ export default function SessionCompleteScreen({
           on a long one. The footer owns the safe area once it shows. */}
       <div
         className={cn(
-          "max-w-md mx-auto px-5 min-h-full flex flex-col",
+          "max-w-md md:max-w-lg mx-auto px-5 min-h-full flex flex-col",
           !saved && "pb-[calc(2rem+var(--safe-bottom))]"
         )}
       >
@@ -565,7 +570,7 @@ export default function SessionCompleteScreen({
               little large and settling, and their trophy after them
               (Pol1). */}
           {listedBests.length > 0 && (
-            <motion.section
+            <m.section
               aria-labelledby="session-new-bests"
               className="space-y-2 origin-top"
               initial={reduce ? false : { opacity: 0, scale: 0.94 }}
@@ -612,7 +617,7 @@ export default function SessionCompleteScreen({
                         </p>
                       )}
                     </div>
-                    <motion.span
+                    <m.span
                       className="shrink-0"
                       initial={
                         reduce ? false : { opacity: 0, scale: 0.4, rotate: -18 }
@@ -628,11 +633,11 @@ export default function SessionCompleteScreen({
                         className="size-5 text-achievement"
                         aria-hidden="true"
                       />
-                    </motion.span>
+                    </m.span>
                   </div>
                 ))}
               </Card>
-            </motion.section>
+            </m.section>
           )}
 
           {/* The badge this session earned sits with its new bests, the
@@ -666,6 +671,20 @@ export default function SessionCompleteScreen({
           {/* The week the lift counts for: the day it started, which a
               session begun on Sunday night keeps past midnight. */}
           {saved && <WeekPulseCard sessionDay={liftSessionDay(startedAt)} />}
+          {/* The league line (Run30 call 2): mounted from the review, so it
+              reads the group before the save, and drawn only when the
+              saved session raised your place. */}
+          <LeagueRiseLine
+            stage={
+              saved
+                ? saveStatus === "synced"
+                  ? "onServer"
+                  : "saving"
+                : completing || saveStatus !== undefined
+                  ? "saving"
+                  : "before"
+            }
+          />
           {saved && (
             <CompletionExtras share={share} badge={false} kind="lift" />
           )}
@@ -721,6 +740,39 @@ export default function SessionCompleteScreen({
             </Card>
           )}
 
+          {(() => {
+            if (!saved || !planWeek || sessionVariant === "easier_today")
+              return null;
+            const progressionItems = buildProgressionPreview(
+              exercises,
+              setLogs,
+              liftUnit
+            );
+            if (progressionItems.length === 0) return null;
+            return (
+              <Card size="compact" tone="flat" className="space-y-2">
+                <SectionHeading size="compact" as="h3">
+                  Next session
+                </SectionHeading>
+                <ul className="space-y-2">
+                  {progressionItems.map((item) => (
+                    <li
+                      key={item.exerciseId}
+                      className="flex items-baseline justify-between gap-3 text-sm"
+                    >
+                      <span className="min-w-0 truncate text-foreground">
+                        {item.name}
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                        {item.detail}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            );
+          })()}
+
           <details className="group space-y-4">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
               Session details
@@ -771,6 +823,9 @@ export default function SessionCompleteScreen({
               </div>
             </div>
           </details>
+          {/* Optional host-specific post-save prompt (e.g. routine template sync). */}
+          {saved && completionExtras}
+
           {/* The saved workout, where it can be changed or deleted, and the
               food log for a recovery meal, as after a run (App1 Q30). */}
           {saved && (onViewWorkout || onLogFood) && (
@@ -877,7 +932,7 @@ export default function SessionCompleteScreen({
           />
         </Suspense>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 

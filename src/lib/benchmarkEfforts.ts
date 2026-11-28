@@ -60,6 +60,10 @@ const MIN_TEMPO_WORK_SECONDS = 600;
  *  90 seconds a repeat. A Tropos heuristic, as the tempo's is. */
 const MIN_INTERVAL_WORK_SECONDS = 720;
 
+/** Elevation gain per kilometre (m/km) above which a benchmark effort is
+ *  marked hilly, so a steep climb never lowers a runner's VDOT. */
+export const HILLY_BENCHMARK_GAIN_PER_KM = 15;
+
 /** What a saved run says about itself that decides whether it was an
  *  effort. A `SavedRun` carries all of it. */
 export interface EffortRun {
@@ -84,6 +88,8 @@ export interface EffortRun {
   templateId?: string;
   /** Run27 (14): started on a hot or extreme day (`RunConfig.hotDay`). */
   hotDay?: boolean;
+  /** Total elevation gain in metres; steep climbs (>= 15 m/km) hold VDOT. */
+  elevationGain?: number;
   /** The run was saved as the goal race (it keeps its `racePrediction`).
    *  Its time is its elapsed time (Run28 call 4). */
   goalRace?: boolean;
@@ -95,10 +101,16 @@ export interface EffortRun {
 /** The effort a run was, or null when it was none. */
 export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
   if (!isPaceEligible(run)) return null;
+  const hillyRun =
+    typeof run.elevationGain === "number" &&
+    Number.isFinite(run.elevationGain) &&
+    run.distance > 0 &&
+    run.elevationGain / (run.distance / 1000) >= HILLY_BENCHMARK_GAIN_PER_KM;
   const source = {
     ...(run.id ? { id: run.id } : {}),
     ...(run.completedAt ? { completedAt: run.completedAt } : {}),
     ...(run.hotDay === true ? { hotDay: true } : {}),
+    ...(hillyRun ? { hillyRun: true } : {}),
   };
   // Run24 (4), deep dive D4: the plan's time trial, read by its one work
   // segment as a race over that distance; the warm-up and cool-down around

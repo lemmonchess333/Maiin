@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  antagonistBalanceReadings,
   chartWaitLine,
   comparisonStartKey,
   exerciseProgressReading,
@@ -381,5 +382,68 @@ describe("chartWaitLine", () => {
         expect(chartWaitLine(logged, 3, noun)!.length).toBeLessThanOrEqual(30);
       }
     }
+  });
+});
+
+describe("antagonistBalanceReadings", () => {
+  it("flags Push:Pull above 1.5x and Quad:Hamstring above 2x once volume clears the floor", () => {
+    expect(
+      antagonistBalanceReadings([
+        { muscle: "Chest", setsPerWeek: 12 },
+        { muscle: "FrontDelts", setsPerWeek: 4 },
+        { muscle: "Triceps", setsPerWeek: 4 },
+        { muscle: "Lats", setsPerWeek: 6 },
+        { muscle: "UpperBack", setsPerWeek: 4 },
+        { muscle: "Quads", setsPerWeek: 12 },
+        { muscle: "Hamstrings", setsPerWeek: 5 },
+      ])
+    ).toEqual([
+      "Push sets are 2.0× pull (20 vs 10 a week).",
+      "Quad sets are 2.4× hamstrings (12 vs 5 a week).",
+    ]);
+  });
+
+  it("stays quiet when balanced, below floor, or missing the paired muscle rows", () => {
+    // Balanced (1.5x exact does not trigger; 2.0x exact does not trigger).
+    expect(
+      antagonistBalanceReadings([
+        { muscle: "Chest", setsPerWeek: 15 },
+        { muscle: "Lats", setsPerWeek: 10 },
+        { muscle: "Quads", setsPerWeek: 12 },
+        { muscle: "Hamstrings", setsPerWeek: 6 },
+      ])
+    ).toEqual([]);
+
+    // Sparse / low-volume weeks stay quiet.
+    expect(
+      antagonistBalanceReadings([
+        { muscle: "Chest", setsPerWeek: 6 },
+        { muscle: "Lats", setsPerWeek: 2 },
+        { muscle: "Quads", setsPerWeek: 6 },
+        { muscle: "Hamstrings", setsPerWeek: 2 },
+      ])
+    ).toEqual([]);
+
+    // Partial row list without pull/hamstring rows stays quiet.
+    expect(
+      antagonistBalanceReadings([
+        { muscle: "Chest", setsPerWeek: 16 },
+        { muscle: "Quads", setsPerWeek: 14 },
+      ])
+    ).toEqual([]);
+  });
+
+  it("reports zero antagonist sets once primary volume clears the zero-pair floor", () => {
+    expect(
+      antagonistBalanceReadings([
+        { muscle: "Chest", setsPerWeek: 12 },
+        { muscle: "Lats", setsPerWeek: 0 },
+        { muscle: "Quads", setsPerWeek: 10 },
+        { muscle: "Hamstrings", setsPerWeek: 0 },
+      ])
+    ).toEqual([
+      "12 push sets a week with no pull sets yet.",
+      "10 quad sets a week with no hamstring sets yet.",
+    ]);
   });
 });
