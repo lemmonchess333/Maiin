@@ -39,7 +39,7 @@ export default function ExerciseRestSheet({
       title={`Rest for ${exerciseName}`}
       description="Saved for this exercise on this device."
     >
-      <div className="space-y-4">
+      <div className="space-y-4 px-4">
         <Button
           variant="outline"
           fullWidth
