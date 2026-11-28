@@ -1,0 +1,73 @@
+name: Backfill lift boards
+
+# onWorkoutCreated and onWorkoutUpdated keep a lifter's heaviest set of each
+# barbell lift, and their place on that lift's board, from the first workout
+# saved or edited after they were deployed (Run30 call 3). This puts every
+# workout saved before then through the triggers' own steps
+# (functions/scripts/backfill-lift-boards.js). It is safe to run again and
+# beside the triggers: every write recomputes from the documents as they are.
+#
+# A dry run first prints what it read and writes nothing; the apply run
+# then writes. Each prints totals, never an id.
+#
+# Run it by hand from the Actions tab, or add a dated line to
+# .github/backfill-lift-boards.request on main: a change to that file
+# runs it too, which is the way to start it from a session whose GitHub app
+# cannot dispatch a workflow.
+
+on:
+  workflow_dispatch:
+  # A new line in the request file on main. Only main, which is also the
+  # only branch the production environment lets this job read its
+  # credentials on.
+  push:
+    branches: [main]
+    paths:
+      - .github/backfill-lift-boards.request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lift-boards-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run.
+    environment: production
+    # Install, a read of every account's workouts, then the same again
+    # with the writes.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Dry run
+        run: node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb
+
+      - name: Backfill
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb apply | tee applied.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("applied.json", "utf8"));
+            if (t.dryRun !== false) {
+              console.error("The apply run did not write.");
+              process.exit(1);
+            }
+          '
