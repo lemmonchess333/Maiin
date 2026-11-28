@@ -70,6 +70,10 @@ async function uidByEmail(email: string): Promise<string> {
  * guard a monotonic check over zero samples passes, and this spec would
  * have gone quietly blind instead of red.
  *
+ * The figure is followed by the day's target ("1.5 L of 2 L", "2.5 L ·
+ * 2 L reached"), so the pattern reads the leading figure and lets the
+ * target's words follow it.
+ *
  * And the figure now carries its own unit, so a burst that crosses a
  * litre renders 750 ml then 1 L. Comparing bare figures would read
  * 750 -> 1 as travelling backwards and fail on correct behaviour, so the
@@ -84,7 +88,7 @@ async function startSampling(page: Page) {
       // "750ml" / "1L" / "4.5L" — value plus its unit span, no space
       // between them in textContent. The weight tile ("100.0kg") and the
       // macro figures ("0g") cannot match this shape.
-      const RE = /^(\d+(?:\.\d+)?)\s*(ml|L)$/;
+      const RE = /^(\d+(?:\.\d+)?)\s*(ml|L)(?:\s+(?:of|·)\s.*)?$/;
       const el = Array.from(document.querySelectorAll("p")).find((p) =>
         RE.test((p.textContent ?? "").trim())
       );
