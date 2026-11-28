@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import StartTimeSheet from "@/components/workout/StartTimeSheet";
 import RenameWorkoutSheet from "@/components/workout/RenameWorkoutSheet";
 import { startLabel } from "@/features/program/sessionStart";
@@ -124,6 +124,8 @@ interface SessionCompleteScreenProps {
   /** The saved workout's id, once saved: a shared card's page goes with
    *  it (Soc17 call 1). */
   savedWorkoutId?: string;
+  /** Optional host-specific post-save slot (e.g. routine template sync). */
+  completionExtras?: ReactNode;
 }
 
 export default function SessionCompleteScreen({
@@ -151,6 +153,7 @@ export default function SessionCompleteScreen({
   moments = null,
   firstOfSport = false,
   savedWorkoutId,
+  completionExtras,
 }: SessionCompleteScreenProps) {
   const today = useLocalDateKey();
   /* The detail being changed: when it started, or its name. */
@@ -820,6 +823,9 @@ export default function SessionCompleteScreen({
               </div>
             </div>
           </details>
+          {/* Optional host-specific post-save prompt (e.g. routine template sync). */}
+          {saved && completionExtras}
+
           {/* The saved workout, where it can be changed or deleted, and the
               food log for a recovery meal, as after a run (App1 Q30). */}
           {saved && (onViewWorkout || onLogFood) && (

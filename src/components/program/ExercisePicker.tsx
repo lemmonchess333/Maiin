@@ -28,6 +28,15 @@ import { toast } from "@/lib/toast";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
+const EQUIPMENT_FILTERS = [
+  { label: "Any kit", match: null },
+  { label: "Barbell", match: "Barbell" },
+  { label: "Dumbbells", match: "Dumbbells" },
+  { label: "Machine", match: "Machine" },
+  { label: "Cable", match: "Cable Machine" },
+  { label: "Bodyweight", match: "Bodyweight" },
+] as const;
+type EquipmentFilterLabel = (typeof EQUIPMENT_FILTERS)[number]["label"];
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
@@ -82,6 +91,8 @@ export default function ExercisePicker({
   const [selectedCategory, setSelectedCategory] = useState<string>(() =>
     initialCategoryFor(currentExerciseId)
   );
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<EquipmentFilterLabel>("Any kit");
   // The plan owns exercises already in the workout. Keep only additions in
   // local state so reopening this mounted picker for another day cannot show
   // the previous day's checkmarks.
@@ -119,6 +130,7 @@ export default function ExercisePicker({
       setDetail(null);
       setSearchQuery("");
       setSelectedCategory(initialCategoryFor(currentExerciseId));
+      setSelectedEquipment("Any kit");
     }
     wasOpen.current = open;
   }, [open, currentExerciseId]);
@@ -145,11 +157,17 @@ export default function ExercisePicker({
       selectedCategory === "All"
         ? getAll()
         : getExercisesByCategory(selectedCategory);
-    if (!normalizedSearchQuery) return inCategory;
-    return inCategory.filter((e) =>
+    const equipmentMatch =
+      EQUIPMENT_FILTERS.find((item) => item.label === selectedEquipment)
+        ?.match ?? null;
+    const inEquipment = equipmentMatch
+      ? inCategory.filter((e) => e.equipment === equipmentMatch)
+      : inCategory;
+    if (!normalizedSearchQuery) return inEquipment;
+    return inEquipment.filter((e) =>
       e.name.toLowerCase().includes(normalizedSearchQuery)
     );
-  }, [normalizedSearchQuery, selectedCategory]);
+  }, [normalizedSearchQuery, selectedCategory, selectedEquipment]);
 
   const allExercises = useMemo(() => {
     return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
@@ -479,12 +497,40 @@ export default function ExercisePicker({
               ))}
             </div>
 
+            {/* Equipment filter chips */}
+            <div
+              role="group"
+              aria-label="Filter by equipment"
+              data-no-page-swipe
+              className="flex overflow-x-auto gap-2 px-4 pb-2"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {EQUIPMENT_FILTERS.map(({ label }) => (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  key={label}
+                  onClick={() => setSelectedEquipment(label)}
+                  aria-pressed={selectedEquipment === label}
+                  className={cn(
+                    "rounded-full px-3.5 text-xs whitespace-nowrap shrink-0",
+                    selectedEquipment === label
+                      ? "font-semibold border-primary/40 bg-primary/10 text-foreground"
+                      : "font-medium text-muted-foreground"
+                  )}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+
             {/* Exercise list — card rows (lift-arc redesign): anatomy
                 tile per category, tokenized lifting-tint selection,
                 Recent section first when browsing All. */}
             <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-28">
               {!normalizedSearchQuery &&
                 selectedCategory === "All" &&
+                selectedEquipment === "Any kit" &&
                 recentExercises.length > 0 && (
                   <>
                     <SectionLabel className="pt-1 pb-2">Recent</SectionLabel>
