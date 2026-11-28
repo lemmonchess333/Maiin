@@ -107,6 +107,16 @@ describe("takesOverHtml", () => {
     expect(takesOverHtml("/", undefined)).toBe(false);
   });
 
+  it("opens Pro at the app's Pro address, the page Hosting sends there", () => {
+    expect(websiteRoute("/upgrade")).toEqual({ kind: "page", key: "pro" });
+    expect(websiteRoute("/upgrade/")).toEqual({ kind: "page", key: "pro" });
+    expect(prerenderedKeyFor("/upgrade")).toBe("pro");
+    expect(takesOverHtml("/upgrade", "pro")).toBe(true);
+    expect(takesOverHtml("/upgrade", "home")).toBe(false);
+    // Anything under it is still one of the app's addresses, on Home.
+    expect(websiteRoute("/upgrade/x")).toEqual({ kind: "appAddress" });
+  });
+
   it("calls a bare /activity a 404, as Hosting does", () => {
     expect(websiteRoute("/activity")).toEqual({ kind: "notFound" });
   });

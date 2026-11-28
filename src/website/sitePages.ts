@@ -189,6 +189,18 @@ export const APP_ADDRESS_PREFIXES: readonly string[] = [
   "/workout",
 ];
 
+/**
+ * Addresses of the app's that open one of the website's pages rather than
+ * Home: the app's Pro page (`/upgrade`) opens the website's, where the
+ * price is. firebase.json serves that page's HTML there, and the
+ * checkout's return (`?checkout=success`) adds its line to it
+ * (`websiteAddress.ts`). The page names its own address as the canonical
+ * copy, and firebase.json asks search engines not to index `/upgrade`.
+ */
+export const PAGE_ALIASES: Readonly<Record<string, SitePageKey>> = {
+  "/upgrade": "pro",
+};
+
 /** What the website shows at an address: a page in the table, a shared
  *  post or card, Home for one of the app's addresses, or the 404. */
 export type WebsiteRoute =
@@ -220,6 +232,8 @@ export function websiteRoute(pathname: string): WebsiteRoute {
   const path = normalisePath(pathname);
   const page = SITE_PAGES.find((p) => p.path === path);
   if (page) return { kind: "page", key: page.key };
+  const alias = PAGE_ALIASES[path];
+  if (alias) return { kind: "page", key: alias };
   if (/^\/activity\/[^/]+$/.test(path)) return { kind: "post" };
   if (/^\/card\/[^/]+$/.test(path)) return { kind: "card" };
   const app = APP_ADDRESS_PREFIXES.some(
