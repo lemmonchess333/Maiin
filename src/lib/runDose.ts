@@ -78,7 +78,7 @@ function intervalMinutes(
     iv.reps * rep +
     Math.max(0, iv.reps - 1) *
       intervalRestSeconds(iv, paceSPerKm, template.config.repeatsAt);
-  return Math.round(seconds / 60 / 5) * 5;
+  return Math.max(5, Math.round(seconds / 60 / 5) * 5);
 }
 
 /**
@@ -93,7 +93,7 @@ export function runDoseLine(
 ): string {
   const km = template.config.targetDistanceKm;
   const minutes = runMinutesLine(template, easyPaceSPerKm, intervalPaceSPerKm);
-  return km ? [`${km} km`, minutes].filter(Boolean).join(" · ") : minutes!;
+  return km ? [`${km} km`, minutes].filter(Boolean).join(" · ") :(minutes ?? "");
 }
 
 /**

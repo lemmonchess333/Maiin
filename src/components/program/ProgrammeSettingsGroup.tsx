@@ -30,7 +30,7 @@ export default function ProgrammeSettingsGroup({
   return (
     <section className={cn("space-y-3", className)}>
       {title ? (
-        <header className="space-y-0.5">
+        <header className="space-y-1">
           <h2
             className={cn(
               "text-body font-bold leading-tight",

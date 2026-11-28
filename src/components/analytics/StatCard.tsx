@@ -88,7 +88,7 @@ export default function StatCard({
             it whole: on a narrow card the VALUE should give up width,
             never the unit that makes it meaningful. */}
         {unit && (
-          <span className="text-caption text-muted-foreground shrink-0">
+          <span className="text-caption font-mono tabular-nums text-muted-foreground shrink-0">
             {unit}
           </span>
         )}

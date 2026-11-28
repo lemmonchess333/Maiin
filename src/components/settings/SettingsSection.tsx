@@ -15,7 +15,7 @@
  * (e.g. deeplinks from Programme → /settings/training shouldn't pop
  * back to Programme, they should pop to Settings).
  */
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { haptic } from "@/lib/haptic";
@@ -76,7 +76,7 @@ export default function SettingsSection({
         aria-label={`Back to ${backLabel.toLowerCase()}`}
         className="inline-flex items-center gap-1 -ml-2 p-2 min-h-[44px] rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition motion-safe:active:scale-95"
       >
-        <ChevronLeft className="size-5" />
+        <ArrowLeft className="size-4" aria-hidden="true" />
         <span>{backLabel}</span>
       </button>
 

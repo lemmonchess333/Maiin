@@ -82,7 +82,7 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   const over = consumed > target && target > 0;
   const leftMode = mode === "left";
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
         <SectionLabel as="span">{label}</SectionLabel>
         <span className="font-mono tabular-nums text-sm">
@@ -154,7 +154,7 @@ function MicroRow({
       ? `Goal reached · ${amount(consumed)}`
       : `${amount(remaining)} to goal · ${pct}%`;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
         <SectionLabel as="span">
           {label}
@@ -325,7 +325,7 @@ export default function HeroDrillDownSheet({
                   Fuel for today’s training
                 </p>
                 {!isPro && (
-                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-foreground">
+                  <span className="inline-flex items-center gap-1 text-micro font-semibold text-foreground">
                     <Lock className="size-3.5" aria-hidden="true" />
                     Pro
                   </span>
@@ -455,7 +455,7 @@ export default function HeroDrillDownSheet({
           {showBurnBreakdown && (
             <section className="space-y-2">
               <SectionLabel tier="section">Activity today</SectionLabel>
-              <div className="space-y-1.5 text-sm">
+              <div className="space-y-2 text-sm">
                 {dailyTargets.actualLiftBurn > 0 && (
                   <div className="flex justify-between">
                     <span className="text-foreground">Lifting</span>

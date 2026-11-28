@@ -343,7 +343,8 @@ export function useWorkoutDraft(
         identity,
         savedAt: Date.now(),
       });
-      pruneUserDrafts(uid);
+      // Overwriting an existing key cannot raise the per-user count past the cap.
+      if (!existing && stored) pruneUserDrafts(uid);
       return stored;
     },
     [uid, key, identity]

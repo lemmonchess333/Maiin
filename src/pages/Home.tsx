@@ -47,7 +47,7 @@ import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import BrandMark from "@/components/ui/BrandMark";
 import { Sparkles, X } from "lucide-react";
@@ -102,7 +102,10 @@ import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import { useTodayReadiness } from "@/hooks/useTodayReadiness";
+import {
+  isScheduledHardRun,
+  useTodayReadiness,
+} from "@/hooks/useTodayReadiness";
 import { useBodySignals } from "@/hooks/useBodySignals";
 import {
   buildEasierSession,
@@ -614,10 +617,16 @@ export default function Home() {
   // Steady or Go easy day. Free; sleep and heart from Apple Health join it
   // for Pro on the phone once Health is asked (Q76, as recommended).
   const heroLift = session.lift;
+  const heroRun = session.run;
+  const heroRunHard = isScheduledHardRun(heroRun?.runDay);
   const bodySignals = useBodySignals(isPro);
   const todayReadiness = useTodayReadiness(
     heroLift?.workout ?? undefined,
-    bodySignals.signals
+    bodySignals.signals,
+    {
+      todayHardRun: heroRunHard,
+      recentWorkouts: workouts,
+    }
   );
   const liftReadiness = useMemo(() => {
     const day = heroLift?.workout;
@@ -648,6 +657,29 @@ export default function Home() {
     bodySignals.connect,
     session.restContext,
     programState,
+  ]);
+  const runReadiness = useMemo(() => {
+    if (
+      !heroRun ||
+      !heroRun.runDay ||
+      heroRun.completed ||
+      heroRun.inProgress ||
+      !heroRunHard
+    ) {
+      return null;
+    }
+    return {
+      today: todayReadiness,
+      connectBody: bodySignals.canConnect ? bodySignals.connect : null,
+      easierTarget: "/run?easier=1",
+      easierSummary: "swap to an easy run",
+    };
+  }, [
+    heroRun,
+    heroRunHard,
+    todayReadiness,
+    bodySignals.canConnect,
+    bodySignals.connect,
   ]);
   // The hero's words around the session (homeHero.ts): the kicker beside
   // the date, the week's count and the next session beside the segments.
@@ -1265,14 +1297,14 @@ export default function Home() {
               <StreakFlame
                 streak={streak}
                 bounce={streakBounce}
-                display={<motion.span>{streakDisplay}</motion.span>}
+                display={<m.span>{streakDisplay}</m.span>}
               />
             </button>
           ) : (
             <StreakFlame
               streak={streak}
               bounce={streakBounce}
-              display={<motion.span>{streakDisplay}</motion.span>}
+              display={<m.span>{streakDisplay}</m.span>}
             />
           )}
           {/* Settings opens from the user's own avatar (DS3): the photo when
@@ -1387,7 +1419,7 @@ export default function Home() {
           home-declutter 4a — sessions FIRST. Today's lift, run or rest is
           the page's primary action and leads. A group, so its name is
           one a screen reader can use: a name on a roleless div is not. */}
-      <motion.div
+      <m.div
         role="group"
         aria-label="Today’s training"
         variants={{
@@ -1416,6 +1448,7 @@ export default function Home() {
               <StackedCTACards
                 session={session}
                 liftReadiness={liftReadiness}
+                runReadiness={runReadiness}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
@@ -1429,13 +1462,13 @@ export default function Home() {
             </SectionErrorBoundary>
           </TrackSectionView>
         )}
-      </motion.div>
+      </m.div>
 
       {/* The week folds into the hero (DS4 call 5): a card one step down
           from it, the week's sessions done and the next one over seven
           segments, each a day that opens its peek. */}
       {showWeekStrip && (
-        <motion.div
+        <m.div
           ref={weekStripRef}
           variants={{
             hidden: { opacity: 0, y: 12 },
@@ -1452,6 +1485,7 @@ export default function Home() {
             <div
               className={cardClasses({
                 size: "compact",
+                tone: "flat",
                 padded: false,
                 className: "space-y-2 px-4 pt-3.5 pb-3",
               })}
@@ -1505,7 +1539,7 @@ export default function Home() {
               )}
             </AnimatePresence>
           </SectionErrorBoundary>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Run9's starter goal reached: a plain Done under today's session,
@@ -1522,7 +1556,7 @@ export default function Home() {
           Routed through the education lane so it doesn't stack with the
           explainer banners (#995). */}
       {welcomeCard.visible && firstWeekState && (
-        <motion.div
+        <m.div
           variants={{
             hidden: { opacity: 0, y: 8 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1533,7 +1567,7 @@ export default function Home() {
             onDismiss={dismissCoachMarks}
             onOpen={openFirstWeekItem}
           />
-        </motion.div>
+        </m.div>
       )}
 
       {newBadge && !badgeOpen && (
@@ -1558,7 +1592,7 @@ export default function Home() {
         <RemindersQuietCard />
       </SectionErrorBoundary>
 
-      <motion.div
+      <m.div
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1581,11 +1615,11 @@ export default function Home() {
             />
           </SectionErrorBoundary>
         </TrackSectionView>
-      </motion.div>
+      </m.div>
 
       {/* Water and weight share a row; items-stretch keeps the pair
           equal-height. */}
-      <motion.div
+      <m.div
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1624,7 +1658,7 @@ export default function Home() {
             weightTrend={weightTrend}
           />
         </SectionErrorBoundary>
-      </motion.div>
+      </m.div>
 
       <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks

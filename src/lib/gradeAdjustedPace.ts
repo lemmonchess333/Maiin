@@ -65,6 +65,17 @@ function minettiCost(grade: number): number {
 }
 
 /**
+ * Ratio of metabolic cost at signed grade `i` (rise / run) to flat running
+ * cost `C(0)`, clamped to `±MAX_ABS_GRADE` so barometer/GPS spikes never blow
+ * up the polynomial. Used for grade-adjusted effective speed in decoupling.
+ */
+export function minettiRelativeCost(grade: number): number {
+  if (!Number.isFinite(grade)) return 1;
+  const clamped = Math.max(-MAX_ABS_GRADE, Math.min(MAX_ABS_GRADE, grade));
+  return minettiCost(clamped) / minettiCost(0);
+}
+
+/**
  * Returns the flat-equivalent pace for a materially hilly run, or null
  * when the gate isn't met or the inputs can't support an estimate
  * (short / flat / malformed runs). Callers gate platform semantics

@@ -15,7 +15,7 @@
  *    exercise layout) and only resumes on an exact match; legacy
  *    drafts without an identity are dropped on read.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import {
   useWorkoutDraft,
@@ -493,6 +493,18 @@ describe("useWorkoutDraft — V2 per-session isolation (packet 15b)", () => {
       identityParts({ dayIndex: 0, dayName: "D0" })
     );
     expect(localStorage.getItem(v2Key(UID, first))).toBeNull();
+  });
+
+  it("skips scanning localStorage keys when overwriting an existing draft", () => {
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENT_A));
+    act(() => result.current.save(draftFor(0)));
+    const keySpy = vi.spyOn(Storage.prototype, "key");
+    try {
+      act(() => result.current.save({ ...draftFor(0), elapsedSeconds: 95 }));
+      expect(keySpy).not.toHaveBeenCalled();
+    } finally {
+      keySpy.mockRestore();
+    }
   });
 
   it("clearWorkoutDraft sweeps only the given uid's V2 drafts", () => {

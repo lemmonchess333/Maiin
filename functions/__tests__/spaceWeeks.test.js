@@ -146,14 +146,15 @@ describe("a Space's week", () => {
     expect(db.data.has(`users/m0/spaceWeeks/${RUNNERS}_${WEEK}`)).toBe(false);
   });
 
-  it("a second delivery stores the same figures", async () => {
+  it("a second delivery stores the same figures without recounting unchanged credits", async () => {
     const db = runners(MIN);
     await creditAll(db, uids(MIN));
     const first = { ...stored(db) };
-    await weeks.refreshMemberWeeks(db, "m1", [TODAY], { now: NOW });
-    const { updatedAt: _a, ...firstFigures } = first;
-    const { updatedAt: _b, ...again } = stored(db);
-    expect(again).toEqual(firstFigures);
+    const result = await weeks.refreshMemberWeeks(db, "m1", [TODAY], {
+      now: NOW + 60_000,
+    });
+    expect(result).toEqual({ recounted: 0 });
+    expect(stored(db)).toEqual(first);
   });
 
   it("an older count never replaces a newer one", async () => {

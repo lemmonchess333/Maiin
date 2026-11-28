@@ -47,7 +47,7 @@ describe("assertCommandId", () => {
     ["too long", "x".repeat(129)],
     ["illegal char", "cmd with spaces 123456"],
     ["dot char", "cmd.abcdef0123456789"],
-    ["non-string", 12345678901234567],
+    ["non-string", 123456789012345],
     ["null", null],
   ])("rejects %s", (_label, value) => {
     expect(() => assertCommandId(value)).toThrow(ProgramCommandError);

@@ -1,7 +1,14 @@
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import { Scale, ArrowRight, ArrowDown, ArrowUp, Minus } from "lucide-react";
+import {
+  Scale,
+  ArrowRight,
+  ArrowDown,
+  ArrowUp,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
@@ -103,7 +110,7 @@ export default function WeightTile({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left transition-transform motion-safe:active:scale-[0.97] bg-card card-shadow h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="p-3 rounded-xl text-left transition-transform motion-safe:active:scale-[0.97] bg-card surface-flat h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <Scale
@@ -112,6 +119,11 @@ export default function WeightTile({
             aria-hidden="true"
           />
           <SectionLabel>Weight</SectionLabel>
+          <Plus
+            className="size-3.5 shrink-0 ml-auto"
+            style={{ color: THEME.chrome.text }}
+            aria-hidden="true"
+          />
         </div>
         {/* Spaces in the text between the tile's words, so they read as
             words, as the name does; the flex boxes draw nothing for

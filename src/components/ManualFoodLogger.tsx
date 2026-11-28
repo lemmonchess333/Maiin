@@ -232,7 +232,7 @@ export function ManualFoodLogger({
               { label: "Carbs", value: carbs, set: setCarbs, unit: "g" },
               { label: "Fat", value: fat, set: setFat, unit: "g" },
             ].map((field) => (
-              <div key={field.label} className="min-w-0 space-y-1.5">
+              <div key={field.label} className="min-w-0 space-y-2">
                 <label
                   htmlFor={`manual-macro-${field.label.toLowerCase()}`}
                   className="text-sm font-medium text-muted-foreground"

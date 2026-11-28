@@ -163,7 +163,7 @@ export default function IntervalStepShell({
       <div className="p-4 pt-3 space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
-            <p className="text-caption font-bold text-white min-w-0 truncate">
+            <p className="text-micro font-bold text-white min-w-0 truncate">
               <span className="text-success-strong" aria-hidden="true">
                 ✓
               </span>{" "}
@@ -171,7 +171,7 @@ export default function IntervalStepShell({
             </p>
           ) : (
             <p
-              className="text-caption font-bold tracking-wider"
+              className="text-micro font-bold tracking-wider"
               style={{ color: TYPE_EYEBROW[current.type] }}
             >
               {stepEyebrow(current)}

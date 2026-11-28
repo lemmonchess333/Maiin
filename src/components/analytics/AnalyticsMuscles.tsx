@@ -4,7 +4,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import { haptic } from "@/lib/haptic";
-
+import { CATEGORY_DISPLAY } from "./muscleGroupTaxonomy";
 /* The body diagrams carry their own chunk (`body-highlighter`); the
    overview should not pull it into the page's first paint. */
 const MuscleHeatMap = lazyRetry(
@@ -25,6 +25,22 @@ export default function AnalyticsMuscles({
   onOpen: () => void;
 }) {
   if (!Object.values(data).some((sets) => sets > 0)) return null;
+  const trainedSet = new Set(
+    Object.entries(data)
+      .filter(([, sets]) => sets > 0)
+      .map(([key]) => CATEGORY_DISPLAY[key] ?? key)
+  );
+  const hasLegsAggregate = trainedSet.has("Legs");
+  const hasBackAggregate = trainedSet.has("Back");
+  const untrained = Object.values(CATEGORY_DISPLAY).filter(
+    (muscle) =>
+      !trainedSet.has(muscle) &&
+      !(
+        hasLegsAggregate &&
+        (muscle === "Quads & Glutes" || muscle === "Hamstrings & Glutes")
+      ) &&
+      !(hasBackAggregate && muscle === "Lats")
+  );
   return (
     <section aria-label="Muscles trained" className="space-y-2">
       <SectionHeading>Muscles trained</SectionHeading>
@@ -42,6 +58,12 @@ export default function AnalyticsMuscles({
         <Suspense fallback={<Skeleton className="h-32 w-full" />}>
           <MuscleHeatMap data={data} variant="compact" />
         </Suspense>
+        {untrained.length > 0 && (
+          <p className="mt-3 pt-2.5 border-t border-border/50 text-xs text-muted-foreground">
+            Not trained in this range: {untrained.slice(0, 3).join(", ")}
+            {untrained.length > 3 ? ` +${untrained.length - 3} more` : ""}
+          </p>
+        )}
       </button>
     </section>
   );

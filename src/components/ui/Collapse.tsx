@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +53,7 @@ export function Collapse({
   return (
     <AnimatePresence initial={false}>
       {open && (
-        <motion.div
+        <m.div
           key="collapse"
           ref={section}
           id={id}
@@ -72,7 +72,7 @@ export function Collapse({
           <div className={cn("flow-root", className)}>
             {typeof children === "function" ? children() : children}
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

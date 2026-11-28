@@ -36,6 +36,7 @@ vi.mock("@/lib/auth", () => ({
     user: { uid: "runner" },
     profile: { displayName: "Runner", darkMode: false },
   }),
+  useUid: () => "runner",
 }));
 vi.mock("@/hooks/useSessionDoc", () => ({
   useSessionDoc: () => ({
@@ -49,6 +50,14 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 }));
 vi.mock("@/hooks/usePrivacyZones", () => ({
   usePrivacyZones: () => ({ zones: [], loading: false, error: null }),
+}));
+vi.mock("@/hooks/useShoes", () => ({
+  useShoes: () => ({
+    shoes: [],
+    activeShoes: [],
+    defaultShoe: null,
+    loading: false,
+  }),
 }));
 vi.mock("@/hooks/useShareRoute", () => ({ useShareRoute: () => vi.fn() }));
 vi.mock("@/hooks/useSavedRoutes", () => ({
@@ -692,5 +701,20 @@ describe("RunDetail — segments (Run26 call 3)", () => {
     renderDetail();
     expect(screen.getByText("Saved despite invalid metrics")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Make a segment" })).toBeNull();
+  });
+});
+
+describe("RunDetail — TCX export", () => {
+  it("offers Export TCX for both outdoor GPS runs and indoor treadmill runs without GPS", () => {
+    h.run = savedRun({});
+    const { unmount } = renderDetail();
+    expect(screen.getByRole("button", { name: "Export GPX" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
+    unmount();
+
+    h.run = savedRun({ place: "treadmill", points: [] });
+    renderDetail();
+    expect(screen.queryByRole("button", { name: "Export GPX" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
   });
 });

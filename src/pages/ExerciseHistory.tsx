@@ -2,7 +2,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -407,7 +407,7 @@ export default function ExerciseHistory() {
   const hasOnlyOneSession = allSessions.length === 1;
 
   return (
-    <motion.div
+    <m.div
       className={`space-y-4 pt-2 pb-8 ${ONE_CARD_RADIUS}`}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
@@ -424,7 +424,7 @@ export default function ExerciseHistory() {
           <ChevronLeft className="size-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-extrabold text-foreground truncate">
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground truncate">
             {decodedName}
           </h1>
           {exercise && (
@@ -580,7 +580,7 @@ export default function ExerciseHistory() {
                       {pr.weightKg > 0 && !isBodyweight && (
                         <>
                           {" "}
-                          <span className="text-caption font-normal text-muted-foreground">
+                          <span className="text-micro font-normal text-muted-foreground">
                             {unitLabel}
                           </span>
                         </>
@@ -701,7 +701,7 @@ export default function ExerciseHistory() {
                           {/* The PR chip every other best wears. White on
                               the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
+                            <span className="text-micro font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               Best
                             </span>
                           )}
@@ -744,6 +744,6 @@ export default function ExerciseHistory() {
           </div>
         </>
       )}
-    </motion.div>
+    </m.div>
   );
 }

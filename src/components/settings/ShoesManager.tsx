@@ -199,7 +199,10 @@ export default function ShoesManager() {
               className="text-muted-foreground"
               leftIcon={
                 <RotateCw
-                  className={cn("size-3.5", recalculating && "animate-spin")}
+                  className={cn(
+                    "size-3.5",
+                    recalculating && "motion-safe:animate-spin"
+                  )}
                 />
               }
             >
@@ -373,23 +376,23 @@ export default function ShoesManager() {
       ))}
 
       {retired.length > 0 && (
-        <div className="pt-2">
-          <SectionHeading size="compact" className="mb-2">
-            Retired
-          </SectionHeading>
-          {retired.map((shoe) => (
-            <div
-              key={shoe.id}
-              className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 mb-1 opacity-60"
-            >
-              <div>
-                <p className="text-xs text-foreground">{shoe.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {storedKmLabel(shoe.totalKm, unit)} logged
-                </p>
+        <div className="pt-2 space-y-2">
+          <SectionHeading size="compact">Retired</SectionHeading>
+          <div className="space-y-1">
+            {retired.map((shoe) => (
+              <div
+                key={shoe.id}
+                className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 opacity-60"
+              >
+                <div>
+                  <p className="text-xs text-foreground">{shoe.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {storedKmLabel(shoe.totalKm, unit)} logged
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

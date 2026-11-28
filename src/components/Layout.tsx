@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
+import { cn } from "@/lib/utils";
 import { WifiOff, Check, CloudUpload } from "lucide-react";
 import {
   FoodTabIcon,
@@ -30,9 +31,10 @@ import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
 import { layoutKey } from "@/lib/sessionPages";
 import { useUid } from "@/lib/auth";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { useDesktopNavShortcuts } from "@/hooks/useDesktopNavShortcuts";
 import {
   Suspense,
   useEffect,
@@ -160,6 +162,7 @@ export default function Layout() {
   const tabRoutes = tabs.map((t) => t.to);
   const { onTouchStart: onSwipeStart, onTouchEnd: onSwipeEnd } =
     useSwipeNavigation(tabRoutes, location.pathname);
+  useDesktopNavShortcuts(tabRoutes, location.pathname, !hideNav);
 
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
@@ -182,7 +185,7 @@ export default function Layout() {
 
   return (
     <div
-      className="min-h-screen transition-colors"
+      className={cn("min-h-screen transition-colors", !hideNav && "lg:pl-56")}
       style={{
         paddingTop: "var(--safe-top)",
         paddingBottom: hideNav
@@ -223,7 +226,7 @@ export default function Layout() {
       <div aria-live="polite">
         <AnimatePresence>
           {(!isOnline || queueCount > 0) && (
-            <motion.div
+            <m.div
               key="pending-sync"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -275,10 +278,10 @@ export default function Layout() {
                   </Button>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           )}
           {isOnline && wasOffline && queueCount === 0 && (
-            <motion.div
+            <m.div
               key="back-online"
               initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -296,7 +299,7 @@ export default function Layout() {
                 <Check className="size-3.5 shrink-0" aria-hidden="true" />
                 <span>Back online</span>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
@@ -321,7 +324,7 @@ export default function Layout() {
           took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md mx-auto px-[16px] py-6 sm:py-7"
+        className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto px-[16px] py-6 sm:py-7 lg:pb-10"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >

@@ -103,7 +103,8 @@ export interface TrainingWeekInput {
         runPlan?: Pick<RunPlan, "mode" | "raceGoal"> | null;
         /** The week the plan's lifts are for: its marks are that week's. */
         liftWeekKey?: string;
-      }
+       weekHistory?: ReadonlyArray<{ weekKey?: string; restedLifts?: number; workouts: ReadonlyArray<unknown> }>;
+    }
     | null
     | undefined;
   /** Saved lift sessions, by the day each belongs to. */
@@ -292,8 +293,15 @@ function liftsAsked(
     liftDays <= 0 ||
     weekKey !== localWeekKey(now) ||
     programState?.liftWeekKey !== weekKey
-  )
+  ) {
+    if (liftDays > 0) {
+      const archived = programState?.weekHistory?.find((h) => h.weekKey === weekKey);
+      if (archived?.restedLifts && archived.restedLifts > 0) {
+        return Math.max(0, Math.min(liftDays, archived.workouts.length - archived.restedLifts));
+      }
+    }
     return liftDays;
+  }
   if (
     programState?.raceWeek !== "race" &&
     !isRaceRestDay(programState?.runPlan, localDateString(now))

@@ -322,18 +322,22 @@ export default function AdminModeration() {
 
   if (!uid) {
     return (
-      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md mx-auto">
-        <h1 className="text-xl font-extrabold mb-2">Moderation</h1>
+      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md md:max-w-lg mx-auto">
+        <h1 className="text-h1 leading-tight tracking-tight font-extrabold mb-2">
+          Moderation
+        </h1>
         <p className="text-sm text-muted-foreground">Sign in to continue.</p>
       </div>
     );
   }
   if (!isAdmin) {
     return (
-      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md mx-auto">
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
+      <div className="px-4 pt-[calc(var(--safe-top)+2rem)] pb-8 max-w-md md:max-w-lg mx-auto">
+        <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <ShieldAlert className="size-8 text-muted-foreground mx-auto mb-3" />
-          <h1 className="text-xl font-extrabold">Not authorised</h1>
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold">
+            Not authorised
+          </h1>
           <p className="text-sm text-muted-foreground mt-2">
             This page is for Tropos moderators only.
           </p>
@@ -344,8 +348,10 @@ export default function AdminModeration() {
 
   return (
     <div className="px-4 pt-[calc(var(--safe-top)+1.5rem)] pb-6 max-w-2xl mx-auto space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-extrabold">Moderation queue</h1>
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-h1 leading-tight tracking-tight font-extrabold">
+          Moderation queue
+        </h1>
         <button
           type="button"
           onClick={refreshReports}
@@ -366,13 +372,16 @@ export default function AdminModeration() {
 
       {reports === null && !error && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          <Loader2
+            className="size-4 motion-safe:animate-spin"
+            aria-hidden="true"
+          />
           <span>Loading pending reports…</span>
         </div>
       )}
 
       {reports && reports.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
+        <div className="rounded-2xl border border-border bg-card p-4 text-center">
           <Check className="size-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm font-semibold">All clear.</p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -388,7 +397,7 @@ export default function AdminModeration() {
             return (
               <li
                 key={report.reportId}
-                className="rounded-xl border border-border bg-card p-4 space-y-3"
+                className="rounded-2xl border border-border bg-card p-4 space-y-3"
               >
                 <header className="flex items-center justify-between gap-3">
                   <div>
@@ -437,7 +446,7 @@ export default function AdminModeration() {
                     </ul>
                   )}
                   {report.target?.flagged === true && (
-                    <p className="text-caption text-warning-strong mt-1.5 font-medium">
+                    <p className="text-micro text-warning-strong mt-1.5 font-medium">
                       Already flagged by auto-filter
                     </p>
                   )}
@@ -482,7 +491,7 @@ export default function AdminModeration() {
                     Dismiss
                   </button>
                   {!report.targetActionable && (
-                    <p className="text-caption text-muted-foreground mt-1.5 basis-full">
+                    <p className="text-micro text-muted-foreground mt-1.5 basis-full">
                       Target could not be revalidated. Dismiss only; no content
                       action can be applied.
                     </p>
@@ -559,7 +568,7 @@ export default function AdminModeration() {
             {restricted.map((account) => (
               <li
                 key={account.uid}
-                className="rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-3"
+                className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3"
               >
                 <div className="flex-1 basis-[12em] min-w-0">
                   <p className="text-sm font-semibold text-foreground break-words">
@@ -569,7 +578,7 @@ export default function AdminModeration() {
                     {account.uid}
                   </p>
                   {account.restrictedAt !== null && (
-                    <p className="text-caption text-muted-foreground mt-0.5">
+                    <p className="text-micro text-muted-foreground mt-0.5">
                       Restricted{" "}
                       {formatDayMonthYear(new Date(account.restrictedAt))}
                     </p>

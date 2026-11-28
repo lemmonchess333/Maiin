@@ -84,7 +84,7 @@ export default function ExperienceSuggestionCard({
         <p className="text-sm text-muted-foreground">{copy.body}</p>
 
         {/* The evidence itself — the answer to "what's this based on?". */}
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 space-y-2">
           {suggestion.evidence.slice(0, 3).map((e) => (
             <div
               key={e.exerciseId}
@@ -99,7 +99,7 @@ export default function ExperienceSuggestionCard({
           ))}
         </div>
 
-        <p className="mt-2 text-caption text-muted-foreground">{copy.basis}</p>
+        <p className="mt-2 text-micro text-muted-foreground">{copy.basis}</p>
       </details>
 
       <div className="mt-3 flex gap-2">

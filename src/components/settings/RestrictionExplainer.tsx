@@ -29,7 +29,7 @@ export default function RestrictionExplainer({
       icon={<ShieldAlert className="size-4" />}
       title={RESTRICTED_LINE}
       description={
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <p>
             A moderator restricted your account after a report. Until it is
             lifted, you can’t post, comment, give props or likes, follow people,

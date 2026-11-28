@@ -35,6 +35,7 @@ vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: { weightKg: 80 } }),
 }));
 vi.mock("@/lib/savedRoutines", () => ({
+  diffCompletedRoutine: vi.fn(() => ({ changed: false, updatedExercises: [], summary: "" })),
   getSavedRoutine: async () => ({
     id: "r1",
     name: h.routineName,

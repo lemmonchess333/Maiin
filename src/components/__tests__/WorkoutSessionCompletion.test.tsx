@@ -2228,6 +2228,11 @@ describe("WorkoutSession — timers survive a locked phone", () => {
       target: { value: "10" },
     });
     expect(h.authReads).toHaveBeenCalled();
+    expect(h.save).not.toHaveBeenCalled();
+    // setTimeout stays real in this block (only setInterval/Date are faked).
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
     expect(h.save).toHaveBeenLastCalledWith(
       expect.objectContaining({ elapsedSeconds: 3 })
     );

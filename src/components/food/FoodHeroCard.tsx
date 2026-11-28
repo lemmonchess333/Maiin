@@ -4,7 +4,7 @@ import {
   useCalorieRingMode,
   setCalorieRingMode,
 } from "@/hooks/useCalorieRingMode";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ChevronRight, Share2 } from "lucide-react";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth, useUidForStorageKey } from "@/lib/auth";
@@ -129,7 +129,8 @@ export default function FoodHeroCard({
   const [showCelebrationCaption, setShowCelebrationCaption] = useState(false);
 
   // Previous macro totals for transition detection
-  const prevTotalsRef = useRef(dailyTotals);
+  const { calories, protein, carbs, fat } = dailyTotals;
+  const prevTotalsRef = useRef({ calories, protein, carbs, fat });
   const firstMountRef = useRef(true);
 
   const toggleMode = () => {
@@ -143,19 +144,20 @@ export default function FoodHeroCard({
   // LOG_MOMENT_MS from the log. A setTimeout, because the animations are
   // driven by Framer Motion inside the child components.
   useEffect(() => {
+    const currentTotals = { calories, protein, carbs, fat };
     if (firstMountRef.current) {
       // Skip haptic on first mount / day switch
       firstMountRef.current = false;
-      prevTotalsRef.current = dailyTotals;
+      prevTotalsRef.current = currentTotals;
       return;
     }
 
     const prev = prevTotalsRef.current;
     const changed =
-      prev.calories !== dailyTotals.calories ||
-      prev.protein !== dailyTotals.protein ||
-      prev.carbs !== dailyTotals.carbs ||
-      prev.fat !== dailyTotals.fat;
+      prev.calories !== calories ||
+      prev.protein !== protein ||
+      prev.carbs !== carbs ||
+      prev.fat !== fat;
 
     if (!changed) return;
 
@@ -172,14 +174,14 @@ export default function FoodHeroCard({
       const todayKey = todayIsoDate();
       if (
         celebrated !== todayKey &&
-        didJustCompleteAll(prev, dailyTotals, targets)
+        didJustCompleteAll(prev, currentTotals, targets)
       ) {
         shouldCelebrate = true;
         writeString(celebratedKey, todayKey);
       }
     }
 
-    prevTotalsRef.current = dailyTotals;
+    prevTotalsRef.current = currentTotals;
 
     // Log-moment haptic at the 600ms mark (ring animation completion)
     const logHapticTimer = setTimeout(() => {
@@ -212,7 +214,10 @@ export default function FoodHeroCard({
       if (celebrationCaptionTimer) clearTimeout(celebrationCaptionTimer);
     };
   }, [
-    dailyTotals,
+    calories,
+    protein,
+    carbs,
+    fat,
     dailyTargets.protein,
     dailyTargets.carbs,
     dailyTargets.fat,
@@ -262,7 +267,7 @@ export default function FoodHeroCard({
         <div className="absolute left-0 top-0 max-w-[40%]">
           <AnimatePresence mode="wait">
             {showCelebrationCaption ? (
-              <motion.p
+              <m.p
                 key="celebration"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -274,7 +279,7 @@ export default function FoodHeroCard({
                 }}
               >
                 {celebrationCaptionText}
-              </motion.p>
+              </m.p>
             ) : null}
           </AnimatePresence>
         </div>

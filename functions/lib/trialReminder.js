@@ -221,6 +221,7 @@ function readReportedPrice(raw) {
     return null;
   if (typeof display !== "string") return null;
   const text = display.trim();
+  // eslint-disable-next-line no-control-regex
   if (!text || text.length > 32 || /[\u0000-\u001f\u007f<>&"]/.test(text))
     return null;
   return { productId, amount, currencyCode, display: text };

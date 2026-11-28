@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import {
-  normalizeProgramState,
-  type ProgramState,
-} from "@/features/program/programTypes";
+import { subscribeProgramState } from "@/lib/programStateStore";
+import { normalizeProgramState } from "@/features/program/programTypes";
 import { nextLiftName } from "@/lib/workoutReminderCopy";
 
 /**
@@ -24,13 +20,14 @@ export function useNextLiftName(): string | null {
   } | null>(null);
   useEffect(() => {
     if (!uid) return;
-    return onSnapshot(
-      doc(db, "users", uid, "programState", "current"),
+    return subscribeProgramState(
+      uid,
       (snap) => {
-        const raw = snap.exists() ? (snap.data() as ProgramState) : null;
         setState({
           uid,
-          name: raw ? nextLiftName(normalizeProgramState(raw)) : null,
+          name: snap.data
+            ? nextLiftName(normalizeProgramState(snap.data))
+            : null,
         });
       },
       (err) => {

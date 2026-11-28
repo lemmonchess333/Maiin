@@ -4,6 +4,7 @@ import {
   ZONE_COVERAGE_MIN,
   ZONE_NAMES,
   isHeartRateSourceKind,
+  type AerobicDecouplingSummary,
   type HeartRateSourceKind,
   type HeartRateSummary,
 } from "@/lib/hrZones";
@@ -13,6 +14,27 @@ const SOURCE_WORD: Record<HeartRateSourceKind, string> = {
   "apple-watch": "Watch",
   bluetooth: "Sensor",
 };
+
+function savedDecoupling(value: unknown): AerobicDecouplingSummary | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const d = value as Partial<AerobicDecouplingSummary>;
+  if (
+    !Number.isFinite(d.pct) ||
+    !Number.isFinite(d.firstHalfAvgBpm) ||
+    !Number.isFinite(d.secondHalfAvgBpm) ||
+    (d.status !== "steady" &&
+      d.status !== "mild_drift" &&
+      d.status !== "high_drift")
+  ) {
+    return undefined;
+  }
+  return {
+    pct: d.pct!,
+    firstHalfAvgBpm: d.firstHalfAvgBpm!,
+    secondHalfAvgBpm: d.secondHalfAvgBpm!,
+    status: d.status,
+  };
+}
 
 function savedSummary(value: unknown): HeartRateSummary | null {
   if (!value || typeof value !== "object") return null;
@@ -34,7 +56,22 @@ function savedSummary(value: unknown): HeartRateSummary | null {
     )
   )
     return null;
-  return summary as HeartRateSummary;
+  const decoupling = savedDecoupling(summary.decoupling);
+  return {
+    ...(summary as HeartRateSummary),
+    ...(decoupling ? { decoupling } : { decoupling: undefined }),
+  };
+}
+
+function decouplingNote(decoupling: AerobicDecouplingSummary): string {
+  const halves = `${decoupling.firstHalfAvgBpm} to ${decoupling.secondHalfAvgBpm} bpm`;
+  if (decoupling.status === "steady") {
+    return `Held steady across both halves (${halves}).`;
+  }
+  if (decoupling.status === "mild_drift") {
+    return `Mild second-half drift (${halves}). Heat, pacing, or fueling can add to this.`;
+  }
+  return `Noticeable second-half drift (${halves}). Often a sign of heat, pacing, or low fuel.`;
 }
 
 function duration(seconds: number): string {
@@ -115,6 +152,21 @@ export default function HeartRateSummaryCard({
           Partial reading: heart rate covered {coveragePercent}% of moving time,
           so time in zones isn’t shown.
         </p>
+      )}
+      {summary.decoupling && (
+        <div className="space-y-1 border-t border-border pt-3">
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="font-medium text-foreground">
+              Heart rate drift
+            </span>
+            <span className="font-mono font-semibold tabular-nums text-foreground">
+              {summary.decoupling.pct.toFixed(1)}%
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {decouplingNote(summary.decoupling)}
+          </p>
+        </div>
       )}
     </Card>
   );

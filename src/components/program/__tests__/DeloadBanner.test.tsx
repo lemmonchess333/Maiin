@@ -4,8 +4,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 // framer-motion → render the actual element synchronously so tests
 // can observe the banner DOM without waiting on AnimatePresence.
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
+vi.mock("framer-motion", () => {
+  const motionProxy = new Proxy(
     {},
     {
       get: (_t: any, prop: string) => (props: any) => {
@@ -20,9 +20,16 @@ vi.mock("framer-motion", () => ({
         return <Tag {...rest} />;
       },
     }
-  ),
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-}));
+  );
+  return {
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => <>{children}</>,
+    domAnimation: {},
+    domMax: {},
+    AnimatePresence: ({ children }: any) => <>{children}</>,
+  };
+});
 
 vi.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => false,

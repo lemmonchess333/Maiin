@@ -58,6 +58,8 @@ interface RunMapProps {
    *  ends were cut off (a public post's page), where the line's ends are
    *  not where the run started or finished. On by default. */
   endMarkers?: boolean;
+  /** Optional revision counter bumped as live GPS fixes append to `points`. */
+  pointsVersion?: number;
 }
 
 export default function RunMap({
@@ -73,6 +75,7 @@ export default function RunMap({
   liveControls = false,
   distanceMarkers = false,
   onMapTap,
+  pointsVersion,
   markerUnit = "km",
   targetRoute,
   endMarkers = true,
@@ -574,6 +577,7 @@ export default function RunMap({
     // and kept the style's default view, a few streets of London.
   }, [
     points,
+    pointsVersion,
     currentPoint,
     paceColored,
     avgPaceSecPerKm,
@@ -653,7 +657,14 @@ export default function RunMap({
     return () => {
       map.off("load", apply);
     };
-  }, [points, highlightFrom, highlightTo, darkMode, paceColored]);
+  }, [
+    points,
+    pointsVersion,
+    highlightFrom,
+    highlightTo,
+    darkMode,
+    paceColored,
+  ]);
 
   const recenter = () => {
     followingRef.current = true;

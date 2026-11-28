@@ -684,5 +684,84 @@ describe("offlineQueue", () => {
       expect(stored.length).toBeGreaterThan(0);
       expect(stored.map((x: { id: string }) => x.id)).not.toContain("a");
     });
+
+    it("evicts non-durable entries before failing when durable records coexist", () => {
+      queueWrite(UID_A, "users/abc/logs", { water: 1 }, "log-1", true);
+      queueDurableWrite(UID_A, `users/${UID_A}/meals`, "meal-1", {
+        foodName: "Oats",
+      });
+      const real = Storage.prototype.setItem;
+      let threw = false;
+      const spy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (this: Storage, k: string, v: string) {
+          if (!threw && k === "tropos_offline_queue") {
+            threw = true;
+            throw new DOMException("quota", "QuotaExceededError");
+          }
+          return real.call(this, k, v);
+        });
+      try {
+        queueWrite(UID_A, "users/abc/logs", { water: 2 }, "log-2", true);
+      } finally {
+        spy.mockRestore();
+      }
+      const stored = JSON.parse(
+        localStorage.getItem("tropos_offline_queue") || "[]"
+      );
+      expect(stored.map((x: { docId?: string }) => x.docId)).toEqual([
+        "meal-1",
+        "log-2",
+      ]);
+    });
+  });
+
+  describe("per-item checkpointing and cross-tab lock", () => {
+    it("retires each landed item from localStorage before the next item finishes", async () => {
+      queueWrite(UID_A, `users/${UID_A}/logs`, { calories: 100 }, "d1", true);
+      queueWrite(UID_A, `users/${UID_A}/logs`, { calories: 200 }, "d2", true);
+      deferWrites();
+      const flushing = flushQueue(
+        {} as Parameters<typeof flushQueue>[0],
+        UID_A
+      );
+      await vi.waitFor(() =>
+        expect(pendingWrites()).toEqual([`users/${UID_A}/logs/d1`])
+      );
+      // Release only the first write while keeping the second deferred.
+      releaseAllWrites();
+      await vi.waitFor(() =>
+        expect(pendingWrites()).toEqual([`users/${UID_A}/logs/d2`])
+      );
+      // Item 1 is already checkpoint-retired while item 2 is still in flight.
+      expect(getQueueLength(UID_A)).toBe(1);
+      resumeWrites();
+      releaseAllWrites();
+      expect(await flushing).toBe(2);
+      expect(getQueueLength(UID_A)).toBe(0);
+    });
+
+    it("serializes flushes through navigator.locks when available", async () => {
+      const requested: string[] = [];
+      const originalNavigator = navigator;
+      vi.stubGlobal("navigator", {
+        onLine: true,
+        locks: {
+          request: async <T>(name: string, cb: () => Promise<T>) => {
+            requested.push(name);
+            return cb();
+          },
+        },
+      });
+      try {
+        queueWrite(UID_A, `users/${UID_A}/logs`, { calories: 50 }, "d1", true);
+        expect(
+          await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A)
+        ).toBe(1);
+        expect(requested).toEqual([`tropos:offline-queue:${UID_A}`]);
+      } finally {
+        vi.stubGlobal("navigator", originalNavigator);
+      }
+    });
   });
 });

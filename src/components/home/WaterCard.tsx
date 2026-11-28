@@ -1,6 +1,6 @@
 import Button from "@/components/ui/Button";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -306,9 +306,6 @@ export default function WaterCard({
     </Suspense>
   );
 
-  const iconBoxShadow = hasWater
-    ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
-    : "var(--ds-shadow-card)";
   const fillBg = hasWater ? waterFillBackground(fillPercent) : "transparent";
 
   /* The tile's heading, so Home's cards can be stepped through by heading.
@@ -319,12 +316,9 @@ export default function WaterCard({
 
   if (compact) {
     return (
-      <div
-        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col dark:card-shadow"
-        style={{ boxShadow: iconBoxShadow }}
-      >
+      <div className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col surface-flat">
         {heading}
-        <motion.div
+        <m.div
           className="absolute inset-0 pointer-events-none rounded-xl"
           style={{ background: fillBg }}
           initial={{ y: "100%" }}
@@ -334,7 +328,7 @@ export default function WaterCard({
           {hasWater && (
             <WaterWave fillPercent={fillPercent} splash={rippleKey} />
           )}
-        </motion.div>
+        </m.div>
         {/* No bubbles on the compact tile. It is 176x134 CSS px, the
             wave is already an ambient loop on this surface (DESIGN_GUIDE
             allows one), and 3-4px decorative dots at that size read as
@@ -544,12 +538,9 @@ export default function WaterCard({
   }
 
   return (
-    <div
-      className="relative overflow-hidden p-4 rounded-xl bg-card dark:card-shadow"
-      style={{ boxShadow: iconBoxShadow }}
-    >
+    <div className="relative overflow-hidden p-4 rounded-2xl bg-card surface-flat">
       {heading}
-      <motion.div
+      <m.div
         className="absolute inset-0 pointer-events-none rounded-xl"
         style={{ background: fillBg }}
         initial={{ y: "100%" }}
@@ -557,7 +548,7 @@ export default function WaterCard({
         transition={FILL_RISE}
       >
         {hasWater && <WaterWave fillPercent={fillPercent} splash={rippleKey} />}
-      </motion.div>
+      </m.div>
       {ml > 2 * GLASS_ML && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
         {/* Left cluster (drop + reading) opens the size sheet. */}

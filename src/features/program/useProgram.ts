@@ -1740,6 +1740,11 @@ export function useProgram() {
         {
           raceLegTrim: profile?.raceLegTrim === true,
           primaryGoal: profile?.primaryGoal,
+          weekSchedule: profile?.weekSchedule,
+          backToBacks: weekendHoldsBackToBacks(
+            profile?.runMode,
+            profile?.raceGoal
+          ),
         }
       );
       if (runs) {

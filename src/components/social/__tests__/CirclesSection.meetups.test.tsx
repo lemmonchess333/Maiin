@@ -408,4 +408,33 @@ describe("planning a meet-up", () => {
     );
     expect(value.planMeetup).not.toHaveBeenCalled();
   });
+
+  it("offers Add to calendar only once you are going (or organising)", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        loadDetail: vi.fn(async () => ({
+          members: MEMBERS,
+          events: [],
+          meetups: [
+            meetup({ id: "m-not-in", going: ["maya"] }),
+            meetup({
+              id: "m-in",
+              title: "Sunday recovery",
+              going: ["maya", "me"],
+            }),
+          ],
+        })),
+      })
+    );
+    renderSection();
+    const sheet = await openSheet();
+    const cards = await sheet.findAllByTestId("circle-meetup");
+    expect(cards).toHaveLength(2);
+    expect(
+      within(cards[0]).queryByRole("button", { name: /Add to calendar/i })
+    ).not.toBeInTheDocument();
+    expect(
+      within(cards[1]).getByRole("button", { name: /Add to calendar/i })
+    ).toBeInTheDocument();
+  });
 });
