@@ -86,6 +86,25 @@ describe("first-paint font preloads", () => {
     expect(preloaded.slice(0, 5)).toEqual(latin);
   });
 
+  it("ships Barlow's licence with the files, as the OFL asks", () => {
+    /* public/legal goes into the app's build and the website's
+       (WEBSITE_PUBLIC_DIRS). The package's first line runs every file's
+       copyright together; the copy keeps one, then the licence as is. */
+    const shipped = readFileSync(
+      resolve(root, "public/legal/fonts/Barlow-OFL.txt"),
+      "utf8"
+    ).split("\n");
+    const packaged = readFileSync(
+      resolve(root, "node_modules/@fontsource/barlow/LICENSE"),
+      "utf8"
+    ).split("\n");
+    expect(shipped[0]).toBe(
+      "Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)"
+    );
+    expect(shipped.slice(1)).toEqual(packaged.slice(1));
+    expect(shipped.join("\n")).toContain("SIL OPEN FONT LICENSE Version 1.1");
+  });
+
   it("is wired into the build", () => {
     const config = readFileSync(resolve(root, "vite.config.ts"), "utf8");
     expect(config).toMatch(/firstPaintFontsPlugin\(\)/);

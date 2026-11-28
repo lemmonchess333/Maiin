@@ -88,3 +88,12 @@
   mask: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill-rule%3D%22evenodd%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M4%2010a6%206%200%201%200%2012%200%206%206%200%201%200-12%200m5-3a1%201%200%201%200%202%200%201%201%200%201%200-2%200m0%203a1%201%200%201%201%202%200v3a1%201%200%201%201-2%200%22%2F%3E%3C%2Fsvg%3E")
     center / 24px 24px no-repeat;
 }
+
+/* MapLibre sets its own face on the map element (12px/20px Helvetica
+   Neue, Arial), so the credit and anything drawn over a map, such as
+   RunMap's offline note, read in a third face. The size stays MapLibre's;
+   the face is the text face (DESIGN_GUIDE §0 rule 4). Both our maps put
+   `data-map-theme` on the element MapLibre takes, which outranks its rule. */
+.maplibregl-map[data-map-theme] {
+  font-family: var(--font-display);
+}

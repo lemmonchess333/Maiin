@@ -3,7 +3,9 @@
  *
  * Self-hosted from @fontsource/barlow (SIL OFL 1.1): Vite bundles each
  * file as a hashed, same-origin asset, so the service worker caches it
- * for offline and no request goes to a font CDN. The faces are declared
+ * for offline and no request goes to a font CDN. The licence ships with
+ * the files, as the OFL asks: public/legal/fonts/Barlow-OFL.txt, in the
+ * app (Pages and the iPhone build) and the website. The faces are declared
  * here rather than through fontsource's own CSS for one descriptor:
  * `size-adjust: 106%`. Barlow's x-height is 0.506 em to Plus Jakarta
  * Sans's 0.536, and its lines run about 8% narrower, so at the same
