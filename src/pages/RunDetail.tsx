@@ -937,6 +937,14 @@ export default function RunDetail() {
               points={run.points as GPSPoint[]}
               weightKg={profile?.weightKg || 70}
               unit={unit}
+              lapSplits={lapSplits}
+              recordingStartedAtMs={
+                (
+                  run.recordingStartedAt as
+                    { toMillis?: () => number } | undefined
+                )?.toMillis?.() ?? null
+              }
+              hasHeartRate={run.heartRate != null}
               onCropped={retryRun}
             />
           </Suspense>

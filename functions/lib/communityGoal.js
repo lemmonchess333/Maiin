@@ -259,7 +259,10 @@ async function reverseOne(db, marker, challengeId, uid, fieldValue) {
       tx.get(challengeRef),
     ]);
     if (!markerSnap.exists) return false; // already taken back
-    const meters = Math.max(0, Math.round(Number(markerSnap.data().meters) || 0));
+    const meters = Math.max(
+      0,
+      Math.round(Number(markerSnap.data().meters) || 0)
+    );
     const before = tallySnap.exists ? tallySnap.data() || {} : {};
     const runsLeft = Math.max(0, (Number(before.runs) || 0) - 1);
     // The last of this person's runs in the goal takes them out of the
@@ -280,6 +283,98 @@ async function reverseOne(db, marker, challengeId, uid, fieldValue) {
       tx.update(challengeRef, {
         collectiveMeters: fieldValue.increment(-meters),
         ...(lastRun ? { collectiveRunners: fieldValue.increment(-1) } : {}),
+      });
+    return true;
+  });
+}
+
+/**
+ * A saved run's credit made to match the run as it is now, after its track
+ * changed (a crop on the run's page; onRunUpdated, lib/runCorrections). It
+ * reads the run as stored, never the event's copy, so a late or repeated
+ * delivery writes the newest figure once.
+ *
+ * Each goal the run counted toward takes the difference in metres, a goal
+ * it no longer counts toward (the run stopped counting) takes it back as a
+ * delete does, and a run never counted is credited as a new one is. A goal
+ * that has ended is corrected too, as a delete corrects it: the run is the
+ * same run, shorter.
+ */
+async function reconcileRunInCommunityGoals(db, { uid, runId, fieldValue }) {
+  if (!uid || !runId) return 0;
+  const sourceRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("runs")
+    .doc(runId);
+  const source = await sourceRef.get();
+  if (!source.exists) return 0;
+  const data = source.data() || {};
+  const meters = communityGoalMeters(data);
+  const credits = await markers(db, uid).where("runId", "==", runId).get();
+  if (credits.empty) {
+    return creditRunToCommunityGoals(db, {
+      uid,
+      runId,
+      data,
+      activityDateKey: sourceActivityDateKey(data),
+      sourceRef,
+      fieldValue,
+    });
+  }
+  let changed = 0;
+  const failed = [];
+  for (const doc of credits.docs) {
+    const challengeId = (doc.data() || {}).challengeId;
+    if (typeof challengeId !== "string" || !challengeId) continue;
+    try {
+      const done =
+        meters > 0
+          ? await adjustOne(db, doc.ref, challengeId, uid, meters, fieldValue)
+          : await reverseOne(db, doc.ref, challengeId, uid, fieldValue);
+      if (done) changed += 1;
+    } catch (err) {
+      failed.push(challengeId);
+      console.error(
+        `communityGoal: correction failed for ${uid}/${runId} in ${challengeId}:`,
+        err.message
+      );
+    }
+  }
+  if (failed.length > 0) {
+    throw new Error(
+      `communityGoal: ${failed.length} goal(s) not corrected for ${uid}/${runId}: ${failed.join(", ")}`
+    );
+  }
+  return changed;
+}
+
+/** One goal's credit for a run moved to `meters`: the marker, the
+ *  person's tally and the collective total, by the same difference. */
+async function adjustOne(db, marker, challengeId, uid, meters, fieldValue) {
+  const tally = tallyRef(db, uid, challengeId);
+  const challengeRef = db.collection("challenges").doc(challengeId);
+  return db.runTransaction(async (tx) => {
+    const [markerSnap, tallySnap, challengeSnap] = await Promise.all([
+      tx.get(marker),
+      tx.get(tally),
+      tx.get(challengeRef),
+    ]);
+    if (!markerSnap.exists) return false; // taken back meanwhile
+    const before = Math.max(
+      0,
+      Math.round(Number(markerSnap.data().meters) || 0)
+    );
+    const delta = meters - before;
+    if (delta === 0) return false; // already true: a repeated delivery
+    tx.update(marker, { meters });
+    if (tallySnap.exists)
+      tx.update(tally, {
+        meters: Math.max(0, (Number(tallySnap.data().meters) || 0) + delta),
+      });
+    if (challengeSnap.exists)
+      tx.update(challengeRef, {
+        collectiveMeters: fieldValue.increment(delta),
       });
     return true;
   });
@@ -347,5 +442,6 @@ module.exports = {
   communityGoalMeters,
   creditRunToCommunityGoals,
   reverseRunFromCommunityGoals,
+  reconcileRunInCommunityGoals,
   backfillCommunityGoal,
 };

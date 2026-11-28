@@ -43,6 +43,7 @@ const launchMilestones = require("./lib/launchMilestones");
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const runRename = require("./lib/runRename");
+const runCorrections = require("./lib/runCorrections");
 const followRemoval = require("./lib/followRemoval");
 const followBackfill = require("./lib/followBackfill");
 const discoveryHidden = require("./lib/discoveryHidden");
@@ -829,8 +830,7 @@ exports.completeOnboarding = functions
       // Share usage analytics turned off in setup, before the account
       // (the agreement's Turn off), outside profileData as the email
       // opt-in is (lib/setupAnalyticsChoice.js).
-      const setupAnalytics =
-        setupAnalyticsChoice.readSetupUsageAnalytics(data);
+      const setupAnalytics = setupAnalyticsChoice.readSetupUsageAnalytics(data);
       if (setupAnalytics.error) {
         throw new functions.https.HttpsError(
           "invalid-argument",
@@ -6573,6 +6573,52 @@ exports.onRunUpdated = functions
         runId,
         nowMs: eventTimeMs(context),
       });
+    // A run whose track changed (a crop on its page) has every credit read
+    // from its distance made to match it (lib/runCorrections), and its
+    // segment efforts matched again from the trace it has now. Each step
+    // reads the current documents and is marker-guarded, so a retry or a
+    // late delivery corrects once; each runs whatever happens to the
+    // others, and a failure fails the event so it is delivered again.
+    const before = change.before.data() || {};
+    if (runCorrections.runTrackMayHaveChanged(before, change.after.data())) {
+      const steps = triggerSteps(`onRunUpdated ${uid}/${runId}`);
+      const fieldValue = admin.firestore.FieldValue;
+      await steps.run("lifetime distance", () =>
+        runCorrections.reconcileRunLifetimeDistance(db, uid, runId, {
+          fallbackApplied: runCorrections.lifetimeMetres(before),
+          fieldValue,
+        })
+      );
+      await steps.run("challenges", () =>
+        runCorrections.reconcileRunChallenges(db, uid, runId, {
+          applyFastestEffort: applyFastestEffortToChallenge,
+          fieldValue,
+        })
+      );
+      await steps.run("community goal", () =>
+        communityGoal.reconcileRunInCommunityGoals(db, {
+          uid,
+          runId,
+          fieldValue,
+        })
+      );
+      await steps.run("segments", async () => {
+        const nowMs = eventTimeMs(context);
+        await segments.removeRunEfforts(db, { uid, runId, nowMs });
+        const current = await change.after.ref.get();
+        if (current.exists)
+          await segments.matchRunToSegments(db, {
+            uid,
+            runId,
+            data: current.data(),
+            nowMs,
+          });
+      });
+      await steps.run("post", () =>
+        runCorrections.syncSharedRunFigures(db, uid, runId, { fieldValue })
+      );
+      steps.settle();
+    }
     return null;
   });
 

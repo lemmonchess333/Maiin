@@ -157,6 +157,30 @@ efforts; only production shows how long the real trigger takes.
       finish: no segment rows until it syncs, then they come as on a
       connection.
 
+## A cropped run, and only runs imported (training audit fixes, 2026-11-28)
+
+Cropping a run on its page recomputes everything read from its track: its
+distance, time, splits and laps on the phone, its shoe's kilometres in the
+same transaction (`runCropSave.ts`, which needs the server, so a crop made
+offline fails and says so), and on the server its challenge progress,
+community-goal credit, lifetime distance, segment efforts and post figures
+(`onRunUpdated`, `functions/lib/runCorrections.js`). Its heart-rate summary
+is removed, as its readings never left the phone. The GPX and TCX import
+refuses another sport and a track past 12 m/s for a minute
+(`gpxImport.ts`). The unit and trigger tests drive all of it on the fakes;
+only a phone shows the Files picker and the deployed trigger.
+
+- [ ] **A crop on a phone.** Crop the last kilometre off a shared run with a
+      shoe and a heart rate, on a connection. Passing: the run's page shows
+      the new distance, its laps recomputed and no heart-rate card; the
+      shoe's kilometres drop by the same amount in Settings → Shoes; within
+      a minute the run's post in the feed shows the new distance, and a km
+      challenge you are in shows the lower total. In airplane mode the crop
+      says it couldn't be saved.
+- [ ] **A ride from the Files picker.** In Settings → Account → Import, pick
+      a Strava or Garmin GPX ride. Passing: "This file is a bike ride. Only
+      runs can be imported." and no run saved; a GPX run imports as before.
+
 ## The health-details agreement, in setup and once before the app (Priv1 call 1, 2026-11-21)
 
 Setup asks for the agreement to store health details on its own screen

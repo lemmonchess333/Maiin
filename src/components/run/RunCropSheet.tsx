@@ -1,12 +1,11 @@
 import { useId, useMemo, useState } from "react";
-import { doc } from "firebase/firestore";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RangeInput } from "@/components/ui/RangeInput";
-import { db } from "@/lib/firebase";
-import { updateDocGuarded } from "@/lib/firestoreWrite";
 import { cropRunTrace } from "@/lib/runCrop";
+import { saveCroppedRun } from "@/lib/runCropSave";
+import type { RunLapSplit } from "@/lib/runLaps";
 import { metresAlong } from "@/lib/segments";
 import { distanceLabel2, nearDistanceLabel, paceMinSec } from "@/lib/runLabels";
 import { paceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
@@ -24,6 +23,12 @@ interface RunCropSheetProps {
   points: readonly GPSPoint[];
   weightKg: number;
   unit: DistanceUnit;
+  /** The laps the run saved, which the crop recomputes. */
+  lapSplits?: readonly RunLapSplit[];
+  /** When the run's clock started, ms: the laps count from it. */
+  recordingStartedAtMs?: number | null;
+  /** The run saved a heart-rate summary, which a crop removes. */
+  hasHeartRate?: boolean;
   onCropped: () => void;
 }
 
@@ -35,6 +40,9 @@ export default function RunCropSheet({
   points,
   weightKg,
   unit,
+  lapSplits,
+  recordingStartedAtMs,
+  hasHeartRate = false,
   onCropped,
 }: RunCropSheetProps) {
   const startId = useId();
@@ -48,8 +56,19 @@ export default function RunCropSheet({
   const clampedEnd = Math.max(clampedStart + 1, Math.min(endIndex, last));
   const along = useMemo(() => metresAlong(points), [points]);
   const preview = useMemo(
-    () => cropRunTrace(points, clampedStart, clampedEnd, weightKg),
-    [points, clampedStart, clampedEnd, weightKg]
+    () =>
+      cropRunTrace(points, clampedStart, clampedEnd, weightKg, {
+        lapSplits,
+        recordingStartedAtMs,
+      }),
+    [
+      points,
+      clampedStart,
+      clampedEnd,
+      weightKg,
+      lapSplits,
+      recordingStartedAtMs,
+    ]
   );
 
   const unchanged = clampedStart === 0 && clampedEnd === last;
@@ -59,17 +78,8 @@ export default function RunCropSheet({
     if (!preview.ok || unchanged || saving) return;
     setSaving(true);
     try {
-      await updateDocGuarded(doc(db, "users", uid, "runs", runId), {
-        points: preview.data.points,
-        distance: preview.data.distance,
-        duration: preview.data.duration,
-        avgPace: preview.data.avgPace,
-        splits: preview.data.splits,
-        elevationGain: preview.data.elevationGain,
-        calories: preview.data.calories,
-        bestEfforts: preview.data.bestEfforts,
-        routePreview: preview.data.routePreview,
-      });
+      // The run and its shoe's distance, in one transaction (runCropSave).
+      await saveCroppedRun(uid, runId, preview.data);
       haptic("light");
       toast.success("Route cropped");
       onOpenChange(false);
@@ -89,7 +99,7 @@ export default function RunCropSheet({
         if (!saving) onOpenChange(next);
       }}
       title="Crop route"
-      description="Trim extra GPS points from the start or end of this run. Splits, pace, and distance recalculate automatically."
+      description="Trim extra GPS points from the start or end of this run. Splits, laps, pace, and distance recalculate automatically."
     >
       <div className="space-y-4 px-4">
         <div className="space-y-3">
@@ -176,6 +186,13 @@ export default function RunCropSheet({
             </p>
           )}
         </Card>
+
+        {hasHeartRate && (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Cropping removes this run’s heart rate. Only its summary was kept,
+            and a summary can’t be cropped.
+          </p>
+        )}
 
         <div className="space-y-2">
           <Button
