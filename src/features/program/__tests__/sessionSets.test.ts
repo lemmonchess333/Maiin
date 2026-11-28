@@ -8,6 +8,8 @@ import {
   type SessionRead,
 } from "../sessionSets";
 import { applySessionSets } from "../programEngine";
+import { effortCueFor } from "../effortCue";
+import { loadGridFor } from "../loadSteps";
 import type { ProgramExercise } from "../programTypes";
 
 const done = (
@@ -531,6 +533,85 @@ describe("RPE autoregulation — final push-set exemption and re-climb gate", ()
 
     const next = applySessionSets(curl, sets, false);
     expect(next.reps).toBe(11);
+  });
+
+  /* Lift4 STATUS 2026-11-28 (owner): clause (6) gives way to clause (5).
+     Every set at its target, effort 10 on the last set only, as the push
+     cue invites: the weight goes up a step and the reps go back to the
+     bottom of the range. The tests around this one pin the reps climbing;
+     these pin the step itself, which a print showed frozen for six
+     sessions before #3590. */
+  it("puts the weight up when every set is at the top of the range and only the last set is at effort 10", () => {
+    const curl = makeEx({ reps: 12 });
+    const next = applySessionSets(
+      curl,
+      read([
+        done(12, 12, "working", 8),
+        done(12, 12, "working", 8),
+        done(12, 12, "working", 10),
+      ]),
+      false
+    );
+    expect(next.weight).toBeGreaterThan(12);
+    expect(next.weight).toBe(loadGridFor("db-curl", false).above(12));
+    expect(next.reps).toBe(10);
+  });
+
+  it("walks a machine lift up its range, then up its stack, with effort 10 on every last set", () => {
+    let pulldown = makeEx({
+      name: "Lat Pulldown",
+      exerciseId: "lat-pulldown",
+      movementCategory: "vertical_pull",
+      reps: 8,
+      baseReps: 8,
+      repRangeMax: 12,
+      weight: 45,
+      lastSuccessfulWeight: 45,
+      lastAttemptedWeight: 45,
+    });
+    // The lift the screen tells to go to the limit on its last set.
+    expect(
+      effortCueFor(pulldown, { isLastSet: true, deloadWeek: false })?.kind
+    ).toBe("push");
+    const seen: string[] = [];
+    for (let session = 0; session < 6; session += 1) {
+      const { weight, reps } = pulldown;
+      seen.push(`${String(weight)} x ${String(reps)}`);
+      pulldown = applySessionSets(
+        pulldown,
+        read([
+          done(weight, reps, "working", 8),
+          done(weight, reps, "working", 8),
+          done(weight, reps, "working", 10),
+        ]),
+        false
+      );
+    }
+    const step = loadGridFor("lat-pulldown", false).above(45);
+    expect(step).toBeGreaterThan(45);
+    expect(seen).toEqual([
+      "45 x 8",
+      "45 x 9",
+      "45 x 10",
+      "45 x 11",
+      "45 x 12",
+      `${String(step)} x 8`,
+    ]);
+  });
+
+  it("still holds a lift with the push cue when every set, the last included, is at 9.5", () => {
+    const curl = makeEx({ reps: 12 });
+    const next = applySessionSets(
+      curl,
+      read([
+        done(12, 12, "working", 9.5),
+        done(12, 12, "working", 9.5),
+        done(12, 12, "working", 9.5),
+      ]),
+      false
+    );
+    expect(next.weight).toBe(12);
+    expect(next.reps).toBe(12);
   });
 
   it("still holds an isolation when an earlier non-final set redlines at RPE 9.5+", () => {
