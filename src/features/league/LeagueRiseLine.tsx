@@ -45,7 +45,7 @@ export default function LeagueRiseLine({
       to="/league"
       aria-label={`${tierName(rise.tier)} league: ${line}. See the league`}
       className={cn(
-        cardClasses({ padded: false }),
+        cardClasses({ tone: "flat", padded: false }),
         "flex min-h-[56px] items-center gap-3 px-4 py-2 transition-transform active:scale-[0.99]",
         className
       )}

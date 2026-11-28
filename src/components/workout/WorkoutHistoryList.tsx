@@ -20,7 +20,7 @@ export default function WorkoutHistoryList({
   if (workouts.length === 0) return null;
 
   return (
-    <div className="mt-3 rounded-xl bg-card card-shadow p-3">
+    <div className="mt-3 rounded-xl bg-card surface-flat p-3">
       <Button
         variant="ghost"
         fullWidth

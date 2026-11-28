@@ -212,8 +212,13 @@
   box-shadow: var(--ds-shadow-card);
 }
 
+/* A secondary card's plane (DESIGN_GUIDE §14s rule 1): the card's step
+   and a hairline round it, with no lift in either theme, and on dark no
+   lit top edge: that is the hero's alone (owner, 28 November 2026). One
+   token, `--ds-shadow-flat`, drawn through Tailwind's shadow variable so
+   a focus ring on the same element is drawn with it. */
 @utility surface-flat {
-  @apply border border-border/60 shadow-none dark:border-transparent dark:shadow-[var(--ds-shadow-card)];
+  @apply shadow-[var(--ds-shadow-flat)];
 }
 
 /* A chip's or a pill button's lit edge, and a progress track cut into its

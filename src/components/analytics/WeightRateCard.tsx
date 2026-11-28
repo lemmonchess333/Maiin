@@ -111,7 +111,7 @@ export default function WeightRateCard({
     : null;
 
   return (
-    <Card as="section" aria-label="Your rate" className="space-y-4">
+    <Card as="section" tone="flat" aria-label="Your rate" className="space-y-4">
       <div>
         <h2 className="text-base font-bold text-foreground">Your rate</h2>
         <p className="text-sm text-muted-foreground">From your trend weight.</p>

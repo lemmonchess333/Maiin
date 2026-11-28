@@ -200,7 +200,7 @@ function LiftPRList({
   const hiddenCount = prs.length - visible.length;
 
   return (
-    <div className="rounded-2xl bg-card overflow-hidden card-shadow">
+    <div className="rounded-2xl bg-card overflow-hidden surface-flat">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-achievement" />
         <h3 className="text-base font-bold text-foreground flex-1">{title}</h3>

@@ -908,7 +908,7 @@ function ActivityCard({
        card's width in em, so they follow the text size as well as the
        screen. At double text a 393px phone's card is 11em wide, and rows
        sized for 22em squeezed the author's name to nothing. */
-    <div className="@container bg-card rounded-2xl overflow-hidden card-shadow">
+    <div className="@container bg-card rounded-2xl overflow-hidden surface-flat">
       {/* Hybrid card: map on top (shorter), then divider, then workout
           content. Its height in rem, as the run card's: the numeral under
           the route grows with the text, and a fixed 120px left the route

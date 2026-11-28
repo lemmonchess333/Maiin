@@ -1113,6 +1113,7 @@ export default function CirclesSection({
         <div
           className={cardClasses({
             size: "compact",
+            tone: "flat",
             padded: false,
             className: "overflow-hidden",
           })}

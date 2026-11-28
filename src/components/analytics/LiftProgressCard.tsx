@@ -72,7 +72,12 @@ export default function LiftProgressCard({
   const reading = readingText ? { text: readingText, waiting: false } : null;
 
   return (
-    <Card as="section" aria-label="Your lifts" className="space-y-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-label="Your lifts"
+      className="space-y-3"
+    >
       <div>
         <h2 className="text-base font-bold text-foreground">Your lifts</h2>
         <p className="text-sm text-muted-foreground">

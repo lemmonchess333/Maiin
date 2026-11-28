@@ -368,6 +368,7 @@ export default function TrainingHistory() {
           <Card
             padded={false}
             size="compact"
+            tone="flat"
             className="p-[12px] space-y-4"
             aria-hidden="true"
           >
@@ -396,6 +397,7 @@ export default function TrainingHistory() {
                   <Card
                     padded={false}
                     size="compact"
+                    tone="flat"
                     className="overflow-hidden @container"
                   >
                     <ul className="divide-y divide-border/50">

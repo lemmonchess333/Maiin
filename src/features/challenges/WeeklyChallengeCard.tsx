@@ -171,7 +171,7 @@ export default function WeeklyChallengeCard({
       };
 
   return (
-    <div className="rounded-2xl bg-card border border-border/50 dark:border-0 card-shadow overflow-hidden">
+    <div className="rounded-2xl bg-card surface-flat overflow-hidden">
       {medal && weekly && (
         <ChallengeMedalBand
           challenge={weekly}

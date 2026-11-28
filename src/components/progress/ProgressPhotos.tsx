@@ -170,7 +170,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       className="space-y-2"
     >
       <SectionHeading action={compareAction}>Progress photos</SectionHeading>
-      <Card className="space-y-3">
+      <Card tone="flat" className="space-y-3">
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <Lock aria-hidden className="mt-0.5 size-3.5 shrink-0" />
           Private to your account. Encrypted on this device before upload and

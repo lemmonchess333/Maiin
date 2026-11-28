@@ -51,6 +51,7 @@ export default function PersonalTargetCard({
   return (
     <Card
       as="section"
+      tone="flat"
       aria-labelledby="personal-target-heading"
       className="mt-3"
     >

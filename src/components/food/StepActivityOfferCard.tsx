@@ -39,7 +39,12 @@ export default function StepActivityOfferCard({
     }
   };
   return (
-    <Card as="section" aria-labelledby="step-offer-heading" className="mt-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-labelledby="step-offer-heading"
+      className="mt-3"
+    >
       <h3
         id="step-offer-heading"
         className="text-sm font-semibold text-foreground text-pretty"

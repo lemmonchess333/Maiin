@@ -106,7 +106,7 @@ export default function SpacePostCard({
   };
 
   return (
-    <article className="rounded-2xl bg-card card-shadow overflow-hidden">
+    <article className="rounded-2xl bg-card surface-flat overflow-hidden">
       {/* Attached-session art: a full-bleed top panel on the card's own
           flat surface, ActivityCard's hero grammar. */}
       {isRunAttach && activity && (

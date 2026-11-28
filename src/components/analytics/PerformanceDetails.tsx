@@ -81,7 +81,7 @@ function ScoreCard({
   // A change is noise until the baseline forms, and a zero is not a gain.
   const showDelta = !establishing && delta !== null && delta !== 0;
   return (
-    <Card as="section" aria-label="Your score">
+    <Card as="section" tone="flat" aria-label="Your score">
       {/* The words keep at least 9em beside the ring and go under it
           when they cannot, rather than one word to a line at larger
           text. */}
