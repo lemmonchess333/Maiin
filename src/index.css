@@ -212,10 +212,11 @@
   box-shadow: var(--ds-shadow-card);
 }
 
-/* A secondary card's plane (DESIGN_GUIDE §14s rule 1): flat on light, a
-   hairline and no lift; on dark the card's lit edge, as every dark card
-   has (§14o). One token, `--ds-shadow-flat`, drawn through Tailwind's
-   shadow variable so a focus ring on the same element is drawn with it. */
+/* A secondary card's plane (DESIGN_GUIDE §14s rule 1): the card's step
+   and a hairline round it, with no lift in either theme, and on dark no
+   lit top edge: that is the hero's alone (owner, 28 November 2026). One
+   token, `--ds-shadow-flat`, drawn through Tailwind's shadow variable so
+   a focus ring on the same element is drawn with it. */
 @utility surface-flat {
   @apply shadow-[var(--ds-shadow-flat)];
 }
