@@ -1,7 +1,7 @@
 /**
  * Saving a cropped run: the run's figures and its shoe's distance in one
  * transaction, so a shoe never keeps kilometres a run no longer has (the
- * 28 November audit, #3593: a crop left the shoe's mileage as it was).
+ * 28 November audit: a crop left the shoe's mileage as it was).
  *
  * Read in the transaction, not from the page's copy: the run's distance
  * before the crop, its shoe and that shoe's total, so two phones cropping

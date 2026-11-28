@@ -5,7 +5,7 @@
  * community-goal credit and its post's figures. Its segment efforts are
  * matched again by onRunUpdated through lib/segments.
  *
- * The track changes when the runner crops the run on its page (#3593,
+ * The track changes when the runner crops the run on its page (
  * RunCropSheet), which rewrote its distance, time and best efforts while
  * onRunUpdated reconciled only what reads the session's day (participation
  * goals, leagues, Space weeks): every credit read from the distance kept
