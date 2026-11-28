@@ -96,6 +96,11 @@ import {
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
+import {
+  droppedRaceNotice,
+  raceLinkAfterDistance,
+  type DroppedRace,
+} from "@/lib/raceLink";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -104,6 +109,7 @@ import {
   layoutWithSport,
   runLevelStart,
   runningAdded,
+  RACE_PLAN_ENDS_ON_SAVE,
   sportChange,
   sportChangeRefusal,
   starterOfferedTo,
@@ -231,6 +237,13 @@ interface RunPlanSettingsProps {
    *  ultra plans are Pro after their first week (Q85). Absent reads as
    *  Pro, so nothing is said. */
   isPro?: boolean;
+}
+
+/** Whether a plan over `distance` may be bound to the catalogue race
+ *  `spaceId`: the race is one, and its distance is the plan's. */
+function bindsRace(spaceId: string, distance: RaceDistance): boolean {
+  const event = spaceId ? spaceDef(spaceId)?.event : undefined;
+  return !!event && raceEventPlanDistance(event) === distance;
 }
 
 /** Seconds → the string the goal-time input round-trips ("24:30",
@@ -455,13 +468,20 @@ export default function RunPlanSettings({
     !timePlan &&
     raceTimeStr.trim() !== "" &&
     raceTimeParsed === null;
-  /** The catalogue binding (Q4). Cleared by any manual distance/date
-   *  edit — the goal is then no longer that event. */
+  /** The catalogue binding (Q4). Cleared by a manual date edit, and with
+   *  the race's name by a distance that is not the race's — the goal is
+   *  then no longer that event. */
   const [raceEventSpaceId, setRaceEventSpaceId] = useState<string>(
     deepLink
       ? deepLink.spaceId
       : (storedDraft?.raceEventSpaceId ?? saved.raceEventSpaceId)
   );
+  /** The distance the race's name and binding belong to, and the race a
+   *  distance change took off the plan (`raceLink.ts`): a 50K plan was
+   *  saved named after a half marathon (owner, 23 November 2026). */
+  const [raceLinkDistance, setRaceLinkDistance] =
+    useState<RaceDistance>(raceDistance);
+  const [droppedRace, setDroppedRace] = useState<DroppedRace | null>(null);
   /** Run9: a race entered, or the distance run on your
    *  own. Nothing is chosen for a new goal; a race picked from the
    *  catalogue, or arrived at from its Space, is one entered. */
@@ -772,7 +792,33 @@ export default function RunPlanSettings({
 
   function handleDistanceChange(d: RaceDistance): void {
     setRaceDistance(d);
-    setRaceEventSpaceId("");
+    // A distance that is not the race's takes the race off the plan, its
+    // name and its catalogue binding, and a return to it puts the race
+    // back (`raceLinkAfterDistance`).
+    const next = raceLinkAfterDistance(
+      {
+        link: {
+          name: raceEventName,
+          spaceId: raceEventSpaceId,
+          distance: raceLinkDistance,
+        },
+        dropped: droppedRace,
+      },
+      d,
+      raceTargetDate
+    );
+    setRaceEventName(next.link.name);
+    setRaceEventSpaceId(next.link.spaceId);
+    setRaceLinkDistance(next.link.distance);
+    setDroppedRace(next.dropped);
+  }
+
+  function handleEventNameChange(v: string): void {
+    setRaceEventName(v);
+    // A name typed belongs to the distance it is typed at, and replaces
+    // the race a distance change took off.
+    setRaceLinkDistance(raceDistance);
+    if (v.trim()) setDroppedRace(null);
   }
 
   function handleTargetDateChange(v: string): void {
@@ -787,6 +833,8 @@ export default function RunPlanSettings({
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);
     setRaceEventSpaceId(def.id);
+    setRaceLinkDistance(distance);
+    setDroppedRace(null);
     setRaceEntry("race");
   }
 
@@ -919,9 +967,14 @@ export default function RunPlanSettings({
       }
 
       if (runMode === "race_prep") {
-        if (raceEventSpaceId && plan.profileUpdates.raceGoal) {
+        if (
+          bindsRace(raceEventSpaceId, raceDistance) &&
+          plan.profileUpdates.raceGoal
+        ) {
           // buildPlan's raceGoal input carries no catalogue binding (Q4) —
           // re-attach it so a picker-sourced goal keeps its space link.
+          // Only to a race run over the plan's distance: a binding counts
+          // the goal in that race's plan group (`raceCohorts`).
           plan.profileUpdates.raceGoal = {
             ...plan.profileUpdates.raceGoal,
             eventSpaceId: raceEventSpaceId,
@@ -1019,6 +1072,14 @@ export default function RunPlanSettings({
      add. A race goal is said up front, where the goal is chosen. */
   const [stopTried, setStopTried] = useState(false);
   const stopHeld = stopRefused?.refusal === "last_sport" ? null : stopRefused;
+  /* What the held line says is true of the goal on screen: once No race,
+     Plan no race or the 30-minute goal is chosen over a saved race plan,
+     "choose No race first" is done, and saving is what is left. Stop
+     running stays held until the race plan is saved away. */
+  const stopHeldLine =
+    stopHeld?.refusal === "race_plan" && runMode !== "race_prep"
+      ? RACE_PLAN_ENDS_ON_SAVE
+      : (stopHeld?.sentence ?? null);
   /** The goals that end with the running, as the confirmation says them. */
   const stopEnds = [
     starterGoalIsActive(profile.starterGoal)
@@ -1282,7 +1343,7 @@ export default function RunPlanSettings({
                 state={plannerState}
                 onDistanceChange={handleDistanceChange}
                 onTargetDateChange={handleTargetDateChange}
-                onEventNameChange={setRaceEventName}
+                onEventNameChange={handleEventNameChange}
                 upcomingRaces={upcomingRaces}
                 selectedEventSpaceId={raceEventSpaceId}
                 onPickRace={handlePickRace}
@@ -1291,6 +1352,9 @@ export default function RunPlanSettings({
                 climbText={raceClimbText}
                 onClimbTextChange={setRaceClimbText}
                 unit={unit}
+                distanceNotice={
+                  raceEntry === "own" ? null : droppedRaceNotice(droppedRace)
+                }
               />
             </div>
           )}
@@ -1512,9 +1576,7 @@ export default function RunPlanSettings({
       {/* ── Stop running (TrainWk1 step 6; Q33's pair) ── */}
       {!addingRunning &&
         (stopHeld ? (
-          <p className="px-1 text-xs text-muted-foreground">
-            {stopHeld.sentence}
-          </p>
+          <p className="px-1 text-xs text-muted-foreground">{stopHeldLine}</p>
         ) : (
           <SettingsGroup
             footer={
@@ -1558,7 +1620,15 @@ export default function RunPlanSettings({
               Couldn’t load your programme. Reopen this page to try again.
             </p>
           )}
+          {/* Keyed by the goal chosen, so a new goal draws a new button.
+              The iPhone app kept painting "Save race plan" in this frosted
+              sticky bar after No race or Plan, no race was chosen, though
+              the label had changed (owner's recording, 23 November 2026):
+              WebKit can leave a backdrop-filtered layer's old text on
+              screen. Not keyed by the label, which would drop focus from
+              the button as it turns to "Saving…". */}
           <Button
+            key={runMode}
             variant="sport"
             fullWidth
             onClick={invalid ? revealInvalidField : handleSave}

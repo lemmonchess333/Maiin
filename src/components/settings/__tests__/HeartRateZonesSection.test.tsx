@@ -17,7 +17,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 const mockHeartRate = {
   maxHr: 190,
-  maxHrSource: "estimated" as "estimated" | "measured",
+  maxHrSource: "estimate" as "estimate" | "measured" | "unknown",
   zones: [] as unknown[],
 };
 vi.mock("@/hooks/useHeartRate", () => ({
@@ -49,7 +49,7 @@ function typeMaxHr(v: string) {
 
 beforeEach(() => {
   mockHeartRate.maxHr = 190;
-  mockHeartRate.maxHrSource = "estimated";
+  mockHeartRate.maxHrSource = "estimate";
 });
 
 describe("HeartRateZonesSection", () => {
@@ -60,6 +60,23 @@ describe("HeartRateZonesSection", () => {
     renderSection();
     expect(screen.getByText(/190/)).toBeInTheDocument();
     expect(screen.getByText(/estimated from your age/i)).toBeInTheDocument();
+  });
+
+  it("suggests the estimate it shows, not a number of its own", () => {
+    // A fixed "188" sat under "Max heart rate 207 bpm" (owner, 23 Nov 2026).
+    mockHeartRate.maxHr = 183;
+    renderSection();
+    expect(screen.getByText("183")).toBeInTheDocument();
+    const input = typeMaxHr("");
+    expect(input).toHaveAttribute("placeholder", "183");
+  });
+
+  it("suggests no number when the max is unknown", () => {
+    mockHeartRate.maxHr = 0;
+    mockHeartRate.maxHrSource = "unknown";
+    renderSection();
+    fireEvent.click(screen.getByRole("button", { name: /set max hr/i }));
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("placeholder");
   });
 
   it("labels a measured max as measured", () => {

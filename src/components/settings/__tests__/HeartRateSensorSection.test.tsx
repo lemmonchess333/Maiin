@@ -211,6 +211,109 @@ describe("HeartRateSensorSection on the iPhone", () => {
     ).toBeDisabled();
   });
 
+  /* The owner's recording (23 November 2026): "Looking for sensors…" and
+     Stop showed under iOS's Bluetooth question, and stayed beside
+     "Bluetooth is off" once it was answered with the radio off in Control
+     Center. A search is not looking until Tropos may use Bluetooth and the
+     radio is on, and it ends the moment either stops being true. */
+  const NOT_ASKED: HeartRateSensorStatus = {
+    ...READY,
+    authorization: "notDetermined",
+    bluetooth: "unknown",
+  };
+
+  async function tapPair() {
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Pair a sensor" })
+    );
+    await waitFor(() => expect(H.onFound).not.toBeNull());
+  }
+
+  it("is not looking while iOS asks for Bluetooth", async () => {
+    H.status = NOT_ASKED;
+    render(<HeartRateSensorSection />);
+    await tapPair();
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Stop" })
+    ).not.toBeInTheDocument();
+    // The tap is answered: the button waits for the question.
+    expect(
+      screen.getByRole("button", { name: "Pair a sensor" })
+    ).toHaveAttribute("aria-busy", "true");
+    // The radio is still being read after Allow: still not looking.
+    act(() => H.onStatus?.({ ...NOT_ASKED, authorization: "allowed" }));
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    act(() =>
+      H.onStatus?.({
+        ...NOT_ASKED,
+        authorization: "allowed",
+        bluetooth: "resetting",
+      })
+    );
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    act(() => H.onStatus?.(READY));
+    expect(screen.getByText("Looking for sensors…")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Stop" })).toBeVisible();
+  });
+
+  it("ends the search when Allow finds the radio off, and says only that", async () => {
+    H.status = NOT_ASKED;
+    render(<HeartRateSensorSection />);
+    await tapPair();
+    act(() =>
+      H.onStatus?.({ ...READY, bluetooth: "poweredOff", scanning: true })
+    );
+    expect(
+      screen.getByText(
+        "Bluetooth is off. Turn it on in Control Center to pair a sensor."
+      )
+    ).toBeVisible();
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Stop" })
+    ).not.toBeInTheDocument();
+    expect(H.stopScan).toHaveBeenCalledOnce();
+    // Turned on again, nothing searches by itself.
+    act(() => H.onStatus?.(READY));
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pair a sensor" })).toBeEnabled();
+  });
+
+  it("ends the search on Don't Allow and says how to allow it", async () => {
+    H.status = NOT_ASKED;
+    render(<HeartRateSensorSection />);
+    await tapPair();
+    // iOS's answer to Don't Allow: refused, and the radio unauthorized.
+    act(() =>
+      H.onStatus?.({
+        ...READY,
+        authorization: "denied",
+        bluetooth: "unauthorized",
+        scanning: true,
+      })
+    );
+    expect(screen.getByText("Bluetooth is off for Tropos")).toBeVisible();
+    expect(
+      screen.getByText(/Allow Bluetooth for Tropos in Settings/)
+    ).toBeVisible();
+    expect(
+      screen.queryByText(/Turn it on in Control Center/)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    expect(H.stopScan).toHaveBeenCalledOnce();
+  });
+
+  it("stops looking when the radio goes off mid-search", async () => {
+    render(<HeartRateSensorSection />);
+    await tapPair();
+    expect(await screen.findByText("Looking for sensors…")).toBeVisible();
+    act(() => H.onStatus?.({ ...READY, bluetooth: "poweredOff" }));
+    expect(screen.queryByText("Looking for sensors…")).not.toBeInTheDocument();
+    expect(H.stopScan).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/No sensor found/)).not.toBeInTheDocument();
+  });
+
   it("says an older app cannot pair one, once native has answered", async () => {
     H.status = { ...READY, available: false };
     render(<HeartRateSensorSection />);

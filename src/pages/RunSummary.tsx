@@ -151,11 +151,10 @@ import {
 } from "@/lib/heartRateSession";
 import {
   heartRateCoverageBand,
-  maxHrFromAge,
   summarizeHeartRate,
   type HeartRateSample,
 } from "@/lib/hrZones";
-import { profileAge } from "@/lib/age";
+import { profileMaxHr } from "@/lib/maxHeartRate";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
@@ -467,12 +466,12 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // The max the zones are drawn on: measured, else the age estimate
+  // (`profileMaxHr`, the one reading every zone in the app uses).
+  const { maxHr: profileMax } = profileMaxHr(profile);
   // In-memory only (cleared automatically on unmount) so Export GPX can still
   // emit Garmin gpxtpx:hr extensions after Save clears the session store.
   const capturedHeartRateSamplesRef = useRef<HeartRateSample[]>([]);
-  // The age the zones' estimate reads: from the year of birth, else an
-  // older account's age (App1, Q57).
-  const ageYears = profileAge(profile);
   useEffect(() => {
     // Any run with a session: the Watch reads outdoor runs, and a paired
     // Bluetooth sensor any run, the treadmill's too. With no readings the
@@ -484,9 +483,7 @@ export default function RunSummary() {
       .then(async ({ samples, activeIntervals }) => {
         if (!active) return;
         if (samples.length > 0) capturedHeartRateSamplesRef.current = samples;
-        const measuredMax = profile?.maxHeartRate ?? 0;
-        const maxHr =
-          measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
+        const maxHr = profileMax;
         const summary = summarizeHeartRate(
           samples,
           activeIntervals,
@@ -521,8 +518,7 @@ export default function RunSummary() {
     state?.elapsed,
     state?.points,
     state?.runConfig?.activityType,
-    profile?.maxHeartRate,
-    ageYears,
+    profileMax,
   ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
@@ -1382,9 +1378,7 @@ export default function RunSummary() {
           if (captured.samples.length > 0) {
             capturedHeartRateSamplesRef.current = captured.samples;
           }
-          const measuredMax = profile?.maxHeartRate ?? 0;
-          const maxHr =
-            measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
+          const maxHr = profileMax;
           const rawHeartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,

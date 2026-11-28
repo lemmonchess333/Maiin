@@ -35,6 +35,12 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/preloadTab", () => ({ preloadTab: vi.fn() }));
 /* reduced-motion ON keeps framer-motion deterministic under jsdom */
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
+/* Whether the phone's keyboard is up (`useOnScreenKeyboard`, tested on its
+   own); down unless a test puts it up. */
+const keyboard = vi.hoisted(() => ({ up: false }));
+vi.mock("@/hooks/useOnScreenKeyboard", () => ({
+  useOnScreenKeyboard: () => keyboard.up,
+}));
 
 function renderAt(path: string) {
   return render(
@@ -224,6 +230,26 @@ describe("Layout — where the tab bar is not", () => {
 
     renderAt("/settings");
     expect(nav()).toBeInTheDocument();
+  });
+
+  it("takes the tab bar away while the phone's keyboard is up, and puts it back", () => {
+    // The bar rode on the iPhone keyboard over the max heart rate field
+    // (owner's recording, 23 November 2026).
+    keyboard.up = true;
+    const nav = () =>
+      screen.queryByRole("navigation", { name: /main navigation/i });
+    const { unmount } = renderAt("/settings");
+    expect(nav()).toBeNull();
+    expect(document.documentElement.hasAttribute("data-keyboard-up")).toBe(
+      true
+    );
+    unmount();
+    keyboard.up = false;
+    renderAt("/settings");
+    expect(nav()).toBeInTheDocument();
+    expect(document.documentElement.hasAttribute("data-keyboard-up")).toBe(
+      false
+    );
   });
 });
 

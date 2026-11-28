@@ -1,6 +1,10 @@
 import type { ReactElement, ReactNode } from "react";
 import type { RaceDistance } from "@/features/program/programTypes";
-import { climbFieldNote, parseClimbField } from "@/lib/raceClimb";
+import {
+  climbFieldMaxLength,
+  climbFieldNote,
+  parseClimbField,
+} from "@/lib/raceClimb";
 import { elevationUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
 
 /**
@@ -44,6 +48,7 @@ export default function RaceClimbField({
           type="text"
           inputMode="numeric"
           autoComplete="off"
+          maxLength={climbFieldMaxLength(unit)}
           value={text}
           onChange={(e) => onTextChange(e.target.value)}
           aria-invalid={climbM === null}
