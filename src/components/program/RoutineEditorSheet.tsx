@@ -55,7 +55,7 @@ function buildRows(
 
 function summaryForRow(row: DraftRow, weightKg: number): string {
   const base = `${row.setCount}×${row.targetReps}`;
-  return weightKg > 0 ? `${base}×${loadIn(weightKg, "kg")}kg` : base;
+  return weightKg > 0 ? `${base}×${loadIn(weightKg, "kg")} kg` : base;
 }
 
 export default function RoutineEditorSheet({
@@ -196,7 +196,7 @@ export default function RoutineEditorSheet({
         title={routine ? "Edit routine" : "New routine"}
         description="Build a reusable lifting template with your own sets and targets."
       >
-        <div className="space-y-4">
+        <div className="space-y-4 px-4">
           <div className="space-y-2">
             <label
               htmlFor={nameId}
@@ -210,7 +210,7 @@ export default function RoutineEditorSheet({
               value={name}
               maxLength={60}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Upper Push, Hotel Dumbbells"
+              placeholder="e.g. Upper push, hotel dumbbells"
               className="ds-input w-full"
             />
           </div>
@@ -224,7 +224,7 @@ export default function RoutineEditorSheet({
               rows.map((row, idx) => (
                 <div
                   key={row.key}
-                  className="space-y-2 rounded-xl border border-border bg-card p-3"
+                  className="space-y-2 rounded-xl border border-border bg-card p-3 dark:border-transparent dark:card-shadow"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
