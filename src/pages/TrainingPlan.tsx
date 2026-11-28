@@ -512,6 +512,7 @@ export default function TrainingPlan() {
             <Card
               padded={false}
               size="compact"
+              tone="flat"
               className="overflow-hidden @container"
             >
               <ol className="divide-y divide-border">

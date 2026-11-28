@@ -18,7 +18,7 @@ export default function CircuitRecord({ circuit }: { circuit: SavedCircuit }) {
   return (
     <section aria-labelledby="circuit-moves" className="space-y-2">
       <SectionHeading id="circuit-moves">Moves</SectionHeading>
-      <Card padded={false} className="divide-y divide-border">
+      <Card padded={false} tone="flat" className="divide-y divide-border">
         {circuit.moves.map((move, index) => (
           <div
             key={`${move.exerciseId}-${index}`}

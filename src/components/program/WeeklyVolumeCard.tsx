@@ -124,7 +124,7 @@ export default function WeeklyVolumeCard({
       : `${lowCount} ${lowCount === 1 ? "muscle" : "muscles"} below target`;
 
   return (
-    <Card className="space-y-3 mt-3">
+    <Card tone="flat" className="space-y-3 mt-3">
       <button
         type="button"
         aria-expanded={expanded}

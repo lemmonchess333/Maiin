@@ -143,7 +143,7 @@ export default function SettingsHiddenPosts() {
         </p>
       ) : rows.length === 0 ? (
         !failed && (
-          <Card>
+          <Card tone="flat">
             <EmptyState
               compact
               icon={EyeOff}

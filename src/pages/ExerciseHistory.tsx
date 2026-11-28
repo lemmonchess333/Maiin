@@ -465,21 +465,24 @@ export default function ExerciseHistory() {
       />
 
       {/* Statistics belong to Progress; Form can render while history loads.
-          One tile per row under 15.5em of page (larger text, from 1.35x on
-          a 320px phone): a third of the page no longer held "Sessions" or
-          "101 kg". Wide-first. */}
+          Totals are one line of figures on the page, each with its unit on
+          the figure and its caption under it, not a tile each (§14r). The
+          caption comes first in the markup, so a screen reader says what
+          a figure counts before the figure. One to a row under 15.5em of
+          page (larger text, from 1.35x on a 320px phone): a third of the
+          page no longer held "Sessions" or "101 kg". Wide-first. */}
       {tab === "progress" && (
         <div className="@container">
-          <div className="grid grid-cols-3 gap-2 @max-[15.5em]:grid-cols-1">
-            <div className="p-3 rounded-xl bg-card card-shadow">
-              <SectionLabel>
+          <dl className="grid grid-cols-3 gap-x-4 gap-y-3 @max-[15.5em]:grid-cols-1">
+            <div className="flex flex-col-reverse">
+              <dt className="text-xs font-semibold text-muted-foreground mt-0.5">
                 {isTimed
                   ? "Longest hold"
                   : isBodyweight
                     ? "Max reps"
                     : "Best est. 1RM"}
-              </SectionLabel>
-              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
+              </dt>
+              <dd className="text-lg font-extrabold font-figure tabular-nums text-foreground">
                 {isTimed
                   ? headerStats.longestHold
                     ? `${headerStats.longestHold}s`
@@ -497,21 +500,25 @@ export default function ExerciseHistory() {
                     </span>
                   </>
                 )}
-              </p>
+              </dd>
             </div>
-            <div className="p-3 rounded-xl bg-card card-shadow">
-              <SectionLabel>Sessions</SectionLabel>
-              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
+            <div className="flex flex-col-reverse">
+              <dt className="text-xs font-semibold text-muted-foreground mt-0.5">
+                Sessions
+              </dt>
+              <dd className="text-lg font-extrabold font-figure tabular-nums text-foreground">
                 {headerStats.totalSessions}
-              </p>
+              </dd>
             </div>
-            <div className="p-3 rounded-xl bg-card card-shadow">
-              <SectionLabel>Total sets</SectionLabel>
-              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
+            <div className="flex flex-col-reverse">
+              <dt className="text-xs font-semibold text-muted-foreground mt-0.5">
+                Total sets
+              </dt>
+              <dd className="text-lg font-extrabold font-figure tabular-nums text-foreground">
                 {headerStats.totalSets}
-              </p>
+              </dd>
             </div>
-          </div>
+          </dl>
         </div>
       )}
 
@@ -529,7 +536,7 @@ export default function ExerciseHistory() {
           />
         </Suspense>
       ) : tab === "form" ? (
-        <div className="rounded-2xl bg-card p-4 card-shadow">
+        <div className="rounded-2xl bg-card p-4 surface-flat">
           <Suspense
             fallback={
               <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
@@ -550,7 +557,7 @@ export default function ExerciseHistory() {
         <>
           {/* ── Bests by reps ───────────────────────────────── */}
           {!isTimed && (
-            <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
+            <div className="@container rounded-2xl bg-card p-4 space-y-3 surface-flat">
               <div className="flex items-center gap-2">
                 <Trophy className="size-4 text-achievement" />
                 {/* One heading, and it is the accurate one. The weighted
@@ -620,13 +627,12 @@ export default function ExerciseHistory() {
 
           {/* ── Chart with metric toggle ────────────────────────────── */}
           {hasOnlyOneSession ? (
-            <div className="p-4 rounded-2xl bg-card text-center py-8 card-shadow">
-              <p className="text-sm text-muted-foreground">
-                Log more sessions to see progression
-              </p>
-            </div>
+            /* A sentence alone sits on the page, not in a card (§14r). */
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Log more sessions to see progression
+            </p>
           ) : (
-            <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
+            <div className="@container rounded-2xl bg-card p-4 space-y-3 surface-flat">
               {/* At larger text the switch drops under its label, and under
                   10.5em of card (double size) its options stack full width:
                   in a row they were wider than the screen. Wide-first. */}
@@ -669,7 +675,7 @@ export default function ExerciseHistory() {
           )}
 
           {/* ── Recent sessions list ────────────────────────────────── */}
-          <div className="rounded-2xl bg-card overflow-hidden card-shadow">
+          <div className="rounded-2xl bg-card overflow-hidden surface-flat">
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
               <h3 className="text-base font-bold text-foreground">
                 Recent sessions

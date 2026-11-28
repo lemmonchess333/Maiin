@@ -241,7 +241,7 @@ export default function MoveRunSheet({
                 </p>
               )}
               {source && option && (
-                <Card size="compact" className="space-y-3">
+                <Card size="compact" tone="flat" className="space-y-3">
                   <div>
                     <p className="text-xs text-muted-foreground">From</p>
                     <p className="text-sm font-semibold">

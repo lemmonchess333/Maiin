@@ -68,7 +68,7 @@ export default function CircuitPicker({
               <li
                 key={i}
                 aria-hidden="true"
-                className="h-[72px] rounded-xl bg-card card-shadow motion-safe:animate-pulse"
+                className="h-[72px] rounded-xl bg-card surface-flat motion-safe:animate-pulse"
               />
             ))}
           {(offers ?? []).map(({ circuit, last }) => (
@@ -77,7 +77,7 @@ export default function CircuitPicker({
                 variant="ghost"
                 fullWidth
                 onClick={() => onChoose(circuit)}
-                className="min-h-[56px] justify-start gap-[12px] bg-card p-[12px] text-left font-normal card-shadow hover:bg-card"
+                className="min-h-[56px] justify-start gap-[12px] bg-card p-[12px] text-left font-normal surface-flat hover:bg-card"
               >
                 <ExerciseThumb
                   exerciseId={circuit.moves[0]?.exerciseId ?? ""}

@@ -27,7 +27,7 @@ export default function RacePredictionResult({
   const words = racePredictionWords(result);
   const figure = "font-mono tabular-nums font-semibold";
   return (
-    <Card className={className}>
+    <Card tone="flat" className={className}>
       <p className="text-sm text-foreground">
         Tropos predicted <span className={figure}>{words.predicted}</span>. You
         ran <span className={figure}>{words.ran}</span>

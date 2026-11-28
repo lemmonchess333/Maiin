@@ -206,7 +206,12 @@ export default function Segment() {
       </Card>
 
       {page.efforts.length > 0 && (
-        <Card as="section" aria-labelledby={yoursId} className="space-y-1">
+        <Card
+          as="section"
+          tone="flat"
+          aria-labelledby={yoursId}
+          className="space-y-1"
+        >
           <SectionHeading id={yoursId} size="compact">
             Your efforts
           </SectionHeading>

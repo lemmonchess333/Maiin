@@ -284,7 +284,7 @@ export function PeriodSummarySkeleton() {
       role="status"
       aria-label="Loading"
       data-skeleton="period-summary"
-      className="bg-card card-shadow rounded-2xl p-4 space-y-4"
+      className="bg-card surface-flat rounded-2xl p-4 space-y-4"
     >
       <div>
         <LineBar text="text-h3 font-bold" className="w-32" />

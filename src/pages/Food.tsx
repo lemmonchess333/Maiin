@@ -2357,6 +2357,7 @@ export default function Food() {
            breakfast" ran 74px past the card. */
         <Card
           size="compact"
+          tone="flat"
           className="flex flex-wrap items-center gap-2"
           role="group"
           aria-labelledby={usualHeadingId}

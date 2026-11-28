@@ -142,7 +142,7 @@ export default function SettingsRecentlyDeleted() {
       {loading && sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : sorted.length === 0 ? (
-        <Card>
+        <Card tone="flat">
           <EmptyState
             compact
             icon={Utensils}
@@ -157,7 +157,7 @@ export default function SettingsRecentlyDeleted() {
             const deletedMs = deletedAtMs(meal);
             const relative = formatRelative(deletedMs);
             return (
-              <li key={meal.id} className="rounded-xl bg-card card-shadow p-3">
+              <li key={meal.id} className="rounded-xl bg-card surface-flat p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">

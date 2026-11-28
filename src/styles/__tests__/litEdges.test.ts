@@ -247,7 +247,7 @@ describe("the lit edge on dark surfaces (DS6, §14o)", () => {
         f.text.includes("bg-card")
     );
     expect(strip?.classes).toEqual(
-      expect.arrayContaining(["bg-card", "rounded-xl", "card-shadow"])
+      expect.arrayContaining(["bg-card", "rounded-xl", "surface-flat"])
     );
   });
 
@@ -276,5 +276,36 @@ describe("the lit edge on dark surfaces (DS6, §14o)", () => {
       );
       expect(excused.length, `${e.file}: ${e.why}`).toBeGreaterThan(0);
     }
+  });
+});
+
+/* The owner's call of 28 November 2026 (DESIGN_GUIDE §14o, §14s rule 1):
+   on dark a flat card keeps its step and a plain hairline, and the
+   hairline of light along the top is the hero's alone. Read from the
+   tokens, since one token draws every flat card. */
+describe("a flat card on dark has no lit top edge (owner, 28 November 2026)", () => {
+  const tokens = readFileSync("src/styles/tokens.css", "utf8");
+  const dark = tokens.slice(tokens.indexOf("\n.dark {"));
+  const value = (block: string, name: string) =>
+    new RegExp(`${name}:\\s*([^;]+);`).exec(block)?.[1].replace(/\s+/g, " ");
+
+  it("the flat token is a hairline round the card, with no light along its top", () => {
+    const flat = value(dark, "--ds-shadow-flat");
+    expect(flat).toBe("inset 0 0 0 1px hsl(var(--border) / 0.4)");
+    expect(flat).not.toMatch(/inset 0 1px 0/);
+    expect(flat).not.toMatch(/--ds-shadow-card/);
+  });
+
+  it("the hero's card keeps the light along its top (positive pin)", () => {
+    expect(value(dark, "--ds-shadow-card")).toMatch(
+      /^inset 0 1px 0 rgba\(255, 255, 255, 0\.08\)/
+    );
+  });
+
+  it("surface-flat draws the flat token and nothing else", () => {
+    const css = readFileSync("src/index.css", "utf8");
+    expect(css).toMatch(
+      /@utility surface-flat \{\s*@apply shadow-\[var\(--ds-shadow-flat\)\];\s*\}/
+    );
   });
 });

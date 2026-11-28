@@ -25,7 +25,7 @@ export default function EmptyWorkoutEntry() {
       <Link
         to={EMPTY_WORKOUT_PATH}
         onClick={() => haptic("light")}
-        className="flex min-h-[44px] items-center gap-[12px] rounded-xl bg-card p-[12px] card-shadow transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-h-[44px] items-center gap-[12px] rounded-xl bg-card p-[12px] surface-flat transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span
           className="size-[36px] shrink-0 rounded-lg flex items-center justify-center"

@@ -63,6 +63,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
     return (
       <div
         className={cardClasses({
+          tone: "flat",
           className: "flex flex-wrap items-center justify-between gap-3",
         })}
       >
@@ -86,7 +87,10 @@ export default function LeagueCard({ uid }: { uid: string }) {
 
   if (state.kind === "notJoined") {
     return (
-      <section aria-label="Weekly leagues" className={cardClasses()}>
+      <section
+        aria-label="Weekly leagues"
+        className={cardClasses({ tone: "flat" })}
+      >
         <LeagueJoin
           joined={state.joined}
           needed={state.needed}
@@ -105,6 +109,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
       <Link
         to="/league"
         className={cardClasses({
+          tone: "flat",
           className:
             "relative flex flex-wrap items-start gap-[12px] transition-transform active:scale-[0.99]",
         })}
@@ -151,7 +156,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
       to="/league"
       aria-label={`${tierName(tier)} league: ${ordinal(me.rank)} of ${ranked.length}, ${pointsLine(me.points)}, ${sessionsLine(me.done, me.planned)}. ${endsLine(weekKey)}. See the league`}
       className={cn(
-        cardClasses({ padded: false }),
+        cardClasses({ tone: "flat", padded: false }),
         "relative block overflow-hidden transition-transform active:scale-[0.99]"
       )}
       data-testid="league-card"

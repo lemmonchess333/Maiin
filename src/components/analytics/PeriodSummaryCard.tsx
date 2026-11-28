@@ -198,7 +198,7 @@ export default function PeriodSummaryCard({
   }
 
   return (
-    <Card as="section" aria-label={title} className="space-y-4">
+    <Card as="section" tone="flat" aria-label={title} className="space-y-4">
       <div>
         <h2 className="text-base font-bold text-foreground">{title}</h2>
         {/* The chart's figure against the range before, in a sentence,

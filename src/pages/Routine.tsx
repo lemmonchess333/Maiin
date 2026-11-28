@@ -290,7 +290,7 @@ export default function Routine() {
   }
 
   const templateSyncNotice = pendingTemplateSync ? (
-    <Card size="compact" className="space-y-3 text-left">
+    <Card size="compact" tone="flat" className="space-y-3 text-left">
       <div className="space-y-1">
         <p className="text-sm font-semibold text-foreground">
           {pendingTemplateSync.status === "updated"

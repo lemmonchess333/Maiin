@@ -51,6 +51,7 @@ export default function AnalyticsMuscles({
           onOpen();
         }}
         className={cardClasses({
+          tone: "flat",
           className:
             "block w-full text-left transition-transform motion-safe:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         })}

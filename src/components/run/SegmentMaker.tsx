@@ -115,7 +115,12 @@ export default function SegmentMaker({
   };
 
   return (
-    <Card as="section" aria-labelledby={headingId} className="space-y-4">
+    <Card
+      as="section"
+      tone="flat"
+      aria-labelledby={headingId}
+      className="space-y-4"
+    >
       <div className="space-y-1">
         <SectionHeading id={headingId} size="compact">
           Make a segment

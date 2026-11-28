@@ -305,7 +305,7 @@ export default function SettingsPantry() {
           Loading…
         </p>
       ) : shown.length === 0 ? (
-        <Card>
+        <Card tone="flat">
           <EmptyState
             compact
             icon={Refrigerator}

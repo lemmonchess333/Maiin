@@ -53,7 +53,12 @@ export default function WeekResetCard({
 }: Props) {
   if (outcome) {
     return (
-      <Card as="section" size="compact" aria-label="Week reset result">
+      <Card
+        as="section"
+        size="compact"
+        tone="flat"
+        aria-label="Week reset result"
+      >
         <div className="flex items-start gap-3">
           {outcome.status === "queued" ? (
             <Clock3
@@ -96,7 +101,12 @@ export default function WeekResetCard({
   }
 
   return (
-    <Card as="section" size="compact" aria-label="Make this week fit">
+    <Card
+      as="section"
+      size="compact"
+      tone="flat"
+      aria-label="Make this week fit"
+    >
       <div className="flex items-start gap-3">
         <CalendarDays
           className="mt-0.5 size-5 shrink-0 text-foreground"

@@ -101,7 +101,7 @@ export default function HeartRateSummaryCard({
   const enoughCoverage = summary.coverage >= ZONE_COVERAGE_MIN;
   const zonesAvailable = summary.maxHr > 0;
   return (
-    <Card className="space-y-3">
+    <Card tone="flat" className="space-y-3">
       <SectionLabel>Heart rate</SectionLabel>
       <div className="grid grid-cols-2 gap-4">
         <div>

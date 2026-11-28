@@ -1158,7 +1158,7 @@ function FoodScreen({ live }: { live: boolean }) {
             <Camera className="size-[24px]" />
           </span>
         </div>
-        <div className="rounded-2xl bg-card p-4 card-shadow">
+        <div className="rounded-2xl bg-card p-4 surface-flat">
           <BeforeAfter
             live={live}
             before={

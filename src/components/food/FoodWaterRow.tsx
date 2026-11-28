@@ -74,7 +74,7 @@ export default function FoodWaterRow({ date }: { date: string }) {
   );
 
   return (
-    <Card size="compact" className="@container space-y-2">
+    <Card size="compact" tone="flat" className="@container space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 grow basis-[8em] items-center gap-2">
           <Droplets className="size-4 shrink-0 text-teal" aria-hidden="true" />

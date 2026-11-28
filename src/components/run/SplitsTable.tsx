@@ -211,7 +211,12 @@ export default function SplitsTable({
   );
 
   return (
-    <Card as="section" aria-labelledby={headingId} className="space-y-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-labelledby={headingId}
+      className="space-y-3"
+    >
       {hasLapSplits ? (
         <Suspense fallback={hasDistanceSplits ? distanceOnlyView : null}>
           <LapSplitsTable

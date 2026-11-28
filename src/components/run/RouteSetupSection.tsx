@@ -194,7 +194,7 @@ export default function RouteSetupSection({
             {routes.map((r) => (
               <li
                 key={r.id}
-                className="flex items-center gap-1 rounded-xl bg-card px-2 card-shadow"
+                className="flex items-center gap-1 rounded-xl bg-card px-2 surface-flat"
               >
                 <button
                   type="button"

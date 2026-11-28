@@ -85,7 +85,7 @@ export default function WeekPreview({
       : null;
   return (
     <section
-      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+      className="rounded-2xl bg-card surface-flat p-4 space-y-3"
       aria-label={draft ? "Draft week" : "Your week shape"}
     >
       <div>

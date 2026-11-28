@@ -60,6 +60,7 @@ export default function FirstWeekCard({
   return (
     <Card
       as="section"
+      tone="flat"
       aria-labelledby="first-week-title"
       className="space-y-3 rounded-xl"
     >
