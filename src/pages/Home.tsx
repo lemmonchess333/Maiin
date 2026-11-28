@@ -1267,7 +1267,10 @@ export default function Home() {
       eyebrow={
         <span className="inline-flex flex-wrap items-center gap-x-1.5">
           <BrandMark />
-          <span className="font-bold text-foreground">
+          {/* The date holds together ("Mon 23 Nov"): at large text the
+              header row wraps the streak and avatar under it instead of
+              stacking the date a word to a line beside them. */}
+          <span className="font-bold text-foreground whitespace-nowrap">
             {formatShortWeekdayDayMonth(today)}
           </span>
           {/* The kicker is the hero's, so it waits with it: "Your first

@@ -46,8 +46,8 @@ non-negotiables, inline so you can't miss them:
 1. **No new colours, gradients, or decorative elements.** The palette is closed.
 2. **Purple = lifting/brand. Coral = running.** Never cross the sport-coding.
 3. **A figure that stands on its own = Archivo (`font-figure`); a number inside
-   a line of text = Plus Jakarta Sans at the words' weight (`font-mono`); both
-   `tabular-nums`. Everything else = Plus Jakarta Sans.** Two fonts, no third
+   a line of text = Barlow at the words' weight (`font-mono`); both
+   `tabular-nums`. Everything else = Barlow.** Two fonts, no third
    — ever (DESIGN_GUIDE §4).
 4. **44px minimum touch target** (iOS shell).
 5. **Use the primitives** (`Button`, `IconButton`, `Banner`, `BottomSheet`,

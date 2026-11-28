@@ -3112,7 +3112,12 @@ export default function WorkoutSession({
                       "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground short:pt-2"
                     )}
                   >
-                    <div className="text-center">Set</div>
+                    {/* As wide as its word: at double text "SET" is a little
+                        wider than the 44px column, and centred over it it
+                        takes a pixel or two of the gap on each side. */}
+                    <div className="w-max justify-self-center text-center">
+                      Set
+                    </div>
                     <div className="min-w-0 text-center @max-[19em]:hidden">
                       Previous
                     </div>

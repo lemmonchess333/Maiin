@@ -166,6 +166,9 @@ export function ToastProvider() {
         toastOptions={{
           style: {
             fontSize: "0.875rem",
+            // sonner sets the system face on its toaster; a toast is in
+            // the text face like everything else (DESIGN_GUIDE §0 rule 4).
+            fontFamily: "var(--font-display)",
           },
         }}
         closeButton

@@ -9,8 +9,7 @@ import type { MedalTier } from "./medals";
  * app's classes (ShareCardRenderer says why), and the medal is drawn on it.
  */
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
-const JAKARTA =
-  "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
+const TEXT_FACE = "'Barlow', ui-sans-serif, system-ui, sans-serif";
 
 /** The drawing's own space: a ribbon over a round medal. */
 const W = 120;
@@ -193,7 +192,7 @@ export default function MedalArt({
           y={CY + 33.6}
           textAnchor="middle"
           fill="white"
-          fontFamily={JAKARTA}
+          fontFamily={TEXT_FACE}
           fontWeight={800}
           fontSize={type.size}
           letterSpacing={type.spacing}
@@ -279,7 +278,7 @@ function DrawnCoin({
           textAnchor="middle"
           fill={p.icon}
           fillOpacity={0.85}
-          fontFamily={JAKARTA}
+          fontFamily={TEXT_FACE}
           fontWeight={700}
           fontSize={8.5}
         >
@@ -338,7 +337,7 @@ function IllustratedCoin({
         {unit && (
           <tspan
             dx={2}
-            fontFamily={JAKARTA}
+            fontFamily={TEXT_FACE}
             fontWeight={700}
             fontSize={7}
             fillOpacity={0.85}

@@ -13,8 +13,7 @@ import {
 } from "./medals";
 
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
-const JAKARTA =
-  "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
+const TEXT_FACE = "'Barlow', ui-sans-serif, system-ui, sans-serif";
 const SIDE = 1080;
 
 /**
@@ -58,7 +57,7 @@ export default function MedalShareCard({
         padding: 80,
         boxSizing: "border-box",
         color: "white",
-        fontFamily: JAKARTA,
+        fontFamily: TEXT_FACE,
         backgroundColor: THEME.bg,
       }}
     >
@@ -84,7 +83,9 @@ export default function MedalShareCard({
       >
         {value.figure}
         {value.unit && (
-          <span style={{ fontFamily: JAKARTA, fontSize: 44, fontWeight: 700 }}>
+          <span
+            style={{ fontFamily: TEXT_FACE, fontSize: 44, fontWeight: 700 }}
+          >
             {" "}
             {value.unit}
           </span>

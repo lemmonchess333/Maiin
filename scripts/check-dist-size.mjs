@@ -22,7 +22,7 @@
  * joining that list fails, since a lazy chunk lands there without any
  * size changing: a module shared with eager code that Rollup hosts in the
  * lazy chunk gives the entry a static edge to all of it. One leaving it
- * is reported. And it holds index.html's two first-paint font preloads
+ * is reported. And it holds index.html's six first-paint font preloads
  * (scripts/first-paint-fonts.ts) to files the build emitted.
  *
  * Bumping the baseline is allowed — in the same PR as the growth, with the
@@ -133,17 +133,19 @@ for (const name of baseline.coldStart ?? []) {
     shrunk.push(`${name}: no longer preloaded — remove it from coldStart`);
 }
 
-/* The first-paint fonts (scripts/first-paint-fonts.ts): both preloaded from
-   index.html, each a file the build emitted. A preload that names a missing
+/* The first-paint fonts (scripts/first-paint-fonts.ts): Barlow's five
+   Latin weights and Archivo's Latin file, each preloaded from index.html
+   and each a file the build emitted. A preload that names a missing
    file fetches nothing useful, and one that goes missing brings back the
    swap from the fallback face on a first web visit. */
 const html = readFileSync(indexPath, "utf8");
 const fontPreloads = [...html.matchAll(/<link\b[^>]*\bas="font"[^>]*>/g)].map(
   ([tag]) => tag
 );
-if (fontPreloads.length !== 2) {
+const FIRST_PAINT_FONT_FILES = 6;
+if (fontPreloads.length !== FIRST_PAINT_FONT_FILES) {
   failures.push(
-    `index.html preloads ${fontPreloads.length} fonts, not the two first-paint faces (scripts/first-paint-fonts.ts)`
+    `index.html preloads ${fontPreloads.length} fonts, not the ${FIRST_PAINT_FONT_FILES} first-paint files (scripts/first-paint-fonts.ts)`
   );
 }
 for (const tag of fontPreloads) {

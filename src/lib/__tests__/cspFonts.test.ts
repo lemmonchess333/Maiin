@@ -45,6 +45,7 @@ describe("fonts reach the page as files", () => {
 
   it.each([
     "plus-jakarta-sans-cyrillic-ext-wght-normal.woff2",
+    "barlow-vietnamese-400-normal.woff2",
     "archivo-latin-wght-normal.woff2",
     "a-font.woff",
     "a-font.ttf",

@@ -32,8 +32,12 @@ const viewBox = brand.match(/MARK_VIEWBOX = "([^"]+)"/)![1];
 const archivo = dataUrl(
   "node_modules/@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2"
 );
-const jakarta = dataUrl(
-  "node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2"
+/** The text face at the weights a card sets, as src/styles/barlow.css declares it. */
+const barlow = [600, 700, 800].map(
+  (weight) =>
+    `@font-face { font-family: Barlow; src: url(${dataUrl(
+      `node_modules/@fontsource/barlow/files/barlow-latin-${weight}-normal.woff2`
+    )}) format("woff2"); font-weight: ${weight}; size-adjust: 106%; }`
 );
 
 /** Each card: its file, the headline, the line under it and the picture. */
@@ -105,9 +109,9 @@ const page = (
   card: (typeof CARDS)[number]
 ) => `<!doctype html><html><head><style>
 @font-face { font-family: Archivo; src: url(${archivo}) format("woff2"); font-weight: 100 900; }
-@font-face { font-family: Jakarta; src: url(${jakarta}) format("woff2"); font-weight: 200 800; }
+${barlow.join("\n")}
 * { box-sizing: border-box; margin: 0; }
-body { width: 1200px; height: 630px; background: #0E0E11; color: #F4F4F6; font-family: Jakarta; display: grid; grid-template-columns: 600px 600px; overflow: hidden; }
+body { width: 1200px; height: 630px; background: #0E0E11; color: #F4F4F6; font-family: Barlow; display: grid; grid-template-columns: 600px 600px; overflow: hidden; }
 .words { padding: 64px 0 64px 72px; display: flex; flex-direction: column; justify-content: space-between; }
 .lockup { display: flex; align-items: center; gap: 16px; }
 .lockup svg { height: 44px; color: #7B72E9; }

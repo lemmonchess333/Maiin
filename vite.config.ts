@@ -77,7 +77,7 @@ function shrinkFormFramesPlugin(): Plugin {
   };
 }
 
-/** Preloads the two font files the first screen draws with from
+/** Preloads the font files the first screen draws with from
  * `dist/index.html` (`scripts/first-paint-fonts.ts`), so a first visit on
  * the web fetches them with the stylesheet instead of after it. */
 function firstPaintFontsPlugin(): Plugin {
@@ -167,8 +167,8 @@ export default defineConfig(({ mode }) => ({
 
     // Inline assets smaller than Vite's 4KB default, keep larger ones as
     // separate files, and never inline a font: index.html's CSP takes fonts
-    // from 'self' only, so a font inlined as a data: URL is refused (Plus
-    // Jakarta Sans's extended-Cyrillic subset, 2.3KB, was). cspFonts.test.ts.
+    // from 'self' only, so a font inlined as a data: URL is refused (the
+    // old text face's extended-Cyrillic subset, 2.3KB, was). cspFonts.test.ts.
     assetsInlineLimit: (file) =>
       /\.(woff2?|ttf|otf|eot)$/i.test(file) ? false : undefined,
 

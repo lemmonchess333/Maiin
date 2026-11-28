@@ -49,7 +49,7 @@ If you only remember thirteen things:
    screen's hero sets its headline at 25-38 px or its figure at 40-48 px;
    display type (64-120 px, Archivo's wide heavy cut) is for finish,
    new-best, streak and live screens only (§4, §14m).
-4. **All other text is Plus Jakarta Sans.** Two fonts total. No third font, ever
+4. **All other text is Barlow.** Two fonts total. No third font, ever
    (not even for one decorative glyph).
 5. **44px minimum touch target.** This is an iOS app shell. Buttons default to
    `md` (44px). Anything smaller needs a real justification.
@@ -337,17 +337,19 @@ on any other em dash in a string, template or JSX text under `src/`.
 
 ## 4. Typography
 
-- **Display / text font:** Plus Jakarta Sans — every word, and every number
-  inside a line of text.
+- **Display / text font:** Barlow: every word, and every number inside a
+  line of text. Its `@font-face` sets `size-adjust: 106%`
+  (`src/styles/barlow.css`), so it fills the lines the old face did with
+  no size token changed (owner, 23 November 2026; §14c).
 - **Figure font:** **Archivo**, for a figure that stands on its own — chosen
   in the brand bake-off to replace JetBrains Mono (see
   `docs/visual-audit/bakeoff/DECISION.md`).
 - **Two number tiers** (owner, 26 October 2026; §14c):
 
-  | Tier   | Class                      | Face              | Where                                                                                                                                                                                                      |
-  | ------ | -------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | Figure | `font-figure tabular-nums` | Archivo           | A number that is the thing on its own line or tile, at text-lg and up: the calorie ring, the macro grams, the weight and water tiles, "0 of 5", hero stats, chart and ring centres, timers, set-log inputs |
-  | Inline | `font-mono tabular-nums`   | Plus Jakarta Sans | A number inside a sentence, a meta line, a caption, a "Last:" line, a chip or a list row's small text, at the weight of the words beside it                                                                |
+  | Tier   | Class                      | Face    | Where                                                                                                                                                                                                      |
+  | ------ | -------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | Figure | `font-figure tabular-nums` | Archivo | A number that is the thing on its own line or tile, at text-lg and up: the calorie ring, the macro grams, the weight and water tiles, "0 of 5", hero stats, chart and ring centres, timers, set-log inputs |
+  | Inline | `font-mono tabular-nums`   | Barlow  | A number inside a sentence, a meta line, a caption, a "Last:" line, a chip or a list row's small text, at the weight of the words beside it                                                                |
 
   The test: if the number reads as part of a sentence, it is inline; if it
   is its own block and the words are its caption, it is a figure. A figure
@@ -380,7 +382,7 @@ on any other em dash in a string, template or JSX text under `src/`.
   on both. **`font-mono` means "a number", not a monospace face**; it
   resolves to the text face. Don't reintroduce a monospace face.
 - **Units.** A unit inside a figure is a word: step it back to the text
-  face with `font-sans` (which resolves to Plus Jakarta Sans), smaller
+  face with `font-sans` (which resolves to Barlow), smaller
   than the figure and on its baseline — "81.7 kg", "0 ml", "91g". Food
   grams stay unspaced ("128g"); every other unit takes one space. Inside a
   `Button`, keep a number and its unit in one span: the button lays its
@@ -903,7 +905,7 @@ no new colours, no gradient, no emoji.
 - [ ] Before and after captures at 393 and 320 px, light and dark, in the PR (§0 rule 13).
 - [ ] No hardcoded hex — everything via tokens (`bg-*`) or `THEME.*`.
 - [ ] Sport-coding correct (purple = lift, coral = run) and semantic colours intact.
-- [ ] A figure that stands on its own uses Archivo (`font-figure`); a number inside a line of text uses the text face at the words' weight (`font-mono`); both `tabular-nums` (§4). Words use Plus Jakarta Sans.
+- [ ] A figure that stands on its own uses Archivo (`font-figure`); a number inside a line of text uses the text face at the words' weight (`font-mono`); both `tabular-nums` (§4). Words use Barlow.
 - [ ] Font weights follow the 600/700/800 tier rules (no 700+800 mixing).
 - [ ] Each piece of text takes its role's one treatment (§4 "One style per
       role"): a card title is 16px bold, labels are sentence case, a unit
@@ -976,10 +978,35 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
 - New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else: a new best's value on the finish, the longest streak, and a best's trophy and New chip; the Bests page's values are plain, as Strava's and Hevy's are (DS10 call 4). Success green is a tick beside neutral words, never "PR"
 - Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
-### 14c. Typography (Plus Jakarta Sans + Archivo)
+### 14c. Typography (Barlow + Archivo)
 
-- **Display font:** Plus Jakarta Sans (all UI text, and every number inside a line of text)
+- **Display font:** Barlow (all UI text, and every number inside a line of text)
 - **Figure font:** Archivo (a figure that stands on its own — the calorie ring, a tile, a hero stat, a timer). Proportional, not monospace; tabular figures forced on `.font-mono` and `.font-figure`. Replaced JetBrains Mono (brand bake-off — `docs/visual-audit/bakeoff/DECISION.md`). The `font-mono` utility means "a number inside text" and resolves to the text face; `font-figure` resolves to Archivo.
+- **Barlow replaces Plus Jakarta Sans (owner, 23 November 2026; DS11
+  call 4).** Designers who saw the app said it looked AI-generated, and
+  Plus Jakarta Sans is on the lists of faces AI tools reach for by
+  default, beside Inter. Of the three faces in the bake-off (Schibsted
+  Grotesk, Fira Sans, Barlow), Barlow is the one that changes the app's
+  voice: straight sides and squared curves, drawn from California's road
+  signs and plates, so the words read as sport, not software. Its narrow
+  words beside Archivo's wide italic figures give the contrast Nike Run
+  Club gets from its two faces. Decided:
+  1. Barlow, static weights 400 to 800 from `@fontsource/barlow` (SIL
+     OFL), self-hosted. Archivo stays on `--font-figure`.
+  2. `size-adjust: 106%` in its `@font-face` (`src/styles/barlow.css`).
+     Barlow's x-height is 0.506 em to the old face's 0.536 and its lines
+     run about 8% narrower, so at the same size captions read small and
+     lines reflowed. At 106% Home, the plan and the finish reflow almost
+     exactly as before, with no size token changed. Ascent and descent
+     are the font's own.
+  3. The five Latin files are preloaded for the web's first paint
+     (`scripts/first-paint-fonts.ts`); on iOS they ship in the app
+     bundle.
+  4. Image text drawn on a canvas (the progress photo's dates, the map
+     image's credit) names Barlow and waits for it to load; the share
+     card and the medal are rasterised from the page, which has it.
+  5. The bake-off's captures, and captures of the app before and after,
+     are in the pull request that made the change.
 - **Two number tiers (owner, 2026-10-26).** The owner, on phone captures of
   Home and Train: "I feel like the writing of the text is weird a lot,
   does this make sense? The numbers saying what weight to do then the reps
@@ -1004,7 +1031,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
      20px figure (16px under 24px on the Food page), not a 12px bold
      subscript, and still unspaced ("91g"); the water chips read "250 ml"
      with one space, not the button's gap; "0 ml" matches "81.7 kg" beside
-     it. `font-sans` resolves to Plus Jakarta Sans, so a unit stepping out
+     it. `font-sans` resolves to the text face, so a unit stepping out
      of a figure never lands on the system font.
      `designSystemInvariants.test.ts` pins the tokens and both size
      boundaries; the share card (`ShareCardRenderer`) keeps its own

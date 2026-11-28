@@ -141,10 +141,12 @@ export default function RacePredictionsCard({
           <>Based on your current fitness level. </>
         )}
         {/* inline-block + negative-margin padding: keeps the footnote rhythm
-            while clearing the 44px touch floor for the only tap target */}
+            while clearing the 44px touch floor for the only tap target.
+            The extra width is on the left only: padding on the right
+            reached past the line's end when "Update" ended a line. */}
         <Link
           to="/settings/run-plan"
-          className="underline underline-offset-2 text-running-strong inline-block px-2 py-3 -mx-2 -my-3"
+          className="underline underline-offset-2 text-running-strong inline-block py-3 pl-3 -my-3 -ml-3"
         >
           Update
         </Link>

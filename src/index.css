@@ -161,16 +161,13 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 6px);
   --radius-2xl: calc(var(--radius) + 12px);
-  /* "… Variable" is the @font-face family name fontsource declares for
-     the self-hosted variable build; the bare name is kept as a fallback
-     for any environment where the variable face fails to load. */
-  --font-display:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
-    sans-serif;
+  /* "Barlow" is the @font-face family styles/barlow.css declares for the
+     self-hosted text face (owner, 23 November 2026). */
+  --font-display: "Barlow", ui-sans-serif, system-ui, sans-serif;
   /* Numbers come in two tiers (DESIGN_GUIDE §4).
      `font-mono` is a number inside a line of text: "3 sets × 8 reps ·
      52.5 kg", "about 59 min", "Last: 105 kg × 5". It is the text face,
-     Plus Jakarta Sans, so the digits share the words' x-height, cap
+     Barlow, so the digits share the words' x-height, cap
      height and weight; the rule further down gives them tabular figures.
      The `mono` name means "this is a number", not a monospace face.
      `font-figure` is a figure that stands on its own at display size:
@@ -178,16 +175,12 @@
      log's inputs. It is Archivo, the numeral face from the brand bake-off
      (docs/visual-audit/bakeoff/DECISION.md), with tabular figures too.
      Sans fallbacks (NOT monospace) for the variable-font-fails case. */
-  --font-mono:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
-    sans-serif;
+  --font-mono: "Barlow", ui-sans-serif, system-ui, sans-serif;
   --font-figure: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
   /* `font-sans` takes a unit or a word inside a figure back to the text
      face ("81.7 kg", "5.02 km"). Left at Tailwind's default it would be
      the system font, a third face. */
-  --font-sans:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
-    sans-serif;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
@@ -651,9 +644,7 @@ body {
      The auth shell (.ds-auth-shell) keeps its own ambience. */
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
-    sans-serif;
+  font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
   font-size: var(--ds-text-body);
   line-height: 1.6;
   font-kerning: normal;
@@ -706,8 +697,8 @@ body {
     font-kerning: normal;
   }
   /* Display-size headings (page titles, hero numbers) get a touch more
-     negative tracking so they read refined rather than airy. Pairs well
-     with Plus Jakarta Sans's geometric character at 24px+. */
+     negative tracking so they read tight rather than airy. Barlow is
+     narrow already, so this is a touch, not a squeeze. */
   h1 {
     letter-spacing: -0.02em;
   }
