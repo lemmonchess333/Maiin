@@ -166,9 +166,13 @@
     0 18px 40px -10px rgba(0, 0, 0, 0.55);
   --ds-shadow-elevated:
     0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
-  /* A flat plane keeps the card's lit edge on dark (DS6, §14o): on a
-     near-black page the step alone is 1.06:1, no edge at all. */
-  --ds-shadow-flat: var(--ds-shadow-card);
+  /* A flat plane on dark is the card's step with a hairline, and not the
+     lit edge (owner, 28 November 2026, reopening DS6 call 1(a) for
+     secondary cards): the hero alone keeps the light along its top, so
+     it stands out on dark too. The step alone is 1.08:1 against the
+     page, the state DS6 measured on the owner's phone as no edge at all,
+     so the plane keeps a hairline at border/40 (1.16:1 at the rim). */
+  --ds-shadow-flat: inset 0 0 0 1px hsl(var(--border) / 0.4);
   /* A chip or a pill button takes the card's lit edge at its own size:
      light along the top, a faint outline all round, a contact shadow. */
   --ds-shadow-chip:
