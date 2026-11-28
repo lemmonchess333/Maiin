@@ -122,7 +122,7 @@ export default function SavedRoutinesSection() {
 
   return (
     <section className="pt-6 space-y-2" aria-label="Saved routines">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Bookmark
             className="size-5 shrink-0"
