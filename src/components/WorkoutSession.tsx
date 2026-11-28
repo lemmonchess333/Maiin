@@ -210,7 +210,6 @@ import {
   kitLoadIn,
   kitLoadToKg,
 } from "@/features/program/loadSteps";
-import { rpeNudgeDirection, rpeNudgeTarget } from "@/features/program/rpeNudge";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useLiftLiveActivity } from "@/hooks/useLiftLiveActivity";
 import { sessionLeadArt } from "@/lib/formArtCutouts";
@@ -3164,38 +3163,6 @@ export default function WorkoutSession({
                         result.kind === "best" &&
                         result.setKey === `${currentExIndex}:${setIdx}`
                     );
-                    const rpeNudgeDir = rpeNudgeDirection(set.rpe);
-                    const rpeNudgeNextIdx =
-                      rpeNudgeDir !== 0 && set.weight > 0
-                        ? currentSets.findIndex(
-                            (s, i) =>
-                              i > setIdx && !s.completed && s.type !== "warmup"
-                          )
-                        : -1;
-                    const rpeNudgeKg =
-                      rpeNudgeNextIdx >= 0
-                        ? rpeNudgeTarget(
-                            set.weight,
-                            set.rpe,
-                            currentExercise.exerciseId,
-                            liftUnit,
-                            smallPlates
-                          )
-                        : null;
-                    const rpeNudgeLabel =
-                      rpeNudgeKg !== null
-                        ? formatKitLoad(
-                            rpeNudgeKg,
-                            liftUnit,
-                            currentExercise.exerciseId
-                          )
-                        : null;
-                    const rpeNudgeApplied =
-                      rpeNudgeKg !== null &&
-                      rpeNudgeNextIdx >= 0 &&
-                      Math.abs(
-                        currentSets[rpeNudgeNextIdx].weight - rpeNudgeKg
-                      ) < 0.005;
                     return (
                       <div
                         key={setIdx}
@@ -3396,37 +3363,6 @@ export default function WorkoutSession({
                                   </span>{" "}
                                   · {rpeReserveWords(set.rpe)}
                                 </span>{" "}
-                                {rpeNudgeDir !== 0 &&
-                                  (rpeNudgeKg !== null &&
-                                  rpeNudgeLabel !== null ? (
-                                    rpeNudgeApplied ? (
-                                      <span className="text-xs text-muted-foreground">
-                                        Next set {rpeNudgeLabel}
-                                      </span>
-                                    ) : (
-                                      <Button
-                                        variant="ghost"
-                                        className="px-2 text-xs font-medium text-primary"
-                                        onClick={() => {
-                                          haptic(10);
-                                          updateSetLog(
-                                            currentExIndex,
-                                            rpeNudgeNextIdx,
-                                            "weight",
-                                            rpeNudgeKg
-                                          );
-                                        }}
-                                      >
-                                        {`Apply ${rpeNudgeLabel} to next set`}
-                                      </Button>
-                                    )
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">
-                                      {rpeNudgeDir > 0
-                                        ? "Easy: add a little next set"
-                                        : "Max effort: watch form"}
-                                    </span>
-                                  ))}
                                 <Button
                                   variant="ghost"
                                   className="px-2 text-xs text-muted-foreground"
@@ -3951,6 +3887,9 @@ export default function WorkoutSession({
                 0
               }
               smallPlates={smallPlates}
+              warmups={currentSets
+                .filter((set) => set.type === "warmup")
+                .map(({ weight, reps }) => ({ weight, reps }))}
             />
           </Suspense>
         )}

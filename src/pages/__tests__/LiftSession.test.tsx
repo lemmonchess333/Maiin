@@ -162,6 +162,27 @@ describe("a lift's own page", () => {
     ).toBeInTheDocument();
   });
 
+  /* Lift4 (2), (3) and owner call (4): the plan never suggests a swap, and
+     a lift stuck inside its range gets nothing said; the rules sheet holds
+     "Stuck on a lift? A variation often gets it moving." A lift that had
+     stalled twice used to carry "Stalled across a couple of cycles" with a
+     Swap variation button under its row. */
+  it("says nothing under a lift that has stalled", () => {
+    const stalled = state.workouts[0].exercises[0];
+    stalled.plateauCount = 3;
+    open("/program/lift/0");
+    expect(
+      screen.getByRole("button", { name: `More options for ${stalled.name}` })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("note", { name: new RegExp(stalled.name) })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Swap variation" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/stalled/i)).not.toBeInTheDocument();
+  });
+
   it("starts the workout over the page, for its own day", () => {
     open("/program/lift/0");
     fireEvent.click(screen.getByRole("button", { name: WORKOUT.start }));
