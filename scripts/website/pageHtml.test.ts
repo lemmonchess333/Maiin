@@ -6,9 +6,10 @@
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
+import { APP_STORE_URL, PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
 import { canonicalUrl, sitePage, SITE_PAGES } from "@/website/sitePages";
 import {
+  APP_STORE_ID,
   SITE_ORIGIN,
   fillNotFound,
   fillPage,
@@ -52,10 +53,22 @@ describe("fillPage", () => {
     expect(html.match(/property="og:title"/g)).toHaveLength(1);
   });
 
-  it("gives Home no canonical address", () => {
+  it("gives every page but Home Safari's Smart App Banner, once", () => {
+    for (const page of SITE_PAGES.filter((p) => p.path !== "/")) {
+      const html = fillPage(TEMPLATE, page, "", canonicalUrl(page));
+      expect(html.split('name="apple-itunes-app"'), page.path).toHaveLength(2);
+      expect(html).toContain(
+        `<meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}" />`
+      );
+    }
+    expect(APP_STORE_URL).toBe(`https://apps.apple.com/app/id${APP_STORE_ID}`);
+  });
+
+  it("gives Home no canonical address and no banner, which a shared post's page adds itself", () => {
     const page = sitePage("home");
     const html = fillPage(TEMPLATE, page, "", canonicalUrl(page));
     expect(html).not.toContain('rel="canonical"');
+    expect(html).not.toContain("apple-itunes-app");
     expect(html).toContain(
       'property="og:url" content="https://troposfit.com/"'
     );
@@ -107,7 +120,9 @@ describe("fillNotFound", () => {
     );
     expect(html).toContain("<title>Page not found · Tropos</title>");
     expect(html).toContain('<meta name="robots" content="noindex" />');
-    expect(html).not.toMatch(/og:|twitter:|name="description"|canonical/);
+    expect(html).not.toMatch(
+      /og:|twitter:|name="description"|canonical|apple-itunes-app/
+    );
     expect(html).toContain(
       '<div id="root" data-page="notFound"><h1>x</h1></div>'
     );
