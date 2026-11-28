@@ -99,7 +99,6 @@ async function shouldSystemWriteProceed(db, uid, reason) {
     return true;
   } catch (err) {
     if (err.errorCode === status.ERROR_CODES.SYSTEM_WRITE_BLOCKED) {
-      // eslint-disable-next-line no-console
       console.info(
         `[R1A] system write skipped for uid=${uid} (kind=${err.kind}, reason=${reason})`,
       );
@@ -161,7 +160,6 @@ async function recordPaymentEventPostDeletion(db, event) {
     // and alertable via log-based metrics. Operators should configure
     // an alert if the rate exceeds a small threshold (suggested:
     // > 5 occurrences per 24h indicates a provider integration drift).
-    // eslint-disable-next-line no-console
     console.warn(JSON.stringify({
       r1aEvent: "payment_event_missing_provider_event_id",
       provider: event.provider,

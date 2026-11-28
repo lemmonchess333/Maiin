@@ -164,3 +164,16 @@ jobs:
           else
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
           fi
+      - name: Close rolling deploy-failure alert on green deploy
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "deploy-functions failing on main in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --repo "$GITHUB_REPOSITORY" \
+              --comment "Deploy succeeded for \`${GITHUB_SHA}\`: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          fi

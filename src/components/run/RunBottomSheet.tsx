@@ -6,7 +6,7 @@ import {
   useId,
   type ReactNode,
 } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
+import { m, useMotionValue, animate } from "framer-motion";
 import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
 import {
@@ -34,6 +34,8 @@ import {
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { type ZoneNumber } from "../../lib/hrZones";
+import { Flag } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
@@ -59,6 +61,8 @@ interface RunBottomSheetProps {
   elapsed: number;
   distance: number;
   points: GPSPoint[];
+  /** Monotonic revision counter bumped when live GPS fixes append to `points`. */
+  pointsVersion?: number;
   formatTime: (s: number) => string;
   onPause: () => void;
   onLock: () => void;
@@ -71,6 +75,9 @@ interface RunBottomSheetProps {
   onResume: () => void;
   onStop: () => void;
   onDiscard?: () => void;
+  /** Optional live manual-lap handler; renders a calm Lap button while active. */
+  onLap?: () => void;
+  manualLapCount?: number;
   /* Drives the End-run dialog's primary-action choice. When the live
      run is sub-threshold (the misclick case: tapped Stop at 0:05/0km),
      surface Discard run as the red primary CTA and demote ending the
@@ -340,6 +347,7 @@ export default function RunBottomSheet({
   elapsed,
   distance,
   points,
+  pointsVersion,
   formatTime,
   onPause,
   onLock,
@@ -348,6 +356,8 @@ export default function RunBottomSheet({
   onResume,
   onStop,
   onDiscard,
+  onLap,
+  manualLapCount = 0,
   isInvalid = false,
   intervalDisplay,
   weightKg,
@@ -459,23 +469,33 @@ export default function RunBottomSheet({
 
   const pace =
     distance < 10 ? "--:--" : paceMinSec((elapsed / distance) * 1000, unit);
+  const trailKey = pointsVersion ?? points.length;
   /* Rolling 30s pace = "what am I doing right now" — the live signal
      runners actually want during a run. The all-time average lags
      badly once you've banked a few km, so it's demoted to a small
      "AVG" caption beneath the live pace. The post-run summary still
      records the all-time average — that's the right number for the
      historical entry. */
-  const livePaceS =
-    isPaused || paceHeld ? null : rollingPaceSeconds(points, 30);
+  const rawRollingPaceS = useMemo(
+    () => rollingPaceSeconds(points, 30),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey]
+  );
+  const livePaceS = isPaused || paceHeld ? null : rawRollingPaceS;
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
-  const elevation = totalElevationGain(points);
+  const elevation = useMemo(
+    () => totalElevationGain(points),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey]
+  );
   /* Live splits are cut on the READER's lap — a mile runner watching the
      strip wants mile splits, not kilometres relabelled. The SAVED record
      stays metric (Run.tsx uses SPLIT_LAP_IS_METRIC); this is display. */
   const splits = useMemo(
     () => calculateSplits(points, lapMetresFor(unit)),
-    [points, unit]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trailKey tracks in-place trail pushes alongside array replacement
+    [points, trailKey, unit]
   );
 
   return (
@@ -485,7 +505,7 @@ export default function RunBottomSheet({
           (its Recenter brings the runner back), and a tap on it raises
           the panel through `expandRequest` (DESIGN_GUIDE
           §14h). The grip still raises it by keyboard. */}
-      <motion.div
+      <m.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
           top,
@@ -783,6 +803,34 @@ export default function RunBottomSheet({
 
             {intervalDisplay}
 
+            {!isPaused && onLap && (
+              <div className="flex justify-center flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={
+                    manualLapCount > 0
+                      ? `Mark lap ${manualLapCount + 1}`
+                      : "Mark lap"
+                  }
+                  onClick={onLap}
+                  className="rounded-full border border-white/15 bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/15"
+                >
+                  <Flag className="size-3.5" aria-hidden="true" />
+                  {manualLapCount > 0 ? (
+                    <span>
+                      Lap{" "}
+                      <span className="font-mono tabular-nums">
+                        {manualLapCount + 1}
+                      </span>
+                    </span>
+                  ) : (
+                    "Lap"
+                  )}
+                </Button>
+              </div>
+            )}
+
             {/* Sprint 7: controls migrated to <RunControlButton>.
                 Each button now carries a compile-time-required
                 aria-label so screen readers announce a real action
@@ -1037,7 +1085,7 @@ export default function RunBottomSheet({
         {isSplitsView && (
           <SplitsList splits={splits} distance={distance} unit={unit} />
         )}
-      </motion.div>
+      </m.div>
       {/* Sprint 3: stop-confirmation migrated onto the shared <Dialog>
           primitive. Pre-Sprint-3 this modal had no escape-to-close
           handler — useFocusTrap was wired but Escape did nothing.

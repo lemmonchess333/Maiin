@@ -1,5 +1,5 @@
 import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { UtensilsCrossed, Plus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
@@ -20,7 +20,7 @@ export default function FirstMealCard({
   navigate: (p: string) => void;
 }) {
   return (
-    <motion.button
+    <m.button
       data-motion-driven
       whileTap={{ scale: 0.97 }}
       onClick={function () {
@@ -61,6 +61,6 @@ export default function FirstMealCard({
           Log
         </div>
       </div>
-    </motion.button>
+    </m.button>
   );
 }

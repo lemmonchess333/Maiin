@@ -136,7 +136,7 @@ function IconButton({
       {loading ? (
         <Loader2
           aria-hidden="true"
-          className={cn("animate-spin", ICON_SIZE_CLASS[size])}
+          className={cn("motion-safe:animate-spin", ICON_SIZE_CLASS[size])}
         />
       ) : (
         /* The box is the size's default icon size, and callers routinely

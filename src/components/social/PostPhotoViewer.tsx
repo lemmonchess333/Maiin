@@ -28,7 +28,7 @@ import {
 import { createPortal } from "react-dom";
 import {
   animate,
-  motion,
+  m,
   useMotionValue,
   useTransform,
   type MotionValue,
@@ -374,13 +374,13 @@ export default function PostPhotoViewer({
       onTouchEnd={(e) => e.stopPropagation()}
     >
       {/* The stage, on its own layer so a pull can fade it. */}
-      <motion.div
+      <m.div
         aria-hidden="true"
         data-photo-backdrop
         className="absolute inset-0 bg-stage"
         style={{ opacity: backdrop }}
       />
-      <motion.div
+      <m.div
         className="relative flex shrink-0 items-center gap-2 px-2 py-1"
         style={{ opacity: backdrop }}
       >
@@ -398,7 +398,7 @@ export default function PostPhotoViewer({
         </p>
         {/* Balances the close button, so the count sits in the middle. */}
         <span aria-hidden="true" className="size-11 shrink-0" />
-      </motion.div>
+      </m.div>
 
       <div
         ref={stageRef}
@@ -481,7 +481,7 @@ export default function PostPhotoViewer({
           toRest(settleView(view(), measure().size));
         }}
       >
-        <motion.div
+        <m.div
           className="absolute inset-0"
           style={{ x: stripX, y: pullY, scale: pullScale }}
         >
@@ -502,7 +502,7 @@ export default function PostPhotoViewer({
                       }
                 }
               >
-                <motion.img
+                <m.img
                   src={shown.url}
                   alt={postPhotoAlt(i, count, authorName, kind)}
                   width={shown.w}
@@ -517,10 +517,10 @@ export default function PostPhotoViewer({
               </div>
             );
           })}
-        </motion.div>
+        </m.div>
         {count > 1 && (
           // The arrows fade with the stage on a pull, like the count.
-          <motion.div
+          <m.div
             className="pointer-events-none absolute inset-0"
             style={{ opacity: backdrop }}
           >
@@ -541,7 +541,7 @@ export default function PostPhotoViewer({
               icon={<ChevronRight />}
               className={`pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 bg-stage/60 aria-disabled:opacity-40 ${STAGE_BUTTON}`}
             />
-          </motion.div>
+          </m.div>
         )}
       </div>
     </div>,

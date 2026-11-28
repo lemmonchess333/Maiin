@@ -123,10 +123,10 @@ export default function WorkoutRestTimer({
       next={next}
       onStop={onStop}
       onExtend={(extra) => {
+        const elapsed = elapsedSecondsSince(startedAt);
         // Re-arm an expired rest, without carrying its extension to the next.
-        if (elapsedSecondsSince(startedAt) >= target)
-          chimeFired.current = false;
-        setTarget((value) => value + extra);
+        if (extra > 0 && elapsed >= target) chimeFired.current = false;
+        setTarget((value) => Math.max(elapsed, value + extra));
       }}
     />
   );

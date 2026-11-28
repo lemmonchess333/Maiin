@@ -1,8 +1,10 @@
-import { useId } from "react";
+import { Suspense, useId } from "react";
 import { Card } from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { lazyRetry } from "@/lib/lazyRetry";
 import type { Split } from "@/lib/gps";
+import type { RunLapSplit } from "@/lib/runLaps";
 import { paceMinSec } from "@/lib/runLabels";
 import {
   elevationIn,
@@ -11,6 +13,8 @@ import {
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import { cn } from "@/lib/utils";
+
+const LapSplitsTable = lazyRetry(() => import("./LapSplitsTable"));
 
 interface SplitsTableProps {
   /** The rows, as `splitsForDisplay` returns them. */
@@ -25,6 +29,8 @@ interface SplitsTableProps {
   /** The reader's unit, for the paces and the climbs. A pace is a rate,
    *  so it converts whatever length the lap was. */
   unit: DistanceUnit;
+  /** Optional per-interval or manual lap splits captured during the run. */
+  lapSplits?: readonly RunLapSplit[];
 }
 
 /** A split's pace in seconds per km, or null for a lap with no usable
@@ -55,21 +61,21 @@ function signedClimb(split: Split, unit: DistanceUnit): string {
  * slower has a bar 10% shorter. The bars start at zero on purpose: a
  * clipped baseline would make an evenly paced run look ragged.
  *
- * It is the one view of the laps on the finish screen and on a saved run,
- * so neither page carries a chart or a second list of the same paces.
- *
- * The fastest lap is marked by weight and named above the table in
- * words, never by a colour of its own: coral is running's colour, and a
- * green or red lap would read as a verdict on a slow one. One lap has
- * nothing to compare against, so it gets neither a bar nor a "fastest".
+ * When a run also recorded per-interval or manual laps (`lapSplits`), a
+ * lazy sibling mounts the compact switcher between distance splits and
+ * interval/lap splits without adding bundle weight to distance-only runs.
  */
 export default function SplitsTable({
   splits,
   lapUnit,
   unit,
+  lapSplits,
 }: SplitsTableProps) {
   const headingId = useId();
-  if (splits.length === 0) return null;
+  const hasDistanceSplits = splits.length > 0;
+  const laps = lapSplits ?? [];
+  const hasLapSplits = laps.length > 0;
+  if (!hasDistanceSplits && !hasLapSplits) return null;
 
   const timed = splits.filter((split) => paceOf(split) !== null);
   const compared = timed.length >= 2;
@@ -89,112 +95,138 @@ export default function SplitsTable({
   const lapNoun = lapUnit === "mi" ? "mile" : "km";
   const paceUnit = paceUnitLabel(unit);
 
-  return (
-    <Card as="section" aria-labelledby={headingId} className="space-y-3">
+  const fastestDistanceLine =
+    fastest && fastestPace !== null ? (
+      <p className="mt-1 text-sm text-muted-foreground">
+        Fastest: {lapNoun}{" "}
+        <span className="font-mono tabular-nums">{fastest.km}</span> ·{" "}
+        <span className="font-mono tabular-nums">
+          {paceMinSec(fastestPace, unit)}
+        </span>{" "}
+        {paceUnit}
+      </p>
+    ) : null;
+
+  const distanceTable = (
+    <table
+      aria-labelledby={headingId}
+      className="w-full table-fixed border-collapse"
+    >
+      <thead>
+        <tr className="border-b border-border">
+          <th scope="col" className="w-10 pb-2 text-left font-normal">
+            <SectionLabel as="span">
+              {lapUnit === "mi" ? "Mi" : "Km"}
+            </SectionLabel>
+          </th>
+          <th scope="col" className="pb-2 text-right font-normal">
+            <SectionLabel as="span">Pace</SectionLabel>
+          </th>
+          {hasClimb && (
+            <th scope="col" className="w-16 pb-2 text-right font-normal">
+              <SectionLabel as="span">
+                <span aria-hidden="true">Elev</span>
+                <span className="sr-only">Elevation change</span>
+              </SectionLabel>
+            </th>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {splits.map((split) => {
+          const pace = paceOf(split);
+          const isFastest = split === fastest;
+          return (
+            <tr key={split.km} data-fastest={isFastest || undefined}>
+              <th
+                scope="row"
+                className={cn(
+                  "py-1.5 text-left text-sm font-mono tabular-nums",
+                  /* Explicit on every row: a <th> is bold by default,
+                     and the weight is what marks the fastest lap. */
+                  isFastest
+                    ? "font-bold text-foreground"
+                    : "font-normal text-muted-foreground"
+                )}
+              >
+                {split.km}
+                {isFastest && <span className="sr-only">, fastest</span>}
+              </th>
+              <td className="py-1.5">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 min-w-0 flex-1" aria-hidden="true">
+                    {compared && pace !== null && fastestPace !== null && (
+                      <div
+                        data-testid="split-bar"
+                        className="h-full rounded-r-full bg-running"
+                        style={{ width: `${(fastestPace / pace) * 100}%` }}
+                      />
+                    )}
+                  </div>
+                  <p className="w-[4.75rem] shrink-0 text-right text-sm text-foreground">
+                    <span
+                      className={cn(
+                        "font-mono tabular-nums",
+                        isFastest ? "font-bold" : "font-normal"
+                      )}
+                    >
+                      {paceMinSec(pace ?? 0, unit)}
+                    </span>
+                    {pace !== null && (
+                      <>
+                        {" "}
+                        <span className="text-xs text-muted-foreground">
+                          {paceUnit}
+                        </span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </td>
+              {hasClimb && (
+                <td className="py-1.5 text-right text-sm text-muted-foreground">
+                  <span className="font-mono tabular-nums">
+                    {signedClimb(split, unit)}
+                  </span>{" "}
+                  <span className="text-xs">{elevationUnitLabel(unit)}</span>
+                </td>
+              )}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+
+  const distanceOnlyView = (
+    <>
       <div>
         <SectionHeading id={headingId} size="compact">
           Splits
         </SectionHeading>
-        {fastest && fastestPace !== null && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Fastest: {lapNoun}{" "}
-            <span className="font-mono tabular-nums">{fastest.km}</span> ·{" "}
-            <span className="font-mono tabular-nums">
-              {paceMinSec(fastestPace, unit)}
-            </span>{" "}
-            {paceUnit}
-          </p>
-        )}
+        {fastestDistanceLine}
       </div>
+      {distanceTable}
+    </>
+  );
 
-      <table
-        aria-labelledby={headingId}
-        className="w-full table-fixed border-collapse"
-      >
-        <thead>
-          <tr className="border-b border-border">
-            <th scope="col" className="w-10 pb-2 text-left font-normal">
-              <SectionLabel as="span">
-                {lapUnit === "mi" ? "Mi" : "Km"}
-              </SectionLabel>
-            </th>
-            <th scope="col" className="pb-2 text-right font-normal">
-              <SectionLabel as="span">Pace</SectionLabel>
-            </th>
-            {hasClimb && (
-              <th scope="col" className="w-16 pb-2 text-right font-normal">
-                <SectionLabel as="span">
-                  <span aria-hidden="true">Elev</span>
-                  <span className="sr-only">Elevation change</span>
-                </SectionLabel>
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {splits.map((split) => {
-            const pace = paceOf(split);
-            const isFastest = split === fastest;
-            return (
-              <tr key={split.km} data-fastest={isFastest || undefined}>
-                <th
-                  scope="row"
-                  className={cn(
-                    "py-1.5 text-left text-sm font-mono tabular-nums",
-                    /* Explicit on every row: a <th> is bold by default,
-                       and the weight is what marks the fastest lap. */
-                    isFastest
-                      ? "font-bold text-foreground"
-                      : "font-normal text-muted-foreground"
-                  )}
-                >
-                  {split.km}
-                  {isFastest && <span className="sr-only">, fastest</span>}
-                </th>
-                <td className="py-1.5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 min-w-0 flex-1" aria-hidden="true">
-                      {compared && pace !== null && fastestPace !== null && (
-                        <div
-                          data-testid="split-bar"
-                          className="h-full rounded-r-full bg-running"
-                          style={{ width: `${(fastestPace / pace) * 100}%` }}
-                        />
-                      )}
-                    </div>
-                    <p className="w-[4.75rem] shrink-0 text-right text-sm text-foreground">
-                      <span
-                        className={cn(
-                          "font-mono tabular-nums",
-                          isFastest ? "font-bold" : "font-normal"
-                        )}
-                      >
-                        {paceMinSec(pace ?? 0, unit)}
-                      </span>
-                      {pace !== null && (
-                        <>
-                          {" "}
-                          <span className="text-xs text-muted-foreground">
-                            {paceUnit}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </td>
-                {hasClimb && (
-                  <td className="py-1.5 text-right text-sm text-muted-foreground">
-                    <span className="font-mono tabular-nums">
-                      {signedClimb(split, unit)}
-                    </span>{" "}
-                    <span className="text-xs">{elevationUnitLabel(unit)}</span>
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+  return (
+    <Card as="section" aria-labelledby={headingId} className="space-y-3">
+      {hasLapSplits ? (
+        <Suspense fallback={hasDistanceSplits ? distanceOnlyView : null}>
+          <LapSplitsTable
+            headingId={headingId}
+            laps={laps}
+            lapUnit={lapUnit}
+            unit={unit}
+            hasDistanceSplits={hasDistanceSplits}
+            fastestDistanceLine={fastestDistanceLine}
+            distanceTable={distanceTable}
+          />
+        </Suspense>
+      ) : (
+        distanceOnlyView
+      )}
     </Card>
   );
 }

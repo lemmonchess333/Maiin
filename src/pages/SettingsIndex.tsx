@@ -14,7 +14,7 @@
  * the Data & Storage section Set1 and Home2/Food6 put them in.
  */
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   ChevronRight,
   Apple,
@@ -179,7 +179,7 @@ export default function SettingsIndex() {
       {/* You. The photo is its own button (it opens the photo sheet);
           the rest of the card is a sibling button that opens Profile —
           a button cannot sit inside a button. */}
-      <motion.div
+      <m.div
         variants={pageItemVariant}
         className="rounded-xl bg-card flex flex-wrap items-center gap-x-3 pl-3 dark:card-shadow"
       >
@@ -208,10 +208,10 @@ export default function SettingsIndex() {
             aria-hidden="true"
           />
         </button>
-      </motion.div>
+      </m.div>
 
       {GROUPS.map((group) => (
-        <motion.div key={group.title} variants={pageItemVariant}>
+        <m.div key={group.title} variants={pageItemVariant}>
           <SettingsGroup title={group.title}>
             {group.rows.map((row) => (
               <SettingsRow
@@ -225,7 +225,7 @@ export default function SettingsIndex() {
               />
             ))}
           </SettingsGroup>
-        </motion.div>
+        </m.div>
       ))}
 
       <p className="text-center text-xs text-muted-foreground pt-2 pb-8">

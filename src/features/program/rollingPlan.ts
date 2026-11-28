@@ -17,7 +17,11 @@
  * distance in turn, and a base week's light session.
  */
 
-import type { RaceDistance, RollingGoal } from "./programTypes";
+import type {
+  RaceDistance,
+  RoadRaceDistance,
+  RollingGoal,
+} from "./programTypes";
 import { isUltraDistance } from "./runPlanTiming";
 
 /** The goals a plan with no race date can have, kept in programTypes so the
@@ -94,7 +98,7 @@ export interface RollingSpec {
   /** The race distance whose session families the tempo and intervals take
    *  in turn (Run24 (5), `BUILD_FAMILIES`): the goal's, and a 10K's for a
    *  goal that names none (keep fit). */
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RoadRaceDistance;
   /** The tempo ladder's top, work minutes, and the 1 km reps' top. */
   qualityPeak: { tempoWorkMinutes: number; intervalReps: number };
   /** A 3 km trial in the second week without a benchmark, then a 5 km
@@ -175,7 +179,7 @@ export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
  * starts from, where a block opening at its base (10 and 14 km) held the
  * long run still for months.
  */
-const RACE_BASE_LONG_KM: Record<"5k" | "10k" | "half" | "marathon", number> = {
+const RACE_BASE_LONG_KM: Record<RoadRaceDistance, number> = {
   "5k": 8,
   "10k": 12,
   half: 14,

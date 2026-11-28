@@ -45,7 +45,7 @@ export default function ScanQuotaIndicator({
         <button
           type="button"
           onClick={onUpgrade}
-          className="text-caption text-muted-foreground font-medium active:opacity-70 transition-opacity"
+          className="text-micro text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
           Out of scans · upgrade for {DAILY_AI_LIMITS.pro.image_ai} a day ·
           resets at {resetStr}
@@ -55,7 +55,7 @@ export default function ScanQuotaIndicator({
   }
 
   return (
-    <p className="text-center text-caption text-muted-foreground">
+    <p className="text-center text-micro text-muted-foreground">
       1 free scan left · resets at {resetStr}
     </p>
   );

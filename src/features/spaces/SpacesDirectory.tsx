@@ -165,7 +165,7 @@ function SpaceCard({
         </p>
         {(event || people) && (
           <p
-            className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
+            className={`text-micro font-medium mt-0.5 flex items-center gap-1 ${
               photo ? "text-white/85" : "text-muted-foreground"
             }`}
           >
@@ -207,7 +207,7 @@ function SpaceCard({
       </PhotoCaption>
       {event && (
         <span
-          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
+          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-micro font-semibold ${
             photo
               ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
               : ""
@@ -233,7 +233,7 @@ function SpaceCard({
 
       {joined && (
         <span
-          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
+          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-micro font-semibold ${
             photo
               ? "bg-black/55 text-white backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-black!"
               : ""
@@ -307,7 +307,7 @@ function SpaceSearchRow({ def }: { def: SpaceDef }) {
   return (
     <Link
       to={`/space/${def.id}`}
-      className="flex items-center gap-3 min-h-14 rounded-xl bg-card card-shadow p-2.5 pr-3.5 active:scale-[0.98] transition-transform"
+      className="flex items-center gap-3 min-h-14 rounded-xl bg-card card-shadow p-3 active:scale-[0.98] transition-transform"
     >
       <span
         className="relative size-11 shrink-0 overflow-hidden rounded-lg"
@@ -327,7 +327,7 @@ function SpaceSearchRow({ def }: { def: SpaceDef }) {
         <span className="block text-sm font-semibold leading-tight text-foreground line-clamp-2 break-words">
           {def.name}
         </span>
-        <span className="mt-0.5 block text-caption text-muted-foreground truncate">
+        <span className="mt-0.5 block text-micro text-muted-foreground truncate">
           {event ? (
             <>
               <span className={past ? undefined : "font-mono tabular-nums"}>

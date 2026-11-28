@@ -28,7 +28,7 @@ import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { FOOD_DAY_KCAL, isFoodDay } from "@/lib/foodDay";
 import { formatDayMonthYear, withSign } from "@/utils/formatters";
 import { computeDataConfidence, T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { THEME } from "@/lib/theme";
 import {
@@ -160,7 +160,7 @@ export default function CalorieBalanceChart({
       <div className="h-44">
         <AnimatePresence initial={false} mode="wait">
           {hasChart ? (
-            <motion.div
+            <m.div
               key="chart"
               className="h-full"
               initial={{ opacity: 0 }}
@@ -243,7 +243,7 @@ export default function CalorieBalanceChart({
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </motion.div>
+            </m.div>
           ) : (
             /* Hist5d pin 4's ghost preview, verbatim: a `bg-muted` block
                with the caveat below it. The pin names what it is NOT —
@@ -261,7 +261,7 @@ export default function CalorieBalanceChart({
                its place in the plot area. The figures stay below, which
                is pin 3 ("raw numbers always shown — suppression only
                abstracts visual decorations"). */
-            <motion.div
+            <m.div
               key="ghost"
               className="h-full flex flex-col"
               initial={{ opacity: 0 }}
@@ -287,7 +287,7 @@ export default function CalorieBalanceChart({
                   many: "days",
                 })}
               </p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

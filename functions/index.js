@@ -1575,7 +1575,7 @@ const aiConsent = require("./lib/aiConsent");
 const foodPhotoDetail = require("./lib/foodPhotoDetail");
 
 exports.analyzeFood = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  .runWith({ ...DEFAULT_HTTP_CAP, memory: "512MB", timeoutSeconds: 60 })
   .https.onRequest((req, res) => {
     corsForAiEndpoints(req, res, async (corsError) => {
       if (corsError) {
@@ -1760,6 +1760,7 @@ exports.analyzeFood = functions
 
         const response = await fetch(url, {
           method: "POST",
+          signal: AbortSignal.timeout(45_000),
           headers: {
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
@@ -2004,6 +2005,7 @@ exports.analyzeFoodText = functions
         // instruction segment. See lib/foodTextRequest.js.
         const response = await fetch(url, {
           method: "POST",
+          signal: AbortSignal.timeout(45_000),
           headers: {
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
@@ -4650,8 +4652,6 @@ exports.sendTestPush = functions
 // a deliberate NON-mirror of the client's claim-map rule (different question,
 // different data shape); see that module's header.
 const raceDayCompletion = require("./lib/raceDayCompletion");
-const RACE_STRICT_DISTANCE_RATIO_FNS =
-  raceDayCompletion.RACE_STRICT_DISTANCE_RATIO;
 
 // Date helpers — `utcDateString` (YYYY-MM-DD in UTC) and
 // `parseUtcDate` (YYYY-MM-DD → UTC 00:00 Date) live in

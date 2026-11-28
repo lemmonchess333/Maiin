@@ -120,7 +120,7 @@ describe("the weekday row", () => {
   it("shows one letter per day", () => {
     const { container } = renderSelector();
     const tops = Array.from(
-      container.querySelectorAll("span.text-caption.text-muted-foreground")
+      container.querySelectorAll("span.text-micro.text-muted-foreground")
     ).map((s) => s.textContent ?? "");
     expect(tops).toHaveLength(7);
     for (const t of tops) expect(t).toHaveLength(1);

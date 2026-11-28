@@ -64,6 +64,7 @@ vi.mock("framer-motion", async (importOriginal) => {
   };
   return {
     ...actual,
+    m: new Proxy({}, { get: (_t, tag: string) => make(tag) }),
     motion: new Proxy({}, { get: (_t, tag: string) => make(tag) }),
   };
 });

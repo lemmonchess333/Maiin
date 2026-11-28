@@ -1,9 +1,11 @@
 import { createRoot } from "react-dom/client";
-import { MotionConfig } from "framer-motion";
+import { domAnimation, LazyMotion, MotionConfig } from "framer-motion";
 import ExerciseLibrary from "./ExerciseLibrary";
 
 createRoot(document.getElementById("root")!).render(
-  <MotionConfig reducedMotion="user">
-    <ExerciseLibrary />
-  </MotionConfig>
+  <LazyMotion features={domAnimation} strict>
+    <MotionConfig reducedMotion="user">
+      <ExerciseLibrary />
+    </MotionConfig>
+  </LazyMotion>
 );

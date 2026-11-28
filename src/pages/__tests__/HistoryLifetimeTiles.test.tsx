@@ -79,10 +79,10 @@ describe("History — Lifetime figures", () => {
 
   it("keeps no unit in the caption line", () => {
     const section = lifetimeSection();
-    // The captions are the `text-caption` lines under each figure. None may open on a
+    // The captions are the `text-micro` lines under each figure. None may open on a
     // unit token; that is the exact shape the runs tile had.
     const captions = [
-      ...section.matchAll(/className="text-caption[^"]*"\s*>([\s\S]*?)<\/dd>/g),
+      ...section.matchAll(/className="text-micro[^"]*"\s*>([\s\S]*?)<\/dd>/g),
     ].map((m) => m[1].trim());
     expect(captions.length, "expected three lifetime captions").toBe(3);
     for (const caption of captions) {

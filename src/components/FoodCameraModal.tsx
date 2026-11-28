@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import {
@@ -969,7 +969,7 @@ export default function FoodCameraModal({
                     stage copy keeps its contrast on bright photos. */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
               </div>
-              <motion.div
+              <m.div
                 className="relative w-full max-w-[340px] aspect-[4/5]"
                 data-testid="scan-frame"
                 initial={reducedMotion ? false : { opacity: 0, scale: 1.045 }}
@@ -1003,7 +1003,7 @@ export default function FoodCameraModal({
                   "-bottom-1 -left-1 border-b-[3px] border-l-[3px] rounded-bl-[20px]",
                   "-bottom-1 -right-1 border-b-[3px] border-r-[3px] rounded-br-[20px]",
                 ].map((corner) => (
-                  <motion.span
+                  <m.span
                     key={corner}
                     aria-hidden
                     data-testid="scan-corner"
@@ -1040,7 +1040,7 @@ export default function FoodCameraModal({
                     data-testid="scan-laser"
                     className="absolute inset-0 overflow-hidden rounded-3xl"
                   >
-                    <motion.div
+                    <m.div
                       className="absolute inset-0 will-change-transform"
                       initial={{ y: "-100%" }}
                       animate={{ y: "0%" }}
@@ -1074,10 +1074,10 @@ export default function FoodCameraModal({
                           boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
                         }}
                       />
-                    </motion.div>
+                    </m.div>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
               {/* Failure content replaces the stage copy: title + next
                   move + the action row. NOT aria-hidden (unlike the
                   decorative stage feed) — this is the actionable
@@ -1085,7 +1085,7 @@ export default function FoodCameraModal({
                   One-shot motion-safe entrance; reduced motion gets
                   it settled. */}
               {failure && failureCopy ? (
-                <motion.div
+                <m.div
                   data-testid="scan-failure"
                   className="flex w-full flex-col items-center gap-4 text-center"
                   initial={reducedMotion ? false : { opacity: 0, y: 10 }}
@@ -1106,7 +1106,7 @@ export default function FoodCameraModal({
                     onDark
                   />
                   {failureActions}
-                </motion.div>
+                </m.div>
               ) : (
                 /* Stage copy. Crossfades between lines (the hard swap
                   every 1.3s read as a glitch next to the smooth laser)
@@ -1121,7 +1121,7 @@ export default function FoodCameraModal({
                   className="relative flex h-5 items-center justify-center"
                 >
                   <AnimatePresence mode="wait" initial={false}>
-                    <motion.p
+                    <m.p
                       key={locked ? "scan-done" : stageLine}
                       initial={reducedMotion ? false : { opacity: 0, y: 7 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1139,7 +1139,7 @@ export default function FoodCameraModal({
                             className="size-4"
                             fill="none"
                           >
-                            <motion.path
+                            <m.path
                               data-testid="scan-check"
                               d="M4.5 12.75 L9.75 18 L19.5 6.75"
                               stroke="currentColor"
@@ -1158,7 +1158,7 @@ export default function FoodCameraModal({
                       ) : (
                         stageLine
                       )}
-                    </motion.p>
+                    </m.p>
                   </AnimatePresence>
                 </div>
               )}
@@ -1412,7 +1412,7 @@ export default function FoodCameraModal({
           data-testid="scan-hint"
         >
           <AnimatePresence mode="wait" initial={false}>
-            <motion.p
+            <m.p
               key={modeHint}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1421,7 +1421,7 @@ export default function FoodCameraModal({
               className="whitespace-nowrap rounded-full bg-black/60 px-3.5 py-1.5 text-sm font-medium text-white"
             >
               {modeHint}
-            </motion.p>
+            </m.p>
           </AnimatePresence>
         </div>
         {tab === "food" ? (
@@ -1480,7 +1480,7 @@ export default function FoodCameraModal({
                     style={scanLineStyle}
                   />
                 ) : (
-                  <motion.div
+                  <m.div
                     className="absolute inset-0 will-change-transform"
                     initial={{ y: "-50%" }}
                     animate={{ y: "50%" }}
@@ -1495,7 +1495,7 @@ export default function FoodCameraModal({
                       className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full"
                       style={scanLineStyle}
                     />
-                  </motion.div>
+                  </m.div>
                 )}
               </div>
             )}

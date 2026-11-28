@@ -6,14 +6,18 @@ vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 import {
   exportWorkoutsCSV,
+  exportRunsCSV,
   exportMealsCSV,
   exportBodyweightCSV,
+  exportAllDataJSON,
   csvFile,
+  jsonFile,
 } from "../export";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
 const UID = "user1";
 const WORKOUTS = `users/${UID}/workouts`;
+const RUNS = `users/${UID}/runs`;
 const MEALS = `users/${UID}/meals`;
 const BODYWEIGHT = `users/${UID}/bodyweightLogs`;
 
@@ -40,7 +44,7 @@ describe("exportWorkoutsCSV", () => {
       },
     ]);
     expect(await exportWorkoutsCSV(UID)).toContain(
-      '2026-09-07,"\'=1+1",1,80,8,"\'+1+1"'
+      '2026-09-07,"\'=1+1",1,80,8,"\'+1+1",'
     );
   });
   it("keeps a circuit (Circ1) as one row: its name, rounds done and seconds", async () => {
@@ -66,17 +70,17 @@ describe("exportWorkoutsCSV", () => {
     ]);
     const lines = (await exportWorkoutsCSV(UID)).split("\n");
     expect(lines).toEqual([
-      "Date,Exercise,Set,Weight (kg),Reps,Type",
-      `2026-09-07,"${circuit.name}",2,0,580,circuit`,
+      "Date,Exercise,Set,Weight (kg),Reps,Type,RPE",
+      `2026-09-07,"${circuit.name}",2,0,580,circuit,`,
     ]);
   });
 
   it("returns header row when no workouts", async () => {
     const csv = await exportWorkoutsCSV("user1");
-    expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type");
+    expect(csv).toBe("Date,Exercise,Set,Weight (kg),Reps,Type,RPE");
   });
 
-  it("formats workout data correctly", async () => {
+  it("formats workout data and optional RPE correctly", async () => {
     seedIn(WORKOUTS, [
       {
         date: "2025-01-15",
@@ -84,7 +88,7 @@ describe("exportWorkoutsCSV", () => {
           {
             exerciseName: "Bench Press",
             sets: [
-              { weightKg: 80, reps: 8, type: "working" },
+              { weightKg: 80, reps: 8, type: "working", rpe: 7.5 },
               { weightKg: 85, reps: 6, type: "working" },
             ],
           },
@@ -94,8 +98,8 @@ describe("exportWorkoutsCSV", () => {
     const csv = await exportWorkoutsCSV("user1");
     const lines = csv.split("\n");
     expect(lines).toHaveLength(3); // header + 2 sets
-    expect(lines[1]).toBe('2025-01-15,"Bench Press",1,80,8,working');
-    expect(lines[2]).toBe('2025-01-15,"Bench Press",2,85,6,working');
+    expect(lines[1]).toBe('2025-01-15,"Bench Press",1,80,8,working,7.5');
+    expect(lines[2]).toBe('2025-01-15,"Bench Press",2,85,6,working,');
   });
 
   it("escapes double quotes in exercise names", async () => {
@@ -140,6 +144,64 @@ describe("exportWorkoutsCSV", () => {
     const csv = await exportWorkoutsCSV("user1");
     const lines = csv.split("\n");
     expect(lines).toHaveLength(1); // header only
+  });
+});
+
+describe("exportRunsCSV", () => {
+  const HEADER =
+    "Date,Type,Distance (km),Duration (s),Avg pace (s/km),Elevation gain (m),Calories,Place,Effort";
+
+  it("returns header row when no runs exist", async () => {
+    expect(await exportRunsCSV(UID)).toBe(HEADER);
+  });
+
+  it("exports valid runs, skips invalid runs unless savedAnyway, and neutralizes formulas", async () => {
+    seedIn(RUNS, [
+      {
+        date: "2026-11-24",
+        completedAt: { toDate: () => new Date("2026-11-24T08:00:00Z") },
+        activityType: "tempo",
+        distance: 8450,
+        duration: 2400,
+        avgPace: 284,
+        elevationGain: 62,
+        calories: 580,
+        place: "treadmill",
+        relativeEffort: "matched",
+      },
+      {
+        date: "2026-11-23",
+        completedAt: { toDate: () => new Date("2026-11-23T08:00:00Z") },
+        activityType: "easy",
+        distance: 5000,
+        duration: 1800,
+        avgPace: 360,
+        elevationGain: 10,
+        calories: 320,
+        isInvalid: true,
+      },
+      {
+        date: "2026-11-22",
+        completedAt: { toDate: () => new Date("2026-11-22T08:00:00Z") },
+        activityType: "=CMD()",
+        distance: 5000,
+        duration: 1700,
+        avgPace: 340,
+        elevationGain: 15,
+        calories: 310,
+        isInvalid: true,
+        savedAnyway: true,
+      },
+    ]);
+
+    const csv = await exportRunsCSV(UID);
+    const lines = csv.split("\n");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe(HEADER);
+    expect(lines[1]).toBe(
+      "2026-11-24,tempo,8.45,2400,284,62,580,treadmill,matched"
+    );
+    expect(lines[2]).toBe('2026-11-22,"\'=CMD()",5,1700,340,15,310,,');
   });
 });
 
@@ -306,5 +368,105 @@ describe("csvFile", () => {
     expect(file.name).toBe("test.csv");
     expect(file.type).toBe("text/csv");
     expect(await file.text()).toBe("Date,Weight (kg)\n2026-10-04,82.5");
+  });
+});
+
+describe("exportAllDataJSON & jsonFile", () => {
+  it("combines workouts (with RPE), valid runs, active meals, and bodyweight into schemaVersion 1 JSON", async () => {
+    seedIn(WORKOUTS, [
+      {
+        date: "2026-10-04",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 80, reps: 8, type: "working", rpe: 8 }],
+          },
+        ],
+      },
+    ]);
+    seedIn(RUNS, [
+      {
+        date: "2026-10-04",
+        completedAt: { toDate: () => new Date("2026-10-04T08:00:00Z") },
+        distance: 5000,
+        duration: 1500,
+        avgPace: 300,
+        elevationGain: 45,
+        activityType: "easy",
+      },
+      {
+        date: "2026-10-03",
+        completedAt: { toDate: () => new Date("2026-10-03T08:00:00Z") },
+        distance: 100,
+        duration: 20,
+        avgPace: 200,
+        activityType: "freerun",
+        isInvalid: true,
+        savedAnyway: false,
+      },
+    ]);
+    seedIn(MEALS, [
+      {
+        date: "2026-10-04",
+        createdAt: 2,
+        foodName: "Oats",
+        totalCalories: 420,
+        totalProtein: 18,
+        totalCarbs: 62,
+        totalFat: 10,
+      },
+      {
+        date: "2026-10-04",
+        createdAt: 1,
+        foodName: "Deleted",
+        totalCalories: 900,
+        deletedAt: "2026-10-04T10:00:00.000Z",
+      },
+    ]);
+    seedIn(BODYWEIGHT, [{ date: "2026-10-04", weight: 78.4 }]);
+
+    const raw = await exportAllDataJSON(UID);
+    const parsed = JSON.parse(raw);
+
+    expect(parsed.schemaVersion).toBe(1);
+    expect(typeof parsed.exportedAt).toBe("string");
+    expect(parsed.workouts).toEqual([
+      {
+        date: "2026-10-04",
+        exercises: [
+          {
+            name: "Bench Press",
+            sets: [{ set: 1, weightKg: 80, reps: 8, type: "working", rpe: 8 }],
+          },
+        ],
+      },
+    ]);
+    expect(parsed.runs).toHaveLength(1);
+    expect(parsed.runs[0]).toMatchObject({
+      date: "2026-10-04",
+      distanceKm: 5,
+      durationSec: 1500,
+      avgPaceSecPerKm: 300,
+      elevationGainM: 45,
+      activityType: "easy",
+    });
+    expect(parsed.meals).toEqual([
+      {
+        date: "2026-10-04",
+        name: "Oats",
+        calories: 420,
+        proteinG: 18,
+        carbsG: 62,
+        fatG: 10,
+      },
+    ]);
+    expect(parsed.bodyweight).toEqual([{ date: "2026-10-04", weightKg: 78.4 }]);
+  });
+
+  it("wraps JSON archive with application/json mime type", async () => {
+    const file = jsonFile('{"schemaVersion":1}', "tropos-all-data.json");
+    expect(file.name).toBe("tropos-all-data.json");
+    expect(file.type).toBe("application/json");
+    expect(await file.text()).toBe('{"schemaVersion":1}');
   });
 });

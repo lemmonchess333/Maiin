@@ -72,7 +72,7 @@ export default function JoinedChallengeRow({
       ) : (
         <SportIconTile sport={sport} />
       )}
-      <div className="min-w-0 flex-1 space-y-1.5 pointer-events-none">
+      <div className="min-w-0 flex-1 space-y-2 pointer-events-none">
         <div>
           <p className="text-sm font-semibold text-foreground leading-snug break-words">
             {challenge.name}

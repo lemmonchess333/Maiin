@@ -43,8 +43,7 @@ export default function ProgressPhotoCompareSheet({
   onClose: () => void;
   /** Null where this device cannot hand an image on. */
   onShare:
-    | ((before: ProgressPhoto, after: ProgressPhoto) => Promise<void>)
-    | null;
+    ((before: ProgressPhoto, after: ProgressPhoto) => Promise<void>) | null;
 }) {
   const [before, setBefore] = useState(initial.before);
   const [after, setAfter] = useState(initial.after);
@@ -72,7 +71,7 @@ export default function ProgressPhotoCompareSheet({
     value: string,
     onChange: (date: string) => void
   ) => (
-    <label className="block space-y-1.5">
+    <label className="block space-y-2">
       <SectionLabel as="span">{label}</SectionLabel>
       <Select value={value} onChange={(e) => onChange(e.target.value)}>
         {days.map((d) => (

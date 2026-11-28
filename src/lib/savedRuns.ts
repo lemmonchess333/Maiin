@@ -47,7 +47,12 @@ import {
   runEvidenceDate,
   type RunExecutionTarget,
 } from "./runExecutionEvidence";
-import { sampleRoute, type RouteCoordinate } from "./routeSegments";
+import {
+  KEPT_ROUTE_POINTS,
+  sampleRoute,
+  type RouteCoordinate,
+} from "./routeSegments";
+import { detectBestEfforts, hasImpossibleStep, type GPSPoint } from "./gps";
 import { pinnedWorkPace, type SessionSegment } from "./runSegments";
 import { isTreadmillRun } from "./runGuards";
 import { elapsedSecondsOf } from "./runElapsed";
@@ -103,6 +108,15 @@ export interface RunSummaryItem {
    *  post compares its own with them (Soc15), and Bests and the Running
    *  page list the fastest (`runEffortSeconds`). */
   bestEfforts?: { distance: number; time: number }[];
+  /** Optional heart-rate zone summary saved on HR-tracked runs, read by
+   *  hybrid training load (TRIMP) calculations. */
+  heartRate?: {
+    averageBpm: number;
+    maxBpm: number;
+    coverage: number;
+    zoneSeconds: [number, number, number, number, number];
+    maxHr: number;
+  };
 }
 
 /** A saved run as every reader sees it. */
@@ -220,17 +234,77 @@ function workPortionOf(
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value ? value : undefined;
 
+/** One best effort a run keeps: metres, seconds, and the name the finish
+ *  gave it ("1K") where it saved one. */
+export interface KeptEffort {
+  distance: number;
+  time: number;
+  label?: string;
+}
+
 /** A saved run's best efforts, each a positive distance and time; those
  *  that can't be read are left out. */
-function bestEffortsOf(value: unknown): { distance: number; time: number }[] {
+function bestEffortsOf(value: unknown): KeptEffort[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((effort: unknown) => {
     if (!effort || typeof effort !== "object") return [];
-    const { distance, time } = effort as { distance?: unknown; time?: unknown };
+    const { distance, time, label } = effort as {
+      distance?: unknown;
+      time?: unknown;
+      label?: unknown;
+    };
     return measured(distance) && measured(time) && distance > 0 && time > 0
-      ? [{ distance, time }]
+      ? [{ distance, time, ...(typeof label === "string" ? { label } : {}) }]
       : [];
   });
+}
+
+/** A saved run's kept trace, when every point has a place and a time. */
+function keptTrace(value: unknown): GPSPoint[] | null {
+  if (!Array.isArray(value) || value.length < 2) return null;
+  const readable = value.every((point: unknown) => {
+    const p = point as Partial<GPSPoint> | null;
+    return (
+      !!p &&
+      Number.isFinite(p.lat) &&
+      Number.isFinite(p.lon) &&
+      Number.isFinite(p.timestamp)
+    );
+  });
+  return readable ? (value as GPSPoint[]) : null;
+}
+
+/**
+ * The best efforts a saved run is timed by, on Bests, the Running page,
+ * the run's page and its placings, and whether its kilometre splits may
+ * stand in where it saved none (`runEffortSeconds`).
+ *
+ * What the finish saved, unless the trace the run kept has a step faster
+ * than any runner (`hasImpossibleStep`). Until 2 Nov 2026 the
+ * finish timed efforts across such a step, the catch-up the smoothing made
+ * after a gap in the fixes, so a 2.85 km run at 8:51 /km kept a "1K 4:29"
+ * and held Fastest 1K on Bests above its own Best pace (owner, 23 Nov
+ * 2026). Its kilometres were cut from the same trace, so they do not stand
+ * in either. A trace kept whole (under `KEPT_ROUTE_POINTS`) is the one the
+ * finish read, and is timed again by the rule as it is now, which refuses
+ * the step; a thinned one can only time a stretch slow (`RunDetail`), so
+ * the run times nothing.
+ */
+export function keptBestEfforts(data: DocumentData): {
+  efforts: KeptEffort[];
+  splitsStandIn: boolean;
+} {
+  const saved = bestEffortsOf(data.bestEfforts);
+  const trace = keptTrace(data.points);
+  if (!trace || !hasImpossibleStep(trace))
+    return { efforts: saved, splitsStandIn: true };
+  return {
+    efforts:
+      trace.length < KEPT_ROUTE_POINTS
+        ? detectBestEfforts(trace, finite(data.distance))
+        : [],
+    splitsStandIn: false,
+  };
 }
 
 /**
@@ -243,7 +317,11 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   const startedAt = toDate(data.startedAt);
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
-  const bestEfforts = bestEffortsOf(data.bestEfforts);
+  const kept = keptBestEfforts(data);
+  const bestEfforts = kept.efforts.map(({ distance, time }) => ({
+    distance,
+    time,
+  }));
   const elapsedSeconds = elapsedSecondsOf(
     data.recordingStartedAt,
     data.recordingEndedAt
@@ -285,9 +363,10 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
         : null,
     isInvalid: data.isInvalid === true,
     savedAnyway: data.savedAnyway === true,
-    kmSplitSeconds: Array.isArray(data.splits)
-      ? (data.splits as unknown[]).map(kmSplitSecondsOf)
-      : [],
+    kmSplitSeconds:
+      kept.splitsStandIn && Array.isArray(data.splits)
+        ? (data.splits as unknown[]).map(kmSplitSecondsOf)
+        : [],
     routePreview:
       data.points?.length > 1
         ? sampleRoute(data.points as RouteCoordinate[], 20).map((p) => ({
@@ -311,6 +390,37 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
     ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
     ...(data.racePrediction?.v === 1 ? { goalRace: true } : {}),
+    ...(heartRateSummaryOf(data.heartRate)
+      ? { heartRate: heartRateSummaryOf(data.heartRate)! }
+      : {}),
+  };
+}
+
+function heartRateSummaryOf(
+  value: unknown
+): RunSummaryItem["heartRate"] | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const hr = value as {
+    averageBpm?: unknown;
+    maxBpm?: unknown;
+    coverage?: unknown;
+    zoneSeconds?: unknown;
+    maxHr?: unknown;
+  };
+  if (
+    !measured(hr.coverage) ||
+    !Array.isArray(hr.zoneSeconds) ||
+    hr.zoneSeconds.length !== 5 ||
+    !hr.zoneSeconds.every((z) => measured(z))
+  ) {
+    return undefined;
+  }
+  return {
+    averageBpm: finite(hr.averageBpm),
+    maxBpm: finite(hr.maxBpm),
+    coverage: hr.coverage,
+    zoneSeconds: hr.zoneSeconds as [number, number, number, number, number],
+    maxHr: finite(hr.maxHr),
   };
 }
 

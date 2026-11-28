@@ -3,10 +3,16 @@ import {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useMemo,
   useRef,
 } from "react";
 import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
+import {
+  readFeedSnapshot,
+  visibleFeedItems,
+  writeFeedSnapshot,
+} from "../lib/feedSnapshots";
 import type { DocumentSnapshot } from "firebase/firestore";
 import { logger } from "../lib/logger";
 import { captureError } from "../lib/errorReporting";
@@ -14,6 +20,12 @@ import { activityToFeedItem } from "../lib/activityFeedItem";
 import type { FeedIndex } from "../lib/feedIndex";
 import type { FeedItem } from "../lib/activityFeedTypes";
 export type { ActivityData, FeedItem } from "../lib/activityFeedTypes";
+
+/** What the session keeps of a source's last read (`feedSnapshots`). */
+interface FeedSnapshot {
+  items: FeedItem[];
+  hasMore: boolean;
+}
 
 /* `enabled` defaults true for backwards compatibility but lets the
  * caller defer the network read when the feed isn't visible. Social.tsx
@@ -29,17 +41,32 @@ export function useSocialFeed(
   hiddenActivityIds?: Set<string>
 ) {
   const uid = useUid();
-  const [items, setItems] = useState<FeedItem[]>([]);
-  /* `internalLoading` reflects whether a fetch is in flight; the
-     publicly-returned `loading` is derived from it AND `enabled`.
-     When the surface is disabled, loading is always false — the
-     consumer doesn't render a forever-skeleton without us needing
-     to setState(false) inside the effect body (which trips
+  const source = highlightsOnly ? "following-highlights" : "following";
+  /* A source read earlier this session starts from that read, shown at
+     once, and reads again behind it (`feedSnapshots`). */
+  const [items, setItems] = useState<FeedItem[]>(
+    () => readFeedSnapshot<FeedSnapshot>(uid, source)?.items ?? []
+  );
+  /* True once a read has landed for this account, here or earlier in the
+     session: the list (empty or not) is then known, and a read in flight
+     is a refresh behind it, not a reason for a placeholder. */
+  const [loaded, setLoaded] = useState(
+    () => readFeedSnapshot<FeedSnapshot>(uid, source) !== undefined
+  );
+  /* What is in flight: the first page again ("refresh", which is also the
+     state before the first read starts) or the next page ("more").
+     `loading` is derived from it AND `enabled`: when the surface is
+     disabled the consumer never sees a stuck skeleton, without a
+     setState(false) inside the effect body (which trips
      react-hooks/set-state-in-effect). */
-  const [internalLoading, setInternalLoading] = useState(true);
+  const [inFlight, setInFlight] = useState<"refresh" | "more" | null>(
+    "refresh"
+  );
   const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(
+    () => readFeedSnapshot<FeedSnapshot>(uid, source)?.hasMore ?? true
+  );
 
   /* SOCIAL-PRIVACY-01 — uid + generation ownership. The feed load is
      async; a resolve captured under account A must never commit after a
@@ -54,11 +81,17 @@ export function useSocialFeed(
      Complements the HOME-ACCOUNT-01 remount boundary as defence in depth
      (and prevents a stale-account commit inside a single mount). */
   const genRef = useRef(0);
+  /* The latest read wins: a refresh started while another read is in
+     flight (the blocks changed, a pull, the source switched back to)
+     supersedes it, so an older answer never lands over a newer one. */
+  const readRef = useRef(0);
   const [ownerUid, setOwnerUid] = useState<string | null>(uid);
   if (ownerUid !== uid) {
+    const kept = readFeedSnapshot<FeedSnapshot>(uid, source);
     setOwnerUid(uid);
-    setItems([]);
-    setHasMore(true);
+    setItems(kept?.items ?? []);
+    setHasMore(kept?.hasMore ?? true);
+    setLoaded(kept !== undefined);
   }
   useLayoutEffect(() => {
     genRef.current++;
@@ -69,9 +102,10 @@ export function useSocialFeed(
     async (refresh = false) => {
       if (!uid) return;
       const myGen = genRef.current;
-      const isCurrent = () => genRef.current === myGen;
-      if (refresh) lastDocRef.current = undefined;
-      setInternalLoading(true);
+      const myRead = ++readRef.current;
+      const isCurrent = () =>
+        genRef.current === myGen && readRef.current === myRead;
+      setInFlight(refresh ? "refresh" : "more");
       setError(null);
       try {
         const result = await getFeed(
@@ -153,6 +187,7 @@ export function useSocialFeed(
         }
         lastDocRef.current = result.lastDoc;
         setHasMore(feedItems.length >= 20);
+        setLoaded(true);
       } catch (e) {
         if (!isCurrent()) return;
         logger.error("Feed error:", e);
@@ -160,10 +195,16 @@ export function useSocialFeed(
         setError(msg);
         captureError(e instanceof Error ? e : new Error(msg), "network");
       }
-      if (isCurrent()) setInternalLoading(false);
+      if (isCurrent()) setInFlight(null);
     },
     [uid, highlightsOnly, blockedUsers, hiddenActivityIds]
   );
+
+  /* Keep the read for the session, so the source comes back with it. */
+  useEffect(() => {
+    if (!uid || !loaded) return;
+    writeFeedSnapshot<FeedSnapshot>(uid, source, { items, hasMore });
+  }, [uid, source, loaded, items, hasMore]);
 
   useEffect(() => {
     /* When disabled, skip the network read entirely. Don't setState
@@ -180,11 +221,23 @@ export function useSocialFeed(
 
   // Public loading is derived: only true while a fetch is genuinely
   // in flight on an enabled surface.
-  const loading = enabled && internalLoading;
+  const loading = enabled && inFlight !== null;
+
+  /* Posts kept from an earlier read, filtered against the blocks and
+     hidden posts as they are now. */
+  const visible = useMemo(
+    () => visibleFeedItems(items, blockedUsers, hiddenActivityIds),
+    [items, blockedUsers, hiddenActivityIds]
+  );
 
   return {
-    items,
+    items: visible,
+    /** A read has landed for this account: the list is known. */
+    loaded,
+    /** A read is in flight: the first page again, or the next page. */
     loading,
+    /** The next page is being read (for the spinner under the list). */
+    loadingMore: enabled && inFlight === "more",
     hasMore,
     error,
     refresh: () => loadFeed(true),

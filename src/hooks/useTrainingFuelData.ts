@@ -1,9 +1,9 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { onSnapshot } from "firebase/firestore";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { subscribeQueuedWrites } from "@/lib/offlineQueue";
+import { subscribeProgramState } from "@/lib/programStateStore";
 import {
   parseSavedRunDocs,
   savedRunsQueries,
@@ -114,12 +114,9 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
     };
     // Read-only: migrations and automatic programme transitions remain owned
     // by useProgram, never by nutrition screens or the daily snapshot writer.
-    const unsubProgram = onSnapshot(
-      doc(db, "users", uid, "programState", "current"),
-      (snap) =>
-        publish({
-          program: snap.exists() ? (snap.data() as ProgramState) : null,
-        }),
+    const unsubProgram = subscribeProgramState(
+      uid,
+      (snap) => publish({ program: snap.data }),
       () => publish({ program: null })
     );
     const runWindow = runWindowFor(today);

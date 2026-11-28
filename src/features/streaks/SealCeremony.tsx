@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SEAL_ART, TIER_COLORS } from "./badges";
@@ -75,7 +75,7 @@ export function SealStage({
           Its pop is the spring's own overshoot from 0.6: a spring takes
           two keyframes, first and last, so the 1.3 once written between
           them was never drawn in a build and threw in development. */}
-      <motion.div
+      <m.div
         className="absolute"
         style={{
           top: "50%",
@@ -107,7 +107,7 @@ export function SealStage({
         {children}
         {/* One-shot white bloom flash on the break. */}
         {revealed && !reduce && (
-          <motion.div
+          <m.div
             aria-hidden="true"
             className="absolute pointer-events-none"
             style={{
@@ -120,12 +120,12 @@ export function SealStage({
             transition={{ duration: 0.55, ease: "easeOut" }}
           />
         )}
-      </motion.div>
+      </m.div>
 
       {/* The seal — a frosted hexagon over the prize. Cracks accrue per tap,
           light builds behind the cracks, then it shatters into shards. */}
       {!revealed ? (
-        <motion.button
+        <m.button
           data-motion-driven
           ref={buttonRef}
           type="button"
@@ -147,7 +147,7 @@ export function SealStage({
               while the button stays mounted (keyboard focus kept). The
               jolt is now an impact: recoil-compress + shake + a touch of
               rotation, not just a horizontal wiggle. */}
-          <motion.div
+          <m.div
             key={`shake-${taps}`}
             className="absolute inset-0"
             animate={
@@ -164,7 +164,7 @@ export function SealStage({
             {/* Light leaking from inside, growing with each crack — and
                 SPIKING on the tap itself (keyed flash → settle) so every
                 hit visibly forces more light through the seal. */}
-            <motion.div
+            <m.div
               key={`glow-${taps}`}
               aria-hidden="true"
               className="absolute pointer-events-none"
@@ -241,7 +241,7 @@ export function SealStage({
                   aria-hidden="true"
                 >
                   {Array.from({ length: tapsNeeded }, (_, i) => (
-                    <motion.span
+                    <m.span
                       key={i}
                       className="size-1.5 rounded-full"
                       style={{ background: color }}
@@ -256,8 +256,8 @@ export function SealStage({
                 </span>
               )}
             </span>
-          </motion.div>
-        </motion.button>
+          </m.div>
+        </m.button>
       ) : (
         // Shatter: the six shards fly outward + fade once on the break.
         !reduce && (
@@ -304,7 +304,7 @@ export function SealPrompt({
 }) {
   if (seal.revealed) return null;
   return (
-    <motion.p
+    <m.p
       key={`prompt-${seal.stage === 0 ? "start" : "more"}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -313,6 +313,6 @@ export function SealPrompt({
       style={{ color: TIER_COLORS[seal.tier] }}
     >
       {seal.stage === 0 ? "Tap to break the seal" : "Keep tapping…"}
-    </motion.p>
+    </m.p>
   );
 }

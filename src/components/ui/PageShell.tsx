@@ -35,7 +35,7 @@
  * legitimately sets its own.) Pages pass sections as children and nothing
  * else.
  */
-import { motion, type HTMLMotionProps } from "framer-motion";
+import { m, type HTMLMotionProps } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { pageItemVariant, pageStaggerContainer } from "./pageMotion";
@@ -131,7 +131,7 @@ export default function PageShell({
     );
 
   return (
-    <motion.div
+    <m.div
       {...rest}
       className={cn("space-y-4", className)}
       initial={false}
@@ -139,7 +139,7 @@ export default function PageShell({
       variants={pageStaggerContainer}
     >
       {banner}
-      <motion.header variants={pageItemVariant}>
+      <m.header variants={pageItemVariant}>
         {/* The title's column is never narrower than its longest word,
             and the row wraps: at large text, actions that no longer fit
             beside the title (Food's date switcher) move under it rather
@@ -170,8 +170,8 @@ export default function PageShell({
         </div>
         {subtitleBelow && subtitleLine}
         {controls && <div className="pt-2">{controls}</div>}
-      </motion.header>
+      </m.header>
       {children}
-    </motion.div>
+    </m.div>
   );
 }

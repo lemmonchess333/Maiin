@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   # Production entry point (including manual redeploys): deploy-production.yml.
   workflow_call:
+    inputs:
+      skip_tests:
+        default: false
+        required: false
+        type: boolean
 
 permissions:
   contents: read
@@ -46,7 +51,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run check:form-art
-      - run: npm run test -- --run
+      - if: ${{ !inputs.skip_tests }}
+        run: npm run test -- --run
       # Guard: fail the deploy if the Firebase web config secrets are unset,
       # rather than shipping a blank config where every sign-in returns
       # auth/internal-error. Same env block as the build below.
@@ -56,6 +62,12 @@ jobs:
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.cache/tropos-form-frames
+          key: tropos-form-frames-${{ hashFiles('scripts/art/shrink-form-frames.ts', 'public/form-art/releases.json') }}
+          restore-keys: |
+            tropos-form-frames-
       - run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}

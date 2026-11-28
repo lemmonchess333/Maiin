@@ -2,12 +2,6 @@ import { useState } from "react";
 import { Download } from "lucide-react";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
-import {
-  exportWorkoutsCSV,
-  exportMealsCSV,
-  exportBodyweightCSV,
-  csvFile,
-} from "@/lib/export";
 import { shareFile } from "@/lib/shareFile";
 import type { User } from "firebase/auth";
 import { logger } from "@/lib/logger";
@@ -28,8 +22,10 @@ interface DataExportSectionProps {
 
 const EXPORTS = [
   { label: "Export workouts", key: "workouts", name: "Workouts" },
+  { label: "Export runs", key: "runs", name: "Runs" },
   { label: "Export meals", key: "meals", name: "Meals" },
   { label: "Export bodyweight", key: "bodyweight", name: "Bodyweight" },
+  { label: "Export all data", key: "all", name: "All data" },
 ] as const;
 
 /**
@@ -83,14 +79,30 @@ export default function DataExportSection({
             if (!user) return;
             setExporting(key);
             try {
-              let csv: string;
-              if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
-              else if (key === "meals") csv = await exportMealsCSV(user.uid);
-              else csv = await exportBodyweightCSV(user.uid);
-              await deliver(
-                csvFile(csv, `tropos-${key}-${localDateString()}.csv`),
-                name
-              );
+              const exp = await import("@/lib/export");
+              if (key === "all") {
+                const json = await exp.exportAllDataJSON(user.uid);
+                await deliver(
+                  exp.jsonFile(
+                    json,
+                    `tropos-all-data-${localDateString()}.json`
+                  ),
+                  name
+                );
+              } else {
+                let csv: string;
+                if (key === "workouts")
+                  csv = await exp.exportWorkoutsCSV(user.uid);
+                else if (key === "runs")
+                  csv = await exp.exportRunsCSV(user.uid);
+                else if (key === "meals")
+                  csv = await exp.exportMealsCSV(user.uid);
+                else csv = await exp.exportBodyweightCSV(user.uid);
+                await deliver(
+                  exp.csvFile(csv, `tropos-${key}-${localDateString()}.csv`),
+                  name
+                );
+              }
             } catch (err) {
               toast.error("Couldn’t export your data. Try again.");
               logger.error(err);
@@ -107,6 +119,7 @@ export default function DataExportSection({
           disabled={exporting !== null || !user}
           onClick={async () => {
             if (!user) return;
+            const { csvFile } = await import("@/lib/export");
             await deliver(
               csvFile(
                 emailConsentCsv(emailConsent),

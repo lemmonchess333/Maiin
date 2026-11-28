@@ -170,6 +170,20 @@ export interface ActiveRunInterval {
   endMs: number;
 }
 
+export type AerobicDecouplingStatus = "steady" | "mild_drift" | "high_drift";
+
+/**
+ * First-half vs second-half pace-to-heart-rate efficiency change (Friel /
+ * Coggan Pw:Hr aerobic decoupling) on steady runs of 30 minutes or more.
+ */
+export interface AerobicDecouplingSummary {
+  /** ((EF1 - EF2) / EF1) * 100, rounded to 1 decimal place. */
+  pct: number;
+  firstHalfAvgBpm: number;
+  secondHalfAvgBpm: number;
+  status: AerobicDecouplingStatus;
+}
+
 export interface HeartRateSummary {
   averageBpm: number;
   maxBpm: number;
@@ -184,6 +198,8 @@ export interface HeartRateSummary {
   maxHr: number;
   /** The source that covered the most of the run. */
   source: HeartRateSourceKind;
+  /** Present on steady GPS runs >= 30 min with >= 50% HR coverage in each half. */
+  decoupling?: AerobicDecouplingSummary;
 }
 
 /** A sample cannot stand in for a long gap or a disconnected source. */
@@ -230,9 +246,9 @@ export function watchReadingSetAside(
 }
 
 /** `samples` sorted by time, without the Watch readings set aside. */
-function preferSensorReadings<T extends Pick<HeartRateSample, "at" | "source">>(
-  samples: readonly T[]
-): T[] {
+export function preferSensorReadings<
+  T extends Pick<HeartRateSample, "at" | "source">,
+>(samples: readonly T[]): T[] {
   let lastSensorAt: number | null = null;
   const kept: T[] = [];
   for (const sample of samples) {

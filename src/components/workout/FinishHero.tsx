@@ -1,5 +1,5 @@
 import { useEffect, useId, type CSSProperties, type ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Flame, Trophy } from "lucide-react";
 // The display register's face: Archivo's wide heavy italic, from the
 // installed package, so the two-family rule holds (DESIGN_GUIDE §4). Only
@@ -160,14 +160,14 @@ export default function FinishHero({
               : "h-[clamp(240px,40svh,340px)]"
           )}
         >
-          <motion.div
+          <m.div
             className="absolute inset-0 flex items-center justify-center"
             initial={reduce ? false : { opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.34, 1.4, 0.64, 1] }}
           >
             {picture}
-          </motion.div>
+          </m.div>
         </div>
       )}
       <div className="relative mt-3 w-full">
@@ -205,7 +205,7 @@ export default function FinishHero({
         </p>
       </div>
       {line && (
-        <motion.p
+        <m.p
           data-finish-line
           className="mt-5 flex max-w-[22rem] items-start justify-center gap-2 text-base font-semibold leading-snug text-foreground text-balance"
           initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -233,7 +233,7 @@ export default function FinishHero({
               </>
             )}
           </span>
-        </motion.p>
+        </m.p>
       )}
     </section>
   );

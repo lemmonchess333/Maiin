@@ -1,4 +1,5 @@
 import type { Workout, WorkoutExercise, WorkoutSet } from "@/lib/savedWorkouts";
+import { followedWeight, sameWeight } from "./sessionSets";
 
 /** One set as Train's "Last:" line shows it. */
 export interface LastSet {
@@ -133,6 +134,32 @@ function countedSets(sets: readonly WorkoutSet[]): LastSet[] {
         : set.type === "working" || set.type === "failure"
     )
     .map(({ weightKg, reps }) => ({ weightKg, reps }));
+}
+
+/**
+ * Last time in one figure, where a line sets today's prescription against
+ * it ("7.5 kg less than last time"): the weight most of last time's sets
+ * were lifted at, the heavier on a tie (`followedWeight`, the weight the
+ * plan follows), and the reps those sets averaged, rounded down, as the
+ * plan records a session (`recordedReps`). Null with no sets.
+ *
+ * Read from the sets Train's "Last:" line lists (`lastSetsBySlot`), so
+ * the hero on Home and Train and the rows under it name one last time.
+ * Not the plan's own record of the slot (`lastPerformance`), which a
+ * session the plan never read leaves where it was: Pull A said "7.5 kg less than last time" against 42.5 kg above
+ * a row reading "Last: 60 kg × 10, 10" (owner, 23 Nov 2026).
+ */
+export function lastTimeOf(
+  sets: readonly LastSet[] | undefined
+): LastSet | null {
+  if (!sets?.length) return null;
+  const weightKg = followedWeight(
+    sets.map((set) => ({ weight: set.weightKg }))
+  );
+  if (weightKg === null) return null;
+  const at = sets.filter((set) => sameWeight(set.weightKg, weightKg));
+  const total = at.reduce((sum, set) => sum + set.reps, 0);
+  return { weightKg, reps: Math.floor(total / at.length) };
 }
 
 /** Consecutive sets at one weight, grouped, so a top set and its back-offs

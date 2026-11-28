@@ -237,7 +237,9 @@ bond stored before then is deleted with either member's account and by
 Weekly leagues (Soc15 call 3): `LeagueCard.tsx` (Social's Together tab),
 `LeagueResultGate.tsx` / `LeagueResultReveal.tsx` (the Monday result,
 once per device), `TierBadge.tsx` (the five drawn tiers), `useLeague.ts`
-(the figure, the membership, the group's standings) and `leagueRules.ts`,
+(the figure, the membership, the group's standings), `LeagueRiseLine.tsx` /
+`useLeagueRise.ts` (a finish's "Up to 4th of 18", only when the session
+raised your place, Run30 call 2) and `leagueRules.ts`,
 the client's copy of `functions/lib/leagueRules.js` (pinned by
 `__tests__/leagueRules.cross.test.ts`). The page is `src/pages/League.tsx`.
 

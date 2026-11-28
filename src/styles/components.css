@@ -924,3 +924,22 @@ html.launching [data-brand-mark] {
     transparent
   );
 }
+
+/* Desktop left navigation rail (>= 1024px): clears the mobile floating-pill
+   chrome without touching the mobile glass rules pinned by tabBarGlass.test.ts. */
+@media (min-width: 1024px) {
+  .bottom-nav-frame {
+    padding: 0;
+    pointer-events: auto;
+  }
+  .bottom-nav-frame::before {
+    display: none;
+  }
+  .bottom-nav-frost {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

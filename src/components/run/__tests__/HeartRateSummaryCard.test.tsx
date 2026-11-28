@@ -81,4 +81,57 @@ describe("saved heart rate summary", () => {
     const { container } = render(<HeartRateSummaryCard summary={null} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("shows steady heart rate drift when decoupling is under 5%", () => {
+    render(
+      <HeartRateSummaryCard
+        summary={{
+          ...complete,
+          decoupling: {
+            pct: 2.4,
+            firstHalfAvgBpm: 144,
+            secondHalfAvgBpm: 147,
+            status: "steady",
+          },
+        }}
+      />
+    );
+    expect(screen.getByText("Heart rate drift")).toBeVisible();
+    expect(screen.getByText("2.4%")).toBeVisible();
+    expect(
+      screen.getByText(/Held steady across both halves \(144 to 147 bpm\)/)
+    ).toBeVisible();
+  });
+
+  it("shows mild and high drift notes cleanly and ignores malformed decoupling", () => {
+    const { unmount } = render(
+      <HeartRateSummaryCard
+        summary={{
+          ...complete,
+          decoupling: {
+            pct: 12.1,
+            firstHalfAvgBpm: 142,
+            secondHalfAvgBpm: 161,
+            status: "high_drift",
+          },
+        }}
+      />
+    );
+    expect(screen.getByText("12.1%")).toBeVisible();
+    expect(
+      screen.getByText(/Noticeable second-half drift \(142 to 161 bpm\)/)
+    ).toBeVisible();
+    unmount();
+
+    render(
+      <HeartRateSummaryCard
+        summary={{
+          ...complete,
+          decoupling: { pct: NaN, status: "unknown" },
+        }}
+      />
+    );
+    expect(screen.getByText("145")).toBeVisible();
+    expect(screen.queryByText("Heart rate drift")).not.toBeInTheDocument();
+  });
 });

@@ -20,7 +20,7 @@ export default function WeekPulseView({ pulse }: { pulse: WeekPulse | null }) {
   if (!pulse) return null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2 dark:card-shadow dark:border-transparent">
+    <div className="p-4 rounded-2xl bg-card space-y-2 surface-flat">
       <SectionLabel>Your week so far</SectionLabel>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {pulse.lifts && (

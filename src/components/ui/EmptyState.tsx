@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -96,7 +96,7 @@ export function EmptyState({
   // the width 24px took.
   return (
     <div
-      className={`text-center ${compact ? "px-[16px] py-6 space-y-2.5" : "px-[24px] py-10 space-y-4"} ${className ?? ""}`}
+      className={`text-center ${compact ? "px-[16px] py-6 space-y-3" : "px-[24px] py-10 space-y-4"} ${className ?? ""}`}
       role="status"
     >
       <div className="relative mx-auto" style={{ width: size, height: size }}>
@@ -108,7 +108,7 @@ export function EmptyState({
           aria-hidden="true"
           style={{ display: "block" }}
         >
-          <motion.polygon
+          <m.polygon
             points={HEX_POINTS}
             stroke={accent}
             strokeOpacity={0.5}
@@ -118,7 +118,7 @@ export function EmptyState({
             {...hexAnim}
           />
           {!Icon && (
-            <motion.polyline
+            <m.polyline
               points={CHEVRON}
               stroke={accent}
               strokeOpacity={0.7}
@@ -130,7 +130,7 @@ export function EmptyState({
           )}
         </svg>
         {Icon && (
-          <motion.div
+          <m.div
             className="absolute inset-0 flex items-center justify-center"
             {...innerAnim}
           >
@@ -140,10 +140,10 @@ export function EmptyState({
               strokeWidth={1.75}
               aria-hidden="true"
             />
-          </motion.div>
+          </m.div>
         )}
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {/* A word wider than the screen breaks rather than spilling past
             it; the margins above are what keep the words in use whole. */}
         <p className="text-h3 font-bold text-foreground break-words">

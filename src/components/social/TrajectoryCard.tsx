@@ -52,7 +52,7 @@ export default function TrajectoryCard({
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
   return (
-    <div className="p-4 rounded-2xl bg-card card-shadow">
+    <div className="p-4 rounded-2xl bg-card border border-border/60 dark:border-transparent dark:card-shadow">
       <div className="flex items-center gap-2 mb-3">
         <Zap className="size-5" style={{ color: THEME.chrome.text }} />
         <div className="flex-1">

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { TodaySession } from "@/lib/todaySession";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
@@ -11,7 +11,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
-import { heroLead, type HeroLine } from "@/lib/homeHero";
+import { heroLead, type HeroLine, type LastSetsOf } from "@/lib/homeHero";
 import type { ComponentProps } from "react";
 
 const stagger = {
@@ -46,6 +46,8 @@ export default function StackedCTACards({
   liftUnit = "kg",
   freeRunLine = null,
   liftReadiness = null,
+  runReadiness = null,
+  lastSetsOf,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
@@ -60,6 +62,12 @@ export default function StackedCTACards({
   /** Readiness for the lift hero (`useTodayReadiness`); the compact card
    *  under a run hero shows none. */
   liftReadiness?: ComponentProps<typeof LiftCTACard>["readiness"];
+  /** Readiness for the run hero (`useTodayReadiness`); the compact card
+   *  under a lift hero shows none. */
+  runReadiness?: ComponentProps<typeof RunCTACard>["readiness"];
+  /** Last time's counted sets for each lift, as Train's "Last:" line
+   *  reads them (`lastSetsBySlot`), for the lift hero's line. */
+  lastSetsOf: LastSetsOf;
 }) {
   const { lift, run, rest } = session;
   // On a day with both, the run leads when running is the person's aim,
@@ -67,7 +75,7 @@ export default function StackedCTACards({
   // the run is not (`heroLead`, which the label beside the date reads too).
   const runLeads = !!run && heroLead(session) === "run";
   const runCard = run && (
-    <motion.div key="run" variants={fadeUp}>
+    <m.div key="run" variants={fadeUp}>
       <RunCTACard
         todayRun={run.runDay}
         racePace={run.racePace}
@@ -81,11 +89,12 @@ export default function StackedCTACards({
         intervalPaceSPerKm={run.intervalPaceSPerKm}
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
+        readiness={runLeads ? runReadiness : null}
       />
-    </motion.div>
+    </m.div>
   );
   const liftCard = lift?.workout ? (
-    <motion.div key="lift" variants={fadeUp}>
+    <m.div key="lift" variants={fadeUp}>
       <LiftCTACard
         nextWorkout={lift.workout}
         dayLabel={lift.name ?? undefined}
@@ -100,10 +109,11 @@ export default function StackedCTACards({
         unit={liftUnit}
         variant={runLeads ? "compact" : "hero"}
         readiness={runLeads ? null : liftReadiness}
+        lastSetsOf={lastSetsOf}
       />
-    </motion.div>
+    </m.div>
   ) : lift ? (
-    <motion.div key="lift-recovery" variants={fadeUp}>
+    <m.div key="lift-recovery" variants={fadeUp}>
       {/* Legacy schedules can outnumber the programme's workouts.
           Keep the next-session choice with Programme's rotation
           (ADR-0002), without deep-linking to an overflow index. */}
@@ -127,18 +137,18 @@ export default function StackedCTACards({
           </Button>
         }
       />
-    </motion.div>
+    </m.div>
   ) : null;
 
   return (
-    <motion.div
+    <m.div
       className="space-y-3"
       initial={false}
       animate="visible"
       variants={stagger}
     >
       {session.inProgressElsewhere?.map((strip) => (
-        <motion.div key={`in-progress-${strip.sport}`} variants={fadeUp}>
+        <m.div key={`in-progress-${strip.sport}`} variants={fadeUp}>
           <InProgressStrip
             session={strip}
             onResume={() => {
@@ -149,7 +159,7 @@ export default function StackedCTACards({
               navigate(strip.resumeTarget);
             }}
           />
-        </motion.div>
+        </m.div>
       ))}
       {runLeads ? (
         <>
@@ -163,7 +173,7 @@ export default function StackedCTACards({
         </>
       )}
       {rest && (
-        <motion.div key="rest" variants={fadeUp}>
+        <m.div key="rest" variants={fadeUp}>
           {/* Rest-day hero. Previously neither lift nor run rendered on
               rest days and the page looked half-empty — users couldn't
               distinguish "scheduled rest" from "something broke". The
@@ -180,6 +190,7 @@ export default function StackedCTACards({
               startTarget={rest.startTarget}
               inProgress={rest.inProgress}
               unit={liftUnit}
+              lastSetsOf={lastSetsOf}
             />
           ) : rest.kind === "free-run" ? (
             <RunCTACard
@@ -195,8 +206,8 @@ export default function StackedCTACards({
           ) : (
             <RestDayCard tomorrow={rest.tomorrow} navigate={navigate} />
           )}
-        </motion.div>
+        </m.div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

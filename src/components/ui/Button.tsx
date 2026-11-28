@@ -127,7 +127,7 @@ function Button({
           <Loader2
             aria-hidden="true"
             className={cn(
-              "animate-spin",
+              "motion-safe:animate-spin",
               size === "sm" ? "size-3.5" : size === "lg" ? "size-5" : "size-4"
             )}
           />

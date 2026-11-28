@@ -3,6 +3,7 @@ import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { useUid } from "@/lib/auth";
+import { readFeedSnapshot, writeFeedSnapshot } from "@/lib/feedSnapshots";
 import { isMemberFacing, type SpacePostDoc } from "./spaceTypes";
 
 export interface CommunityFeedItem {
@@ -10,6 +11,14 @@ export interface CommunityFeedItem {
   postId: string;
   post: SpacePostDoc;
 }
+
+/** What the session keeps of the stream's last read (`feedSnapshots`):
+ *  the posts, and the joined Spaces they were read for. */
+interface SpacesSnapshot {
+  idsKey: string;
+  items: CommunityFeedItem[];
+}
+const SOURCE = "spaces";
 
 const PER_SPACE_LIMIT = 10;
 const TOTAL_CAP = 30;
@@ -31,6 +40,10 @@ export const MAX_SPACES_IN_FEED = 6;
  * Read discipline: fires only when `enabled` (the sub-tab is active) —
  * bounded at MAX_SPACES_IN_FEED joined spaces × PER_SPACE_LIMIT posts per
  * refresh, one-shot reads (no listeners), merged and capped client-side.
+ *
+ * Read earlier this session for the same joined Spaces, the stream starts
+ * from that read, shown at once, and reads again behind it
+ * (`feedSnapshots`); a read for other Spaces is never shown.
  */
 export function useCommunitiesFeed(enabled: boolean, joinedSpaceIds: string[]) {
   const uid = useUid();
@@ -103,8 +116,29 @@ export function useCommunitiesFeed(enabled: boolean, joinedSpaceIds: string[]) {
     void load();
   }, [enabled, readKey, load]);
 
+  /* Keep the read for the session, so the stream comes back with it. */
+  useEffect(() => {
+    if (!uid || !idsKey || result.key !== readKey) return;
+    writeFeedSnapshot<SpacesSnapshot>(uid, SOURCE, {
+      idsKey,
+      items: result.items,
+    });
+  }, [uid, idsKey, readKey, result]);
+
+  /* Read earlier this session for these same Spaces: start from that
+     read (adjust-state idiom), and the load above reads again behind it.
+     A read for other Spaces, or another account's, is never taken. */
+  if (result.key !== readKey && idsKey) {
+    const kept = readFeedSnapshot<SpacesSnapshot>(uid, SOURCE);
+    if (kept?.idsKey === idsKey) setResult({ key: readKey, items: kept.items });
+  }
+
   return {
     items: result.key === readKey ? result.items : [],
+    /** The stream is known: read for these Spaces here or earlier in the
+     *  session, or there are no Spaces to read. A read in flight is then a
+     *  refresh behind it, not a reason for a placeholder. */
+    loaded: result.key === readKey || idsKey.length === 0,
     loading:
       enabled && (loading || (idsKey.length > 0 && result.key !== readKey)),
     refresh: useCallback(async () => {

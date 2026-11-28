@@ -74,7 +74,7 @@ export default function Lifting() {
             {GUIDES.map((guide) => (
               <li
                 key={guide.file}
-                className="rounded-2xl bg-card card-shadow p-2 text-center"
+                className="rounded-xl bg-card card-shadow p-3 text-center"
               >
                 <img
                   src={`/form-art/${guide.file}.webp`}

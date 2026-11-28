@@ -330,7 +330,7 @@ export default function SpacePostComposer({
                 />
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {sessions.map((a, i) => (
                   <button
                     key={i}

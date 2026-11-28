@@ -32,6 +32,7 @@ import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import LeagueRiseLine from "@/features/league/LeagueRiseLine";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
@@ -88,6 +89,7 @@ import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
 import { pinnedWorkPace } from "../lib/runSegments";
 import type { WorkPortion } from "../hooks/useSessionPlayer";
+import type { RunLapSplit } from "@/lib/runLaps";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -144,12 +146,14 @@ import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import {
   clearHeartRateSession,
+  getHeartRateSession,
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
 import {
   heartRateCoverageBand,
   maxHrFromAge,
   summarizeHeartRate,
+  type HeartRateSample,
 } from "@/lib/hrZones";
 import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
@@ -162,7 +166,7 @@ import {
   WifiOff,
   CheckCircle,
   Trophy,
-  ChevronLeft,
+  ArrowLeft,
   AlertCircle,
   Pencil,
   Share,
@@ -325,7 +329,7 @@ function InvalidRunReview({
   return (
     <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3 dark:card-shadow">
       {/* Announce the saved heading without repeating the pre-save warning. */}
-      <div className="space-y-1.5" aria-live="polite">
+      <div className="space-y-2" aria-live="polite">
         <p className="text-base font-semibold text-foreground">{heading}</p>
         {bodyCopy && (
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -429,6 +433,8 @@ interface RunData {
   /** The time and distance in the session's work segments
    *  (`useSessionPlayer`), null for a run with none. */
   workPortion?: WorkPortion | null;
+  /** Per-interval or manual lap splits captured during the run. */
+  lapSplits?: RunLapSplit[];
 }
 
 export default function RunSummary() {
@@ -461,6 +467,9 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // In-memory only (cleared automatically on unmount) so Export GPX can still
+  // emit Garmin gpxtpx:hr extensions after Save clears the session store.
+  const capturedHeartRateSamplesRef = useRef<HeartRateSample[]>([]);
   // The age the zones' estimate reads: from the year of birth, else an
   // older account's age (App1, Q57).
   const ageYears = profileAge(profile);
@@ -472,8 +481,9 @@ export default function RunSummary() {
       return;
     let active = true;
     void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
-      .then(({ samples, activeIntervals }) => {
+      .then(async ({ samples, activeIntervals }) => {
         if (!active) return;
+        if (samples.length > 0) capturedHeartRateSamplesRef.current = samples;
         const measuredMax = profile?.maxHeartRate ?? 0;
         const maxHr =
           measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
@@ -483,7 +493,21 @@ export default function RunSummary() {
           maxHr,
           state.elapsed
         );
-        if (summary) setHeartRatePreview(summary);
+        if (summary) {
+          const { computeAerobicDecoupling } =
+            await import("@/lib/aerobicDecoupling");
+          if (!active) return;
+          const decoupling = computeAerobicDecoupling({
+            samples,
+            activeIntervals,
+            points: state.points ?? [],
+            activityType: state.runConfig?.activityType,
+            movingSecondsOverride: state.elapsed,
+          });
+          setHeartRatePreview(
+            decoupling ? { ...summary, decoupling } : summary
+          );
+        }
       })
       .catch((error) =>
         logger.warn("[RunSummary] Heart rate unavailable", error)
@@ -495,6 +519,8 @@ export default function RunSummary() {
     user?.uid,
     state?.identity,
     state?.elapsed,
+    state?.points,
+    state?.runConfig?.activityType,
     profile?.maxHeartRate,
     ageYears,
   ]);
@@ -1353,16 +1379,33 @@ export default function RunSummary() {
             setSaveStatus("idle");
             return;
           }
+          if (captured.samples.length > 0) {
+            capturedHeartRateSamplesRef.current = captured.samples;
+          }
           const measuredMax = profile?.maxHeartRate ?? 0;
           const maxHr =
             measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
-          heartRate = summarizeHeartRate(
+          const rawHeartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,
             maxHr,
             elapsed
           );
-          if (heartRate) setHeartRatePreview(heartRate);
+          if (rawHeartRate) {
+            const { computeAerobicDecoupling } =
+              await import("@/lib/aerobicDecoupling");
+            const decoupling = computeAerobicDecoupling({
+              samples: captured.samples,
+              activeIntervals: captured.activeIntervals,
+              points: state.points ?? [],
+              activityType,
+              movingSecondsOverride: elapsed,
+            });
+            heartRate = decoupling
+              ? { ...rawHeartRate, decoupling }
+              : rawHeartRate;
+            setHeartRatePreview(heartRate);
+          }
         } catch (error) {
           logger.warn("[RunSave] Heart rate unavailable:", error);
         }
@@ -1416,6 +1459,7 @@ export default function RunSummary() {
         invalidReason: invalidReason ?? null,
         routeQuality: state.routeQuality ?? null,
         workPortion: state.workPortion ?? null,
+        lapSplits: state.lapSplits,
         shoeId: effectiveShoeId,
         bestEfforts,
         name: nameToSave,
@@ -1647,12 +1691,21 @@ export default function RunSummary() {
       toast.error("Couldn’t check your privacy settings. Try again");
       return;
     }
+    const hrSamples =
+      capturedHeartRateSamplesRef.current.length > 0
+        ? capturedHeartRateSamplesRef.current
+        : user?.uid && state?.identity
+          ? getHeartRateSession(user.uid, state.identity.sessionId).samples
+          : undefined;
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     // The raw fixes, cut by the privacy zones on those coordinates.
     const gpx = toGPX(
       exportTrace(state?.points ?? [], privacyZones),
-      `Tropos Run ${formatDayMonthYear(runDate)}`
+      `Tropos Run ${formatDayMonthYear(runDate)}`,
+      hrSamples && hrSamples.length > 0
+        ? { heartRateSamples: hrSamples }
+        : undefined
     );
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
@@ -1747,7 +1800,7 @@ export default function RunSummary() {
           variant="secondary"
           className="bg-background/85 backdrop-blur-sm transparency-reduce:backdrop-blur-none transparency-reduce:bg-background!"
           onClick={() => navigate(-1)}
-          icon={<ChevronLeft className="size-5" aria-hidden="true" />}
+          icon={<ArrowLeft className="size-4" aria-hidden="true" />}
         />
       </div>
 
@@ -2187,6 +2240,23 @@ export default function RunSummary() {
             </OptionalSummaryBoundary>
           </div>
 
+          {/* The league line (Run30 call 2), under the week as on the lift:
+              it lands seconds after the save, so it goes below the run's
+              figures and pushes none of them down, and it reserves no space
+              when it has nothing to say. Mounted before the save, so it
+              reads the group first; drawn only when the saved run raised
+              your place. */}
+          <LeagueRiseLine
+            className="mx-4 mb-4"
+            stage={
+              saveStatus === "idle" && savedRunId === null
+                ? "before"
+                : saved && savedRunId !== null && !pendingSync
+                  ? "onServer"
+                  : "saving"
+            }
+          />
+
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
               Adherence chip surfaces "Planned" / "Custom" / "Extra"
               against the user's plan when planMetadata is present
@@ -2270,12 +2340,13 @@ export default function RunSummary() {
           {/* Splits: one table, lap, pace and climb, with a bar per lap
               for its speed, and the only view of the laps here. A saved
               run shows the same table. */}
-          {displaySplits.length > 0 && (
+          {(displaySplits.length > 0 || (state.lapSplits?.length ?? 0) > 0) && (
             <div className="px-4 mb-4">
               <SplitsTable
                 splits={displaySplits}
                 lapUnit={lapUnit}
                 unit={unit}
+                lapSplits={state.lapSplits}
               />
             </div>
           )}
@@ -2337,7 +2408,7 @@ export default function RunSummary() {
                 and saving without touching it is fine. The notes field
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <SectionHeading size="compact" className="px-1">
                   How did it feel?
                 </SectionHeading>

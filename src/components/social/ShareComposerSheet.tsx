@@ -298,14 +298,14 @@ export default function ShareComposerSheet() {
             {REMEMBER_LABEL[state.type]}
           </span>
         </label>
-        <p className="text-caption text-muted-foreground px-1 -mt-1">
+        <p className="text-micro text-muted-foreground px-1 -mt-1">
           {remember
             ? REMEMBER_HINT[state.type]
             : "Applies to this session only. Set a default in Settings → Social & privacy."}
         </p>
 
         {!isOnline && (
-          <p className="text-caption text-muted-foreground text-center">
+          <p className="text-micro text-muted-foreground text-center">
             You’re offline. Your post shares when you’re back online.
           </p>
         )}

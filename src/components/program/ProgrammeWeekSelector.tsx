@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -224,7 +224,7 @@ export default function ProgrammeWeekSelector({
               className="flex flex-col items-center flex-1 min-w-11"
             >
               {cell.topLabel !== undefined && (
-                <span className="text-caption text-muted-foreground mb-0.5">
+                <span className="text-micro text-muted-foreground mb-0.5">
                   {cell.topLabel}
                 </span>
               )}
@@ -283,7 +283,7 @@ export default function ProgrammeWeekSelector({
                   that remains, and CSS variables stay theme-correct in
                   both light and dark. Size is not tweened because it no
                   longer changes: every cell is `CELL_PX`. */}
-                <motion.div
+                <m.div
                   className="flex items-center justify-center rounded-full"
                   animate={{
                     boxShadow: glow ?? "0 0 0 0 transparent",
@@ -299,7 +299,7 @@ export default function ProgrammeWeekSelector({
                   }}
                 >
                   {content}
-                </motion.div>
+                </m.div>
               </button>
               {/* The row is reserved whether or not this cell has a label.
                 Rest days render an empty span, so without a floor the
@@ -320,7 +320,7 @@ export default function ProgrammeWeekSelector({
               <span
                 data-cell-label
                 className={cn(
-                  "text-caption font-semibold text-center leading-tight block",
+                  "text-micro font-semibold text-center leading-tight block",
                   sport === "run"
                     ? cn(
                         "max-w-[calc(100%_+_0.25rem)] @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter",

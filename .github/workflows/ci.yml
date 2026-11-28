@@ -114,7 +114,7 @@ jobs:
     # installs, lints, builds and checks the bundle: in the training-engine
     # merges it ran 10–15 minutes, and one run passed every step and was
     # cancelled at 15 during its cleanup.
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -123,6 +123,8 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - name: Check Cloud Functions syntax
+        run: npm --prefix functions run check:syntax
       # package.json's `test:verifiers` runs these same two commands, so
       # `npm run verify` runs them before a push. The guard
       # requiredCheckComposition.test.ts holds that script to this step,
@@ -190,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     # As the unit job: the suites ran 11–15 minutes in these jobs on
     # 19 October, and Kiritimati was cancelled at 15 with its tests passing.
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -277,7 +279,7 @@ jobs:
     if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -375,7 +377,7 @@ jobs:
     if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -496,7 +498,7 @@ jobs:
     if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
     runs-on: ubuntu-latest
     # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
@@ -27,7 +27,7 @@ export default function ArrivalFade({
   const reduce = useReducedMotion();
   const fade = arrived && !reduce;
   return (
-    <motion.div
+    <m.div
       initial={fade ? { opacity: 0 } : false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
@@ -35,6 +35,6 @@ export default function ArrivalFade({
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

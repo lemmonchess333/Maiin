@@ -27,6 +27,14 @@ export interface SessionRead {
   weight: number;
   /** The sets at that weight that count, best first. */
   counted: SessionSet[];
+  /**
+   * Highest RPE logged on sets BEFORE the final working set at `weight`
+   * (null when RPE was only logged on that final set; omitted when no set
+   * carried an RPE). Lets `hardestEffort` honour the final-set push cue on
+   * isolations and machine accessories without letting early redlined sets
+   * slip through.
+   */
+  nonFinalEffort?: number | null;
 }
 
 /** Weights within this of each other are the same weight. */
@@ -71,14 +79,24 @@ export function readSessionSets(
   );
   const weight = followedWeight(working);
   if (weight === null) return null;
-  const counted = working
-    .filter((set) => sameWeight(set.weight, weight))
+  const atWeight = working.filter((set) => sameWeight(set.weight, weight));
+  const counted = atWeight
     .map(({ weight, reps, rpe }) =>
       rpe === undefined ? { weight, reps } : { weight, reps, rpe }
     )
     .sort((a, b) => b.reps - a.reps)
     .slice(0, planned > 0 ? planned : undefined);
-  return { weight, counted };
+  const hasAnyRpe = counted.some((set) => typeof set.rpe === "number");
+  if (!hasAnyRpe) return { weight, counted };
+  const nonFinalRpes = atWeight
+    .slice(0, -1)
+    .map((set) => set.rpe)
+    .filter((rpe): rpe is number => typeof rpe === "number");
+  return {
+    weight,
+    counted,
+    nonFinalEffort: nonFinalRpes.length ? Math.max(...nonFinalRpes) : null,
+  };
 }
 
 /**
@@ -133,7 +151,13 @@ export function recordedReps(read: SessionRead): number {
 }
 
 /** The highest effort logged on a counted set, if any was. */
-export function hardestEffort(read: SessionRead): number | undefined {
+export function hardestEffort(
+  read: SessionRead,
+  options?: { exemptLastSet?: boolean }
+): number | undefined {
+  if (options?.exemptLastSet && read.nonFinalEffort !== undefined) {
+    return read.nonFinalEffort ?? undefined;
+  }
   const efforts = read.counted
     .map((set) => set.rpe)
     .filter((rpe): rpe is number => typeof rpe === "number");

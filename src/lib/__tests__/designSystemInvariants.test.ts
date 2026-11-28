@@ -402,7 +402,8 @@ describe("DS ratchets — surface-level drift", () => {
   // field asks for no meal.
   // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
   // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
-  const RAW_BUTTON_BASELINE = 293;
+  // 293 → 292: locked in after prior Button-primitive migration freed one slot.
+  const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -450,12 +451,17 @@ describe("DS ratchets — surface-level drift", () => {
 
   // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
   // is the Tailwind spelling of that promise. `animate-none` is a reset,
-  // not an animation, and is excluded.
-  const UNGUARDED_ANIMATION_BASELINE = 8;
+  // not an animation, and is excluded. Comments are stripped so JSDoc
+  // history notes don't count as live classes.
+  // Floor is 0: every animate-* class in code is now motion-safe:-guarded.
+  const UNGUARDED_ANIMATION_BASELINE = 0;
   it("animate-* classes without a motion-safe: prefix do not increase", () => {
     const { total, byFile } = scan((src) => {
+      const code = src
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/\/\/[^\n]*/g, " ");
       let n = 0;
-      for (const m of src.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
+      for (const m of code.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
         if (!m[1] && m[2] !== "none") n++;
       }
       return n;
@@ -487,7 +493,11 @@ describe("DS ratchets — surface-level drift", () => {
   // has no way off the token at all.
   // 20 since a shared post's and card's pages draw their one heading
   // through `SharedLanding` (owner's layout, 22 Nov 2026).
-  const OFF_SCALE_H1_BASELINE = 20;
+  // 20 → 8: migrated all 12 grandfathered text-lg / text-xl / text-2xl page
+  // headings (Terms, Privacy, Support, Diagnostics, Moderation, ExerciseHistory,
+  // MinVersionGate, AppErrorBoundary, RunTilePicker, RunLaunchCard) onto text-h1;
+  // only bespoke display/hero/sr-only headings remain.
+  const OFF_SCALE_H1_BASELINE = 8;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
   // The website's own headline (troposfit.com, App1 Q52): a hero at the
   // website's scale, 36 px on a phone and 56 px at 1440, where the app's
@@ -559,7 +569,7 @@ describe("DS ratchets — surface-level drift", () => {
      modals and the empty states — they adopt the primitive as they are
      touched. */
   const CARD_PAIRINGS = new Set(["rounded-2xl p-4", "rounded-xl p-3"]);
-  const OFF_PAIRING_CARD_BASELINE = 32;
+  const OFF_PAIRING_CARD_BASELINE = 0;
   const CARD_PRIMITIVE = "src/components/ui/cardClasses.ts";
   it("hand-rolled bg-card surfaces off the two card pairings do not increase", () => {
     const { total, byFile } = scan((src) => {
@@ -723,7 +733,9 @@ describe("DS ratchets — surface-level drift", () => {
      and 32px — and 60 half-step stacks (0.5 / 1.5 / 2.5) sat across the
      tree. The five route pages and the shell are pinned to the scale
      outright; the rest of the tree is ratcheted. */
-  const HALF_STEP_STACK_BASELINE = 56;
+  // 56 → 33 → 12 → 0: fully burned down — every vertical stack is now on
+  // whole-step spacing. Floor is 0: any half-step space-y-* fails.
+  const HALF_STEP_STACK_BASELINE = 0;
   it("half-step vertical stacks (space-y-0.5 / 1.5 / 2.5) do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
@@ -758,13 +770,11 @@ describe("DS ratchets — surface-level drift", () => {
   /* A section heading carries no margin of its own — its group's stack
      places it. A heading that brings `mt-6 mb-2` to a container that
      already spaces its children is how one page ends up with 56px between
-     sections while another gets 16. Analytics is fully burned down (its
-     four page sections and PerformanceSection all take their placement
-     from a `space-y-2` section stack); the five left are Shoes, run
-     setup, route setup, the challenge list and Programme settings' field
-     groups. Counted across `SectionHeading` and the legacy section-tier
+     sections while another gets 16. Fully burned down — every section
+     heading now takes placement from its parent stack. Floor is 0.
+     Counted across `SectionHeading` and the legacy section-tier
      label, so neither picks the habit up. Multi-line openers included. */
-  const SECTION_LABEL_MARGIN_BASELINE = 5;
+  const SECTION_LABEL_MARGIN_BASELINE = 0;
   it("section headings with their own vertical margin do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
@@ -814,7 +824,7 @@ describe("type tiers", () => {
      (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
      The count holds the remaining word uses and may only fall. */
-  const CAPTION_WORDS_BASELINE = 58;
+  const CAPTION_WORDS_BASELINE = 0;
   it("text-caption on words does not increase (words sit on text-micro)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

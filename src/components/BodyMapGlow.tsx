@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import Model, { type IExerciseData } from "react-body-highlighter";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -48,7 +48,7 @@ export default function BodyMapGlow({
   if (data.length === 0) return null;
 
   return (
-    <motion.div
+    <m.div
       aria-hidden="true"
       className="absolute inset-0 pointer-events-none"
       style={{ filter: `blur(${blur}px)` }}
@@ -72,6 +72,6 @@ export default function BodyMapGlow({
         style={{ width, height, padding: 0, margin: "0 auto" }}
         svgStyle={svgStyle}
       />
-    </motion.div>
+    </m.div>
   );
 }

@@ -176,6 +176,42 @@ describe("classifyDayIntensity — lift limb + combined days", () => {
       })
     ).toBe("HARD");
   });
+
+  it("classifies each lift weekday from its own WorkoutDay volume rather than the weekly max", () => {
+    const program = makeProgram({
+      primaryGoal: "hypertrophy",
+      currentPhase: "progression",
+      weekNumber: 2,
+      workouts: [
+        liftDay("Heavy Legs", 8, 4, 6), // 192 reps → high → HARD (Mon slot 0)
+        liftDay("Light Arms", 3, 3, 6), // 54 reps → low → EASY (Thu slot 1)
+      ],
+      runDays: [],
+    });
+    const ws = sched([
+      "rest", // Sun
+      "lift", // Mon → slot 0 (Heavy Legs)
+      "rest",
+      "rest",
+      "lift", // Thu → slot 1 (Light Arms)
+      "rest",
+      "rest",
+    ]);
+    expect(
+      classifyDayIntensity({
+        date: fixtureDateFor(1),
+        program,
+        weekSchedule: ws,
+      })
+    ).toBe("HARD");
+    expect(
+      classifyDayIntensity({
+        date: fixtureDateFor(4),
+        program,
+        weekSchedule: ws,
+      })
+    ).toBe("EASY");
+  });
 });
 
 describe("classifyDayIntensity — absent plan / safety", () => {

@@ -4,8 +4,8 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 // framer-motion → plain elements
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
+vi.mock("framer-motion", () => {
+  const motionProxy = new Proxy(
     {},
     {
       get: (_t: any, prop: string) => (props: any) => {
@@ -14,8 +14,15 @@ vi.mock("framer-motion", () => ({
         return <Tag {...rest} />;
       },
     }
-  ),
-}));
+  );
+  return {
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: ({ children }: any) => <>{children}</>,
+    domAnimation: {},
+    domMax: {},
+  };
+});
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/subscription", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/subscription")>()),

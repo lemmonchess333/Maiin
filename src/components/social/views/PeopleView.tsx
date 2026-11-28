@@ -348,7 +348,7 @@ export default function PeopleView({
             )}
           </div>
           {suggestionsPending && suggestedPeople.length === 0 ? (
-            <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center dark:card-shadow dark:border-transparent">
+            <div className="p-4 rounded-2xl bg-card border border-border/50 flex items-center justify-center dark:card-shadow dark:border-transparent">
               <Spinner
                 size="sm"
                 variant="muted"

@@ -21,11 +21,13 @@ export default function Support() {
 
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto px-4 py-6 space-y-6">
         <LegalBack />
 
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">Support</h1>
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
+            Support
+          </h1>
           <p className="text-xs text-muted-foreground mt-1">
             We usually reply within a couple of days.
           </p>

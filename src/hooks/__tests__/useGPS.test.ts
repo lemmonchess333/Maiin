@@ -884,4 +884,21 @@ describe("useGPS — a lap reads its length", () => {
     expect(result.current.distance).toBeGreaterThan(1200 * 0.98);
     expect(result.current.distance).toBeLessThan(1200 * 1.02);
   });
+
+  it("bumps pointsVersion on each accepted fix without cloning the points array", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    vi.setSystemTime(T0);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 8, T0, 3.5)));
+    const firstRef = result.current.points;
+    const v1 = result.current.pointsVersion;
+    expect(firstRef).toHaveLength(1);
+    expect(v1).toBeGreaterThan(0);
+
+    vi.setSystemTime(T0 + 2_000);
+    act(() => h.watchOnFix?.(geoPos(north(10), -0.12, 8, T0 + 2_000, 3.5)));
+    expect(result.current.points).toBe(firstRef);
+    expect(result.current.points).toHaveLength(2);
+    expect(result.current.pointsVersion).toBe(v1 + 1);
+  });
 });
