@@ -153,7 +153,12 @@ export default function HeartRateZonesSection({
               id="max-hr"
               type="text"
               inputMode="numeric"
-              placeholder="188"
+              /* The estimate the header shows, never a number of its own:
+                 a fixed "188" here sat under "Max heart rate 207 bpm"
+                 (owner's recording, 23 November 2026). */
+              placeholder={
+                maxHrSource === "estimate" ? String(maxHr) : undefined
+              }
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className="ds-input text-sm font-mono tabular-nums"

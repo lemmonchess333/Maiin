@@ -1881,3 +1881,136 @@ describe("RunPlanSettings — adding and stopping running", () => {
     ).toHaveValue(3);
   });
 });
+
+/* The owner's recording of Run plan (23 November 2026): a 50K plan kept a
+   half marathon's name, the line under the goals said the opposite of the
+   goal chosen, and the save named a race plan with no race chosen. */
+describe("RunPlanSettings — what the page says follows the goal chosen", () => {
+  const race = () => firstUpcomingRace();
+  const racePlan = () =>
+    ({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: {
+        distance: race().event!.distance,
+        targetDate: race().event!.dateKey,
+        eventName: race().name,
+        eventSpaceId: race().id,
+        entry: "race",
+      },
+    }) as unknown as UserProfile;
+  const ultra = (name: string) =>
+    within(
+      screen.getByRole("radiogroup", { name: "Ultra distance" })
+    ).getByRole("radio", { name });
+  const roadName = {
+    "5k": "5K",
+    "10k": "10K",
+    half: "Half",
+    marathon: "Marathon",
+  } as const;
+
+  beforeEach(() => {
+    configureSpy.mockClear();
+    localStorage.clear();
+  });
+
+  it("takes the race off a plan whose distance is no longer the race's, and says so", async () => {
+    renderPage(racePlan());
+    expect(screen.getByLabelText(/Race name/i)).toHaveValue(race().name);
+    fireEvent.click(ultra("50K"));
+    expect(screen.getByLabelText(/Race name/i)).toHaveValue("");
+    const notice = screen.getByText(/no longer this plan’s race/);
+    expect(notice).toHaveAttribute("role", "status");
+    expect(notice).toHaveTextContent(
+      new RegExp(
+        `^${race().name} is a .+, so it’s no longer this plan’s race\\. Check the date below\\.$`
+      )
+    );
+    // The date stays, as the plan's target date.
+    expect(screen.getByLabelText(/Target date/i)).toHaveValue(
+      race().event!.dateKey
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const goal = sentPayload().profileUpdates.raceGoal!;
+    expect(goal.distance).toBe("50k");
+    expect(goal.targetDate).toBe(race().event!.dateKey);
+    expect("eventName" in goal).toBe(false);
+    expect("eventSpaceId" in goal).toBe(false);
+  });
+
+  it("puts the race back on a return to its distance", async () => {
+    renderPage(racePlan());
+    fireEvent.click(ultra("50K"));
+    fireEvent.click(
+      within(
+        screen.getByRole("radiogroup", { name: "Race distance" })
+      ).getByRole("radio", {
+        name: roadName[race().event!.distance as keyof typeof roadName],
+      })
+    );
+    expect(screen.getByLabelText(/Race name/i)).toHaveValue(race().name);
+    expect(
+      screen.queryByText(/no longer this plan’s race/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("names a new race over the notice", () => {
+    renderPage(racePlan());
+    fireEvent.click(ultra("50K"));
+    fireEvent.change(screen.getByLabelText(/Race name/i), {
+      target: { value: "Ox Ultra" },
+    });
+    expect(
+      screen.queryByText(/no longer this plan’s race/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("says saving ends the race plan once No race is chosen, not to choose it", () => {
+    renderPage(racePlan());
+    const refusal =
+      "You’re training for a race. To stop running, choose No race first.";
+    expect(screen.getByText(refusal)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /^No race/ }));
+    expect(screen.queryByText(refusal)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Save to end your race plan. Then you can stop running.")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /^Plan, no race/ }));
+    expect(screen.queryByText(refusal)).not.toBeInTheDocument();
+    // Stop running stays held until the race plan is saved away.
+    expect(
+      screen.queryByRole("button", { name: "Stop running" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /Training for a race/ }));
+    expect(screen.getByText(refusal)).toBeInTheDocument();
+  });
+
+  it("names the save from the goal chosen, on a new button each time", () => {
+    renderPage(racePlan());
+    fireEvent.click(screen.getByRole("radio", { name: /^No race/ }));
+    const noRace = screen.getByRole("button", { name: "Save run plan" });
+    expect(screen.queryByText("Save race plan")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /^Plan, no race/ }));
+    const rolling = screen.getByRole("button", { name: "Save run plan" });
+    expect(screen.queryByText("Save race plan")).not.toBeInTheDocument();
+    // A new element: WebKit left the old label painted in the frosted bar.
+    expect(rolling).not.toBe(noRace);
+    fireEvent.click(screen.getByRole("radio", { name: /Training for a race/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Increase run days" }));
+    expect(
+      screen.getByRole("button", { name: /^Save .*plan$/ })
+    ).not.toHaveTextContent("Save run plan");
+  });
+
+  it("takes no more characters in the climb than the largest climb it keeps", () => {
+    renderPage(racePlan());
+    expect(screen.getByLabelText("Total climb (optional)")).toHaveAttribute(
+      "maxlength",
+      String("20,000".length)
+    );
+  });
+});

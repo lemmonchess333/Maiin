@@ -353,6 +353,14 @@ describe("ProfileInfoSection — year of birth", () => {
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
+  it("names no age from a stored number it does not use as one", () => {
+    // The old TDEE field could leave a 2 (owner's recording, 23 Nov 2026).
+    renderSection(makeProfile({ age: 2 }));
+    const why = screen.getByText(/heart-rate zones are worked out from it/);
+    expect(why).toHaveTextContent("It’s never shown on your profile.");
+    expect(why).not.toHaveTextContent(/use an age of/);
+  });
+
   it("writes the year and the targets re-worked with the new age", async () => {
     const profile = makeProfile({
       age: 30,

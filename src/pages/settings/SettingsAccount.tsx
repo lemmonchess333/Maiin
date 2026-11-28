@@ -23,6 +23,7 @@ import {
 } from "@/lib/onboardingDraft";
 import { DELETE_ACCOUNT_ANCHOR } from "@/lib/healthConsent";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { profileMaxHr } from "@/lib/maxHeartRate";
 import SettingsSection from "@/components/settings/SettingsSection";
 import AccountSection from "@/components/settings/AccountSection";
 import SecuritySection from "@/components/settings/SecuritySection";
@@ -136,8 +137,7 @@ export default function SettingsAccount({
                 }
                 bodyWeightUnit={profile?.preferredWeightUnit}
                 weightKg={profile?.weightKg}
-                maxHeartRate={profile?.maxHeartRate}
-                age={profile?.age}
+                maxHeartRate={profileMaxHr(profile).maxHr || null}
               />
             </Suspense>
             <SettingsGroup title="Recently deleted">

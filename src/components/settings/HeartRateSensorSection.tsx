@@ -71,9 +71,24 @@ export default function HeartRateSensorSection() {
   const [error, setError] = useState<string | null>(null);
   const [bpm, setBpm] = useState<number | null>(null);
   const stopSearchRef = useRef<(() => void) | null>(null);
-  const searchTimerRef = useRef<number | null>(null);
+  /** Counts searches, so a scan that answers after its search ended (the
+   *  radio read off first) is stopped at once rather than left running. */
+  const searchIdRef = useRef(0);
   const mountedRef = useRef(true);
   const pairedId = status.paired?.id ?? null;
+
+  /* A search asked for is looking only once Tropos may use Bluetooth and
+     the radio is on. Before that iOS may be asking (the first search is
+     what shows its question), or the radio is still being read after the
+     answer ("unknown", "resetting"), so the button waits and nothing says
+     it is looking (owner's recording, 23 November 2026). */
+  const bluetoothReady =
+    status.authorization === "allowed" && status.bluetooth === "poweredOn";
+  const looking = searching && bluetoothReady;
+  /* What ends a search on its own: Bluetooth refused (`blockedReason`) or
+     the radio off. Either is said in the card's place of the search. */
+  const searchCannotRun =
+    blockedReason(status) !== null || status.bluetooth === "poweredOff";
 
   useEffect(() => {
     mountedRef.current = true;
@@ -81,10 +96,33 @@ export default function HeartRateSensorSection() {
       mountedRef.current = false;
       stopSearchRef.current?.();
       stopSearchRef.current = null;
-      if (searchTimerRef.current != null)
-        window.clearTimeout(searchTimerRef.current);
     };
   }, []);
+
+  // Bluetooth refused or the radio off ends the search where it stands.
+  if (searching && searchCannotRun) {
+    setSearching(false);
+    setNoneFound(false);
+  }
+
+  /* A search that has ended, however it ended, stops the phone looking,
+     and a scan still starting is stopped as it answers (`startSearch`). */
+  useEffect(() => {
+    if (searching) return;
+    searchIdRef.current++;
+    stopSearchRef.current?.();
+    stopSearchRef.current = null;
+  }, [searching]);
+
+  /* The search's time runs while it is looking, not while iOS asks. */
+  useEffect(() => {
+    if (!looking) return;
+    const timer = window.setTimeout(() => {
+      setSearching(false);
+      setNoneFound(true);
+    }, SEARCH_FOR_MS);
+    return () => window.clearTimeout(timer);
+  }, [looking]);
 
   // The paired sensor's reading, kept connected while it is on screen.
   useEffect(() => {
@@ -113,14 +151,9 @@ export default function HeartRateSensorSection() {
     };
   }, [native, pairedId]);
 
-  function endSearch(timedOut: boolean) {
-    stopSearchRef.current?.();
-    stopSearchRef.current = null;
-    if (searchTimerRef.current != null)
-      window.clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = null;
+  function endSearch() {
     setSearching(false);
-    setNoneFound(timedOut);
+    setNoneFound(false);
   }
 
   async function startSearch() {
@@ -129,24 +162,23 @@ export default function HeartRateSensorSection() {
     setFound([]);
     setNoneFound(false);
     setSearching(true);
+    const id = ++searchIdRef.current;
     const stop = await scanForHeartRateSensors((sensor) =>
       setFound((list) =>
         list.some((known) => known.id === sensor.id) ? list : [...list, sensor]
       )
     );
-    if (!mountedRef.current) {
+    // Ended while the scan was starting (the page left, the radio read
+    // off, Bluetooth refused): it stops now.
+    if (!mountedRef.current || id !== searchIdRef.current) {
       stop();
       return;
     }
     stopSearchRef.current = stop;
-    searchTimerRef.current = window.setTimeout(
-      () => endSearch(true),
-      SEARCH_FOR_MS
-    );
   }
 
   async function pair(sensor: PairedSensor) {
-    endSearch(false);
+    endSearch();
     setBusy(true);
     setError(null);
     const next = await pairHeartRateSensor(sensor.id);
@@ -254,7 +286,7 @@ export default function HeartRateSensorSection() {
                   : "Pair a Bluetooth chest strap or armband to see your heart rate on runs. Put it on so it wakes up."}
               </p>
             </div>
-            {searching ? (
+            {looking ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Spinner
@@ -282,7 +314,7 @@ export default function HeartRateSensorSection() {
                     </Button>
                   </div>
                 ))}
-                <Button variant="ghost" onClick={() => endSearch(false)}>
+                <Button variant="ghost" onClick={endSearch}>
                   Stop
                 </Button>
               </div>
@@ -295,7 +327,7 @@ export default function HeartRateSensorSection() {
                 )}
                 <Button
                   variant="secondary"
-                  loading={busy}
+                  loading={busy || searching}
                   disabled={radioOff}
                   onClick={() => void startSearch()}
                 >

@@ -148,6 +148,13 @@ function refusalSentence(refusal: SportRefusal, sport: Sport): string {
   }
 }
 
+/** Run plan's line in place of Stop running while a race plan is saved but
+ *  the person has chosen a goal with no race and not saved it yet: the
+ *  refusal's "choose No race first" is already done (owner's recording,
+ *  23 November 2026). Owner's words, 28 November 2026. */
+export const RACE_PLAN_ENDS_ON_SAVE =
+  "Save to end your race plan. Then you can stop running.";
+
 /** Which sport an intent changes. */
 export function sportOf(kind: SportChangeKind): Sport {
   return kind === "add_lifting" || kind === "remove_lifting"
