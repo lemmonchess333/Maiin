@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { todaySession, type TodaySessionInput } from "../todaySession";
+import {
+  runStartTarget,
+  todaySession,
+  type TodaySessionInput,
+} from "../todaySession";
 import { layOutWeek } from "../layOutWeek";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -442,6 +446,76 @@ describe("todaySession — a run day", () => {
     expect(session.lift?.workout).toBeTruthy();
     expect(session.run?.runDay).toBeTruthy();
     expect(session.runFirst).toBe(true);
+  });
+});
+
+/* A half, marathon or ultra plan past its free first week (Q85): its
+   planned sessions wait on Pro, the race itself does not. Home's stack
+   offers only what can be started (owner's recording, 23 Nov 2026:
+   "Also today · Easy 10 · See Pro" with a lock), and Train keeps the Pro
+   offer. */
+describe("todaySession — a planned run on a locked race plan", () => {
+  it("leaves it out under a lift, and the lift leads alone", () => {
+    const both = {
+      profile: profileWith({ 3: "both" }),
+      programState: programStateWith({
+        workouts: [PUSH],
+        runDays: [runDay(WEDNESDAY)],
+      }),
+    };
+    // Anchored: unlocked, the same day offers both.
+    expect(todaySession(input(both)).run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
+    const session = todaySession(input({ ...both, runPlanLocked: true }));
+    expect(session.type).toBe("lift");
+    expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
+    expect(session.run).toBeNull();
+    expect(session.rest).toBeNull();
+  });
+
+  it("offers a free run in its place on a day with no lift", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, { runMode: "race_prep" }),
+        programState: programStateWith({ runDays: [runDay(WEDNESDAY)] }),
+        runPlanLocked: true,
+      })
+    );
+    expect(session.run).toBeNull();
+    expect(session.rest).toEqual({
+      kind: "free-run",
+      startTarget: runStartTarget(null),
+    });
+  });
+
+  it("keeps the race itself, which starts on any plan", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, { runMode: "race_prep" }),
+        programState: programStateWith({
+          runDays: [
+            runDay(WEDNESDAY, { templateId: "marathon_race", type: "race" }),
+          ],
+        }),
+        runPlanLocked: true,
+      })
+    );
+    expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
+    expect(session.rest).toBeNull();
+  });
+
+  it("keeps a planned run already done, which offers nothing to start", () => {
+    const claimMap = new Map<string, ClaimState>([
+      [`rd-${WEDNESDAY}`, { manualCompleted: true, legacyCompleted: false }],
+    ]);
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, { runMode: "race_prep" }),
+        programState: programStateWith({ runDays: [runDay(WEDNESDAY)] }),
+        claimMap,
+        runPlanLocked: true,
+      })
+    );
+    expect(session.run?.completed).toBe(true);
   });
 });
 

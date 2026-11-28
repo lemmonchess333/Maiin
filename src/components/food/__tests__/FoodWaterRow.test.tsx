@@ -38,6 +38,10 @@ const YESTERDAY = localDateString(
 );
 const PATH = `users/u1/waterLog/${YESTERDAY}`;
 
+/** The row's line, read whole: its figures sit in spans of their own. */
+const line = (pattern: RegExp) => (_: string, el: Element | null) =>
+  el?.tagName === "P" && pattern.test(el.textContent ?? "");
+
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
@@ -51,12 +55,12 @@ describe("FoodWaterRow", () => {
   it("adds water to the day on screen, and takes the last tap back", async () => {
     seedFirestore({ [PATH]: { ml: 500, targetMl: 2000 } });
     render(<FoodWaterRow date={YESTERDAY} />);
-    expect(await screen.findByText(/logged/)).toHaveTextContent(
-      "500 ml logged"
+    expect(await screen.findByText(line(/of 2/))).toHaveTextContent(
+      "500 ml of 2 L"
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Add 250 ml" }));
-    expect(screen.getByText(/·/)).toHaveTextContent("+250 ml · 750 ml");
+    expect(screen.getByText(/·/)).toHaveTextContent("+250 ml · 750 ml of 2 L");
     await act(async () => {
       await flushWater("u1");
     });
@@ -67,15 +71,38 @@ describe("FoodWaterRow", () => {
       await flushWater("u1");
     });
     await waitFor(() =>
-      expect(screen.getByText(/logged/)).toHaveTextContent("500 ml logged")
+      expect(screen.getByText(line(/of 2/))).toHaveTextContent("500 ml of 2 L")
     );
     expect(readDoc(PATH)).toMatchObject({ ml: 500 });
   });
 
   it("offers the two everyday sizes", async () => {
     render(<FoodWaterRow date={YESTERDAY} />);
-    expect(await screen.findByText(/logged/)).toHaveTextContent("0 ml logged");
+    expect(await screen.findByText(line(/of 2/))).toHaveTextContent(
+      "0 ml of 2 L"
+    );
     expect(screen.getByRole("button", { name: "Add 250 ml" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Add 500 ml" })).toBeEnabled();
+  });
+
+  it("says the day against its target, and fills the bar to it", async () => {
+    seedFirestore({ [PATH]: { ml: 1500, targetMl: 2000 } });
+    const { container } = render(<FoodWaterRow date={YESTERDAY} />);
+    expect(await screen.findByText(line(/of 2/))).toHaveTextContent(
+      "1.5 L of 2 L"
+    );
+    const fill = container.querySelector("[data-water-bar] > div");
+    expect((fill as HTMLElement).style.width).toBe("75%");
+  });
+
+  it("says plainly once the target is met, with the bar full", async () => {
+    seedFirestore({ [PATH]: { ml: 2500, targetMl: 2000 } });
+    const { container } = render(<FoodWaterRow date={YESTERDAY} />);
+    expect(await screen.findByText(/reached/)).toHaveTextContent(
+      "2.5 L · 2 L reached"
+    );
+    const fill = container.querySelector("[data-water-bar] > div");
+    expect((fill as HTMLElement).style.width).toBe("100%");
+    expect(container.textContent).not.toMatch(/!/);
   });
 });

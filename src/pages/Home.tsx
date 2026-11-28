@@ -135,7 +135,6 @@ import { targetHasAdapted } from "@/hooks/useTrialReminder";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
 import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
-import { proRaceName } from "@/lib/racePlanAccess";
 import { usePriorHomeVisit } from "@/hooks/usePriorHomeVisit";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { DEFAULT_PLAN } from "@/lib/proPlans";
@@ -531,19 +530,11 @@ export default function Home() {
     DEFAULT_PLAN
   );
   // A half, marathon or ultra plan past its free first week (whole-app
-  // grill Q85, Run27 (18)): today's planned run offers Pro; the race itself
-  // still starts.
+  // grill Q85, Run27 (18)): its planned sessions are left out of today's
+  // stack, which offers only what can be started (`todaySession`); the
+  // race itself still starts, and Train keeps the Pro offer.
   // The hook also records the account's free week as used, once.
-  const raceDistance =
-    profile?.raceGoal?.distance ??
-    programState?.runPlan?.raceGoal?.distance ??
-    null;
-  const runPlanLocked = useRacePlanLocked(programState?.runPlan)
-    ? {
-        cta: proStripTrialEligible ? "Try Pro free" : "See Pro",
-        raceName: proRaceName(raceDistance),
-      }
-    : null;
+  const runPlanLocked = useRacePlanLocked(programState?.runPlan);
   const proStripOffersTrial =
     proStripTrialEligible && effectiveTargets.personalTarget != null;
   const showProStrip = shouldShowHomeProStrip({
@@ -589,6 +580,7 @@ export default function Home() {
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
+        runPlanLocked,
         inFlight: {
           drafts: draftsInFlight,
           run: runInFlight,
@@ -607,6 +599,7 @@ export default function Home() {
       runStatsLoading,
       lifetimeRunCount,
       totalLifetimeMeals,
+      runPlanLocked,
       draftsInFlight,
       runInFlight,
       routinesInFlight,
@@ -1452,7 +1445,6 @@ export default function Home() {
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
-                runPlanLocked={runPlanLocked}
                 lastSetsOf={lastSetsOf}
                 navigate={function (p: string) {
                   closePeek();

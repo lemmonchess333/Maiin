@@ -30,6 +30,7 @@ import JoinedChallengeRow from "./JoinedChallengeRow";
 import WeeklyChallengeCard from "./WeeklyChallengeCard";
 import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
 import CollectivePulse from "./CollectivePulse";
+import { useChallengeReach } from "./useChallengeReach";
 
 /* The full card is drawn only in the sheet a row opens, so it loads on
    that first tap rather than with the page. */
@@ -68,6 +69,11 @@ const LIST_CARD = cardClasses({
  * Every section is drawn from the person's first day, however few people
  * are on Tropos (App1 Q6, `src/lib/fillingUp.ts`): a challenge, a Space or
  * the league that is still small says it is filling up, and Join stays.
+ *
+ * A challenge that needs more training days than it has left, counting the
+ * days already trained, is not offered in Discover, and a joined one stays
+ * with its progress but no countdown (`useChallengeReach`, owner's
+ * recording of 23 Nov 2026). Only a count of days can run out like that.
  */
 export function ChallengeList({
   refreshRef,
@@ -108,6 +114,8 @@ export function ChallengeList({
     restricted,
   } = useChallenges();
   const [openId, setOpenId] = useState<string | null>(null);
+  /* The challenges whose first goal needs more days than are left. */
+  const outOfReach = useChallengeReach(challenges, myProgress);
   const weekId = useId();
   const circlesId = useId();
   const discoverId = useId();
@@ -135,10 +143,15 @@ export function ChallengeList({
   const listed = (c: Challenge) =>
     c.id !== weeklyCh?.id && c.id !== collectiveCh?.id;
   const joined = featuredChallengesFirst(myChallenges.filter(listed));
-  const discover = featuredChallengesFirst(availableChallenges.filter(listed));
+  const discover = featuredChallengesFirst(
+    availableChallenges.filter((c) => listed(c) && !outOfReach.has(c.id))
+  );
   // Time left is said once for the month in each list, and again only by
-  // a challenge that ends on another day.
-  const joinedTimeLeft = cardsShowingTimeLeft(joined);
+  // a challenge that ends on another day. A joined challenge out of reach
+  // counts nothing down, so another row says the month's.
+  const joinedTimeLeft = cardsShowingTimeLeft(
+    joined.filter((c) => !outOfReach.has(c.id))
+  );
   /* Discover says the month's time left once, on its heading; a row says
      its own only when it ends on another day. */
   const discoverAnchor = timeLeftAnchor(discover);
@@ -192,6 +205,7 @@ export function ChallengeList({
                 progress={myProgress[ch.id]}
                 onOpen={() => setOpenId(ch.id)}
                 showTimeLeft={joinedTimeLeft.has(ch.id)}
+                outOfReach={outOfReach.has(ch.id)}
               />
             ))}
           </ul>
@@ -278,6 +292,7 @@ export function ChallengeList({
                 myProgress={myProgress[opened.id]}
                 leaderboard={leaderboards[opened.id]}
                 joined={!!myProgress[opened.id]}
+                outOfReach={outOfReach.has(opened.id)}
                 onJoin={() => join(opened)}
                 onLeave={async () => {
                   await leaveChallenge(opened.id);

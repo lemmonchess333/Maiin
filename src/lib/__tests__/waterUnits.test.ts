@@ -9,6 +9,7 @@ import {
   resolveConsumedMl,
   resolveTargetMl,
   waterProgress,
+  waterTargetWords,
   formatWaterVolume,
 } from "../waterUnits";
 
@@ -188,5 +189,25 @@ describe("drinksFromReceipts", () => {
         ok: { delta: 250, at: 1 },
       })
     ).toEqual([{ id: "ok", ml: 250, at: 1 }]);
+  });
+});
+
+describe("waterTargetWords — the amount against the day's target", () => {
+  it("says of the target below it", () => {
+    expect(waterTargetWords(0, 2000)).toEqual({ met: false, words: "of 2 L" });
+    expect(waterTargetWords(1999, 2500)).toEqual({
+      met: false,
+      words: "of 2.5 L",
+    });
+  });
+  it("says the target is reached from the target on, as the tile's met does", () => {
+    expect(waterTargetWords(2000, 2000)).toEqual({
+      met: true,
+      words: "2 L reached",
+    });
+    expect(waterTargetWords(7250, 2000)?.words).toBe("2 L reached");
+  });
+  it("states nothing without a target", () => {
+    expect(waterTargetWords(500, 0)).toBeNull();
   });
 });

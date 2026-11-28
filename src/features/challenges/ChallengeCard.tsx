@@ -43,6 +43,7 @@ import ChallengePeople from "./ChallengePeople";
 import { PEOPLE_COUNT_MIN_VISIBLE, roomPeople } from "@/lib/fillingUp";
 import { challengeHasMedal } from "./rowMedal";
 import { collectiveTotal as goalTotal } from "./collectiveGoal";
+import { OUT_OF_REACH_SHEET_LINE } from "./challengeReach";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -57,6 +58,9 @@ interface ChallengeCardProps {
   /** Off when another card already says how long this one has left:
    *  the monthly challenges all end on the same day. */
   showTimeLeft?: boolean;
+  /** Joined, and its first goal needs more days than are left
+   *  (`useChallengeReach`): the aim at Bronze gives way to that fact. */
+  outOfReach?: boolean;
 }
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
@@ -179,6 +183,7 @@ export function ChallengeCard({
   onJoin,
   onLeave,
   showTimeLeft = true,
+  outOfReach = false,
 }: ChallengeCardProps) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
@@ -489,7 +494,11 @@ export function ChallengeCard({
              target, so a card with a goal adds nothing here; one
              without gets the next-tier hint. The full progress bar
              appears the moment the user has any progress to show. */
-          goal ? null : (
+          outOfReach ? (
+            <p className="text-sm text-muted-foreground">
+              {OUT_OF_REACH_SHEET_LINE}
+            </p>
+          ) : goal ? null : (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 {nextTier && nextValue
@@ -601,6 +610,20 @@ export function ChallengeCard({
                     liftUnit,
                     distanceUnit
                   )}
+                </span>
+              ) : outOfReach ? (
+                <span>
+                  You’re at{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatChallengeValue(
+                      challenge.metric,
+                      currentValue,
+                      liftUnit,
+                      distanceUnit
+                    )}
+                  </span>
+                  {" · "}
+                  {OUT_OF_REACH_SHEET_LINE}
                 </span>
               ) : nextTier && nextValue ? (
                 <span>

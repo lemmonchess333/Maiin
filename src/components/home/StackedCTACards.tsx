@@ -47,7 +47,6 @@ export default function StackedCTACards({
   freeRunLine = null,
   liftReadiness = null,
   runReadiness = null,
-  runPlanLocked = null,
   lastSetsOf,
 }: {
   /** Today's session, as `todaySession` decided it. */
@@ -66,9 +65,6 @@ export default function StackedCTACards({
   /** Readiness for the run hero (`useTodayReadiness`); the compact card
    *  under a lift hero shows none. */
   runReadiness?: ComponentProps<typeof RunCTACard>["readiness"];
-  /** The half, marathon or ultra plan is past its free first week (Q85):
-   *  today's planned run offers Pro (`RunCTACard`). */
-  runPlanLocked?: ComponentProps<typeof RunCTACard>["planLocked"];
   /** Last time's counted sets for each lift, as Train's "Last:" line
    *  reads them (`lastSetsBySlot`), for the lift hero's line. */
   lastSetsOf: LastSetsOf;
@@ -93,7 +89,6 @@ export default function StackedCTACards({
         intervalPaceSPerKm={run.intervalPaceSPerKm}
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
-        planLocked={runPlanLocked}
         readiness={runLeads ? runReadiness : null}
       />
     </m.div>
