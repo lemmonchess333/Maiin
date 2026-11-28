@@ -74,7 +74,7 @@ export const BIRTH_YEAR_MESSAGES: Record<BirthYearProblem, string> = {
  * The ages a profile has ever been let keep: 16 until Biz1 call 4 raised
  * setup's line to 18 (`AGE_YEARS`), up to 120. A stored age outside it is
  * not an age. Settings' TDEE field wrote `Number(text) || 25` on every
- * keystroke until 25 October 2026 (#2956), straight to the profile and past
+ * keystroke until 25 October 2026, straight to the profile and past
  * the server's range, so an account could keep a 2 typed on the way to 28.
  * Read as an age, a 2 put the heart-rate zones on a 207 bpm max (Tanaka for
  * a two-year-old) while the field beside them suggested 188 (owner's
