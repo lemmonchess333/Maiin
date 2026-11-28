@@ -35,6 +35,29 @@ describe("useAccountUsageAnalytics", () => {
     expect(setUsageAnalytics.mock.calls).toEqual([[true]]);
   });
 
+  it("leaves the device's answer alone for an account still in setup with no answer", () => {
+    // Sign-up writes the new profile before the plan is saved. Turn off,
+    // tapped on the agreement in signed-out setup, must survive it so the
+    // plan's save can carry it onto the account.
+    renderHook(() => useAccountUsageAnalytics({ onboardingComplete: false }));
+    expect(setUsageAnalytics).not.toHaveBeenCalled();
+  });
+
+  it("applies an answer an account in setup already has", () => {
+    renderHook(() =>
+      useAccountUsageAnalytics({
+        onboardingComplete: false,
+        usageAnalytics: false,
+      })
+    );
+    expect(setUsageAnalytics.mock.calls).toEqual([[false]]);
+  });
+
+  it("applies on once setup is saved with no answer", () => {
+    renderHook(() => useAccountUsageAnalytics({ onboardingComplete: true }));
+    expect(setUsageAnalytics.mock.calls).toEqual([[true]]);
+  });
+
   it("leaves the device's answer alone with no profile", () => {
     const { rerender } = renderHook(
       ({ profile }: { profile: Profile }) => useAccountUsageAnalytics(profile),
