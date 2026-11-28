@@ -92,11 +92,17 @@ function duration(seconds: number): string {
  */
 export default function HeartRateSummaryCard({
   summary: value,
+  steady = true,
 }: {
   summary: unknown;
+  /** The run was meant to hold one pace (`isSteadyRunPlan`). A drift
+   *  saved on any other run, as tempo runs were until 28 November 2026,
+   *  is not shown: its second half was meant to be harder. */
+  steady?: boolean;
 }) {
-  const summary = savedSummary(value);
-  if (!summary) return null;
+  const saved = savedSummary(value);
+  if (!saved) return null;
+  const summary = steady ? saved : { ...saved, decoupling: undefined };
   const coveragePercent = Math.round(summary.coverage * 100);
   const enoughCoverage = summary.coverage >= ZONE_COVERAGE_MIN;
   const zonesAvailable = summary.maxHr > 0;

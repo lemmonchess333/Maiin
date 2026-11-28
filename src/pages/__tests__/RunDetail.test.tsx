@@ -718,3 +718,49 @@ describe("RunDetail — TCX export", () => {
     expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
   });
 });
+
+/* A tempo saved with "high_drift" before 28 November 2026 (the audit's
+   Appendix I): its second half was meant to be harder, so its page shows
+   the heart rate and no drift. An easy run keeps its drift line. */
+describe("RunDetail — heart-rate drift", () => {
+  const heartRate = {
+    averageBpm: 158,
+    maxBpm: 172,
+    coveredSeconds: 2700,
+    movingSeconds: 2700,
+    coverage: 1,
+    zoneSeconds: [0, 600, 900, 1200, 0],
+    belowZoneSeconds: 0,
+    maxHr: 190,
+    source: "apple-watch",
+    decoupling: {
+      pct: 16.4,
+      firstHalfAvgBpm: 153,
+      secondHalfAvgBpm: 168,
+      status: "high_drift",
+    },
+  };
+
+  it("shows no drift on a tempo run", () => {
+    h.run = savedRun({
+      activityType: "tempo",
+      runConfig: { activityType: "tempo" },
+      heartRate,
+    });
+    renderDetail();
+    expect(screen.getByText("158")).toBeInTheDocument();
+    expect(screen.queryByText(/second-half drift/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the drift on an easy run", () => {
+    h.run = savedRun({
+      activityType: "easy",
+      runConfig: { activityType: "easy" },
+      heartRate,
+    });
+    renderDetail();
+    expect(
+      screen.getByText(/Noticeable second-half drift/)
+    ).toBeInTheDocument();
+  });
+});

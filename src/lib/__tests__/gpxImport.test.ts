@@ -389,3 +389,123 @@ describe("parseTcxRun & importRunFile", () => {
     ).toThrow(/GPS points or lap data/i);
   });
 });
+
+/* Imports keep, with checks (owner, 28 November). A ride imported as a
+   run fed Bests, the community goal, km challenges, the league and
+   segment boards: a 20 km GPX ride at 8 m/s read as a 5K in 10:30 (the
+   28 November audit, Appendix G). A file that names another sport is
+   refused, and so is a track that moves faster than anyone runs for a
+   minute or more. */
+describe("only runs come in", () => {
+  /** The sample track with a `<type>` under its name. */
+  const gpxOfType = (type: string, options = {}) =>
+    buildSampleGpx(options).replace(
+      "<name>Morning 5K</name>",
+      `<name>Morning 5K</name>\n    <type>${type}</type>`
+    );
+  /** A 20 km ride at 8 m/s: 250 fixes 10 s and 80 m apart. */
+  const RIDE = { pointCount: 250, stepSec: 10, stepLat: 80 / 111_195 };
+
+  const refusal = (fn: () => unknown) => {
+    try {
+      fn();
+    } catch (err) {
+      return err instanceof GpxImportError
+        ? { code: err.code, message: err.message }
+        : err;
+    }
+    return null;
+  };
+
+  it("refuses a GPX ride, and says it is one", () => {
+    expect(refusal(() => parseGpxRun(gpxOfType("cycling", RIDE)))).toEqual({
+      code: "GPX_NOT_A_RUN",
+      message: "This file is a bike ride. Only runs can be imported.",
+    });
+    // Strava writes the sport as its own number: 1 is a ride.
+    expect(refusal(() => parseRunFile(gpxOfType("1", RIDE)))).toEqual(
+      expect.objectContaining({ code: "GPX_NOT_A_RUN" })
+    );
+  });
+
+  it("refuses walks and hikes, which Tropos has no type for", () => {
+    expect(refusal(() => parseGpxRun(gpxOfType("walking")))).toEqual({
+      code: "GPX_NOT_A_RUN",
+      message: "This file is a walk. Only runs can be imported.",
+    });
+    expect(refusal(() => parseGpxRun(gpxOfType("10")))).toEqual(
+      expect.objectContaining({ code: "GPX_NOT_A_RUN" })
+    );
+    expect(refusal(() => parseGpxRun(gpxOfType("hiking")))).toEqual({
+      code: "GPX_NOT_A_RUN",
+      message: "This file is a hike. Only runs can be imported.",
+    });
+    expect(refusal(() => parseGpxRun(gpxOfType("swimming")))).toEqual({
+      code: "GPX_NOT_A_RUN",
+      message: "This file is from another sport. Only runs can be imported.",
+    });
+  });
+
+  it.each(["running", "trail_running", "Run", "9", "53", "other", ""])(
+    "imports a GPX run whose type is %j",
+    (type) => {
+      const run = parseGpxRun(gpxOfType(type));
+      expect(run.distance).toBeGreaterThan(1900);
+    }
+  );
+
+  it("refuses a TCX ride or other sport, and reads the run in a multisport file", () => {
+    const tcx = buildSampleTcx();
+    expect(
+      refusal(() =>
+        parseTcxRun(tcx.replace('Sport="Running"', 'Sport="Biking"'))
+      )
+    ).toEqual({
+      code: "GPX_NOT_A_RUN",
+      message: "This file is a bike ride. Only runs can be imported.",
+    });
+    expect(
+      refusal(() =>
+        parseTcxRun(tcx.replace('Sport="Running"', 'Sport="Other"'))
+      )
+    ).toEqual(expect.objectContaining({ code: "GPX_NOT_A_RUN" }));
+    // A ride, then the run: the run is what comes in.
+    const ride = `<Activity Sport="Biking"><Id>2026-10-14T06:00:00Z</Id></Activity>\n    `;
+    const multisport = tcx.replace(
+      '<Activity Sport="Running">',
+      `${ride}<Activity Sport="Running">`
+    );
+    expect(parseTcxRun(multisport).distance).toBeGreaterThan(1900);
+  });
+
+  it("refuses a track faster than anyone runs for a minute, past 12 m/s", () => {
+    // No sport named; 20 m/s for ten minutes.
+    const drive = buildSampleGpx({ stepSec: 10, stepLat: 200 / 111_195 });
+    expect(refusal(() => parseGpxRun(drive))).toEqual({
+      code: "GPX_TOO_FAST",
+      message:
+        "This file moves faster than anyone can run. Only runs can be imported.",
+    });
+  });
+
+  it("keeps a run with a GPS glitch of a few seconds past 12 m/s", () => {
+    // One fix 400 m off for a single 10 s step, then back on the line.
+    const glitch = buildSampleGpx().replace(
+      /lat="51\.509000"/,
+      'lat="51.512600"'
+    );
+    expect(glitch).toContain('lat="51.512600"');
+    expect(parseGpxRun(glitch).distance).toBeGreaterThan(1900);
+  });
+
+  it("refuses an indoor TCX whose laps cover the distance faster than anyone runs", () => {
+    const fast = buildSampleTcx({ includePosition: false, stepSec: 1 });
+    expect(refusal(() => parseTcxRun(fast))).toEqual(
+      expect.objectContaining({ code: "GPX_TOO_FAST" })
+    );
+    // The same laps at a running speed come in.
+    expect(
+      parseTcxRun(buildSampleTcx({ includePosition: false })).distance
+    ).toBeGreaterThan(1900);
+  });
+});

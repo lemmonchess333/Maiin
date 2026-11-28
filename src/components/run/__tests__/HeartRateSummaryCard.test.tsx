@@ -134,4 +134,25 @@ describe("saved heart rate summary", () => {
     expect(screen.getByText("145")).toBeVisible();
     expect(screen.queryByText("Heart rate drift")).not.toBeInTheDocument();
   });
+
+  /* A tempo saved with "high_drift" before 28 November 2026: its second
+     half was meant to be harder, so the drift is not shown. */
+  it("shows no drift saved on a run that was not steady", () => {
+    const tempo = {
+      ...complete,
+      decoupling: {
+        pct: 16.4,
+        firstHalfAvgBpm: 153,
+        secondHalfAvgBpm: 168,
+        status: "high_drift" as const,
+      },
+    };
+    render(<HeartRateSummaryCard summary={tempo} steady={false} />);
+    expect(screen.getByText("145")).toBeVisible();
+    expect(screen.queryByText(/drift/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("16.4%")).not.toBeInTheDocument();
+    cleanup();
+    render(<HeartRateSummaryCard summary={tempo} />);
+    expect(screen.getByText(/Noticeable second-half drift/)).toBeVisible();
+  });
 });
