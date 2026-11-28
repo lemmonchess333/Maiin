@@ -99,9 +99,9 @@ describe("computeAerobicDecoupling", () => {
 
     expect(result).not.toBeNull();
     expect(result!.status).toBe("steady");
-    expect(result!.firstHalfAvgBpm).toBe(145);
+    expect(result!.firstHalfAvgBpm).toBe(146);
     expect(result!.secondHalfAvgBpm).toBe(148);
-    expect(result!.pct).toBeCloseTo(2.0, 0);
+    expect(result!.pct).toBeCloseTo(1.4, 0);
   });
 
   it("reports mild_drift (5–10%) when HR rises modestly at constant pace", () => {
@@ -110,7 +110,7 @@ describe("computeAerobicDecoupling", () => {
       { startMs: START_MS, endMs: START_MS + durationSec * 1000 },
     ];
     const points = buildPoints(durationSec, 3.0, 3.0);
-    const samples = buildHrSamples(durationSec, 140, 151); // ~7.3% drift
+    const samples = buildHrSamples(durationSec, 140, 154); // ~6.1% post-warmup drift
 
     const result = computeAerobicDecoupling({
       samples,
@@ -262,5 +262,84 @@ describe("computeAerobicDecoupling", () => {
     expect(result!.firstHalfAvgBpm).toBe(145);
     expect(result!.secondHalfAvgBpm).toBe(146);
     expect(result!.status).toBe("steady");
+  });
+
+  it("excludes initial warm-up HR lag so early ramp-up does not fabricate cardiac drift", () => {
+    const durationSec = 50 * 60;
+    const activeIntervals: ActiveRunInterval[] = [
+      { startMs: START_MS, endMs: START_MS + durationSec * 1000 },
+    ];
+    const points = buildPoints(durationSec, 3.0, 3.0);
+    // First 10 min warm up from 115 bpm; remaining 40 min hold steady at 150 bpm.
+    const samples: HeartRateSample[] = [];
+    for (let t = 0; t < durationSec; t += 5) {
+      samples.push({
+        at: START_MS + t * 1000,
+        bpm: t < 10 * 60 ? 115 : 150,
+        source: "bluetooth",
+      });
+    }
+
+    const result = computeAerobicDecoupling({
+      samples,
+      activeIntervals,
+      points,
+      activityType: "easy",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.firstHalfAvgBpm).toBe(150);
+    expect(result!.secondHalfAvgBpm).toBe(150);
+    expect(result!.pct).toBe(0);
+    expect(result!.status).toBe("steady");
+  });
+
+  it("applies Minetti grade-adjusted speed so an uphill first half and downhill second half at steady effort stays steady", () => {
+    const durationSec = 50 * 60;
+    const warmupSec = 10 * 60;
+    const steadyMidSec = warmupSec + (durationSec - warmupSec) / 2; // 30 min
+    const activeIntervals: ActiveRunInterval[] = [
+      { startMs: START_MS, endMs: START_MS + durationSec * 1000 },
+    ];
+    // Steady metabolic effort (~3.0 m/s flat-equivalent): 2.31 m/s uphill (+5% grade,
+    // Minetti cost ~1.30x) vs 3.95 m/s downhill (-5% grade, Minetti cost ~0.76x)
+    // at constant 150 bpm. Horizontal speed alone would imply massive negative drift (~-71%),
+    // whereas Minetti GAP brings both halves near equal flat-equivalent effort.
+    const pts: GPSPoint[] = [];
+    let lat = 51.5;
+    let alt = 100;
+    for (let t = 0; t <= durationSec; t += 10) {
+      if (t > 0) {
+        const uphill = t <= steadyMidSec;
+        const speed = t <= warmupSec ? 3.0 : uphill ? 2.31 : 3.95;
+        const stepM = speed * 10;
+        lat += stepM / 111_195;
+        if (t > warmupSec) {
+          alt += uphill ? stepM * 0.05 : -stepM * 0.05;
+        }
+      }
+      pts.push({
+        lat,
+        lon: -0.1,
+        rawLat: lat,
+        rawLon: -0.1,
+        timestamp: START_MS + t * 1000,
+        altitude: alt,
+        accuracy: 5,
+        speed: 3.0,
+      });
+    }
+    const samples = buildHrSamples(durationSec, 150, 150, 5, 0, "bluetooth");
+
+    const result = computeAerobicDecoupling({
+      samples,
+      activeIntervals,
+      points: pts,
+      activityType: "long",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe("steady");
+    expect(Math.abs(result!.pct)).toBeLessThan(3);
   });
 });

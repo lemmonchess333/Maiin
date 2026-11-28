@@ -147,6 +147,21 @@ describe("estimateAdaptiveTDEE", () => {
     expect(r.slopeKgPerDay!).toBeLessThan(0);
     expect(r.learnedTDEE!).toBeGreaterThan(2200);
   });
+
+  it("aligns average intake strictly to the weigh-in span so out-of-span refeeds do not skew learnedTDEE", () => {
+    const ds = days(START, 21);
+    // Weigh-ins span days 3..17 (15 days, 14-day span), weight flat at 80 kg.
+    const weighIns = ds.slice(3, 18).map((d) => ({ dateKey: d, weightKg: 80 }));
+    // Intake inside [3..17] is 2400 kcal; out-of-span days (0..2, 18..20) are 4000 kcal.
+    const intakeByDay = ds.map((d, i) => ({
+      dateKey: d,
+      kcal: i < 3 || i > 17 ? 4000 : 2400,
+    }));
+    const r = estimateAdaptiveTDEE({ intakeByDay, weighIns });
+    expect(r.ready).toBe(true);
+    expect(r.trustedDays).toBe(15);
+    expect(r.learnedTDEE).toBe(2400);
+  });
 });
 
 describe("estimateAdaptiveTDEE — spanDays", () => {
