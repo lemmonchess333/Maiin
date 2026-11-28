@@ -43,8 +43,11 @@
  * app shut) still counts, and counts once.
  *
  * Read the start of the funnel in that order (A6, sign-up at the end of
- * setup): welcome_viewed (once a phone) → setup_started (once a phone) →
- * the onboarding steps → auth_screen_viewed (save_plan) → account_created
+ * setup): the welcome seen and setup started, counted on Tropos's own
+ * server with no identifier (`setupCounts.ts`, never sent to Google) → the
+ * onboarding steps from the health-details agreement on (Google Analytics
+ * hears nothing before its line, `analyticsProvider.ts`) →
+ * auth_screen_viewed (save_plan) → account_created
  * → onboarding_completed → trial_offer_viewed → trial_started.
  * `auth_screen_viewed` is sent on every showing of a signed-out screen, the
  * first-run events once (`firstRunEvents.ts`). Someone who closes the app
@@ -61,10 +64,9 @@ import type { WatchRunCommandRejection } from "./watchRunBridge";
 
 export type LifecycleEvent =
   | "auth_screen_viewed"
-  /** A6's first-run events (`firstRunEvents.ts`): the welcome and setup's
-   *  first question, once a phone, and the trial offer once an account. */
-  | "welcome_viewed"
-  | "setup_started"
+  /** A6's first-run event (`firstRunEvents.ts`): the trial offer, once an
+   *  account. The welcome and setup's first question are counted on
+   *  Tropos's own server instead (`setupCounts.ts`). */
   | "trial_offer_viewed"
   /** The account is made, with its method: once an account, where its
    *  profile is first written (`auth.tsx`). Was `signup_completed`. */
@@ -152,15 +154,11 @@ export interface LifecycleEventMetadata {
   /** auth_screen_viewed: which signed-out screen was shown. `save_plan` is
    *  Save your plan, where setup makes the account (A6). */
   screen?: "welcome" | "sign_in" | "save_plan";
-  /** auth_screen_viewed, welcome_viewed: whether an account has signed in
+  /** auth_screen_viewed: whether an account has signed in
    *  on this device before. Every signed-out visit opens on the welcome
    *  (DS9 STATUS), so the funnel's first rung is the welcome with this
    *  false. */
   returningDevice?: boolean;
-  /** setup_started: whether an account was signed in when setup began (a
-   *  new Google or Apple account from the welcome's Sign in), or not (A6's
-   *  setup before the account). */
-  signedIn?: boolean;
   /** account_created: which auth provider created the account. */
   method?: SignupMethod;
   /** onboarding_step_* and onboarding_abandoned: stable step identifier

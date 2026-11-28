@@ -403,7 +403,10 @@ describe("DS ratchets — surface-level drift", () => {
   // 292 → 293: Report segment, the one row of the segment page's ⋯ menu
   // (App Review 1.2, owner 18 Nov), a menu row like the profile's.
   // 293 → 292: locked in after prior Button-primitive migration freed one slot.
-  const RAW_BUTTON_BASELINE = 292;
+  // 292 → 293: Turn off at the end of the health-details agreement's
+  // analytics line (owner, 23 November 2026), a link inside a sentence,
+  // whose 44 px target is padding the line takes back (AnalyticsNotice).
+  const RAW_BUTTON_BASELINE = 293;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
