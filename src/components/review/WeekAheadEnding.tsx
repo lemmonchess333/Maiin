@@ -281,7 +281,7 @@ function OfferCard({
   return (
     <section
       aria-label={offer.title}
-      className="space-y-2 rounded-2xl bg-card p-4 card-shadow"
+      className="space-y-2 rounded-2xl bg-card p-4 surface-flat"
     >
       <SectionHeading size="compact" as="h3">
         {offer.title}

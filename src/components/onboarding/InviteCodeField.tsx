@@ -49,7 +49,7 @@ export default function InviteCodeField({
 
   return (
     <details
-      className="rounded-2xl bg-card card-shadow px-4"
+      className="rounded-2xl bg-card surface-flat px-4"
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >

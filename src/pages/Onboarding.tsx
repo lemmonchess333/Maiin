@@ -1878,7 +1878,7 @@ export default function Onboarding() {
                     ]}
                   />
                   {runMode === "starter" && (
-                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                    <div className="space-y-4 rounded-2xl bg-card surface-flat p-4">
                       <p className="text-sm">
                         Run {STARTER_GOAL_NAME} in about nine weeks. It starts
                         with short runs and walks between them, and a week
@@ -1899,7 +1899,7 @@ export default function Onboarding() {
                     </div>
                   )}
                   {runMode === "rolling" && (
-                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                    <div className="space-y-4 rounded-2xl bg-card surface-flat p-4">
                       <p className="text-sm">
                         A plan that keeps going, with no race date. Change it or
                         add a race any time.
@@ -1929,7 +1929,7 @@ export default function Onboarding() {
                     </div>
                   )}
                   {runMode === "race_prep" && (
-                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                    <div className="space-y-4 rounded-2xl bg-card surface-flat p-4">
                       <label className="block text-sm">
                         Runs per week ·{" "}
                         <span className="font-mono tabular-nums">
@@ -2099,7 +2099,7 @@ export default function Onboarding() {
                   )}
                   {askRecentRace && (
                     <section
-                      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+                      className="rounded-2xl bg-card surface-flat p-4 space-y-3"
                       aria-label="Recent race"
                     >
                       {/* The distance drops under the heading at larger
@@ -2384,8 +2384,8 @@ export default function Onboarding() {
                   never shown on your profile. The initial activity estimate
                   uses planned lifting frequency; running is accounted for as
                   you log it. “Prefer not to say” uses the midpoint of the male
-                  and female calculations. These are estimates you can adjust
-                  in Settings.
+                  and female calculations. These are estimates you can adjust in
+                  Settings.
                 </p>
               </details>
               <div className="space-y-3">
@@ -2494,7 +2494,7 @@ export default function Onboarding() {
             <div className="space-y-5">
               {runningFirst ? (
                 <section
-                  className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+                  className="rounded-2xl bg-card surface-flat p-4 space-y-3"
                   aria-label="First run preview"
                 >
                   <SectionLabel className="text-running-strong">
@@ -2550,7 +2550,7 @@ export default function Onboarding() {
                 )}
 
               {validBody && <DailyTarget {...dailyTarget} />}
-              <details className="rounded-2xl bg-card card-shadow px-4">
+              <details className="rounded-2xl bg-card surface-flat px-4">
                 <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
                   Your answers
                 </summary>
@@ -2676,7 +2676,7 @@ export default function Onboarding() {
                 disabled={saving}
               />
               {askEmail && (
-                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card card-shadow p-4">
+                <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-card surface-flat p-4">
                   <div className="min-w-0 flex-1 basis-40 space-y-1">
                     {/* At 200% text on a 320 px screen the switch drops
                         under the words rather than squeezing them until a

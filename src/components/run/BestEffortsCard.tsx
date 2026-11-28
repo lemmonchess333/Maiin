@@ -37,7 +37,12 @@ export default function BestEffortsCard({
   const headingId = useId();
   if (efforts.length === 0) return null;
   return (
-    <Card as="section" aria-labelledby={headingId} className="space-y-2">
+    <Card
+      as="section"
+      tone="flat"
+      aria-labelledby={headingId}
+      className="space-y-2"
+    >
       <SectionHeading id={headingId} size="compact">
         Best efforts
       </SectionHeading>

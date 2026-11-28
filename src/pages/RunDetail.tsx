@@ -714,7 +714,7 @@ export default function RunDetail() {
             felt against what they expected, and their notes. Shown only
             when they said something. */}
         {(feltLine || notes) && (
-          <Card className="space-y-3">
+          <Card tone="flat" className="space-y-3">
             {feltLine && (
               <div>
                 <SectionLabel>How it felt</SectionLabel>

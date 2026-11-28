@@ -467,7 +467,7 @@ export default function SessionCompleteScreen({
               still be changed: when it started, and an empty workout's
               name. */}
           {!saved && (onChangeStart || onRename) && (
-            <Card padded={false} className="divide-y divide-border">
+            <Card padded={false} tone="flat" className="divide-y divide-border">
               {onRename && (
                 <DetailRow
                   label="Name"
@@ -591,7 +591,11 @@ export default function SessionCompleteScreen({
                   {listedBests.length}
                 </span>
               </SectionHeading>
-              <Card padded={false} className="divide-y divide-border">
+              <Card
+                padded={false}
+                tone="flat"
+                className="divide-y divide-border"
+              >
                 {listedBests.map(({ key, name, exerciseId, result }) => (
                   <div key={key} className="flex items-center gap-3 p-3">
                     <ExerciseThumb exerciseId={exerciseId ?? ""} />
@@ -703,7 +707,7 @@ export default function SessionCompleteScreen({
           )}
 
           {hasMuscleFigure(muscleCategories) && (
-            <Card className="@container">
+            <Card tone="flat" className="@container">
               {/* The session's drawing is the first screen's, so the
                   muscles figure stands here, unless it already stands up
                   there. At larger text sizes it goes above the list, so it

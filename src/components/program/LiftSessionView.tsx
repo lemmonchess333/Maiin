@@ -903,7 +903,7 @@ export default function LiftSessionView({
                      row still opens the exercise's page on its Form tab,
                      still swipes and long-presses to its manage menu, and
                      still has the "…" that opens that menu visibly. */
-                  <div className="rounded-xl bg-card card-shadow overflow-hidden divide-y divide-border">
+                  <div className="rounded-xl bg-card surface-flat overflow-hidden divide-y divide-border">
                     {pairRuns(selectedWorkout.exercises).map((run) => {
                       const row = (ex: ProgramExercise, i: number) => (
                         <div key={rowId(ex, idx, i)} data-swipe-card="true">

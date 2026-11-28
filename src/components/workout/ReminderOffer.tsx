@@ -149,7 +149,12 @@ export default function ReminderOffer({ kind }: { kind: "lift" | "run" }) {
 
   if (refused)
     return (
-      <Card size="compact" as="section" aria-label="Reminder permission">
+      <Card
+        size="compact"
+        tone="flat"
+        as="section"
+        aria-label="Reminder permission"
+      >
         <p role="status" className="text-sm text-muted-foreground">
           Notifications are off for Tropos. Allow them in your phone’s Settings,
           then turn reminders on in Settings → Notifications.
@@ -159,7 +164,12 @@ export default function ReminderOffer({ kind }: { kind: "lift" | "run" }) {
   if (!ready || answered) return null;
   const next = reminders.liftName ?? "your next session";
   return (
-    <Card size="compact" as="section" aria-label="Training-day reminder">
+    <Card
+      size="compact"
+      tone="flat"
+      as="section"
+      aria-label="Training-day reminder"
+    >
       <h3 className="text-base font-bold text-foreground">
         Remind you before {next}?
       </h3>

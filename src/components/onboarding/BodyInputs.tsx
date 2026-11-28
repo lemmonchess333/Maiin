@@ -150,7 +150,7 @@ export default function BodyInputs({
   return (
     <div className="space-y-6">
       <section
-        className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+        className="rounded-2xl bg-card surface-flat p-4 space-y-3"
         aria-label="Starting weight"
       >
         {/* The unit control drops under its heading at larger text, and
@@ -248,7 +248,7 @@ export default function BodyInputs({
         </p>
       </section>
       <section
-        className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+        className="rounded-2xl bg-card surface-flat p-4 space-y-3"
         aria-label="Height"
       >
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

@@ -23,7 +23,7 @@ export default function DailyTarget({
 }) {
   return (
     <section
-      className="rounded-2xl bg-card card-shadow p-4 space-y-2"
+      className="rounded-2xl bg-card surface-flat p-4 space-y-2"
       aria-label="Your daily target"
     >
       <SectionLabel className="text-nutrition-strong">

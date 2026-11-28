@@ -611,7 +611,7 @@ describe("DS ratchets — surface-level drift", () => {
      plane: `tone="flat"` on `Card`, `tone: "flat"` in `cardClasses()`,
      or `surface-flat` on a card drawn by hand. This counts what still
      asks for the raised look outside the surfaces named below, each a
-     screen's hero:
+     screen's hero or a dock that floats over the page:
 
      - a `Card` with no `tone` or the `card` tone;
      - a `cardClasses()` call with no `tone` or the `card` tone;
@@ -628,9 +628,10 @@ describe("DS ratchets — surface-level drift", () => {
      At the start of the sweep (28 November 2026) the app had 130 raised
      cards: 74 `Card` and `cardClasses()` uses and 56 hand-drawn, 120 of
      them outside the heroes. The first PR flattened Progress, Food, Home,
-     Social and League (65 left); the second takes the count to 0. A new
-     hero is a screen's one primary card: name it below, with the screen
-     it leads, rather than raising the baseline. */
+     Social and League (65 left); the second took Train, runs, workouts,
+     the finishes, setup and the rest to 0. The floor is 0: a new hero
+     is a screen's one primary card, named below with the screen it
+     leads, and every other card is flat. */
   const RAISED_CARDS: Record<string, { uses: number; why: string }> = {
     "src/components/analytics/PerformanceSection.tsx": {
       uses: 2,
@@ -660,8 +661,24 @@ describe("DS ratchets — surface-level drift", () => {
       uses: 1,
       why: "Share: the card being shared",
     },
+    "src/components/program/SessionCommandCard.tsx": {
+      uses: 1,
+      why: "Train's Lift and Run tabs and the Plan page: the next session",
+    },
+    "src/components/WorkoutSession.tsx": {
+      uses: 2,
+      why: "A workout: the current exercise's set table; and the rest timer's dock, glass floating over the page (§14o), not a plane in it",
+    },
+    "src/components/workout/NewBestMoment.tsx": {
+      uses: 1,
+      why: "A workout: the new best's dock, glass floating over the page (§14o)",
+    },
+    "src/pages/Segment.tsx": {
+      uses: 1,
+      why: "A segment: your best time, the page's one large figure",
+    },
   };
-  const RAISED_CARD_BASELINE = 65;
+  const RAISED_CARD_BASELINE = 0;
   const CARD_PRIMITIVE_TSX = "src/components/ui/Card.tsx";
 
   function raisedCardUses(src: string, rel: string): number {

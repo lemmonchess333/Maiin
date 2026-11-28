@@ -35,7 +35,12 @@ export default function RunSegmentEfforts({
     );
   if (rows.length === 0) return null;
   return (
-    <Card as="section" aria-labelledby={headingId} className="space-y-1">
+    <Card
+      as="section"
+      tone="flat"
+      aria-labelledby={headingId}
+      className="space-y-1"
+    >
       <SectionHeading id={headingId} size="compact">
         Segments
       </SectionHeading>

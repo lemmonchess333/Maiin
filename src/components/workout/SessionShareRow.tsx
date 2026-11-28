@@ -343,9 +343,15 @@ function ShareRow({
       )}
 
       {state.kind === "ask" && (
-        // The standard card: the answers are secondary buttons, whose fill
-        // is the muted tone, so a muted card would hide them.
-        <Card as="section" aria-labelledby={headingId} className="space-y-3">
+        // The card's own fill, flat (§14s): the answers are secondary
+        // buttons, whose fill is the muted tone, so a muted card would
+        // hide them.
+        <Card
+          as="section"
+          tone="flat"
+          aria-labelledby={headingId}
+          className="space-y-3"
+        >
           <div>
             <h3
               id={headingId}

@@ -18,7 +18,7 @@ export default function InjuryChangesList({
   const { swaps, kept } = changes;
   return (
     <section
-      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+      className="rounded-2xl bg-card surface-flat p-4 space-y-3"
       aria-label="What this changes"
       aria-live="polite"
     >

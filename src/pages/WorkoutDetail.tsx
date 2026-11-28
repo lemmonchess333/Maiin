@@ -145,7 +145,7 @@ function ExerciseRecord({
   const timed = exercise.repUnit === "seconds";
   const liftUnit = useLiftUnit();
   return (
-    <Card padded={false} className="@container overflow-hidden">
+    <Card padded={false} tone="flat" className="@container overflow-hidden">
       {/* At larger text sizes the drawing gives way to the exercise name.
           A long one-word name
           breaks rather than running out of the card. Wide-first. The row

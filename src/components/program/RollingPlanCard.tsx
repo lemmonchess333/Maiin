@@ -34,7 +34,12 @@ export default function RollingPlanCard({
   today: string;
 }) {
   return (
-    <Card as="section" aria-label="Run plan" className="space-y-1 rounded-xl">
+    <Card
+      as="section"
+      tone="flat"
+      aria-label="Run plan"
+      className="space-y-1 rounded-xl"
+    >
       <p className="text-sm font-bold text-running-strong">Plan, no race</p>
       <h3 className="text-base font-bold text-foreground">
         {ROLLING_GOAL_NAMES[goal]}

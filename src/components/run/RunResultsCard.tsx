@@ -57,6 +57,7 @@ export default function RunResultsCard({
   return (
     <Card
       as="section"
+      tone="flat"
       aria-labelledby={headingId}
       data-run-results
       className="space-y-2"

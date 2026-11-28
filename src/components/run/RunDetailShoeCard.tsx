@@ -91,7 +91,7 @@ export default function RunDetailShoeCard({
   };
 
   return (
-    <Card className="space-y-2">
+    <Card tone="flat" className="space-y-2">
       <SectionLabel>Shoe</SectionLabel>
       <Select
         aria-label="Shoe"

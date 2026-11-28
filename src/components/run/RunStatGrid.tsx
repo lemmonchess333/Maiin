@@ -22,7 +22,7 @@ export interface RunStat {
  */
 export default function RunStatGrid({ stats }: { stats: RunStat[] }) {
   return (
-    <Card padded={false} className="@container overflow-hidden">
+    <Card padded={false} tone="flat" className="@container overflow-hidden">
       {/* Two by two, and one per row under 14em of card (larger text, from
           1.35x on a 320px phone): "Elevation" and an hour's "1:02:15" no
           longer fit half the card. The side padding then holds at 16px, as

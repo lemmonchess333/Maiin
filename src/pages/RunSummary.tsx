@@ -2151,7 +2151,7 @@ export default function RunSummary() {
               under the distance headline at the top of the page. Every
               other run goes from the headline to the stats card. */}
           {primaryStat && (
-            <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
+            <div className="mx-4 mb-3 p-4 rounded-2xl text-center surface-flat bg-running/8">
               <p className="text-3xl font-extrabold font-figure tabular-nums leading-tight text-running">
                 {primaryStat.value}
               </p>

@@ -99,6 +99,7 @@ export default function IsometricHoldTimer({
       as="section"
       aria-label="Hold timer"
       size="compact"
+      tone="flat"
       className="space-y-3"
     >
       <div className="flex items-center justify-between gap-3">
