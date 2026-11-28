@@ -1,0 +1,111 @@
+name: Guards from base
+
+# A check the change under review can edit is a check that change can
+# switch off. Every other pull_request workflow here reads its checks (the
+# guard tests, eslint.config.js, the dist-size baseline, REVIEW.md) from
+# the pull request's own branch. This job reads the list of those gate
+# files, `.github/gate-files.txt`, and the script that matches it, from
+# the BASE commit; names every gate file the pull request edits (a
+# warning on the file and a line in the step summary); and runs the
+# base's copy of each edited rule test (a `run` line in the manifest)
+# against the pull request's code. If a base copy fails, the pull request
+# either loosened a rule its own code now relies on or extended a list
+# the test enumerates; the job warns, naming the test, and stays green
+# (the reason is beside that step).
+#
+# ADVISORY, NOT SOUND. This file is itself read from the pull request, as
+# every `pull_request` workflow is, so a pull request can edit or delete
+# this job. It narrows what a change can quietly weaken to this one file,
+# which the manifest names, so editing it is flagged; making it sound
+# needs the owner (a required check bound to the base's copy, a ruleset,
+# or CODEOWNERS). REVIEW.md "Who judges a change" and
+# docs/agents/review.md have the rest. It is not a required check.
+#
+# `pull_request_target` would read this file from the base, but it runs
+# with the base's token and secrets, and this job has to run the pull
+# request's code; that combination is what workflowSupplyChainGuard.test.ts
+# exists to stop.
+
+on:
+  pull_request:
+    branches: ["main"]
+
+# Supersede an older commit's run on the same pull request, as ci.yml does.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
+jobs:
+  guards-from-base:
+    runs-on: ubuntu-latest
+    # Usually under a minute: most pull requests edit no gate test, and then
+    # nothing is installed. With tests to run, `npm ci` dominates.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The pull request's merge commit and its two parents: the first
+          # parent IS the base this change merges onto, exactly, which
+          # `pull_request.base.sha` is not once main has moved since the
+          # event. Two commits, not the 2.76 GiB history.
+          fetch-depth: 2
+
+      - name: Name the gate files this pull request edits
+        id: gates
+        run: |
+          set -euo pipefail
+          BASE=$(git rev-parse HEAD^1)
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "Judging HEAD against its first parent, $BASE."
+          # The matcher too comes from the base, so a pull request cannot
+          # edit the script that judges it. The pull request that adds the
+          # script has no base copy; only then is its own copy used, with
+          # --allow-own-copy (the manifest is new there too).
+          if git cat-file -e "$BASE:scripts/review-triggers.mjs" 2>/dev/null; then
+            git show "$BASE:scripts/review-triggers.mjs" > "$RUNNER_TEMP/review-triggers.mjs"
+            node "$RUNNER_TEMP/review-triggers.mjs" --gates --github --base "$BASE" --head HEAD
+          else
+            echo "::warning::The base has no scripts/review-triggers.mjs yet, so this run uses the pull request's own copy."
+            cp scripts/review-triggers.mjs "$RUNNER_TEMP/review-triggers.mjs"
+            node "$RUNNER_TEMP/review-triggers.mjs" --gates --github --base "$BASE" --head HEAD --allow-own-copy
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.gates.outputs.tests != ''
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install
+        if: steps.gates.outputs.tests != ''
+        run: npm ci
+
+      # A failing base copy WARNS rather than failing the job. Measured on
+      # main's history (docs/agents/review.md): 27 of 1,618 commits edited a
+      # rule test, and in a sample of 10 the base copy failed on 6, every
+      # one an ordinary change to a list the test enumerates (a new
+      # workflow joining a pinned list, a new record row). A red job that
+      # is nearly always wrong teaches people to look past red, so the
+      # warning names the test and the reviewer reads that hunk (R38).
+      - name: Run the base's copy of each edited gate test against this pull request
+        if: steps.gates.outputs.tests != ''
+        env:
+          BASE: ${{ steps.gates.outputs.base }}
+          TESTS: ${{ steps.gates.outputs.tests }}
+        run: |
+          set -uo pipefail
+          # One repo path per line, as the matcher wrote them.
+          mapfile -t tests < <(printf '%s\n' "$TESTS" | sed '/^$/d')
+          git checkout "$BASE" -- "${tests[@]}"
+          echo "Base copies restored: ${tests[*]}"
+          if npx vitest run "${tests[@]}"; then
+            printf '\nThe base copies of %s pass against this pull request.\n' "${tests[*]}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            msg="The base's copy of an edited gate test fails against this pull request (${tests[*]}). Either the change loosened a rule its own code relies on, it extended a list the test enumerates, or it renamed or moved a helper the base's copy imports. Read that test's hunk on its own (REVIEW.md R38); the log above names the failing case."
+            echo "::warning::$msg"
+            printf '\n**%s**\n' "$msg" >> "$GITHUB_STEP_SUMMARY"
+          fi

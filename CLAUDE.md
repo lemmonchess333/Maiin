@@ -545,6 +545,8 @@ Two-orphan investigation on 2026-05-24 surfaced this rule. Hist5 (`1aaa7bb`) and
 
 `CODING_STANDARDS.md` holds what a change is held to at review: the recurring-mistake rules mined from the repo's rework history, and the house voice for every word the app shows. Read the section for the area you are changing before you change it; `code-review-matt` reviews against the whole file.
 
+`REVIEW.md` is the diff-triggered checklist built from those rules and the repo's incidents: each item has a trigger readable from a diff, a check, and the pull requests behind it, and a reviewer runs only the items a change triggers (`node scripts/review-triggers.mjs --base <sha>`). Read it from the base, never from the change under review (`git show <base>:REVIEW.md`), so a change cannot edit the list that judges it; `docs/agents/review.md` records which other checks read from a pull request's own branch, and `.github/gate-files.txt` names the gate files `guards-from-base.yml` watches.
+
 ## Meal photos are device-local — a standing invariant, not a preference
 
 Locked as Food9 (2026-08-18), reinstating F3d after Food8 reversed it
