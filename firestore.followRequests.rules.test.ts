@@ -10,6 +10,14 @@
  * the two people. Only the person asked writes the edges, on accepting, in
  * the batch that removes the request.
  *
+ * The second suite holds who may read a follow once it exists (Polish4
+ * call 1): a person lists and counts their own two lists, each of the two
+ * people on one follow reads that follow, and nobody else reads who. A
+ * profile shows how many from `followCounts/{uid}`
+ * (firestore.followCounts.rules.test.ts). The rules' own `exists()` on a
+ * follow (a followers-only post, a friends board) is not a client read;
+ * firestore.rules.test.ts holds those cases.
+ *
  * Run: `npm run test:rules`. Skipped when FIRESTORE_EMULATOR_HOST is unset,
  * a hard failure when CI sets REQUIRE_FIRESTORE_EMULATOR=1. Its own
  * projectId, because the rules suites run in parallel against one emulator
@@ -26,8 +34,11 @@ import {
   collection,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDoc,
   getDocs,
+  limit,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -373,9 +384,14 @@ suite("firestore.rules — invites", () => {
       followedAt: Timestamp.now(),
       fromInvite: true,
     });
+    // By the two people it joins, and nobody else.
     await assertSucceeds(
-      getDoc(doc(db(CAROL), "following", BOB, "users", ALICE))
+      getDoc(doc(db(BOB), "following", BOB, "users", ALICE))
     );
+    await assertSucceeds(
+      getDoc(doc(db(ALICE), "following", BOB, "users", ALICE))
+    );
+    await assertFails(getDoc(doc(db(CAROL), "following", BOB, "users", ALICE)));
     // And either person can still end it.
     await assertSucceeds(
       deleteDoc(doc(db(BOB), "following", BOB, "users", ALICE))
@@ -415,5 +431,104 @@ suite("firestore.rules — invites", () => {
     await assertSucceeds(
       setDoc(doc(db(BOB), "users", BOB), { darkMode: true }, { merge: true })
     );
+  });
+});
+
+suite("firestore.rules — the follow lists are their owner's", () => {
+  const followingOf = (as: string, uid: string) =>
+    collection(db(as), "following", uid, "users");
+  const followersOf = (as: string, uid: string) =>
+    collection(db(as), "followers", uid, "users");
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+    // Bob follows Alice: the two edges of one follow.
+    await seed(`following/${BOB}/users/${ALICE}`, { followedAt: 1 });
+    await seed(`followers/${ALICE}/users/${BOB}`, { followedAt: 1 });
+  });
+
+  describe("your own", () => {
+    it("you list whom you follow and who follows you", async () => {
+      await assertSucceeds(getDocs(followingOf(BOB, BOB)));
+      await assertSucceeds(getDocs(followersOf(ALICE, ALICE)));
+      // Empty lists are yours to read as well.
+      await assertSucceeds(getDocs(followersOf(BOB, BOB)));
+      await assertSucceeds(getDocs(followingOf(ALICE, ALICE)));
+    });
+
+    it("you count them, which is how your own profile gets its numbers", async () => {
+      await assertSucceeds(getCountFromServer(followingOf(BOB, BOB)));
+      await assertSucceeds(getCountFromServer(followersOf(ALICE, ALICE)));
+    });
+
+    it("you read the first few, as the feed does to see whether you follow anyone", async () => {
+      await assertSucceeds(getDocs(query(followingOf(BOB, BOB), limit(3))));
+    });
+  });
+
+  describe("one follow", () => {
+    it("is read by the person who follows", async () => {
+      await assertSucceeds(
+        getDoc(doc(db(BOB), "following", BOB, "users", ALICE))
+      );
+      await assertSucceeds(
+        getDoc(doc(db(BOB), "followers", ALICE, "users", BOB))
+      );
+    });
+
+    it("is read by the person followed", async () => {
+      await assertSucceeds(
+        getDoc(doc(db(ALICE), "following", BOB, "users", ALICE))
+      );
+      await assertSucceeds(
+        getDoc(doc(db(ALICE), "followers", ALICE, "users", BOB))
+      );
+    });
+
+    it("that does not exist is still theirs to ask about", async () => {
+      // "Do I follow Carol?" and "does Carol follow me?"
+      await assertSucceeds(
+        getDoc(doc(db(BOB), "following", BOB, "users", CAROL))
+      );
+      await assertSucceeds(
+        getDoc(doc(db(BOB), "following", CAROL, "users", BOB))
+      );
+    });
+
+    it("is not read by anyone else", async () => {
+      await assertFails(
+        getDoc(doc(db(CAROL), "following", BOB, "users", ALICE))
+      );
+      await assertFails(
+        getDoc(doc(db(CAROL), "followers", ALICE, "users", BOB))
+      );
+    });
+  });
+
+  describe("someone else's", () => {
+    it("nobody else lists whom a person follows or who follows them", async () => {
+      await assertFails(getDocs(followingOf(CAROL, BOB)));
+      await assertFails(getDocs(followersOf(CAROL, ALICE)));
+    });
+
+    it("being on one of its follows does not open the list", async () => {
+      // Bob follows Alice. He may read that follow, not her other followers.
+      await assertFails(getDocs(followersOf(BOB, ALICE)));
+      await assertFails(getDocs(followingOf(ALICE, BOB)));
+    });
+
+    it("nobody else counts them: the app reads a refused count as nobody", async () => {
+      await assertFails(getCountFromServer(followersOf(CAROL, ALICE)));
+      await assertFails(getCountFromServer(followingOf(CAROL, BOB)));
+      await assertFails(getCountFromServer(followersOf(BOB, ALICE)));
+    });
+
+    it("signed out, nobody reads any of it", async () => {
+      const anon = env
+        .unauthenticatedContext()
+        .firestore() as unknown as Firestore;
+      await assertFails(getDocs(collection(anon, "followers", ALICE, "users")));
+      await assertFails(getDoc(doc(anon, "following", BOB, "users", ALICE)));
+    });
   });
 });
