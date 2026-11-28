@@ -608,6 +608,54 @@ jobs:
           npm ci
           npm audit --omit=dev --audit-level=high
 
+  # troposfit.com, the website (App1 Q52). Only deploy-hosting.yml built
+  # it, so a page that failed to hydrate, a picture that did not ship, a
+  # page wider than a phone or a kept address that stopped answering came
+  # to light at the release. This builds it as deploy-hosting does and
+  # opens every page and kept address in Chromium at 393 and 1440 px,
+  # served with firebase.json's rules (scripts/website/check-site.ts).
+  # Not a required check: `unit` and `emulator-tests` are.
+  website:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.app != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
+          echo "version=$PW_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
+      - name: Install Chromium deps only (cache hit path)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        # Bounded and retried for the same reason as the step above.
+        timeout-minutes: 10
+        run: bash scripts/ci/install-playwright-chromium.sh install-deps 140
+      # The universal-links file needs the Team ID; a placeholder builds it
+      # here, since nothing this job builds is deployed.
+      - run: npm run build:hosting
+        env:
+          IOS_APP_ID_PREFIX: ABCDE12345
+      - run: npm run check:site
+
   # One rolling issue for the scheduled runs, which run every job whole on
   # main: opened (labelled ready-for-agent) on the first red run, commented
   # on while it stays red, and closed on the next green one. It names the
@@ -623,6 +671,7 @@ jobs:
       - unit-future
       - unit-shuffle
       - audit
+      - website
     if: ${{ always() && github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -150,6 +150,19 @@ const db = memoryFirestore({
   },
 });
 
+/** Each file compressed once: Brotli at its best takes a second or more
+ *  on the app's largest script, which every page would wait for. */
+const compressedFiles = new Map<string, Buffer>();
+function compressed(file: string, encoding: "br" | "gzip", body: Buffer) {
+  const key = `${encoding}:${file}`;
+  let out = compressedFiles.get(key);
+  if (!out) {
+    out = encoding === "br" ? brotliCompressSync(body) : gzipSync(body);
+    compressedFiles.set(key, out);
+  }
+  return out;
+}
+
 createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${port}`);
   const files = deployed();
@@ -169,10 +182,10 @@ createServer((req, res) => {
     const text = /^(text\/|application\/(json|xml)|image\/svg)/.test(type);
     if (text && accepts.includes("br")) {
       res.writeHead(200, { "Content-Type": type, "Content-Encoding": "br" });
-      res.end(brotliCompressSync(body));
+      res.end(compressed(answer.file, "br", body));
     } else if (text && accepts.includes("gzip")) {
       res.writeHead(200, { "Content-Type": type, "Content-Encoding": "gzip" });
-      res.end(gzipSync(body));
+      res.end(compressed(answer.file, "gzip", body));
     } else {
       res.writeHead(200, { "Content-Type": type });
       res.end(body);

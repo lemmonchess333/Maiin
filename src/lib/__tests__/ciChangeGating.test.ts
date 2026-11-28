@@ -117,6 +117,7 @@ describe("the required checks cannot be skipped by what changed", () => {
         "unit-locale",
         "unit-future",
         "unit-shuffle",
+        "website",
       ])
     );
     for (const [name, text] of gated) {
@@ -222,6 +223,7 @@ describe("the scheduled full runs and their issue", () => {
       "unit-future",
       "unit-shuffle",
       "audit",
+      "website",
     ])
       expect(issue).toMatch(new RegExp(`^ {6}- ${job}\\s*$`, "m"));
   });
