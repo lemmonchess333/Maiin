@@ -31,9 +31,10 @@ describe("PRCard keeps its fill", () => {
     expect(style).not.toMatch(/(^|;)\s*background:/);
   });
 
-  it("is drawn as the records table beside it: radius and shadow in both themes", () => {
+  it("is drawn as the records table beside it: radius and the flat plane (§14s)", () => {
     const el = card();
     expect(el.className).toContain("rounded-2xl");
-    expect(el.className.split(/\s+/)).toContain("card-shadow");
+    expect(el.className.split(/\s+/)).toContain("surface-flat");
+    expect(el.className.split(/\s+/)).not.toContain("card-shadow");
   });
 });

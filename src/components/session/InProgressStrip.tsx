@@ -49,7 +49,7 @@ export default function InProgressStrip({
       }
       className={cn(
         "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-card p-3",
-        !onCard && "card-shadow",
+        !onCard && "surface-flat",
         className
       )}
     >

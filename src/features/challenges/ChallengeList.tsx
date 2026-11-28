@@ -40,6 +40,7 @@ const ChallengeCard = lazyRetry(() =>
 
 const LIST_CARD = cardClasses({
   size: "compact",
+  tone: "flat",
   padded: false,
   className: "@container overflow-hidden divide-y divide-border/40",
 });

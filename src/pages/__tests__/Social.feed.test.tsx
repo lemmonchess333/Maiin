@@ -352,7 +352,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
     expect(youFollow()).toBeUndefined();
     // Each post's card, found from its Follow link (newest first).
     const [first, second] = followLinks().map((link) =>
-      link.closest<HTMLElement>(".card-shadow")!
+      link.closest<HTMLElement>(".surface-flat")!
     );
 
     fireEvent.click(within(first).getByRole("button", { name: "Follow Bea" }));

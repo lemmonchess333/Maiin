@@ -44,7 +44,12 @@ export default function FastestKilometresCard({
 }) {
   if (rows.length === 0) return null;
   return (
-    <Card as="section" aria-label="Fastest kilometres" className="space-y-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-label="Fastest kilometres"
+      className="space-y-3"
+    >
       <div>
         <h2 className="text-base font-bold text-foreground">
           Fastest kilometres

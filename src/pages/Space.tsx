@@ -180,7 +180,7 @@ function RaceEventHeader({
   const entry = raceEntryLink(event, todayKey);
 
   return (
-    <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
+    <div className="rounded-2xl bg-card surface-flat p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <span
           className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-semibold"

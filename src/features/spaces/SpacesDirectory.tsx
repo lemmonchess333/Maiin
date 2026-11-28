@@ -119,7 +119,7 @@ function SpaceCard({
   return (
     <Link
       to={`/space/${def.id}`}
-      className={`relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform ${CARD_SIZE[size].box}`}
+      className={`relative shrink-0 snap-start rounded-2xl overflow-hidden surface-flat active:scale-[0.98] transition-transform ${CARD_SIZE[size].box}`}
       style={
         photo
           ? undefined
@@ -307,7 +307,7 @@ function SpaceSearchRow({ def }: { def: SpaceDef }) {
   return (
     <Link
       to={`/space/${def.id}`}
-      className="flex items-center gap-3 min-h-14 rounded-xl bg-card card-shadow p-3 active:scale-[0.98] transition-transform"
+      className="flex items-center gap-3 min-h-14 rounded-xl bg-card surface-flat p-3 active:scale-[0.98] transition-transform"
     >
       <span
         className="relative size-11 shrink-0 overflow-hidden rounded-lg"

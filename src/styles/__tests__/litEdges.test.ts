@@ -247,7 +247,7 @@ describe("the lit edge on dark surfaces (DS6, §14o)", () => {
         f.text.includes("bg-card")
     );
     expect(strip?.classes).toEqual(
-      expect.arrayContaining(["bg-card", "rounded-xl", "card-shadow"])
+      expect.arrayContaining(["bg-card", "rounded-xl", "surface-flat"])
     );
   });
 

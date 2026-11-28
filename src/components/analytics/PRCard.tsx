@@ -64,7 +64,7 @@ export default function PRCard({
 
   return (
     <div
-      className="rounded-2xl bg-card overflow-hidden card-shadow"
+      className="rounded-2xl bg-card overflow-hidden surface-flat"
       style={{
         /* The tint over the card's own fill: `background` would reset
            the colour `bg-card` sets, and the card drew as the page with

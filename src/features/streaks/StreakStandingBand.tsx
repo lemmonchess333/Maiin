@@ -45,6 +45,7 @@ export default function StreakStandingBand({
         aria-label={`${sentence}.`}
         className={cardClasses({
           size: "compact",
+          tone: "flat",
           className:
             "flex min-w-0 items-center gap-3 @max-[12em]:flex-col @max-[12em]:items-start",
         })}

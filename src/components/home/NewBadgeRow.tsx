@@ -30,6 +30,7 @@ export default function NewBadgeRow({
       }}
       className={cardClasses({
         size: "compact",
+        tone: "flat",
         className:
           "w-full min-h-11 flex items-center gap-3 text-left active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
       })}

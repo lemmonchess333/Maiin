@@ -1397,7 +1397,7 @@ export default function History() {
               stalledSources.length > 0 && (
                 <div
                   role="status"
-                  className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
+                  className="p-4 rounded-2xl bg-card space-y-2 surface-flat"
                 >
                   <p className="text-sm font-semibold text-foreground">
                     Still loading your {formatSourceList(stalledSources)}
@@ -1552,7 +1552,7 @@ export default function History() {
                      Retry re-issues the same one-shot getDocs — the read
                      is idempotent, and the usual cause (a transient
                      network or a wedged stream) clears on a second go. */
-                  <div className="p-4 rounded-2xl bg-card space-y-2 card-shadow">
+                  <div className="p-4 rounded-2xl bg-card space-y-2 surface-flat">
                     <p className="text-sm font-semibold text-foreground">
                       Couldn’t load your runs
                     </p>

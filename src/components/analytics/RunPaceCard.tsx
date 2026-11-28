@@ -54,7 +54,12 @@ export default function RunPaceCard({
 }) {
   if (rows.length === 0) return null;
   return (
-    <Card as="section" aria-label="Pace by run type" className="space-y-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-label="Pace by run type"
+      className="space-y-3"
+    >
       <div>
         <h2 className="text-base font-bold text-foreground">
           Pace by run type

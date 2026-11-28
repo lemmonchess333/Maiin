@@ -26,6 +26,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
+import ts from "typescript";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -602,6 +603,176 @@ describe("DS ratchets — surface-level drift", () => {
     expect(src).toMatch(/hero: \{ radius: "rounded-2xl", padding: "p-4" \}/);
     expect(src).toMatch(/compact: \{ radius: "rounded-xl", padding: "p-3" \}/);
     expect(src).toMatch(/card: "bg-card card-shadow"/);
+  });
+
+  /* Raised cards (DESIGN_GUIDE §14s rule 1, owner 24 November 2026).
+     The raised card, `card-shadow`'s lift and on dark its lit edge
+     (§14o), belongs to a screen's one hero. Every other card is a flat
+     plane: `tone="flat"` on `Card`, `tone: "flat"` in `cardClasses()`,
+     or `surface-flat` on a card drawn by hand. This counts what still
+     asks for the raised look outside the surfaces named below, each a
+     screen's hero:
+
+     - a `Card` with no `tone` or the `card` tone;
+     - a `cardClasses()` call with no `tone` or the `card` tone;
+     - a hand-written class string with `card-shadow` and no variant in
+       front of it. `dark:card-shadow` is the flat look's dark half (a
+       card whose light look is its own), and a `rounded-full` control
+       (a round Back button) is a button, not a card: neither counts.
+
+     A tone held in a variable is not followed: the count trades that for
+     reading every file the same way. The website (`src/website`) is
+     outside the app and keeps its own design doc
+     (`docs/website/design.md`), so it is not scanned.
+
+     At the start of the sweep (28 November 2026) the app had 130 raised
+     cards: 74 `Card` and `cardClasses()` uses and 56 hand-drawn, 120 of
+     them outside the heroes. The first PR flattened Progress, Food, Home,
+     Social and League (67 left); the second takes the count to 0. A new
+     hero is a screen's one primary card: name it below, with the screen
+     it leads, rather than raising the baseline. */
+  const RAISED_CARDS: Record<string, { uses: number; why: string }> = {
+    "src/components/analytics/PerformanceSection.tsx": {
+      uses: 2,
+      why: "Progress: the Performance card (§14r), and its slot before a first score",
+    },
+    "src/components/LoadingSkeleton.tsx": {
+      uses: 1,
+      why: "Progress: the Performance card's own skeleton",
+    },
+    "src/pages/League.tsx": {
+      uses: 3,
+      why: "League: your standing, and its slot before you have one (join, locked, waiting)",
+    },
+    "src/features/spaces/RaceHero.tsx": {
+      uses: 1,
+      why: "Together: your race's hero",
+    },
+    "src/pages/PublicPost.tsx": {
+      uses: 1,
+      why: "A shared post's page: the session's route",
+    },
+    "src/components/share/SharedLanding.tsx": {
+      uses: 1,
+      why: "A shared card's page: the card",
+    },
+    "src/components/share/ShareCardSheet.tsx": {
+      uses: 1,
+      why: "Share: the card being shared",
+    },
+  };
+  const RAISED_CARD_BASELINE = 67;
+  const CARD_PRIMITIVE_TSX = "src/components/ui/Card.tsx";
+
+  function raisedCardUses(src: string, rel: string): number {
+    // The primitive itself passes its caller's tone on.
+    if (rel.startsWith("src/website/") || rel === CARD_PRIMITIVE_TSX) return 0;
+    const file = ts.createSourceFile(
+      rel,
+      src,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX
+    );
+    const importsCard = /from "[^"]*\/ui\/Card"/.test(src);
+    /** No tone is the default, `card`; an expression is raised when it
+     *  can give "card". */
+    const raisedTone = (tone: ts.Node | undefined): boolean => {
+      if (!tone) return true;
+      let raised = false;
+      const look = (node: ts.Node) => {
+        if (
+          (ts.isStringLiteral(node) ||
+            ts.isNoSubstitutionTemplateLiteral(node)) &&
+          node.text === "card"
+        )
+          raised = true;
+        ts.forEachChild(node, look);
+      };
+      look(tone);
+      return raised;
+    };
+    let n = 0;
+    const visit = (node: ts.Node) => {
+      if (
+        importsCard &&
+        (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+        node.tagName.getText(file) === "Card"
+      ) {
+        const tone = node.attributes.properties.find(
+          (p): p is ts.JsxAttribute =>
+            ts.isJsxAttribute(p) && p.name.getText(file) === "tone"
+        );
+        if (!tone || raisedTone(tone.initializer)) n++;
+      } else if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "cardClasses"
+      ) {
+        const options = node.arguments[0];
+        const tone =
+          options && ts.isObjectLiteralExpression(options)
+            ? options.properties.find(
+                (p) =>
+                  (ts.isPropertyAssignment(p) ||
+                    ts.isShorthandPropertyAssignment(p)) &&
+                  p.name.getText(file) === "tone"
+              )
+            : undefined;
+        // `{ tone }` passes a variable on, which is not followed.
+        if (
+          !tone ||
+          (ts.isPropertyAssignment(tone) && raisedTone(tone.initializer))
+        )
+          n++;
+      } else if (
+        ts.isStringLiteral(node) ||
+        ts.isNoSubstitutionTemplateLiteral(node) ||
+        ts.isTemplateHead(node) ||
+        ts.isTemplateMiddle(node) ||
+        ts.isTemplateTail(node)
+      ) {
+        const tokens = node.text.split(/\s+/);
+        if (tokens.includes("card-shadow") && !tokens.includes("rounded-full"))
+          n++;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(file);
+    return n;
+  }
+
+  it("raised cards outside the named heroes do not increase (secondary cards are flat)", () => {
+    const { total, byFile } = scan((src, rel) =>
+      Math.max(0, raisedCardUses(src, rel) - (RAISED_CARDS[rel]?.uses ?? 0))
+    );
+    expectRatchet("raised card", total, RAISED_CARD_BASELINE, byFile);
+  });
+
+  it("each named surface is still raised, once per state named (positive pin)", () => {
+    // A hero that moved or went flat leaves a stale entry that would let
+    // another card in that file rise unseen: the list is kept exact.
+    for (const [rel, { uses }] of Object.entries(RAISED_CARDS)) {
+      const src = readFileSync(resolve(repoRoot, rel), "utf8");
+      expect(raisedCardUses(src, rel), rel).toBe(uses);
+    }
+  });
+
+  it("counts the three ways a card asks to be raised (positive pin)", () => {
+    const sample = [
+      'import { Card } from "@/components/ui/Card";',
+      'const a = <Card className="p-4" />;',
+      'const b = <Card tone="card" />;',
+      'const c = <Card tone="flat" />;',
+      'const d = cardClasses({ size: "compact" });',
+      'const e = cardClasses({ tone: "flat" });',
+      'const f = <div className="rounded-2xl bg-card card-shadow" />;',
+      'const g = <div className="rounded-2xl bg-card dark:card-shadow" />;',
+      'const h = <button className="rounded-full bg-card card-shadow" />;',
+      'const i = <div className="rounded-xl bg-card surface-flat" />;',
+    ].join("\n");
+    expect(raisedCardUses(sample, "src/sample.tsx")).toBe(4);
+    expect(raisedCardUses(sample, "src/website/sample.tsx")).toBe(0);
   });
 
   /* `shadow-card` is a trap, documented in index.css: Tailwind parses it

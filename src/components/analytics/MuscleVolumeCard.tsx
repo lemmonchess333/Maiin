@@ -59,14 +59,15 @@ export default function MuscleVolumeCard({
     "full"
   );
 
+  /* A heading and a sentence sit on the page, not in a card (§14r). */
   if (weeks === 0) {
     return (
-      <Card as="section" aria-label="Sets per muscle" className="space-y-1">
+      <section aria-label="Sets per muscle" className="space-y-1">
         <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
         <p className="text-sm text-muted-foreground">
           After your first full week
         </p>
-      </Card>
+      </section>
     );
   }
   const hasFractional = Boolean(fractionalRows && fractionalRows.length > 0);
@@ -82,7 +83,12 @@ export default function MuscleVolumeCard({
   const balanceNotes = antagonistBalanceReadings(activeRows);
 
   return (
-    <Card as="section" aria-label="Sets per muscle" className="space-y-3">
+    <Card
+      as="section"
+      tone="flat"
+      aria-label="Sets per muscle"
+      className="space-y-3"
+    >
       <div className="space-y-2">
         <div>
           <h2 className="text-base font-bold text-foreground">

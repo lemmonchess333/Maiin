@@ -488,13 +488,19 @@ export default function DayPeekCard({
         strip you just tapped, and nothing connected the two — it read as
         an unrelated box that showed up. Pointing at the row it came from
         makes the relationship obvious without a word of copy.
+
+        The card is a flat plane (§14s rule 1): on light a hairline and no
+        shadow. The caret takes the same hairline on its two upper edges
+        and sits over the card's top edge, so the line opens under it and
+        the two read as one shape. On dark both keep the lit edge, with
+        the card over the caret as before.
       */}
       <div className="pt-1 pb-0.5 px-1">
         <div
           aria-hidden="true"
-          className="mx-auto size-2.5 rotate-45 rounded-[2px] bg-card -mb-1.5"
+          className="relative z-[1] mx-auto size-2.5 rotate-45 rounded-[2px] border-t border-l border-border/60 bg-card -mb-1.5 dark:z-auto dark:border-transparent"
         />
-        <div className="relative rounded-xl bg-card px-3 py-3 space-y-2 card-shadow">
+        <div className="relative rounded-xl bg-card px-3 py-3 space-y-2 surface-flat">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">

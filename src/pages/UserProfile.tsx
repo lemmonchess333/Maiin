@@ -451,7 +451,7 @@ function ProfileContent({
           {/* This week, from what they shared: all a profile can read, and
           the label says so. Replaced two lifetime-looking pills that
           summed the last ten shared posts. */}
-          <Card>
+          <Card tone="flat">
             <div className="flex items-center justify-between gap-3">
               <SectionLabel>Shared this week</SectionLabel>
               {streak > 0 && (
