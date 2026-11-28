@@ -2759,6 +2759,19 @@ What is genuinely left, and it is narrower than the row implied:
 Do this before an App Store reviewer or a data-subject request reads
 section 7. The claim is probably true; "probably" is the problem.
 
+## The Privacy Policy's promise to tell people about a change (2026-11-21)
+
+Section 10 of `src/pages/PrivacyPolicy.tsx` says "We will notify you of
+significant changes through the app." Nothing in the app tells anyone
+about a change to the policy. The Terms make the same promise in their
+section 11, with a row of their own ("The Terms' first material change
+after launch"); one notice can serve both.
+
+- [ ] **The policy's first significant change after launch.** Before it is
+      published, decide how the app tells people (a Home card or a push)
+      and build it. Passing: an account that opens the app after the
+      change is told once, in the app, what changed and where to read it.
+
 ## Meal photos moved to the device (Food9, 2026-08-18)
 
 Affects: `src/lib/foodPhotoStore.ts` (new), `src/lib/foodPhotoUpload.ts`

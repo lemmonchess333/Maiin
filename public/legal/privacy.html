@@ -87,6 +87,23 @@
       a {
         color: var(--brand);
       }
+      table {
+        width: 100%;
+        margin: 0 0 12px;
+        border-collapse: collapse;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      th {
+        color: var(--text);
+        text-align: left;
+      }
+      th,
+      td {
+        padding: 6px 12px 6px 0;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
       .card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -132,19 +149,46 @@
               <strong>Account Information:</strong> your email address, your
               display name and how you sign in (email and password, Google or
               Apple). If you sign in with Apple, Apple may give us a private
-              relay address instead of your own.
+              relay address instead of your own. If you sign in with Google or
+              Apple, the name on that account is your display name until you
+              change it, and with Google, the photo on your Google account is
+              your profile photo until you change it.
             </li>
             <li>
-              <strong>Profile and Fitness Details:</strong> sex or gender, age
-              range, height and weight, activity level and training experience,
-              any injury limits you tell us about, your maximum heart rate, your
-              goals (including a goal weight), and the details of any race you
-              are training for, such as its distance, date and event.
+              <strong>Profile and Fitness Details:</strong> your sex for the
+              calorie calculation (if you give it), year of birth (an older
+              account may hold an age or an age range instead), height and
+              weight, activity level and training experience, any injury limits
+              you tell us about, your maximum heart rate, your goals (including
+              a goal weight), and the details of any race you are training for,
+              such as its distance, date and event. Sex is optional: choose
+              Prefer not to say in setup, or Not set on your profile in
+              Settings, and Tropos stores none and uses a figure halfway between
+              the male and female ones. We also keep when you agreed to Tropos
+              storing your health details, and to which wording of that
+              question.
+            </li>
+            <li>
+              <strong>Setup Before You Have an Account:</strong> you answer
+              setup’s questions before you make an account. Until you do, your
+              answers, including your health details once you have agreed to
+              Tropos storing them, are kept only on your phone or in your
+              browser, and none of them is sent to our servers. They are kept
+              for 2 days from your last answer and deleted the next time Tropos
+              opens after that, and deleted at once when you sign out or when an
+              account other than the one you make from Save your plan signs in.
+              When you make your account from Save your plan, they become your
+              plan. If you agreed to Tropos storing your health details before
+              you had an account, that agreement lapses after 2 days, after 2
+              hours with Tropos in the background, or when the app is closed,
+              and setup asks again.
             </li>
             <li>
               <strong>Activity Data:</strong> workouts, sets and personal
               records, runs, meals, water, weight logs over time, your notes,
-              and the training plan you follow.
+              and the training plan you follow. Also the routes you save to
+              follow again (a route you import, plan or keep from a run), and
+              the running shoes you add with the distance run in each.
             </li>
             <li>
               <strong>Location During Runs:</strong> while a run is recording,
@@ -165,17 +209,20 @@
               It is read on your phone and is not stored or sent to Tropos.
             </li>
             <li>
-              <strong>Nutrition Data:</strong> food logs, barcode scans, food
-              searches, and calorie and macro tracking data.
+              <strong>Nutrition Data:</strong> food logs, including foods you
+              add from a barcode scan or a search and the barcode of a food you
+              scan, and calorie and macro tracking data. The words you type in a
+              food search go straight from your phone to Open Food Facts, and
+              Tropos keeps none of your searches (section 7).
             </li>
             <li>
               <strong>Apple Health (optional):</strong> if you connect it, your
               daily step count, which Pro compares with your activity level.
               With Pro, if you add them, your sleep, resting heart rate and
-              heart rate variability for readiness. With Apple Watch runs
-              enabled, Tropos also reads heart rate during a run. Saving a
-              completed Tropos run as a workout in Apple Health is a separate
-              choice. See section 8.
+              heart rate variability for readiness. When available, Apple Watch
+              runs also read heart rate during a run, and saving a completed
+              Tropos run as a workout in Apple Health is a separate choice. See
+              section 8.
             </li>
             <li>
               <strong>Heart rate sensor (optional):</strong> if you pair a
@@ -207,29 +254,85 @@
               out the location and other details your camera stored in the file.
             </li>
             <li>
+              <strong>Run Map Images (optional):</strong> when you share a run
+              with a route, the app draws a picture of the map of the route it
+              shares (with the start and finish hidden unless you turned that
+              off, and your privacy zones removed) and stores it with the post.
+              It is checked as photos are (section 7) and deleted with the post.
+            </li>
+            <li>
+              <strong>Segments (optional):</strong> a segment you make from a
+              stretch of one of your runs (its line, name and length), and the
+              times our server records when a run of yours passes along a
+              segment, yours or someone else’s. See section 4.
+            </li>
+            <li>
+              <strong>Shared Cards (optional):</strong> when you share a card of
+              a session, a day’s food or a week from the share sheet, a copy of
+              the card’s figures and words as the card shows them, without any
+              you hid, so that its link can open it. It never holds a route, a
+              coordinate, the photo the card was drawn on or your name. See
+              section 4.
+            </li>
+            <li>
               <strong>Social Activity (optional):</strong> the posts you share,
-              comments, props, follows, Circle check-ins, Space posts, and the
-              reports you make about content or accounts.
+              comments, props, follows, Circle check-ins and meet-ups, Space
+              posts, and the reports you make about content or accounts. Also
+              the posts you hide from your feed, the people you block, the
+              challenges you join with your progress and place in them, the
+              medals they award, your weekly league standing if you join the
+              league, a race you choose to show on your profile, and who invited
+              you, if you joined from someone’s invite.
+            </li>
+            <li>
+              <strong>Notifications in the app:</strong> the notices in your
+              tray, such as “Sam gave you props”. One about something a person
+              did carries their name, so when you give props, comment, follow or
+              join from an invite, your name goes into the other person’s tray.
+              Each notice is deleted after 90 days, and when either account is
+              deleted.
             </li>
             <li>
               <strong>Subscription Records:</strong> whether you have Pro, where
               you bought it, its product and dates, and the store’s transaction
-              identifiers.
+              identifiers. If you start a free trial, its dates and the price
+              you were shown, so we can remind you before it turns into a paid
+              subscription.
             </li>
             <li>
               <strong>Usage Data and Analytics Identifiers:</strong> which
               screens and features you use, and events such as finishing a
-              workout, a run or a scan, with a few figures about them, tied to
-              an identifier for this installation of the app. See section 2.
+              workout, a run or a scan, from the health-details agreement in
+              setup on, tied to an identifier for this installation of the app,
+              not to your account. They carry no figure about your body, food or
+              training. Google Analytics adds an approximate location and your
+              device’s type and model (section 2). Your account also keeps when
+              you saved your first session, when you trained in your fourth
+              week, and when your first trial and first paid period began, and
+              which of these your phone has already sent to analytics, so each
+              is counted once. See section 2.
+            </li>
+            <li>
+              <strong>Notification Token (optional):</strong> if you allow
+              notifications, the token your phone or browser gives Tropos so
+              that notifications reach that device, and whether it is an iPhone
+              or a browser. Signing out on the device removes it from your
+              account.
             </li>
             <li>
               <strong>Crash and Error Reports:</strong> error messages and where
-              in the app they happened, and in the iPhone app, its crashes.
+              in the app they happened, with the address of the screen (any name
+              or id in it taken out) and your device’s browser or app details,
+              and in the iPhone app, its crashes.
             </li>
             <li>
               <strong>Preferences and Time Zone:</strong> units, theme,
               notification and sharing choices, and your device’s time zone, so
-              daily limits and reminders follow your local day.
+              daily limits and reminders follow your local day. For each email
+              you can choose (section 2), whether you said yes or no, when,
+              where and to which wording. For the evening streak reminder and
+              the Monday review, when each was last sent and whether you opened
+              Tropos after it.
             </li>
           </ul>
         </section>
@@ -252,18 +355,86 @@
               ask in setup, off until you turn it on)
             </li>
             <li>
+              Send the reminders and notifications you turn on. Our server sends
+              at most one notification a day, and 5 in any 7 days, that is not
+              about something a person did (such as the evening streak reminder,
+              the Monday review, a challenge or a badge). A reminder you leave
+              unanswered 3 times running (you did not open Tropos that day, tap
+              it or do what it asked) is turned off, and Home tells you once.
+              You can turn it back on in Settings &gt; Notifications.
+            </li>
+            <li>
               Understand how the app is used and fix what breaks (analytics, and
               crash and error reports)
             </li>
           </ul>
           <p>
             <strong>Analytics.</strong> Google Analytics for Firebase receives
-            the usage events described in section 1, including some fitness
-            figures about sessions, such as how long one took or how many items
-            were logged. Google also works out an approximate location, such as
-            the country or city, from your connection. Analytics never receives
-            your email address, your name, GPS routes, what you type about
-            meals, or your notes.
+            the usage events described in section 1: which screens you open,
+            what you do there (such as finishing a workout or tapping a chart),
+            the choices you make in settings and in your plan, and timings, such
+            as how long a screen took to appear or logging a meal took. It
+            receives the choices you made in setup: your goal (such as building
+            muscle or losing fat), how many days a week you train, whether you
+            lift, run or both, and whether your runs follow a race plan, a
+            starter plan or neither. Events from your food diary carry counts,
+            such as how many rows a day shows, never what is in them. It
+            receives no figure about your body, food, sleep, heart or training,
+            such as a weight, calories, a distance, a pace or a score. Google
+            Analytics also works out an approximate location, such as your city
+            and country, from your connection’s IP address. Google uses the IP
+            address to work this out and does not store it. It also records
+            details of your device, such as its type, model and operating
+            system. Analytics never receives your email address, your name, GPS
+            routes, what you type about meals, the names of your foods, or your
+            notes.
+          </p>
+          <p>
+            It also receives a few events about your first days, each sent once:
+            your account made and how (Apple, Google or email), setup finished,
+            and the trial offer seen. And once for each account, with how many
+            days after setup each came: your first saved session and whether it
+            was a lift or a run, a session in your fourth week, and your first
+            trial and first paid period, with whether each was bought in the app
+            or on the web. None of them carries your name, your email address or
+            a figure about you.
+          </p>
+          <p>
+            <strong>When analytics starts.</strong> Google Analytics, in the
+            iPhone app and on the web, counts how the app is used so we can
+            improve it. It starts at the health-details agreement (in setup, or
+            on its own screen for an account made before it), which has a line
+            saying so that ends in Turn off, or when you sign in to an account
+            that has agreed. Nothing is sent to Google Analytics before that
+            line, and after you sign out nothing is sent until you reach it
+            again or sign in. Before it, our own server counts only how many
+            times a day the welcome screen is shown and setup is started, and
+            how many accounts are made: totals with no identifier, sent without
+            reading anything from your phone, which cannot be linked to you and
+            are deleted after about 13 months. These counts never go to Google
+            Analytics.
+          </p>
+          <p>
+            <strong>What Google does with it.</strong> Google processes this
+            data to give us the analytics. We have turned off Google signals, ad
+            personalisation and the sharing of this data with Google’s other
+            products and services, and no Google Ads account is linked. Google
+            may use our analytics data, combined with other apps’ data in totals
+            that cannot identify you, to provide benchmarks and improve its
+            services. Tropos does not use analytics for advertising.
+          </p>
+          <p>
+            <strong>Turning analytics off.</strong> Usage analytics is on from
+            there until you turn it off, with Turn off on that line or with
+            Share usage analytics in Settings &gt; Social &amp; privacy. Off,
+            the phone or browser you are using stops sending anything to Google
+            Analytics at once, and your account keeps the choice so your other
+            devices follow it once you sign in on them. If you turn it off in
+            setup before you have an account, the account you save your plan to
+            keeps that choice, unless it already had a choice of its own. If you
+            sign in to an account that already has a plan, that account’s
+            setting applies, which is on unless it was turned off there. Crash
+            and error reports are not analytics and do not follow this switch.
           </p>
           <p>
             We do not use your data for advertising, Tropos shows no adverts,
@@ -300,11 +471,27 @@
           <p>We do <strong>not</strong> sell or rent your personal data.</p>
           <p>
             <strong>What other people see.</strong> Your display name, profile
-            photo, streaks and badges are visible to other signed-in Tropos
-            users. Your logs (meals, weight, workouts and runs) are private to
-            your account unless you share them. Comments, Circle check-ins and
-            Space posts are seen by the people in that conversation, Circle or
-            Space.
+            photo, streaks, badges and medals are visible to other signed-in
+            Tropos users, and so is a race you choose to show on your profile.
+            Anyone signed in can find you by searching for your name. Your
+            profile also holds whether you set up Tropos to lift, run or both,
+            when your account was made and the last day your streak counted. The
+            app does not show those three to other people, but anyone signed in
+            can read them. Your logs (meals, weight, workouts and runs) are
+            private to your account unless you share them. Comments on a session
+            you share are seen by whoever can see that session. Circle check-ins
+            are seen by the people in that Circle, and a Circle meet-up (what it
+            is, when, the place, note and pace groups you type, and who is
+            going) by the Circle’s members.
+            <strong>Spaces are open to everyone signed in:</strong> anyone
+            signed in to Tropos can read a Space’s posts, the comments and props
+            on them, and who has joined it (each member’s name and photo),
+            whether or not they have joined it themselves. If you join a
+            challenge, your name, photo and progress in it are visible to other
+            signed-in Tropos users. If you join the weekly league, the people in
+            your group (about 20) see your first name, your photo and your week:
+            the sessions you did against those your plan had, and the points
+            they give. Leaving the league removes your standing at once.
           </p>
           <p>
             <strong>Sharing sessions.</strong> When you share a workout or a
@@ -316,6 +503,54 @@
             without asking. Until you choose, you are asked each time. A shared
             route has its start and end hidden unless you turn that off, and
             your privacy zones are removed from it.
+          </p>
+          <p>
+            <strong>Public posts on the web.</strong> Anyone with the link to a
+            session you shared publicly can open it on troposfit.com, signed in
+            or not. The page asks search engines not to list it. That page shows
+            your display name and profile photo, the session’s name and date,
+            its figures (a run’s distance, time, pace and climb, or a workout’s
+            time, volume, number of exercises and any record) and, for a run, a
+            map of its route with the start and finish cut off and your privacy
+            zones removed. A followers-only or private post never opens there.
+          </p>
+          <p>
+            <strong>Shared cards.</strong> A card you share from the share sheet
+            that is not of a public post can end with a link to its own page on
+            troposfit.com. Anyone with the link can open it, signed in or not,
+            and the page asks search engines not to list it. It shows the card’s
+            figures and words as you shared them (such as a run’s distance, time
+            and pace, a workout’s volume, or a day’s calories and macros), never
+            a route, a coordinate, the photo the card was drawn on or your full
+            name. The line above the card names you by your first name, and
+            while the invite code you had when you shared it is still yours, the
+            page offers it to join Tropos. A card of a post or a session stops
+            opening when you delete that post or session, and its copy is
+            deleted. A card of a day’s food or a week opens for 30 days and is
+            then deleted. Deleting your account deletes them all.
+          </p>
+          <p>
+            <strong>Spaces you join.</strong> The sessions you share publicly
+            are shown in each Space you have joined, including up to 20 from the
+            28 days before you joined. Each week your sessions also count
+            towards the Space’s totals (how many members trained, their sessions
+            and distance), which name no one and are shown only once at least 5
+            members trained that week.
+          </p>
+          <p>
+            <strong>Segments.</strong> A segment is a stretch of one of your
+            runs that you name. Anyone signed in can open its line, name and
+            length, and it does not name you. Each outdoor GPS run saved after a
+            segment is made is checked against it on our server, so your runs
+            are timed on segments other people made, and theirs on yours. When
+            you make a segment, your own last 50 runs are checked against it
+            too. Each time is kept in the runner’s own account, where only they
+            see it. Your best time on a segment is shown to your accepted
+            followers, and only when it comes from a run you shared with
+            followers or publicly and neither its start nor its end is in one of
+            your privacy zones. Anyone else can report a segment, and Tropos can
+            remove it. Deleting a run, a segment or your account deletes the
+            times that go with it.
           </p>
           <p>
             <strong>Followers.</strong> Someone becomes your follower once you
@@ -347,6 +582,16 @@
               Turn AI food analysis on or off at any time, in Settings &gt;
               Social &amp; privacy
             </li>
+            <li>
+              Turn usage analytics off at any time, with Turn off on the
+              health-details agreement or Share usage analytics in Settings &gt;
+              Social &amp; privacy
+            </li>
+            <li>
+              Object to any other use of your data where we rely on legitimate
+              interests (section 6), by writing to support@troposfit.com
+            </li>
+            <li>Complain, to us or to the ICO (section 6)</li>
           </ul>
         </section>
         <section>
@@ -354,15 +599,130 @@
           <p>
             If you are located in the UK or European Economic Area, you have
             additional rights under the General Data Protection Regulation
-            (GDPR):
+            (GDPR).
           </p>
+          <p>
+            <strong>Legal basis.</strong> The law allows us to use your data for
+            each purpose on one of these grounds:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">What we do</th>
+                <th scope="col">Why the law allows it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  Your account, your plan and logs (with your sex for the
+                  calorie calculation, if you give it), recording a run’s route,
+                  syncing your devices, showing what you share, segments,
+                  challenges and leagues you join, Pro, and emails about your
+                  account or a trial ending
+                </td>
+                <td>Contract: it is the service you signed up for.</td>
+              </tr>
+              <tr>
+                <td>
+                  Your health details: weight, height, injuries, steps, the food
+                  you log, the heart rate from your runs, and anything else you
+                  allow from Apple Health
+                </td>
+                <td>
+                  Your explicit consent (UK GDPR Article 9(2)(a)), which you
+                  give in setup before the questions about your body, or, for an
+                  account made before that question was added, the first time
+                  you open Tropos after the update. You can withdraw it by
+                  deleting your account.
+                </td>
+              </tr>
+              <tr>
+                <td>Sending a meal photo or a typed meal to Google’s Gemini</td>
+                <td>
+                  Your consent, asked before the first one is sent. You can turn
+                  it off at any time.
+                </td>
+              </tr>
+              <tr>
+                <td>Notifications</td>
+                <td>
+                  Your consent, which you give when your phone or browser asks.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  The emails you choose: your weekly review and the emails after
+                  a break
+                </td>
+                <td>
+                  Your consent, asked in setup and in Settings &gt;
+                  Notifications, off until you turn it on. We keep when you said
+                  yes or no and to which words. You can turn each off at any
+                  time, or with the unsubscribe link in any of them.
+                </td>
+              </tr>
+              <tr>
+                <td>The page a shared card’s link opens</td>
+                <td>
+                  Contract: it is part of the service you asked for when you
+                  shared the card.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Counting how many times a day the welcome screen is shown,
+                  setup is started and an account is made, as totals with no
+                  identifier
+                </td>
+                <td>
+                  Legitimate interests: knowing how many people start Tropos and
+                  where they stop, without telling anyone apart.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Noting whether you opened Tropos after a reminder, so one you
+                  keep ignoring is turned off
+                </td>
+                <td>
+                  Legitimate interests: not sending you reminders you do not
+                  want.
+                </td>
+              </tr>
+              <tr>
+                <td>Usage analytics (Google Analytics)</td>
+                <td>
+                  Legitimate interests: knowing how the app is used so we can
+                  improve it. The Data (Use and Access) Act 2025 lets an app
+                  store and read what analytics needs on your device without
+                  asking first, when it is used for statistics to improve the
+                  app, you are told, and you have a simple, free way to object.
+                  The health-details agreement tells you, and you can object
+                  with Turn off there or with Share usage analytics in Settings
+                  &gt; Social &amp; privacy.
+                </td>
+              </tr>
+              <tr>
+                <td>Crash and error reports</td>
+                <td>
+                  Legitimate interests: finding and fixing what breaks. You can
+                  object to them (section 5).
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Security, stopping abuse and moderation, including the records
+                  kept after an account is deleted
+                </td>
+                <td>
+                  Legitimate interests: keeping Tropos and the people on it
+                  safe.
+                </td>
+              </tr>
+            </tbody>
+          </table>
           <ul>
-            <li>
-              <strong>Legal basis:</strong> We process your data based on your
-              consent (provided during account creation, and when the app asks,
-              as it does before AI food analysis) and for the performance of our
-              service.
-            </li>
             <li>
               <strong>Right to access:</strong> You can request a copy of all
               data we hold about you.
@@ -380,46 +740,81 @@
               data in CSV format through the app’s settings.
             </li>
             <li>
-              <strong>Right to withdraw consent:</strong> You can withdraw
-              consent at any time by deleting your account, withdraw it for AI
-              food analysis by turning it off in Settings &gt; Social &amp;
-              privacy, and for the weekly review and the emails after a break by
-              turning them off in Settings &gt; Notifications or with the
-              unsubscribe link in any of them. We keep when you said yes or no
-              to each, and to which words, with your account.
+              <strong>Right to object:</strong> You can object to our use of
+              your data where we rely on legitimate interests, and we will stop
+              unless we have a strong reason to continue, such as keeping other
+              people safe. For usage analytics, turn off Share usage analytics
+              in Settings &gt; Social &amp; privacy, which stops it on iPhone
+              and on the web.
+            </li>
+            <li>
+              <strong>Right to withdraw consent:</strong> You can withdraw your
+              consent to your health details by deleting your account, withdraw
+              it for AI food analysis by turning it off in Settings &gt; Social
+              &amp; privacy, and for the weekly review and the emails after a
+              break by turning them off in Settings &gt; Notifications or with
+              the unsubscribe link in any of them. We keep when you said yes or
+              no to each, and to which words, with your account.
             </li>
             <li>
               <strong>Data retention:</strong> We retain your data while your
-              account is active. Deletion freezes new writes, removes your
-              personal data, then removes your sign-in. Failed cleanup is
-              retried in the background. We retain a minimal deletion record for
-              30 days and a protection record for 90 days. Non-public comment
-              text and minimised moderation records may be retained for up to
-              365 days for safety review. Protected billing identifiers are
-              retained for 13 months to prevent purchase theft. If a moderator
-              had restricted your account, we keep a coded form of its email
-              address and its Apple or Google sign-in for 13 months, which can’t
-              be read back, so that a new account made with them is restricted
-              too. Expired records are removed by scheduled retention policies;
-              removal is not instantaneous. An outstanding subscription
-              cancellation request is kept until it is resolved. Deletion also
-              leaves records of password-reset requests, which hold the email
-              address a reset was asked for, and the records of Apple’s
-              subscription notifications, kept so each is handled once. Outside
-              Tropos, RevenueCat keeps its subscription records, Stripe keeps
-              its records of any purchase made on the web, and Google keeps
-              analytics data under its Google Analytics retention settings, each
-              under its own policy.
+              account is active. A meal you delete goes to Recently deleted
+              meals (Settings &gt; Account), where for 30 days you can restore
+              it or delete it permanently; after 30 days it is deleted for good.
+              A shared card of a day’s food or a week stops opening 30 days
+              after you share it and is then deleted (section 4). Setup answers
+              kept on your phone before you have an account are deleted after 2
+              days (section 1). Deleting your account freezes new writes,
+              removes your personal data, then removes your sign-in. Failed
+              cleanup is retried in the background. We retain a minimal deletion
+              record for 30 days and a protection record for 90 days. Non-public
+              comment text and minimised moderation records may be retained for
+              up to 365 days for safety review. Protected billing identifiers
+              are retained for 13 months to prevent purchase theft. If a
+              moderator had restricted your account, we keep a coded form of its
+              email address and its Apple or Google sign-in for 13 months, which
+              can’t be read back, so that a new account made with them is
+              restricted too. A record of a password-reset request holds a coded
+              form of the email address a reset was asked for, never the address
+              itself, and is kept for up to a day after the last request. When
+              you open an invite link before you have an account, our server
+              keeps a coded form of your connection’s IP address, never the
+              address itself, for up to a day after the last lookup, so that
+              invite codes can’t be looked up too often. Expired records are
+              removed by scheduled retention policies; removal is not
+              instantaneous. An outstanding subscription cancellation request is
+              kept until it is resolved. Deletion also leaves the records of
+              Apple’s subscription notifications, kept so each is handled once.
+              Outside Tropos, RevenueCat keeps its subscription records and
+              Stripe keeps its records of any purchase made on the web, each
+              under its own policy. Google Analytics deletes event-level data
+              after 2 months, and user-level data, what it holds about an
+              installation of the app, after 14 months. Its reports of totals
+              are not deleted. Our setup counts are deleted after about 13
+              months (section 2).
             </li>
             <li>
               <strong>One limit on erasure, stated plainly:</strong> meal photos
-              are not on our servers, so there is nothing there for us to erase.
-              Equally, no process of ours can reach a phone. Deleting your
-              account clears them from the device you delete from. If you have
-              signed in on another device, that device keeps its copies until
-              they expire after 90 days or you delete the app there.
+              are kept on your phone, not on our servers, and no process of ours
+              can reach a phone. Deleting your account clears them from the
+              device you delete from. If you have signed in on another device,
+              that device keeps its copies until they expire after 90 days or
+              you delete the app there.
             </li>
           </ul>
+          <p>
+            <strong>Complaints.</strong> If you are unhappy with how we use your
+            data, tell us at support@troposfit.com. We acknowledge a complaint
+            no later than 30 days after we receive it, look into it and tell you
+            what we found. You can also complain to the Information
+            Commissioner’s Office (ICO), the UK’s data protection regulator, at
+            <a
+              href="https://ico.org.uk"
+              target="_blank"
+              rel="noopener noreferrer"
+              >ico.org.uk</a
+            >.
+          </p>
           <p>For GDPR-related requests, contact us at: support@troposfit.com</p>
         </section>
         <section>
@@ -431,20 +826,24 @@
           <ul>
             <li>
               <strong>Google (Firebase):</strong> Firebase Authentication
-              (sign-in), Cloud Firestore (your data), Cloud Storage (progress,
-              profile, post and Space photos), Cloud Functions (our server
+              (sign-in), Firebase Hosting (which serves troposfit.com, including
+              the pages of public posts and shared cards), Cloud Firestore (your
+              data), Cloud Storage (progress, profile, post and Space photos,
+              and the map images of runs you share), Cloud Functions (our server
               code), App Check (which checks that requests come from the real
-              app; on the web it uses reCAPTCHA), Google Analytics for Firebase
-              (usage analytics, section 2) and, in the iPhone app, Firebase
-              Crashlytics (crash reports, below).
+              app; on the web it uses reCAPTCHA), Firebase Cloud Messaging
+              (which delivers notifications to your phone or browser), Google
+              Analytics for Firebase (usage analytics, section 2) and, in the
+              iPhone app, Firebase Crashlytics (crash reports, below).
             </li>
             <li>
-              <strong>Photo checks (Google Cloud Vision):</strong> a photo you
-              set as your profile photo, add to a session you share or attach to
-              a Space post is checked by Google Cloud Vision’s SafeSearch before
-              other people can see it, and a photo with nudity is deleted.
-              Google processes the photo only to return the check and does not
-              use it to train its models.
+              <strong>Photo checks (Google Cloud Vision):</strong> the photo you
+              set as your profile photo, the photos you add to a session you
+              share or attach to a Space post, and the map image of a run you
+              share are checked by Google Cloud Vision’s SafeSearch before other
+              people can see them, and one with nudity is deleted. Google
+              processes the photo only to return the check and does not use it
+              to train its models.
             </li>
             <li>
               <strong>AI Food Analysis (Google Gemini):</strong> if you allow
@@ -456,45 +855,55 @@
               estimate and may hold it briefly under its terms for this service,
               for example to detect abuse. Google does not use it to train its
               models.
-              <strong
-                >Tropos does not store your food photos on its servers.</strong
-              >
-              After analysis, the photo is kept only on the device that took it,
-              so your meal diary can show it. It is not backed up to iCloud,
-              does not sync between your devices, and is deleted automatically
-              after 90 days, the furthest back the diary can be viewed. Deleting
-              the app, or getting a new phone, removes these photos; your logged
-              meals and their nutrition data are unaffected. Barcode scans do
-              not use AI: the barcode is read on your phone and looked up in
-              Open Food Facts (below).
+              <strong>Tropos does not keep meal photos on its servers.</strong>
+              The photo stays on your phone and is sent to Google’s Gemini only
+              to be read. After analysis, it is kept only on the device that
+              took it, so your meal diary can show it. It is not backed up to
+              iCloud, does not sync between your devices, and is deleted
+              automatically after 90 days, the furthest back the diary can be
+              viewed. Deleting the app, or getting a new phone, removes these
+              photos; your logged meals and their nutrition data are unaffected.
+              Barcode scans do not use AI: the barcode is read on your phone and
+              looked up in Open Food Facts (below).
             </li>
             <li>
               <strong>Apple:</strong> Sign in with Apple (if you use it), Apple
-              Health (optional steps, sleep and heart for readiness, run heart
-              rate and workout export; section 8), In-App Purchase (Pro bought
-              in the app; Apple handles the payment) and App Attest (which
-              confirms that requests come from the real app on your iPhone).
+              Health (optional steps, sleep and heart for readiness and, when
+              available, run heart rate and workout export; section 8), In-App
+              Purchase (Pro bought in the app; Apple handles the payment), the
+              Apple Push Notification service (notifications on your iPhone,
+              through Firebase Cloud Messaging) and App Attest (which confirms
+              that requests come from the real app on your iPhone).
             </li>
             <li>
-              <strong>RevenueCat:</strong> manages Pro subscriptions. It holds
-              your Tropos account ID and your purchase history.
+              <strong>RevenueCat:</strong> manages Pro subscriptions, bought in
+              the app or on the web, and runs the checkout on the web
+              (RevenueCat Billing). It holds your Tropos account ID and your
+              purchase history, and for a purchase on the web, the email address
+              you pay with. We receive from it whether you have Pro, its product
+              and dates, and whether it is a trial.
             </li>
             <li>
-              <strong>Stripe:</strong> payments for Pro bought on the web.
-              Stripe handles the card details; we receive the subscription’s
-              status and Stripe’s customer and subscription identifiers.
+              <strong>Stripe:</strong> takes the payment for Pro bought on the
+              web, through RevenueCat’s checkout. Stripe receives your card
+              details and the email address you pay with. Tropos never receives
+              your card details.
             </li>
             <li>
               <strong>Resend:</strong> sends account emails, such as verifying
               your email address or resetting your password, the reminder before
               a free trial turns into a paid subscription, and, if you choose
               them, your weekly review and the emails after a break. It receives
-              your email address and the email.
+              your email address and the email. It also carries the alert Tropos
+              gets when someone makes a report: the reason, what kind of thing
+              was reported and any note the person reporting wrote, which can
+              quote what they reported.
             </li>
             <li>
               <strong>Open Food Facts:</strong> barcode lookups and food
               searches. The barcode or the words you search for go straight from
-              your phone, with its IP address; no account details are sent.
+              your phone, with its IP address; no account details are sent, and
+              Tropos keeps none of your searches.
             </li>
             <li>
               <strong>OpenFreeMap:</strong> the maps. It receives the area of
@@ -529,13 +938,30 @@
             handling.
           </p>
           <p>
+            <strong>Where your data goes.</strong> Tropos is run from the UK,
+            and your data is also processed in the United States: our server
+            code runs in Google Cloud’s us-central1 region, Google’s Gemini on
+            Vertex AI analyses meals in the US, and RevenueCat, Resend and
+            Stripe are US companies. Google, Resend and Stripe are certified
+            under the UK Extension to the EU-US Data Privacy Framework (the
+            UK-US data bridge). For RevenueCat, the safeguard is the UK’s
+            International Data Transfer Addendum to the EU standard contractual
+            clauses, in its data processing terms. Write to
+            support@troposfit.com for a copy of the safeguard that covers a
+            transfer.
+          </p>
+          <p>
             <strong>Error Reporting:</strong> We automatically collect crash
             reports and error logs to improve app stability. They are stored
             with your account, and in the iPhone app Google’s Firebase
             Crashlytics also receives them, with your account’s ID but not your
             name or email address. Reports include error messages and stack
-            traces but do not contain sensitive personal data such as passwords,
-            meal content, or workout details.
+            traces, the address of the screen the app was on with any name or id
+            in it taken out (an exercise’s page is kept as
+            /history/exercise/:id, never with the exercise’s name), and your
+            device’s browser or app details (its user agent), but do not contain
+            sensitive personal data such as passwords, meal content, or workout
+            details.
           </p>
         </section>
         <section>
@@ -555,25 +981,28 @@
             your daily step count on your phone. With Pro, it compares last
             week’s average with the activity level your calorie target assumes,
             and offers to change the level when they differ; nothing changes
-            unless you accept. The step count is not stored or sent to Tropos.
-            With Pro, if you add sleep and heart, Tropos reads your sleep,
-            resting heart rate and heart rate variability for the last four
-            weeks to say how ready you are for today’s session. They are read on
-            your phone each time and are not stored or sent to Tropos. If you
-            use Apple Watch runs, Tropos reads heart rate during that run to
-            show a live reading and calculate a run summary. The Watch reads it
-            through a workout session, and Apple asks an app that runs one for
-            permission to save workouts as well; the Watch saves none. Raw heart
-            rate samples are held on your device until you save or discard the
-            run; a saved run can include average and maximum heart rate and time
-            in heart rate zones. Those values are not used to change calorie
-            targets or sent to product analytics. If you separately turn on
-            workout export, Tropos writes a completed run to Apple Health after
-            it is saved to your account. The exported workout contains its time,
-            distance and estimated energy, without a GPS route. Tropos does not
-            import Apple Health workouts into your training plan. You can change
-            either choice in Tropos settings and remove Apple Health access in
-            the Health app.
+            unless you accept, and then only the new activity level is saved.
+            The step count is not stored or sent to Tropos. With Pro, if you add
+            sleep and heart, Tropos reads your sleep, resting heart rate and
+            heart rate variability for the last four weeks to say how ready you
+            are for today’s session. They are read on your phone each time and
+            are not stored or sent to Tropos. Apple Watch runs and workout
+            export are not yet in the App Store version of Tropos; this is how
+            they work when they are available. If you use Apple Watch runs,
+            Tropos reads heart rate during that run to show a live reading and
+            calculate a run summary. The Watch reads it through a workout
+            session, and Apple asks an app that runs one for permission to save
+            workouts as well; the Watch saves none. Raw heart rate samples are
+            held on your device until you save or discard the run; a saved run
+            can include average and maximum heart rate and time in heart rate
+            zones. Those values are not used to change calorie targets or sent
+            to product analytics. If you separately turn on workout export,
+            Tropos writes a completed run to Apple Health after it is saved to
+            your account. The exported workout contains its time, distance and
+            estimated energy, without a GPS route. Tropos does not import Apple
+            Health workouts into your training plan. You can change either
+            choice in Tropos settings and remove Apple Health access in the
+            Health app.
           </p>
           <p>
             <strong>Heart rate sensor.</strong> If you pair a Bluetooth heart
