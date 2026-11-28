@@ -12,7 +12,7 @@ const OUT = join(__dirname, "out-stress");
 const SCREENS = join(OUT, "screenshots");
 mkdirSync(SCREENS, { recursive: true });
 import { BASE, PW } from "./env.mjs";
-const CHROMIUM_PATH = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { CHROMIUM_PATH } from "./env.mjs";
 const log = (...a) => console.log("[stress]", ...a);
 
 function noisy(t) {

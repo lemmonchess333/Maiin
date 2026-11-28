@@ -1,9 +1,17 @@
 ---
 name: verifier-tropos-web
-description: Drive the Tropos Vite + React + Firebase web app against the local emulator and capture evidence (screenshots, console errors, navigation events) for a PR verification. Use when the /verify skill needs a handle to a running Tropos instance — not for unit tests, not for CI replay.
+description: Hand-written Playwright drivers for one-off sweeps of the Tropos web app against the local emulator (a QA walk of every surface, theme passes, tab timings). For verifying a change, use the verify skill (`npm run verify:app`) instead; it boots the same rig itself. Not for unit tests, not for CI replay.
 ---
 
 # verifier-tropos-web
+
+> **Start with the `verify` skill** (`.claude/skills/verify/SKILL.md`,
+> `npm run verify:app`). It boots, seeds, builds and serves this same rig
+> idempotently, drives the features a change touches from the feature map
+> (`scripts/verify/featureMap.ts`), and writes the report. Use the recipe
+> and drivers below for a sweep the map does not cover; the rig `verify`
+> left running (emulators on 9099/8080, the preview's port in
+> `.verify/preview.json`) serves them too.
 
 Evidence-capture protocol for the Tropos web SPA. Boots the Firebase
 emulator + a production-built preview server pointed at it, signs in
@@ -46,9 +54,18 @@ executable to run` when firebase-tools isn't linked on PATH — after
   the install, invoke the local binary directly:
   `node_modules/.bin/firebase emulators:start ...`.
 - Java (`which java`) — the auth emulator's a JAR
-- A bundled Chromium at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`
-  (Playwright's download server is blocked by the container's outbound
-  network policy — use the pre-cached one)
+- A Chromium Playwright can launch. Cloud sandboxes pre-install one under
+  `/opt/pw-browsers/chromium-<build>/chrome-linux64/chrome` for a different
+  Playwright release than this repo's, so the repo's Playwright does not
+  find it by default; pass its path as `CHROMIUM_PATH` (these drivers) or
+  `PW_CHROMIUM` (the capture specs, the verify skill). The build number
+  changes between images (it was 1194, then 1243): look it up with
+  `ls -d /opt/pw-browsers/chromium-*/chrome-linux*/chrome` rather than
+  copying one. The verify skill finds it itself.
+- In a cloud sandbox the Firestore emulator's jar may not download
+  (storage.googleapis.com can be blocked by the egress proxy). Without it
+  only signed-out screens can be driven; signed-in verification goes to the
+  **Verify app** workflow.
 
 ## Recipe
 
@@ -125,7 +142,8 @@ Use the `drive.mjs` next to this SKILL.md as a starting template,
 or copy + adapt for the specific surfaces under review. The driver
 MUST:
 
-- Set `executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"`
+- Set `executablePath` from `CHROMIUM_PATH` when the repo's Playwright has
+  no browser of its own (see Prerequisites)
 - Set `bypassCSP: true` on the context (production CSP doesn't
   allowlist `127.0.0.1:9099` — bypass is only safe because we're
   intentionally pointing at an emulator)

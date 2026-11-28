@@ -67,6 +67,17 @@ describe("capture workflows — one seed chain, two files", () => {
     ).toEqual(shots);
   });
 
+  it("the verify rig seeds the same chain, in the same order", async () => {
+    /* A third copy: `npm run verify:app` (the verify skill) seeds the
+       emulator itself, and its feature map waits on the anchors the
+       capture specs wait on, against this data. */
+    const { SEED_CHAIN } = await import("../../../scripts/verify/rigConfig");
+    expect(
+      [...SEED_CHAIN],
+      "scripts/verify/rigConfig.ts must seed what the capture job seeds"
+    ).toEqual(gate);
+  });
+
   it("seeds the chain actually has, so this is not vacuous", () => {
     /* An empty extraction would satisfy the equality above. */
     expect(gate.length).toBeGreaterThan(3);
