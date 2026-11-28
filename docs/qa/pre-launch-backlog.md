@@ -103,9 +103,11 @@ real kill, and a sandbox purchase from the offer.
       `trial_started` once the server has the trial.
 - [ ] **The first-run events.** On a phone that has never had Tropos, with
       Share usage analytics on, go from the welcome to Home. Passing: GA4
-      DebugView shows `welcome_viewed`, `setup_started`, `account_created`
-      (with its method), `onboarding_completed` and `trial_offer_viewed`,
-      each once, and none of them with Share usage analytics off.
+      DebugView shows `account_created` (with its method),
+      `onboarding_completed` and `trial_offer_viewed`, each once, and none
+      of them with Share usage analytics off. The welcome and setup's start
+      are not GA events since 2026-11-23: they are the server's setup counts
+      (the row "Google Analytics from the agreement on").
 
 ## Your top three on a run (Run29, 2026-11-22)
 
@@ -1287,10 +1289,11 @@ deploy and two real accounts can confirm the rest.
       sweep.
 - [ ] **The workouts saved before it, backfilled once.** After the row
       above passes (the functions deployed and `lifters.uid` Enabled), run
-      `node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb`
-      with a service account: a dry run, which writes nothing and prints
-      the accounts, workouts and lifters it read. Then the same with
-      `apply` added. Passing: it ends with `"dryRun": false` and an
+      the Backfill lift boards workflow (Actions, or a dated line in
+      `.github/backfill-lift-boards.request` on main), which runs
+      `functions/scripts/backfill-lift-boards.js` as a dry run, printing
+      the accounts, workouts and lifters it read, then with `apply`.
+      Passing: it ends with `"dryRun": false` and an
       `entriesWritten` count, and a second `apply` run changes nothing
       (it is safe beside the live triggers). Put the date here:
       not yet.
@@ -7859,3 +7862,58 @@ phone.
 - [ ] **Offline.** Open the finish with the phone in Airplane Mode, save,
       then reconnect. Passing: nothing shows (the group could not be read
       before the save).
+
+## Google Analytics from the agreement on, and the setup counts (2026-11-23)
+
+Google Analytics stays on by default with Settings › Social & privacy ›
+Share usage analytics to turn it off (the statistical-purposes exception),
+and hears nothing before the person has met its line on the health-details
+agreement (`USAGE_ANALYTICS_NOTICE`, `analyticsProvider.ts`). The welcome
+and setup's start are counted instead on Tropos's own server as daily
+totals with no identifier (`countSetupStep`, `functions/lib/setupCounts.js`),
+and accounts made by `onAuthUserCreated`.
+
+- [x] **GA4 set up as the owner chose (23 November 2026).** In Google
+      Analytics › Admin for the Tropos property: Account settings › Data
+      sharing settings has Google products and services off, and Modelling
+      contributions and business insights, Technical support and
+      Recommendations on (the owner's call: Modelling shares aggregated,
+      de-identified data for benchmarks, which the Privacy Policy names);
+      Data collection, ads personalisation off for every region (0 of 307);
+      Data retention, event data 2 months and user data 14 months; Product
+      links, no Google Ads link; the web stream's enhanced measurement off;
+      `account_created` a key event. The owner sent a screenshot of each page
+      in the session on 23 November.
+- [ ] **Google signals stays off.** Admin › Data collection › Google signals
+      data collection reads off. It is off unless someone turns it on, and
+      the App Privacy label's "Tracking: No" depends on it. Passing: a
+      dated screenshot in this row.
+- [ ] **A fresh iPhone install sends nothing to Google before the
+      agreement.** Delete the app, install the TestFlight build, and with
+      the phone on a proxy (Charles or Proxyman, with its certificate
+      trusted) open it, look at the welcome, start setup and go as far as
+      the step before the health-details agreement. Passing: no request to
+      `app-measurement.com`, `google-analytics.com` or
+      `firebaselogging-pa.googleapis.com`, and one POST each to
+      `…cloudfunctions.net/countSetupStep` carrying `{"step":"welcome_viewed"}`
+      and `{"step":"setup_started"}` and no cookie or Authorization header.
+      Then reach the agreement: requests to `app-measurement.com` start.
+      Sign out, and on the next welcome they stop again until the agreement
+      is shown.
+- [ ] **Turn off on the agreement, on an iPhone.** On a fresh install with
+      the proxy on, reach the agreement and tap Turn off at the end of the
+      analytics line. Passing: the line reads "Google Analytics is off. You
+      can turn it on in Settings › Social & privacy.", no request to
+      `app-measurement.com` follows for the rest of setup, and once the plan
+      is saved Settings › Social & privacy shows Share usage analytics off.
+- [ ] **The same on the web.** In a private window on the Pages build,
+      with the network tab open, go from the welcome to the step before the
+      agreement. Passing: no `gtag` script and no request to
+      `google-analytics.com`; the two `countSetupStep` POSTs, each with no
+      cookie. Reaching the agreement loads `gtag`.
+- [ ] **The counts arrive.** After Deploy production, in Firebase Console ›
+      Firestore, `setupCounts/<today in UTC>` carries `welcome_viewed`,
+      `setup_started` and, after a test sign-up, `account_created`, with no
+      other field than `updatedAt` and `expiresAt`. Passing: the numbers
+      rise by one per showing, and Time-to-live lists `setupCounts` on
+      `expiresAt` as Serving.

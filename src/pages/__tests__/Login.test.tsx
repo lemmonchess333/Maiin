@@ -34,10 +34,12 @@ vi.mock("@/lib/auth", () => ({
   hasSignedInOnThisDevice: () => h.signedInBefore,
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/setupCounts", () => ({ countSetupStep: vi.fn() }));
 vi.mock("@/lib/platform", () => ({ isNativePlatform: () => h.native }));
 
 import Login from "../Login";
 import { track } from "@/lib/lifecycleAnalytics";
+import { countSetupStep } from "@/lib/setupCounts";
 import { traceBoot } from "@/lib/bootTrace";
 
 const show = () =>
@@ -158,13 +160,12 @@ describe("Login — who sees which screen", () => {
     expect(screen.getByText("Setup")).toBeInTheDocument();
   });
 
-  it("sends welcome_viewed once a phone, however often the welcome shows", () => {
+  it("counts the welcome on Tropos's server and sends Google nothing of it", () => {
     show();
-    cleanup();
-    show();
+    expect(vi.mocked(countSetupStep)).toHaveBeenCalledWith("welcome_viewed");
     expect(
-      vi.mocked(track).mock.calls.filter(([e]) => e === "welcome_viewed")
-    ).toEqual([["welcome_viewed", { returningDevice: false }]]);
+      vi.mocked(track).mock.calls.map(([e]) => e as string)
+    ).not.toContain("welcome_viewed");
   });
 
   it("Sign in opens the sign-in form", () => {

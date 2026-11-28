@@ -4,6 +4,8 @@ import Button from "@/components/ui/Button";
 import BrandMark from "@/components/ui/BrandMark";
 import HealthConsentDeclineActions from "@/components/healthConsent/HealthConsentDeclineActions";
 import HealthConsentPolicyLink from "@/components/healthConsent/HealthConsentPolicyLink";
+import { noteAnalyticsNoticeShown } from "@/lib/analyticsProvider";
+import AnalyticsNotice from "@/components/healthConsent/AnalyticsNotice";
 import {
   DELETE_ACCOUNT_ANCHOR,
   HEALTH_CONSENT_COPY,
@@ -33,14 +35,24 @@ export type HealthConsentGateView = "asking" | "saving" | "declined";
  * says why Tropos cannot work without these details and offers every way
  * on: back to the agreement, deleting the account, or signing out.
  *
- * Nothing about the answer is sent to analytics.
+ * Nothing about the answer is sent to analytics. The screen carries the
+ * analytics line (`AnalyticsNotice`), and Google Analytics runs only from
+ * its showing on (`noteAnalyticsNoticeShown`). Its Turn off writes the
+ * account's own Share usage analytics (`onTurnOffAnalytics`), as the
+ * Settings switch does.
  */
 export default function HealthConsentGate({
   uid,
+  analyticsOff = false,
+  onTurnOffAnalytics,
   onAgreed,
   onSignOut,
 }: {
   uid: string;
+  /** The account (or this device) has Share usage analytics off. */
+  analyticsOff?: boolean;
+  /** Turn it off for the account; true once saved. */
+  onTurnOffAnalytics?: () => Promise<boolean>;
   /** Read the account again once the agreement is written; true once a
    *  read shows it. */
   onAgreed: () => Promise<boolean>;
@@ -49,10 +61,15 @@ export default function HealthConsentGate({
   const navigate = useNavigate();
   const [view, setView] = useState<HealthConsentGateView>("asking");
   const [error, setError] = useState<string | null>(null);
+  const [turnedOff, setTurnedOff] = useState(false);
   const busy = useRef(false);
   const live = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const declined = view === "declined";
+
+  useEffect(() => {
+    noteAnalyticsNoticeShown();
+  }, []);
 
   useEffect(() => {
     live.current = true;
@@ -87,6 +104,14 @@ export default function HealthConsentGate({
       // place; while it is still here, it asks again.
       if (live.current) setView("asking");
     }
+  };
+
+  const turnOffAnalytics = async () => {
+    setTurnedOff(true);
+    const saved = (await onTurnOffAnalytics?.()) ?? false;
+    // Not saved: the switch is as the account has it, and updateProfile
+    // has said so.
+    if (!saved && live.current) setTurnedOff(false);
   };
 
   const show = (next: HealthConsentGateView) => {
@@ -126,6 +151,11 @@ export default function HealthConsentGate({
             <p className="text-base">{HEALTH_CONSENT_COPY.use}</p>
             <p className="text-base">{HEALTH_CONSENT_COPY.withdraw}</p>
             <HealthConsentPolicyLink />
+            <AnalyticsNotice
+              off={analyticsOff || turnedOff}
+              onTurnOff={() => void turnOffAnalytics()}
+              disabled={view === "saving"}
+            />
           </>
         )}
         {error && (
