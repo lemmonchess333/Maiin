@@ -1287,10 +1287,11 @@ deploy and two real accounts can confirm the rest.
       sweep.
 - [ ] **The workouts saved before it, backfilled once.** After the row
       above passes (the functions deployed and `lifters.uid` Enabled), run
-      `node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb`
-      with a service account: a dry run, which writes nothing and prints
-      the accounts, workouts and lifters it read. Then the same with
-      `apply` added. Passing: it ends with `"dryRun": false` and an
+      the Backfill lift boards workflow (Actions, or a dated line in
+      `.github/backfill-lift-boards.request` on main), which runs
+      `functions/scripts/backfill-lift-boards.js` as a dry run, printing
+      the accounts, workouts and lifters it read, then with `apply`.
+      Passing: it ends with `"dryRun": false` and an
       `entriesWritten` count, and a second `apply` run changes nothing
       (it is safe beside the live triggers). Put the date here:
       not yet.
