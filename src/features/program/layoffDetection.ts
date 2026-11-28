@@ -414,7 +414,7 @@ export function recentPace(
 /**
  * Longest eligible completed run inside the trailing `windowDays` (default 21)
  * strictly before `beforeKey`, or null when no eligible runs exist in that
- * window. Used to cap scheduled long runs against sudden volume spikes when no
+ * window. Caps scheduled long runs against sudden volume spikes when no
  * explicit running baseline is bounding the climb.
  */
 export function longestCompletedRunInWindow(
