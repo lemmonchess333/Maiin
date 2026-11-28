@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ComponentType, type SVGProps } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
-  motion,
+  m,
   useMotionValue,
   animate,
   useReducedMotion as useFramerReducedMotion,
@@ -241,7 +241,7 @@ export default function MacroColumn({
 
       Keep the scale pop — that is per-log feedback, not a state. */
   const icon = (
-    <motion.span
+    <m.span
       className="relative inline-flex shrink-0 items-center justify-center"
       style={{ scale: iconScale }}
     >
@@ -254,7 +254,7 @@ export default function MacroColumn({
         strokeWidth={2}
         aria-hidden="true"
       />
-    </motion.span>
+    </m.span>
   );
 
   /* Big number — Food7: neutral foreground (not the macro hue). The
@@ -340,7 +340,7 @@ export default function MacroColumn({
           barFillPct === 0 && overshootPct === 0 && !compact && !row ? 0.4 : 1,
       }}
     >
-      <motion.div
+      <m.div
         className="h-full rounded-full"
         style={{ background: overColor, opacity: pulseOpacity }}
         initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
@@ -354,7 +354,7 @@ export default function MacroColumn({
           arc. Slight delay so it reads as "filled, then leaked over"
           rather than racing the base bar. */}
       {isOver && (
-        <motion.div
+        <m.div
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
             background: overColor,

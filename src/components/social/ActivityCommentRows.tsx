@@ -1,5 +1,6 @@
 import { IconButton } from "@/components/ui/IconButton";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
+import MotionMaxRoot from "@/components/MotionMaxRoot";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import type { CommentReaction } from "@/lib/socialApi";
 import { getTimeAgo } from "@/lib/timeAgo";
@@ -24,7 +25,7 @@ export default function ActivityCommentRows({
 }) {
   const { comments, viewerUid, deletingId, setPanel, react } = thread;
   return (
-    <>
+    <MotionMaxRoot>
       {/* initial={false}: the thread opens settled; a comment added or
           deleted while it is open still animates. */}
       <AnimatePresence initial={false}>
@@ -35,7 +36,7 @@ export default function ActivityCommentRows({
           const isOwn = viewerUid === c.authorId;
 
           return (
-            <motion.div
+            <m.div
               key={c.id}
               layout
               initial={{ opacity: 0, y: 10 }}
@@ -65,9 +66,7 @@ export default function ActivityCommentRows({
                     the column is too narrow for both (large text on a
                     small phone) rather than running past the edge. */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                  <p className="text-caption text-muted-foreground">
-                    {timeAgo}
-                  </p>
+                  <p className="text-micro text-muted-foreground">{timeAgo}</p>
                   {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
                   hit area toward the 44px floor without bloating the
                   row visually (the sibling flame's -m trick). */}
@@ -140,7 +139,7 @@ export default function ActivityCommentRows({
                   className="size-[44px] text-muted-foreground"
                 />
               ) : null}
-            </motion.div>
+            </m.div>
           );
         })}
       </AnimatePresence>
@@ -154,6 +153,6 @@ export default function ActivityCommentRows({
           Load more comments
         </button>
       )}
-    </>
+    </MotionMaxRoot>
   );
 }

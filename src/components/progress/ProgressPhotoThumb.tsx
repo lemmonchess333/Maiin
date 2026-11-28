@@ -44,7 +44,7 @@ export default function ProgressPhotoThumb({
       )}
       <span
         aria-hidden
-        className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-caption font-semibold text-white"
+        className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-micro font-semibold text-white"
       >
         {label}
       </span>

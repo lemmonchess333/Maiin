@@ -115,6 +115,7 @@ export function performedWeeklyVolume(
     weekKeys,
     primaryGoal,
     targets,
+    secondaryWeight,
   }: {
     weekKeys: readonly string[];
     primaryGoal: string | undefined;
@@ -122,6 +123,8 @@ export function performedWeeklyVolume(
      *  (`volumeTargetsFor`): the goal's band at their level, its floor
      *  lowered to what their days and time fit. Absent, the goal's band. */
     targets?: ReadonlyMap<JudgementMuscle, VolumeLandmark>;
+    /** Secondary/synergist credit weight (defaults to ADR-0010 1.0). */
+    secondaryWeight?: number;
   }
 ): MuscleWeekVolume[] {
   if (weekKeys.length === 0) return [];
@@ -137,7 +140,8 @@ export function performedWeeklyVolume(
   const totals = new Map<JudgementMuscle, number>();
   for (const list of byWeek.values()) {
     for (const { muscle, sets } of weeklyVolumeByJudgementMuscle(
-      list.map(asVolumeDay)
+      list.map(asVolumeDay),
+      secondaryWeight
     )) {
       totals.set(muscle, (totals.get(muscle) ?? 0) + sets);
     }

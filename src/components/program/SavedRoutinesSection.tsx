@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, Trash2, Play } from "lucide-react";
+import { Bookmark, Pencil, Plus, Trash2, Play } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { useUid } from "@/lib/auth";
 import {
@@ -12,22 +12,18 @@ import {
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import SectionHeading from "@/components/ui/SectionHeading";
+import RoutineEditorSheet from "./RoutineEditorSheet";
 
 /**
- * "Saved routines" surface on the Program page (PR 4 save half).
+ * "Saved routines" surface on the Program page.
  *
- * Lists workouts the user saved from the social feed via the
- * "Save as routine" action on ActivityCard. Each row shows the
- * routine name, the original author attribution, and a compact
- * exercise count + total set count.
- *
- * The "Use this routine" path (run a saved routine as a workout)
- * is deferred to PR 4.1 because it touches the program engine's
- * dayIndex-keyed completion flow. For now the rows are display-only
- * with a delete affordance.
+ * Lists workouts the user saved from the social feed or built with the
+ * routine editor. Each row launches the routine runner, or lets the user
+ * edit or remove the saved template.
  */
 export default function SavedRoutinesSection() {
   const uid = useUid();
@@ -36,6 +32,10 @@ export default function SavedRoutinesSection() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editorState, setEditorState] = useState<{
+    open: boolean;
+    routine: SavedRoutine | null;
+  }>({ open: false, routine: null });
 
   useEffect(() => {
     if (!uid) return;
@@ -64,7 +64,8 @@ export default function SavedRoutinesSection() {
   if (!uid) return null;
   // Hide the section entirely when there's nothing saved AND we're not
   // loading — empty-state chrome on a non-essential surface adds noise.
-  if (!loading && !loadFailed && routines.length === 0) return null;
+  if (!loading && !loadFailed && routines.length === 0 && !editorState.open)
+    return null;
 
   // Undo writes the same document back under the same id, so the row and
   // any /routine/:id link to it return exactly as they were. The section
@@ -111,15 +112,36 @@ export default function SavedRoutinesSection() {
     }
   };
 
+  const handleSaved = (saved: SavedRoutine) => {
+    setRoutines((prev) => {
+      const idx = prev.findIndex((r) => r.id === saved.id);
+      if (idx === -1) return [saved, ...prev];
+      return prev.map((r, i) => (i === idx ? saved : r));
+    });
+  };
+
   return (
     <section className="pt-6 space-y-2" aria-label="Saved routines">
-      <div className="flex items-center gap-2">
-        <Bookmark
-          className="size-5 shrink-0"
-          style={{ color: THEME.lifting }}
-          aria-hidden="true"
-        />
-        <SectionHeading>Saved routines</SectionHeading>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Bookmark
+            className="size-5 shrink-0"
+            style={{ color: THEME.lifting }}
+            aria-hidden="true"
+          />
+          <SectionHeading>Saved routines</SectionHeading>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          leftIcon={<Plus className="size-4" aria-hidden="true" />}
+          onClick={() => {
+            haptic("light");
+            setEditorState({ open: true, routine: null });
+          }}
+        >
+          New
+        </Button>
       </div>
 
       {loadFailed && routines.length === 0 ? (
@@ -142,11 +164,11 @@ export default function SavedRoutinesSection() {
             0
           );
           return (
-            /* Row body links to the runnable session; trash icon is a
-               sibling so its click doesn't bubble through the Link. */
+            /* Row body links to the runnable session; action icons are
+               siblings so clicks don't bubble through the Link. */
             <div
               key={routine.id}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card card-shadow"
+              className="flex items-center gap-2 p-3 rounded-xl bg-card surface-flat"
             >
               <Link
                 to={`/routine/${routine.id}`}
@@ -164,8 +186,10 @@ export default function SavedRoutinesSection() {
                     {routine.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    From {routine.sourceAuthorName} · {routine.exercises.length}{" "}
-                    exercise
+                    {routine.sourceAuthorId === uid
+                      ? "Your routine"
+                      : `From ${routine.sourceAuthorName}`}{" "}
+                    · {routine.exercises.length} exercise
                     {routine.exercises.length === 1 ? "" : "s"}
                     {setCount > 0
                       ? ` · ${setCount} ${setCount === 1 ? "set" : "sets"}`
@@ -173,6 +197,17 @@ export default function SavedRoutinesSection() {
                   </p>
                 </div>
               </Link>
+              <IconButton
+                icon={<Pencil className="size-4" />}
+                aria-label={`Edit ${routine.name}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  haptic("light");
+                  setEditorState({ open: true, routine });
+                }}
+                className="shrink-0 -my-2 text-muted-foreground hover:text-foreground"
+              />
               <IconButton
                 icon={<Trash2 className="size-4" />}
                 aria-label={`Remove ${routine.name}`}
@@ -188,6 +223,18 @@ export default function SavedRoutinesSection() {
           );
         })}
       </div>
+
+      {editorState.open && (
+        <RoutineEditorSheet
+          key={editorState.routine?.id ?? "new"}
+          open
+          uid={uid}
+          authorName="You"
+          routine={editorState.routine}
+          onClose={() => setEditorState({ open: false, routine: null })}
+          onSaved={handleSaved}
+        />
+      )}
     </section>
   );
 }

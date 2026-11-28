@@ -665,7 +665,7 @@ export default function WeekAheadEnding({
       {/* D16: the personal "why", resurfaced in the user's own words, on a
           review only: never on the page before a first one. */}
       {trainingWhy && !preview && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <SectionHeading size="compact">Why you train</SectionHeading>
           <p className="text-lg font-semibold leading-snug text-foreground">
             &ldquo;{trainingWhy}&rdquo;

@@ -24,7 +24,7 @@ export default function RunAbout({
     lines.push(["Coaches also call this", about.alsoCalled]);
   if (lines.length === 0) return null;
   return (
-    <dl className="space-y-1.5">
+    <dl className="space-y-2">
       {lines.map(([term, text]) => (
         <div key={term}>
           <dt className="font-semibold text-foreground">{term}</dt>

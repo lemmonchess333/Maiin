@@ -25,6 +25,7 @@ import {
   type RaceBlockWeek,
 } from "./weekPrescription";
 import { loadsTheLegs } from "./easierToday";
+import { effortCueFor } from "./effortCue";
 import {
   pickExercise,
   pickAccessory,
@@ -2959,6 +2960,12 @@ export function applySessionSets(
   const uncalibrated =
     !isBodyweight && (exercise.weight === 0 || lifted === null);
 
+  const exemptLastSet =
+    effortCueFor(exercise, { isLastSet: true, deloadWeek: false })?.kind ===
+    "push";
+  const effort = hardestEffort(read, { exemptLastSet });
+  const rpeOk = effort === undefined || effort < RPE_HOLD_THRESHOLD;
+
   const progressed = (ex: ProgramExercise) =>
     withRecordedReps(
       applyProgression(
@@ -2966,7 +2973,7 @@ export function applySessionSets(
         weakest,
         read.weight,
         smallPlates,
-        hardestEffort(read),
+        effort,
         missCounts,
         date,
         unit,
@@ -2978,8 +2985,8 @@ export function applySessionSets(
   const { lowered: _line, ...base } = exercise;
 
   // Climbing back to where the plan lowered the lift from: a step a session
-  // that is not a miss, at most to that weight, and the rep target as it
-  // was. At it or past it, the usual rules take over from the weight lifted.
+  // that is not a miss and not redlined on RPE, at most to that weight, and
+  // the rep target as it was. At it or past it, the usual rules take over.
   if (
     lowering?.unit === "kg" &&
     !uncalibrated &&
@@ -2991,6 +2998,12 @@ export function applySessionSets(
       lowered: { ...lowering, shown: true as const },
     };
     if (outcome === "miss") return progressed(climbing);
+    if (!rpeOk) {
+      return {
+        ...recorded(climbing, read, reps, false, date),
+        weight: lifted,
+      };
+    }
     const weight = Math.min(
       lowering.from,
       loadGridFor(exercise.exerciseId, smallPlates, unit).above(lifted)
@@ -3285,6 +3298,11 @@ export function advanceWeek(
      *  save's re-fit for a new length does. A block's focus moves reps,
      *  never sets, so it isn't this. */
     primaryGoal?: PrimaryGoal;
+    /** Weekly schedule so rollover preserves leg/long-run separation after
+     *  rotating unfinished sessions to the front. */
+    weekSchedule?: ReadonlyArray<{ day: number; type: string }> | null;
+    /** Whether the plan carries ultra weekend back-to-back runs. */
+    backToBacks?: boolean;
   } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
@@ -3340,6 +3358,10 @@ export function advanceWeek(
      an archive that says nothing happened for two months is not the "honest
      record" the unattended-days trade-off was defending; that reasoning is
      about a week the user was PRESENT for and left unfinished. */
+  const restedLifts =
+    state.raceWeek === "race"
+      ? state.workouts.filter((d) => d.skipped && !d.completed).length
+      : 0;
   const history = weekWasTrained
     ? [
         ...(state.weekHistory ?? []),
@@ -3348,6 +3370,9 @@ export function advanceWeek(
           workouts: state.workouts,
           ...(state.currentPhase === "deload"
             ? { lighter: true as const }
+            : {}),
+          ...(restedLifts > 0 && state.liftWeekKey
+            ? { weekKey: state.liftWeekKey, restedLifts }
             : {}),
         },
       ].slice(-8)
@@ -3464,6 +3489,36 @@ export function advanceWeek(
   const upNext = nextUpIndex(state);
   if (upNext > 0) {
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
+  }
+  if (options.weekSchedule && raceWeek !== "race") {
+    const backToBacks = options.backToBacks === true;
+    const allFinished =
+      weekWasTrained &&
+      state.workouts.every((day) => day.completed || day.skipped);
+    if (upNext > 0) {
+      // Keep Lift4's opening session pinned at index 0 while pulling
+      // lower-body lifts off the eve of long or quality runs.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          pinFirst: true,
+          runEvesOnly: true,
+        }
+      );
+    } else if (allFinished) {
+      // A fully completed week starts clean, pulling any rotated leg session
+      // back off long/quality run eves without disturbing pure lifting splits.
+      workouts = orderForAdjacency(
+        workouts,
+        options.weekSchedule,
+        backToBacks,
+        {
+          runEvesOnly: true,
+        }
+      );
+    }
   }
   if (raceWeek === "race") {
     workouts = raceWeekSession(

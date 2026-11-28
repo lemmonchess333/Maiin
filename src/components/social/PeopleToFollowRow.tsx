@@ -44,7 +44,7 @@ export default function PeopleToFollowRow({
           return (
             <li
               key={person.uid}
-              className="flex w-[148px] shrink-0 snap-start flex-col items-center gap-2 rounded-xl bg-card card-shadow p-3 text-center"
+              className="flex w-[148px] shrink-0 snap-start flex-col items-center gap-2 rounded-xl bg-card border border-border/60 dark:border-transparent dark:card-shadow p-3 text-center"
             >
               {/* A card with no reason line keeps its Follow at its foot
                   (`mt-auto`), level with the other cards' in the row. */}

@@ -62,7 +62,6 @@ const EXEMPT: Record<string, string> = {
   // there: both files recomposite the wave animation the water
   // transition capture spec films, so the change needs before/after
   // frames from the capture channel rather than a green unit suite.
-  "components/home/WaterCard.tsx": "hydration fill ramp (deferred, #2220)",
   "components/home/WaterWave.tsx": "hydration fill ramp (deferred, #2220)",
   // The same ramp's fill stops, moved out of WaterCard so the fill can
   // be sized to the water's depth (the compositor fix of #3121).

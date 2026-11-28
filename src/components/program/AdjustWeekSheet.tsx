@@ -482,7 +482,7 @@ export default function AdjustWeekSheet({
                 done.
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {step.swaps.map((s) => (
                   <li
                     key={String(s.key)}

@@ -1162,6 +1162,41 @@ describe("toGPX", () => {
     expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
     expect(gpx).toContain("<time>1970-01-01T00:05:02.000Z</time>");
   });
+
+  it("emits Garmin gpxtpx:hr extensions when fresh HR samples match trackpoints", () => {
+    const track: GPSPoint[] = [
+      makePoint({ lat: 51.5, lon: -0.1, timestamp: 10_000 }),
+      makePoint({ lat: 51.501, lon: -0.1, timestamp: 20_000 }),
+      makePoint({ lat: 51.502, lon: -0.1, timestamp: 50_000 }), // > 15s stale
+    ];
+    const gpx = toGPX(track, "HR Run", {
+      heartRateSamples: [
+        { at: 9_000, bpm: 148, source: "apple-watch" },
+        // Bluetooth reading overrides Watch reading at the same window
+        { at: 19_000, bpm: 154, source: "bluetooth" },
+        { at: 19_500, bpm: 170, source: "apple-watch" },
+      ],
+    });
+    expect(gpx).toContain(
+      'xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"'
+    );
+    expect(gpx).toContain(
+      "<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>148</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>"
+    );
+    expect(gpx).toContain(
+      "<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>154</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>"
+    );
+    expect(gpx).not.toContain("<gpxtpx:hr>170</gpxtpx:hr>");
+    expect(gpx.match(/<gpxtpx:hr>/g)).toHaveLength(2);
+  });
+
+  it("omits gpxtpx namespace and extensions when no HR samples match", () => {
+    const gpx = toGPX(pts, "No HR", {
+      heartRateSamples: [{ at: 999_000, bpm: 150, source: "apple-watch" }],
+    });
+    expect(gpx).not.toContain("gpxtpx");
+    expect(gpx).not.toContain("<extensions>");
+  });
 });
 
 describe("rawTrace", () => {

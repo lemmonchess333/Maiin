@@ -1,0 +1,4 @@
+# Each line added to this file on main runs the "Backfill lift boards"
+# workflow (.github/workflows/backfill-lift-boards.yml) once, as
+# Actions → Run workflow does. Add a dated line saying why.
+2026-11-28 first run: the lift boards (Run30 call 3, #3509) and the lifters.uid exemption are deployed

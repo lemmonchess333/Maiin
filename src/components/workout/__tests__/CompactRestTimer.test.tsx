@@ -123,13 +123,24 @@ describe("CompactRestTimer", () => {
     ).not.toHaveTextContent("Next");
   });
 
-  it("adds fifteen seconds and ends the rest", () => {
+  it("adds or removes fifteen seconds and ends the rest", () => {
     const { onExtend, onStop } = row(10, 90);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove 15 seconds of rest" })
+    );
+    expect(onExtend).toHaveBeenCalledWith(-15);
     fireEvent.click(
       screen.getByRole("button", { name: "Add 15 seconds of rest" })
     );
     expect(onExtend).toHaveBeenCalledWith(15);
     fireEvent.click(screen.getByRole("button", { name: "End rest" }));
     expect(onStop).toHaveBeenCalled();
+  });
+
+  it("hides the remove-15-seconds button once the rest is done", () => {
+    row(90, 90);
+    expect(
+      screen.queryByRole("button", { name: "Remove 15 seconds of rest" })
+    ).toBeNull();
   });
 });

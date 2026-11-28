@@ -73,11 +73,11 @@ const LEGAL_BASES: ReadonlyArray<{ purpose: string; basis: string }> = [
 export default function PrivacyPolicy() {
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md md:max-w-lg lg:max-w-2xl mx-auto px-4 py-6 space-y-6">
         <LegalBack />
 
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">
+          <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words">
             Privacy Policy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">

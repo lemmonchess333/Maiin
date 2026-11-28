@@ -497,3 +497,127 @@ describe("how far a lift comes down: 10% on its step grid, at least a step", () 
     expect(lowersTo({ ...curl, weight: 10 })).toBe(7.5);
   });
 });
+
+describe("RPE autoregulation — final push-set exemption and re-climb gate", () => {
+  const makeEx = (over: Partial<ProgramExercise> = {}): ProgramExercise => ({
+    name: "Dumbbell Curl",
+    exerciseId: "db-curl",
+    movementCategory: "arms_biceps",
+    isAccessory: true,
+    sets: 3,
+    reps: 10,
+    baseReps: 10,
+    repRangeMax: 12,
+    weight: 12,
+    progressionType: "double",
+    lastSuccessfulWeight: 12,
+    lastAttemptedWeight: 12,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    ...over,
+  });
+
+  it("allows an isolation coached to push its final set to progress when only the last set hits RPE 10", () => {
+    const curl = makeEx();
+    const sets = read([
+      done(12, 10, "working", 8),
+      done(12, 10, "working", 8.5),
+      done(12, 10, "working", 10),
+    ]);
+    expect(hardestEffort(sets)).toBe(10);
+    expect(hardestEffort(sets, { exemptLastSet: true })).toBe(8.5);
+
+    const next = applySessionSets(curl, sets, false);
+    expect(next.reps).toBe(11);
+  });
+
+  it("still holds an isolation when an earlier non-final set redlines at RPE 9.5+", () => {
+    const curl = makeEx();
+    const sets = read([
+      done(12, 10, "working", 9.5),
+      done(12, 10, "working", 9),
+      done(12, 10, "working", 10),
+    ]);
+    const next = applySessionSets(curl, sets, false);
+    expect(next.reps).toBe(10);
+    expect(next.weight).toBe(12);
+  });
+
+  it("allows a machine compound accessory coached to push its final set to progress at RPE 10", () => {
+    const legPress = makeEx({
+      name: "Leg Press",
+      exerciseId: "leg-press",
+      movementCategory: "knee_dominant",
+      isAccessory: true,
+      weight: 100,
+    });
+    const sets = read([
+      done(100, 10, "working", 8),
+      done(100, 10, "working", 8.5),
+      done(100, 10, "working", 10),
+    ]);
+    const next = applySessionSets(legPress, sets, false);
+    expect(next.reps).toBe(11);
+  });
+
+  it("still holds a free-weight main compound when the final set hits RPE 9.5+", () => {
+    const squat = makeEx({
+      name: "Back Squat",
+      exerciseId: "squat",
+      movementCategory: "knee_dominant",
+      isAccessory: false,
+      weight: 100,
+      reps: 5,
+      baseReps: 5,
+      repRangeMax: undefined,
+      progressionType: "linear",
+    });
+    const sets = read([
+      done(100, 5, "working", 8),
+      done(100, 5, "working", 8.5),
+      done(100, 5, "working", 9.5),
+    ]);
+    const next = applySessionSets(squat, sets, false);
+    expect(next.weight).toBe(100);
+  });
+
+  it("gates lowered-lift re-climb on RPE so grinding RPE 9.5+ at a lowered weight holds instead of jumping up", () => {
+    const loweredSquat = makeEx({
+      name: "Back Squat",
+      exerciseId: "squat",
+      movementCategory: "knee_dominant",
+      isAccessory: false,
+      weight: 90,
+      reps: 5,
+      baseReps: 5,
+      repRangeMax: undefined,
+      progressionType: "linear",
+      lowered: { exerciseId: "squat", from: 100, unit: "kg", target: 5 },
+    });
+
+    const grinding = applySessionSets(
+      loweredSquat,
+      read([
+        done(90, 5, "working", 9),
+        done(90, 5, "working", 9.5),
+        done(90, 5, "working", 10),
+      ]),
+      false
+    );
+    expect(grinding.weight).toBe(90);
+    expect(grinding.lowered).toMatchObject({ from: 100, shown: true });
+
+    const clean = applySessionSets(
+      grinding,
+      read([
+        done(90, 5, "working", 7.5),
+        done(90, 5, "working", 8),
+        done(90, 5, "working", 8),
+      ]),
+      false
+    );
+    expect(clean.weight).toBe(92.5);
+  });
+});

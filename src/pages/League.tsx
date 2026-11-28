@@ -329,7 +329,7 @@ function StandingRow({
     <li
       aria-current={self ? "true" : undefined}
       className={cn(
-        "flex flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-2.5",
+        "flex flex-wrap items-center gap-x-[10px] gap-y-1 rounded-xl p-3",
         self
           ? "border border-primary/25 bg-primary/10"
           : "bg-card dark:card-shadow"

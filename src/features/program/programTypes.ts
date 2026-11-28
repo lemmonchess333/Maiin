@@ -375,6 +375,8 @@ export interface WeekSnapshot {
   workouts: WorkoutDay[];
   /** A lighter week, so the next can't be one too (Lift4 (9)). */
   lighter?: true;
+  weekKey?: string;
+  restedLifts?: number;
 }
 
 /**

@@ -26,11 +26,10 @@ vi.mock("@/hooks/useWorkouts", () => ({
 }));
 vi.mock("@/hooks/useLiftUnit", () => ({ useLiftUnit: () => h.unit }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("framer-motion", () => ({
-  motion: {
-    div: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  },
-}));
+vi.mock("framer-motion", () => {
+  const div = ({ children }: { children: ReactNode }) => <div>{children}</div>;
+  return { m: { div }, motion: { div } };
+});
 vi.mock("@/components/analytics/ExerciseProgressChart", () => ({
   default: (props: unknown) => (
     <output data-testid="exercise-chart">{JSON.stringify(props)}</output>

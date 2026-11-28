@@ -29,10 +29,7 @@ export default function RunAvailabilitySettings({
             ["longRunMinutes", "Long run"],
           ] as const
         ).map(([key, label]) => (
-          <label
-            key={key}
-            className="space-y-1.5 text-xs text-muted-foreground"
-          >
+          <label key={key} className="space-y-2 text-xs text-muted-foreground">
             <span>{label}</span>
             <Select
               fieldClassName="font-mono tabular-nums"

@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
+import MotionMaxRoot from "@/components/MotionMaxRoot";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 
@@ -44,44 +45,46 @@ export default function MealMacroBar({
   const layoutDep = `${pPct}-${cPct}-${fPct}`;
 
   return (
-    <div
-      className="h-1 w-full overflow-hidden rounded-sm flex"
-      aria-hidden="true"
-    >
-      <motion.div
-        layout={reduce ? false : "size"}
-        layoutDependency={layoutDep}
-        className="h-full"
-        style={{
-          width: `${pPct}%`,
-          background: accent.protein,
-          opacity: 0.85,
-          borderTopLeftRadius: "2px",
-          borderBottomLeftRadius: "2px",
-        }}
-      />
-      <motion.div
-        layout={reduce ? false : "size"}
-        layoutDependency={layoutDep}
-        className="h-full"
-        style={{
-          width: `${cPct}%`,
-          background: accent.carbs,
-          opacity: 0.85,
-        }}
-      />
-      <motion.div
-        layout={reduce ? false : "size"}
-        layoutDependency={layoutDep}
-        className="h-full"
-        style={{
-          width: `${fPct}%`,
-          background: accent.fat,
-          opacity: 0.85,
-          borderTopRightRadius: "2px",
-          borderBottomRightRadius: "2px",
-        }}
-      />
-    </div>
+    <MotionMaxRoot>
+      <div
+        className="h-1 w-full overflow-hidden rounded-sm flex"
+        aria-hidden="true"
+      >
+        <m.div
+          layout={reduce ? false : "size"}
+          layoutDependency={layoutDep}
+          className="h-full"
+          style={{
+            width: `${pPct}%`,
+            background: accent.protein,
+            opacity: 0.85,
+            borderTopLeftRadius: "2px",
+            borderBottomLeftRadius: "2px",
+          }}
+        />
+        <m.div
+          layout={reduce ? false : "size"}
+          layoutDependency={layoutDep}
+          className="h-full"
+          style={{
+            width: `${cPct}%`,
+            background: accent.carbs,
+            opacity: 0.85,
+          }}
+        />
+        <m.div
+          layout={reduce ? false : "size"}
+          layoutDependency={layoutDep}
+          className="h-full"
+          style={{
+            width: `${fPct}%`,
+            background: accent.fat,
+            opacity: 0.85,
+            borderTopRightRadius: "2px",
+            borderBottomRightRadius: "2px",
+          }}
+        />
+      </div>
+    </MotionMaxRoot>
   );
 }

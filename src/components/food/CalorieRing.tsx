@@ -1,6 +1,6 @@
 import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useRingMoveCause } from "@/hooks/useRingMoveCause";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -223,7 +223,7 @@ export default function CalorieRing({
             strokeWidth={STROKE}
           />
           {hasTarget && (
-            <motion.circle
+            <m.circle
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
@@ -249,7 +249,7 @@ export default function CalorieRing({
               full first lap: on the left view's empty one there is
               nothing to keep the head apart from. */}
           {isOver && !isLeftMode && (
-            <motion.circle
+            <m.circle
               data-lap-gap=""
               cx={CENTER}
               cy={CENTER}
@@ -267,7 +267,7 @@ export default function CalorieRing({
             />
           )}
           {isOver && (
-            <motion.circle
+            <m.circle
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}

@@ -1289,10 +1289,11 @@ deploy and two real accounts can confirm the rest.
       sweep.
 - [ ] **The workouts saved before it, backfilled once.** After the row
       above passes (the functions deployed and `lifters.uid` Enabled), run
-      `node functions/scripts/backfill-lift-boards.js adaptive-fitness-af8bb`
-      with a service account: a dry run, which writes nothing and prints
-      the accounts, workouts and lifters it read. Then the same with
-      `apply` added. Passing: it ends with `"dryRun": false` and an
+      the Backfill lift boards workflow (Actions, or a dated line in
+      `.github/backfill-lift-boards.request` on main), which runs
+      `functions/scripts/backfill-lift-boards.js` as a dry run, printing
+      the accounts, workouts and lifters it read, then with `apply`.
+      Passing: it ends with `"dryRun": false` and an
       `entriesWritten` count, and a second `apply` run changes nothing
       (it is safe beside the live triggers). Put the date here:
       not yet.
@@ -7881,13 +7882,21 @@ and setup's start are counted instead on Tropos's own server as daily
 totals with no identifier (`countSetupStep`, `functions/lib/setupCounts.js`),
 and accounts made by `onAuthUserCreated`.
 
-- [ ] **GA4 acts only for Tropos.** In Google Analytics › Admin for the
-      Tropos property: Account settings › Data sharing settings, every
-      box off; Data collection, Google signals off; Data collection, ads
-      personalisation off for every region; Data retention, event data and
-      user data both at the minimum (2 months); Product links, no Google
-      Ads link (none to add later either). Passing: a screenshot of each
-      page, dated, in this row.
+- [x] **GA4 set up as the owner chose (23 November 2026).** In Google
+      Analytics › Admin for the Tropos property: Account settings › Data
+      sharing settings has Google products and services off, and Modelling
+      contributions and business insights, Technical support and
+      Recommendations on (the owner's call: Modelling shares aggregated,
+      de-identified data for benchmarks, which the Privacy Policy names);
+      Data collection, ads personalisation off for every region (0 of 307);
+      Data retention, event data 2 months and user data 14 months; Product
+      links, no Google Ads link; the web stream's enhanced measurement off;
+      `account_created` a key event. The owner sent a screenshot of each page
+      in the session on 23 November.
+- [ ] **Google signals stays off.** Admin › Data collection › Google signals
+      data collection reads off. It is off unless someone turns it on, and
+      the App Privacy label's "Tracking: No" depends on it. Passing: a
+      dated screenshot in this row.
 - [ ] **A fresh iPhone install sends nothing to Google before the
       agreement.** Delete the app, install the TestFlight build, and with
       the phone on a proxy (Charles or Proxyman, with its certificate

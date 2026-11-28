@@ -16,6 +16,11 @@
  * or the parity tests fail.
  */
 
+import type {
+  RaceDistance,
+  RoadRaceDistance,
+} from "@/features/program/programTypes";
+
 export const RACE_COUNTRIES = {
   GB: "United Kingdom",
   US: "United States",
@@ -38,14 +43,13 @@ export type RaceCountryCode = keyof typeof RACE_COUNTRIES;
 export type SpaceKind = "interest" | "race" | "location";
 
 /** The road distances an event is listed at, and its plan's. */
-export type TrainingRaceDistance = "5k" | "10k" | "half" | "marathon";
+export type TrainingRaceDistance = RoadRaceDistance;
 /** An ultra is listed as one, with its organiser's kilometres
  *  (`distanceKm`); its plan's distance comes from them
  *  (`raceEventPlanDistance`). */
 export type RaceEventDistance = TrainingRaceDistance | "ultra";
 /** The distances a plan prepares for (programTypes' `RaceDistance`). */
-export type RaceEventPlanDistance =
-  TrainingRaceDistance | "50k" | "50mi" | "100k";
+export type RaceEventPlanDistance = RaceDistance;
 
 /**
  * Event metadata for kind === "race" spaces (Races & Events plan,

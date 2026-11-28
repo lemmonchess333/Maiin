@@ -1,6 +1,6 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import {
   BADGE_ART,
@@ -119,7 +119,7 @@ export function BadgeGrid() {
     <div className="space-y-6">
       {/* Next badge — surfaced so there's always a near goal to chase. */}
       {next && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 overflow-hidden dark:card-shadow dark:border-transparent"
@@ -152,7 +152,7 @@ export function BadgeGrid() {
               color={nextColor}
             />
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Streak summary. */}
@@ -204,7 +204,7 @@ export function BadgeGrid() {
                   : badgeProgress(badge, badgeProgressCtx);
 
                 return (
-                  <motion.div
+                  <m.div
                     key={badge.id}
                     /* The grid arrives together: a 40 ms step per badge,
                        restarting in each category, trickled thirty tiles
@@ -294,11 +294,11 @@ export function BadgeGrid() {
                         color={tierColor}
                       />
                     ) : (
-                      <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
+                      <p className="text-micro text-muted-foreground mt-1 line-clamp-2">
                         {badgeDescription(badge, liftUnit)}
                       </p>
                     )}
-                  </motion.div>
+                  </m.div>
                 );
               })}
             </div>

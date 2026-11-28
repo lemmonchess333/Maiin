@@ -46,7 +46,7 @@ export default function TrialTimeline({ plan }: Props) {
   ];
 
   return (
-    <ol className="space-y-1.5" aria-label="How your free trial works">
+    <ol className="space-y-2" aria-label="How your free trial works">
       {steps.map(({ icon: Icon, when, what }) => (
         <li key={when} className="flex items-start gap-2.5">
           <span

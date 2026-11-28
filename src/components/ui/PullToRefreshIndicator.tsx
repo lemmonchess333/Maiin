@@ -1,4 +1,4 @@
-import { motion, useTransform, type MotionValue } from "framer-motion";
+import { m, useTransform, type MotionValue } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -30,7 +30,7 @@ export default function PullToRefreshIndicator({
   const notReady = useTransform(ready, (r) => 1 - r);
 
   return (
-    <motion.div
+    <m.div
       aria-hidden={refreshing ? undefined : "true"}
       data-pull-indicator
       className="pointer-events-none fixed left-1/2 z-40 -ml-5 flex size-10 items-center justify-center rounded-full bg-card shadow-md ring-1 ring-border"
@@ -39,21 +39,21 @@ export default function PullToRefreshIndicator({
       {refreshing ? (
         <Spinner size="sm" label={label} />
       ) : (
-        <motion.span className="relative size-4" style={{ rotate }}>
-          <motion.span
+        <m.span className="relative size-4" style={{ rotate }}>
+          <m.span
             className="absolute inset-0 text-muted-foreground"
             style={{ opacity: notReady }}
           >
             <RefreshCw className="size-4" aria-hidden="true" />
-          </motion.span>
-          <motion.span
+          </m.span>
+          <m.span
             className="absolute inset-0 text-primary"
             style={{ opacity: ready }}
           >
             <RefreshCw className="size-4" aria-hidden="true" />
-          </motion.span>
-        </motion.span>
+          </m.span>
+        </m.span>
       )}
-    </motion.div>
+    </m.div>
   );
 }

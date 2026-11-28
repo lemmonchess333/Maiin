@@ -26,6 +26,7 @@ function playerAt(segments: SessionSegment[], index: number): SessionPlayer {
     tick: vi.fn(),
     skip: vi.fn(),
     workPortion: () => null,
+    lapSplits: () => [],
   };
 }
 

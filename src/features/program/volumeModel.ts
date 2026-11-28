@@ -592,8 +592,9 @@ export interface VolumeDay {
   >[];
 }
 
-function judgementCreditsFor(
-  ex: Pick<ProgramExercise, "exerciseId" | "movementCategory">
+export function judgementCreditsFor(
+  ex: Pick<ProgramExercise, "exerciseId" | "movementCategory">,
+  secondaryWeight = SECONDARY_SET_WEIGHT
 ): Map<JudgementMuscle, number> | null {
   const credits = new Map<JudgementMuscle, number>();
   const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
@@ -614,7 +615,7 @@ function judgementCreditsFor(
     const jm = fineToJudgement(toFine(sec), ex.movementCategory);
     if (!jm) continue;
     if (jm === "Abs" && primary !== "Abs") continue; // direct-work counting
-    if (!credits.has(jm)) credits.set(jm, SECONDARY_SET_WEIGHT);
+    if (!credits.has(jm)) credits.set(jm, secondaryWeight);
   }
   return credits;
 }
@@ -637,7 +638,8 @@ export function primaryJudgementForExercise(
 
 /** Weekly sets per JUDGEMENT group — the tally classification runs on. */
 export function weeklyVolumeByJudgementMuscle(
-  workouts: readonly VolumeDay[]
+  workouts: readonly VolumeDay[],
+  secondaryWeight = SECONDARY_SET_WEIGHT
 ): Array<{ muscle: JudgementMuscle; sets: number }> {
   const tally = new Map<JudgementMuscle, number>();
   for (const day of workouts) {
@@ -645,7 +647,7 @@ export function weeklyVolumeByJudgementMuscle(
     for (const ex of day.exercises) {
       const sets = ex.sets ?? 0;
       if (sets <= 0) continue;
-      const credits = judgementCreditsFor(ex);
+      const credits = judgementCreditsFor(ex, secondaryWeight);
       if (!credits) continue;
       for (const [muscle, weight] of credits) {
         tally.set(muscle, (tally.get(muscle) ?? 0) + sets * weight);

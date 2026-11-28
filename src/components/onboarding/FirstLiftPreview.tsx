@@ -26,7 +26,7 @@ export default function FirstLiftPreview({
   const count = first.exercises.length;
   return (
     <section
-      className="rounded-2xl bg-card card-shadow p-5 space-y-3"
+      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
       aria-label="First lift preview"
     >
       <SectionLabel className="text-lifting-strong">

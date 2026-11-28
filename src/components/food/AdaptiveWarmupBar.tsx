@@ -27,7 +27,7 @@ export default function AdaptiveWarmupBar({
   return (
     <div className="mt-2" role="status" aria-live="polite">
       <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-caption font-medium text-muted-foreground">
+        <span className="text-micro font-medium text-muted-foreground">
           Learning your metabolism
         </span>
         <span
@@ -47,7 +47,7 @@ export default function AdaptiveWarmupBar({
         />
       </div>
       {stalled && (
-        <p className="mt-1 text-caption leading-snug text-muted-foreground">
+        <p className="mt-1 text-micro leading-snug text-muted-foreground">
           Keep logging meals and weigh-ins to keep learning.
         </p>
       )}

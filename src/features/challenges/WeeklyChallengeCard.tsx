@@ -120,7 +120,7 @@ export default function WeeklyChallengeCard({
 
   if (!hasChallenges) {
     return (
-      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40 dark:card-shadow dark:border-transparent">
         <div
           className="size-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: THEME.chrome.tint }}
@@ -233,7 +233,7 @@ export default function WeeklyChallengeCard({
               )}
             </div>
             {timeLeft && !medal && (
-              <span className="text-caption text-muted-foreground shrink-0 mt-0.5">
+              <span className="text-micro text-muted-foreground shrink-0 mt-0.5">
                 {timeLeft}
               </span>
             )}
@@ -284,8 +284,8 @@ export default function WeeklyChallengeCard({
 
         {/* Secondary: the challenge's own leaders. */}
         {leaders.length > 0 && (
-          <>
-            <SectionHeading as="h3" size="compact" className="mt-4 mb-2">
+          <div className="pt-1 space-y-2">
+            <SectionHeading as="h3" size="compact">
               Leading this week
             </SectionHeading>
             <ol className="space-y-1" aria-label="Leading this week">
@@ -310,7 +310,7 @@ export default function WeeklyChallengeCard({
                 </li>
               ))}
             </ol>
-          </>
+          </div>
         )}
       </div>
     </div>

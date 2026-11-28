@@ -165,13 +165,30 @@ export function estimateAdaptiveTDEE(
 
   if (spanDays < minSpanDays) return notReady;
 
+  // Align intake strictly to the weigh-in span [firstWeighIn, lastWeighIn] so
+  // days logged before the first weigh-in or after the last weigh-in cannot
+  // skew the energy balance against a trend measured over a narrower interval.
+  const firstWeighEpoch = dayEpoch(sortedWeighIns[0].dateKey);
+  const lastWeighEpoch = dayEpoch(sortedWeighIns[weighInCount - 1].dateKey);
+  const alignedTrusted = trusted.filter((d) => {
+    const epoch = dayEpoch(d.dateKey);
+    return epoch >= firstWeighEpoch && epoch <= lastWeighEpoch;
+  });
+  if (alignedTrusted.length < minTrustedDays) {
+    return {
+      ...notReady,
+      trustedDays: alignedTrusted.length,
+    };
+  }
+
   // Theil-Sen slope of the raw weigh-ins (the fit is the de-noiser; see
   // header — EWMA-then-fit biases the slope via warmup lag).
   const slopeKgPerDay = slopePerDay(
     sortedWeighIns.map((w) => ({ dateKey: w.dateKey, value: w.weightKg }))
   );
 
-  const avgIntake = trusted.reduce((s, d) => s + d.kcal, 0) / trustedDays;
+  const avgIntake =
+    alignedTrusted.reduce((s, d) => s + d.kcal, 0) / alignedTrusted.length;
 
   // Energy balance: TDEE = intake − (Δweight/day × kcal/kg).
   // Losing weight (negative slope) → TDEE > intake; returns maintenance even mid-deficit.
@@ -180,7 +197,7 @@ export function estimateAdaptiveTDEE(
   return {
     ready: true,
     learnedTDEE,
-    trustedDays,
+    trustedDays: alignedTrusted.length,
     weighInCount,
     spanDays,
     slopeKgPerDay,

@@ -26,7 +26,7 @@ export default function PhaseRail({ activePhase, className }: PhaseRailProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-4 gap-1 text-caption text-muted-foreground",
+        "grid grid-cols-4 gap-1 text-micro text-muted-foreground",
         className
       )}
       aria-hidden="true"

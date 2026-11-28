@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { BadgeTier } from "./badges";
 import { TIER_PALETTES } from "./tierPalettes";
 import {
@@ -203,7 +203,7 @@ export function SealFace({
           break line itself. */}
       {SEAL_CRACKS.slice(0, visibleCracks).map((d, i) => (
         <g key={i} data-seal-crack="">
-          <motion.path
+          <m.path
             d={d}
             fill="none"
             stroke={p.highlight}
@@ -215,7 +215,7 @@ export function SealFace({
             animate={{ pathLength: 1, opacity: 1 }}
             transition={{ duration: 0.25 }}
           />
-          <motion.path
+          <m.path
             d={d}
             fill="none"
             stroke="#ffffff"
@@ -251,7 +251,7 @@ export function SealShards({ tier, idBase, size, imageSrc }: SealShardsProps) {
       {SEAL_SHARDS.map((s, i) => {
         const id = `${idBase}-s${i}`;
         return (
-          <motion.svg
+          <m.svg
             key={i}
             viewBox="0 0 100 100"
             width={size}
@@ -299,7 +299,7 @@ export function SealShards({ tier, idBase, size, imageSrc }: SealShardsProps) {
               strokeOpacity={0.45}
               strokeWidth={0.8}
             />
-          </motion.svg>
+          </m.svg>
         );
       })}
     </>
@@ -316,12 +316,12 @@ interface SealSweepProps {
  *  to the hexagon, so every hit visibly rings the metal. */
 export function SealSweep({ boxUnitsTall, dy }: SealSweepProps) {
   return (
-    <motion.div
+    <m.div
       aria-hidden="true"
       className="absolute inset-0 pointer-events-none overflow-hidden"
       style={{ clipPath: sealClipPolygon(dy, boxUnitsTall) }}
     >
-      <motion.div
+      <m.div
         className="absolute inset-y-0 w-1/2"
         style={{
           background:
@@ -331,7 +331,7 @@ export function SealSweep({ boxUnitsTall, dy }: SealSweepProps) {
         animate={{ x: "260%" }}
         transition={{ duration: 0.55, ease: "easeOut" }}
       />
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -346,7 +346,7 @@ export function SealDust({ tier }: { tier: BadgeTier }) {
       data-seal-dust=""
     >
       {SEAL_DUST.map((d, i) => (
-        <motion.span
+        <m.span
           key={i}
           className="absolute rounded-full"
           style={{

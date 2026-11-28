@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
-import { FORM_ART_CUTOUTS } from "../../src/lib/formArtCutouts.data";
+import { FORM_ART_CUTOUTS } from "../../src/lib/formArtCutouts.data.ts";
 
 /**
  * The Firebase Hosting build is the website, not the app (App1 Q52, owner

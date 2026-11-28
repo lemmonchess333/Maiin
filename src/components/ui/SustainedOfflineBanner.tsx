@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { WifiOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -69,7 +69,7 @@ export default function SustainedOfflineBanner({
   return (
     <AnimatePresence>
       {sustained && (
-        <motion.div
+        <m.div
           key={bannerKey}
           initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
@@ -86,7 +86,7 @@ export default function SustainedOfflineBanner({
             icon={<WifiOff className="size-4" />}
             description={children}
           />
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

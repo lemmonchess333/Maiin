@@ -25,7 +25,9 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import InProgressStrip from "@/components/session/InProgressStrip";
+import ReadinessStrip from "@/components/home/ReadinessStrip";
 import SessionHero from "@/components/home/SessionHero";
+import type { TodayReadiness } from "@/hooks/useTodayReadiness";
 import type { SessionInProgress } from "@/lib/sessionsInFlight";
 import { useEffect } from "react";
 import { getCurrentWeather } from "@/lib/weather";
@@ -58,6 +60,7 @@ export default function RunCTACard({
   freeLine = null,
   variant = "hero",
   planLocked = null,
+  readiness = null,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -86,6 +89,14 @@ export default function RunCTACard({
    *  (whole-app grill Q85, Run27 (18)): the button offers Pro instead of
    *  Start, with its words. The race itself still starts. */
   planLocked?: { cta: string; raceName: string } | null;
+  /** Today's readiness for the run hero (`useTodayReadiness`), shown above
+   *  Start on the hero card only. */
+  readiness?: {
+    today: TodayReadiness;
+    easierTarget?: string | null;
+    easierSummary?: string;
+    connectBody?: (() => Promise<void>) | null;
+  } | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
 }) {
@@ -194,16 +205,38 @@ export default function RunCTACard({
       </Button>
     ) : startable ? (
       variant === "hero" ? (
-        /* The screen's one full-width filled button is neutral (DS4,
-           DESIGN_GUIDE §14i): the running colour stays on the data. */
-        <Button
-          variant="neutral"
-          className="pointer-events-auto w-full text-base"
-          onClick={start}
-        >
-          <Play className="size-4 fill-current" aria-hidden="true" />
-          Start run
-        </Button>
+        <div className="space-y-3">
+          {readiness && (
+            <ReadinessStrip
+              readiness={readiness.today.readiness}
+              feel={readiness.today.feel}
+              onFeel={readiness.today.setFeel}
+              easierSummary={readiness.easierSummary}
+              onConnectBody={readiness.connectBody ?? null}
+              onEasier={
+                readiness.easierTarget
+                  ? function () {
+                      trackHomeEvent("home_card_tapped", {
+                        card: "today_run",
+                        action: "start",
+                      });
+                      navigate(readiness.easierTarget!);
+                    }
+                  : null
+              }
+            />
+          )}
+          {/* The screen's one full-width filled button is neutral (DS4,
+              DESIGN_GUIDE §14i): the running colour stays on the data. */}
+          <Button
+            variant="neutral"
+            className="pointer-events-auto w-full text-base"
+            onClick={start}
+          >
+            <Play className="size-4 fill-current" aria-hidden="true" />
+            Start run
+          </Button>
+        </div>
       ) : (
         /* The compact card under the hero keeps the screen to one filled
            button (DESIGN_GUIDE §14m rule 21): coral, but tinted. */
