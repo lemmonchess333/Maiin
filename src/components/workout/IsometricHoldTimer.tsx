@@ -111,7 +111,7 @@ export default function IsometricHoldTimer({
             data-testid="hold-timer-readout"
             className={cn(
               "mt-0.5 text-2xl font-extrabold font-figure tabular-nums leading-none",
-              reachedTarget ? "text-success-strong" : "text-foreground"
+              reachedTarget ? "text-primary" : "text-foreground"
             )}
           >
             {formatHoldClock(elapsedSec)}
@@ -161,7 +161,7 @@ export default function IsometricHoldTimer({
         <div
           className={cn(
             "h-full rounded-full",
-            reachedTarget ? "bg-success" : "bg-primary",
+            "bg-primary",
             !reducedMotion && "transition-[width] duration-200 ease-out"
           )}
           style={{ width: `${Math.round(progress * 100)}%` }}
