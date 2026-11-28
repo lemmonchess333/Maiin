@@ -35,6 +35,7 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { track } from "@/lib/lifecycleAnalytics";
 import { loadWordFilter } from "@/lib/wordFilter";
+import { EXERCISE_WARNING } from "@/lib/exerciseWarning";
 import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
 import {
   NO_EQUIPMENT_EXERCISE_IDS,
@@ -2478,5 +2479,46 @@ describe("sex is stored only when answered", () => {
         none.targetCalories - (male.targetCalories + female.targetCalories) / 2
       )
     ).toBeLessThanOrEqual(1);
+  });
+});
+
+/* The Terms tell people to "follow the warnings in the app" (the Terms'
+   Health section). Setup shows it twice: under the limitation choices, and
+   on the review, the one screen a runner and a lifter both reach. */
+describe("the exercise warning", () => {
+  const follows = (first: Element, then: Element) =>
+    Boolean(
+      first.compareDocumentPosition(then) & Node.DOCUMENT_POSITION_FOLLOWING
+    );
+
+  it("sits under the limitation choices", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 4, injuries: [] });
+    open();
+    const warning = screen.getByText(EXERCISE_WARNING);
+    expect(
+      follows(screen.getByRole("button", { name: "Wrist" }), warning)
+    ).toBe(true);
+  });
+
+  it.each([
+    ["a lifter", {}],
+    ["a runner", { primaryGoal: "running", trainingActivity: "running" }],
+  ] as const)("is on the review for %s, before Start my plan", (_, more) => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 7, ...more });
+    open();
+    const warning = screen.getByText(EXERCISE_WARNING);
+    expect(
+      follows(screen.getByLabelText("Your public display name"), warning)
+    ).toBe(true);
+    expect(
+      follows(warning, screen.getByRole("button", { name: "Start my plan" }))
+    ).toBe(true);
+  });
+
+  it("is not on the steps between", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 5 });
+    open();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.queryByText(EXERCISE_WARNING)).not.toBeInTheDocument();
   });
 });

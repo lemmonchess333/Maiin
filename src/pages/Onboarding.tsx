@@ -35,6 +35,7 @@ import WeekPreview from "@/components/onboarding/WeekPreview";
 import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
 import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
 import DailyTarget from "@/components/onboarding/DailyTarget";
+import ExerciseWarning from "@/components/legal/ExerciseWarning";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
 import {
@@ -2663,6 +2664,9 @@ export default function Onboarding() {
                   />
                 </div>
               )}
+              {/* The last thing read before Start my plan, for runners
+                  too, who never see the limitation step's copy. */}
+              <ExerciseWarning />
               {!answersValid && (
                 <p role="alert" className="text-sm text-destructive-strong">
                   Check the answers above before creating your plan.

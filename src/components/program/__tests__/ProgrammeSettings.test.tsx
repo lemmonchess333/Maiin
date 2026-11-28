@@ -40,6 +40,7 @@ import type { DatedRun } from "@/features/program/layoffDetection";
 import { buildPlan } from "@/features/program/planBuilder";
 import { localDateString } from "@/lib/dateHelpers";
 import { SPORT_CHANGE } from "@/test/journeyScreens";
+import { EXERCISE_WARNING } from "@/lib/exerciseWarning";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -748,6 +749,25 @@ describe("ProgrammeSettings — injuries mutual exclusion", () => {
       );
       expect(payload.profileUpdates.injuries).not.toContain("none");
     });
+  });
+});
+
+describe("ProgrammeSettings — the exercise warning", () => {
+  it("sits under the injury choices, after the last one", () => {
+    // The Terms send people to "the warnings in the app"; Lift plan is
+    // where injuries are changed after setup.
+    setup();
+    const warning = screen.getByText(EXERCISE_WARNING);
+    const options = screen.getAllByText(
+      /^(No injuries|Lower back|Shoulder|Knee|Elbow)$/
+    );
+    for (const option of options) {
+      expect(
+        option.compareDocumentPosition(warning) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+    expect(options.length).toBeGreaterThanOrEqual(5);
   });
 });
 

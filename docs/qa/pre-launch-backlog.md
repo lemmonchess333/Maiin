@@ -3262,6 +3262,7 @@ The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own
 
 - [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
 - [ ] **Before the Purchase Link goes live (App1 Q52, 15 November 2026):** troposfit.com no longer serves the app, so nothing on it can start this checkout. The return also needs a signed parameter: `?checkout=success` is unsigned, so anyone can type it, and until the return carries something the website can verify, the page can only say what is true if they paid. The website first needs either a signed-in Pro corner (an existing account signs in, then the checkout as that account, its `?checkout=success` return and Manage subscription) or an anonymous purchase the iPhone app redeems into the account (RevenueCat's redemption links, native work). The owner is choosing; either is its own PR. Until then `/upgrade` and `/settings/account` show the App Store page, and the web trial email's "sign in to Tropos on the web" steps (`functions/lib/trialReminderEmail.js`) and iOS Upgrade's "Manage your subscription at troposfit.com" point at nothing that manages a subscription.
+- [ ] **Before `REVENUECAT_WEB_PURCHASE_TOKEN` is set (2026-11-21):** the Terms' section 4 says Pro is bought through Apple's In-App Purchase and charged to the Apple ID. Checked on Deploy production run 44919815737 (main at `79f567d`): the variable is empty in the Hosting build, so the website sells nothing today. Before it is set, the Terms' section 4 and the Privacy Policy's payment lines (RevenueCat, Stripe) must cover a website buyer: who charges them, how to cancel, and how to get a refund.
 - [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
 - [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
 - [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
@@ -7855,3 +7856,38 @@ phone.
 - [ ] **Offline.** Open the finish with the phone in Airplane Mode, save,
       then reconnect. Passing: nothing shows (the group could not be read
       before the save).
+
+## The exercise warning in setup, Lift plan and Run plan, and the Terms' consumer fixes (legal audit 6.3, 7.2 and 9.4, 2026-11-21)
+
+One sentence (`src/lib/exerciseWarning.ts`, drawn by
+`src/components/legal/ExerciseWarning.tsx`) now shows in five places: under
+setup's limitation choices, on setup's review just above the footer, under
+Lift plan's Add lifting limitation choices, under Lift plan's Injuries
+group, and under Run plan's Add running question. The Terms' Health section
+points at it ("follow the warnings in the app"). Unit-tested in each spot
+(`Onboarding.test.tsx`, `AddLiftingFlow.test.tsx`,
+`ProgrammeSettings.test.tsx`, `RunPlanSettings.test.tsx`,
+`legalCopyClaims.test.ts`); the first four were measured in a browser
+harness at 393 and 320 px with 135% and 200% text: no breaks, seven lines
+at the extreme. No phone has shown it.
+
+- [ ] **Setup on a phone.** On a TestFlight build, make a new account and go
+      through setup as a lifter. Passing: "Check with a doctor before you
+      start…" is under Wrist on the limitations step, in the grey small
+      print, and stays put when Knee opens "What this changes" below it;
+      on the review it is under the invite code, just above the footer,
+      and Start my plan is still reachable without the footer covering it,
+      at the largest text size too.
+- [ ] **Setup as a runner.** Choose Running. Passing: no limitations
+      step, and the warning is on the review.
+- [ ] **Lift plan.** Settings → Lift plan. Passing: the warning is under
+      Elbow in Injuries. On an account with no lift days, Add lifting's
+      third question shows it under Wrist.
+- [ ] **Add running.** On an account with no runs on its plan, Settings →
+      Run plan. Passing: the warning is under Regular runner, above the
+      running goal's cards once a level is chosen.
+- [ ] **The Terms' first material change after launch.** The Terms now
+      promise notice in the app before a material change takes effect
+      (section 11), and the app has no notice built for it. Before the
+      first such change, decide how it is told (a Home card or a push)
+      and when, and leave time to cancel Pro or delete the account.

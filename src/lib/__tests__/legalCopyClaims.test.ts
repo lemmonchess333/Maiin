@@ -27,6 +27,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { AI_CONSENT_COPY } from "@/lib/aiConsent";
+import { EXERCISE_WARNING } from "@/lib/exerciseWarning";
 import { appInfoPlistString } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -483,5 +484,135 @@ describe("the Terms describe the subscription the app sells", () => {
     // refunds through Google Play and the web, where nothing is sold.
     expect(TERMS_PROSE).not.toMatch(/lifetime/i);
     expect(TERMS_PROSE).not.toMatch(/Google Play/);
+  });
+});
+
+describe("the Terms keep a UK consumer's rights", () => {
+  /* The legal audit (November 2026, its section 9.4) read the Terms against
+     the Consumer Rights Act 2015. Each pin below is one of its findings, so
+     the clause it replaced cannot come back by accident. */
+  const section = (from: string, to: string) =>
+    TERMS_PROSE.slice(TERMS_PROSE.indexOf(from), TERMS_PROSE.indexOf(to));
+
+  it("excludes no warranty: digital content must be as described (s.47, s.62)", () => {
+    expect(TERMS_PROSE).not.toMatch(/\bas is\b/i);
+    expect(TERMS_PROSE).not.toMatch(/without warranties/i);
+    expect(TERMS_PROSE).toMatch(
+      /Nothing in these Terms takes away your legal rights as a consumer/
+    );
+  });
+
+  it("says what Tropos is liable for, and caps the rest at 12 months' fees", () => {
+    const liability = section("9. Our Liability to You", "10. Account");
+    expect(liability).toMatch(
+      /foreseeable result of our breaking these Terms or of our not using reasonable care and skill/
+    );
+    expect(liability).toMatch(
+      /what you paid for Pro in the 12 months before the claim arose, or £100 if that is more/
+    );
+  });
+
+  it("never caps death or injury caused by negligence (s.65), and says so after every limit", () => {
+    const liability = section("9. Our Liability to You", "10. Account");
+    const carveOut = liability.indexOf(
+      "None of this limits or excludes our liability for death or personal injury caused by our negligence"
+    );
+    // After the cap, so "none of this" reads over every limit in the section.
+    expect(carveOut).toBeGreaterThan(liability.indexOf("Our total liability"));
+  });
+
+  it("changes the Terms with notice in the app and a way out, not by use alone", () => {
+    const changes = section("11. Changes to These Terms", "12. Governing Law");
+    expect(changes).not.toMatch(/Continued use/i);
+    expect(changes).toMatch(
+      /Before a material change takes effect, we tell you about it in the app/
+    );
+    expect(changes).toMatch(/you can cancel Pro or delete your account/);
+    // The way out is real: the app has an account deletion.
+    expect(ACCOUNT_SECTION).toMatch(/label="Delete account"/);
+  });
+
+  it("states the governing law and lets the rest of the UK sue at home", () => {
+    expect(TERMS_PROSE).toMatch(
+      /These Terms are governed by the law of England and Wales\. If you live elsewhere in the UK, you can bring a claim in your local courts\./
+    );
+  });
+
+  it("says App Store purchases are also under Apple's terms", () => {
+    expect(TERMS_PROSE).toMatch(
+      /Pro bought in the App Store is also covered by Apple’s own terms/
+    );
+  });
+
+  it("numbers its sections in order, with none skipped", () => {
+    const numbers = [...TERMS_PROSE.matchAll(/<h2[^>]*> (\d+)\. /g)].map((m) =>
+      Number(m[1])
+    );
+    expect(numbers.length).toBeGreaterThan(10);
+    expect(numbers).toEqual(numbers.map((_, i) => i + 1));
+  });
+});
+
+describe("the Terms' content licence covers where posts are shown", () => {
+  it("licenses hosting and sharing on troposfit.com, which shows a public post", () => {
+    // A public post has its own page on troposfit.com (PublicPost, through
+    // the website's routes); a licence "to display it within the App"
+    // did not reach it.
+    expect(TERMS_PROSE).toMatch(
+      /licence to host, show and share it in Tropos and on troposfit\.com, as your sharing choices allow/
+    );
+    expect(TERMS_PROSE).not.toMatch(/within the App/);
+    // The website loads its pages through one table (#3436).
+    const website = read("../../website/WebsiteRoutes.tsx");
+    expect(website).toMatch(/path="\/activity\/:activityId"/);
+    expect(website).toMatch(/lazyRetry\(WEBSITE_PAGE_MODULES\.post\)/);
+    expect(read("../../website/pageModules.ts")).toMatch(
+      /post: \(\) => import\("@\/pages\/PublicPost"\)/
+    );
+  });
+});
+
+describe("the Terms say what the Online Safety Act asks of a social app", () => {
+  it("name promoting eating disorders among what may not be posted", () => {
+    const rules = TERMS_PROSE.slice(
+      TERMS_PROSE.indexOf("7. Objectionable Content"),
+      TERMS_PROSE.indexOf("8. Health")
+    );
+    expect(rules).toMatch(/<li>promotes eating disorders<\/li>/);
+  });
+
+  it("give a person whose post went or whose account was restricted a way to appeal", () => {
+    expect(TERMS_PROSE).toMatch(
+      /If we removed something you posted, or restricted your account, you can ask for a review at support@troposfit\.com/
+    );
+  });
+});
+
+describe("the warning the Terms point at is in the app", () => {
+  /* The Terms' Health section says "follow the warnings in the app". The
+     audit's section 6.3 found none: the only health warning was in the
+     Terms and the policy. These tie the sentence to the places that show
+     it; the render tests beside each screen show it is drawn. */
+  it("the Terms point at the app's warnings", () => {
+    expect(TERMS_PROSE).toMatch(
+      /You exercise at your own risk; follow the warnings in the app\./
+    );
+  });
+
+  it("the warning names a doctor first and when to stop", () => {
+    expect(EXERCISE_WARNING).toBe(
+      "Check with a doctor before you start if you have a health condition, an injury or are pregnant. Stop and get advice if you feel pain, dizziness or chest pain."
+    );
+  });
+
+  it("setup's review, the limitation choices, Lift plan's injuries and Add running draw it", () => {
+    for (const file of [
+      "../../pages/Onboarding.tsx",
+      "../../components/onboarding/LiftLimitsQuestion.tsx",
+      "../../components/program/ProgrammeSettings.tsx",
+      "../../components/program/RunPlanSettings.tsx",
+    ]) {
+      expect(read(file), file).toMatch(/<ExerciseWarning\b/);
+    }
   });
 });

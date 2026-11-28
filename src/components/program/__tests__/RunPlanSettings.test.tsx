@@ -22,6 +22,7 @@ import type { RunSummaryItem } from "@/hooks/useRunningStats";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { SETUP_OPTIONS, SPORT_CHANGE } from "@/test/journeyScreens";
+import { EXERCISE_WARNING } from "@/lib/exerciseWarning";
 
 /**
  * Run-Split contract, rebuilt for RUN-EV-02 (owner decision, P0): the
@@ -1743,6 +1744,21 @@ describe("RunPlanSettings — adding and stopping running", () => {
     expect(
       screen.queryByRole("button", { name: "Stop running" })
     ).not.toBeInTheDocument();
+  });
+
+  it("shows the exercise warning under the running question, as setup does", () => {
+    renderPage(lifter);
+    const warning = screen.getByText(EXERCISE_WARNING);
+    expect(
+      screen
+        .getByRole("button", { name: /^Regular runner/ })
+        .compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("shows no exercise warning to someone whose plan already runs", () => {
+    renderPage(baseProfile);
+    expect(screen.queryByText(EXERCISE_WARNING)).not.toBeInTheDocument();
   });
 
   it("New to running opens on the 30-minute goal and adds it, with the level", async () => {

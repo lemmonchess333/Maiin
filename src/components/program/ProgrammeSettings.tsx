@@ -94,6 +94,7 @@ import {
 import SessionLengthLabel from "./SessionLengthLabel";
 import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
+import ExerciseWarning from "@/components/legal/ExerciseWarning";
 import PendingChangesSummary from "./PendingChangesSummary";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import type {
@@ -1134,6 +1135,7 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
+          <ExerciseWarning className="mt-3" />
         </div>
       </ProgrammeSettingsGroup>
 
