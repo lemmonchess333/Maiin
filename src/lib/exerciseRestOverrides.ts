@@ -13,8 +13,9 @@ export function readExerciseRestOverrides(
   uid: string | null | undefined
 ): ExerciseRestOverrides {
   if (!uid) return {};
+  const uidKey = scopedKey(REST_OVERRIDE_KEY, uid);
   const raw = readJson<Record<string, unknown>>(
-    scopedKey(REST_OVERRIDE_KEY, uid),
+    uidKey,
     {}
   );
   if (!raw || typeof raw !== "object") return {};
@@ -45,7 +46,8 @@ export function writeExerciseRestOverride(
     next[exerciseId] = Math.max(15, Math.min(600, Math.round(seconds)));
   }
   if (uid) {
-    writeJson(scopedKey(REST_OVERRIDE_KEY, uid), next);
+    const uidKey = scopedKey(REST_OVERRIDE_KEY, uid);
+    writeJson(uidKey, next);
   }
   return next;
 }
