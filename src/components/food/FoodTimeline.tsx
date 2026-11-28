@@ -223,7 +223,7 @@ export default function FoodTimeline({
     /* No `layout` on the card: its rows fold their own height when one is
        deleted, and the card's own tween stretched the rows inside it. */
     <div
-      className="bg-card rounded-xl overflow-hidden card-shadow"
+      className="bg-card rounded-xl overflow-hidden surface-flat"
       style={{ contain: "layout paint" }}
     >
       {/* Header caption — item count answers "did I log all five

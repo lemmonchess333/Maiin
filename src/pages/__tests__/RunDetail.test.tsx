@@ -36,6 +36,7 @@ vi.mock("@/lib/auth", () => ({
     user: { uid: "runner" },
     profile: { displayName: "Runner", darkMode: false },
   }),
+  useUid: () => "runner",
 }));
 vi.mock("@/hooks/useSessionDoc", () => ({
   useSessionDoc: () => ({
@@ -49,6 +50,14 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 }));
 vi.mock("@/hooks/usePrivacyZones", () => ({
   usePrivacyZones: () => ({ zones: [], loading: false, error: null }),
+}));
+vi.mock("@/hooks/useShoes", () => ({
+  useShoes: () => ({
+    shoes: [],
+    activeShoes: [],
+    defaultShoe: null,
+    loading: false,
+  }),
 }));
 vi.mock("@/hooks/useShareRoute", () => ({ useShareRoute: () => vi.fn() }));
 vi.mock("@/hooks/useSavedRoutes", () => ({
@@ -231,6 +240,26 @@ describe("RunDetail — best efforts", () => {
     expect(run.activityType).toBe("freerun");
     expect(run.startedAt).toEqual(started);
     expect(isPaceEligible(run)).toBe(true);
+  });
+
+  it("does not list a 1K timed across a step faster than any runner (1 Nov)", () => {
+    /* Saved before #3036, the finish timed "1K 4:29" across the catch-up
+       a gap in the fixes made. The kept trace still has the step (445 m
+       more in 30 s), so the saved figure is not believed, and with the
+       step refused no 1K is left in the trace. */
+    const points = track(13, 30).map((p, i) =>
+      i >= 7 ? { ...p, lat: p.lat + 0.004, rawLat: p.rawLat + 0.004 } : p
+    );
+    h.run = savedRun({
+      points,
+      distance: totalDistance(points),
+      bestEfforts: [{ distance: 1000, time: 269, label: "1K" }],
+    });
+    renderDetail();
+    // POSITIVE anchor: the saved run rendered, splits and all.
+    expect(screen.getByRole("region", { name: "Splits" })).toBeVisible();
+    expect(screen.queryByText("4:29")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Best efforts" })).toBeNull();
   });
 
   it("does not search a thinned track for a run saved before efforts were kept", () => {
@@ -672,5 +701,20 @@ describe("RunDetail — segments (Run26 call 3)", () => {
     renderDetail();
     expect(screen.getByText("Saved despite invalid metrics")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Make a segment" })).toBeNull();
+  });
+});
+
+describe("RunDetail — TCX export", () => {
+  it("offers Export TCX for both outdoor GPS runs and indoor treadmill runs without GPS", () => {
+    h.run = savedRun({});
+    const { unmount } = renderDetail();
+    expect(screen.getByRole("button", { name: "Export GPX" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
+    unmount();
+
+    h.run = savedRun({ place: "treadmill", points: [] });
+    renderDetail();
+    expect(screen.queryByRole("button", { name: "Export GPX" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Export TCX" })).toBeVisible();
   });
 });

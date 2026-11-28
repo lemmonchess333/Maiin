@@ -1,6 +1,12 @@
 import { splitRouteSegments } from "./routeSegments";
 import { METRES_PER_MILE, type DistanceUnit } from "./distanceUnits";
 import { estimateRunBurn } from "./workoutBurn";
+import {
+  isHeartRateSourceKind,
+  MAX_HEART_RATE_SAMPLE_AGE_MS,
+  preferSensorReadings,
+  type HeartRateSample,
+} from "./hrZones";
 
 export function haversine(
   lat1: number,
@@ -916,6 +922,51 @@ export function isImpossibleStep(metres: number, seconds: number): boolean {
 }
 
 /**
+ * A trace's steps as best efforts measure them: the credited distance and
+ * the wall clock at each point, and whether the step into it is faster
+ * than any runner. Distance through `segmentMetres`, the rule the run's
+ * distance counts with, and none across a break. The clock never steps
+ * back, so no stretch can time out negative on a corrected phone clock.
+ */
+function traceSteps(points: readonly GPSPoint[]): {
+  cum: number[];
+  clock: number[];
+  impossible: boolean[];
+} {
+  const n = points.length;
+  const cum = new Array<number>(n).fill(0);
+  const clock = new Array<number>(n).fill(0);
+  const impossible = new Array<boolean>(n).fill(false);
+  if (n === 0) return { cum, clock, impossible };
+  clock[0] = points[0].timestamp;
+  for (let i = 1; i < n; i++) {
+    const metres = points[i].breakBefore
+      ? 0
+      : segmentMetres(points[i - 1], points[i]);
+    cum[i] = cum[i - 1] + metres;
+    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
+    impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
+  }
+  return { cum, clock, impossible };
+}
+
+/**
+ * Whether a trace has a step faster than any runner (`isImpossibleStep`),
+ * measured as best efforts measure it (`traceSteps`).
+ *
+ * Until 2 Nov 2026 the finish timed best efforts across such a
+ * step, the catch-up the smoothing made after a gap in the fixes, and
+ * saved them with the run. A saved run keeps its trace, thinned to
+ * `KEPT_ROUTE_POINTS`, and a catch-up still shows in it: a dozen fixes at
+ * up to 90 m/s are still far past 12 m/s between every third. So a reader
+ * asks the kept trace before it believes what the run saved
+ * (`keptBestEfforts`).
+ */
+export function hasImpossibleStep(points: readonly GPSPoint[]): boolean {
+  return traceSteps(points).impossible.some(Boolean);
+}
+
+/**
  * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
  * stretch ending there that covers the distance, timed on ELAPSED time,
  * the wall clock between its fixes (Run28 call 3), as Strava times best
@@ -942,23 +993,7 @@ export function detectBestEfforts(
   const results: { distance: number; time: number; label: string }[] = [];
   const n = points.length;
   if (n < 2) return results;
-
-  // Credited distance and the wall clock at each point. The clock never
-  // steps back, so no stretch can time out negative on a corrected phone
-  // clock. `impossible[i]`: the step into point i is faster than any runner.
-  const cum = new Array<number>(n);
-  const clock = new Array<number>(n);
-  const impossible = new Array<boolean>(n).fill(false);
-  cum[0] = 0;
-  clock[0] = points[0].timestamp;
-  for (let i = 1; i < n; i++) {
-    const metres = points[i].breakBefore
-      ? 0
-      : segmentMetres(points[i - 1], points[i]);
-    cum[i] = cum[i - 1] + metres;
-    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
-    impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
-  }
+  const { cum, clock, impossible } = traceSteps(points);
 
   for (const effort of efforts) {
     if (totalDistance < effort.target) continue;
@@ -1023,6 +1058,63 @@ export function rawTrace(points: GPSPoint[]): GPSPoint[] {
   );
 }
 
+export interface ToGpxOptions {
+  /** Optional HR samples collected during the run; emits Garmin gpxtpx:hr extensions when matched. */
+  heartRateSamples?: readonly HeartRateSample[];
+}
+
+function matchHeartRateByPoint(
+  points: readonly GPSPoint[],
+  samples: readonly HeartRateSample[] | undefined
+): Map<GPSPoint, number> | null {
+  if (!samples || samples.length === 0) return null;
+  const seen = new Set<string>();
+  const valid = samples
+    .filter((sample) => {
+      if (
+        !isHeartRateSourceKind(sample.source) ||
+        !Number.isFinite(sample.bpm) ||
+        sample.bpm < 30 ||
+        sample.bpm > 250 ||
+        !Number.isFinite(sample.at)
+      ) {
+        return false;
+      }
+      if (sample.id) {
+        if (seen.has(sample.id)) return false;
+        seen.add(sample.id);
+      }
+      return true;
+    })
+    .sort(
+      (a, b) =>
+        a.at - b.at ||
+        Number(a.source !== "bluetooth") - Number(b.source !== "bluetooth")
+    );
+  const ordered = preferSensorReadings(valid);
+  if (ordered.length === 0) return null;
+
+  const byPoint = new Map<GPSPoint, number>();
+  let cursor = 0;
+  for (const point of points) {
+    if (!Number.isFinite(point.timestamp)) continue;
+    while (
+      cursor + 1 < ordered.length &&
+      ordered[cursor + 1].at <= point.timestamp
+    ) {
+      cursor += 1;
+    }
+    const candidate = ordered[cursor];
+    if (
+      candidate.at <= point.timestamp &&
+      point.timestamp - candidate.at <= MAX_HEART_RATE_SAMPLE_AGE_MS
+    ) {
+      byPoint.set(point, Math.round(candidate.bpm));
+    }
+  }
+  return byPoint.size > 0 ? byPoint : null;
+}
+
 /**
  * A GPX 1.1 track of the points as given (callers export `rawTrace`, cut
  * by the privacy zones on those same coordinates, `exportTrace` in
@@ -1033,12 +1125,17 @@ export function rawTrace(points: GPSPoint[]): GPSPoint[] {
  * break) and after every hold, when nothing was recorded (a pause, an
  * auto-pause), as GPX does for a receiver that was off.
  */
-export function toGPX(points: GPSPoint[], name: string): string {
+export function toGPX(
+  points: GPSPoint[],
+  name: string,
+  options?: ToGpxOptions
+): string {
   const marked = points.map((p, i) =>
     i > 0 && !p.breakBefore && pausedMsOf(p) > pausedMsOf(points[i - 1])
       ? { ...p, breakBefore: true }
       : p
   );
+  const hrByPoint = matchHeartRateByPoint(marked, options?.heartRateSamples);
   const segments = splitRouteSegments(marked)
     .map((segment) => {
       const trkpts = segment
@@ -1046,14 +1143,22 @@ export function toGPX(points: GPSPoint[], name: string): string {
           const time = new Date(p.timestamp).toISOString();
           const ele =
             p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : "";
-          return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
+          const hr = hrByPoint?.get(p);
+          const ext =
+            hr != null
+              ? `<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>${hr}</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>`
+              : "";
+          return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time>${ext}</trkpt>`;
         })
         .join("\n");
       return `    <trkseg>\n${trkpts}\n    </trkseg>`;
     })
     .join("\n");
+  const gpxtpxNs = hrByPoint
+    ? ' xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"'
+    : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Tropos" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Tropos" xmlns="http://www.topografix.com/GPX/1/1"${gpxtpxNs}>
   <trk><name>${escapeXml(name)}</name>
 ${segments}
   </trk>

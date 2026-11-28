@@ -30,8 +30,9 @@ import {
   type RunFitnessInput,
 } from "./runPaces";
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import type { RoadRaceDistance } from "@/features/program/programTypes";
 
-export type RaceDistance = "5k" | "10k" | "half" | "marathon";
+export type RaceDistance = RoadRaceDistance;
 
 const DISTANCE_KM: Record<RaceDistance, number> = {
   "5k": 5,

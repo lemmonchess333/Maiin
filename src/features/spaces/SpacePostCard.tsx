@@ -222,14 +222,14 @@ export default function SpacePostCard({
               {post.official && (
                 /* The success tint with its AA text step: the fixed green
                    as ink measured 2.24:1 on the light card. */
-                <span className="inline-flex max-w-full items-center text-caption font-semibold px-1.5 py-0.5 rounded bg-muted text-foreground">
+                <span className="inline-flex max-w-full items-center text-micro font-semibold px-1.5 py-0.5 rounded bg-muted text-foreground">
                   Tropos Team
                 </span>
               )}
             </div>
             {/* Pinned rides the time line, not the name row: beside the
                 name and the Team badge it squeezed the name to "Tropos T…". */}
-            <p className="text-caption text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               {[
                 (post.createdAt as Timestamp)?.toDate
                   ? getTimeAgo((post.createdAt as Timestamp).toDate())

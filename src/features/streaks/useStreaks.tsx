@@ -36,6 +36,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth, useUid } from "@/lib/auth";
 import { startDayKey } from "@/lib/startDay";
+import { subscribeProgramState } from "@/lib/programStateStore";
 import type { ProgramState } from "@/features/program/programTypes";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
@@ -1011,10 +1012,10 @@ function useStreaksInternal(planProfile: PlanProfile | null) {
 
     // The programme's run days and race, for the plan's rest days. Read
     // only: the programme's upkeep belongs to useProgram.
-    const unsubProgram = onSnapshot(
-      doc(db, "users", uid, "programState", "current"),
+    const unsubProgram = subscribeProgramState(
+      uid,
       (snap) => {
-        setProgram(snap.exists() ? (snap.data() as ProgramState) : null);
+        setProgram(snap.data);
         setProgramLoaded(true);
       },
       onSubscriptionError("programme", setProgramLoaded, setProgramFailed)

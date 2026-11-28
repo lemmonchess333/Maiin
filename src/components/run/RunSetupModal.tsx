@@ -27,7 +27,7 @@ import {
   CloudSnow,
   CloudLightning,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
@@ -464,7 +464,7 @@ export default function RunSetupModal({
             run type: the type above stays the session (a planned run's
             own), and this switch says it is run on a treadmill, with no
             GPS and the distance typed in at the end (TreadmillMode). */}
-        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+        <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
           <div className="min-w-0">
             <p className="text-sm text-foreground">On a treadmill</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -522,7 +522,7 @@ export default function RunSetupModal({
 
         {/* Weather strip */}
         {!weatherLoading && weather && (
-          <motion.div
+          <m.div
             initial={motionSafe({ opacity: 0, y: -4 })}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 p-3 rounded-xl"
@@ -561,7 +561,7 @@ export default function RunSetupModal({
                 const tip = getRunningTip(weather, config.activityType);
                 if (!tip) return null;
                 return (
-                  <motion.p
+                  <m.p
                     key={config.activityType}
                     initial={motionSafe({ opacity: 0 })}
                     animate={{ opacity: 1 }}
@@ -569,7 +569,7 @@ export default function RunSetupModal({
                     className="text-xs text-muted-foreground"
                   >
                     {tip}
-                  </motion.p>
+                  </m.p>
                 );
               })()}
               {/* On a hot day the heat line (heatAdjustment.ts); the tip above
@@ -588,7 +588,7 @@ export default function RunSetupModal({
                 {WEATHER_CREDIT}
               </p>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* A hot day's offer for the planned run, while the run is still
@@ -673,7 +673,7 @@ export default function RunSetupModal({
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
           {config.activityType === "intervals" && !fixedSession && (
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
@@ -708,14 +708,14 @@ export default function RunSetupModal({
               </button>
               <AnimatePresence>
                 {showCustomise && (
-                  <motion.div
+                  <m.div
                     id="interval-customise-panel"
                     initial={motionSafe({ opacity: 0, height: 0 })}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
+                    <div className="p-4 rounded-2xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           {
@@ -798,25 +798,23 @@ export default function RunSetupModal({
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* Goal — for non-interval runs, and not on the treadmill, which
             has no live distance to hold a goal against */}
         {config.activityType !== "intervals" && !onTreadmill && (
-          <div>
+          <div className="space-y-2">
             {/* Visible-label rename only ("Target (optional)" → "Goal").
                 The internal `target.type` config field is unchanged
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-            <SectionHeading size="compact" className="mb-2">
-              Goal
-            </SectionHeading>
+            <SectionHeading size="compact">Goal</SectionHeading>
             {/* Goal type — shared SegmentedControl (tone=running). Was a
                   hand-rolled pill row that hardcoded the coral hex and used
                   rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the
@@ -853,7 +851,7 @@ export default function RunSetupModal({
         {config.target.type !== "none" &&
           config.activityType !== "intervals" &&
           !onTreadmill && (
-            <div className="p-4 rounded-xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
+            <div className="p-4 rounded-2xl border border-border space-y-3 bg-card dark:card-shadow dark:border-transparent">
               {config.target.type === "distance" &&
                 (() => {
                   /* Preset chips — selecting a preset populates the
@@ -1235,7 +1233,7 @@ export default function RunSetupModal({
 
         <AnimatePresence>
           {showAdvanced && (
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
@@ -1263,7 +1261,7 @@ export default function RunSetupModal({
                 .map((setting) => (
                   <div
                     key={setting.key}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
+                    className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent"
                   >
                     <span className="text-sm">{setting.label}</span>
                     <Toggle
@@ -1291,7 +1289,7 @@ export default function RunSetupModal({
                       the user's choice. */}
                   {!requiresManualDistance(config) &&
                     config.target.type === "pace" && (
-                      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                         <span className="text-sm">Pace alerts</span>
                         <Toggle
                           checked={config.paceAlerts}
@@ -1302,7 +1300,7 @@ export default function RunSetupModal({
                         />
                       </div>
                     )}
-                  <div className="p-3.5 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
+                  <div className="p-3 rounded-xl border border-border/50 bg-card dark:card-shadow dark:border-transparent">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
                       <span className="text-xs text-muted-foreground font-mono tabular-nums">
@@ -1322,7 +1320,7 @@ export default function RunSetupModal({
                   </div>
                 </>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

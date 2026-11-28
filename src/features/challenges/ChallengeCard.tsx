@@ -1,5 +1,5 @@
 import { useState, type ComponentType, type CSSProperties } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Clock,
@@ -438,7 +438,7 @@ export function ChallengeCard({
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
                   <div className="h-2 rounded-full track-cut overflow-hidden">
-                    <motion.div
+                    <m.div
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
                       transition={{ duration: 0.6 }}
@@ -466,7 +466,7 @@ export function ChallengeCard({
                   )}{" "}
                   together
                 </p>
-                <p className="text-caption text-center text-muted-foreground">
+                <p className="text-micro text-center text-muted-foreground">
                   You contributed{" "}
                   {formatChallengeValue(
                     challenge.metric,
@@ -490,7 +490,7 @@ export function ChallengeCard({
              without gets the next-tier hint. The full progress bar
              appears the moment the user has any progress to show. */
           goal ? null : (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 {nextTier && nextValue
                   ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
@@ -514,7 +514,7 @@ export function ChallengeCard({
                 bar. */}
             <div className="relative pt-1 pb-7">
               <div className="h-2 rounded-full track-cut overflow-hidden">
-                <motion.div
+                <m.div
                   initial={{ width: 0 }}
                   animate={{
                     width:
@@ -657,13 +657,13 @@ export function ChallengeCard({
       {/* Expanded leaderboard */}
       <AnimatePresence>
         {expanded && (
-          <motion.div
+          <m.div
             initial={motionSafe({ height: 0, opacity: 0 })}
             animate={{ height: "auto", opacity: 1 }}
             exit={motionSafe({ height: 0, opacity: 0 })}
             className="overflow-hidden border-t border-border/50"
           >
-            <div className="p-4 space-y-1.5 max-h-60 overflow-y-auto">
+            <div className="p-4 space-y-2 max-h-60 overflow-y-auto">
               {leaderboard.map((p, i) => {
                 const tier = resolveTier(
                   p.currentValue,
@@ -707,7 +707,7 @@ export function ChallengeCard({
                 );
               })}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

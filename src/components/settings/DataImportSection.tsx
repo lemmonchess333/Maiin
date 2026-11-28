@@ -1,0 +1,408 @@
+import { useRef, useState } from "react";
+import { Dumbbell, FileJson, Scale, Upload, Utensils } from "lucide-react";
+import type { User } from "firebase/auth";
+import { SettingsGroup, SettingsRow } from "./SettingsList";
+import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
+import type { DistanceUnit } from "@/lib/distanceUnits";
+
+const MAX_GPX_BYTES = 15 * 1024 * 1024;
+const MAX_CSV_BYTES = 10 * 1024 * 1024;
+const MAX_WEIGHT_CSV_BYTES = 5 * 1024 * 1024;
+const MAX_NUTRITION_CSV_BYTES = 10 * 1024 * 1024;
+const MAX_ARCHIVE_JSON_BYTES = 25 * 1024 * 1024;
+
+interface DataImportSectionProps {
+  user: User | null;
+  distanceUnit?: DistanceUnit;
+  liftWeightUnit?: "kg" | "lbs";
+  bodyWeightUnit?: "kg" | "lbs";
+  weightKg?: number;
+  maxHeartRate?: number | null;
+  age?: number;
+}
+
+export default function DataImportSection({
+  user,
+  distanceUnit = "km",
+  liftWeightUnit = "kg",
+  bodyWeightUnit = "kg",
+  weightKg,
+  maxHeartRate,
+  age,
+}: DataImportSectionProps) {
+  const [gpxStatus, setGpxStatus] = useState<string | null>(null);
+  const [csvStatus, setCsvStatus] = useState<string | null>(null);
+  const [weightStatus, setWeightStatus] = useState<string | null>(null);
+  const [nutritionStatus, setNutritionStatus] = useState<string | null>(null);
+  const [archiveStatus, setArchiveStatus] = useState<string | null>(null);
+  const gpxInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const weightInputRef = useRef<HTMLInputElement>(null);
+  const nutritionInputRef = useRef<HTMLInputElement>(null);
+  const archiveInputRef = useRef<HTMLInputElement>(null);
+
+  const formatProgress = (
+    verb: string,
+    written: number,
+    total: number
+  ): string => (total > 0 ? `${verb} ${written}/${total}…` : `${verb}…`);
+
+  const handleGpxChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+    // Reset so picking the same file(s) again still fires onChange.
+    event.target.value = "";
+    if (files.length === 0 || !user) return;
+
+    if (files.length === 1) {
+      const [file] = files;
+      if (file.size > MAX_GPX_BYTES) {
+        toast.error("This file is too large to import.");
+        return;
+      }
+
+      setGpxStatus("Importing…");
+      try {
+        const xml = await file.text();
+        const [{ GpxImportError, importRunFile }, { distanceLabel2 }] =
+          await Promise.all([
+            import("@/lib/gpxImport"),
+            import("@/lib/runLabels"),
+          ]);
+        try {
+          const result = await importRunFile(user.uid, xml, {
+            weightKg,
+            maxHr: maxHeartRate ?? undefined,
+            age,
+          });
+          toast.success(
+            `Imported ${distanceLabel2(result.distance, distanceUnit)} run`
+          );
+        } catch (err) {
+          if (err instanceof GpxImportError) {
+            toast.error(err.message);
+          } else {
+            toast.error("Couldn’t import this run file. Try again.");
+            logger.error(err);
+          }
+        }
+      } catch (err) {
+        toast.error("Couldn’t read this file. Try again.");
+        logger.error(err);
+      } finally {
+        setGpxStatus(null);
+      }
+      return;
+    }
+
+    setGpxStatus(formatProgress("Importing", 0, files.length));
+    try {
+      const { GpxImportError, importRunFile } = await import("@/lib/gpxImport");
+      let imported = 0;
+      let skipped = 0;
+
+      for (let i = 0; i < files.length; i += 1) {
+        const file = files[i];
+        setGpxStatus(formatProgress("Importing", i + 1, files.length));
+        if (file.size > MAX_GPX_BYTES) {
+          skipped += 1;
+          continue;
+        }
+        try {
+          const xml = await file.text();
+          await importRunFile(user.uid, xml, {
+            weightKg,
+            maxHr: maxHeartRate ?? undefined,
+            age,
+          });
+          imported += 1;
+        } catch (err) {
+          skipped += 1;
+          if (!(err instanceof GpxImportError)) {
+            logger.error(err);
+          }
+        }
+      }
+
+      if (imported === 0) {
+        toast.error("Couldn’t import any of these run files.");
+      } else {
+        const unit = imported === 1 ? "run" : "runs";
+        const suffix = skipped > 0 ? ` (${skipped} skipped)` : "";
+        toast.success(`Imported ${imported} ${unit}${suffix}`);
+      }
+    } catch (err) {
+      toast.error("Couldn’t import these run files. Try again.");
+      logger.error(err);
+    } finally {
+      setGpxStatus(null);
+    }
+  };
+
+  const handleCsvChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_CSV_BYTES) {
+      toast.error("This file is too large to import.");
+      return;
+    }
+
+    setCsvStatus("Importing…");
+    try {
+      const csvText = await file.text();
+      const { WorkoutCsvImportError, importWorkoutsCsv } =
+        await import("@/lib/workoutCsvImport");
+      try {
+        const result = await importWorkoutsCsv(user.uid, csvText, {
+          weightKg,
+          defaultWeightUnit: liftWeightUnit,
+          onProgress: ({ written, total }) =>
+            setCsvStatus(formatProgress("Importing", written, total)),
+        });
+        const unit = result.importedCount === 1 ? "workout" : "workouts";
+        toast.success(`Imported ${result.importedCount} ${unit}`);
+      } catch (err) {
+        if (err instanceof WorkoutCsvImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t import this CSV file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setCsvStatus(null);
+    }
+  };
+
+  const handleWeightCsvChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_WEIGHT_CSV_BYTES) {
+      toast.error("This file is too large to import.");
+      return;
+    }
+
+    setWeightStatus("Importing…");
+    try {
+      const csvText = await file.text();
+      const { BodyweightCsvImportError, importBodyweightCsv } =
+        await import("@/lib/bodyweightCsvImport");
+      try {
+        const result = await importBodyweightCsv(user.uid, csvText, {
+          defaultWeightUnit: bodyWeightUnit,
+          onProgress: ({ written, total }) =>
+            setWeightStatus(formatProgress("Importing", written, total)),
+        });
+        const unit = result.importedCount === 1 ? "weigh-in" : "weigh-ins";
+        toast.success(`Imported ${result.importedCount} ${unit}`);
+      } catch (err) {
+        if (err instanceof BodyweightCsvImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t import this CSV file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setWeightStatus(null);
+    }
+  };
+
+  const handleNutritionCsvChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_NUTRITION_CSV_BYTES) {
+      toast.error("This file is too large to import.");
+      return;
+    }
+
+    setNutritionStatus("Importing…");
+    try {
+      const csvText = await file.text();
+      const { NutritionCsvImportError, importNutritionCsv } =
+        await import("@/lib/nutritionCsvImport");
+      try {
+        const result = await importNutritionCsv(user.uid, csvText, {
+          onProgress: ({ written, total }) =>
+            setNutritionStatus(formatProgress("Importing", written, total)),
+        });
+        const unit = result.importedCount === 1 ? "meal" : "meals";
+        toast.success(`Imported ${result.importedCount} ${unit}`);
+      } catch (err) {
+        if (err instanceof NutritionCsvImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t import this CSV file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setNutritionStatus(null);
+    }
+  };
+
+  const handleArchiveJsonChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user) return;
+
+    if (file.size > MAX_ARCHIVE_JSON_BYTES) {
+      toast.error("This backup file is too large to import.");
+      return;
+    }
+
+    setArchiveStatus("Restoring…");
+    try {
+      const jsonText = await file.text();
+      const { JsonArchiveImportError, importFullBackupJson } =
+        await import("@/lib/jsonArchiveImport");
+      try {
+        const result = await importFullBackupJson(user.uid, jsonText, {
+          weightKg,
+          onProgress: ({ written, total }) =>
+            setArchiveStatus(formatProgress("Restoring", written, total)),
+        });
+        const unit = result.totalItems === 1 ? "record" : "records";
+        toast.success(`Restored ${result.totalItems} ${unit} from backup`);
+      } catch (err) {
+        if (err instanceof JsonArchiveImportError) {
+          toast.error(err.message);
+        } else {
+          toast.error("Couldn’t restore this backup file. Try again.");
+          logger.error(err);
+        }
+      }
+    } catch (err) {
+      toast.error("Couldn’t read this file. Try again.");
+      logger.error(err);
+    } finally {
+      setArchiveStatus(null);
+    }
+  };
+
+  return (
+    <SettingsGroup title="Import">
+      <input
+        ref={gpxInputRef}
+        type="file"
+        multiple
+        data-import-kind="gpx"
+        accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml,application/xml,text/xml"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleGpxChange}
+      />
+      <input
+        ref={csvInputRef}
+        type="file"
+        data-import-kind="workout-csv"
+        accept=".csv,text/csv,text/plain"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleCsvChange}
+      />
+      <input
+        ref={weightInputRef}
+        type="file"
+        data-import-kind="weight-csv"
+        accept=".csv,text/csv,text/plain"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleWeightCsvChange}
+      />
+      <input
+        ref={nutritionInputRef}
+        type="file"
+        data-import-kind="nutrition-csv"
+        accept=".csv,text/csv,text/plain"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleNutritionCsvChange}
+      />
+      <input
+        ref={archiveInputRef}
+        type="file"
+        data-import-kind="archive-json"
+        accept=".json,application/json"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleArchiveJsonChange}
+      />
+      <SettingsRow
+        icon={Upload}
+        label="Import GPX or TCX runs"
+        description="Add one or more runs from Strava, Garmin, Coros or other apps"
+        value={gpxStatus ?? undefined}
+        chevron={false}
+        disabled={gpxStatus !== null || !user}
+        onClick={() => gpxInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={Dumbbell}
+        label="Import lifting CSV"
+        description="Add workouts from Hevy, Strong or Tropos"
+        value={csvStatus ?? undefined}
+        chevron={false}
+        disabled={csvStatus !== null || !user}
+        onClick={() => csvInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={Scale}
+        label="Import weight CSV"
+        description="Add weigh-ins from Happy Scale, Withings, Renpho or Tropos"
+        value={weightStatus ?? undefined}
+        chevron={false}
+        disabled={weightStatus !== null || !user}
+        onClick={() => weightInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={Utensils}
+        label="Import nutrition CSV"
+        description="Add meals from MyFitnessPal, Cronometer, Lose It! or Tropos"
+        value={nutritionStatus ?? undefined}
+        chevron={false}
+        disabled={nutritionStatus !== null || !user}
+        onClick={() => nutritionInputRef.current?.click()}
+      />
+      <SettingsRow
+        icon={FileJson}
+        label="Import backup JSON"
+        description="Restore workouts, runs, meals and weight from a Tropos backup"
+        value={archiveStatus ?? undefined}
+        chevron={false}
+        disabled={archiveStatus !== null || !user}
+        onClick={() => archiveInputRef.current?.click()}
+      />
+    </SettingsGroup>
+  );
+}

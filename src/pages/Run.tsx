@@ -223,13 +223,25 @@ import type {
   HeatPanelSwap,
 } from "../components/run/HeatPanel";
 import type { RunSetupHeat } from "../components/run/RunSetupModal";
+import {
+  isScheduledHardRun,
+  useTodayReadiness,
+} from "../hooks/useTodayReadiness";
+import { useBodySignals } from "../hooks/useBodySignals";
+import { useSubscription } from "../lib/subscription";
 import { haptic } from "../lib/haptic";
 import {
   distanceLabel,
   distanceValue,
   paceBandLabel,
   paceLabel,
+  paceMinSec,
 } from "../lib/runLabels";
+import {
+  buildManualLapSplits,
+  lapPaceSecondsPerKm,
+  type LapAnchor,
+} from "@/lib/runLaps";
 import {
   startRunActivity,
   updateRunActivity,
@@ -239,6 +251,7 @@ import { toast } from "../lib/toast";
 import {
   SPLIT_LAP_IS_METRIC,
   distanceUnitLabel,
+  paceUnitLabel,
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -246,7 +259,7 @@ import { useWatchSnapshotBeat } from "@/hooks/useWatchSnapshotBeat";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
-import { formatDuration } from "@/utils/formatters";
+import { formatClock, formatDuration } from "@/utils/formatters";
 import { goBackOr } from "@/lib/backNavigation";
 import { RESUME_PARAM } from "@/lib/resumeParam";
 import { runModeWithPlan } from "@/features/program/programMaintenance";
@@ -383,6 +396,7 @@ export default function Run() {
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [manualLapAnchors, setManualLapAnchors] = useState<LapAnchor[]>([]);
   const [manualDistanceDraft, setManualDistanceDraft] =
     useState<ManualDistanceDraft | null>(null);
   const manualDistanceDraftRef = useRef<ManualDistanceDraft | null>(null);
@@ -1218,6 +1232,52 @@ export default function Run() {
         }
       : null;
 
+  const { isPro } = useSubscription();
+  const launchIsHardRun = isScheduledHardRun(launchWorkout);
+  const checkLaunchReadiness =
+    phase === "waiting" && canFastLaunch && launchIsHardRun;
+  const bodySignals = useBodySignals(isPro && checkLaunchReadiness);
+  const runReadiness = useTodayReadiness(undefined, bodySignals.signals, {
+    todayHardRun: checkLaunchReadiness,
+  });
+  const startReadinessEasySwap = () => {
+    const base = buildLaunchConfig(
+      planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    if (heatSwapMinutes !== null) {
+      handleStart(heatSwapConfig(base, heatSwapMinutes));
+      return;
+    }
+    if (structuredLongRun) {
+      handleStart(heatLongSwapConfig(base));
+      return;
+    }
+    const easyMinutes = Math.max(
+      25,
+      Math.round(((launchWorkout?.estimatedDuration ?? 45) * 0.65) / 5) * 5
+    );
+    handleStart(heatSwapConfig(base, easyMinutes));
+  };
+  const launchReadiness =
+    launchIsHardRun &&
+    runReadiness.readiness.offerEasier &&
+    runReadiness.readiness.word !== null
+      ? {
+          word: runReadiness.readiness.word,
+          line: runReadiness.readiness.line,
+          swapLabel: "Run easy instead",
+          swapSummary:
+            heatSwapMinutes !== null
+              ? `Easy ${heatSwapMinutes} min instead of today’s harder effort`
+              : structuredLongRun
+                ? "Keep today’s long run easy all the way"
+                : "Shorter easy run to absorb recent leg load",
+          onSwap: startReadinessEasySwap,
+        }
+      : null;
+
   /* Run25 call 2: the run's clock starts at one instant, and every reader
      of the run's start is given it: the timer, Apple Health's start
      (`recordingStartedAt`), and the saved run's start and day (its
@@ -1266,6 +1326,7 @@ export default function Run() {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
     replaceManualDistanceDraft(null);
+    setManualLapAnchors([]);
     audioCues.prime();
     await wakeLock.request();
     if (user && auth.currentUser?.uid !== uid) return;
@@ -1550,30 +1611,29 @@ export default function Run() {
     [replaceManualDistanceDraft, writeSnapshot]
   );
 
-  // Periodic write: every 5s while a run is in flight. The interval
-  // re-arms whenever the deps change (e.g. pause flips phase) so the
-  // closure captures fresh state.
+  // Periodic write: every 5s while a run is in flight, plus one immediate
+  // write on phase/config/uid entry so a quick background before the first
+  // tick still has a snapshot. Wrapping writeSnapshot in useEffectEvent keeps
+  // the 5s interval stable across 1 Hz timer ticks and GPS updates instead of
+  // tearing down and synchronously writing localStorage every second.
+  const latestWriteSnapshot = useEffectEvent(writeSnapshot);
   useEffect(() => {
     if (phase !== "active" && phase !== "paused") return;
-    const id = setInterval(writeSnapshot, 5000);
-    // Fire one immediate write so the snapshot exists even if the
-    // user immediately backgrounds the tab before the first tick.
-    writeSnapshot();
+    const id = setInterval(() => {
+      latestWriteSnapshot();
+    }, 5000);
+    latestWriteSnapshot();
     return () => clearInterval(id);
-  }, [phase, writeSnapshot]);
+  }, [phase, timer.isRunning, player.checkpoint, runConfig, profile?.uid]);
 
   // visibilitychange→hidden: write immediately so a backgrounded tab
   // that the OS may suspend at any moment has the freshest possible
   // snapshot persisted. Distinct from useRunVisibility's onHidden
   // (which manages GPS/wake-lock); this one is purely persistence.
-  // writeSnapshot wrapped in useEffectEvent so the listener stays
-  // subscribed for the whole active/paused window instead of
-  // re-binding on every writeSnapshot identity change.
-  const visibilityWriteSnapshot = useEffectEvent(writeSnapshot);
   useEffect(() => {
     if (phase !== "active" && phase !== "paused") return;
     const handler = () => {
-      if (document.visibilityState === "hidden") visibilityWriteSnapshot();
+      if (document.visibilityState === "hidden") latestWriteSnapshot();
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
@@ -1803,6 +1863,13 @@ export default function Run() {
       startClockOnFix(firstPointAt);
   }, [phase, firstPointAt]);
 
+  const gpsTrailKey = gps.pointsVersion ?? gps.points.length;
+  const currentRollingPaceSec = useMemo(
+    () => rollingPaceSeconds(gps.points, 30),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- gpsTrailKey tracks in-place trail pushes alongside array replacement
+    [gps.points, gpsTrailKey]
+  );
+
   useEffect(() => {
     if (phase !== "active") return;
     /* Cumulative distance + elapsed, NOT a pace: the hook measures each
@@ -1851,10 +1918,9 @@ export default function Run() {
       runConfig?.target?.type === "pace" &&
       runConfig.target.value
     ) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
-      if (currentPaceSec !== null) {
+      if (currentRollingPaceSec !== null) {
         audioCues.checkPaceAlert(
-          currentPaceSec,
+          currentRollingPaceSec,
           runConfig.target.value,
           timer.elapsed
         );
@@ -1882,10 +1948,9 @@ export default function Run() {
       if (hr.bpm != null && easyHrCeiling > 0) {
         audioCues.checkEasyHeartRate(hr.bpm, easyHrCeiling, timer.elapsed);
       } else if (easyFastEdge) {
-        const currentPaceSec = rollingPaceSeconds(gps.points, 30);
-        if (currentPaceSec !== null) {
+        if (currentRollingPaceSec !== null) {
           audioCues.checkEasyCeiling(
-            currentPaceSec,
+            currentRollingPaceSec,
             easyFastEdge,
             timer.elapsed
           );
@@ -1906,7 +1971,7 @@ export default function Run() {
     }
   }, [
     gps.distance,
-    gps.points,
+    currentRollingPaceSec,
     timer.elapsed,
     phase,
     audioCues,
@@ -1928,7 +1993,7 @@ export default function Run() {
   useEffect(() => {
     if (!isOutdoorGpsRun(runConfig)) return;
     if (phase !== "active" && phase !== "paused") return;
-    const paceS = rollingPaceSeconds(gps.points, 30);
+    const paceS = currentRollingPaceSec;
     // The card names the session the run was started as, or its type.
     const name = runInProgressName({
       metadata: runConfig?.planMetadata,
@@ -1951,7 +2016,7 @@ export default function Run() {
     timer,
     timer.elapsed,
     gps.distance,
-    gps.points,
+    currentRollingPaceSec,
     unit,
     runConfig,
     launchWorkout,
@@ -2161,7 +2226,7 @@ export default function Run() {
       phase,
       elapsedSeconds: timer.elapsed,
       distanceMeters: gps.distance,
-      paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
+      paceSecondsPerKm: currentRollingPaceSec,
       recordedAtMs: Date.now(),
       unit,
       step: watchStep(),
@@ -2304,6 +2369,17 @@ export default function Run() {
         })
       : null;
 
+    const structuredLapSplits = resumedRef.current
+      ? []
+      : player.lapSplits(timer.elapsed, gps.distance);
+    const manualLapSplits = buildManualLapSplits(
+      manualLapAnchors,
+      moving.seconds,
+      finalDistance
+    );
+    const lapSplits =
+      manualLapSplits.length > 0 ? manualLapSplits : structuredLapSplits;
+
     const finish: StoredRunFinish = {
       finishedAt,
       watchCompanionUsed: watchConnectedRef.current,
@@ -2320,6 +2396,7 @@ export default function Run() {
         resumedRef.current || requiresManualDistance(runConfig)
           ? null
           : player.workPortion(timer.elapsed, gps.distance),
+      ...(lapSplits.length > 0 ? { lapSplits } : {}),
     };
     const previousRevision = watchRevisionRef.current;
     if (watchEligible && identityRef.current) watchRevisionRef.current += 1;
@@ -2386,9 +2463,36 @@ export default function Run() {
         // unverifiable resume (`resumedRef`) or when only the final whole-run distance
         // is known. Manual step completion is not a measured work distance.
         workPortion: finish.workPortion,
+        lapSplits: finish.lapSplits,
       },
     });
     return true;
+  };
+
+  const handleManualLap = () => {
+    const distanceNow = requiresManualDistance(runConfig)
+      ? treadmillDistance
+      : gps.distance;
+    const elapsedNow = timer.elapsed;
+    const prev = manualLapAnchors[manualLapAnchors.length - 1] ?? {
+      elapsed: 0,
+      distance: 0,
+    };
+    const lapSec = Math.max(0, Math.round(elapsedNow - prev.elapsed));
+    const lapDist = Math.max(0, Math.round(distanceNow - prev.distance));
+    if (lapSec <= 0 && lapDist <= 0) return;
+    const lapNum = manualLapAnchors.length + 1;
+    setManualLapAnchors((anchors) => [
+      ...anchors,
+      { elapsed: elapsedNow, distance: distanceNow },
+    ]);
+    haptic("medium");
+    const pace = lapPaceSecondsPerKm(lapDist, lapSec);
+    toast(
+      pace !== null
+        ? `Lap ${lapNum} · ${paceMinSec(pace, unit)} ${paceUnitLabel(unit)}`
+        : `Lap ${lapNum} · ${formatClock(lapSec)}`
+    );
   };
 
   const handlePause = () => {
@@ -2483,7 +2587,7 @@ export default function Run() {
             phase: nextPhase,
             elapsedSeconds: timer.elapsed,
             distanceMeters: gps.distance,
-            paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
+            paceSecondsPerKm: currentRollingPaceSec,
             recordedAtMs: Date.now(),
             unit,
             step: watchStep(),
@@ -2690,21 +2794,22 @@ export default function Run() {
       className={`fixed inset-0 z-50 flex flex-col pt-[var(--safe-top)]${phase === "waiting" ? " bg-background" : ""}`}
       style={phase === "waiting" ? undefined : { backgroundColor: THEME.bg }}
     >
-      <GuideHint
-        key={runHelpRequest}
-        requested={runHelpRequest > 0}
-        id="first-run"
-        layer="session"
-        placement="top"
-        when={
-          phase === "waiting" &&
-          arrival === "done" &&
-          (firstRunMoment || runHelpRequest > 0)
-        }
-      />
-      {phase === "waiting" && (
-        <>
-          {/* Phase B1: delayed-mount gate for structured/race_prep
+      <div className="flex-1 flex flex-col min-h-0 max-w-lg mx-auto w-full">
+        <GuideHint
+          key={runHelpRequest}
+          requested={runHelpRequest > 0}
+          id="first-run"
+          layer="session"
+          placement="bottom"
+          when={
+            phase === "waiting" &&
+            arrival === "done" &&
+            (firstRunMoment || runHelpRequest > 0)
+          }
+        />
+        {phase === "waiting" && (
+          <>
+            {/* Phase B1: delayed-mount gate for structured/race_prep
               users so RunSetupModal's init-from-props captures the
               real programme prefill on its first render. Freeform
               users skip the wait. Skeleton appears only after a
@@ -2712,84 +2817,85 @@ export default function Run() {
               than this, so the skeleton flash is rare). A start from
               Home waits the same way, with nothing to show until the
               run starts or the page shows itself. */}
-          {arrival !== "done" || (!isFreeformUser && programLoading) ? (
-            showSkeleton ? (
-              <RunSetupSkeleton />
-            ) : null
-          ) : canFastLaunch && launchWorkout ? (
-            // Confident named planned run → one-tap launch card (preserves the
-            // gesture so audio primes). Customize drops to the full modal.
-            <RunLaunchCard
-              workout={launchWorkout}
-              racePace={launchRacePace}
-              purpose={
-                runSessionPresentation({
-                  type: launchWorkout.type,
-                  templateId: launchWorkout.id,
-                  currentWeek: programState?.runPlan?.currentWeek,
-                  totalWeeks: programState?.runPlan?.totalWeeks,
-                  shortBase: programState?.runPlan?.shortBase,
-                  distance:
-                    programState?.runPlan?.raceGoal?.distance ??
-                    profile?.raceGoal?.distance,
-                  weekHasQuality: launchWeekHasQuality,
-                  racePace: launchRacePace?.kind,
-                  inRecovery: launchInRecovery,
-                  rolling: launchRolling,
-                }).purpose
-              }
-              prefill={planDecision.prefill}
-              strip={planDecision.strip}
-              isExtra={isExtraLaunch}
-              selectedShoeId={launchShoeId}
-              onSelectShoe={setLaunchShoeId}
-              onStart={() => handleStart(plannedLaunchConfig())}
-              onCustomize={() => setForceModal(true)}
-              onHelp={() => setRunHelpRequest((request) => request + 1)}
-              onBack={leaveSetup}
-              gpsSignal={setupSignal}
-              heat={
-                hotNow && heatLineNow && heat.level !== "none"
-                  ? {
-                      level: heat.level,
-                      line: heatLineNow,
-                      coolest: coolestNow,
-                      adjust: heatAdjust,
-                      swap: heatSwap,
-                    }
-                  : null
-              }
-              paceRange={
-                heatAdjusted && heatTarget?.kind === "range"
-                  ? heatTarget.pace
-                  : null
-              }
-            />
-          ) : forceModal || targetRoute != null ? (
-            <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-              <RunSetupModal
-                /* Follow-a-route entry: import a GPX or pick a saved route,
+            {arrival !== "done" || (!isFreeformUser && programLoading) ? (
+              showSkeleton ? (
+                <RunSetupSkeleton />
+              ) : null
+            ) : canFastLaunch && launchWorkout ? (
+              // Confident named planned run → one-tap launch card (preserves the
+              // gesture so audio primes). Customize drops to the full modal.
+              <RunLaunchCard
+                workout={launchWorkout}
+                racePace={launchRacePace}
+                purpose={
+                  runSessionPresentation({
+                    type: launchWorkout.type,
+                    templateId: launchWorkout.id,
+                    currentWeek: programState?.runPlan?.currentWeek,
+                    totalWeeks: programState?.runPlan?.totalWeeks,
+                    shortBase: programState?.runPlan?.shortBase,
+                    distance:
+                      programState?.runPlan?.raceGoal?.distance ??
+                      profile?.raceGoal?.distance,
+                    weekHasQuality: launchWeekHasQuality,
+                    racePace: launchRacePace?.kind,
+                    inRecovery: launchInRecovery,
+                    rolling: launchRolling,
+                  }).purpose
+                }
+                prefill={planDecision.prefill}
+                strip={planDecision.strip}
+                isExtra={isExtraLaunch}
+                selectedShoeId={launchShoeId}
+                onSelectShoe={setLaunchShoeId}
+                onStart={() => handleStart(plannedLaunchConfig())}
+                onCustomize={() => setForceModal(true)}
+                onHelp={() => setRunHelpRequest((request) => request + 1)}
+                onBack={leaveSetup}
+                gpsSignal={setupSignal}
+                heat={
+                  hotNow && heatLineNow && heat.level !== "none"
+                    ? {
+                        level: heat.level,
+                        line: heatLineNow,
+                        coolest: coolestNow,
+                        adjust: heatAdjust,
+                        swap: heatSwap,
+                      }
+                    : null
+                }
+                paceRange={
+                  heatAdjusted && heatTarget?.kind === "range"
+                    ? heatTarget.pace
+                    : null
+                }
+                readiness={launchReadiness}
+              />
+            ) : forceModal || targetRoute != null ? (
+              <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
+                <RunSetupModal
+                  /* Follow-a-route entry: import a GPX or pick a saved route,
                    or (when a route is loaded — incl. arriving via
                    RunDetail's "Re-run this route") show Following +
                    Save/Clear. The route overlays the normal run config —
                    start as usual. */
-                routeSection={
-                  <RouteSetupSection
-                    targetRoute={targetRoute}
-                    routeSource={routeSource}
-                    currentPosition={gps.currentPoint}
-                    onLoadRoute={(points, source) => {
-                      setTargetRoute(points);
-                      setRouteSource(source);
-                    }}
-                    onClearRoute={() => {
-                      setTargetRoute(null);
-                      setRouteSource(null);
-                    }}
-                  />
-                }
-                onStart={handleStart}
-                /* Back goes back ONE step. This branch is reached two
+                  routeSection={
+                    <RouteSetupSection
+                      targetRoute={targetRoute}
+                      routeSource={routeSource}
+                      currentPosition={gps.currentPoint}
+                      onLoadRoute={(points, source) => {
+                        setTargetRoute(points);
+                        setRouteSource(source);
+                      }}
+                      onClearRoute={() => {
+                        setTargetRoute(null);
+                        setRouteSource(null);
+                      }}
+                    />
+                  }
+                  onStart={handleStart}
+                  /* Back goes back ONE step. This branch is reached two
                    ways: `forceModal`, set by "More options" on the tile
                    picker or "Customize" on the launch card, and a
                    `targetRoute` arriving from RunDetail's "Re-run this
@@ -2799,200 +2905,202 @@ export default function Run() {
                    flag re-renders whichever fast surface opened this one;
                    `launchShoeId` lives on this page rather than in the
                    modal, so a shoe picked before the detour survives it. */
-                onCancel={() =>
-                  forceModal ? setForceModal(false) : leaveSetup()
-                }
-                programContext={planDecision.strip}
-                sessionName={
-                  launchWorkout
-                    ? runSessionName(launchWorkout, launchRacePace, unit)
-                    : undefined
-                }
-                heat={setupHeat}
-                savedPreferences={{
-                  autoPause: true,
-                  audioCues: profile?.audioCues !== false,
-                  // Plan-derived prefill: activityType, target, intervals.
-                  // Empty object on freeform / rest_day / completed_day /
-                  // elapsed-plan / missing-template paths.
-                  ...planDecision.prefill,
-                  // Plan-adherence snapshot — Run.tsx owns the truth, the
-                  // modal just carries it through to handleStart where
-                  // finalisePlanMetadata recomputes against the user's
-                  // final activityType.
-                  planMetadata: planDecision.metadata,
-                }}
-              />
-            </div>
-          ) : (
-            // Freeform / rest / completed / ad-hoc → one-tap tile picker.
-            // Structured sessions (intervals/race/route) and any run
-            // on the treadmill live behind "More options" → the full modal.
-            <RunTilePicker
-              paceTable={paceTable}
-              selectedShoeId={launchShoeId}
-              onSelectShoe={setLaunchShoeId}
-              repeatType={repeatType}
-              onPickType={(type) =>
-                handleStart(
-                  buildTileConfig(
-                    type,
-                    paceTable,
-                    planDecision.metadata,
-                    profile?.audioCues !== false,
-                    launchShoeId
-                  )
-                )
-              }
-              onMoreOptions={() => setForceModal(true)}
-              onHelp={() => setRunHelpRequest((request) => request + 1)}
-              onBack={leaveSetup}
-              gpsSignal={setupSignal}
-              heat={
-                hotNow && heatLineNow && heat.level !== "none"
-                  ? {
-                      level: heat.level,
-                      line: heatLineNow,
-                      coolest: coolestNow,
-                    }
-                  : null
-              }
-            />
-          )}
-        </>
-      )}
-
-      {phase === "countdown" && (
-        <StartCountdown
-          seconds={countdown.seconds ?? 1}
-          onSkip={countdown.skip}
-        />
-      )}
-
-      {phase === "acquiring" &&
-        (() => {
-          const acc = gps.gpsAccuracy;
-          const quality = gps.signalQuality;
-          const locationDenied = gps.permissionState === "denied";
-          const { lit: bars, colour: barColor } = gpsSignalBars(quality);
-          return (
-            <div
-              className="flex-1 flex flex-col items-center justify-center px-8"
-              style={{ background: THEME.bg }}
-            >
-              {/* Signal rings */}
-              <div className="relative size-28 flex items-center justify-center mb-8">
-                <div
-                  className="absolute inset-0 rounded-full border-2 motion-safe:animate-ping"
-                  style={{
-                    borderColor: `${THEME.running}30`,
-                    animationDuration: "2s",
+                  onCancel={() =>
+                    forceModal ? setForceModal(false) : leaveSetup()
+                  }
+                  programContext={planDecision.strip}
+                  sessionName={
+                    launchWorkout
+                      ? runSessionName(launchWorkout, launchRacePace, unit)
+                      : undefined
+                  }
+                  heat={setupHeat}
+                  savedPreferences={{
+                    autoPause: true,
+                    audioCues: profile?.audioCues !== false,
+                    // Plan-derived prefill: activityType, target, intervals.
+                    // Empty object on freeform / rest_day / completed_day /
+                    // elapsed-plan / missing-template paths.
+                    ...planDecision.prefill,
+                    // Plan-adherence snapshot — Run.tsx owns the truth, the
+                    // modal just carries it through to handleStart where
+                    // finalisePlanMetadata recomputes against the user's
+                    // final activityType.
+                    planMetadata: planDecision.metadata,
                   }}
                 />
-                <div
-                  className="absolute inset-3 rounded-full border-2 motion-safe:animate-ping"
-                  style={{
-                    borderColor: `${THEME.running}40`,
-                    animationDuration: "2s",
-                    animationDelay: "0.4s",
-                  }}
-                />
-                <div
-                  className="absolute inset-6 rounded-full border-2 motion-safe:animate-ping"
-                  style={{
-                    borderColor: `${THEME.running}50`,
-                    animationDuration: "2s",
-                    animationDelay: "0.8s",
-                  }}
-                />
-                <div
-                  className="size-14 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `${THEME.running}1F`,
-                    border: `2px solid ${THEME.running}`,
-                  }}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={THEME.running}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-                  </svg>
-                </div>
               </div>
+            ) : (
+              // Freeform / rest / completed / ad-hoc → one-tap tile picker.
+              // Structured sessions (intervals/race/route) and any run
+              // on the treadmill live behind "More options" → the full modal.
+              <RunTilePicker
+                paceTable={paceTable}
+                selectedShoeId={launchShoeId}
+                onSelectShoe={setLaunchShoeId}
+                repeatType={repeatType}
+                onPickType={(type) =>
+                  handleStart(
+                    buildTileConfig(
+                      type,
+                      paceTable,
+                      planDecision.metadata,
+                      profile?.audioCues !== false,
+                      launchShoeId
+                    )
+                  )
+                }
+                onMoreOptions={() => setForceModal(true)}
+                onHelp={() => setRunHelpRequest((request) => request + 1)}
+                onBack={leaveSetup}
+                gpsSignal={setupSignal}
+                heat={
+                  hotNow && heatLineNow && heat.level !== "none"
+                    ? {
+                        level: heat.level,
+                        line: heatLineNow,
+                        coolest: coolestNow,
+                      }
+                    : null
+                }
+              />
+            )}
+          </>
+        )}
 
-              {/* Signal bars + accuracy */}
-              <div className="flex items-end gap-1 mb-4">
-                {[1, 2, 3, 4].map((i) => (
+        {phase === "countdown" && (
+          <StartCountdown
+            seconds={countdown.seconds ?? 1}
+            onSkip={countdown.skip}
+          />
+        )}
+
+        {phase === "acquiring" &&
+          (() => {
+            const acc = gps.gpsAccuracy;
+            const quality = gps.signalQuality;
+            const locationDenied = gps.permissionState === "denied";
+            const { lit: bars, colour: barColor } = gpsSignalBars(quality);
+            return (
+              <div
+                className="flex-1 flex flex-col items-center justify-center px-8"
+                style={{ background: THEME.bg }}
+              >
+                {/* Signal rings */}
+                <div className="relative size-28 flex items-center justify-center mb-8">
                   <div
-                    key={i}
+                    className="absolute inset-0 rounded-full border-2 motion-safe:animate-ping"
                     style={{
-                      width: 8,
-                      height: 6 + i * 5,
-                      borderRadius: 3,
-                      background:
-                        i <= bars ? barColor : "rgba(255,255,255,0.1)",
-                      transition: "background 0.3s",
+                      borderColor: `${THEME.running}30`,
+                      animationDuration: "2s",
                     }}
                   />
-                ))}
-                <p
-                  className="text-micro ml-2 font-mono"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                >
-                  {acc ? `\u00B1${Math.round(acc)} m` : "---"}
-                </p>
-              </div>
+                  <div
+                    className="absolute inset-3 rounded-full border-2 motion-safe:animate-ping"
+                    style={{
+                      borderColor: `${THEME.running}40`,
+                      animationDuration: "2s",
+                      animationDelay: "0.4s",
+                    }}
+                  />
+                  <div
+                    className="absolute inset-6 rounded-full border-2 motion-safe:animate-ping"
+                    style={{
+                      borderColor: `${THEME.running}50`,
+                      animationDuration: "2s",
+                      animationDelay: "0.8s",
+                    }}
+                  />
+                  <div
+                    className="size-14 rounded-full flex items-center justify-center"
+                    style={{
+                      background: `${THEME.running}1F`,
+                      border: `2px solid ${THEME.running}`,
+                    }}
+                  >
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={THEME.running}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                    </svg>
+                  </div>
+                </div>
 
-              {/* A refusal is not a search: no signal will arrive until
+                {/* Signal bars + accuracy */}
+                <div className="flex items-end gap-1 mb-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 8,
+                        height: 6 + i * 5,
+                        borderRadius: 3,
+                        background:
+                          i <= bars ? barColor : "rgba(255,255,255,0.1)",
+                        transition: "background 0.3s",
+                      }}
+                    />
+                  ))}
+                  <p
+                    className="text-micro ml-2 font-mono"
+                    style={{ color: "rgba(255,255,255,0.5)" }}
+                  >
+                    {acc ? `\u00B1${Math.round(acc)} m` : "---"}
+                  </p>
+                </div>
+
+                {/* A refusal is not a search: no signal will arrive until
                   location is turned back on, so it gets its own words.
                   Otherwise the run is waiting for the fix its clock starts
                   on (Run25 call 2). */}
-              <p className="text-white font-semibold text-lg mb-1">
-                {locationDenied ? "Location is off for Tropos" : "Finding GPS"}
-              </p>
-              <p
-                className="text-sm text-center max-w-[260px]"
-                style={{ color: "rgba(255,255,255,0.6)" }}
-              >
-                {locationDenied
-                  ? isNativePlatform()
-                    ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
-                    : "Allow location for this site in your browser’s settings to track this run with GPS, or track it without GPS."
-                  : quality === "weak" || quality === "searching"
-                    ? "Move to an open area away from buildings"
-                    : "Getting an accurate signal…"}
-              </p>
-              {locationDenied ? (
-                isNativePlatform() && (
-                  <div className="mt-4 w-full">
-                    <Button
-                      variant="ghost"
-                      fullWidth
-                      onClick={() => void openLocationSettings()}
-                      className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
-                    >
-                      Open settings
-                    </Button>
-                  </div>
-                )
-              ) : gps.error ? (
-                <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
-                  Can’t get a GPS signal right now. Move outside, or track
-                  without GPS below.
+                <p className="text-white font-semibold text-lg mb-1">
+                  {locationDenied
+                    ? "Location is off for Tropos"
+                    : "Finding GPS"}
                 </p>
-              ) : null}
+                <p
+                  className="text-sm text-center max-w-[260px]"
+                  style={{ color: "rgba(255,255,255,0.6)" }}
+                >
+                  {locationDenied
+                    ? isNativePlatform()
+                      ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
+                      : "Allow location for this site in your browser’s settings to track this run with GPS, or track it without GPS."
+                    : quality === "weak" || quality === "searching"
+                      ? "Move to an open area away from buildings"
+                      : "Getting an accurate signal…"}
+                </p>
+                {locationDenied ? (
+                  isNativePlatform() && (
+                    <div className="mt-4 w-full">
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={() => void openLocationSettings()}
+                        className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                      >
+                        Open settings
+                      </Button>
+                    </div>
+                  )
+                ) : gps.error ? (
+                  <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
+                    Can’t get a GPS signal right now. Move outside, or track
+                    without GPS below.
+                  </p>
+                ) : null}
 
-              <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {!locationDenied && (
-                  /* Run25 call 2: the clock starts now rather than on a
+                <div className="mt-8 flex flex-col items-center gap-3 w-full">
+                  {!locationDenied && (
+                    /* Run25 call 2: the clock starts now rather than on a
                      good fix; the run still records GPS, and its distance
                      counts from the first fix the reading gate passes.
                      Not while location is refused, where none will come:
@@ -3001,196 +3109,197 @@ export default function Run() {
                      never finds a fix finishes as any unlocked GPS run
                      does, with the finish's "GPS never locked on" and the
                      validity rule's verdict on its distance. */
-                  <div className="w-full">
-                    <Button
-                      variant="sport"
-                      size="lg"
-                      fullWidth
-                      onClick={handleStartAnyway}
-                      className="rounded-2xl"
-                    >
-                      Start anyway
-                    </Button>
-                    <p
-                      className="text-xs text-center mt-2"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
-                    >
-                      Your run starts by itself when GPS finds you.
-                    </p>
-                  </div>
-                )}
-                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
-                  /* Manual distance entry (TreadmillMode): a real time now,
+                    <div className="w-full">
+                      <Button
+                        variant="sport"
+                        size="lg"
+                        fullWidth
+                        onClick={handleStartAnyway}
+                        className="rounded-2xl"
+                      >
+                        Start anyway
+                      </Button>
+                      <p
+                        className="text-xs text-center mt-2"
+                        style={{ color: "rgba(255,255,255,0.5)" }}
+                      >
+                        Your run starts by itself when GPS finds you.
+                      </p>
+                    </div>
+                  )}
+                  {(acquiringSeconds >= 15 ||
+                    !!gps.error ||
+                    locationDenied) && (
+                    /* Manual distance entry (TreadmillMode): a real time now,
                      the distance typed in after. With location refused it
                      is the way to run and the one filled button; beside
                      Start anyway it is the quieter choice. */
-                  <div className="w-full">
-                    {locationDenied ? (
-                      <button
-                        type="button"
-                        onClick={handleSwitchToManual}
-                        className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
-                        style={{
-                          background: THEME.running,
-                          color: "hsl(var(--stage))",
-                        }}
+                    <div className="w-full">
+                      {locationDenied ? (
+                        <button
+                          type="button"
+                          onClick={handleSwitchToManual}
+                          className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
+                          style={{
+                            background: THEME.running,
+                            color: "hsl(var(--stage))",
+                          }}
+                        >
+                          Track without GPS
+                        </button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          fullWidth
+                          onClick={handleSwitchToManual}
+                          className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                        >
+                          Track without GPS
+                        </Button>
+                      )}
+                      <p
+                        className="text-xs text-center mt-2"
+                        style={{ color: "rgba(255,255,255,0.5)" }}
                       >
-                        Track without GPS
-                      </button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        fullWidth
-                        onClick={handleSwitchToManual}
-                        className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
-                      >
-                        Track without GPS
-                      </Button>
-                    )}
-                    <p
-                      className="text-xs text-center mt-2"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
-                    >
-                      Record time now and enter distance after.
-                    </p>
-                  </div>
-                )}
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  onClick={handleMoveToTreadmill}
-                  className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
-                >
-                  On a treadmill
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    gps.stop();
-                    // Back to the run's own card, where Customise is.
-                    setArrival("done");
-                    dispatch({ type: "CANCEL_ACQUIRING" });
-                  }}
-                  className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.7)" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          );
-        })()}
-
-      {(phase === "active" || phase === "paused") &&
-        requiresManualDistance(runConfig) && (
-          <div
-            className="flex-1 min-h-0 overflow-y-auto text-white"
-            style={{ backgroundColor: THEME.bg }}
-          >
-            {(snapshotWriteFailed || continuedWithoutCoaching) && (
-              <div className="px-4 pt-3 space-y-2">{recoveryNotice}</div>
-            )}
-            <TreadmillMode
-              mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
-              elapsed={timer.elapsed}
-              formatTime={timer.formatTime}
-              isPaused={phase === "paused"}
-              onPause={handlePause}
-              onResume={handleResume}
-              distanceDraft={manualDistanceDraft}
-              onDistanceDraftChange={handleManualDistanceDraftChange}
-              sessionGuidance={
-                sessionSegments ? (
-                  <IntervalStepShell
-                    player={player}
-                    band={intervalBand}
-                    manualDistance
-                    paused={phase === "paused"}
-                    onSkip={() => {
-                      haptic();
-                      player.skip(timer.elapsed, 0);
+                        Record time now and enter distance after.
+                      </p>
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={handleMoveToTreadmill}
+                    className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                  >
+                    On a treadmill
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gps.stop();
+                      // Back to the run's own card, where Customise is.
+                      setArrival("done");
+                      dispatch({ type: "CANCEL_ACQUIRING" });
                     }}
-                  />
-                ) : undefined
-              }
-              onSave={(distance) => {
-                setTreadmillDistance(distance);
-                haptic("success");
-                finishRun(distance);
-              }}
-              onDiscard={() => {
-                // A draft reset can render before navigation unmounts Run.
-                // Retire the writer before clearing the discarded checkpoint.
-                startedAtRef.current = null;
-                if (profile?.uid)
-                  discardStoredSession(profile.uid, identityRef.current);
-                replaceManualDistanceDraft(null);
-                navigate("/");
-              }}
-            />
-          </div>
-        )}
+                    className="text-sm"
+                    style={{ color: "rgba(255,255,255,0.7)" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
-      {(phase === "active" || phase === "paused") &&
-        isOutdoorGpsRun(runConfig) && (
-          <div
-            className="fixed inset-0 z-50 text-white"
-            style={
-              {
-                backgroundColor: THEME.bg,
-                // The map runs under the status bar; the controls, the
-                // banners and RunMap's own note start below it.
-                "--map-overlay-top": "calc(var(--safe-top) + 0.5rem)",
-                // MapLibre handles its own pan/pinch via pointer events (it
-                // works fine under touch-action:none), and the sheet owns its
-                // own drag. Locking touch-action + overscroll here stops iOS
-                // from rubber-banding / scrolling the page out from under a
-                // sheet drag or a map gesture.
-                touchAction: "none",
-                overscrollBehavior: "none",
-              } as CSSProperties
-            }
-          >
-            <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
-              <GpsSignalChip
-                accuracy={gps.gpsAccuracy}
-                isTracking={gps.isTracking}
-                pointCount={gps.points.length}
-                signalQuality={gps.signalQuality}
+        {(phase === "active" || phase === "paused") &&
+          requiresManualDistance(runConfig) && (
+            <div
+              className="flex-1 min-h-0 overflow-y-auto text-white"
+              style={{ backgroundColor: THEME.bg }}
+            >
+              {(snapshotWriteFailed || continuedWithoutCoaching) && (
+                <div className="px-4 pt-3 space-y-2">{recoveryNotice}</div>
+              )}
+              <TreadmillMode
+                mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
+                elapsed={timer.elapsed}
+                formatTime={timer.formatTime}
+                isPaused={phase === "paused"}
+                onPause={handlePause}
+                onResume={handleResume}
+                distanceDraft={manualDistanceDraft}
+                onDistanceDraftChange={handleManualDistanceDraftChange}
+                sessionGuidance={
+                  sessionSegments ? (
+                    <IntervalStepShell
+                      player={player}
+                      band={intervalBand}
+                      manualDistance
+                      paused={phase === "paused"}
+                      onSkip={() => {
+                        haptic();
+                        player.skip(timer.elapsed, 0);
+                      }}
+                    />
+                  ) : undefined
+                }
+                onSave={(distance) => {
+                  setTreadmillDistance(distance);
+                  haptic("success");
+                  finishRun(distance);
+                }}
+                onDiscard={() => {
+                  // A draft reset can render before navigation unmounts Run.
+                  // Retire the writer before clearing the discarded checkpoint.
+                  startedAtRef.current = null;
+                  if (profile?.uid)
+                    discardStoredSession(profile.uid, identityRef.current);
+                  replaceManualDistanceDraft(null);
+                  navigate("/");
+                }}
               />
             </div>
+          )}
 
-            {(runConfig?.activityType === "tempo" ||
-              runConfig?.activityType === "intervals") &&
-              judgingPace &&
-              barPace !== null && (
-                <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
-                  <PaceZoneBar
-                    /* The last 30 seconds, as the alerts read it: the whole
+        {(phase === "active" || phase === "paused") &&
+          isOutdoorGpsRun(runConfig) && (
+            <div
+              className="fixed inset-0 z-50 text-white"
+              style={
+                {
+                  backgroundColor: THEME.bg,
+                  // The map runs under the status bar; the controls, the
+                  // banners and RunMap's own note start below it.
+                  "--map-overlay-top": "calc(var(--safe-top) + 0.5rem)",
+                  // MapLibre handles its own pan/pinch via pointer events (it
+                  // works fine under touch-action:none), and the sheet owns its
+                  // own drag. Locking touch-action + overscroll here stops iOS
+                  // from rubber-banding / scrolling the page out from under a
+                  // sheet drag or a map gesture.
+                  touchAction: "none",
+                  overscrollBehavior: "none",
+                } as CSSProperties
+              }
+            >
+              <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
+                <GpsSignalChip
+                  accuracy={gps.gpsAccuracy}
+                  isTracking={gps.isTracking}
+                  pointCount={gps.points.length}
+                  signalQuality={gps.signalQuality}
+                />
+              </div>
+
+              {(runConfig?.activityType === "tempo" ||
+                runConfig?.activityType === "intervals") &&
+                judgingPace &&
+                barPace !== null && (
+                  <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
+                    <PaceZoneBar
+                      /* The last 30 seconds, as the alerts read it: the whole
                      run's average carries the warm-up into every reading. */
-                    currentPace={
-                      clockHeld ? 0 : (rollingPaceSeconds(gps.points, 30) ?? 0)
-                    }
-                    targetPace={barPace}
-                    tolerance={15}
-                  />
-                </div>
-              )}
+                      currentPace={clockHeld ? 0 : (currentRollingPaceSec ?? 0)}
+                      targetPace={barPace}
+                      tolerance={15}
+                    />
+                  </div>
+                )}
 
-            <RunMap
-              points={gps.points}
-              currentPoint={gps.currentPoint}
-              onMapTap={() => setPanelExpandRequest((n) => n + 1)}
-              interactive={true}
-              liveControls={true}
-              distanceMarkers={true}
-              markerUnit={unit}
-              targetRoute={targetRoute ?? undefined}
-              height="h-full"
-              className="absolute inset-0"
-            />
+              <RunMap
+                points={gps.points}
+                pointsVersion={gps.pointsVersion}
+                currentPoint={gps.currentPoint}
+                onMapTap={() => setPanelExpandRequest((n) => n + 1)}
+                interactive={true}
+                liveControls={true}
+                distanceMarkers={true}
+                markerUnit={unit}
+                targetRoute={targetRoute ?? undefined}
+                height="h-full"
+                className="absolute inset-0"
+              />
 
-            {/* Top-centre nav aid + run status banners, in ONE flow stack.
+              {/* Top-centre nav aid + run status banners, in ONE flow stack.
                 Each of these used to be its own absolutely-positioned element
                 at a hand-picked `top-*`, which collided in two ways on a real
                 device: `autoPaused` and `bgGapBanner` shared `top-20`, so any
@@ -3220,58 +3329,58 @@ export default function Run() {
                 Clear of the left GPS indicator + the tempo/interval
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
-            <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
-              {recoveryNotice}
-              {targetRoute ? (
-                <>
-                  <RouteFollowChip
-                    targetRoute={targetRoute}
+              <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
+                {recoveryNotice}
+                {targetRoute ? (
+                  <>
+                    <RouteFollowChip
+                      targetRoute={targetRoute}
+                      currentPoint={gps.currentPoint}
+                    />
+                    <GhostDeltaChip
+                      targetRoute={targetRoute}
+                      currentPoint={gps.currentPoint}
+                      elapsedSec={timer.elapsed}
+                    />
+                  </>
+                ) : (
+                  <BackToStartChip
+                    points={gps.points}
                     currentPoint={gps.currentPoint}
                   />
-                  <GhostDeltaChip
-                    targetRoute={targetRoute}
-                    currentPoint={gps.currentPoint}
-                    elapsedSec={timer.elapsed}
+                )}
+
+                {autoPaused && (
+                  <div
+                    className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-3 py-2 text-center"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-xs text-warning-strong">
+                      Auto-paused · start moving to resume
+                    </p>
+                  </div>
+                )}
+
+                {bgGapBanner && (
+                  <div
+                    className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-xs text-warning-strong">{bgGapBanner}</p>
+                  </div>
+                )}
+
+                {showBgGrantNote && (
+                  <RunBackgroundGrantNote
+                    onOpenSettings={openLocationSettings}
+                    onDismiss={dismissBgGrantNote}
                   />
-                </>
-              ) : (
-                <BackToStartChip
-                  points={gps.points}
-                  currentPoint={gps.currentPoint}
-                />
-              )}
+                )}
 
-              {autoPaused && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-3 py-2 text-center"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">
-                    Auto-paused · start moving to resume
-                  </p>
-                </div>
-              )}
-
-              {bgGapBanner && (
-                <div
-                  className="max-w-full whitespace-nowrap rounded-full bg-warning-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-warning-strong">{bgGapBanner}</p>
-                </div>
-              )}
-
-              {showBgGrantNote && (
-                <RunBackgroundGrantNote
-                  onOpenSettings={openLocationSettings}
-                  onDismiss={dismissBgGrantNote}
-                />
-              )}
-
-              {(() => {
-                /* GPS-loss banner: no fix has ARRIVED for 8s during an
+                {(() => {
+                  /* GPS-loss banner: no fix has ARRIVED for 8s during an
                active run.
                
                It reads `lastFixAt`, which until 2026-08-13 meant "the
@@ -3286,89 +3395,92 @@ export default function Run() {
                so the comparison stays current without a separate
                interval. The treadmill case is already excluded by
                the parent JSX block at the start of this section. */
-                if (phase !== "active") return null;
-                if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
-                /* Reading the wall clock during render is flagged as
+                  if (phase !== "active") return null;
+                  if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
+                  /* Reading the wall clock during render is flagged as
                impure by react-hooks/purity. The render is bounded by
                the per-second timer.elapsed re-render, so staleness is
                at most ~1s — the banner will appear / refresh on the
                next tick. The dependency on Date.now() is intentional. */
-                // eslint-disable-next-line react-hooks/purity -- see above
-                const now = Date.now();
-                // Phase B3: suppress for 5s after a Resume so the cold-
-                // start GPS window doesn't render a false-positive banner
-                // against the stale lastFixAt of the restored trail.
-                if (now < gapBannerSuppressUntil) return null;
-                const gapSeconds = (now - gps.lastFixAt) / 1000;
-                if (gapSeconds < 8) return null;
-                return (
-                  <div
-                    className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <p className="text-xs text-destructive-strong">
-                      GPS recovering · last fix {Math.round(gapSeconds)}s ago
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
+                  // eslint-disable-next-line react-hooks/purity -- see above
+                  const now = Date.now();
+                  // Phase B3: suppress for 5s after a Resume so the cold-
+                  // start GPS window doesn't render a false-positive banner
+                  // against the stale lastFixAt of the restored trail.
+                  if (now < gapBannerSuppressUntil) return null;
+                  const gapSeconds = (now - gps.lastFixAt) / 1000;
+                  if (gapSeconds < 8) return null;
+                  return (
+                    <div
+                      className="max-w-full whitespace-nowrap rounded-full bg-destructive-bg px-4 py-2 text-center motion-safe:animate-pulse"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <p className="text-xs text-destructive-strong">
+                        GPS recovering · last fix {Math.round(gapSeconds)}s ago
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
 
-            <RunBottomSheet
-              expandRequest={panelExpandRequest}
-              elapsed={timer.elapsed}
-              distance={currentDistance}
-              points={gps.points}
-              formatTime={timer.formatTime}
-              onPause={handlePause}
-              onLock={() => setLocked(true)}
-              isPaused={phase === "paused"}
-              paceHeld={clockHeld}
-              onResume={handleResume}
-              onStop={() => {
-                haptic("success");
-                finishRun();
-              }}
-              /* Sub-threshold runs route home immediately — there's
+              <RunBottomSheet
+                expandRequest={panelExpandRequest}
+                elapsed={timer.elapsed}
+                distance={currentDistance}
+                points={gps.points}
+                pointsVersion={gps.pointsVersion}
+                formatTime={timer.formatTime}
+                onPause={handlePause}
+                onLock={() => setLocked(true)}
+                isPaused={phase === "paused"}
+                paceHeld={clockHeld}
+                onResume={handleResume}
+                onStop={() => {
+                  haptic("success");
+                  finishRun();
+                }}
+                onLap={!sessionSegments ? handleManualLap : undefined}
+                manualLapCount={manualLapAnchors.length}
+                /* Sub-threshold runs route home immediately — there's
                nothing meaningful to lose. Valid runs hit the
                ConfirmDialog "Discard this run?" gate before tearing
                down GPS / timer / wake-lock. */
-              onDiscard={() => {
-                if (isInvalid) {
-                  timer.pause();
-                  gps.stop();
-                  wakeLock.release();
-                  // Phase B3: clear the persisted snapshot so a
-                  // discarded sub-threshold run doesn't reappear in
-                  // the chooser on next /run open.
-                  if (profile?.uid)
-                    discardStoredSession(profile.uid, identityRef.current);
-                  navigate("/");
-                } else {
-                  setShowDiscardConfirm(true);
+                onDiscard={() => {
+                  if (isInvalid) {
+                    timer.pause();
+                    gps.stop();
+                    wakeLock.release();
+                    // Phase B3: clear the persisted snapshot so a
+                    // discarded sub-threshold run doesn't reappear in
+                    // the chooser on next /run open.
+                    if (profile?.uid)
+                      discardStoredSession(profile.uid, identityRef.current);
+                    navigate("/");
+                  } else {
+                    setShowDiscardConfirm(true);
+                  }
+                }}
+                isInvalid={isInvalid}
+                intervalDisplay={
+                  sessionSegments ? (
+                    <IntervalStepShell
+                      player={player}
+                      band={intervalBand}
+                      onSkip={() => {
+                        haptic();
+                        player.skip(timer.elapsed, gps.distance);
+                      }}
+                    />
+                  ) : undefined
                 }
-              }}
-              isInvalid={isInvalid}
-              intervalDisplay={
-                sessionSegments ? (
-                  <IntervalStepShell
-                    player={player}
-                    band={intervalBand}
-                    onSkip={() => {
-                      haptic();
-                      player.skip(timer.elapsed, gps.distance);
-                    }}
-                  />
-                ) : undefined
-              }
-              weightKg={profile?.weightKg || 70}
-              bpm={hr.bpm}
-              hrZone={hr.zone}
-            />
-          </div>
-        )}
-      {/* Phase B3: chooser overlays everything while we have a
+                weightKg={profile?.weightKg || 70}
+                bpm={hr.bpm}
+                hrZone={hr.zone}
+              />
+            </div>
+          )}
+        {/* Phase B3: chooser overlays everything while we have a
           recoverable snapshot. Mounted last so it z-orders above the
           setup modal and any other waiting-state UI.
           Distance is rebuilt from the persisted point buffer here
@@ -3376,57 +3488,58 @@ export default function Run() {
           shape minimal and counts by the rule the GPS hook rebuilds the
           live distance with on Resume (`totalDistance`), so the prompt
           and the run it resumes show the same figure. */}
-      {resumePrompt && (
-        <RunResumePrompt
-          accumulatedSeconds={resumePrompt.accumulatedSeconds}
-          distanceMeters={totalDistance(resumePrompt.points)}
-          startedAt={resumePrompt.startedAt}
-          onResume={handleResumeFromPrompt}
-          recoveryNote={
-            resumeCoaching?.fallback
-              ? "Your recorded progress is kept. Session guidance couldn’t be restored. Continue without coaching."
-              : undefined
-          }
-          resumeLabel={
-            resumeCoaching?.fallback ? "Continue without coaching" : undefined
-          }
-          onStartNew={handleStartNewFromPrompt}
-          onDiscard={handleDiscardFromPrompt}
-          onBack={leaveSetup}
+        {resumePrompt && (
+          <RunResumePrompt
+            accumulatedSeconds={resumePrompt.accumulatedSeconds}
+            distanceMeters={totalDistance(resumePrompt.points)}
+            startedAt={resumePrompt.startedAt}
+            onResume={handleResumeFromPrompt}
+            recoveryNote={
+              resumeCoaching?.fallback
+                ? "Your recorded progress is kept. Session guidance couldn’t be restored. Continue without coaching."
+                : undefined
+            }
+            resumeLabel={
+              resumeCoaching?.fallback ? "Continue without coaching" : undefined
+            }
+            onStartNew={handleStartNewFromPrompt}
+            onDiscard={handleDiscardFromPrompt}
+            onBack={leaveSetup}
+          />
+        )}
+
+        <ConfirmDialog
+          open={showDiscardConfirm}
+          title="Discard this run?"
+          description="This can’t be undone."
+          confirmLabel="Discard"
+          destructive
+          onConfirm={() => {
+            setShowDiscardConfirm(false);
+            timer.pause();
+            gps.stop();
+            wakeLock.release();
+            // Phase B3: clear so the discarded run doesn't get
+            // resurrected by the chooser on next mount.
+            if (profile?.uid)
+              discardStoredSession(profile.uid, identityRef.current);
+            navigate("/");
+          }}
+          onCancel={() => setShowDiscardConfirm(false)}
         />
-      )}
 
-      <ConfirmDialog
-        open={showDiscardConfirm}
-        title="Discard this run?"
-        description="This can’t be undone."
-        confirmLabel="Discard"
-        destructive
-        onConfirm={() => {
-          setShowDiscardConfirm(false);
-          timer.pause();
-          gps.stop();
-          wakeLock.release();
-          // Phase B3: clear so the discarded run doesn't get
-          // resurrected by the chooser on next mount.
-          if (profile?.uid)
-            discardStoredSession(profile.uid, identityRef.current);
-          navigate("/");
-        }}
-        onCancel={() => setShowDiscardConfirm(false)}
-      />
-
-      <ConfirmDialog
-        open={showLeaveConfirm}
-        title="Leave this run?"
-        description="Your progress is saved. You can resume where you left off."
-        confirmLabel="Leave"
-        onConfirm={() => {
-          setShowLeaveConfirm(false);
-          navigate("/");
-        }}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
+        <ConfirmDialog
+          open={showLeaveConfirm}
+          title="Leave this run?"
+          description="Your progress is saved. You can resume where you left off."
+          confirmLabel="Leave"
+          onConfirm={() => {
+            setShowLeaveConfirm(false);
+            navigate("/");
+          }}
+          onCancel={() => setShowLeaveConfirm(false)}
+        />
+      </div>
     </div>
   );
 }

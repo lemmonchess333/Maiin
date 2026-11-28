@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { m, useMotionValue, useTransform, animate } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Props {
@@ -51,5 +51,5 @@ export function AnimatedNumber({
   }, [value, reduce, count, duration, ease]);
 
   if (reduce) return <span className={className}>{formatted(value)}</span>;
-  return <motion.span className={className}>{display}</motion.span>;
+  return <m.span className={className}>{display}</m.span>;
 }

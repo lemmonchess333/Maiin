@@ -30,7 +30,7 @@ export type CardSize = "hero" | "compact";
  *  pair under Water); `tinted` supplies no surface at all, for the
  *  sport-coloured CTA cards whose 8% wash the caller paints (the colour is
  *  the card's meaning, so it stays at the call site). */
-export type CardTone = "card" | "muted" | "tinted";
+export type CardTone = "card" | "flat" | "muted" | "tinted";
 
 const SIZE_CLASSES: Record<CardSize, { radius: string; padding: string }> = {
   hero: { radius: "rounded-2xl", padding: "p-4" },
@@ -39,6 +39,7 @@ const SIZE_CLASSES: Record<CardSize, { radius: string; padding: string }> = {
 
 const TONE_CLASSES: Record<CardTone, string> = {
   card: "bg-card card-shadow",
+  flat: "bg-card surface-flat",
   // A tile's lit edge on dark (DS6, §14o), at a chip's size: transparent
   // in light, where the tile still sits flush.
   muted: "bg-muted chip-edge",

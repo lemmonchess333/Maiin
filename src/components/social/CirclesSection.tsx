@@ -1785,7 +1785,7 @@ export default function CirclesSection({
                   />
                 </Suspense>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <SectionHeading size="compact" as="h3">
                     Recent
                   </SectionHeading>

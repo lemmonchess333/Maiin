@@ -5,34 +5,41 @@ import { render, screen, fireEvent } from "@testing-library/react";
 // Mock framer-motion to render plain divs so we can test clicks
 // against the rendered buttons without swipe-gesture interference.
 vi.mock("framer-motion", function () {
+  const motionProxy = new Proxy(
+    {},
+    {
+      get: function (_target: any, prop: string) {
+        return function (props: any) {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _t,
+            variants: _v,
+            whileTap: _w,
+            drag: _d,
+            dragDirectionLock: _ddl,
+            dragConstraints: _dc,
+            dragElastic: _de,
+            onDrag: _od,
+            onDragEnd: _ode,
+            onTap: _ot,
+            ...rest
+          } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        };
+      },
+    }
+  );
   return {
-    motion: new Proxy(
-      {},
-      {
-        get: function (_target: any, prop: string) {
-          return function (props: any) {
-            const {
-              initial: _i,
-              animate: _a,
-              exit: _e,
-              transition: _t,
-              variants: _v,
-              whileTap: _w,
-              drag: _d,
-              dragDirectionLock: _ddl,
-              dragConstraints: _dc,
-              dragElastic: _de,
-              onDrag: _od,
-              onDragEnd: _ode,
-              onTap: _ot,
-              ...rest
-            } = props;
-            const Tag = prop === "create" ? "div" : prop;
-            return <Tag {...rest} />;
-          };
-        },
-      }
-    ),
+    m: motionProxy,
+    motion: motionProxy,
+    LazyMotion: function ({ children }: any) {
+      return children;
+    },
+    domMax: {},
+    domAnimation: {},
     AnimatePresence: function ({ children }: any) {
       return children;
     },

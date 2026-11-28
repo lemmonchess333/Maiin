@@ -66,7 +66,11 @@ import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import type { RaceDistance } from "@/features/program/programTypes";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
+import { buildWeekPlanIcs, icsFile } from "@/lib/planCalendarIcs";
+import { shareFile } from "@/lib/shareFile";
+const ScheduleLayoutSheet = lazyRetry(
+  () => import("@/components/program/ScheduleLayoutSheet")
+);
 import {
   CalendarRange,
   Dumbbell,
@@ -78,7 +82,7 @@ import {
   FastForward,
   ArrowUpDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import PageShell from "@/components/ui/PageShell";
 import { splitLabel } from "@/features/program/programEngine";
@@ -854,7 +858,7 @@ function ProgramInner() {
             key={orderHelpRequest}
             requested={orderHelpRequest > 0}
             id="train-order"
-            placement="top"
+            placement="bottom"
             when={
               liftSelectorCells.length > 1 &&
               !session.sessionOpen &&
@@ -1075,28 +1079,32 @@ function ProgramInner() {
           hook) only mounts while the sheet is open. That's the
           hydration guarantee: each open is a fresh hook mount that
           re-reads the current profile. */}
-      <ScheduleLayoutSheet
-        open={editLayoutOpen}
-        onClose={() => setEditLayoutOpen(false)}
-        profile={profile}
-        programState={programState}
-        updateProfile={updateProfile}
-        refreshRunSchedule={refreshRunSchedule}
-        regenerateProgram={regenerateProgram}
-      />
+      {editLayoutOpen && (
+        <Suspense fallback={null}>
+          <ScheduleLayoutSheet
+            open={editLayoutOpen}
+            onClose={() => setEditLayoutOpen(false)}
+            profile={profile}
+            programState={programState}
+            updateProfile={updateProfile}
+            refreshRunSchedule={refreshRunSchedule}
+            regenerateProgram={regenerateProgram}
+          />
+        </Suspense>
+      )}
 
       {/* Overflow Menu Sheet */}
       <AnimatePresence>
         {showOverflow && (
           <>
-            <motion.div
+            <m.div
               initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
               exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 bg-black/50 z-40"
               onClick={() => setShowOverflow(false)}
             />
-            <motion.div
+            <m.div
               ref={overflowRef}
               role="dialog"
               aria-modal="true"
@@ -1254,8 +1262,32 @@ function ProgramInner() {
                     </span>
                   </span>
                 </button>
+                {(profile?.weekSchedule?.length ?? 0) > 0 && (
+                  <Button
+                    variant="ghost"
+                    fullWidth
+                    onClick={async () => {
+                      setShowOverflow(false);
+                      haptic();
+                      const ics = buildWeekPlanIcs({
+                        schedule: profile?.weekSchedule ?? [],
+                        workouts: programState?.workouts ?? [],
+                        referenceDate: parseLocalDate(todayKey),
+                      });
+                      const file = icsFile(ics, `tropos-week-${todayKey}.ics`);
+                      const outcome = await shareFile(file);
+                      if (outcome === "shared" || outcome === "downloaded") {
+                        toast.success("Week exported to calendar");
+                      } else if (outcome === "failed") {
+                        toast.error("Couldn’t export calendar. Try again.");
+                      }
+                    }}
+                  >
+                    Export week to calendar
+                  </Button>
+                )}
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

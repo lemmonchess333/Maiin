@@ -10,6 +10,29 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## One last time for a lift, and no best from a GPS catch-up (2026-11-23)
+
+Home's hero and Train's session card set today's lift against the saved
+session Train's row lists (`lastSetsBySlot`, `lastTimeOf`); a loaded lift's
+sets saved with no weight read as reps; and a run whose kept trace has a
+step faster than any runner keeps none of the efforts it saved before the
+2 Nov detector fix (`keptBestEfforts`). The unit tests pin each; only the
+owner's own account holds the 1 Nov run and the Pull A that showed them.
+
+- [ ] **Home and Train name one last time.** On the owner's account, Home's
+      Pull A hero and Train's Pull A card. Passing: both lines say the same
+      thing against last time, and it is the row's "Last:" weight (with
+      "Last: 60 kg × 10, 10" under Barbell Row, the line reads "25 kg less
+      than last time", not 7.5).
+- [ ] **No dash for a missing weight.** Train's Pull A, Rope Tricep
+      Pushdown. Passing: "Last: 10, 10 reps".
+- [ ] **The 1 Nov 1K is gone.** Progress → Bests. Passing: no "Fastest 1K
+      4:29" on either card; Fastest 1K is 6:50 · 16 Aug, or a later run's;
+      the 1 Nov run's page shows no 4:29 under Best efforts (a 1K at its
+      own pace if it kept its whole trace, none if the trace was thinned).
+      If the 4:29 is still there, the run's kept trace had no step past
+      12 m/s: note its point count, and the catch-up needs another reading.
+
 ## Enter this race opens the organiser's page (Reg1, 2026-11-23)
 
 A race's page has "Enter this race", a link to the organiser's own entry

@@ -348,7 +348,7 @@ export default function TrainingBlockCard({
           }}
           /* DS3: a plain row on the card surface, no tinted icon tile,
              like the day's exercise list above it. */
-          className="w-full min-h-[44px] p-3 rounded-xl bg-card card-shadow flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
+          className="w-full min-h-[44px] p-3 rounded-xl bg-card surface-flat flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
@@ -377,7 +377,7 @@ export default function TrainingBlockCard({
             if (finished) void openReview(block);
             else setShowDetail(true);
           }}
-          className="w-full min-h-[44px] p-3 rounded-xl bg-card card-shadow flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
+          className="w-full min-h-[44px] p-3 rounded-xl bg-card surface-flat flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
@@ -680,7 +680,7 @@ export default function TrainingBlockCard({
                 minus sign, and "never a guilt trip" is one of this surface's
                 locked constraints. */}
             {review.anchors.some((a) => a.endE1rm) && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <SectionLabel>Main lifts</SectionLabel>
                 {review.anchors
                   .filter((a) => a.endE1rm)

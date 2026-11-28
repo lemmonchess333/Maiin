@@ -2,7 +2,7 @@ import { useHiddenActivities } from "@/hooks/useHiddenActivities";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUid } from "@/lib/auth";
 import { useFollowingCount } from "@/hooks/useFollowingCount";
@@ -19,7 +19,10 @@ import { X, Search, Bell } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
-import NotificationsSheet from "@/components/social/NotificationsSheet";
+import { lazyRetry } from "@/lib/lazyRetry";
+const NotificationsSheet = lazyRetry(
+  () => import("@/components/social/NotificationsSheet")
+);
 import { shouldShowFollowingFeed } from "@/lib/socialGates";
 import PageShell from "@/components/ui/PageShell";
 import MedalRevealGate from "@/features/challenges/MedalRevealGate";
@@ -319,19 +322,23 @@ export default function Social() {
         />
       )}
 
-      <NotificationsSheet
-        open={showNotifications}
-        onOpenChange={(open) => {
-          setShowNotifications(open);
-          /* A row that arrived while the tray was open has been seen
-             too: closing it leaves no dot on the Social tab (App1 Q34). */
-          if (!open) notifications.markAllSeen();
-        }}
-        items={notifications.items}
-        loading={notifications.loading}
-        error={notifications.error}
-        onRetry={notifications.retry}
-      />
+      {showNotifications && (
+        <Suspense fallback={null}>
+          <NotificationsSheet
+            open={showNotifications}
+            onOpenChange={(open) => {
+              setShowNotifications(open);
+              /* A row that arrived while the tray was open has been seen
+                 too: closing it leaves no dot on the Social tab (App1 Q34). */
+              if (!open) notifications.markAllSeen();
+            }}
+            items={notifications.items}
+            loading={notifications.loading}
+            error={notifications.error}
+            onRetry={notifications.retry}
+          />
+        </Suspense>
+      )}
 
       {/* ========== FEED TAB ========== */}
       <FeedView

@@ -702,6 +702,73 @@ describe("advanceWeek — the week opens with the session not reached", () => {
     );
     expect(next.workouts).toHaveLength(3);
   });
+
+  it("keeps Lift4's opening session while keeping leg days off the long run's eve on rollover", () => {
+    const upper = (name: string, completed = false): WorkoutDay => ({
+      dayName: name,
+      dayType: "upper",
+      completed,
+      exercises: [
+        makeTestExercise({
+          name: "Bench Press",
+          exerciseId: "bench-press",
+          movementCategory: "horizontal_push",
+          sets: 4,
+        }),
+      ],
+    });
+    const legs = (name: string, completed = false): WorkoutDay => ({
+      dayName: name,
+      dayType: "lower",
+      completed,
+      exercises: [
+        makeTestExercise({
+          name: "Back Squat",
+          exerciseId: "barbell-squat",
+          movementCategory: "knee_dominant",
+          sets: 4,
+        }),
+        makeTestExercise({
+          name: "Romanian Deadlift",
+          exerciseId: "romanian-deadlift",
+          movementCategory: "hip_dominant",
+          sets: 4,
+        }),
+      ],
+    });
+    // Mon lift (0), Wed lift (1), Fri lift (2) -> Sat run (long run, day 6).
+    const schedule = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "lift" },
+      { day: 2, type: "run" },
+      { day: 3, type: "lift" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "run" },
+    ];
+    // Original order: [Legs, Push, Pull]. User completed Legs (Mon), missed Push & Pull.
+    // Raw rotation puts [Push, Pull, Legs] -> Legs lands on Friday (eve of Saturday long run)!
+    const next = advanceWeek(
+      week([legs("Legs", true), upper("Push"), upper("Pull")]),
+      "intermediate",
+      undefined,
+      null,
+      { weekSchedule: schedule }
+    );
+    // Push stays first (Lift4), while Legs moves away from index 2 (Friday long-run eve).
+    expect(names(next)[0]).toBe("Push");
+    expect(names(next)[2]).not.toBe("Legs");
+
+    // On a fully completed week, a previously rotated order heals back off Friday's eve.
+    const healed = advanceWeek(
+      week([upper("Push", true), upper("Pull", true), legs("Legs", true)]),
+      "intermediate",
+      undefined,
+      null,
+      { weekSchedule: schedule }
+    );
+    expect(names(healed)[2]).not.toBe("Legs");
+  });
 });
 
 // ── PPL×2 Deep Copy ─────────────────────────────

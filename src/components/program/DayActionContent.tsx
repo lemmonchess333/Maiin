@@ -547,12 +547,12 @@ export default function DayActionContent({
                 ))}
               </Select>
               {isRaceTemplate ? (
-                <span className="mt-1 block text-caption text-muted-foreground">
+                <span className="mt-1 block text-micro text-muted-foreground">
                   {goalDayName(profile?.raceGoal)} keeps its template.
                 </span>
               ) : (
                 run.isStartable && (
-                  <span className="mt-1 block text-caption text-muted-foreground">
+                  <span className="mt-1 block text-micro text-muted-foreground">
                     Changes this day only.
                   </span>
                 )

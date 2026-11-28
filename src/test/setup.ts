@@ -1,5 +1,47 @@
 import "@testing-library/jest-dom";
+import type { ReactElement, ReactNode } from "react";
 import { afterEach, vi } from "vitest";
+
+/* In production, App.tsx mounts every signed-in screen under MotionRoot
+ * (`<LazyMotion features={domAnimation} strict>`). Unit tests render
+ * components in isolation with `@testing-library/react`'s `render()`,
+ * where `m.*` elements would otherwise lack a LazyContext renderer and
+ * stay stuck at their `initial` style / 0 MotionValue. Composing
+ * `LazyMotion` around RTL's `wrapper` in jsdom gives every component
+ * test the same `domAnimation` runtime without changing production code
+ * or requiring 300+ test files to manually wrap in MotionRoot. */
+vi.mock("@testing-library/react", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@testing-library/react")>();
+  if (typeof document === "undefined") return actual;
+  const [{ createElement }, framer] = await Promise.all([
+    import("react"),
+    import("framer-motion"),
+  ]);
+  const exports = Object.keys(framer);
+  if (!exports.includes("LazyMotion") || !exports.includes("domAnimation")) {
+    return actual;
+  }
+  const { LazyMotion, domAnimation } = framer;
+  const render = ((
+    ui: Parameters<typeof actual.render>[0],
+    options?: Parameters<typeof actual.render>[1]
+  ) => {
+    const UserWrapper = options?.wrapper;
+    function MotionTestWrapper({ children }: { children: ReactNode }) {
+      const inner = UserWrapper
+        ? createElement(UserWrapper, null, children)
+        : children;
+      return createElement(
+        LazyMotion,
+        { features: domAnimation },
+        inner as ReactElement
+      );
+    }
+    return actual.render(ui, { ...options, wrapper: MotionTestWrapper });
+  }) as typeof actual.render;
+  return { ...actual, render };
+});
 
 /* Drain post-unmount timers before the jsdom realm is torn down.
  *

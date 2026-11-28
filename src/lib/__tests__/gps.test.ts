@@ -18,6 +18,7 @@ import {
   totalDistance,
   estimateRunCalories,
   detectBestEfforts,
+  hasImpossibleStep,
   isImpossibleStep,
   isTraceStep,
   traceStepMetres,
@@ -1161,6 +1162,41 @@ describe("toGPX", () => {
     expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
     expect(gpx).toContain("<time>1970-01-01T00:05:02.000Z</time>");
   });
+
+  it("emits Garmin gpxtpx:hr extensions when fresh HR samples match trackpoints", () => {
+    const track: GPSPoint[] = [
+      makePoint({ lat: 51.5, lon: -0.1, timestamp: 10_000 }),
+      makePoint({ lat: 51.501, lon: -0.1, timestamp: 20_000 }),
+      makePoint({ lat: 51.502, lon: -0.1, timestamp: 50_000 }), // > 15s stale
+    ];
+    const gpx = toGPX(track, "HR Run", {
+      heartRateSamples: [
+        { at: 9_000, bpm: 148, source: "apple-watch" },
+        // Bluetooth reading overrides Watch reading at the same window
+        { at: 19_000, bpm: 154, source: "bluetooth" },
+        { at: 19_500, bpm: 170, source: "apple-watch" },
+      ],
+    });
+    expect(gpx).toContain(
+      'xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"'
+    );
+    expect(gpx).toContain(
+      "<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>148</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>"
+    );
+    expect(gpx).toContain(
+      "<extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>154</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions>"
+    );
+    expect(gpx).not.toContain("<gpxtpx:hr>170</gpxtpx:hr>");
+    expect(gpx.match(/<gpxtpx:hr>/g)).toHaveLength(2);
+  });
+
+  it("omits gpxtpx namespace and extensions when no HR samples match", () => {
+    const gpx = toGPX(pts, "No HR", {
+      heartRateSamples: [{ at: 999_000, bpm: 150, source: "apple-watch" }],
+    });
+    expect(gpx).not.toContain("gpxtpx");
+    expect(gpx).not.toContain("<extensions>");
+  });
 });
 
 describe("rawTrace", () => {
@@ -1329,6 +1365,46 @@ describe("detectBestEfforts — a step faster than any runner", () => {
     expect(isImpossibleStep(MAX_PLAUSIBLE_SPEED_MPS + 0.01, 1)).toBe(true);
     expect(isImpossibleStep(5, 0)).toBe(true);
     expect(isImpossibleStep(0, 0)).toBe(false);
+  });
+});
+
+/* A saved run keeps its trace, thinned (`KEPT_ROUTE_POINTS`), and the
+   best efforts its finish screen timed. Those timed before #3036 crossed
+   the step the rule above refuses, so a reader asks the kept trace
+   whether it has one, by the rule `detectBestEfforts` measures it with. */
+describe("hasImpossibleStep", () => {
+  it("finds a step faster than any runner", () => {
+    expect(
+      hasImpossibleStep(trace(25, 100, 50, {}, { 14: 400 }, { 14: 2 }))
+    ).toBe(true);
+  });
+
+  it("passes a run at any runner's pace, and an empty trace", () => {
+    expect(hasImpossibleStep(trace(25, 100, 50))).toBe(false);
+    // A 100 m sprint in 9 s is 11.1 m/s: fast, and a runner's.
+    expect(hasImpossibleStep(trace(10, 100, 9))).toBe(false);
+    expect(hasImpossibleStep([])).toBe(false);
+  });
+
+  it("measures a jump across a hold and a break as the distance does", () => {
+    // Paused for 10 minutes and carried 400 m: the line across the hold is
+    // capped to what the running clock either side could carry.
+    expect(
+      hasImpossibleStep(trace(25, 100, 50, { 14: 600 }, { 14: 400 }))
+    ).toBe(false);
+    // A privacy cut: the step into a new piece carries no metres.
+    const cut = trace(25, 100, 50, {}, { 14: 400 }, { 14: 2 });
+    cut[14] = { ...cut[14], breakBefore: true };
+    expect(hasImpossibleStep(cut)).toBe(false);
+  });
+
+  it("still finds a catch-up once the trace is thinned as a run is saved", () => {
+    // 1,500 fixes a second apart at 1.6 m/s, and twelve after a gap that
+    // drag the position 600 m at 50 m/s, thinned to the 500 a run keeps.
+    const steps: Record<number, number> = {};
+    for (let i = 700; i < 712; i++) steps[i] = 50 - 1.6;
+    const full = trace(1500, 1.6, 1, {}, steps);
+    expect(hasImpossibleStep(sampleRoute(full, 500))).toBe(true);
   });
 });
 

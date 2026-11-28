@@ -2,6 +2,7 @@ import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { workoutCircuit } from "@/features/circuit/savedCircuit";
 
 /** CSV quoting protects cell boundaries; an apostrophe also keeps untrusted
@@ -22,7 +23,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
   // synced: it is the user's data from the moment they finished it.
   const workouts = await fetchSavedWorkouts(uid, { all: true });
 
-  const rows = ["Date,Exercise,Set,Weight (kg),Reps,Type"];
+  const rows = ["Date,Exercise,Set,Weight (kg),Reps,Type,RPE"];
 
   // Older workouts named an exercise `name` and a set's load `weight`.
   type ExportedExercise = {
@@ -33,6 +34,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
       weight?: number;
       reps?: number;
       type?: string;
+      rpe?: number;
     }[];
   };
   for (const w of workouts) {
@@ -49,6 +51,7 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
           csvCell(0),
           csvCell(circuit.activeSeconds),
           csvCell("circuit"),
+          csvCell(""),
         ].join(",")
       );
       continue;
@@ -56,6 +59,10 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     for (const ex of w.exercises as unknown as ExportedExercise[]) {
       if (!Array.isArray(ex.sets)) continue;
       ex.sets.forEach((set, i) => {
+        const rpeCell =
+          typeof set.rpe === "number" && Number.isFinite(set.rpe)
+            ? set.rpe
+            : "";
         rows.push(
           [
             csvCell(w.date),
@@ -64,10 +71,38 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
             csvCell(set.weightKg ?? set.weight ?? 0),
             csvCell(set.reps ?? 0),
             csvCell(set.type || "working"),
+            csvCell(rpeCell),
           ].join(",")
         );
       });
     }
+  }
+
+  return rows.join("\n");
+}
+
+export async function exportRunsCSV(uid: string): Promise<string> {
+  const runs = await fetchSavedRuns(uid, { all: true });
+  const rows = [
+    "Date,Type,Distance (km),Duration (s),Avg pace (s/km),Elevation gain (m),Calories,Place,Effort",
+  ];
+
+  for (const run of runs) {
+    if (run.isInvalid && !run.savedAnyway) continue;
+    const distanceKm = Math.round((run.distance / 1000) * 100) / 100;
+    rows.push(
+      [
+        csvCell(run.day),
+        csvCell(run.activityType || run.type || "run"),
+        csvCell(distanceKm),
+        csvCell(Math.round(run.duration)),
+        csvCell(Math.round(run.avgPace)),
+        csvCell(Math.round(run.elevationGain)),
+        csvCell(Math.round(run.calories)),
+        csvCell(run.place ?? ""),
+        csvCell(run.relativeEffort ?? ""),
+      ].join(",")
+    );
   }
 
   return rows.join("\n");
@@ -117,6 +152,166 @@ export async function exportBodyweightCSV(uid: string): Promise<string> {
   return rows.join("\n");
 }
 
+export interface FullDataExport {
+  schemaVersion: 1;
+  exportedAt: string;
+  workouts: {
+    date: string;
+    exercises: {
+      name: string;
+      sets: {
+        set: number;
+        weightKg: number;
+        reps: number;
+        type: string;
+        rpe?: number;
+      }[];
+    }[];
+    circuit?: {
+      name: string;
+      roundsDone: number;
+      activeSeconds: number;
+    };
+  }[];
+  runs: {
+    date: string;
+    distanceKm: number;
+    durationSec: number;
+    avgPaceSecPerKm: number;
+    elevationGainM: number;
+    activityType: string;
+    place?: string;
+  }[];
+  meals: {
+    date: string;
+    name: string;
+    calories: number;
+    proteinG: number;
+    carbsG: number;
+    fatG: number;
+  }[];
+  bodyweight: {
+    date: string;
+    weightKg: number;
+  }[];
+}
+
+/**
+ * Full portable JSON backup combining workouts, runs, active meals, and
+ * bodyweight logs. Reuses the same single-source readers (`fetchSavedWorkouts`,
+ * `fetchSavedRuns`, `isActiveMealDoc`) so soft-deleted meals and discarded
+ * invalid runs never leak into the archive.
+ */
+export async function exportAllDataJSON(uid: string): Promise<string> {
+  const [rawWorkouts, rawRuns, mealsSnap, bwSnap] = await Promise.all([
+    fetchSavedWorkouts(uid, { all: true }),
+    fetchSavedRuns(uid, { all: true }),
+    getDocs(
+      query(collection(db, "users", uid, "meals"), orderBy("createdAt", "desc"))
+    ),
+    getDocs(
+      query(
+        collection(db, "users", uid, "bodyweightLogs"),
+        orderBy("date", "desc")
+      )
+    ),
+  ]);
+
+  type LegacyExercise = {
+    exerciseName?: string;
+    name?: string;
+    sets?: {
+      weightKg?: number;
+      weight?: number;
+      reps?: number;
+      type?: string;
+      rpe?: number;
+    }[];
+  };
+
+  const workouts: FullDataExport["workouts"] = rawWorkouts.map((w) => {
+    const circuit = workoutCircuit(w);
+    if (circuit) {
+      return {
+        date: w.date,
+        exercises: [],
+        circuit: {
+          name: circuit.name,
+          roundsDone: circuit.roundsDone,
+          activeSeconds: circuit.activeSeconds,
+        },
+      };
+    }
+    const exercises = (w.exercises as unknown as LegacyExercise[])
+      .filter((ex) => Array.isArray(ex.sets))
+      .map((ex) => ({
+        name: ex.exerciseName || ex.name || "",
+        sets: (ex.sets ?? []).map((set, i) => ({
+          set: i + 1,
+          weightKg: set.weightKg ?? set.weight ?? 0,
+          reps: set.reps ?? 0,
+          type: set.type || "working",
+          ...(typeof set.rpe === "number" && Number.isFinite(set.rpe)
+            ? { rpe: set.rpe }
+            : {}),
+        })),
+      }));
+    return { date: w.date, exercises };
+  });
+
+  const runs: FullDataExport["runs"] = rawRuns
+    .filter((r) => !(r.isInvalid && !r.savedAnyway))
+    .map((r) => ({
+      date: r.day || r.date || "",
+      distanceKm: Number.isFinite(r.distance)
+        ? Math.round((r.distance / 1000) * 100) / 100
+        : 0,
+      durationSec: Number.isFinite(r.duration) ? Math.round(r.duration) : 0,
+      avgPaceSecPerKm: Number.isFinite(r.avgPace) ? Math.round(r.avgPace) : 0,
+      elevationGainM: Number.isFinite(r.elevationGain)
+        ? Math.round(r.elevationGain)
+        : 0,
+      activityType: r.activityType || r.type || "freerun",
+      ...(r.place ? { place: r.place } : {}),
+    }));
+
+  const meals: FullDataExport["meals"] = [];
+  mealsSnap.docs.forEach((docSnap) => {
+    const m = docSnap.data();
+    if (!isActiveMealDoc(m)) return;
+    const date =
+      m.date || (m.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] ?? "");
+    meals.push({
+      date,
+      name: String(m.foodName || m.name || ""),
+      calories: Number(m.totalCalories ?? m.calories ?? 0) || 0,
+      proteinG: Number(m.totalProtein ?? m.protein ?? 0) || 0,
+      carbsG: Number(m.totalCarbs ?? m.carbs ?? 0) || 0,
+      fatG: Number(m.totalFat ?? m.fat ?? 0) || 0,
+    });
+  });
+
+  const bodyweight: FullDataExport["bodyweight"] = bwSnap.docs.map(
+    (docSnap) => {
+      const d = docSnap.data();
+      return {
+        date: String(d.date ?? ""),
+        weightKg: Number(d.weight ?? 0) || 0,
+      };
+    }
+  );
+
+  const payload: FullDataExport = {
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    workouts,
+    runs,
+    meals,
+    bodyweight,
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
 /**
  * An export as a CSV file, for shareFile to hand over: the share sheet on
  * the iPhone (Save to Files, Mail…), a download on the web. This was a
@@ -125,4 +320,9 @@ export async function exportBodyweightCSV(uid: string): Promise<string> {
  */
 export function csvFile(content: string, filename: string): File {
   return new File([content], filename, { type: "text/csv" });
+}
+
+/** Full-account JSON archive file for shareFile to hand over. */
+export function jsonFile(content: string, filename: string): File {
+  return new File([content], filename, { type: "application/json" });
 }

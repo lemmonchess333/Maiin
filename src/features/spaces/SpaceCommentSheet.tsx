@@ -249,7 +249,7 @@ export default function SpaceCommentSheet({
                 <p className="text-sm font-semibold text-foreground truncate">
                   {c.authorName || "Athlete"}
                 </p>
-                <span className="text-caption text-muted-foreground shrink-0">
+                <span className="text-micro text-muted-foreground shrink-0">
                   {c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : ""}
                 </span>
               </div>

@@ -1,4 +1,5 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useUid } from "@/lib/auth";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
@@ -7,8 +8,10 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import { isHardRun } from "@/lib/hybridGuidance";
+import { readFeel, subscribeFeel } from "@/lib/readinessFeel";
 import { runEvidenceDate } from "@/lib/runExecutionEvidence";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import type { Feel } from "@/lib/readiness";
 import { easierTodayRecommendation, isLowerBodyDay } from "./easierToday";
 import type { WorkoutDay } from "./programTypes";
 
@@ -41,8 +44,18 @@ export function useHardRunBefore(): (startedAt: number) => boolean {
 
 /** Advice for the actual cursor/chooser day; never writes a prescription. */
 export function useEasierTodayRecommendation(day: WorkoutDay | undefined) {
+  const uid = useUid();
   const { runs, evidenceReady } = useRunningStats(2);
   const today = useLocalDateKey();
+  const [feel, setFeel] = useState<Feel | null>(() =>
+    uid ? readFeel(uid, today) : null
+  );
+  useEffect(() => {
+    const sync = () => setFeel(uid ? readFeel(uid, today) : null);
+    sync();
+    return subscribeFeel(sync);
+  }, [uid, today]);
+
   return useMemo(() => {
     if (!day) return null;
     const yesterday = localDateString(addLocalDays(parseLocalDate(today), -1));
@@ -54,9 +67,17 @@ export function useEasierTodayRecommendation(day: WorkoutDay | undefined) {
           runEvidenceDate(run) === yesterday &&
           isHardRun(run)
       );
-    return easierTodayRecommendation({
+    const training = easierTodayRecommendation({
       hardRunYesterday,
       lowerBodyDay: isLowerBodyDay(day),
     });
-  }, [day, runs, evidenceReady, today]);
+    if (training.recommended) return training;
+    if (feel === "rough") {
+      return { recommended: true, reason: "you said you feel rough today" };
+    }
+    if (feel === "tired") {
+      return { recommended: true, reason: "you said you’re tired today" };
+    }
+    return training;
+  }, [day, runs, evidenceReady, today, feel]);
 }

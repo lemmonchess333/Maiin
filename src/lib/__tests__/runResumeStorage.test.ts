@@ -485,6 +485,54 @@ describe("RUN-06 chunked persistence", () => {
       expect(localStorage.getItem(runResumeChunkKey(UID, i))).toBeNull();
     }
   });
+
+  it("rewrites earlier sealed chunks on finish so reconciled pausedMs persists", () => {
+    const now = 2_000_000;
+    const basePoints = makePoints(300);
+    expect(
+      writeStoredRun(
+        UID,
+        makeSnapshot({
+          phase: "active",
+          lastWriteAt: now,
+          points: basePoints,
+        })
+      )
+    ).toBe(true);
+
+    // Finish-time moving-time reconciliation can stamp pausedMs onto points
+    // in chunk 0 (indices 0..249) while keeping the same startedAt & length.
+    const reconciled = basePoints.map((p, idx) =>
+      idx >= 100 ? { ...p, pausedMs: 45_000 } : p
+    );
+    expect(
+      writeStoredRun(
+        UID,
+        makeSnapshot({
+          phase: "finished",
+          isRunning: false,
+          lastWriteAt: now + 5_000,
+          points: reconciled,
+          finish: {
+            finishedAt: now + 5_000,
+            distance: 1_500,
+            elapsed: 255,
+            splits: [],
+            elevationGain: 0,
+            routeQuality: null,
+            workPortion: null,
+          },
+        })
+      )
+    ).toBe(true);
+
+    const read = readStoredRun(UID, now + 5_000);
+    expect(read?.phase).toBe("finished");
+    expect(read?.points[99]?.pausedMs).toBeUndefined();
+    expect(read?.points[100]?.pausedMs).toBe(45_000);
+    expect(read?.points[249]?.pausedMs).toBe(45_000);
+    expect(read?.points[299]?.pausedMs).toBe(45_000);
+  });
 });
 
 describe("clearStoredRun", () => {

@@ -18,6 +18,7 @@ import {
   Repeat,
   Pencil,
   Spline,
+  Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -47,11 +48,13 @@ import BestEffortsCard, {
 import { KEPT_ROUTE_POINTS } from "@/lib/routeSegments";
 import { useRunPlacings } from "@/hooks/useRunPlacings";
 import type { PlacedRun } from "@/lib/runPlacings";
-import { parseSavedRun } from "@/lib/savedRuns";
+import { keptBestEfforts, parseSavedRun } from "@/lib/savedRuns";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
-import ShareCardSheet from "@/components/share/ShareCardSheet";
+const ShareCardSheet = lazyRetry(
+  () => import("@/components/share/ShareCardSheet")
+);
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
@@ -78,22 +81,29 @@ import {
 import { parseGoalRaceRecord } from "@/lib/racePrediction";
 import { elapsedSecondsOf, raceSeconds, runTimeStat } from "@/lib/runElapsed";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
+import { parseRunLapSplits } from "@/lib/runLaps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { isRunDateKey } from "@/lib/runExecutionEvidence";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 const RenameRunSheet = lazyRetry(
   () => import("@/components/run/RenameRunSheet")
 );
+const RunCropSheet = lazyRetry(() => import("@/components/run/RunCropSheet"));
 /* Loaded on the first tap of "Make a segment", not with the page. */
 const SegmentMaker = lazyRetry(() => import("@/components/run/SegmentMaker"));
 /* The run's segment efforts arrive from the server after the page has
    drawn, so the card's code can too. */
 const RunSegmentEfforts = lazyRetry(
   () => import("@/components/run/RunSegmentEfforts")
+);
+/* The runner's shoe list loads asynchronously after the page has drawn. */
+const RunDetailShoeCard = lazyRetry(
+  () => import("@/components/run/RunDetailShoeCard")
 );
 
 /**
@@ -152,8 +162,14 @@ export default function RunDetail() {
   const [renameOpen, setRenameOpen] = useState(false);
   /* The sheet loads on the first tap of the pencil, not with the page. */
   const [renameWanted, setRenameWanted] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropWanted, setCropWanted] = useState(false);
   /* The name just saved, shown before the page reads the run again. */
   const [renamed, setRenamed] = useState<string | null>(null);
+  const lapSplits = useMemo(
+    () => parseRunLapSplits(run?.lapSplits),
+    [run?.lapSplits]
+  );
   const [replaying, setReplaying] = useState(false);
   /* The stretch being made a segment (Run26 call 3); null while the maker
      is closed. The map draws it, and a tap on the map moves its nearer
@@ -188,7 +204,17 @@ export default function RunDetail() {
   const savedInvalid = run?.isInvalid === true;
   const bestEfforts = useMemo(() => {
     if (savedInvalid) return [];
-    if (Array.isArray(savedEfforts)) return savedEfforts.filter(isBestEffort);
+    /* What the run saved, unless its kept trace has a step faster than
+       any runner, which efforts timed before 2 Nov 2026 crossed: then the rule
+       as it is now, on a trace kept whole, or none (`keptBestEfforts`,
+       which Bests reads too). */
+    const kept = keptBestEfforts({
+      points: keptTrack,
+      distance: keptDistance,
+      bestEfforts: savedEfforts,
+    });
+    if (Array.isArray(savedEfforts) || !kept.splitsStandIn)
+      return kept.efforts.filter(isBestEffort);
     return Array.isArray(keptTrack) &&
       keptTrack.length > 1 &&
       keptTrack.length < KEPT_ROUTE_POINTS
@@ -373,6 +399,31 @@ export default function RunDetail() {
     );
   };
 
+  const exportThisRunTcx = async () => {
+    const { exportRunTcx } = await import("@/lib/exportRunTcx");
+    const startedAtMs =
+      (run.startedAt as { toDate?: () => Date } | undefined)
+        ?.toDate?.()
+        ?.getTime() ??
+      run.points?.[0]?.timestamp ??
+      (date ? date.getTime() - (run.duration ?? 0) * 1000 : Date.now());
+    const hr = run.heartRate as
+      { averageBpm?: number; maxBpm?: number } | undefined;
+    await exportRunTcx({
+      heading,
+      fileLabel: `${heading} · ${distanceLabel(run.distance, unit)}`,
+      hasGpsTrace,
+      points: run.points ?? [],
+      privacy,
+      startedAtMs,
+      distanceMeters: typeof run.distance === "number" ? run.distance : 0,
+      durationSeconds: typeof run.duration === "number" ? run.duration : 0,
+      calories: typeof run.calories === "number" ? run.calories : undefined,
+      avgHeartRate: hr?.averageBpm,
+      maxHeartRate: hr?.maxBpm,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Map — full bleed, tall */}
@@ -517,7 +568,7 @@ export default function RunDetail() {
                 className="mt-0.5 shrink-0 text-warning-strong"
                 aria-hidden="true"
               />
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
                   {describeRouteConfidence(
                     (run.routeQuality as RouteQuality).confidence
@@ -539,7 +590,7 @@ export default function RunDetail() {
               className="mt-0.5 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">
                 Saved despite invalid metrics
               </p>
@@ -683,6 +734,30 @@ export default function RunDetail() {
           </Card>
         )}
 
+        {/* Shoe attribution: view or edit the running shoe for this session,
+            so imported GPX/TCX runs or mis-attributed runs feed shoe mileage. */}
+        {user && runId && (
+          <Suspense fallback={null}>
+            <RunDetailShoeCard
+              uid={user.uid}
+              runId={runId}
+              storedShoeId={
+                typeof run.shoeId === "string"
+                  ? run.shoeId
+                  : typeof (run.runConfig as { shoeId?: unknown } | undefined)
+                        ?.shoeId === "string"
+                    ? ((run.runConfig as { shoeId: string }).shoeId ?? null)
+                    : null
+              }
+              distanceMeters={
+                typeof run.distance === "number" ? run.distance : 0
+              }
+              volumeEligible={isVolumeEligible(run)}
+              unit={unit}
+            />
+          </Suspense>
+        )}
+
         {/* The finish screen's two cards, in its order: best efforts,
             then one splits table. */}
         <BestEffortsCard efforts={bestEfforts} placings={placings} />
@@ -690,8 +765,13 @@ export default function RunDetail() {
         <Suspense fallback={null}>
           <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
         </Suspense>
-        {displaySplits.length > 0 && (
-          <SplitsTable splits={displaySplits} lapUnit={lapUnit} unit={unit} />
+        {(displaySplits.length > 0 || lapSplits.length > 0) && (
+          <SplitsTable
+            splits={displaySplits}
+            lapUnit={lapUnit}
+            unit={unit}
+            lapSplits={lapSplits}
+          />
         )}
 
         {/* Elevation profile */}
@@ -754,24 +834,54 @@ export default function RunDetail() {
             {/* Run26 call 3: a segment is cut from an outdoor run with GPS
                 that counts. Opens under the map, which scrolls into view. */}
             {user && runId && isOutdoorGpsRun(kind) && !run.isInvalid && (
-              <Button
-                variant="outline"
-                fullWidth
-                disabled={segmentRange !== null}
-                onClick={() => {
-                  setSegmentRange(defaultStretch(run.points));
-                  window.scrollTo({ top: 0 });
-                }}
-              >
-                <Spline
-                  className="size-4 @max-[7em]:hidden"
-                  aria-hidden="true"
-                />
-                Make a segment
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={segmentRange !== null}
+                  onClick={() => {
+                    setSegmentRange(defaultStretch(run.points));
+                    window.scrollTo({ top: 0 });
+                  }}
+                >
+                  <Spline
+                    className="size-4 @max-[7em]:hidden"
+                    aria-hidden="true"
+                  />
+                  Make a segment
+                </Button>
+                {Array.isArray(run.points) && run.points.length >= 4 && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setCropWanted(true);
+                      setCropOpen(true);
+                    }}
+                  >
+                    <Scissors
+                      className="size-4 @max-[7em]:hidden"
+                      aria-hidden="true"
+                    />
+                    Crop route
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )}
+
+        {/* TCX export works for both outdoor GPS and indoor treadmill runs. */}
+        <div className="@container">
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => void exportThisRunTcx()}
+          >
+            <Share2 className="size-4 @max-[7em]:hidden" aria-hidden="true" />
+            Export TCX
+          </Button>
+        </div>
 
         {/* ADR-0012. Last on the page and behind a confirm: a records
             correction for a mis-log, not a primary action. A phone-in-
@@ -804,40 +914,64 @@ export default function RunDetail() {
         </Suspense>
       )}
 
+      {user &&
+        runId &&
+        cropWanted &&
+        Array.isArray(run.points) &&
+        run.points.length >= 4 && (
+          <Suspense fallback={null}>
+            <RunCropSheet
+              key={cropOpen ? "open" : "closed"}
+              open={cropOpen}
+              onOpenChange={setCropOpen}
+              uid={user.uid}
+              runId={runId}
+              points={run.points as GPSPoint[]}
+              weightKg={profile?.weightKg || 70}
+              unit={unit}
+              onCropped={retryRun}
+            />
+          </Suspense>
+        )}
+
       {/* S1 share-card system — customization sheet + new renderer */}
-      <ShareCardSheet
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        data={{
-          template: "run",
-          handle: profile?.displayName ?? "Athlete",
-          date:
-            date?.toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }) ?? "",
-          // Shared to the feed: the card links to the post while public.
-          postId:
-            typeof run.sharedActivityId === "string"
-              ? run.sharedActivityId
-              : undefined,
-          // Any other card's page goes with the run (Soc17).
-          runId,
-          points: sharedPoints,
-          distanceKm: run.distance / 1000,
-          durationSec: run.duration,
-          paceSecPerKm: avgPace,
-          elevationM: run.elevationGain ?? undefined,
-          /* The card's rows follow the same recut-not-relabel rule as the
-             chart above it — `displaySplits` is already in the sharer's
-             unit, and `paceSeconds` is sec/km either way. */
-          splits: displaySplits.map((s) => ({
-            lap: s.km,
-            paceSecPerKm: s.paceSeconds,
-          })),
-        }}
-      />
+      {shareOpen && (
+        <Suspense fallback={null}>
+          <ShareCardSheet
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            data={{
+              template: "run",
+              handle: profile?.displayName ?? "Athlete",
+              date:
+                date?.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }) ?? "",
+              // Shared to the feed: the card links to the post while public.
+              postId:
+                typeof run.sharedActivityId === "string"
+                  ? run.sharedActivityId
+                  : undefined,
+              // Any other card's page goes with the run (Soc17).
+              runId,
+              points: sharedPoints,
+              distanceKm: run.distance / 1000,
+              durationSec: run.duration,
+              paceSecPerKm: avgPace,
+              elevationM: run.elevationGain ?? undefined,
+              /* The card's rows follow the same recut-not-relabel rule as the
+                 chart above it — `displaySplits` is already in the sharer's
+                 unit, and `paceSeconds` is sec/km either way. */
+              splits: displaySplits.map((s) => ({
+                lap: s.km,
+                paceSecPerKm: s.paceSeconds,
+              })),
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

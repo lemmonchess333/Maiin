@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useId } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 
 interface AccordionSectionProps {
@@ -102,7 +102,7 @@ export default function AccordionSection({
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id={panelId}
             role="region"
             aria-labelledby={triggerId}
@@ -115,7 +115,7 @@ export default function AccordionSection({
             <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">
               {children}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

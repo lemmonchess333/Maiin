@@ -1430,7 +1430,7 @@ export default function ProgrammeRunSection({
             sport="run"
             eyebrow="Start a run"
             title="Pick your pace today"
-            description="Easy, tempo, intervals or just go."
+            description="Easy, tempo, long or just go."
             meta={[]}
             /* Home's free run draws the easy runner; so does this card,
                as a planned run's does, where it had the icon tile. */
@@ -1463,7 +1463,7 @@ export default function ProgrammeRunSection({
               these two lines fade in once useRunningStats resolves.
               No spinner is shown over the Start CTA above. */}
           {runsLoading ? (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div
                 className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "70%" }}
@@ -1602,7 +1602,11 @@ export default function ProgrammeRunSection({
               waits while the 30-minute goal is offered, and while the
               starter goal's Done shows, which offer their own next goal. */}
           {!rollingOfferDismissed && !starterOffered && !starterDoneShowing && (
-            <Card size="compact" className="flex items-center gap-3">
+            <Card
+              size="compact"
+              tone="flat"
+              className="flex items-center gap-3"
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -1646,7 +1650,11 @@ export default function ProgrammeRunSection({
               It waits while the starter goal's Done shows: that card already
               offers the next goal. */}
           {!setRaceGoalDismissed && !starterDoneShowing && (
-            <Card size="compact" className="flex items-center gap-3">
+            <Card
+              size="compact"
+              tone="flat"
+              className="flex items-center gap-3"
+            >
               <button
                 type="button"
                 onClick={() => {

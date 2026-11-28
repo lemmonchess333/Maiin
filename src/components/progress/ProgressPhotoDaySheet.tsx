@@ -197,7 +197,7 @@ export default function ProgressPhotoDaySheet({
     draftDate !== date;
 
   const dateEditor = (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <SectionLabel as="span">Date taken</SectionLabel>
       <input
         aria-label="Date taken"

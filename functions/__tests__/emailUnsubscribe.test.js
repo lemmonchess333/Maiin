@@ -199,7 +199,7 @@ describe("Hosting sends the link's address to the function", () => {
               .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
               .replace(/\*\*/g, "\u0000")
               .replace(/\*/g, "[^/]*")
-              .replace(/\u0000/g, ".*")}$`
+              .replaceAll("\u0000", ".*")}$`
           ).test("/email/unsubscribe");
     expect(index).toBeGreaterThan(-1);
     expect(rewrites.slice(0, index).filter(takes)).toEqual([]);

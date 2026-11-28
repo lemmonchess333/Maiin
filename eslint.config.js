@@ -89,7 +89,7 @@ const PALETTE_TABLES = [
 ];
 
 export default defineConfig([
-  globalIgnores(["dist", "functions", ".claude", "ios"]),
+  globalIgnores(["dist", "functions/node_modules", ".claude", "ios"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -181,6 +181,47 @@ export default defineConfig([
           selector: "TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}/]",
           message:
             "A palette table names THEME tokens (THEME.purpleRamp, THEME.tier.platinum), never a hex.",
+        },
+      ],
+    },
+  },
+  // ── Cloud Functions (CommonJS runtime) ──────────────────────────────
+  {
+    files: ["functions/**/*.js"],
+    ignores: ["functions/vitest.config.js", "functions/__tests__/**/*.js"],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "commonjs",
+      globals: globals.node,
+    },
+    rules: {
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
+  // ── Cloud Functions tests & Vitest config (ESM) ─────────────────────
+  {
+    files: ["functions/vitest.config.js", "functions/__tests__/**/*.js"],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: globals.node,
+    },
+    rules: {
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
     },

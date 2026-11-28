@@ -778,21 +778,13 @@ async function computeAndWritePerformanceForUser(
     let weekBeforePreviousPI = null;
     try {
       const prevKey = dateKeyMinusN(computeKey, WINDOW_DAYS);
-      const prevDoc = await db
-        .collection("users")
-        .doc(uid)
-        .collection("performance")
-        .doc(prevKey)
-        .get();
-      if (prevDoc.exists) previousComputePI = priorDeloadIndex(prevDoc.data());
-
       const prev2Key = dateKeyMinusN(computeKey, WINDOW_DAYS * 2);
-      const prev2Doc = await db
-        .collection("users")
-        .doc(uid)
-        .collection("performance")
-        .doc(prev2Key)
-        .get();
+      const perfCol = db.collection("users").doc(uid).collection("performance");
+      const [prevDoc, prev2Doc] = await Promise.all([
+        perfCol.doc(prevKey).get(),
+        perfCol.doc(prev2Key).get(),
+      ]);
+      if (prevDoc.exists) previousComputePI = priorDeloadIndex(prevDoc.data());
       if (prev2Doc.exists) {
         weekBeforePreviousPI = priorDeloadIndex(prev2Doc.data());
       }
@@ -926,8 +918,8 @@ async function computeAndWritePerformanceForUser(
 // ── Cooldown lock ────────────────────────────
 
 /**
- * Check and acquire a cooldown lock. Returns true if compute should proceed.
- * Simple timestamp check — no transactions needed at this scale.
+ * Check and acquire a cooldown lock atomically via a transaction. Returns true
+ * if compute should proceed.
  */
 async function acquireCooldownLock(uid) {
   try {
@@ -936,31 +928,34 @@ async function acquireCooldownLock(uid) {
       .doc(uid)
       .collection("_engine")
       .doc("performanceLock");
-    const lockSnap = await lockRef.get();
 
-    if (lockSnap.exists) {
-      const data = lockSnap.data();
-      const nextAllowed =
-        data.nextAllowedAt && data.nextAllowedAt.toDate
-          ? data.nextAllowedAt.toDate()
-          : new Date(0);
-      if (new Date() < nextAllowed) {
-        return false;
+    return await db.runTransaction(async (tx) => {
+      const lockSnap = await tx.get(lockRef);
+      const now = Date.now();
+      if (lockSnap.exists) {
+        const data = lockSnap.data() || {};
+        const nextAllowed =
+          data.nextAllowedAt && data.nextAllowedAt.toDate
+            ? data.nextAllowedAt.toDate()
+            : new Date(0);
+        if (now < nextAllowed.getTime()) {
+          return false;
+        }
       }
-    }
 
-    await lockRef.set(
-      {
-        inProgress: true,
-        nextAllowedAt: admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + COOLDOWN_MS)
-        ),
-        lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return true;
+      tx.set(
+        lockRef,
+        {
+          inProgress: true,
+          nextAllowedAt: admin.firestore.Timestamp.fromDate(
+            new Date(now + COOLDOWN_MS)
+          ),
+          lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      return true;
+    });
   } catch (error) {
     console.error("acquireCooldownLock error:", {
       uid,
@@ -977,14 +972,16 @@ async function releaseLock(uid, ok, error) {
     .doc(uid)
     .collection("_engine")
     .doc("performanceLock");
-  await lockRef.set(
-    {
-      inProgress: false,
-      lastRunOk: ok,
-      lastError: error || null,
-    },
-    { merge: true }
-  );
+  const update = {
+    inProgress: false,
+    lastRunOk: ok,
+    lastError: error || null,
+  };
+  // Clear cooldown on failure so a transient error doesn't block retries for 10 min.
+  if (!ok) {
+    update.nextAllowedAt = admin.firestore.Timestamp.fromMillis(0);
+  }
+  await lockRef.set(update, { merge: true });
 }
 
 // ── Exports ──────────────────────────────────

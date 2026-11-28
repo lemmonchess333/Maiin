@@ -19,6 +19,7 @@ import { useState } from "react";
 import HeroDrillDownSheet from "../HeroDrillDownSheet";
 import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { groupRe, groupTextRe } from "@/test/localeGrouping";
+import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import type { TrainingFuelAdjustment } from "@/hooks/useEffectiveTargets";
 
@@ -210,20 +211,20 @@ describe("HeroDrillDownSheet — training-aware fuel", () => {
 
 /**
  * The macro bars must be drawn the way the macro that opened this sheet
- * is: with what is logged, whichever way the numbers count (Food11 call
- * 5; `loggedFill` in `calorieRingFill.ts` has the rule and its reasons).
+ * is: following the left and logged switch, as the wheel does (`ringFill`
+ * in `calorieRingFill.ts` has the rule and its reasons; owner, 23
+ * November 2026, reversing Food11 call 5).
  *
  * This sheet was once the surface that broke it. The tile's bar emptied
  * in "left" and the sheet drew what was logged, so the SAME protein was a
  * 9.2%-full bar on the tile and an 88.7%-full bar here, one tap apart,
- * measured off the Food capture frames. Food10 fixed that by making the
- * sheet empty too; Food11 turned the wheel, the bars and this sheet round
- * together, so they still agree and none of them depends on the mode.
+ * measured off the Food capture frames (Food10 call 1: the card and the
+ * sheet never run opposite ways).
  *
  * Rendered, because the wiring is what broke: a helper's own suite stays
  * green when a component stops calling it.
  */
-describe("HeroDrillDownSheet — bars are what is logged, in both modes", () => {
+describe("HeroDrillDownSheet — bars follow the switch, as the card does", () => {
   /** Inline widths of the three MACRO bars.
    *
    *  Scoped to the "Macros" section deliberately. The micronutrient rows
@@ -278,38 +279,82 @@ describe("HeroDrillDownSheet — bars are what is logged, in both modes", () => 
     );
   }
 
-  it("draws the logged share in LEFT mode, the same bars as in LOGGED mode", () => {
-    const { unmount } = renderAt("left");
-    const left = barWidths();
+  it("draws what is logged in LOGGED mode and what is left in LEFT mode", () => {
+    const { unmount } = renderAt("eaten");
     // 56 of 140g, 110 of 273g, 30 of 61g.
-    expect(left).toEqual(["40%", "40%", "49%"]);
+    expect(barWidths()).toEqual(["40%", "40%", "49%"]);
     unmount();
 
-    renderAt("eaten");
-    expect(barWidths()).toEqual(left);
+    renderAt("left");
+    expect(barWidths()).toEqual(["60%", "60%", "51%"]);
   });
 
-  it("prints the logged share beside the grams logged in LEFT mode", () => {
+  it("prints the bar's share beside the grams logged in LEFT mode", () => {
     renderAt("left");
     // The headline counts what is left; the line under the bar says what
     // is logged, and the percentage is the bar's.
-    expect(screen.getByText("56g logged · 40%")).toBeInTheDocument();
-    expect(screen.getByText("30g logged · 49%")).toBeInTheDocument();
+    expect(screen.getByText("56g logged · 60%")).toBeInTheDocument();
+    expect(screen.getByText("30g logged · 51%")).toBeInTheDocument();
   });
 
-  it("draws the calorie bar the same way", () => {
-    renderAt("left");
+  /** A colour as the DOM gives an inline style back. */
+  function cssColour(colour: string) {
+    const probe = document.createElement("div");
+    probe.style.background = colour;
+    return probe.style.background;
+  }
+
+  /** The calorie bar's fill and the percentage printed beside it. */
+  function calorieBar() {
     const heading = Array.from(document.querySelectorAll("p")).find(
       (el) => el.textContent?.trim() === "Calories"
     );
     const section = heading!.closest("section")!;
     const fill = section.querySelector<HTMLElement>(".h-2 > div")!;
-    const pct = Number.parseFloat(fill.style.width);
-    expect(pct).toBeGreaterThan(0);
-    expect(pct).toBeLessThan(100);
-    expect(section).toHaveTextContent(`${pct}%`);
-    expect(section).toHaveTextContent(
-      new RegExp(`${groupTextRe(1000)} kcal logged`)
+    return { section, fill, pct: Number.parseFloat(fill.style.width) };
+  }
+
+  it.each([
+    ["eaten", 1000, 45],
+    ["left", 1000, 55],
+  ] as const)(
+    "draws the calorie bar the same way (%s: %i of 2,200 is %i%%)",
+    (mode, calories, pct) => {
+      window.localStorage.setItem("tropos.food.calorieRingMode", mode);
+      render(
+        <HeroDrillDownSheet
+          open
+          onOpenChange={() => {}}
+          selectedDate="2026-07-13"
+          isToday
+          dailyTotals={{ ...totals, calories }}
+          dailyTargets={targets({ finalTarget: 2200 })}
+        />
+      );
+      const bar = calorieBar();
+      expect(bar.pct).toBe(pct);
+      expect(bar.section).toHaveTextContent(`${pct}%`);
+    }
+  );
+
+  it("past the target in LEFT mode shows what is over in the deeper orange, as the wheel's second lap does", () => {
+    window.localStorage.setItem("tropos.food.calorieRingMode", "left");
+    render(
+      <HeroDrillDownSheet
+        open
+        onOpenChange={() => {}}
+        selectedDate="2026-07-13"
+        isToday
+        dailyTotals={{ ...totals, calories: 2750 }}
+        dailyTargets={targets({ finalTarget: 2200 })}
+      />
+    );
+    const bar = calorieBar();
+    // 550 over 2,200: a quarter.
+    expect(bar.pct).toBe(25);
+    expect(bar.fill.style.background).toBe(cssColour(THEME.calorieRing.deep));
+    expect(bar.section).toHaveTextContent(
+      new RegExp(`550\\s*over ${groupTextRe(2200)} kcal`)
     );
   });
 });

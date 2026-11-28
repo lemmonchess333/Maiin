@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { RotateCcw, Trophy } from "lucide-react";
@@ -85,7 +85,7 @@ export default function NewBestMoment({
       </p>
       <AnimatePresence>
         {moment && (
-          <motion.div
+          <m.div
             key={moment.setKey}
             data-testid="new-best-moment"
             // A fade, no scale: in the workout's dock the card is frosted,
@@ -146,7 +146,7 @@ export default function NewBestMoment({
                 </Button>
               )}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

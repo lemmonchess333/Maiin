@@ -105,7 +105,7 @@ export default function HeartRateZonesSection({
                 at the right, when the two no longer fit on one line (double
                 text on a 320px phone), rather than stacking "93–", "112"
                 and "bpm" a piece a line. */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {zones.map((z) => (
                 <div
                   key={z.zone}
